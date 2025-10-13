@@ -1,0 +1,36 @@
+{
+  "root": true,
+  "env": { "browser": true, "es2020": true, "jest": true, "node": true },
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:jsx-a11y/recommended",
+    "prettier"
+  ],
+  "ignorePatterns": ["dist", ".eslintrc"],
+  "plugins": ["react-refresh", "prettier"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "prettier/prettier": "error",
+    "react/prop-types": "off",
+    "react-refresh/only-export-components": [
+      "off"
+    ],
+    "react/react-in-jsx-scope": "off", // Not needed in React 17+
+    "jsx-a11y/click-events-have-key-events": "off",
+    "jsx-a11y/no-static-element-interactions": "off",
+    "react/no-unescaped-entities": "off"
+  }
+}

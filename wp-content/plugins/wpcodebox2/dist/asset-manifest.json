@@ -1,0 +1,24 @@
+{
+  "files": {
+    "main.css": "/build/static/css/main.css",
+    "main.js": "/build/static/js/main.js",
+    "static/media/cdnjs.svg": "/build/static/media/cdnjs.708b70910689ffbbb4202905553308ba.svg",
+    "static/media/less.svg": "/build/static/media/less.5fe8e80749f1059a2f0bb685e1b06117.svg",
+    "static/media/php.svg": "/build/static/media/php.41f8325ee729e1dd3b6edb9607875377.svg",
+    "static/media/json.svg": "/build/static/media/json.7fc51bf5e995204308eab660ec2bf9fd.svg",
+    "static/media/html.svg": "/build/static/media/html.8c11e1a8364b520a311ac9bf8b5d2fbf.svg",
+    "static/media/layout_default.svg": "/build/static/media/layout_default.7d9836b354cc158d5685beb58ccd3b1b.svg",
+    "index.html": "/build/index.html",
+    "static/media/javascript.svg": "/build/static/media/javascript.e006a1bdb37ac04bddaadc5ef89af1ae.svg",
+    "static/media/layout_center.svg": "/build/static/media/layout_center.6b487333b4a1eb350ff2932166735fbe.svg",
+    "static/media/notepad.svg": "/build/static/media/notepad.cdedf580ffe9bf071432052ebb66cba8.svg",
+    "static/media/highlight.svg": "/build/static/media/highlight.ee8105a09ea7f9b8347ad4622a509233.svg",
+    "static/media/sass.svg": "/build/static/media/sass.9d369b9682db6ea151ba0c234144d399.svg",
+    "static/media/md.svg": "/build/static/media/md.e9254d6905af6cdb1ba39fff5e66997c.svg",
+    "static/media/css.svg": "/build/static/media/css.64fd0678f8dc5c47a4d09e91c5c6de7a.svg"
+  },
+  "entrypoints": [
+    "static/css/main.css",
+    "static/js/main.js"
+  ]
+}

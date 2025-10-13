@@ -1,0 +1,23 @@
+:root {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+
+  /* Make accent more visible for hover states */
+  --accent: 217 19% 27%; /* Lighter shade for hover */
+  --accent-foreground: 210 40% 98%;
+
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+
+  /* Make accent more visible for hover */
+  --accent: 217 19% 27%; /* Lighter shade for hover */
+  --accent-foreground: 210 40% 98%;
+
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+}

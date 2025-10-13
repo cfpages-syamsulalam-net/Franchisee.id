@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 96.1%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 335 59% 49%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 93%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 215 28% 80%;
+    --input: 215 28% 80%;
+    --ring: 335 59% 49%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 215 28% 17%;
+    --card-foreground: 210 40% 98%;
+    --popover: 215 28% 17%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 335 59% 49%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 215 25% 27%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 215 28% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 335 59% 49%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+  }
+
+  /* Custom styles for the log viewer */
+  .log-table {
+    @apply w-full border-collapse rounded-lg overflow-hidden bg-card;
+  }
+
+  .log-table th {
+    @apply px-4 py-2 text-left text-sm font-medium bg-muted border-b border-border;
+  }
+
+  .log-table td {
+    @apply px-4 py-2 text-sm border-t border-border;
+  }
+
+  .log-table tr:hover {
+    @apply bg-muted/50;
+  }
+
+  /* Light theme specific styles */
+  :root:not(.dark) {
+    /* Light theme button styles */
+    button[class*="bg-[rgb(2,8,23)]"] {
+      @apply bg-[#02081700] border-border;
+    }
+
+    /* Light theme shortcut key styles */
+    button
+      div[class*="rounded"]:not(
+        button[class*="bg-[#238636]"] div[class*="rounded"],
+        button[class*="bg-[#C7337E]"] div[class*="rounded"]
+      ) {
+      @apply bg-[rgb(241,245,249)] border-[rgb(190,201,219)];
+    }
+  }
+
+  /* Dark theme specific styles */
+  .dark {
+    /* Dark theme button styles */
+    button[class*="bg-[rgb(2,8,23)]"] {
+      @apply bg-[rgb(2,8,23)]/35 border-border;
+    }
+
+    /* Dark theme shortcut key styles */
+    button
+      div[class*="rounded"]:not(
+        button[class*="bg-[#238636]"] div[class*="rounded"],
+        button[class*="bg-[#C7337E]"] div[class*="rounded"]
+      ) {
+      @apply bg-[#24334f] border-[#24334f];
+    }
+  }
+
+  /* Special button states (theme independent) */
+  button[class*="bg-[#238636]"] div[class*="rounded"] {
+    @apply bg-green-500/20 border border-green-300/30 text-white;
+  }
+
+  button[class*="bg-[#C7337E]"] {
+    @apply shadow-sm;
+  }
+
+  button[class*="bg-[#C7337E]"] div[class*="rounded"] {
+    @apply bg-white/20 border-white/30;
+  }
+
+  /* For backward compatibility */
+  button[class*="bg-[#C7337E]"] {
+    @apply border-0;
+  }
+
+  button[class*="bg-[#C7337E]"] div[class*="rounded"] {
+    @apply bg-[#dd71a8] border border-[#dd71a8]/70 text-white;
+  }
+
+  /* Status badges */
+  .log-level {
+    @apply px-2 py-1 rounded-full text-xs font-medium;
+  }
+
+  .log-level-notice {
+    @apply bg-blue-500/20 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400;
+  }
+
+  .log-level-warning {
+    @apply bg-yellow-500/20 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400;
+  }
+
+  .log-level-error {
+    @apply bg-red-500/20 text-red-800 dark:bg-red-500/20 dark:text-red-400;
+  }
+
+  .log-message {
+    @apply font-mono text-sm whitespace-pre-wrap text-foreground;
+  }
+
+  /* Additional styles for better light mode visibility */
+  :root {
+    .log-table {
+      @apply shadow-sm border border-border;
+    }
+
+    .log-table tr:nth-child(even) {
+      @apply bg-muted/30;
+    }
+
+    .log-table tr:hover {
+      @apply bg-muted;
+    }
+
+    /* Top controls container */
+    div[class*="bg-card"] {
+      @apply border border-border shadow-sm;
+    }
+
+    /* Input field */
+    input[type="text"] {
+      @apply border border-border shadow-sm;
+    }
+
+    /* Navigation buttons */
+    button[class*="variant-ghost"] {
+      @apply bg-card hover:bg-muted;
+    }
+
+    /* Table text in light mode */
+    .log-message {
+      @apply text-foreground/90 dark:text-foreground;
+    }
+
+    /* Table header */
+    .log-table th {
+      @apply text-foreground/80 bg-muted/50;
+    }
+  }
+
+  /* Keyboard shortcut styles */
+  kbd {
+    @apply font-mono text-xs font-medium;
+  }
+}
