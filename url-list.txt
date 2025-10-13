@@ -1,6 +1,3 @@
-
-## Sitemap URLs
-Number of URLs: 204
 - [https://franchisee.id/jasa-layanan/](https://google.com/search?q=site%3Ahttps://franchisee.id/jasa-layanan/)
 - [https://franchisee.id/berita/](https://google.com/search?q=site%3Ahttps://franchisee.id/berita/)
 - [https://franchisee.id/kontak-kami/](https://google.com/search?q=site%3Ahttps://franchisee.id/kontak-kami/)
