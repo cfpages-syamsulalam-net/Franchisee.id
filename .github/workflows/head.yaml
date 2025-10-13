@@ -1,0 +1,111 @@
+name: Insert .head Content v2.4
+
+on:
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+  push:
+    paths:
+      - .head  # Trigger when the .head file is modified
+
+permissions:
+  contents: write  # Grant write permissions to the repository contents
+
+jobs:
+  update_html_files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check if .head file exists
+        id: check_head
+        run: |
+          if [[ -f .head ]]; then
+            echo "exists=true" >> $GITHUB_ENV
+          else
+            echo "exists=false" >> $GITHUB_ENV
+          fi
+
+      - name: Abort if .head file does not exist
+        if: env.exists == 'false'
+        run: |
+          echo "No .head file found, aborting operation."
+          exit 1
+
+      - name: Insert or Update .head content in HTML files
+        if: env.exists == 'true'
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          set -e # Exit immediately if a command exits with a non-zero status.
+
+          # --- Define the exact comment markers ---
+          START_COMMENT_MARKER="<!-- START of .head content -->"
+          END_COMMENT_MARKER="<!-- END of .head content -->"
+
+          CONTENT_RAW=$(cat .head | tr -d '\r') # Read .head and remove carriage returns
+
+          # Function to escape backslashes for sed 'i' text blocks (for the comment markers themselves)
+          escape_backslashes() {
+            echo "$1" | sed 's/\\/\\\\/g'
+          }
+
+          # Function to prepare multi-line content from .head for sed 'i' text block
+          # Escapes backslashes and adds a trailing '\' to each line except the last
+          prepare_multiline_for_sed() {
+            echo "$1" | sed -e 's/\\/\\\\/g' -e '$!s/$/\\/'
+          }
+
+          # Prepare comment markers for insertion (escaped for sed 'i' text)
+          START_COMMENT_TEXT=$(escape_backslashes "$START_COMMENT_MARKER")
+          END_COMMENT_TEXT=$(escape_backslashes "$END_COMMENT_MARKER")
+
+          # Prepare .head content for insertion
+          CONTENT_TEXT=$(prepare_multiline_for_sed "$CONTENT_RAW")
+
+          # Prepare comment markers for deletion (regex-escaped for sed address)
+          START_COMMENT_REGEX=$(echo "$START_COMMENT_MARKER" | sed -e 's/[][\/.*^$]/\\&/g')
+          END_COMMENT_REGEX=$(echo "$END_COMMENT_MARKER" | sed -e 's/[][\/.*^$]/\\&/g')
+
+          # Use find with -print0 and while read -r -d $'\0' for robust filename handling
+          find . -name '*.html' -print0 | while IFS= read -r -d $'\0' file; do
+            echo "Processing $file..."
+
+            # 1. Delete existing block defined by the comment markers (if it exists)
+            # This removes the lines from START_COMMENT_MARKER to END_COMMENT_MARKER, inclusive.
+            echo "Attempting to remove existing block: ${START_COMMENT_MARKER} ... ${END_COMMENT_MARKER}"
+            # The sed command will do nothing if the block is not found.
+            # Using a different delimiter like '#' for sed's address range if comments could contain '/'
+            # However, START_COMMENT_REGEX and END_COMMENT_REGEX should correctly escape '/' if present.
+            # Standard GNU sed:
+            sed -i "/${START_COMMENT_REGEX}/,/${END_COMMENT_REGEX}/d" "$file"
+            
+            # 2. Insert the new block (markers + .head content) before </head>
+            # The text block for sed 'i' command is formed by lines ending with '\', except the final line of the block.
+            if [[ -z "$CONTENT_RAW" ]]; then # If .head file was empty, CONTENT_TEXT will be an empty string
+              sed -i "/<\/head>/i \\
+                ${START_COMMENT_TEXT}\\
+                ${END_COMMENT_TEXT}" "$file"
+            else # .head file has content, so CONTENT_TEXT is prepared
+              sed -i "/<\/head>/i \\
+                ${START_COMMENT_TEXT}\\
+                ${CONTENT_TEXT}\\
+                ${END_COMMENT_TEXT}" "$file"
+            fi
+          done
+          
+          # Commit and push changes if any
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Check for changes before attempting to commit
+          if ! git diff --quiet; then
+            echo "Changes detected, committing and pushing..."
+            git add .
+            git commit -m "Update .head content in HTML files (v2.4)" # Updated version
+            
+            # Push changes
+            git remote set-url origin "https://x-access-token:${GH_PAT}@github.com/${GITHUB_REPOSITORY}"
+            git push origin HEAD:${GITHUB_REF_NAME} # Push to the same branch
+          else
+            echo "No changes to commit."
+          fi
