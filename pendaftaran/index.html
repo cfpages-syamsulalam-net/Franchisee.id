@@ -228,6 +228,21 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		margin-right: 5px;
 	}
 
+	/* Dashboard Result Style */
+	.result-dashboard {
+		background: #ffffff;
+		border: 2px solid #f0f0f0;
+		border-radius: 12px;
+		overflow: hidden; /* Supaya border radius works */
+		box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+	}
+	.fw-800 {
+		font-weight: 800;
+	}
+	.bg-soft-success {
+		background-color: #f6fff9; /* Hijau sangat muda untuk area BEP */
+	}
+
 	/* RESPONSIVE (MOBILE) */
 	@media (max-width: 768px) {
 		.form-group-row {
@@ -247,6 +262,16 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		}
 		.form-section-card {
 			padding: 20px;
+		}
+		.result-card {
+			border-bottom: 1px solid #f0f0f0;
+		}
+	}
+
+	/* Garis pemisah tengah (Hanya di Desktop) */
+	@media (min-width: 768px) {
+		.border-end-md {
+			border-right: 2px dashed #e0e0e0;
 		}
 	}
 </style>
@@ -736,27 +761,25 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 								<hr class="my-4">
 
 								<!-- Breakdown Biaya -->
-								<h5 class="mb-3 text-dark fw-bold">Rincian Modal Awal (Estimasi)</h5>
+								<h5 class="mb-3 text-dark fw-bold">Rincian Modal & Profitabilitas</h5>
 
-								<!-- 1. Franchise Fee -->
+								<!-- Breakdown Biaya (Tanpa Nomor Urut) -->
 								<div class="form-group-row">
 									<div class="label-col">
-										<label class="form-label">1. Franchise Fee</label>
+										<label class="form-label">Franchise Fee</label>
 									</div>
 									<div class="input-col">
 										<div class="input-group">
 											<span class="input-group-text">Rp</span>
-											<!-- Class 'rupiah-input' untuk trigger JS separator ribuan -->
 											<input type="text" class="form-control rupiah-input calc-input" id="fee_license" name="fee_license" placeholder="0">
 										</div>
 										<small class="helper-text-bottom">Biaya lisensi / hak merek (Hangus).</small>
 									</div>
 								</div>
 
-								<!-- 2. Paket Pusat -->
 								<div class="form-group-row">
 									<div class="label-col">
-										<label class="form-label">2. Biaya Paket Pusat</label>
+										<label class="form-label">Biaya Paket Pusat</label>
 									</div>
 									<div class="input-col">
 										<div class="input-group">
@@ -767,10 +790,9 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 									</div>
 								</div>
 
-								<!-- 3. Konstruksi -->
 								<div class="form-group-row">
 									<div class="label-col">
-										<label class="form-label" id="construction_label">3. Estimasi Konstruksi</label>
+										<label class="form-label" id="construction_label">Estimasi Konstruksi</label>
 									</div>
 									<div class="input-col">
 										<div class="input-group">
@@ -781,23 +803,6 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 									</div>
 								</div>
 
-								<!-- TOTAL DISPLAY (CENTER & BIG) -->
-								<div class="total-box mt-4 text-center">
-									<label class="fw-bold text-uppercase mb-2 d-block text-muted" style="font-size: 0.9rem;">Total Estimasi Modal Awal</label>
-									<div class="d-flex justify-content-center align-items-center">
-										<span class="fs-2 fw-bold me-2 text-dark">Rp</span>
-										<!-- Input dibuat transparent, center, font besar -->
-										<input type="text" class="total-input text-center w-100" id="total_investment_display" value="0" readonly style="font-size: 2.5rem; border: none; background: transparent; font-weight: 800; color: #333;">
-									</div>
-									<input type="hidden" name="total_investment_value" id="total_investment_value"> 
-								</div>
-
-								<hr class="my-4">
-
-								<!-- PERHITUNGAN PROFIT & BEP -->
-								<h5 class="mb-3 text-dark fw-bold">Estimasi Keuntungan & BEP</h5>
-
-								<!-- Input Omzet (Wajib untuk hitung BEP) -->
 								<div class="form-group-row">
 									<div class="label-col">
 										<label class="form-label">Estimasi Omzet / Bulan</label>
@@ -807,44 +812,75 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 											<span class="input-group-text">Rp</span>
 											<input type="text" class="form-control rupiah-input calc-bep" id="omzet_monthly" name="omzet_monthly" placeholder="Contoh: 30.000.000" required>
 										</div>
-										<small class="helper-text-bottom">Rata-rata penjualan kotor per bulan.</small>
 									</div>
 								</div>
 
-								<!-- Pecah HPP dan Profit -->
-								<div class="row">
-									<div class="col-6">
-										<div class="mb-3">
-											<label class="form-label small fw-bold">HPP (%)</label>
-											<div class="input-group">
-												<input type="number" class="form-control" name="hpp_percent" placeholder="50">
-												<span class="input-group-text">%</span>
-											</div>
-											<small class="text-muted" style="font-size: 10px;">Harga Pokok Penjualan</small>
-										</div>
+								<!-- HPP & Profit (2 Kolom Compact) -->
+								<div class="form-group-row align-items-center">
+									<div class="label-col">
+										<label class="form-label">Margin Bisnis</label>
 									</div>
-									<div class="col-6">
-										<div class="mb-3">
-											<label class="form-label small fw-bold">Net Profit (%)</label>
-											<div class="input-group">
-												<input type="number" class="form-control calc-bep" id="net_profit_percent" name="profit_percent" placeholder="20" required>
-												<span class="input-group-text">%</span>
+									<div class="input-col">
+										<div class="row g-2">
+											<div class="col-6">
+												<label class="small text-muted mb-1">HPP (%)</label>
+												<div class="input-group input-group-sm">
+													<input type="number" class="form-control" name="hpp_percent" placeholder="50">
+													<span class="input-group-text">%</span>
+												</div>
 											</div>
-											<small class="text-muted" style="font-size: 10px;">Keuntungan Bersih</small>
+											<div class="col-6">
+												<label class="small text-muted mb-1 fw-bold text-success">Net Profit (%)</label>
+												<div class="input-group input-group-sm">
+													<input type="number" class="form-control calc-bep" id="net_profit_percent" name="profit_percent" placeholder="20" required>
+													<span class="input-group-text">%</span>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>
 
-								<!-- Auto Calc BEP -->
-								<div class="alert alert-success d-flex align-items-center mt-2" role="alert">
-									<i class="fas fa-calculator me-3 fs-4"></i>
-									<div>
-										<span class="d-block small text-uppercase fw-bold">Estimasi Balik Modal (BEP):</span>
-										<span class="fs-4 fw-bold" id="bep_display">-</span> <span class="fw-bold">Bulan</span>
-										<input type="hidden" name="estimated_bep_months" id="bep_value">
+								<!-- DASHBOARD HASIL (Total & BEP Sebelahan) -->
+								<div class="result-dashboard mt-4">
+									<div class="row g-0">
+										<!-- Kolom Total Modal -->
+										<div class="col-md-6 border-end-md">
+											<div class="result-card p-3 text-center">
+												<div class="result-icon mb-2">
+													<i class="fas fa-coins text-warning" style="font-size: 1.5rem;"></i>
+												</div>
+												<small class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Total Modal Awal</small>
+												
+												<!-- Menggunakan DIV/Text, bukan INPUT, agar tidak terpotong -->
+												<div class="d-flex justify-content-center align-items-baseline mt-1 text-wrap">
+													<span class="fs-5 me-1 text-muted fw-bold">Rp</span>
+													<span id="total_display_text" class="fw-800 text-dark" style="font-size: 1.6rem; line-height: 1.2;">0</span>
+												</div>
+												
+												<!-- Hidden Input untuk dikirim ke server -->
+												<input type="hidden" name="total_investment_value" id="total_investment_value"> 
+											</div>
+										</div>
+
+										<!-- Kolom BEP -->
+										<div class="col-md-6">
+											<div class="result-card p-3 text-center bg-soft-success">
+												<div class="result-icon mb-2">
+													<i class="fas fa-hourglass-half text-success" style="font-size: 1.5rem;"></i>
+												</div>
+												<small class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Estimasi BEP</small>
+												
+												<div class="d-flex justify-content-center align-items-baseline mt-1">
+													<span id="bep_display_text" class="fw-800 text-success" style="font-size: 1.6rem; line-height: 1.2;">-</span>
+													<span class="fs-6 ms-1 fw-bold text-muted">Bulan</span>
+												</div>
+
+												<!-- Hidden Input -->
+												<input type="hidden" name="estimated_bep_months" id="bep_value">
+											</div>
+										</div>
 									</div>
 								</div>
-							</div>
 
 							<!-- BAGIAN 3: Profil -->
 							<div class="form-section-card">
@@ -1391,20 +1427,23 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				// --- LOGIC 3: Auto Calculation (Total Investasi & BEP) ---
 				const rupiahInputs = document.querySelectorAll('.rupiah-input');
 				const totalDisplay = document.getElementById('total_investment_display');
-				const totalValueHidden = document.getElementById('total_investment_value');
+				const totalDisplayText = document.getElementById('total_display_text'); // Span Text
+				const totalValueHidden = document.getElementById('total_investment_value'); // Hidden Input
 				
 				// BEP Elements
 				const omzetInput = document.getElementById('omzet_monthly');
 				const profitPercentInput = document.getElementById('net_profit_percent');
-				const bepDisplay = document.getElementById('bep_display');
+				const bepDisplayText = document.getElementById('bep_display_text');
 				const bepValueHidden = document.getElementById('bep_value');
 
 				// Fungsi Hitung Utama
 				function calculateAll() {
-					// Ambil elemen dengan safety check (biar gak error kalau element null)
+					// Ambil elemen input biaya
 					const elLicense = document.getElementById('fee_license');
 					const elCapex = document.getElementById('fee_capex');
 					const elConstruct = document.getElementById('fee_construction');
+					const elOmzet = document.getElementById('omzet_monthly');
+					const elProfit = document.getElementById('net_profit_percent');
 
 					if(!elLicense || !elCapex || !elConstruct) return;
 
@@ -1415,37 +1454,34 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 					
 					let totalModal = feeLicense + feeCapex + feeConstruct;
 					
-					// Update tampilan Total (Format Rupiah)
-					if(totalDisplay) totalDisplay.value = formatRupiah(totalModal);
+					// Update Tampilan (Text Content untuk Span)
+					if(totalDisplayText) totalDisplayText.innerText = formatRupiah(totalModal);
+					// Update Value (untuk dikirim ke server)
 					if(totalValueHidden) totalValueHidden.value = totalModal;
 
-					// 2. Hitung BEP (Hanya jika Omzet & Profit diisi)
-					if(omzetInput && profitPercentInput && bepDisplay) {
-						let omzet = cleanNumber(omzetInput.value);
-						let margin = parseFloat(profitPercentInput.value) || 0;
+					// 2. Hitung BEP
+					if(elOmzet && elProfit && bepDisplayText) {
+						let omzet = cleanNumber(elOmzet.value);
+						let margin = parseFloat(elProfit.value) || 0;
 
 						if (totalModal > 0 && omzet > 0 && margin > 0) {
-							// Rumus: Nominal Profit = Omzet * (Margin/100)
 							let nominalProfit = omzet * (margin / 100);
-							
-							// Rumus BEP = Total Modal / Nominal Profit
 							let bepMonths = totalModal / nominalProfit;
-							
-							// Tampilkan hasil (1 desimal)
 							let formattedBEP = bepMonths.toFixed(1);
 							
-							bepDisplay.innerText = formattedBEP;
+							// Update Text
+							bepDisplayText.innerText = formattedBEP;
 							if(bepValueHidden) bepValueHidden.value = formattedBEP;
 							
-							// Indikator Warna
-							if(bepMonths > 24) { // Lama (> 2 tahun)
-								bepDisplay.className = 'fs-4 fw-bold text-danger';
-							} else { // Cepat
-								bepDisplay.className = 'fs-4 fw-bold text-success';
+							// Warna Indikator
+							if(bepMonths > 24) {
+								bepDisplayText.className = 'fw-800 text-danger'; // Merah jika lama
+							} else {
+								bepDisplayText.className = 'fw-800 text-success'; // Hijau jika cepat
 							}
 						} else {
-							bepDisplay.innerText = "-";
-							bepDisplay.className = 'fs-4 fw-bold';
+							bepDisplayText.innerText = "-";
+							bepDisplayText.className = 'fw-800 text-muted';
 						}
 					}
 				}
