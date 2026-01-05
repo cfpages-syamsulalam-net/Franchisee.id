@@ -1402,22 +1402,22 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 
 							if (['type_a', 'type_b', 'type_c'].includes(type)) {
 								// Tipe Kecil
-								rentLabel.innerText = "Estimasi Sewa Lahan (Teras/Space) per Bulan";
+								rentLabel.innerText = "Estimasi Sewa Lahan (Teras / Space) per Bulan";
 								rentInput.placeholder = "Rp 500rb - Rp 1.5 Juta";
-								constructLabel.innerText = "3. Est. Pembuatan Booth/Container";
-								constructHelper.innerText = "Isi 0 jika booth sudah termasuk di Paket Pusat.";
+								constructLabel.innerText = "Estimasi Pembuatan Booth / Container / Stand";
+								constructHelper.innerText = "Isi 0 jika biaya booth / container / stand sudah termasuk di Paket Pusat.";
 								
 							} else if (['type_d', 'type_e'].includes(type)) {
 								// Tipe Besar
 								rentLabel.innerText = "Rekomendasi Budget Sewa Bangunan per Tahun";
 								rentInput.placeholder = "Rp 50 Juta - Rp 100 Juta";
-								constructLabel.innerText = "3. Estimasi Renovasi Interior & Sipil";
-								constructHelper.innerText = "Biaya tukang, cat, partisi (disiapkan mitra).";
+								constructLabel.innerText = "Estimasi Renovasi Interior & Sipil";
+								constructHelper.innerText = "Biaya tukang, cat, partisi, fasad, dlsb (disiapkan mitra).";
 
 							} else if (type === 'type_f') {
 								// Cloud Kitchen
 								if(rentWrapper) rentWrapper.classList.add('d-none');
-								constructLabel.innerText = "3. Estimasi Setup Dapur";
+								constructLabel.innerText = "Estimasi Setup Dapur";
 								constructHelper.innerText = "Biaya exhaust & penyesuaian dapur.";
 							}
 						});
