@@ -737,7 +737,8 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 
 								<!-- Breakdown Biaya -->
 								<h5 class="mb-3 text-dark fw-bold">Rincian Modal Awal (Estimasi)</h5>
-								
+
+								<!-- 1. Franchise Fee -->
 								<div class="form-group-row">
 									<div class="label-col">
 										<label class="form-label">1. Franchise Fee</label>
@@ -745,12 +746,14 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 									<div class="input-col">
 										<div class="input-group">
 											<span class="input-group-text">Rp</span>
-											<input type="number" class="form-control calc-input" id="fee_license" name="fee_license" placeholder="0">
+											<!-- Class 'rupiah-input' untuk trigger JS separator ribuan -->
+											<input type="text" class="form-control rupiah-input calc-input" id="fee_license" name="fee_license" placeholder="0">
 										</div>
 										<small class="helper-text-bottom">Biaya lisensi / hak merek (Hangus).</small>
 									</div>
 								</div>
 
+								<!-- 2. Paket Pusat -->
 								<div class="form-group-row">
 									<div class="label-col">
 										<label class="form-label">2. Biaya Paket Pusat</label>
@@ -758,12 +761,13 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 									<div class="input-col">
 										<div class="input-group">
 											<span class="input-group-text">Rp</span>
-											<input type="number" class="form-control calc-input" id="fee_capex" name="fee_capex" placeholder="0">
+											<input type="text" class="form-control rupiah-input calc-input" id="fee_capex" name="fee_capex" placeholder="0">
 										</div>
 										<small class="helper-text-bottom">Peralatan, Stok Awal, Sistem.</small>
 									</div>
 								</div>
 
+								<!-- 3. Konstruksi -->
 								<div class="form-group-row">
 									<div class="label-col">
 										<label class="form-label" id="construction_label">3. Estimasi Konstruksi</label>
@@ -771,30 +775,73 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 									<div class="input-col">
 										<div class="input-group">
 											<span class="input-group-text">Rp</span>
-											<input type="number" class="form-control calc-input" id="fee_construction" name="fee_construction" placeholder="0">
+											<input type="text" class="form-control rupiah-input calc-input" id="fee_construction" name="fee_construction" placeholder="0">
 										</div>
 										<small class="helper-text-bottom" id="construction_helper">Biaya persiapan fisik/renovasi.</small>
 									</div>
 								</div>
 
-								<!-- TOTAL DISPLAY -->
-								<div class="total-box mt-3">
-									<div class="d-flex justify-content-between align-items-center">
-										<label class="fw-bold text-uppercase mb-0">Total Estimasi Modal:</label>
-										<div class="d-flex align-items-center">
-											<span class="fs-4 fw-bold me-1">Rp</span>
-											<input type="text" class="total-input" id="total_investment_display" value="0" readonly>
-										</div>
+								<!-- TOTAL DISPLAY (CENTER & BIG) -->
+								<div class="total-box mt-4 text-center">
+									<label class="fw-bold text-uppercase mb-2 d-block text-muted" style="font-size: 0.9rem;">Total Estimasi Modal Awal</label>
+									<div class="d-flex justify-content-center align-items-center">
+										<span class="fs-2 fw-bold me-2 text-dark">Rp</span>
+										<!-- Input dibuat transparent, center, font besar -->
+										<input type="text" class="total-input text-center w-100" id="total_investment_display" value="0" readonly style="font-size: 2.5rem; border: none; background: transparent; font-weight: 800; color: #333;">
 									</div>
 									<input type="hidden" name="total_investment_value" id="total_investment_value"> 
 								</div>
 
-								<div class="form-group-row mt-3">
+								<hr class="my-4">
+
+								<!-- PERHITUNGAN PROFIT & BEP -->
+								<h5 class="mb-3 text-dark fw-bold">Estimasi Keuntungan & BEP</h5>
+
+								<!-- Input Omzet (Wajib untuk hitung BEP) -->
+								<div class="form-group-row">
 									<div class="label-col">
-										<label class="form-label">HPP & Profit Margin</label>
+										<label class="form-label">Estimasi Omzet / Bulan</label>
 									</div>
 									<div class="input-col">
-										<input type="text" class="form-control" name="profit_margin" placeholder="Contoh: HPP 50%, Net Profit 20%">
+										<div class="input-group">
+											<span class="input-group-text">Rp</span>
+											<input type="text" class="form-control rupiah-input calc-bep" id="omzet_monthly" name="omzet_monthly" placeholder="Contoh: 30.000.000" required>
+										</div>
+										<small class="helper-text-bottom">Rata-rata penjualan kotor per bulan.</small>
+									</div>
+								</div>
+
+								<!-- Pecah HPP dan Profit -->
+								<div class="row">
+									<div class="col-6">
+										<div class="mb-3">
+											<label class="form-label small fw-bold">HPP (%)</label>
+											<div class="input-group">
+												<input type="number" class="form-control" name="hpp_percent" placeholder="50">
+												<span class="input-group-text">%</span>
+											</div>
+											<small class="text-muted" style="font-size: 10px;">Harga Pokok Penjualan</small>
+										</div>
+									</div>
+									<div class="col-6">
+										<div class="mb-3">
+											<label class="form-label small fw-bold">Net Profit (%)</label>
+											<div class="input-group">
+												<input type="number" class="form-control calc-bep" id="net_profit_percent" name="profit_percent" placeholder="20" required>
+												<span class="input-group-text">%</span>
+											</div>
+											<small class="text-muted" style="font-size: 10px;">Keuntungan Bersih</small>
+										</div>
+									</div>
+								</div>
+
+								<!-- Auto Calc BEP -->
+								<div class="alert alert-success d-flex align-items-center mt-2" role="alert">
+									<i class="fas fa-calculator me-3 fs-4"></i>
+									<div>
+										<span class="d-block small text-uppercase fw-bold">Estimasi Balik Modal (BEP):</span>
+										<span class="fs-4 fw-bold" id="bep_display">-</span> <span class="fw-bold">Bulan</span>
+										<input type="hidden" name="estimated_bep_months" id="bep_value">
 									</div>
 								</div>
 							</div>
@@ -1264,96 +1311,171 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 		var wpforms_settings = {"val_required":"This field is required.","val_email":"Please enter a valid email address.","val_email_suggestion":"Did you mean {suggestion}?","val_email_suggestion_title":"Click to accept this suggestion.","val_email_restricted":"This email address is not allowed.","val_number":"Please enter a valid number.","val_number_positive":"Please enter a valid positive number.","val_minimum_price":"Amount entered is less than the required minimum.","val_confirm":"Field values do not match.","val_checklimit":"You have exceeded the number of allowed selections: {#}.","val_limit_characters":"{count} of {limit} max characters.","val_limit_words":"{count} of {limit} max words.","val_min":"Please enter a value greater than or equal to {0}.","val_max":"Please enter a value less than or equal to {0}.","val_recaptcha_fail_msg":"Google reCAPTCHA verification failed, please try again later.","val_turnstile_fail_msg":"Cloudflare Turnstile verification failed, please try again later.","val_inputmask_incomplete":"Please fill out the field in required format.","uuid_cookie":"","locale":"en","country":"","country_list_label":"Country list","wpforms_plugin_url":"\/wp-content\/plugins\/wpforms-lite\/","gdpr":"","ajaxurl":"\/wp-admin\/admin-ajax.php","mailcheck_enabled":"1","mailcheck_domains":[],"mailcheck_toplevel_domains":["dev"],"is_ssl":"1","currency_code":"USD","currency_thousands":",","currency_decimals":"2","currency_decimal":".","currency_symbol":"$","currency_symbol_pos":"left","val_requiredpayment":"Payment is required.","val_creditcard":"Please enter a valid credit card number.","error_updating_token":"Error updating token. Please try again or contact support if the issue persists.","network_error":"Network error or server is unreachable. Check your connection or try again later.","token_cache_lifetime":"86400","hn_data":[],"address_field":{"list_countries_without_states":["GB","DE","CH","NL"]}}
 		/* ]]> */
 		</script>
-		<script id="form-daftar-franchise">
+		<script id="form-daftar-franchise-logic">
 			document.addEventListener('DOMContentLoaded', function() {
-				
+				// --- UTILS: Format Angka ---
+				function formatRupiah(angka) {
+					if (!angka) return '';
+					// Pastikan hanya angka string yang diproses
+					return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+				}
+
+				function cleanNumber(str) {
+					if (!str) return 0;
+					// Hapus titik, lalu parse ke float
+					return parseFloat(str.toString().replace(/\./g, '')) || 0;
+				}
+
 				// --- LOGIC 1: HAKI (Merek) ---
 				const hakiRadios = document.querySelectorAll('.haki-radio');
 				const hakiWrapper = document.getElementById('haki_number_wrapper');
-				const hakiInput = hakiWrapper.querySelector('input');
-
-				hakiRadios.forEach(radio => {
-					radio.addEventListener('change', function() {
-						if (this.value === 'registered') {
-							hakiWrapper.classList.remove('d-none');
-							hakiInput.setAttribute('required', 'required');
-						} else {
-							hakiWrapper.classList.add('d-none');
-							hakiInput.removeAttribute('required');
-							hakiInput.value = '';
-						}
+				
+				if(hakiWrapper) { // Safety check
+					const hakiInput = hakiWrapper.querySelector('input');
+					hakiRadios.forEach(radio => {
+						radio.addEventListener('change', function() {
+							if (this.value === 'registered') {
+								hakiWrapper.classList.remove('d-none');
+								if(hakiInput) hakiInput.setAttribute('required', 'required');
+							} else {
+								hakiWrapper.classList.add('d-none');
+								if(hakiInput) {
+									hakiInput.removeAttribute('required');
+									hakiInput.value = '';
+								}
+							}
+						});
 					});
-				});
+				}
 
 				// --- LOGIC 2: Tipe Outlet & Label Dinamis ---
 				const outletRadios = document.querySelectorAll('.outlet-type');
 				const rentLabel = document.getElementById('rent_label');
 				const rentInput = document.getElementById('rent_input');
 				const rentWrapper = document.getElementById('rent_wrapper');
-				
 				const constructLabel = document.getElementById('construction_label');
 				const constructHelper = document.getElementById('construction_helper');
 
-				outletRadios.forEach(radio => {
-					radio.addEventListener('change', function() {
-						const type = this.value;
-						
-						// Reset visibility
-						rentWrapper.classList.remove('d-none');
+				if(rentLabel && constructLabel) { // Safety check
+					outletRadios.forEach(radio => {
+						radio.addEventListener('change', function() {
+							const type = this.value;
+							
+							// Default visible
+							if(rentWrapper) rentWrapper.classList.remove('d-none');
 
-						// Logic Label Sewa & Konstruksi
-						if (['type_a', 'type_b', 'type_c'].includes(type)) {
-							// Tipe Kecil (Booth/Container)
-							rentLabel.innerText = "Estimasi Sewa Lahan (Teras/Space) per Bulan";
-							rentInput.placeholder = "Rp 500rb - Rp 1.5 Juta";
-							
-							constructLabel.innerText = "3. Est. Pembuatan Booth/Container";
-							constructHelper.innerText = "Isi 0 jika booth sudah termasuk di Paket Pusat.";
-							
-						} else if (['type_d', 'type_e'].includes(type)) {
-							// Tipe Besar (Kiosk/Ruko)
-							rentLabel.innerText = "Rekomendasi Budget Sewa Bangunan per Tahun";
-							rentInput.placeholder = "Rp 50 Juta - Rp 100 Juta";
-							
-							constructLabel.innerText = "3. Estimasi Renovasi Interior & Sipil";
-							constructHelper.innerText = "Biaya tukang, cat, partisi (disiapkan mitra).";
+							if (['type_a', 'type_b', 'type_c'].includes(type)) {
+								// Tipe Kecil
+								rentLabel.innerText = "Estimasi Sewa Lahan (Teras/Space) per Bulan";
+								rentInput.placeholder = "Rp 500rb - Rp 1.5 Juta";
+								constructLabel.innerText = "3. Est. Pembuatan Booth/Container";
+								constructHelper.innerText = "Isi 0 jika booth sudah termasuk di Paket Pusat.";
+								
+							} else if (['type_d', 'type_e'].includes(type)) {
+								// Tipe Besar
+								rentLabel.innerText = "Rekomendasi Budget Sewa Bangunan per Tahun";
+								rentInput.placeholder = "Rp 50 Juta - Rp 100 Juta";
+								constructLabel.innerText = "3. Estimasi Renovasi Interior & Sipil";
+								constructHelper.innerText = "Biaya tukang, cat, partisi (disiapkan mitra).";
 
-						} else if (type === 'type_f') {
-							// Cloud Kitchen
-							rentWrapper.classList.add('d-none'); // Hide sewa field for simplicity or custom logic
-							
-							constructLabel.innerText = "3. Estimasi Setup Dapur";
-							constructHelper.innerText = "Biaya exhaust & penyesuaian dapur.";
-						}
+							} else if (type === 'type_f') {
+								// Cloud Kitchen
+								if(rentWrapper) rentWrapper.classList.add('d-none');
+								constructLabel.innerText = "3. Estimasi Setup Dapur";
+								constructHelper.innerText = "Biaya exhaust & penyesuaian dapur.";
+							}
+						});
 					});
-				});
+				}
 
-				// --- LOGIC 3: Auto Calculation (Total Investasi) ---
-				const calcInputs = document.querySelectorAll('.calc-input');
+				// --- LOGIC 3: Auto Calculation (Total Investasi & BEP) ---
+				const rupiahInputs = document.querySelectorAll('.rupiah-input');
 				const totalDisplay = document.getElementById('total_investment_display');
-				const totalValue = document.getElementById('total_investment_value');
+				const totalValueHidden = document.getElementById('total_investment_value');
+				
+				// BEP Elements
+				const omzetInput = document.getElementById('omzet_monthly');
+				const profitPercentInput = document.getElementById('net_profit_percent');
+				const bepDisplay = document.getElementById('bep_display');
+				const bepValueHidden = document.getElementById('bep_value');
 
-				function formatRupiah(angka) {
-					return new Intl.NumberFormat('id-ID').format(angka);
-				}
+				// Fungsi Hitung Utama
+				function calculateAll() {
+					// Ambil elemen dengan safety check (biar gak error kalau element null)
+					const elLicense = document.getElementById('fee_license');
+					const elCapex = document.getElementById('fee_capex');
+					const elConstruct = document.getElementById('fee_construction');
 
-				function calculateTotal() {
-					let total = 0;
-					calcInputs.forEach(input => {
-						let val = parseFloat(input.value);
-						if (!isNaN(val)) {
-							total += val;
+					if(!elLicense || !elCapex || !elConstruct) return;
+
+					// 1. Hitung Total Modal
+					let feeLicense = cleanNumber(elLicense.value);
+					let feeCapex = cleanNumber(elCapex.value);
+					let feeConstruct = cleanNumber(elConstruct.value);
+					
+					let totalModal = feeLicense + feeCapex + feeConstruct;
+					
+					// Update tampilan Total (Format Rupiah)
+					if(totalDisplay) totalDisplay.value = formatRupiah(totalModal);
+					if(totalValueHidden) totalValueHidden.value = totalModal;
+
+					// 2. Hitung BEP (Hanya jika Omzet & Profit diisi)
+					if(omzetInput && profitPercentInput && bepDisplay) {
+						let omzet = cleanNumber(omzetInput.value);
+						let margin = parseFloat(profitPercentInput.value) || 0;
+
+						if (totalModal > 0 && omzet > 0 && margin > 0) {
+							// Rumus: Nominal Profit = Omzet * (Margin/100)
+							let nominalProfit = omzet * (margin / 100);
+							
+							// Rumus BEP = Total Modal / Nominal Profit
+							let bepMonths = totalModal / nominalProfit;
+							
+							// Tampilkan hasil (1 desimal)
+							let formattedBEP = bepMonths.toFixed(1);
+							
+							bepDisplay.innerText = formattedBEP;
+							if(bepValueHidden) bepValueHidden.value = formattedBEP;
+							
+							// Indikator Warna
+							if(bepMonths > 24) { // Lama (> 2 tahun)
+								bepDisplay.className = 'fs-4 fw-bold text-danger';
+							} else { // Cepat
+								bepDisplay.className = 'fs-4 fw-bold text-success';
+							}
+						} else {
+							bepDisplay.innerText = "-";
+							bepDisplay.className = 'fs-4 fw-bold';
 						}
-					});
-
-					totalDisplay.value = formatRupiah(total);
-					totalValue.value = total;
+					}
 				}
 
-				calcInputs.forEach(input => {
-					input.addEventListener('input', calculateTotal);
+				// Event Listener untuk Rupiah Input (Format & Sanitasi)
+				rupiahInputs.forEach(input => {
+					// Gunakan 'input' event agar cover paste & autocomplete
+					input.addEventListener('input', function(e) {
+						// 1. Hapus karakter selain angka
+						let rawValue = this.value.replace(/[^0-9]/g, '');
+						
+						// 2. Update value field dengan format rupiah
+						this.value = formatRupiah(rawValue);
+						
+						// 3. Trigger hitung ulang
+						calculateAll();
+					});
 				});
+				
+				// Listener khusus profit percent
+				if(profitPercentInput) {
+					profitPercentInput.addEventListener('input', function() {
+						// Batasi max 100%
+						if(this.value > 100) this.value = 100;
+						calculateAll();
+					});
+				}
 
+				// Jalankan kalkulasi sekali saat load (untuk handle autofill browser)
+				setTimeout(calculateAll, 500);
 			});
 		</script>
 	</body>
