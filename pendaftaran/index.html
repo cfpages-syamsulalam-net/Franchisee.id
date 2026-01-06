@@ -228,6 +228,40 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		margin-right: 5px;
 	}
 
+	/* 1. Style untuk HPP & Profit */
+	.custom-grid-2-col {
+		display: grid;
+		grid-template-columns: 1fr 1fr; /* Membagi 2 kolom sama rata */
+		gap: 15px; /* Jarak antar kolom */
+		width: 100%;
+	}
+
+	/* 2. Style untuk Dashboard Result */
+	.dashboard-flex-wrapper {
+		display: flex; /* Paksa berjajar horizontal */
+		width: 100%;
+		flex-direction: row; 
+	}
+
+	.dashboard-col {
+		flex: 1; /* Masing-masing ambil 50% space */
+		width: 50%;
+		position: relative;
+	}
+
+	/* Garis Pemisah Dashboard */
+	.dashed-border-right {
+		border-right: 2px dashed #e0e0e0;
+	}
+
+	.bg-soft-success {
+		background-color: #f6fff9;
+	}
+
+	.fw-800 {
+		font-weight: 800;
+	}
+
 	/* Dashboard Result Style */
 	.result-dashboard {
 		background: #ffffff;
@@ -235,12 +269,6 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		border-radius: 12px;
 		overflow: hidden; /* Supaya border radius works */
 		box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-	}
-	.fw-800 {
-		font-weight: 800;
-	}
-	.bg-soft-success {
-		background-color: #f6fff9; /* Hijau sangat muda untuk area BEP */
 	}
 
 	/* RESPONSIVE (MOBILE) */
@@ -265,6 +293,20 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		}
 		.result-card {
 			border-bottom: 1px solid #f0f0f0;
+		}
+		.custom-grid-2-col {
+			grid-template-columns: 1fr; /* Stack jadi 1 kolom di HP */
+		}
+		
+		.dashboard-flex-wrapper {
+			flex-direction: column; /* Stack vertikal di HP */
+		}
+		.dashboard-col {
+			width: 100%; /* Full width di HP */
+		}
+		.dashed-border-right {
+			border-right: none;
+			border-bottom: 2px dashed #e0e0e0; /* Ganti border samping jadi bawah */
 		}
 	}
 
@@ -815,21 +857,22 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 									</div>
 								</div>
 
-								<!-- HPP & Profit (2 Kolom Compact) -->
+								<!-- HPP & Profit (Margin Bisnis) -->
 								<div class="form-group-row align-items-center">
 									<div class="label-col">
 										<label class="form-label">Margin Bisnis</label>
 									</div>
 									<div class="input-col">
-										<div class="row g-2">
-											<div class="col-6">
+										<!-- Wrapper Custom untuk paksa sebelahan -->
+										<div class="custom-grid-2-col">
+											<div class="grid-item">
 												<label class="small text-muted mb-1">HPP (%)</label>
 												<div class="input-group input-group-sm">
 													<input type="number" class="form-control" name="hpp_percent" placeholder="50">
 													<span class="input-group-text">%</span>
 												</div>
 											</div>
-											<div class="col-6">
+											<div class="grid-item">
 												<label class="small text-muted mb-1 fw-bold text-success">Net Profit (%)</label>
 												<div class="input-group input-group-sm">
 													<input type="number" class="form-control calc-bep" id="net_profit_percent" name="profit_percent" placeholder="20" required>
@@ -840,42 +883,41 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 									</div>
 								</div>
 
-								<!-- DASHBOARD HASIL (Total & BEP Sebelahan) -->
+								<!-- DASHBOARD HASIL (Layout Flex Manual) -->
 								<div class="result-dashboard mt-4">
-									<div class="row g-0">
-										<!-- Kolom Total Modal -->
-										<div class="col-md-6 border-end-md">
-											<div class="result-card p-3 text-center">
+									<!-- Wrapper Flex Custom -->
+									<div class="dashboard-flex-wrapper">
+										
+										<!-- Kolom Kiri: Total Modal -->
+										<div class="dashboard-col dashed-border-right">
+											<div class="p-3 text-center">
 												<div class="result-icon mb-2">
 													<i class="fas fa-coins text-warning" style="font-size: 1.5rem;"></i>
 												</div>
 												<small class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Total Modal Awal</small>
 												
-												<!-- Menggunakan DIV/Text, bukan INPUT, agar tidak terpotong -->
 												<div class="d-flex justify-content-center align-items-baseline mt-1 text-wrap">
 													<span class="fs-5 me-1 text-muted fw-bold">Rp</span>
+													<!-- ID ini penting untuk JS -->
 													<span id="total_display_text" class="fw-800 text-dark" style="font-size: 1.6rem; line-height: 1.2;">0</span>
 												</div>
-												
-												<!-- Hidden Input untuk dikirim ke server -->
 												<input type="hidden" name="total_investment_value" id="total_investment_value"> 
 											</div>
 										</div>
 
-										<!-- Kolom BEP -->
-										<div class="col-md-6">
-											<div class="result-card p-3 text-center bg-soft-success">
+										<!-- Kolom Kanan: BEP -->
+										<div class="dashboard-col bg-soft-success">
+											<div class="p-3 text-center">
 												<div class="result-icon mb-2">
 													<i class="fas fa-hourglass-half text-success" style="font-size: 1.5rem;"></i>
 												</div>
 												<small class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Estimasi BEP</small>
 												
 												<div class="d-flex justify-content-center align-items-baseline mt-1">
+													<!-- ID ini penting untuk JS -->
 													<span id="bep_display_text" class="fw-800 text-success" style="font-size: 1.6rem; line-height: 1.2;">-</span>
 													<span class="fs-6 ms-1 fw-bold text-muted">Bulan</span>
 												</div>
-
-												<!-- Hidden Input -->
 												<input type="hidden" name="estimated_bep_months" id="bep_value">
 											</div>
 										</div>
