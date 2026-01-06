@@ -285,6 +285,7 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		flex: 1; /* Masing-masing ambil 50% space */
 		width: 50%;
 		position: relative;
+		padding: 30px 0 30px;
 	}
 
 	/* Garis Pemisah Dashboard */
@@ -830,18 +831,17 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 								<!-- Logic Sewa -->
 								<div class="form-group-row" id="rent_wrapper">
 									<div class="label-col">
-										<label class="form-label" id="rent_label">Rekomendasi Sewa</label>
+										<label class="form-label" id="rent_label">Rekomendasi Estimasi Sewa</label>
 									</div>
 									<div class="input-col">
 										<div class="input-group">
 											<span class="input-group-text">Rp</span>
-											<input type="text" class="form-control rupiah-input" name="rent_budget" id="rent_input" placeholder="Estimasi biaya sewa per tahun. Contoh: 100.000.000 ">
+											<input type="text" class="form-control rupiah-input" name="rent_budget" id="rent_input" placeholder="Estimasi biaya sewa. Contoh: 10.000.000 ">
+											<span class="input-group-text" id="rent_period_label">/ Bulan</span>
 										</div>
-										<small class="helper-text-bottom">Angka ini referensi mitra, tidak dijumlahkan ke total paket.</small>
+										<small class="helper-text-bottom">Estimasi biaya sewa yang direkomendasikan untuk franchise ini. Angka ini referensi mitra, tidak dijumlahkan ke total paket.</small>
 									</div>
 								</div>
-
-								<hr class="my-4">
 
 								<!-- Breakdown Biaya -->
 								<h5 class="mb-3 text-dark fw-bold">Rincian Modal & Profitabilitas</h5>
@@ -1473,6 +1473,7 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				const rentLabel = document.getElementById('rent_label');
 				const rentInput = document.getElementById('rent_input');
 				const rentWrapper = document.getElementById('rent_wrapper');
+				const rentPeriodLabel = document.getElementById('rent_period_label');
 				const constructLabel = document.getElementById('construction_label');
 				const constructHelper = document.getElementById('construction_helper');
 
@@ -1487,14 +1488,16 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 							if (['type_a', 'type_b', 'type_c'].includes(type)) {
 								// Tipe Kecil
 								rentLabel.innerText = "Estimasi Sewa Lahan (Teras / Space) per Bulan";
-								rentInput.placeholder = "Rp 500rb - Rp 1.5 Juta";
+								rentInput.placeholder = "Contoh: 1.000.000";
+								if(rentPeriodLabel) rentPeriodLabel.innerText = "/ Bulan";
 								constructLabel.innerText = "Estimasi Pembuatan Booth / Container / Stand";
 								constructHelper.innerText = "Isi 0 jika biaya booth / container / stand sudah termasuk di Paket Pusat.";
 								
 							} else if (['type_d', 'type_e'].includes(type)) {
 								// Tipe Besar
 								rentLabel.innerText = "Rekomendasi Budget Sewa Bangunan per Tahun";
-								rentInput.placeholder = "Rp 50 Juta - Rp 100 Juta";
+								rentInput.placeholder = "Contoh: 100.000.000";
+								if(rentPeriodLabel) rentPeriodLabel.innerText = "/ Tahun";
 								constructLabel.innerText = "Estimasi Renovasi Interior & Sipil";
 								constructHelper.innerText = "Biaya tukang, cat, partisi, fasad, dlsb (disiapkan mitra).";
 
