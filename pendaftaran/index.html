@@ -152,6 +152,15 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		border-top-right-radius: 6px !important;
 		border-bottom-right-radius: 6px !important;
 	}
+	.input-group .form-select {
+		border-radius: 0;
+		border-left: 0; 
+		font-size: 0.9rem;
+	}
+	.input-group .form-select:last-child {
+		border-top-right-radius: 6px !important;
+		border-bottom-right-radius: 6px !important;
+	}
 
 	.form-label {
 		font-weight: 600;
@@ -847,16 +856,56 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 								<h5 class="mb-3 text-dark fw-bold">Rincian Modal & Profitabilitas</h5>
 
 								<!-- Breakdown Biaya (Tanpa Nomor Urut) -->
-								<div class="form-group-row">
+								<div class="form-group-row align-items-center">
 									<div class="label-col">
-										<label class="form-label">Franchise Fee</label>
+										<label class="form-label">Lisensi & Durasi</label>
 									</div>
 									<div class="input-col">
-										<div class="input-group">
-											<span class="input-group-text">Rp</span>
-											<input type="text" class="form-control rupiah-input calc-input" id="fee_license" name="fee_license" placeholder="0">
+										<div class="custom-grid-2-col">
+											<!-- Kolom 1: Nominal Fee -->
+											<div class="grid-item">
+												<label class="small text-muted mb-1">Franchise Fee</label>
+												<div class="input-group">
+													<span class="input-group-text">Rp</span>
+													<input type="text" class="form-control rupiah-input calc-input" id="fee_license" name="fee_license" placeholder="0">
+												</div>
+											</div>
+											<!-- Kolom 2: Durasi -->
+											<div class="grid-item">
+												<label class="small text-muted mb-1">Lama Kontrak</label>
+												<div class="input-group">
+													<input type="number" class="form-control calc-bep" id="contract_years" name="contract_duration" placeholder="5" min="1" required>
+													<span class="input-group-text">Tahun</span>
+												</div>
+											</div>
 										</div>
-										<small class="helper-text-bottom">Biaya lisensi / hak merek (Hangus).</small>
+										<small class="helper-text-bottom">Biaya hak merek untuk jangka waktu tertentu.</small>
+									</div>
+								</div>
+
+								<div class="form-group-row">
+									<div class="label-col">
+										<label class="form-label">Royalty / Management Fee</label>
+									</div>
+									<div class="input-col">
+										<!-- Input Group Inline Panjang -->
+										<div class="input-group">
+											<input type="number" class="form-control calc-bep" id="royalty_percent" name="royalty_percent" placeholder="0" step="0.1" style="max-width: 80px;">
+											<span class="input-group-text">%</span>
+											
+											<!-- Pilihan Basis (Omzet/Profit) -->
+											<select class="form-select calc-bep bg-white" id="royalty_basis" name="royalty_basis" style="width: auto; flex: 1;">
+												<option value="omzet">dari Omzet</option>
+												<option value="profit">dari Profit</option>
+											</select>
+											
+											<!-- Pilihan Periode (Bulan/Tahun) -->
+											<select class="form-select calc-bep bg-light" id="royalty_period" name="royalty_period" style="width: auto; flex: 1;">
+												<option value="month">/ Bulan</option>
+												<option value="year">/ Tahun</option>
+											</select>
+										</div>
+										<small class="helper-text-bottom">Biaya manajemen (Isi 0 jika Free Royalty atau tanpa biaya Royalty).</small>
 									</div>
 								</div>
 
@@ -1525,46 +1574,95 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 
 				// Fungsi Hitung Utama
 				function calculateAll() {
-					// Ambil elemen input biaya
+					// 1. Ambil Element Input
 					const elLicense = document.getElementById('fee_license');
 					const elCapex = document.getElementById('fee_capex');
 					const elConstruct = document.getElementById('fee_construction');
+					
+					// BEP Elements
 					const elOmzet = document.getElementById('omzet_monthly');
-					const elProfit = document.getElementById('net_profit_percent');
+					const elProfitPercent = document.getElementById('net_profit_percent');
+					const elContract = document.getElementById('contract_years');
+					
+					// Royalty Elements
+					const elRoyaltyPercent = document.getElementById('royalty_percent');
+					const elRoyaltyBasis = document.getElementById('royalty_basis');
+					const elRoyaltyPeriod = document.getElementById('royalty_period');
 
+					// Safety Check
 					if(!elLicense || !elCapex || !elConstruct) return;
 
-					// 1. Hitung Total Modal
+					// --- STEP 1: Hitung Total Modal ---
 					let feeLicense = cleanNumber(elLicense.value);
 					let feeCapex = cleanNumber(elCapex.value);
 					let feeConstruct = cleanNumber(elConstruct.value);
-					
 					let totalModal = feeLicense + feeCapex + feeConstruct;
 					
-					// Update Tampilan (Text Content untuk Span)
+					// Update UI Total
 					if(totalDisplayText) totalDisplayText.innerText = formatRupiah(totalModal);
-					// Update Value (untuk dikirim ke server)
 					if(totalValueHidden) totalValueHidden.value = totalModal;
 
-					// 2. Hitung BEP
-					if(elOmzet && elProfit && bepDisplayText) {
+					// --- STEP 2: Hitung BEP Real ---
+					if(elOmzet && elProfitPercent && elContract && bepDisplayText) {
 						let omzet = cleanNumber(elOmzet.value);
-						let margin = parseFloat(elProfit.value) || 0;
+						let marginPercent = parseFloat(elProfitPercent.value) || 0;
+						let contractYears = parseFloat(elContract.value) || 0;
+						let contractMonths = contractYears * 12;
 
-						if (totalModal > 0 && omzet > 0 && margin > 0) {
-							let nominalProfit = omzet * (margin / 100);
-							let bepMonths = totalModal / nominalProfit;
-							let formattedBEP = bepMonths.toFixed(1);
+						// Ambil Data Royalty
+						let royPercent = parseFloat(elRoyaltyPercent.value) || 0;
+						let royBasis = elRoyaltyBasis.value; // 'omzet' or 'profit'
+						let royPeriod = elRoyaltyPeriod.value; // 'month' or 'year'
+
+						if (totalModal > 0 && omzet > 0 && marginPercent > 0 && contractYears > 0) {
 							
-							// Update Text
-							bepDisplayText.innerText = formattedBEP;
-							if(bepValueHidden) bepValueHidden.value = formattedBEP;
+							// 1. Hitung Profit Operasional Awal (Sebelum Royalty)
+							// Rumus: Omzet * (NetProfit% / 100)
+							let operationalProfit = omzet * (marginPercent / 100);
+
+							// 2. Hitung Potongan Royalty (Dalam Rupiah per Bulan)
+							let royaltyDeduction = 0;
 							
-							// Warna Indikator
-							if(bepMonths > 24) {
-								bepDisplayText.className = 'fw-800 text-danger'; // Merah jika lama
+							// Hitung basis potongannya dulu
+							let basisAmount = (royBasis === 'omzet') ? omzet : operationalProfit;
+							let rawRoyalty = basisAmount * (royPercent / 100);
+
+							// Konversi ke Bulanan
+							if(royPeriod === 'year') {
+								royaltyDeduction = rawRoyalty / 12;
 							} else {
-								bepDisplayText.className = 'fw-800 text-success'; // Hijau jika cepat
+								royaltyDeduction = rawRoyalty;
+							}
+
+							// 3. Hitung Final Net Profit (Take Home Pay Mitra)
+							let finalProfit = operationalProfit - royaltyDeduction;
+
+							// 4. Kalkulasi Bulan BEP
+							if (finalProfit > 0) {
+								let bepMonths = totalModal / finalProfit;
+								let formattedBEP = bepMonths.toFixed(1);
+								
+								bepDisplayText.innerText = formattedBEP;
+								if(bepValueHidden) bepValueHidden.value = formattedBEP;
+								
+								// --- LOGIC WARNA INDIKATOR ---
+								bepDisplayText.className = 'fw-800'; // Reset class
+								
+								if(bepMonths > contractMonths) {
+									// KASUS MERAH: BEP lebih lama dari kontrak (Rugi)
+									bepDisplayText.classList.add('text-danger'); 
+								} else if (bepMonths > 24) {
+									// KASUS ORANGE: BEP lama (> 2 tahun), tapi masih masuk kontrak
+									bepDisplayText.classList.add('text-warning'); 
+								} else {
+									// KASUS HIJAU: BEP Cepat (< 2 Tahun) & Aman
+									bepDisplayText.classList.add('text-success'); 
+								}
+
+							} else {
+								// Profit minus gara-gara royalty kegedean
+								bepDisplayText.innerText = "∞"; 
+								bepDisplayText.className = 'fw-800 text-danger';
 							}
 						} else {
 							bepDisplayText.innerText = "-";
@@ -1586,6 +1684,12 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 						// 3. Trigger hitung ulang
 						calculateAll();
 					});
+				});
+
+				const newElements = document.querySelectorAll('.calc-bep');
+				newElements.forEach(el => {
+					el.addEventListener('input', calculateAll);
+					el.addEventListener('change', calculateAll);
 				});
 				
 				// Listener khusus profit percent
