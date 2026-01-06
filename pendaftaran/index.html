@@ -69,6 +69,89 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		color: #333;
 	}
 
+	/* 1. Step Indicator (Bulatan Angka) */
+	.step-indicator-wrapper {
+		max-width: 700px;
+		margin: 0 auto;
+	}
+	.step-indicator {
+		display: flex;
+		justify-content: space-between;
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		position: relative;
+		z-index: 1;
+	}
+	.step-item {
+		text-align: center;
+		width: 20%;
+		position: relative;
+	}
+	.step-circle {
+		width: 35px;
+		height: 35px;
+		background-color: #e9ecef;
+		border-radius: 50%;
+		margin: 0 auto 5px auto;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: bold;
+		color: #6c757d;
+		border: 2px solid #dee2e6;
+		transition: all 0.3s;
+	}
+	.step-text {
+		font-size: 0.75rem;
+		color: #6c757d;
+		font-weight: 500;
+	}
+
+	/* Active State */
+	.step-item.active .step-circle {
+		background-color: #f8b526; /* Kuning Brand */
+		border-color: #f8b526;
+		color: #fff;
+		box-shadow: 0 0 0 3px rgba(248, 181, 38, 0.2);
+	}
+	.step-item.active .step-text {
+		color: #333;
+		font-weight: 700;
+	}
+	/* Completed State (Opsional, jika mau dikasih warna beda) */
+	.step-item.completed .step-circle {
+		background-color: #28a745;
+		border-color: #28a745;
+		color: #fff;
+	}
+
+	/* 2. Form Step Logic (Show/Hide) */
+	.form-step {
+		display: none; /* Default hidden */
+		animation: fadeIn 0.5s;
+	}
+	.form-step.active {
+		display: block; /* Show active */
+	}
+
+	@keyframes fadeIn {
+		from { opacity: 0; transform: translateY(10px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+
+	/* 3. Navigation Buttons */
+	.btn-prev {
+		background-color: #e2e6ea;
+		border: none;
+		color: #555;
+		font-weight: 600;
+	}
+	.btn-prev:hover {
+		background-color: #dbe0e5;
+		color: #333;
+	}
+
 	/* CARD STYLE */
 	.form-section-card {
 		background: #ffffff;
@@ -687,8 +770,36 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 				<div class="elementor-widget-container">
 					<!-- START CUSTOM FRANCHISE LISTING FORM (HORIZONTAL STYLE) -->
 					<div class="franchise-listing-form-wrapper">
+						<div class="step-indicator-wrapper mb-4">
+							<ul class="step-indicator">
+								<li class="step-item active" data-step="1">
+									<div class="step-circle">1</div>
+									<div class="step-text">Identitas</div>
+								</li>
+								<li class="step-item" data-step="2">
+									<div class="step-circle">2</div>
+									<div class="step-text">Biaya</div>
+								</li>
+								<li class="step-item" data-step="3">
+									<div class="step-circle">3</div>
+									<div class="step-text">Profil</div>
+								</li>
+								<li class="step-item" data-step="4">
+									<div class="step-circle">4</div>
+									<div class="step-text">Media</div>
+								</li>
+								<li class="step-item" data-step="5">
+									<div class="step-circle">5</div>
+									<div class="step-text">Kontak</div>
+								</li>
+							</ul>
+							<div class="progress mt-2" style="height: 4px;">
+								<div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" id="main_progress_bar"></div>
+							</div>
+						</div>
+
 						<form id="franchiseListingForm" class="needs-validation" enctype="multipart/form-data">
-							
+
 							<!-- BAGIAN 1: Identitas Bisnis -->
 							<div class="form-section-card">
 								<h3 class="section-title">1. Identitas Bisnis & Legalitas</h3>
@@ -1489,6 +1600,74 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 		</script>
 		<script id="form-daftar-franchise-logic">
 			document.addEventListener('DOMContentLoaded', function() {
+				let currentStep = 1;
+				const totalSteps = 5;
+
+				// Fungsi Lanjut ke Next Step
+				window.nextStep = function(stepIndex) {
+					// 1. Validasi Input di Step aktif dulu
+					if (!validateStep(stepIndex)) {
+						return; // Stop kalau ada yang belum diisi
+					}
+
+					// 2. Hide Current Step
+					document.getElementById('step-' + stepIndex).classList.remove('active');
+					
+					// 3. Show Next Step
+					currentStep = stepIndex + 1;
+					document.getElementById('step-' + currentStep).classList.add('active');
+					
+					// 4. Update Progress Bar UI
+					updateProgressBar(currentStep);
+					
+					// Scroll ke atas biar user nyaman
+					document.querySelector('.franchise-listing-form-wrapper').scrollIntoView({ behavior: 'smooth' });
+				};
+
+				// Fungsi Mundur ke Prev Step
+				window.prevStep = function(stepIndex) {
+					document.getElementById('step-' + stepIndex).classList.remove('active');
+					currentStep = stepIndex - 1;
+					document.getElementById('step-' + currentStep).classList.add('active');
+					updateProgressBar(currentStep);
+					document.querySelector('.franchise-listing-form-wrapper').scrollIntoView({ behavior: 'smooth' });
+				};
+
+				// Fungsi Update Tampilan Indikator & Bar
+				function updateProgressBar(step) {
+					// Update Lingkaran Angka
+					document.querySelectorAll('.step-item').forEach(item => {
+						let itemStep = parseInt(item.getAttribute('data-step'));
+						item.classList.remove('active', 'completed');
+						
+						if (itemStep === step) {
+							item.classList.add('active');
+						} else if (itemStep < step) {
+							item.classList.add('completed'); // Opsional: Kasih warna hijau kalau sudah lewat
+							item.classList.add('active'); // Biar tetap berwarna
+						}
+					});
+
+					// Update Garis Progress Bar (Bootstrap style)
+					let percent = (step / totalSteps) * 100;
+					document.getElementById('main_progress_bar').style.width = percent + '%';
+				}
+
+				// Fungsi Validasi Input (HTML5 CheckValidity)
+				function validateStep(stepIndex) {
+					let currentStepDiv = document.getElementById('step-' + stepIndex);
+					let inputs = currentStepDiv.querySelectorAll('input[required], select[required], textarea[required]');
+					let isValid = true;
+
+					inputs.forEach(input => {
+						if (!input.checkValidity()) {
+							input.reportValidity(); // Munculkan pesan error browser (Tooltip "Please fill out this field")
+							isValid = false;
+						}
+					});
+					return isValid;
+				}
+				
 				// --- UTILS: Format Angka ---
 				function formatRupiah(angka) {
 					if (!angka) return '';
