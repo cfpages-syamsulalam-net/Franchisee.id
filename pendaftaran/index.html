@@ -143,11 +143,20 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		border-top-left-radius: 6px !important;
 		border-bottom-left-radius: 6px !important;
 	}
-	/* 3. Perbaiki Input Field-nya */
+	.input-group .input-group-text:not(:first-child):not(:last-child) {
+		margin: 0 5px !important;
+		border-radius: 6px !important;
+		border: 1px solid #dcdcdc !important;
+		z-index: 5;
+	}
+	/* Agar sudut kirinya melengkung */
+	.input-group > .form-select:not(:first-child),
 	.input-group > .form-control:not(:first-child) {
 		border-top-left-radius: 6px !important;
 		border-bottom-left-radius: 6px !important;
 	}
+	/* Agar sudut kanannya melengkung */
+	.input-group > .form-select:not(:last-child),
 	.input-group > .form-control:not(:last-child) {
 		border-top-right-radius: 6px !important;
 		border-bottom-right-radius: 6px !important;
