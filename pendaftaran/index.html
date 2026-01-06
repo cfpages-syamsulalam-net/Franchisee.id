@@ -102,17 +102,35 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		margin-bottom: 0;
 		padding-bottom: 0;
 	}
-
 	.label-col {
 		flex: 0 0 35%; /* Lebar Label 35% */
 		max-width: 35%;
 		padding-right: 20px;
 		padding-top: 10px; /* Supaya sejajar dengan text input */
 	}
-
 	.input-col {
 		flex: 0 0 65%; /* Lebar Input 65% */
 		max-width: 65%;
+	}
+	.input-group {
+		display: flex !important;
+		flex-wrap: nowrap !important;
+		align-items: stretch !important;
+		width: 100% !important;
+	}
+
+	.input-group .input-group-text {
+		display: flex;
+		align-items: center;
+		white-space: nowrap;
+		width: auto !important;
+		flex: 0 0 auto;
+	}
+
+	.input-group .form-control {
+		flex: 1 1 auto !important;
+		width: 1% !important;
+		margin-bottom: 0 !important;
 	}
 
 	.form-label {
@@ -795,7 +813,10 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 										<label class="form-label" id="rent_label">Rekomendasi Sewa</label>
 									</div>
 									<div class="input-col">
-										<input type="text" class="form-control" name="rent_budget" id="rent_input" placeholder="Estimasi biaya sewa">
+										<div class="input-group">
+											<span class="input-group-text">Rp</span>
+											<input type="text" class="form-control rupiah-input" name="rent_budget" id="rent_input" placeholder="Estimasi biaya sewa per tahun. Contoh: 100.000.000 ">
+										</div>
 										<small class="helper-text-bottom">Angka ini referensi mitra, tidak dijumlahkan ke total paket.</small>
 									</div>
 								</div>
