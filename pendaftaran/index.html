@@ -69,6 +69,49 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		color: #333;
 	}
 
+	/* TABS STYLING */
+	.registration-tabs-wrapper {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 40px;
+	}
+
+	.registration-tabs {
+		background: #f1f1f1;
+		padding: 5px;
+		border-radius: 50px;
+		display: inline-flex;
+		box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+	}
+
+	.tab-btn {
+		border: none;
+		background: transparent;
+		padding: 12px 30px;
+		border-radius: 40px;
+		font-size: 1rem;
+		font-weight: 600;
+		color: #777;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		display: flex;
+		align-items: center;
+	}
+
+	.tab-btn.active {
+		background: #fff;
+		color: #f8b526; /* Kuning Brand */
+		box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+	}
+
+	.tab-btn:hover:not(.active) {
+		color: #333;
+	}
+
+	/* Helper Class */
+	.mw-800 { max-width: 800px; }
+	.mx-auto { margin-left: auto; margin-right: auto; }
+
 	/* 1. Step Indicator (Bulatan Angka) */
 	.step-indicator-wrapper {
 		max-width: 700px;
@@ -758,307 +801,394 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 							<div class="elementor-container elementor-column-gap-no">
 					<div class="elementor-column elementor-col-100 elementor-top-column elementor-element elementor-element-f392fb0" data-id="f392fb0" data-element_type="column" data-settings="{&quot;background_background&quot;:&quot;classic&quot;}">
 			<div class="elementor-widget-wrap elementor-element-populated">
-						<div class="elementor-element elementor-element-b1a5117 elementor-widget elementor-widget-heading" data-id="b1a5117" data-element_type="widget" data-widget_type="heading.default">
-				<div class="elementor-widget-container">
-					<h3 class="elementor-heading-title elementor-size-default">Daftar Sekarang &amp; Temukan Peluang Bisnis Terbaik</h3>				</div>
+
+				<div class="registration-tabs-wrapper mb-5">
+					<div class="registration-tabs">
+						<button class="tab-btn active" onclick="openTab('franchisee')">
+							<i class="fas fa-user-tie me-2"></i> Daftar sebagai Franchisee
+						</button>
+						<button class="tab-btn" onclick="openTab('franchisor')">
+							<i class="fas fa-store me-2"></i> Daftar sebagai Franchisor
+						</button>
+					</div>
 				</div>
-				<div class="elementor-element elementor-element-0efbcc9 elementor-widget elementor-widget-text-editor" data-id="0efbcc9" data-element_type="widget" data-widget_type="text-editor.default">
-				<div class="elementor-widget-container">
-									<p data-start="153" data-end="418">Bergabunglah dengan <strong data-start="173" data-end="189">Franchise.id</strong>, platform bisnis dan waralaba terpercaya di Indonesia! Dengan mendaftar, Anda akan mendapatkan akses penuh ke berbagai peluang franchise, panduan usaha, promo eksklusif, dan informasi event terkini di dunia franchise nasional.</p><p data-start="420" data-end="735">Daftar sekarang untuk memulai perjalanan bisnis Anda bersama ratusan brand terkemuka. Hanya dengan beberapa langkah mudah, Anda bisa menemukan franchise yang sesuai dengan minat, modal, dan target pasar Anda.<br data-start="628" data-end="631"><strong data-start="631" data-end="733">Mulailah hari ini &mdash; temukan inspirasi, peluang, dan mitra bisnis yang tepat hanya di Franchise.id!</strong></p>								</div>
-				</div>
-				<div class="elementor-element elementor-element-1c71114 elementor-widget elementor-widget-wpforms" data-id="1c71114" data-element_type="widget" data-widget_type="wpforms.default">
-				<div class="elementor-widget-container">
-					<!-- START CUSTOM FRANCHISE LISTING FORM (HORIZONTAL STYLE) -->
-					<div class="franchise-listing-form-wrapper">
-						<div class="step-indicator-wrapper mb-4">
-							<ul class="step-indicator">
-								<li class="step-item active" data-step="1">
-									<div class="step-circle">1</div>
-									<div class="step-text">Identitas</div>
-								</li>
-								<li class="step-item" data-step="2">
-									<div class="step-circle">2</div>
-									<div class="step-text">Biaya</div>
-								</li>
-								<li class="step-item" data-step="3">
-									<div class="step-circle">3</div>
-									<div class="step-text">Profil</div>
-								</li>
-								<li class="step-item" data-step="4">
-									<div class="step-circle">4</div>
-									<div class="step-text">Media</div>
-								</li>
-								<li class="step-item" data-step="5">
-									<div class="step-circle">5</div>
-									<div class="step-text">Kontak</div>
-								</li>
-							</ul>
-							<div class="progress mt-2" style="height: 4px;">
-								<div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" id="main_progress_bar"></div>
+
+				<div id="tab-franchisee" class="tab-content active">
+					<div class="elementor-element elementor-element-b1a5117 elementor-widget elementor-widget-heading" data-id="b1a5117" data-element_type="widget" data-widget_type="heading.default">
+						<div class="elementor-widget-container">
+							<h3 class="elementor-heading-title elementor-size-default">Daftar Sekarang &amp; Temukan Peluang Bisnis Terbaik</h3>				
+						</div>
+					</div>
+
+					<div class="elementor-element elementor-element-0efbcc9 elementor-widget elementor-widget-text-editor" data-id="0efbcc9" data-element_type="widget" data-widget_type="text-editor.default">
+						<div class="elementor-widget-container">
+							<p data-start="153" data-end="418">Bergabunglah dengan <strong data-start="173" data-end="189">Franchise.id</strong>, platform bisnis dan waralaba terpercaya di Indonesia! Dengan mendaftar, Anda akan mendapatkan akses penuh ke berbagai peluang franchise, panduan usaha, promo eksklusif, dan informasi event terkini di dunia franchise nasional.	</p>
+							<p data-start="420" data-end="735">Daftar sekarang untuk memulai perjalanan bisnis Anda bersama ratusan brand terkemuka. Hanya dengan beberapa langkah mudah, Anda bisa menemukan franchise yang sesuai dengan minat, modal, dan target pasar Anda.<br data-start="628" data-end="631">	<strong data-start="631" data-end="733">Mulailah hari ini — temukan inspirasi, peluang, dan mitra bisnis yang tepat hanya di Franchise.id!</strong></p>
+						</div>
+					</div>
+
+					<div class="elementor-element elementor-widget elementor-widget-wpforms" data-element_type="widget" data-widget_type="wpforms.default">
+						<div class="elementor-widget-container">
+							<div class="franchise-listing-form-wrapper">
+								<div class="form-section-card">
+									<form id="franchiseeForm">
+										<div class="mb-3">
+											<label class="form-label">Nama Lengkap</label>
+											<input type="text" class="form-control" name="name" required placeholder="Nama Anda">
+										</div>
+										<div class="mb-3">
+											<label class="form-label">Nomor WhatsApp</label>
+											<input type="number" class="form-control" name="whatsapp" required placeholder="0812xxxx">
+										</div>
+										<div class="mb-3">
+											<label class="form-label">Email</label>
+											<input type="email" class="form-control" name="email" required placeholder="email@anda.com">
+										</div>
+										<div class="mb-3">
+											<label class="form-label">Lokasi / Domisili</label>
+											<input type="text" class="form-control" name="location" placeholder="Kota / Kabupaten">
+										</div>
+										
+										<div class="row">
+											<div class="col-md-6 mb-3">
+												<label class="form-label">Range Modal (Budget)</label>
+												<select class="form-select" name="budget">
+													<option value="">Pilih Budget...</option>
+													<option value="&lt;50jt">Di bawah 50 Juta</option>
+													<option value="50-100jt">50 - 100 Juta</option>
+													<option value="100-250jt">100 - 250 Juta</option>
+													<option value="250-500jt">250 - 500 Juta</option>
+													<option value=">500jt">Di atas 500 Juta</option>
+												</select>
+											</div>
+											<div class="col-md-6 mb-3">
+												<label class="form-label">Kategori Minat</label>
+												<select class="form-select" name="interest">
+													<option value="">Semua Kategori</option>
+													<option value="FnB">Makanan & Minuman</option>
+													<option value="Retail">Retail</option>
+													<option value="Jasa">Jasa</option>
+													<option value="Pendidikan">Pendidikan</option>
+												</select>
+											</div>
+										</div>
+						
+										<button type="submit" class="btn btn-primary w-100 fw-bold py-3 mt-3 shadow">DAFTAR SEKARANG</button>
+									</form>
+								</div>
 							</div>
 						</div>
-
-						<form id="franchiseListingForm" class="needs-validation" enctype="multipart/form-data">
-							
-							<!-- STEP 1: IDENTITAS (WRAPPER ACTIVE) -->
-							<div class="form-step active" id="step-1">
-								<div class="form-section-card">
-									<h3 class="section-title">1. Identitas Bisnis & Legalitas</h3>
-									
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Nama Brand <span class="text-danger">*</span></label></div>
-										<div class="input-col"><input type="text" class="form-control" name="brand_name" placeholder="Contoh: Kopi Kenangan Mantan" required></div>
-									</div>
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Nama Perusahaan <span class="text-danger">*</span></label></div>
-										<div class="input-col"><input type="text" class="form-control" name="company_name" placeholder="Contoh: PT. Kopi Maju Jaya" required></div>
-									</div>
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Kategori <span class="text-danger">*</span></label></div>
-										<div class="input-col">
-											<select class="form-select" name="category" required>
-												<option value="" selected disabled>Pilih Kategori...</option>
-												<option value="FnB">F&B (Makanan & Minuman)</option>
-												<option value="Retail">Retail & Minimarket</option>
-												<option value="Jasa">Jasa & Layanan</option>
-												<option value="Pendidikan">Pendidikan & Pelatihan</option>
-												<option value="Kecantikan">Kecantikan & Kesehatan</option>
-												<option value="Otomotif">Otomotif</option>
-												<option value="Agribisnis">Agribisnis & Peternakan</option>
-												<option value="Lainnya">Lainnya</option>
-											</select>
-										</div>
-									</div>
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Tahun Berdiri <span class="text-danger">*</span></label></div>
-										<div class="input-col"><input type="number" class="form-control" name="year_established" min="1900" max="2099" placeholder="Contoh: 2020" required></div>
-									</div>
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Status HAKI <span class="text-danger">*</span></label></div>
-										<div class="input-col">
-											<div class="radio-group-vertical">
-												<label class="radio-custom"><input type="radio" name="haki_status" class="haki-radio" value="registered" required> Sudah Terdaftar</label>
-												<label class="radio-custom"><input type="radio" name="haki_status" class="haki-radio" value="process"> Sedang Proses</label>
-												<label class="radio-custom"><input type="radio" name="haki_status" class="haki-radio" value="none"> Belum Terdaftar</label>
-											</div>
-											<div class="mt-2 d-none" id="haki_number_wrapper">
-												<input type="text" class="form-control" name="haki_number" placeholder="Nomor Sertifikat / ID Merek">
-											</div>
-										</div>
-									</div>
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Nomor NIB</label></div>
-										<div class="input-col">
-											<input type="text" class="form-control" name="nib_number" placeholder="Masukkan 13 digit NIB">
-											<small class="helper-text-bottom text-muted"><i class="fas fa-lock"></i> Data NIB aman, hanya untuk verifikasi admin.</small>
-										</div>
-									</div>
-
-									<!-- TOMBOL NAVIGASI STEP 1 -->
-									<div class="d-flex justify-content-end mt-4">
-										<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(1)">Lanjut: Biaya <i class="fas fa-arrow-right ms-2"></i></button>
-									</div>
-								</div>
-							</div>
-
-							<!-- STEP 2: BIAYA (WRAPPER HIDDEN) -->
-							<div class="form-step" id="step-2">
-								<div class="form-section-card">
-									<h3 class="section-title">2. Konsep Outlet & Struktur Biaya</h3>
-									
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Jenis Paket Utama <span class="text-danger">*</span></label></div>
-										<div class="input-col">
-											<div class="outlet-grid-container">
-												<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_a" required><span class="radio-content"><strong>Tipe A</strong><small>Booth / Gerobak</small></span></label>
-												<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_b"><span class="radio-content"><strong>Tipe B</strong><small>Container / Outdoor</small></span></label>
-												<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_c"><span class="radio-content"><strong>Tipe C</strong><small>Island / Stand Mall</small></span></label>
-												<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_d"><span class="radio-content"><strong>Tipe D</strong><small>Kiosk (Permanen)</small></span></label>
-												<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_e"><span class="radio-content"><strong>Tipe E</strong><small>Ruko / Cafe / Resto</small></span></label>
-												<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_f"><span class="radio-content"><strong>Tipe F</strong><small>Cloud Kitchen</small></span></label>
-											</div>
-										</div>
-									</div>
-
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Luas Lokasi</label></div>
-										<div class="input-col"><input type="text" class="form-control" name="location_size" placeholder="Contoh: 3x4 Meter"></div>
-									</div>
-
-									<div class="form-group-row" id="rent_wrapper">
-										<div class="label-col"><label class="form-label" id="rent_label">Rekomendasi Sewa</label></div>
-										<div class="input-col">
-											<div class="input-group">
-												<span class="input-group-text">Rp</span>
-												<input type="text" class="form-control rupiah-input" id="rent_input" name="rent_budget" placeholder="Contoh: 10.000.000">
-												<span class="input-group-text" id="rent_period_label">/ Bulan</span>
-											</div>
-											<small class="helper-text-bottom">Estimasi sewa rekomendasi (referensi mitra).</small>
-										</div>
-									</div>
-
-									<hr class="my-4">
-									<h5 class="mb-3 text-dark fw-bold">Rincian Modal & Profitabilitas</h5>
-
-									<!-- Fee & Contract -->
-									<div class="form-group-row align-items-center">
-										<div class="label-col"><label class="form-label">Lisensi & Durasi</label></div>
-										<div class="input-col">
-											<div class="custom-grid-2-col">
-												<div class="grid-item">
-													<label class="small text-muted mb-1">Franchise Fee</label>
-													<div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-input" id="fee_license" name="fee_license" placeholder="0"></div>
-												</div>
-												<div class="grid-item">
-													<label class="small text-muted mb-1">Lama Kontrak</label>
-													<div class="input-group"><input type="number" class="form-control calc-bep" id="contract_years" name="contract_duration" placeholder="5" min="1" required><span class="input-group-text">Tahun</span></div>
-												</div>
-											</div>
-										</div>
-									</div>
-
-									<!-- Royalty -->
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Royalty / Mgmt Fee</label></div>
-										<div class="input-col">
-											<div class="input-group">
-												<input type="number" class="form-control calc-bep" id="royalty_percent" name="royalty_percent" placeholder="0" step="0.1" style="max-width: 80px;">
-												<span class="input-group-text">%</span>
-												<select class="form-select calc-bep bg-white" id="royalty_basis" name="royalty_basis" style="width: auto; flex: 1;"><option value="omzet">dari Omzet</option><option value="profit">dari Profit</option></select>
-												<select class="form-select calc-bep bg-light" id="royalty_period" name="royalty_period" style="width: auto; flex: 1;"><option value="month">/ Bulan</option><option value="year">/ Tahun</option></select>
-											</div>
-											<small class="helper-text-bottom">Biaya manajemen (Isi 0 jika Free Royalty).</small>
-										</div>
-									</div>
-
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Biaya Paket Pusat</label></div>
-										<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-input" id="fee_capex" name="fee_capex" placeholder="0"></div></div>
-									</div>
-
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label" id="construction_label">Estimasi Konstruksi</label></div>
-										<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-input" id="fee_construction" name="fee_construction" placeholder="0"></div></div>
-									</div>
-
-									<!-- Omzet & Profit -->
-									<div class="form-group-row">
-										<div class="label-col"><label class="form-label">Estimasi Omzet / Bulan</label></div>
-										<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-bep" id="omzet_monthly" name="omzet_monthly" placeholder="Contoh: 30.000.000" required></div></div>
-									</div>
-
-									<div class="form-group-row align-items-center">
-										<div class="label-col"><label class="form-label">Margin Bisnis</label></div>
-										<div class="input-col">
-											<div class="custom-grid-2-col">
-												<div class="grid-item">
-													<label class="small text-muted mb-1">HPP (%)</label>
-													<div class="input-group input-group-sm"><input type="number" class="form-control" name="hpp_percent" placeholder="50"><span class="input-group-text">%</span></div>
-												</div>
-												<div class="grid-item">
-													<label class="small text-muted mb-1 fw-bold text-success">Net Profit (%)</label>
-													<div class="input-group input-group-sm"><input type="number" class="form-control calc-bep" id="net_profit_percent" name="profit_percent" placeholder="20" required><span class="input-group-text">%</span></div>
-												</div>
-											</div>
-										</div>
-									</div>
-
-									<!-- Dashboard Result -->
-									<div class="result-dashboard mt-4">
-										<div class="dashboard-flex-wrapper">
-											<div class="dashboard-col dashed-border-right">
-												<div class="p-3 text-center">
-													<div class="result-icon mb-2"><i class="fas fa-coins text-warning" style="font-size: 1.5rem;"></i></div>
-													<small class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Total Modal Awal</small>
-													<div class="d-flex justify-content-center align-items-baseline mt-1 text-wrap"><span class="fs-5 me-1 text-muted fw-bold">Rp</span><span id="total_display_text" class="fw-800 text-dark" style="font-size: 1.6rem;">0</span></div>
-													<input type="hidden" name="total_investment_value" id="total_investment_value"> 
-												</div>
-											</div>
-											<div class="dashboard-col bg-soft-success">
-												<div class="p-3 text-center">
-													<div class="result-icon mb-2"><i class="fas fa-hourglass-half text-success" style="font-size: 1.5rem;"></i></div>
-													<small class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Estimasi BEP</small>
-													<div class="d-flex justify-content-center align-items-baseline mt-1"><span id="bep_display_text" class="fw-800 text-success" style="font-size: 1.6rem;">-</span><span class="fs-6 ms-1 fw-bold text-muted">Bulan</span></div>
-													<input type="hidden" name="estimated_bep_months" id="bep_value">
-												</div>
-											</div>
-										</div>
-									</div>
-
-									<!-- TOMBOL NAVIGASI STEP 2 -->
-									<div class="d-flex justify-content-between mt-4">
-										<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(2)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
-										<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(2)">Lanjut: Profil <i class="fas fa-arrow-right ms-2"></i></button>
-									</div>
-								</div>
-							</div>
-
-							<!-- STEP 3: PROFIL (WRAPPER HIDDEN) -->
-							<div class="form-step" id="step-3">
-								<div class="form-section-card">
-									<h3 class="section-title">3. Profil & Keunggulan</h3>
-									<div class="form-group-row"><div class="label-col"><label class="form-label">Deskripsi Singkat</label></div><div class="input-col"><textarea class="form-control" name="short_desc" rows="2" maxlength="150" placeholder="Teaser 1 kalimat."></textarea></div></div>
-									<div class="form-group-row"><div class="label-col"><label class="form-label">Tentang Brand</label></div><div class="input-col"><textarea class="form-control" name="full_desc" rows="5" placeholder="Sejarah & Keunggulan."></textarea></div></div>
-									<div class="mb-2"><label class="form-label fw-bold mb-2">Fasilitas / Support System</label>
-										<div class="support-grid">
-											<label class="check-custom"><input type="checkbox" name="support[]" value="Survei Lokasi"> Survei Lokasi</label>
-											<label class="check-custom"><input type="checkbox" name="support[]" value="Desain Interior"> Desain Interior</label>
-											<label class="check-custom"><input type="checkbox" name="support[]" value="Peralatan"> Peralatan</label>
-											<label class="check-custom"><input type="checkbox" name="support[]" value="Training"> Training</label>
-											<label class="check-custom"><input type="checkbox" name="support[]" value="Bahan Baku"> Bahan Baku</label>
-											<label class="check-custom"><input type="checkbox" name="support[]" value="Marketing"> Marketing</label>
-											<label class="check-custom"><input type="checkbox" name="support[]" value="SOP"> SOP</label>
-										</div>
-									</div>
-									
-									<!-- TOMBOL NAVIGASI STEP 3 -->
-									<div class="d-flex justify-content-between mt-4">
-										<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(3)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
-										<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(3)">Lanjut: Media <i class="fas fa-arrow-right ms-2"></i></button>
-									</div>
-								</div>
-							</div>
-
-							<!-- STEP 4: MEDIA (WRAPPER HIDDEN) -->
-							<div class="form-step" id="step-4">
-								<div class="form-section-card">
-									<h3 class="section-title">4. Media & Aset Visual</h3>
-									<div class="form-group-row"><div class="label-col"><label class="form-label">Logo Brand <span class="text-danger">*</span></label></div><div class="input-col"><input type="file" class="form-control" name="logo_file" accept="image/*" required></div></div>
-									<div class="form-group-row"><div class="label-col"><label class="form-label">Foto Cover</label></div><div class="input-col"><input type="file" class="form-control" name="cover_file" accept="image/*"></div></div>
-									<div class="form-group-row"><div class="label-col"><label class="form-label">Galeri Foto</label></div><div class="input-col"><input type="file" class="form-control" name="gallery_files[]" accept="image/*" multiple><small class="helper-text-bottom">Max 5 foto.</small></div></div>
-									<div class="form-group-row"><div class="label-col"><label class="form-label">Proposal PDF</label></div><div class="input-col"><input type="file" class="form-control" name="proposal_file" accept=".pdf"></div></div>
-
-									<!-- TOMBOL NAVIGASI STEP 4 -->
-									<div class="d-flex justify-content-between mt-4">
-										<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(4)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
-										<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(4)">Lanjut: Kontak <i class="fas fa-arrow-right ms-2"></i></button>
-									</div>
-								</div>
-							</div>
-
-							<!-- STEP 5: KONTAK (WRAPPER HIDDEN) -->
-							<div class="form-step" id="step-5">
-								<div class="form-section-card">
-									<h3 class="section-title">5. Kontak Leads</h3>
-									<div class="form-group-row"><div class="label-col"><label class="form-label">Nama PIC</label></div><div class="input-col"><input type="text" class="form-control" name="pic_name"></div></div>
-									<div class="form-group-row"><div class="label-col"><label class="form-label">WhatsApp <span class="text-danger">*</span></label></div><div class="input-col"><input type="number" class="form-control" name="whatsapp" required placeholder="0812xxxx"></div></div>
-									<div class="form-group-row"><div class="label-col"><label class="form-label">Email / Web</label></div><div class="input-col"><div class="d-flex gap-2"><input type="email" class="form-control" name="email_contact" placeholder="Email"><input type="text" class="form-control" name="website_url" placeholder="Web/IG"></div></div></div>
-
-									<!-- TOMBOL NAVIGASI STEP 5 (SUBMIT) -->
-									<div class="d-flex justify-content-between mt-4">
-										<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(5)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
-										<button type="submit" class="btn btn-success btn-lg fw-bold px-5 shadow">KIRIM DATA LISTING <i class="fas fa-check ms-2"></i></button>
-									</div>
-								</div>
-							</div>
-
-						</form>
 					</div>
-					<!-- END CUSTOM FORM -->
 				</div>
+
+				<div id="tab-franchisor" class="tab-content" style="display: none;">
+					<div class="elementor-element elementor-widget elementor-widget-heading" data-element_type="widget" data-widget_type="heading.default">
+						<div class="elementor-widget-container">
+							<h3 class="elementor-heading-title elementor-size-default">Pasarkan Waralaba Anda &amp; Temukan Mitra Tepat</h3>				
+						</div>
 					</div>
+
+					<div class="elementor-element elementor-widget elementor-widget-text-editor" data-element_type="widget" data-widget_type="text-editor.default">
+						<div class="elementor-widget-container">
+							<p class="text-muted">Tingkatkan ekspansi bisnis Anda bersama Franchise.id. Tampilkan profil bisnis Anda secara profesional dan dapatkan <strong>leads investor berkualitas</strong> untuk pertumbuhan outlet Anda.</p>
+						</div>
+					</div>
+
+					<div class="elementor-element elementor-element-1c71114 elementor-widget elementor-widget-wpforms" data-id="1c71114" data-element_type="widget" data-widget_type="wpforms.default">
+						<div class="elementor-widget-container">
+							<!-- START CUSTOM FRANCHISE LISTING FORM (HORIZONTAL STYLE) -->
+							<div class="franchise-listing-form-wrapper">
+								<div class="step-indicator-wrapper mb-4">
+									<ul class="step-indicator">
+										<li class="step-item active" data-step="1">
+											<div class="step-circle">1</div>
+											<div class="step-text">Identitas</div>
+										</li>
+										<li class="step-item" data-step="2">
+											<div class="step-circle">2</div>
+											<div class="step-text">Biaya</div>
+										</li>
+										<li class="step-item" data-step="3">
+											<div class="step-circle">3</div>
+											<div class="step-text">Profil</div>
+										</li>
+										<li class="step-item" data-step="4">
+											<div class="step-circle">4</div>
+											<div class="step-text">Media</div>
+										</li>
+										<li class="step-item" data-step="5">
+											<div class="step-circle">5</div>
+											<div class="step-text">Kontak</div>
+										</li>
+									</ul>
+									<div class="progress mt-2" style="height: 4px;">
+										<div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" id="main_progress_bar"></div>
+									</div>
+								</div>
+
+								<form id="franchiseListingForm" class="needs-validation" enctype="multipart/form-data">
+									
+									<!-- STEP 1: IDENTITAS (WRAPPER ACTIVE) -->
+									<div class="form-step active" id="step-1">
+										<div class="form-section-card">
+											<h3 class="section-title">1. Identitas Bisnis &amp; Legalitas</h3>
+											
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Nama Brand <span class="text-danger">*</span></label></div>
+												<div class="input-col"><input type="text" class="form-control" name="brand_name" placeholder="Contoh: Kopi Kenangan Mantan" required="" data-last-active-input=""></div>
+											</div>
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Nama Perusahaan <span class="text-danger">*</span></label></div>
+												<div class="input-col"><input type="text" class="form-control" name="company_name" placeholder="Contoh: PT. Kopi Maju Jaya" required=""></div>
+											</div>
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Kategori <span class="text-danger">*</span></label></div>
+												<div class="input-col">
+													<select class="form-select" name="category" required="">
+														<option value="" selected="" disabled="">Pilih Kategori...</option>
+														<option value="FnB">F&amp;B (Makanan &amp; Minuman)</option>
+														<option value="Retail">Retail &amp; Minimarket</option>
+														<option value="Jasa">Jasa &amp; Layanan</option>
+														<option value="Pendidikan">Pendidikan &amp; Pelatihan</option>
+														<option value="Kecantikan">Kecantikan &amp; Kesehatan</option>
+														<option value="Otomotif">Otomotif</option>
+														<option value="Agribisnis">Agribisnis &amp; Peternakan</option>
+														<option value="Lainnya">Lainnya</option>
+													</select>
+												</div>
+											</div>
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Tahun Berdiri <span class="text-danger">*</span></label></div>
+												<div class="input-col"><input type="number" class="form-control" name="year_established" min="1900" max="2099" placeholder="Contoh: 2020" required=""></div>
+											</div>
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Status HAKI <span class="text-danger">*</span></label></div>
+												<div class="input-col">
+													<div class="radio-group-vertical">
+														<label class="radio-custom"><input type="radio" name="haki_status" class="haki-radio" value="registered" required=""> Sudah Terdaftar</label>
+														<label class="radio-custom"><input type="radio" name="haki_status" class="haki-radio" value="process"> Sedang Proses</label>
+														<label class="radio-custom"><input type="radio" name="haki_status" class="haki-radio" value="none"> Belum Terdaftar</label>
+													</div>
+													<div class="mt-2 d-none" id="haki_number_wrapper">
+														<input type="text" class="form-control" name="haki_number" placeholder="Nomor Sertifikat / ID Merek">
+													</div>
+												</div>
+											</div>
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Nomor NIB</label></div>
+												<div class="input-col">
+													<input type="text" class="form-control" name="nib_number" placeholder="Masukkan 13 digit NIB">
+													<small class="helper-text-bottom text-muted"><i class="fas fa-lock"></i> Data NIB aman, hanya untuk verifikasi admin.</small>
+												</div>
+											</div>
+
+											<!-- TOMBOL NAVIGASI STEP 1 -->
+											<div class="d-flex justify-content-end mt-4">
+												<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(1)">Lanjut: Biaya <i class="fas fa-arrow-right ms-2"></i></button>
+											</div>
+										</div>
+									</div>
+
+									<!-- STEP 2: BIAYA (WRAPPER HIDDEN) -->
+									<div class="form-step" id="step-2">
+										<div class="form-section-card">
+											<h3 class="section-title">2. Konsep Outlet &amp; Struktur Biaya</h3>
+											
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Jenis Paket Utama <span class="text-danger">*</span></label></div>
+												<div class="input-col">
+													<div class="outlet-grid-container">
+														<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_a" required=""><span class="radio-content"><strong>Tipe A</strong><small>Booth / Gerobak</small></span></label>
+														<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_b"><span class="radio-content"><strong>Tipe B</strong><small>Container / Outdoor</small></span></label>
+														<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_c"><span class="radio-content"><strong>Tipe C</strong><small>Island / Stand Mall</small></span></label>
+														<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_d"><span class="radio-content"><strong>Tipe D</strong><small>Kiosk (Permanen)</small></span></label>
+														<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_e"><span class="radio-content"><strong>Tipe E</strong><small>Ruko / Cafe / Resto</small></span></label>
+														<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_f"><span class="radio-content"><strong>Tipe F</strong><small>Cloud Kitchen</small></span></label>
+													</div>
+												</div>
+											</div>
+
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Luas Lokasi</label></div>
+												<div class="input-col"><input type="text" class="form-control" name="location_size" placeholder="Contoh: 3x4 Meter"></div>
+											</div>
+
+											<div class="form-group-row" id="rent_wrapper">
+												<div class="label-col"><label class="form-label" id="rent_label">Rekomendasi Sewa</label></div>
+												<div class="input-col">
+													<div class="input-group">
+														<span class="input-group-text">Rp</span>
+														<input type="text" class="form-control rupiah-input" id="rent_input" name="rent_budget" placeholder="Contoh: 10.000.000">
+														<span class="input-group-text" id="rent_period_label">/ Bulan</span>
+													</div>
+													<small class="helper-text-bottom">Estimasi sewa rekomendasi (referensi mitra).</small>
+												</div>
+											</div>
+
+											<hr class="my-4">
+											<h5 class="mb-3 text-dark fw-bold">Rincian Modal &amp; Profitabilitas</h5>
+
+											<!-- Fee & Contract -->
+											<div class="form-group-row align-items-center">
+												<div class="label-col"><label class="form-label">Lisensi &amp; Durasi</label></div>
+												<div class="input-col">
+													<div class="custom-grid-2-col">
+														<div class="grid-item">
+															<label class="small text-muted mb-1">Franchise Fee</label>
+															<div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-input" id="fee_license" name="fee_license" placeholder="0"></div>
+														</div>
+														<div class="grid-item">
+															<label class="small text-muted mb-1">Lama Kontrak</label>
+															<div class="input-group"><input type="number" class="form-control calc-bep" id="contract_years" name="contract_duration" placeholder="5" min="1" required=""><span class="input-group-text">Tahun</span></div>
+														</div>
+													</div>
+												</div>
+											</div>
+
+											<!-- Royalty -->
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Royalty / Mgmt Fee</label></div>
+												<div class="input-col">
+													<div class="input-group">
+														<input type="number" class="form-control calc-bep" id="royalty_percent" name="royalty_percent" placeholder="0" step="0.1" style="max-width: 80px;">
+														<span class="input-group-text">%</span>
+														<select class="form-select calc-bep bg-white" id="royalty_basis" name="royalty_basis" style="width: auto; flex: 1;"><option value="omzet">dari Omzet</option><option value="profit">dari Profit</option></select>
+														<select class="form-select calc-bep bg-light" id="royalty_period" name="royalty_period" style="width: auto; flex: 1;"><option value="month">/ Bulan</option><option value="year">/ Tahun</option></select>
+													</div>
+													<small class="helper-text-bottom">Biaya manajemen (Isi 0 jika Free Royalty).</small>
+												</div>
+											</div>
+
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Biaya Paket Pusat</label></div>
+												<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-input" id="fee_capex" name="fee_capex" placeholder="0"></div></div>
+											</div>
+
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label" id="construction_label">Estimasi Konstruksi</label></div>
+												<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-input" id="fee_construction" name="fee_construction" placeholder="0"></div></div>
+											</div>
+
+											<!-- Omzet & Profit -->
+											<div class="form-group-row">
+												<div class="label-col"><label class="form-label">Estimasi Omzet / Bulan</label></div>
+												<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-bep" id="omzet_monthly" name="omzet_monthly" placeholder="Contoh: 30.000.000" required=""></div></div>
+											</div>
+
+											<div class="form-group-row align-items-center">
+												<div class="label-col"><label class="form-label">Margin Bisnis</label></div>
+												<div class="input-col">
+													<div class="custom-grid-2-col">
+														<div class="grid-item">
+															<label class="small text-muted mb-1">HPP (%)</label>
+															<div class="input-group input-group-sm"><input type="number" class="form-control" name="hpp_percent" placeholder="50"><span class="input-group-text">%</span></div>
+														</div>
+														<div class="grid-item">
+															<label class="small text-muted mb-1 fw-bold text-success">Net Profit (%)</label>
+															<div class="input-group input-group-sm"><input type="number" class="form-control calc-bep" id="net_profit_percent" name="profit_percent" placeholder="20" required=""><span class="input-group-text">%</span></div>
+														</div>
+													</div>
+												</div>
+											</div>
+
+											<!-- Dashboard Result -->
+											<div class="result-dashboard mt-4">
+												<div class="dashboard-flex-wrapper">
+													<div class="dashboard-col dashed-border-right">
+														<div class="p-3 text-center">
+															<div class="result-icon mb-2"><i class="fas fa-coins text-warning" style="font-size: 1.5rem;"></i></div>
+															<small class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Total Modal Awal</small>
+															<div class="d-flex justify-content-center align-items-baseline mt-1 text-wrap"><span class="fs-5 me-1 text-muted fw-bold">Rp</span><span id="total_display_text" class="fw-800 text-dark" style="font-size: 1.6rem;"></span></div>
+															<input type="hidden" name="total_investment_value" id="total_investment_value" value="0"> 
+														</div>
+													</div>
+													<div class="dashboard-col bg-soft-success">
+														<div class="p-3 text-center">
+															<div class="result-icon mb-2"><i class="fas fa-hourglass-half text-success" style="font-size: 1.5rem;"></i></div>
+															<small class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem;">Estimasi BEP</small>
+															<div class="d-flex justify-content-center align-items-baseline mt-1"><span id="bep_display_text" class="fw-800 text-muted" style="font-size: 1.6rem;">-</span><span class="fs-6 ms-1 fw-bold text-muted">Bulan</span></div>
+															<input type="hidden" name="estimated_bep_months" id="bep_value">
+														</div>
+													</div>
+												</div>
+											</div>
+
+											<!-- TOMBOL NAVIGASI STEP 2 -->
+											<div class="d-flex justify-content-between mt-4">
+												<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(2)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
+												<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(2)">Lanjut: Profil <i class="fas fa-arrow-right ms-2"></i></button>
+											</div>
+										</div>
+									</div>
+
+									<!-- STEP 3: PROFIL (WRAPPER HIDDEN) -->
+									<div class="form-step" id="step-3">
+										<div class="form-section-card">
+											<h3 class="section-title">3. Profil &amp; Keunggulan</h3>
+											<div class="form-group-row"><div class="label-col"><label class="form-label">Deskripsi Singkat</label></div><div class="input-col"><textarea class="form-control" name="short_desc" rows="2" maxlength="150" placeholder="Teaser 1 kalimat."></textarea></div></div>
+											<div class="form-group-row"><div class="label-col"><label class="form-label">Tentang Brand</label></div><div class="input-col"><textarea class="form-control" name="full_desc" rows="5" placeholder="Sejarah &amp; Keunggulan."></textarea></div></div>
+											<div class="mb-2"><label class="form-label fw-bold mb-2">Fasilitas / Support System</label>
+												<div class="support-grid">
+													<label class="check-custom"><input type="checkbox" name="support[]" value="Survei Lokasi"> Survei Lokasi</label>
+													<label class="check-custom"><input type="checkbox" name="support[]" value="Desain Interior"> Desain Interior</label>
+													<label class="check-custom"><input type="checkbox" name="support[]" value="Peralatan"> Peralatan</label>
+													<label class="check-custom"><input type="checkbox" name="support[]" value="Training"> Training</label>
+													<label class="check-custom"><input type="checkbox" name="support[]" value="Bahan Baku"> Bahan Baku</label>
+													<label class="check-custom"><input type="checkbox" name="support[]" value="Marketing"> Marketing</label>
+													<label class="check-custom"><input type="checkbox" name="support[]" value="SOP"> SOP</label>
+												</div>
+											</div>
+											
+											<!-- TOMBOL NAVIGASI STEP 3 -->
+											<div class="d-flex justify-content-between mt-4">
+												<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(3)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
+												<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(3)">Lanjut: Media <i class="fas fa-arrow-right ms-2"></i></button>
+											</div>
+										</div>
+									</div>
+
+									<!-- STEP 4: MEDIA (WRAPPER HIDDEN) -->
+									<div class="form-step" id="step-4">
+										<div class="form-section-card">
+											<h3 class="section-title">4. Media &amp; Aset Visual</h3>
+											<div class="form-group-row"><div class="label-col"><label class="form-label">Logo Brand <span class="text-danger">*</span></label></div><div class="input-col"><input type="file" class="form-control" name="logo_file" accept="image/*" required=""></div></div>
+											<div class="form-group-row"><div class="label-col"><label class="form-label">Foto Cover</label></div><div class="input-col"><input type="file" class="form-control" name="cover_file" accept="image/*"></div></div>
+											<div class="form-group-row"><div class="label-col"><label class="form-label">Galeri Foto</label></div><div class="input-col"><input type="file" class="form-control" name="gallery_files[]" accept="image/*" multiple=""><small class="helper-text-bottom">Max 5 foto.</small></div></div>
+											<div class="form-group-row"><div class="label-col"><label class="form-label">Proposal PDF</label></div><div class="input-col"><input type="file" class="form-control" name="proposal_file" accept=".pdf"></div></div>
+
+											<!-- TOMBOL NAVIGASI STEP 4 -->
+											<div class="d-flex justify-content-between mt-4">
+												<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(4)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
+												<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(4)">Lanjut: Kontak <i class="fas fa-arrow-right ms-2"></i></button>
+											</div>
+										</div>
+									</div>
+
+									<!-- STEP 5: KONTAK (WRAPPER HIDDEN) -->
+									<div class="form-step" id="step-5">
+										<div class="form-section-card">
+											<h3 class="section-title">5. Kontak Leads</h3>
+											<div class="form-group-row"><div class="label-col"><label class="form-label">Nama PIC</label></div><div class="input-col"><input type="text" class="form-control" name="pic_name"></div></div>
+											<div class="form-group-row"><div class="label-col"><label class="form-label">WhatsApp <span class="text-danger">*</span></label></div><div class="input-col"><input type="number" class="form-control" name="whatsapp" required="" placeholder="0812xxxx"></div></div>
+											<div class="form-group-row"><div class="label-col"><label class="form-label">Email / Web</label></div><div class="input-col"><div class="d-flex gap-2"><input type="email" class="form-control" name="email_contact" placeholder="Email"><input type="text" class="form-control" name="website_url" placeholder="Web/IG"></div></div></div>
+
+											<!-- TOMBOL NAVIGASI STEP 5 (SUBMIT) -->
+											<div class="d-flex justify-content-between mt-4">
+												<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(5)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
+												<button type="submit" class="btn btn-success btn-lg fw-bold px-5 shadow">KIRIM DATA LISTING <i class="fas fa-check ms-2"></i></button>
+											</div>
+										</div>
+									</div>
+
+								</form>
+							</div>
+							<!-- END CUSTOM FORM -->
+						</div>
+					</div>
+				</div>
+			</div>
+
 		</div>
-					</div>
 		</section>
 				</div>
 		
@@ -1400,6 +1530,33 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 		</script>
 		<script id="form-daftar-franchise-logic">
 			document.addEventListener('DOMContentLoaded', function() {
+				// --- LOGIC TABS SWITCHER ---
+				window.openTab = function(tabName) {
+					// 1. Hide Semua Konten
+					document.querySelectorAll('.tab-content').forEach(content => {
+						content.style.display = 'none';
+						content.classList.remove('active');
+					});
+
+					// 2. Deactivate Semua Tombol
+					document.querySelectorAll('.tab-btn').forEach(btn => {
+						btn.classList.remove('active');
+					});
+
+					// 3. Show Konten yang Dipilih
+					const selectedContent = document.getElementById('tab-' + tabName);
+					if(selectedContent) {
+						selectedContent.style.display = 'block';
+						// Sedikit delay biar ada efek fade in kalau mau pake CSS animation
+						setTimeout(() => selectedContent.classList.add('active'), 10);
+					}
+
+					// 4. Activate Tombol yang Diklik (Logic cari tombol berdasarkan onclick attr simpel)
+					// Atau pake event.target kalau mau lebih strict, tapi ini cukup:
+					const activeBtn = document.querySelector(`button[onclick="openTab('${tabName}')"]`);
+					if(activeBtn) activeBtn.classList.add('active');
+				};
+
 				let currentStep = 1;
 				const totalSteps = 5;
 
