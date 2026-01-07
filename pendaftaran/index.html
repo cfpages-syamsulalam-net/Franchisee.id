@@ -73,7 +73,9 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 	.registration-tabs-wrapper {
 		display: flex;
 		justify-content: center;
+		align-items: center;
 		margin-bottom: 40px;
+		width: 100%;
 	}
 
 	.registration-tabs {
@@ -96,6 +98,12 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		transition: all 0.3s ease;
 		display: flex;
 		align-items: center;
+		justify-content: center;
+	}
+
+	.tab-btn i {
+		margin-right: 8px;
+		font-size: 1.1rem;
 	}
 
 	.tab-btn.active {
@@ -109,6 +117,7 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 	}
 
 	/* Helper Class */
+	.text-center { text-align: center !important; }
 	.mw-800 { max-width: 800px; }
 	.mx-auto { margin-left: auto; margin-right: auto; }
 
@@ -822,8 +831,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 
 					<div class="elementor-element elementor-element-0efbcc9 elementor-widget elementor-widget-text-editor" data-id="0efbcc9" data-element_type="widget" data-widget_type="text-editor.default">
 						<div class="elementor-widget-container">
-							<p data-start="153" data-end="418">Bergabunglah dengan <strong data-start="173" data-end="189">Franchise.id</strong>, platform bisnis dan waralaba terpercaya di Indonesia! Dengan mendaftar, Anda akan mendapatkan akses penuh ke berbagai peluang franchise, panduan usaha, promo eksklusif, dan informasi event terkini di dunia franchise nasional.	</p>
-							<p data-start="420" data-end="735">Daftar sekarang untuk memulai perjalanan bisnis Anda bersama ratusan brand terkemuka. Hanya dengan beberapa langkah mudah, Anda bisa menemukan franchise yang sesuai dengan minat, modal, dan target pasar Anda.<br data-start="628" data-end="631">	<strong data-start="631" data-end="733">Mulailah hari ini — temukan inspirasi, peluang, dan mitra bisnis yang tepat hanya di Franchise.id!</strong></p>
+							<p data-start="153" data-end="418">Bergabunglah dengan Franchise.id! Temukan bisnis yang sesuai dengan <strong>minat, modal, dan lokasi</strong> Anda hanya dalam beberapa langkah.<br data-start="628" data-end="631">	<strong data-start="631" data-end="733">Mulailah hari ini — temukan inspirasi, peluang, dan mitra bisnis yang tepat hanya di Franchise.id!</strong></p>
 						</div>
 					</div>
 
@@ -832,26 +840,47 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 							<div class="franchise-listing-form-wrapper">
 								<div class="form-section-card">
 									<form id="franchiseeForm">
-										<div class="mb-3">
-											<label class="form-label">Nama Lengkap</label>
-											<input type="text" class="form-control" name="name" required placeholder="Nama Anda">
+										<div class="form-group-row">
+											<div class="label-col">
+												<label class="form-label">Nama Lengkap</label>
+											</div>
+											<div class="input-col">
+												<input type="text" class="form-control" name="name" required placeholder="Nama Anda">
+											</div>
 										</div>
-										<div class="mb-3">
-											<label class="form-label">Nomor WhatsApp</label>
-											<input type="number" class="form-control" name="whatsapp" required placeholder="0812xxxx">
+
+										<div class="form-group-row">
+											<div class="label-col">
+												<label class="form-label">Nomor WhatsApp</label>
+											</div>
+											<div class="input-col">
+												<input type="number" class="form-control" name="whatsapp" required placeholder="0812xxxx">
+											</div>
 										</div>
-										<div class="mb-3">
-											<label class="form-label">Email</label>
-											<input type="email" class="form-control" name="email" required placeholder="email@anda.com">
+
+										<div class="form-group-row">
+											<div class="label-col">
+												<label class="form-label">Email</label>
+											</div>
+											<div class="input-col">
+												<input type="email" class="form-control" name="email" required placeholder="email@anda.com">
+											</div>
 										</div>
-										<div class="mb-3">
-											<label class="form-label">Lokasi / Domisili</label>
-											<input type="text" class="form-control" name="location" placeholder="Kota / Kabupaten">
+
+										<div class="form-group-row">
+											<div class="label-col">
+												<label class="form-label">Lokasi / Domisili</label>
+											</div>
+											<div class="input-col">
+												<input type="text" class="form-control" name="location" placeholder="Kota / Kabupaten">
+											</div>
 										</div>
 										
-										<div class="row">
-											<div class="col-md-6 mb-3">
+										<div class="form-group-row">
+											<div class="label-col">
 												<label class="form-label">Range Modal (Budget)</label>
+											</div>
+											<div class="input-col">
 												<select class="form-select" name="budget">
 													<option value="">Pilih Budget...</option>
 													<option value="&lt;50jt">Di bawah 50 Juta</option>
@@ -861,8 +890,13 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 													<option value=">500jt">Di atas 500 Juta</option>
 												</select>
 											</div>
-											<div class="col-md-6 mb-3">
+										</div>
+
+										<div class="form-group-row">
+											<div class="label-col">
 												<label class="form-label">Kategori Minat</label>
+											</div>
+											<div class="input-col">
 												<select class="form-select" name="interest">
 													<option value="">Semua Kategori</option>
 													<option value="FnB">Makanan & Minuman</option>
@@ -872,8 +906,10 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 												</select>
 											</div>
 										</div>
-						
-										<button type="submit" class="btn btn-primary w-100 fw-bold py-3 mt-3 shadow">DAFTAR SEKARANG</button>
+
+										<div class="text-center mt-4 mb-2">
+											<button type="submit" class="btn btn-primary btn-lg fw-bold px-5 shadow w-100">DAFTAR SEKARANG</button>
+										</div>
 									</form>
 								</div>
 							</div>
@@ -882,13 +918,13 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 				</div>
 
 				<div id="tab-franchisor" class="tab-content" style="display: none;">
-					<div class="elementor-element elementor-widget elementor-widget-heading" data-element_type="widget" data-widget_type="heading.default">
-						<div class="elementor-widget-container">
+					<div class="elementor-element elementor-element-b1a5117 elementor-widget elementor-widget-heading" data-element_type="widget" data-widget_type="heading.default">
+						<div class="elementor-widget-container text-center">
 							<h3 class="elementor-heading-title elementor-size-default">Pasarkan Waralaba Anda &amp; Temukan Mitra Tepat</h3>				
 						</div>
 					</div>
 
-					<div class="elementor-element elementor-widget elementor-widget-text-editor" data-element_type="widget" data-widget_type="text-editor.default">
+					<div class="elementor-element elementor-element-0efbcc9 elementor-widget elementor-widget-text-editor" data-element_type="widget" data-widget_type="text-editor.default">
 						<div class="elementor-widget-container">
 							<p class="text-muted">Tingkatkan ekspansi bisnis Anda bersama Franchise.id. Tampilkan profil bisnis Anda secara profesional dan dapatkan <strong>leads investor berkualitas</strong> untuk pertumbuhan outlet Anda.</p>
 						</div>
