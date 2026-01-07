@@ -1001,12 +1001,15 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 												<div class="label-col"><label class="form-label">Status HAKI <span class="text-danger">*</span></label></div>
 												<div class="input-col">
 													<div class="radio-group-vertical">
-														<label class="radio-custom"><input type="radio" name="haki_status" class="haki-radio" value="registered" required=""> Sudah Terdaftar</label>
+														<label class="radio-custom"><input type="radio" name="haki_status" class="haki-radio" value="registered" required> Sudah Terdaftar</label>
 														<label class="radio-custom"><input type="radio" name="haki_status" class="haki-radio" value="process"> Sedang Proses</label>
 														<label class="radio-custom"><input type="radio" name="haki_status" class="haki-radio" value="none"> Belum Terdaftar</label>
 													</div>
+													
+													<!-- Wrapper Input Nomor -->
 													<div class="mt-2 d-none" id="haki_number_wrapper">
 														<input type="text" class="form-control" name="haki_number" placeholder="Nomor Sertifikat / ID Merek">
+														<small class="helper-text-bottom text-muted">Masukkan nomor bukti pendaftaran dari DJKI.</small>
 													</div>
 												</div>
 											</div>
@@ -1019,7 +1022,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 											</div>
 
 											<!-- TOMBOL NAVIGASI STEP 1 -->
-											<div class="d-flex justify-content-end mt-4">
+											<div class="d-flex text-center mt-4">
 												<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(1)">Lanjut: Biaya <i class="fas fa-arrow-right ms-2"></i></button>
 											</div>
 										</div>
@@ -1150,7 +1153,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 											</div>
 
 											<!-- TOMBOL NAVIGASI STEP 2 -->
-											<div class="d-flex justify-content-between mt-4">
+											<div class="d-flex text-center mt-4">
 												<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(2)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
 												<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(2)">Lanjut: Profil <i class="fas fa-arrow-right ms-2"></i></button>
 											</div>
@@ -1176,7 +1179,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 											</div>
 											
 											<!-- TOMBOL NAVIGASI STEP 3 -->
-											<div class="d-flex justify-content-between mt-4">
+											<div class="d-flex text-center mt-4">
 												<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(3)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
 												<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(3)">Lanjut: Media <i class="fas fa-arrow-right ms-2"></i></button>
 											</div>
@@ -1193,7 +1196,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 											<div class="form-group-row"><div class="label-col"><label class="form-label">Proposal PDF</label></div><div class="input-col"><input type="file" class="form-control" name="proposal_file" accept=".pdf"></div></div>
 
 											<!-- TOMBOL NAVIGASI STEP 4 -->
-											<div class="d-flex justify-content-between mt-4">
+											<div class="d-flex text-center mt-4">
 												<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(4)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
 												<button type="button" class="btn btn-warning btn-next px-4 fw-bold shadow-sm" onclick="nextStep(4)">Lanjut: Kontak <i class="fas fa-arrow-right ms-2"></i></button>
 											</div>
@@ -1209,7 +1212,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 											<div class="form-group-row"><div class="label-col"><label class="form-label">Email / Web</label></div><div class="input-col"><div class="d-flex gap-2"><input type="email" class="form-control" name="email_contact" placeholder="Email"><input type="text" class="form-control" name="website_url" placeholder="Web/IG"></div></div></div>
 
 											<!-- TOMBOL NAVIGASI STEP 5 (SUBMIT) -->
-											<div class="d-flex justify-content-between mt-4">
+											<div class="d-flex text-center mt-4">
 												<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(5)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
 												<button type="submit" class="btn btn-success btn-lg fw-bold px-5 shadow">KIRIM DATA LISTING <i class="fas fa-check ms-2"></i></button>
 											</div>
@@ -1678,14 +1681,30 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				const hakiRadios = document.querySelectorAll('.haki-radio');
 				const hakiWrapper = document.getElementById('haki_number_wrapper');
 				
-				if(hakiWrapper) { // Safety check
+				if(hakiWrapper) { 
 					const hakiInput = hakiWrapper.querySelector('input');
 					hakiRadios.forEach(radio => {
 						radio.addEventListener('change', function() {
-							if (this.value === 'registered') {
+							const status = this.value;
+
+							if (status === 'registered') {
+								// KONDISI 1: SUDAH TERDAFTAR
 								hakiWrapper.classList.remove('d-none');
-								if(hakiInput) hakiInput.setAttribute('required', 'required');
+								if(hakiInput) {
+									hakiInput.setAttribute('required', 'required');
+									hakiInput.placeholder = "Nomor Sertifikat Merek (Contoh: IDM000123xxx)";
+									hakiInput.value = ""; // Reset biar bersih
+								}
+							} else if (status === 'process') {
+								// KONDISI 2: SEDANG PROSES (Tetap diminta nomor agenda)
+								hakiWrapper.classList.remove('d-none');
+								if(hakiInput) {
+									hakiInput.setAttribute('required', 'required');
+									hakiInput.placeholder = "Nomor Permohonan / Agenda (Contoh: JID2023xxxx)";
+									hakiInput.value = "";
+								}
 							} else {
+								// KONDISI 3: BELUM DAFTAR
 								hakiWrapper.classList.add('d-none');
 								if(hakiInput) {
 									hakiInput.removeAttribute('required');
