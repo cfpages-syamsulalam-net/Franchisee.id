@@ -1786,16 +1786,37 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 					document.getElementById('main_progress_bar').style.width = percent + '%';
 				}
 
-				// Fungsi Validasi Input (HTML5 CheckValidity)
+				// Fungsi Validasi Input (Updated dengan Admin Bypass)
 				function validateStep(stepIndex) {
+					
+					// --- ADMIN BYPASS LOGIC ---
+					// Cara pakai: Tambahkan ?mode=preview di akhir URL website
+					const urlParams = new URLSearchParams(window.location.search);
+					if (urlParams.get('mode') === 'preview') {
+						console.warn('⚡ VALIDATION BYPASSED (Admin Mode) ⚡');
+						
+						// (Opsional) Kasih visual feedback biar sadar lagi mode admin
+						const btnNext = document.querySelector(`#step-${stepIndex} .btn-next`);
+						if(btnNext) {
+							let originalText = btnNext.innerHTML;
+							btnNext.innerHTML = '⚠️ Bypassing...';
+							setTimeout(() => btnNext.innerHTML = originalText, 500);
+						}
+						return true; // Langsung lolos tanpa cek input
+					}
+					// ---------------------------
+
 					let currentStepDiv = document.getElementById('step-' + stepIndex);
 					let inputs = currentStepDiv.querySelectorAll('input[required], select[required], textarea[required]');
 					let isValid = true;
 
 					inputs.forEach(input => {
 						if (!input.checkValidity()) {
-							input.reportValidity(); // Munculkan pesan error browser (Tooltip "Please fill out this field")
+							input.reportValidity(); 
 							isValid = false;
+							
+							// Tambahkan class invalid visual juga
+							input.classList.add('is-invalid');
 						}
 					});
 					return isValid;
