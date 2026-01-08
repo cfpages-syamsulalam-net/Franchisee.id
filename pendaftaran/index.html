@@ -237,20 +237,40 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		margin-bottom: 0;
 		padding-bottom: 0;
 	}
-	/* --- 1. VALIDATION STYLES (Centang Hijau) --- */
-	/* Input yang valid akan mendapatkan background centang */
+	/* 1. Valid (Hijau) */
 	.form-control.is-valid, .form-select.is-valid {
-		border-color: #198754 !important; /* Warna Hijau */
-		padding-right: 40px; /* Space untuk icon */
+		border-color: #198754 !important;
+		padding-right: 40px;
 		background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
 		background-repeat: no-repeat;
 		background-position: right calc(0.375em + 0.1875rem) center;
 		background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
 	}
 
-	/* Khusus Input Group (Supaya icon tidak ketabrak text group) */
-	.input-group .form-control.is-valid {
-		z-index: 3; /* Pastikan border hijau di atas */
+	/* 2. Invalid (Merah) */
+	.form-control.is-invalid, .form-select.is-invalid {
+		border-color: #dc3545 !important;
+		padding-right: 40px;
+		background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 2l8 8m0-8L2 10'/%3e%3c/svg%3e");
+		background-repeat: no-repeat;
+		background-position: right calc(0.375em + 0.1875rem) center;
+		background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+	}
+
+	/* 3. Pesan Error Text */
+	.validation-error-msg {
+		width: 100%;
+		margin-top: 0.25rem;
+		font-size: 0.8em;
+		color: #dc3545;
+		font-weight: 500;
+		display: block;
+	}
+
+	/* Fix untuk Input Group agar icon tidak tertutup */
+	.input-group .form-control.is-valid,
+	.input-group .form-control.is-invalid {
+		z-index: 3; 
 	}
 
 	/* --- 2. PHONE INPUT STYLES (Country Code) --- */
@@ -1990,65 +2010,140 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				});
 
 
-				// 2. LOGIC VALIDASI CERDAS (Smart Validation)
-				// Target input yang perlu divalidasi, KECUALI country code
+				// 2. LOGIC VALIDASI CERDAS & SPESIFIK
 				const inputsToValidate = document.querySelectorAll('input:not(.country-select), select:not(.country-select), textarea');
 
 				inputsToValidate.forEach(input => {
-					// A. Event saat User SELESAI mengetik (Blur) -> Validasi ketat
+					// Event Blur: Cek Validasi Ketat & Tampilkan Error
 					input.addEventListener('blur', function() {
-						checkValidation(this);
+						validateSpecificField(this);
 					});
 
-					// B. Event saat User MASIH mengetik (Input) -> Hanya hilangkan validasi (Reset)
-					// Kita tidak mau memunculkan centang hijau saat user masih ngetik
+					// Event Input: Hapus Error Saat User Memperbaiki (Reset)
 					input.addEventListener('input', function() {
-						if(this.classList.contains('is-valid')) {
-							// Jika user edit lagi, hilangkan dulu centang hijaunya sampai dia blur lagi
-							this.classList.remove('is-valid');
-						}
+						this.classList.remove('is-valid', 'is-invalid');
+						removeErrorMsg(this);
 					});
-					
-					// C. Event khusus Select/Dropdown -> Langsung validasi saat ganti
-					if(input.tagName === 'SELECT') {
+
+					// Event Change (Select/File): Validasi Langsung
+					if(input.tagName === 'SELECT' || input.type === 'file') {
 						input.addEventListener('change', function() {
-							checkValidation(this);
+							validateSpecificField(this);
 						});
 					}
 				});
 
-				function checkValidation(field) {
-					let isValid = false;
-					const val = field.value.trim();
+				function validateSpecificField(field) {
+					// Jangan validasi jika field tersembunyi (misal HAKI belum dipilih)
+					if (field.offsetParent === null) return;
 
-					// 1. Cek Required Dasar
+					let isValid = true;
+					let errorMsg = "";
+					const val = field.value.trim();
+					const name = field.name;
+
+					// --- RULE 1: Cek Required Dasar ---
 					if (field.hasAttribute('required') && val === '') {
 						isValid = false;
+						errorMsg = "Wajib diisi.";
 					} 
-					// 2. Cek Minimal Karakter (Khusus Teks seperti Nama)
-					else if (field.type === 'text' && val.length < 3) {
-						isValid = false; // Nama minimal 3 huruf
-					}
-					// 3. Cek Format Email (Regex Sederhana)
-					else if (field.type === 'email') {
-						const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-						isValid = emailPattern.test(val);
-					}
-					// 4. Cek Format No HP (Minimal 9 digit angka)
-					else if (field.classList.contains('phone-format')) {
-						const digits = val.replace(/\D/g, ''); // Ambil angka saja
-						isValid = digits.length >= 9; 
-					}
-					// 5. Default Valid (Untuk Select, Number, File, dll)
-					else {
-						isValid = field.checkValidity();
+					
+					// --- RULE 2: Logic Spesifik per Field (Jika ada isinya) ---
+					else if (val !== '') {
+						
+						// A. Validasi NIB (Wajib 13 Angka)
+						if (name === 'nib_number') {
+							if (!/^\d+$/.test(val)) {
+								isValid = false; errorMsg = "Hanya boleh angka.";
+							} else if (val.length !== 13) {
+								isValid = false; errorMsg = `Harus 13 digit (Saat ini: ${val.length}).`;
+							}
+						}
+
+						// B. Validasi HAKI (Format DJKI: IDM/DID/JID/IDP)
+						else if (name === 'haki_number') {
+							const upperVal = val.toUpperCase();
+							// Regex sederhana cek awalan standar
+							if (!/^(IDM|DID|JID|IDP|IPT)/.test(upperVal)) {
+								isValid = false; 
+								errorMsg = "Format nomor HAKI biasanya diawali IDM, DID, atau JID.";
+							} else if (val.length < 8) {
+								isValid = false; errorMsg = "Nomor HAKI terlalu pendek.";
+							}
+						}
+
+						// C. Validasi Tahun (Tidak boleh masa depan / terlalu lampau)
+						else if (name === 'year_established') {
+							const year = parseInt(val);
+							const currentYear = new Date().getFullYear();
+							if (year < 1900 || year > currentYear) {
+								isValid = false; errorMsg = "Tahun tidak valid.";
+							}
+						}
+
+						// D. Validasi Nama (Min 3 Karakter)
+						else if (name === 'brand_name' || name === 'company_name' || name === 'pic_name' || name === 'name') {
+							if (val.length < 3) {
+								isValid = false; errorMsg = "Terlalu pendek (Min. 3 huruf).";
+							}
+						}
+
+						// E. Validasi Email
+						else if (field.type === 'email') {
+							const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+							if (!emailPattern.test(val)) {
+								isValid = false; errorMsg = "Format email salah.";
+							}
+						}
+
+						// F. Validasi No HP (Min 9 Digit)
+						else if (field.classList.contains('phone-format') || name === 'whatsapp') {
+							const digits = val.replace(/\D/g, '');
+							if (digits.length < 9) {
+								isValid = false; errorMsg = "Nomor WhatsApp tidak valid.";
+							}
+						}
 					}
 
-					// Terapkan Class Visual
+					// --- TERAPKAN UI (Merah/Hijau) ---
 					if (isValid) {
 						field.classList.add('is-valid');
+						field.classList.remove('is-invalid');
+						removeErrorMsg(field);
 					} else {
+						field.classList.add('is-invalid');
 						field.classList.remove('is-valid');
+						showErrorMsg(field, errorMsg);
+					}
+					
+					return isValid;
+				}
+
+				// Helper: Tampilkan Pesan Error di bawah input
+				function showErrorMsg(inputField, msg) {
+					removeErrorMsg(inputField); // Hapus dulu biar gak dobel
+					// Cari parent kolom (input-col atau input-group)
+					const parent = inputField.closest('.input-col') || inputField.parentElement;
+					
+					const msgDiv = document.createElement('div');
+					msgDiv.className = 'validation-error-msg';
+					msgDiv.innerText = msg;
+					
+					// Sisipkan setelah input
+					if (parent.querySelector('.helper-text-bottom')) {
+						// Jika ada helper text, taruh sebelum helper text biar rapi
+						parent.insertBefore(msgDiv, parent.querySelector('.helper-text-bottom'));
+					} else {
+						parent.appendChild(msgDiv);
+					}
+				}
+
+				// Helper: Hapus Pesan Error
+				function removeErrorMsg(inputField) {
+					const parent = inputField.closest('.input-col') || inputField.parentElement;
+					const existingMsg = parent.querySelector('.validation-error-msg');
+					if (existingMsg) {
+						existingMsg.remove();
 					}
 				}
 
