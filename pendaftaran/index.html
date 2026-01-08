@@ -1990,26 +1990,64 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				});
 
 
-				// 2. LOGIC GENERAL VALIDATION (Centang Hijau)
-				// Target semua input yang punya attribute 'required'
-				const inputsToValidate = document.querySelectorAll('input, select, textarea');
+				// 2. LOGIC VALIDASI CERDAS (Smart Validation)
+				// Target input yang perlu divalidasi, KECUALI country code
+				const inputsToValidate = document.querySelectorAll('input:not(.country-select), select:not(.country-select), textarea');
 
 				inputsToValidate.forEach(input => {
-					// Event saat user mengetik atau pindah kolom
-					['input', 'blur', 'change'].forEach(evt => {
-						input.addEventListener(evt, function() {
-							validateField(this);
-						});
+					// A. Event saat User SELESAI mengetik (Blur) -> Validasi ketat
+					input.addEventListener('blur', function() {
+						checkValidation(this);
 					});
+
+					// B. Event saat User MASIH mengetik (Input) -> Hanya hilangkan validasi (Reset)
+					// Kita tidak mau memunculkan centang hijau saat user masih ngetik
+					input.addEventListener('input', function() {
+						if(this.classList.contains('is-valid')) {
+							// Jika user edit lagi, hilangkan dulu centang hijaunya sampai dia blur lagi
+							this.classList.remove('is-valid');
+						}
+					});
+					
+					// C. Event khusus Select/Dropdown -> Langsung validasi saat ganti
+					if(input.tagName === 'SELECT') {
+						input.addEventListener('change', function() {
+							checkValidation(this);
+						});
+					}
 				});
 
-				function validateField(field) {
-					// Cek apakah field valid secara HTML5 (required, type email, dll)
-					if (field.checkValidity() && field.value.trim() !== '') {
+				function checkValidation(field) {
+					let isValid = false;
+					const val = field.value.trim();
+
+					// 1. Cek Required Dasar
+					if (field.hasAttribute('required') && val === '') {
+						isValid = false;
+					} 
+					// 2. Cek Minimal Karakter (Khusus Teks seperti Nama)
+					else if (field.type === 'text' && val.length < 3) {
+						isValid = false; // Nama minimal 3 huruf
+					}
+					// 3. Cek Format Email (Regex Sederhana)
+					else if (field.type === 'email') {
+						const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+						isValid = emailPattern.test(val);
+					}
+					// 4. Cek Format No HP (Minimal 9 digit angka)
+					else if (field.classList.contains('phone-format')) {
+						const digits = val.replace(/\D/g, ''); // Ambil angka saja
+						isValid = digits.length >= 9; 
+					}
+					// 5. Default Valid (Untuk Select, Number, File, dll)
+					else {
+						isValid = field.checkValidity();
+					}
+
+					// Terapkan Class Visual
+					if (isValid) {
 						field.classList.add('is-valid');
-						field.classList.remove('is-invalid'); // Jaga-jaga kalau ada error class
 					} else {
-						// Jangan langsung merah saat ngetik, tapi hilangkan hijaunya
 						field.classList.remove('is-valid');
 					}
 				}
