@@ -2034,7 +2034,6 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				});
 
 				function validateSpecificField(field) {
-					// Jangan validasi jika field tersembunyi (misal HAKI belum dipilih)
 					if (field.offsetParent === null) return;
 
 					let isValid = true;
@@ -2042,13 +2041,21 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 					const val = field.value.trim();
 					const name = field.name;
 
+					// --- RULE 0: Cek Optional & Kosong (FIX UX) ---
+					// Jika tidak required DAN isinya kosong -> Netral (Hapus Hijau/Merah)
+					if (!field.hasAttribute('required') && val === '') {
+						field.classList.remove('is-valid', 'is-invalid');
+						removeErrorMsg(field);
+						return true; // Anggap valid tapi tanpa visual
+					}
+
 					// --- RULE 1: Cek Required Dasar ---
 					if (field.hasAttribute('required') && val === '') {
 						isValid = false;
 						errorMsg = "Wajib diisi.";
 					} 
 					
-					// --- RULE 2: Logic Spesifik per Field (Jika ada isinya) ---
+					// --- RULE 2: Logic Spesifik (Jika ada isi) ---
 					else if (val !== '') {
 						
 						// A. Validasi NIB (Wajib 13 Angka)
@@ -2060,10 +2067,9 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 							}
 						}
 
-						// B. Validasi HAKI (Format DJKI: IDM/DID/JID/IDP)
+						// B. Validasi HAKI 
 						else if (name === 'haki_number') {
 							const upperVal = val.toUpperCase();
-							// Regex sederhana cek awalan standar
 							if (!/^(IDM|DID|JID|IDP|IPT)/.test(upperVal)) {
 								isValid = false; 
 								errorMsg = "Format nomor HAKI biasanya diawali IDM, DID, atau JID.";
@@ -2072,7 +2078,7 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 							}
 						}
 
-						// C. Validasi Tahun (Tidak boleh masa depan / terlalu lampau)
+						// C. Validasi Tahun
 						else if (name === 'year_established') {
 							const year = parseInt(val);
 							const currentYear = new Date().getFullYear();
@@ -2096,7 +2102,7 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 							}
 						}
 
-						// F. Validasi No HP (Min 9 Digit)
+						// F. Validasi No HP
 						else if (field.classList.contains('phone-format') || name === 'whatsapp') {
 							const digits = val.replace(/\D/g, '');
 							if (digits.length < 9) {
