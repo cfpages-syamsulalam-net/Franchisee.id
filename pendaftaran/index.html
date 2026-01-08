@@ -1723,8 +1723,9 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				// Logic Scroll To Top Form
 				function scrollToTopForm() {
 					const formWrapper = document.querySelector('.franchise-listing-form-wrapper');
-					// Jarak dari atas (150px cukup untuk menghindari Sticky Header + Space dikit)
-					const headerOffset = 150; 
+					if (!formWrapper) return;
+					// Jarak dari atas (120px - 150px biasanya pas untuk Sticky Header)
+					const headerOffset = 140; 
 					const elementPosition = formWrapper.getBoundingClientRect().top;
 					const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -1734,36 +1735,33 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 					});
 				}
 
-				// Fungsi Lanjut ke Next Step (UPDATED)
+				// Fungsi Lanjut ke Next Step (UPDATED WITH DELAY)
 				window.nextStep = function(stepIndex) {
-					// 1. Validasi Input di Step aktif dulu
 					if (!validateStep(stepIndex)) {
 						return; 
 					}
 
-					// 2. Hide Current Step
+					// Switch Step
 					document.getElementById('step-' + stepIndex).classList.remove('active');
-					
-					// 3. Show Next Step
 					currentStep = stepIndex + 1;
 					document.getElementById('step-' + currentStep).classList.add('active');
-					
-					// 4. Update Progress Bar UI
 					updateProgressBar(currentStep);
 					
-					// 5. Scroll Ke Atas (Pake fungsi baru)
-					scrollToTopForm();
+					setTimeout(function() {
+						scrollToTopForm();
+					}, 100); 
 				};
 
-				// Fungsi Mundur ke Prev Step (UPDATED)
+				// Fungsi Mundur ke Prev Step (UPDATED WITH DELAY)
 				window.prevStep = function(stepIndex) {
 					document.getElementById('step-' + stepIndex).classList.remove('active');
 					currentStep = stepIndex - 1;
 					document.getElementById('step-' + currentStep).classList.add('active');
 					updateProgressBar(currentStep);
-
-					// Scroll Ke Atas juga pas mundur
-					scrollToTopForm();
+					// FIX: Kasih jeda juga saat mundur
+					setTimeout(function() {
+						scrollToTopForm();
+					}, 100);
 				};
 
 				// Fungsi Update Tampilan Indikator & Bar
