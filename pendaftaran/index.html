@@ -1724,10 +1724,8 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				function scrollToTopForm() {
 					const formWrapper = document.querySelector('.franchise-listing-form-wrapper');
 					if (!formWrapper) return;
-					// Jarak dari atas (120px - 150px biasanya pas untuk Sticky Header)
-					const headerOffset = 140; 
 					const elementPosition = formWrapper.getBoundingClientRect().top;
-					const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+					const offsetPosition = elementPosition + window.pageYOffset;
 
 					window.scrollTo({
 						top: offsetPosition,
@@ -1749,7 +1747,7 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 					
 					setTimeout(function() {
 						scrollToTopForm();
-					}, 100); 
+					}, 200); 
 				};
 
 				// Fungsi Mundur ke Prev Step (UPDATED WITH DELAY)
@@ -1758,10 +1756,9 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 					currentStep = stepIndex - 1;
 					document.getElementById('step-' + currentStep).classList.add('active');
 					updateProgressBar(currentStep);
-					// FIX: Kasih jeda juga saat mundur
 					setTimeout(function() {
 						scrollToTopForm();
-					}, 100);
+					}, 200);
 				};
 
 				// Fungsi Update Tampilan Indikator & Bar
