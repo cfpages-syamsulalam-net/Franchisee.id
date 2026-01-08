@@ -1722,10 +1722,10 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 
 				// Logic Scroll To Top Form
 				function scrollToTopForm() {
-					const formWrapper = document.querySelector('.franchise-listing-form-wrapper');
+					const formWrapper = document.querySelector('.registration-tabs-wrapper');
 					if (!formWrapper) return;
 					const elementPosition = formWrapper.getBoundingClientRect().top;
-					const offsetPosition = elementPosition + window.pageYOffset;
+					const offsetPosition = elementPosition;
 
 					window.scrollTo({
 						top: offsetPosition,
