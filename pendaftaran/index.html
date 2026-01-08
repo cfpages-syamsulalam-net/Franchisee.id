@@ -1724,8 +1724,9 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				function scrollToTopForm() {
 					const formWrapper = document.querySelector('.registration-tabs-wrapper');
 					if (!formWrapper) return;
+					const headerOffset = 140; 			
 					const elementPosition = formWrapper.getBoundingClientRect().top;
-					const offsetPosition = elementPosition;
+					const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
 					window.scrollTo({
 						top: offsetPosition,
