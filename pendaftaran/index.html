@@ -2201,6 +2201,98 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 					}
 				}
 
+				// BAGIAN 3: SUBMIT KE GOOGLE SHEET (VIA CF FUNCTION)
+				const franchiseeForm = document.getElementById('franchiseeForm');
+				const franchisorForm = document.getElementById('franchiseListingForm');
+
+				// Fungsi Pengirim Data
+				async function submitToCloudflare(formElement, type) {
+					const btn = formElement.querySelector('button[type="submit"]');
+					const originalText = btn.innerHTML;
+					
+					// 1. Loading State
+					btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+					btn.disabled = true;
+
+					try {
+						// 2. Ambil Data Form
+						const formData = new FormData(formElement);
+						const data = Object.fromEntries(formData.entries());
+						
+						// Tambahkan Tipe Form (Untuk nama Sheet)
+						data.form_type = type; 
+						
+						// Handle Checkbox (Karena FormData standard hanya ambil yg terakhir kalau namanya sama)
+						// Khusus untuk checkbox 'support[]' di franchisor
+						if (type === 'FRANCHISOR') {
+							const checkboxes = formElement.querySelectorAll('input[name="support[]"]:checked');
+							let supportList = [];
+							checkboxes.forEach((cb) => supportList.push(cb.value));
+							data['support'] = supportList.join(", "); // Gabung jadi string
+							delete data['support[]']; // Hapus key array asli
+						}
+
+						// 3. Kirim ke Cloudflare Function
+						const response = await fetch('/form-submit', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify(data)
+						});
+
+						const result = await response.json();
+
+						if (response.ok) {
+							// SUKSES
+							btn.innerHTML = '<i class="fas fa-check"></i> Terkirim!';
+							btn.classList.replace('btn-primary', 'btn-success');
+							btn.classList.replace('btn-warning', 'btn-success');
+							
+							// Redirect atau Tampilkan Pesan Sukses (Sesuaikan kebutuhanmu)
+							alert("Terima kasih! Data berhasil disimpan. Kami akan segera menghubungi Anda.");
+							formElement.reset();
+							window.location.reload(); // Atau redirect ke thank you page
+						} else {
+							throw new Error(result.error || 'Gagal mengirim data');
+						}
+
+					} catch (error) {
+						console.error('Error:', error);
+						btn.innerHTML = 'Gagal. Coba lagi.';
+						btn.disabled = false;
+						alert('Terjadi kesalahan: ' + error.message);
+					} finally {
+						// Balikin tombol setelah beberapa detik jika gagal
+						setTimeout(() => {
+							if(!btn.innerHTML.includes('Terima')) {
+								btn.innerHTML = originalText;
+								btn.disabled = false;
+							}
+						}, 3000);
+					}
+				}
+
+				// Listener Form Franchisee
+				if (franchiseeForm) {
+					franchiseeForm.addEventListener('submit', function(e) {
+						e.preventDefault();
+						// Validasi manual jika perlu, atau andalkan HTML5
+						submitToCloudflare(this, 'FRANCHISEE');
+					});
+				}
+
+				// Listener Form Franchisor
+				if (franchisorForm) {
+					franchisorForm.addEventListener('submit', function(e) {
+						e.preventDefault();
+						// Pastikan validasi step terakhir lolos
+						if (this.checkValidity()) {
+							submitToCloudflare(this, 'FRANCHISOR');
+						} else {
+							this.reportValidity();
+						}
+					});
+				}
+
 				// Event Listener untuk Rupiah Input (Format & Sanitasi)
 				rupiahInputs.forEach(input => {
 					// Gunakan 'input' event agar cover paste & autocomplete
