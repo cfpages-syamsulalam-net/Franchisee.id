@@ -2266,12 +2266,13 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 						const data = Object.fromEntries(formData.entries());
 						data.form_type = type;
 						
-						// ... (Logic checkbox support[] sama seperti sebelumnya) ...
+						// Handle checkbox support[] logic
 						if (type === 'FRANCHISOR') {
 							const checkboxes = formElement.querySelectorAll('input[name="support[]"]:checked');
 							let supportList = [];
 							checkboxes.forEach((cb) => supportList.push(cb.value));
 							data['support'] = supportList.join(", "); 
+							delete data['support[]'];
 						}
 
 						// Kirim ke Database
@@ -2284,37 +2285,49 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 						const result = await response.json();
 
 						if (response.ok) {
-							// 1. Sukses Database -> Hapus AutoSave
-							clearStorage();
+							// --- SUKSES ---
+							clearStorage(); // Hapus auto save
 
-							// 2. Kirim ke WhatsApp (Panggil FormSender Global)
-							// Kita beri delay dikit biar UX tombol success terlihat
 							btn.innerHTML = '<i class="fas fa-check"></i> Tersimpan!';
 							btn.classList.replace('btn-primary', 'btn-success');
+							btn.classList.replace('btn-warning', 'btn-success');
 							
 							setTimeout(() => {
-								// INI KUNCINYA: WA dibuka setelah data aman di server
+								// Trigger WA (jika ada formsender)
 								if(window.FormSender) {
 									window.FormSender.send(formElement);
 								} else {
-									// Fallback jika formsender.js gagal load
-									alert("Data tersimpan! Silakan hubungi admin via WhatsApp untuk konfirmasi.");
+									alert("Data tersimpan! Kami akan menghubungi Anda.");
 								}
-								
-								// Reset Form & Reload
 								formElement.reset();
 								window.location.reload();
-							}, 1500); // Delay 1.5 detik
+							}, 1500);
 
 						} else {
-							throw new Error(result.error || 'Gagal mengirim data');
+							// --- GAGAL / DUPLIKAT ---
+							if (result.error === "DUPLICATE_ENTRY") {
+								// Alert Khusus Duplikat
+								alert("⚠️ GAGAL: " + result.message);
+								
+								// Kembalikan tombol ke kondisi semula (User mungkin mau ganti email/wa)
+								btn.innerHTML = originalText;
+								btn.disabled = false;
+							} else {
+								// Error Lain
+								throw new Error(result.error || 'Gagal mengirim data');
+							}
 						}
 
 					} catch (error) {
 						console.error('Error:', error);
 						btn.innerHTML = 'Gagal. Coba lagi.';
 						btn.disabled = false;
-						alert('Gagal menyimpan: ' + error.message + '. Silakan coba lagi atau hubungi WA Admin langsung.');
+						alert('Terjadi kesalahan sistem: ' + error.message);
+						
+						// Balikin tombol
+						setTimeout(() => {
+							btn.innerHTML = originalText;
+						}, 3000);
 					}
 				}
 
