@@ -1,26 +1,42 @@
-// /functions/form-submit.js
+// /functions/form-submit.js v2.1
 export async function onRequestPost({ request, env }) {
   try {
     const data = await request.json();
-    const sheetName = data.form_type || "DATA_UMUM"; // FRANCHISEE atau FRANCHISOR
+    const sheetName = data.form_type || "DATA_UMUM";
     
-    // Hapus form_type dari data agar tidak jadi kolom (opsional)
-    delete data.form_type;
+    delete data.form_type; // Bersihkan data
 
-    // Tambahkan ID Unik & Timestamp
+    // Data baru yang mau disimpan
     const finalData = {
-      id: crypto.randomUUID().split('-')[0].toUpperCase(), // ID Pendek
+      id: crypto.randomUUID().split('-')[0].toUpperCase(),
       timestamp: new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }),
       ...data
     };
 
-    // 1. Authenticate with Google (Get Access Token)
+    // 1. Auth Google
     const token = await getGoogleAuthToken(env.G_CLIENT_EMAIL, env.G_PRIVATE_KEY);
 
-    // 2. Check if Sheet Exists, if not Create it
+    // 2. Cek Sheet Exists
     const sheetId = await ensureSheetExists(env.G_SHEET_ID, sheetName, token);
 
-    // 3. Handle Headers & Append Data
+    // Hanya cek jika ada Email atau WhatsApp
+    if (data.email || data.whatsapp) {
+        const isDuplicate = await checkForDuplicates(env.G_SHEET_ID, sheetName, data.email, data.whatsapp, token);
+        
+        if (isDuplicate) {
+            // Stop proses, kembalikan error ke frontend
+            return new Response(JSON.stringify({ 
+                success: false, 
+                error: "DUPLICATE_ENTRY",
+                message: "Email atau Nomor WhatsApp ini sudah terdaftar sebelumnya."
+            }), {
+                status: 409, // Conflict status code
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+    }
+
+    // 3. Kalau aman, Simpan Data
     await appendDataSmart(env.G_SHEET_ID, sheetName, sheetId, finalData, token);
 
     return new Response(JSON.stringify({ success: true, id: finalData.id }), {
@@ -36,19 +52,8 @@ export async function onRequestPost({ request, env }) {
 }
 
 // --- HELPER FUNCTIONS ---
-function cleanPrivateKey(key) {
-  // 1. Hapus Header dan Footer PEM
-  let body = key
-    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
-    .replace(/-----END PRIVATE KEY-----/g, "");
-  
-  // 2. Hapus spasi dan newline (termasuk \n literal string atau karakter enter asli)
-  body = body.replace(/\s/g, "").replace(/\\n/g, "");
-  
-  return body;
-}
 
-// 1. Google Service Account Auth (Native Web Crypto - No External Libs)
+// 1. Google Auth (SAMA SEPERTI SEBELUMNYA - Tapi pastikan cleanPrivateKey ada)
 async function getGoogleAuthToken(clientEmail, privateKey) {
   const header = { alg: "RS256", typ: "JWT" };
   const now = Math.floor(Date.now() / 1000);
@@ -63,12 +68,13 @@ async function getGoogleAuthToken(clientEmail, privateKey) {
   const encodedHeader = btoa(JSON.stringify(header));
   const encodedClaim = btoa(JSON.stringify(claim));
 
-  // Fix Private Key Format for Import
-  const pemHeader = "-----BEGIN PRIVATE KEY-----";
-  const pemFooter = "-----END PRIVATE KEY-----";
-  const pemContents = cleanPrivateKey(privateKey);
-  console.log("Key Length:", pemContents.length);
-  
+  // Pembersih Key
+  const pemContents = privateKey
+    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+    .replace(/-----END PRIVATE KEY-----/g, "")
+    .replace(/\s/g, "")
+    .replace(/\\n/g, "");
+
   const binaryDerString = atob(pemContents);
   const binaryDer = new Uint8Array(binaryDerString.length);
   for (let i = 0; i < binaryDerString.length; i++) {
@@ -76,27 +82,18 @@ async function getGoogleAuthToken(clientEmail, privateKey) {
   }
 
   const key = await crypto.subtle.importKey(
-    "pkcs8",
-    binaryDer.buffer,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"]
+    "pkcs8", binaryDer.buffer, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]
   );
 
   const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    key,
-    new TextEncoder().encode(encodedHeader + "." + encodedClaim)
+    "RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(encodedHeader + "." + encodedClaim)
   );
 
   const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
   const jwt = `${encodedHeader}.${encodedClaim}.${encodedSignature}`;
 
-  // Exchange JWT for Access Token
   const tokenResp = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -107,29 +104,24 @@ async function getGoogleAuthToken(clientEmail, privateKey) {
   return tokenData.access_token;
 }
 
-// 2. Ensure Sheet Exists
+// 2. Ensure Sheet (SAMA SEPERTI SEBELUMNYA)
 async function ensureSheetExists(spreadsheetId, title, token) {
-  // Get Spreadsheet Metadata
   const metaResp = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const meta = await metaResp.json();
-  
   const existingSheet = meta.sheets.find(s => s.properties.title === title);
   
   if (existingSheet) {
     return existingSheet.properties.sheetId;
   } else {
-    // Create new sheet
     const addResp = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requests: [{ addSheet: { properties: { title: title } } }]
-        }),
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title: title } } }] }),
       }
     );
     const addData = await addResp.json();
@@ -137,37 +129,23 @@ async function ensureSheetExists(spreadsheetId, title, token) {
   }
 }
 
-// 3. Smart Append (Handle Dynamic Headers)
+// 3. Smart Append (SAMA SEPERTI SEBELUMNYA)
 async function appendDataSmart(spreadsheetId, sheetName, sheetId, dataObj, token) {
-  // A. Get Current Headers (Row 1)
-  const range = `${sheetName}!A1:Z1`; // Limit Z1 (26 cols) or extend if needed
+  const range = `${sheetName}!A1:Z1`; 
   const getResp = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const getJson = await getResp.json();
-  
   let currentHeaders = (getJson.values && getJson.values[0]) ? getJson.values[0] : [];
   
-  // B. Identify New Headers
   const inputKeys = Object.keys(dataObj);
   const newHeaders = [];
-  
   inputKeys.forEach(key => {
-    if (!currentHeaders.includes(key)) {
-      newHeaders.push(key);
-    }
+    if (!currentHeaders.includes(key)) newHeaders.push(key);
   });
 
-  // C. Update Headers if needed
   if (newHeaders.length > 0) {
-    const startColIndex = currentHeaders.length;
-    // Append new headers to Row 1
-    // We assume append adds to the next available column
-    // But safely, let's write to specific cells if we knew A1 notation logic, 
-    // simpler: Just Append to Row 1? No, append adds rows. We must Update cells.
-    
-    // Easier way: Re-write the whole header row 1
     const allHeaders = [...currentHeaders, ...newHeaders];
     await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A1:1?valueInputOption=RAW`,
@@ -180,13 +158,8 @@ async function appendDataSmart(spreadsheetId, sheetName, sheetId, dataObj, token
     currentHeaders = allHeaders;
   }
 
-  // D. Map Data to Headers Order
-  const rowValues = currentHeaders.map(header => {
-    // Handle specific file object if simple upload (optional) or just text
-    return dataObj[header] || "";
-  });
+  const rowValues = currentHeaders.map(header => dataObj[header] || "");
 
-  // E. Append Data Row
   await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A2:A:append?valueInputOption=USER_ENTERED`,
     {
@@ -195,4 +168,47 @@ async function appendDataSmart(spreadsheetId, sheetName, sheetId, dataObj, token
       body: JSON.stringify({ values: [rowValues] })
     }
   );
+}
+
+// 4. FUNCTION BARU: Check Duplicates
+async function checkForDuplicates(spreadsheetId, sheetName, email, whatsapp, token) {
+    // Ambil semua data (Header + Rows)
+    const range = `${sheetName}!A1:Z1000`;
+    const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const result = await response.json();
+    
+    if (!result.values || result.values.length < 2) return false; // Belum ada data
+
+    const headers = result.values[0];
+    const rows = result.values.slice(1);
+
+    // Cari index kolom Email dan Whatsapp
+    const emailIndex = headers.indexOf('email');
+    const waIndex = headers.indexOf('whatsapp');
+
+    if (emailIndex === -1 && waIndex === -1) return false;
+
+    // Loop data untuk mencari match
+    for (let row of rows) {
+        // Cek Email (Case insensitive & Trim)
+        if (email && emailIndex !== -1 && row[emailIndex]) {
+            if (row[emailIndex].trim().toLowerCase() === email.trim().toLowerCase()) {
+                return true;
+            }
+        }
+        // Cek WA (Pastikan format bersih angka saja)
+        if (whatsapp && waIndex !== -1 && row[waIndex]) {
+            // Bersihkan format +62 atau - agar perbandingan apple-to-apple
+            const cleanDbWA = row[waIndex].replace(/\D/g, '');
+            const cleanInputWA = whatsapp.replace(/\D/g, '');
+            if (cleanDbWA === cleanInputWA) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
