@@ -2343,12 +2343,13 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 							const val = this.value;
 							listContainer.innerHTML = '';
 							
+							this.classList.remove('is-invalid', 'is-valid');
+							
 							if (!val) {
 								listContainer.style.display = 'none';
 								return;
 							}
 
-							// Filter Kota (Case insensitive)
 							const matches = citiesData.filter(city => 
 								city.toLowerCase().includes(val.toLowerCase())
 							).slice(0, 10);
@@ -2357,17 +2358,16 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 								matches.forEach(city => {
 									const item = document.createElement('div');
 									item.className = 'city-suggestion-item';
-									// Highlight text yang cocok
 									const regex = new RegExp(`(${val})`, "gi");
 									item.innerHTML = city.replace(regex, "<strong>$1</strong>");
 									
-									// Event saat klik suggestion
-									item.addEventListener('click', function() {
+									// FIX: Gunakan 'mousedown' agar dieksekusi SEBELUM 'blur' input
+									item.addEventListener('mousedown', function(e) {
+										e.preventDefault();
 										input.value = city;
 										listContainer.style.display = 'none';
-										listContainer.innerHTML = '';
 										
-										// Trigger validasi visual (Centang Hijau)
+										// Langsung tandai valid hijau
 										input.classList.remove('is-invalid');
 										input.classList.add('is-valid');
 									});
@@ -2380,38 +2380,33 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 							}
 						});
 
-						// B. Event Validasi Ketat saat Blur (Pindah fokus)
+						// B. Event Validasi Ketat saat Blur
 						input.addEventListener('blur', function() {
-							// Gunakan timeout agar event 'click' pada item list bisa jalan dulu
+							// Delay sedikit untuk memastikan mousedown selesai (jaga-jaga)
 							setTimeout(() => {
-								listContainer.style.display = 'none'; // Sembunyikan list
+								listContainer.style.display = 'none';
 								
 								const typedVal = this.value.trim();
-								if (typedVal === "") return; // Kalau kosong biar dihandle required
+								if (typedVal === "") return; // Biarkan kosong (handle required terpisah)
 
-								// Cek apakah input user ada di database (Persis)
-								const isValidCity = citiesData.some(city => city.toLowerCase() === typedVal.toLowerCase());
+								// Cek di Database
+								const match = citiesData.find(city => city.toLowerCase() === typedVal.toLowerCase());
 
-								if (!isValidCity) {
-									// KOTA TIDAK DITEMUKAN
-									this.value = ""; // Kosongkan input
-									this.classList.add('is-invalid');
-									this.classList.remove('is-valid');
-									this.placeholder = "Pilih kota dari daftar!";
-									
-									// Opsional: Alert kecil / Toast
-									// alert("Mohon pilih Kota/Kabupaten yang valid dari daftar yang muncul.");
-								} else {
-									// KOTA VALID (Fix Capitalization)
-									// Misal user ketik "surabaya", kita ganti jadi "Surabaya" sesuai DB
-									const correctName = citiesData.find(city => city.toLowerCase() === typedVal.toLowerCase());
-									this.value = correctName;
-									this.classList.add('is-valid');
+								if (match) {
+									// KOTA ADA -> Pakai format baku dari DB (Fix Uppercase)
+									this.value = match;
 									this.classList.remove('is-invalid');
+									this.classList.add('is-valid');
+								} else {
+									// KOTA TIDAK ADA -> Hapus & Peringatkan
+									this.value = ""; 
+									this.classList.remove('is-valid');
+									this.classList.add('is-invalid');
+									this.placeholder = "Wajib pilih kota dari daftar!";
 								}
-							}, 200);
+							}, 100);
 						});
-						
+
 						// C. Tutup list kalau klik di luar
 						document.addEventListener('click', function(e) {
 							if (e.target !== input) {
