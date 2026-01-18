@@ -913,7 +913,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 						<div class="elementor-widget-container">
 							<div class="franchise-listing-form-wrapper">
 								<div class="form-section-card">
-									<form id="franchiseeForm">
+									<form id="franchiseeForm" class="async-form">
 										<div class="form-group-row">
 											<div class="label-col">
 												<label class="form-label">Nama Lengkap</label>
@@ -1048,7 +1048,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 									</div>
 								</div>
 
-								<form id="franchiseListingForm" class="needs-validation" enctype="multipart/form-data">
+								<form id="franchiseListingForm" class="needs-validation async-form" enctype="multipart/form-data">
 									
 									<!-- STEP 1: IDENTITAS (WRAPPER ACTIVE) -->
 									<div class="form-step active" id="step-1">
@@ -2205,34 +2205,76 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				const franchiseeForm = document.getElementById('franchiseeForm');
 				const franchisorForm = document.getElementById('franchiseListingForm');
 
+				// BAGIAN 4: AUTO SAVE & RESTORE (Local Storage)	
+				const STORAGE_KEY = 'franchise_form_autosave';
+
+				function initAutoSave() {
+					// 1. Restore Data (Saat Halaman Dimuat)
+					const savedData = localStorage.getItem(STORAGE_KEY);
+					if (savedData) {
+						const data = JSON.parse(savedData);
+						Object.keys(data).forEach(name => {
+							const el = document.querySelector(`[name="${name}"]`);
+							if (el) {
+								if (el.type === 'radio') {
+									if (el.value === data[name]) el.checked = true;
+								} else if (el.type === 'checkbox') {
+									// Logic checkbox array (skip for simplicity or implement loop)
+								} else {
+									el.value = data[name];
+								}
+								// Trigger event agar logic kalkulasi/validasi jalan ulang
+								el.dispatchEvent(new Event('input'));
+								el.dispatchEvent(new Event('change'));
+							}
+						});
+					}
+
+					// 2. Save Data (Saat User Mengetik)
+					const inputs = document.querySelectorAll('input, select, textarea');
+					inputs.forEach(input => {
+						input.addEventListener('input', saveToStorage);
+						input.addEventListener('change', saveToStorage);
+					});
+				}
+
+				function saveToStorage() {
+					const formData = new FormData(document.getElementById('franchiseListingForm'));
+					// Gabungkan juga dengan form franchisee simple jika ada
+					// (Simpelnya kita simpan berdasarkan nama field unique)
+					const data = Object.fromEntries(formData.entries());
+					localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+				}
+
+				function clearStorage() {
+					localStorage.removeItem(STORAGE_KEY);
+				}
+
+				// Jalankan Auto Save saat load
+				initAutoSave();
+
 				// Fungsi Pengirim Data
 				async function submitToCloudflare(formElement, type) {
 					const btn = formElement.querySelector('button[type="submit"]');
 					const originalText = btn.innerHTML;
 					
-					// 1. Loading State
-					btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+					btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
 					btn.disabled = true;
 
 					try {
-						// 2. Ambil Data Form
 						const formData = new FormData(formElement);
 						const data = Object.fromEntries(formData.entries());
+						data.form_type = type;
 						
-						// Tambahkan Tipe Form (Untuk nama Sheet)
-						data.form_type = type; 
-						
-						// Handle Checkbox (Karena FormData standard hanya ambil yg terakhir kalau namanya sama)
-						// Khusus untuk checkbox 'support[]' di franchisor
+						// ... (Logic checkbox support[] sama seperti sebelumnya) ...
 						if (type === 'FRANCHISOR') {
 							const checkboxes = formElement.querySelectorAll('input[name="support[]"]:checked');
 							let supportList = [];
 							checkboxes.forEach((cb) => supportList.push(cb.value));
-							data['support'] = supportList.join(", "); // Gabung jadi string
-							delete data['support[]']; // Hapus key array asli
+							data['support'] = supportList.join(", "); 
 						}
 
-						// 3. Kirim ke Cloudflare Function
+						// Kirim ke Database
 						const response = await fetch('/form-submit', {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
@@ -2242,15 +2284,28 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 						const result = await response.json();
 
 						if (response.ok) {
-							// SUKSES
-							btn.innerHTML = '<i class="fas fa-check"></i> Terkirim!';
+							// 1. Sukses Database -> Hapus AutoSave
+							clearStorage();
+
+							// 2. Kirim ke WhatsApp (Panggil FormSender Global)
+							// Kita beri delay dikit biar UX tombol success terlihat
+							btn.innerHTML = '<i class="fas fa-check"></i> Tersimpan!';
 							btn.classList.replace('btn-primary', 'btn-success');
-							btn.classList.replace('btn-warning', 'btn-success');
 							
-							// Redirect atau Tampilkan Pesan Sukses (Sesuaikan kebutuhanmu)
-							alert("Terima kasih! Data berhasil disimpan. Kami akan segera menghubungi Anda.");
-							formElement.reset();
-							window.location.reload(); // Atau redirect ke thank you page
+							setTimeout(() => {
+								// INI KUNCINYA: WA dibuka setelah data aman di server
+								if(window.FormSender) {
+									window.FormSender.send(formElement);
+								} else {
+									// Fallback jika formsender.js gagal load
+									alert("Data tersimpan! Silakan hubungi admin via WhatsApp untuk konfirmasi.");
+								}
+								
+								// Reset Form & Reload
+								formElement.reset();
+								window.location.reload();
+							}, 1500); // Delay 1.5 detik
+
 						} else {
 							throw new Error(result.error || 'Gagal mengirim data');
 						}
@@ -2259,15 +2314,7 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 						console.error('Error:', error);
 						btn.innerHTML = 'Gagal. Coba lagi.';
 						btn.disabled = false;
-						alert('Terjadi kesalahan: ' + error.message);
-					} finally {
-						// Balikin tombol setelah beberapa detik jika gagal
-						setTimeout(() => {
-							if(!btn.innerHTML.includes('Terima')) {
-								btn.innerHTML = originalText;
-								btn.disabled = false;
-							}
-						}, 3000);
+						alert('Gagal menyimpan: ' + error.message + '. Silakan coba lagi atau hubungi WA Admin langsung.');
 					}
 				}
 

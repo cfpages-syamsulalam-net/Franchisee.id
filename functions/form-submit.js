@@ -1,5 +1,4 @@
 // /functions/form-submit.js
-
 export async function onRequestPost({ request, env }) {
   try {
     const data = await request.json();
@@ -37,6 +36,17 @@ export async function onRequestPost({ request, env }) {
 }
 
 // --- HELPER FUNCTIONS ---
+function cleanPrivateKey(key) {
+  // 1. Hapus Header dan Footer PEM
+  let body = key
+    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+    .replace(/-----END PRIVATE KEY-----/g, "");
+  
+  // 2. Hapus spasi dan newline (termasuk \n literal string atau karakter enter asli)
+  body = body.replace(/\s/g, "").replace(/\\n/g, "");
+  
+  return body;
+}
 
 // 1. Google Service Account Auth (Native Web Crypto - No External Libs)
 async function getGoogleAuthToken(clientEmail, privateKey) {
@@ -56,10 +66,8 @@ async function getGoogleAuthToken(clientEmail, privateKey) {
   // Fix Private Key Format for Import
   const pemHeader = "-----BEGIN PRIVATE KEY-----";
   const pemFooter = "-----END PRIVATE KEY-----";
-  const pemContents = privateKey.substring(
-    pemHeader.length,
-    privateKey.length - pemFooter.length - 1
-  ).replace(/\n/g, ""); // Remove newlines
+  const pemContents = cleanPrivateKey(privateKey);
+  console.log("Key Length:", pemContents.length);
   
   const binaryDerString = atob(pemContents);
   const binaryDer = new Uint8Array(binaryDerString.length);
