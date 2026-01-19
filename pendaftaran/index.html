@@ -1062,7 +1062,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 
 										<div class="form-group-row">
 											<div class="label-col">
-												<label class="form-label">Lokasi / Domisili</label>
+												<label class="form-label">Lokasi Rencana Usaha</label>
 											</div>
 											<div class="input-col">
 												<div class="autocomplete-wrapper">
@@ -2505,6 +2505,55 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 								listContainer.style.display = 'none';
 							}
 						});
+					});
+				}
+
+				// BAGIAN 6: AUTO FORMATTER (Brand & PT/CV)				
+				const brandInput = document.querySelector('input[name="brand_name"]');
+				const companyInput = document.querySelector('input[name="company_name"]');
+
+				// 1. Logic Title Case Cerdas (Brand Name)
+				if (brandInput) {
+					brandInput.addEventListener('blur', function() {
+						const raw = this.value;
+						if (!raw) return;
+
+						// Pecah jadi kata-kata
+						const words = raw.split(' ');
+						const formattedWords = words.map(word => {
+							if (word === word.toLowerCase()) {
+								return word.charAt(0).toUpperCase() + word.slice(1);
+							}
+							return word;
+						});
+
+						this.value = formattedWords.join(' ');
+					});
+				}
+
+				// 2. Logic Legalitas Cerdas (PT/CV/UD)
+				if (companyInput) {
+					companyInput.addEventListener('blur', function() {
+						let raw = this.value;
+						if (!raw) return;
+
+						// A. Title Case dulu untuk nama perusahaannya (sama logic dgn Brand)
+						raw = raw.split(' ').map(word => {
+							if (word === word.toLowerCase()) {
+								return word.charAt(0).toUpperCase() + word.slice(1);
+							}
+							return word;
+						}).join(' ');
+
+						// B. Regex Magic untuk PT/CV/UD
+						const legalRegex = /\b(pt|cv|ud)\.?\b/gi; 
+
+						// Ganti match dengan format baku (Kapital + Titik)
+						const fixed = raw.replace(legalRegex, (match) => {
+							return match.replace('.', '').toUpperCase() + '.';
+						});
+
+						this.value = fixed;
 					});
 				}
 
