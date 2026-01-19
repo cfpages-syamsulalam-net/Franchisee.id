@@ -2124,21 +2124,19 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 
 
 				// 2. LOGIC VALIDASI CERDAS & SPESIFIK
-				const inputsToValidate = document.querySelectorAll('input:not(.country-select), select:not(.country-select), textarea');
+				const inputsToValidate = document.querySelectorAll('input:not(.country-select):not(.city-autocomplete), select:not(.country-select), textarea');
 
 				inputsToValidate.forEach(input => {
-					// Event Blur: Cek Validasi Ketat & Tampilkan Error
+					// Event Blur
 					input.addEventListener('blur', function() {
 						validateSpecificField(this);
 					});
-
-					// Event Input: Hapus Error Saat User Memperbaiki (Reset)
+					// Event Input
 					input.addEventListener('input', function() {
 						this.classList.remove('is-valid', 'is-invalid');
 						removeErrorMsg(this);
 					});
-
-					// Event Change (Select/File): Validasi Langsung
+					// Event Change
 					if(input.tagName === 'SELECT' || input.type === 'file') {
 						input.addEventListener('change', function() {
 							validateSpecificField(this);
@@ -2321,19 +2319,27 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				// BAGIAN 5: CITY AUTOCOMPLETE & VALIDATION			
 				let citiesData = [];
 
-				// 1. Fetch Data Kota (Sekali saja)
+				// 1. Fetch Data Kota
 				fetch('https://cekkode.github.io/json/data-kota-id.json')
-					.then(response => response.json())
+					.then(response => {
+                        if (!response.ok) throw new Error("Gagal load kota");
+                        return response.json();
+                    })
 					.then(data => {
 						citiesData = data;
+						console.log("Data kota loaded:", citiesData.length);
 						initCityAutocomplete();
 					})
-					.catch(err => console.error("Gagal memuat data kota:", err));
+					.catch(err => console.error("Error Autocomplete:", err));
 
 				function initCityAutocomplete() {
 					const inputs = document.querySelectorAll('.city-autocomplete');
 
 					inputs.forEach(input => {
+                        // Pastikan tidak double init
+                        if (input.dataset.acInitialized) return;
+                        input.dataset.acInitialized = "true";
+
 						const listContainer = document.createElement('div');
 						listContainer.className = 'city-suggestions';
 						input.parentNode.appendChild(listContainer);
@@ -2343,9 +2349,10 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 							const val = this.value;
 							listContainer.innerHTML = '';
 							
+                            // Hapus validasi bawaan saat ngetik
 							this.classList.remove('is-invalid', 'is-valid');
 							
-							if (!val) {
+							if (!val || citiesData.length === 0) {
 								listContainer.style.display = 'none';
 								return;
 							}
@@ -2358,7 +2365,9 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 								matches.forEach(city => {
 									const item = document.createElement('div');
 									item.className = 'city-suggestion-item';
-									const regex = new RegExp(`(${val})`, "gi");
+									
+                                    // Highlight match
+                                    const regex = new RegExp(`(${val})`, "gi");
 									item.innerHTML = city.replace(regex, "<strong>$1</strong>");
 									
 									// FIX: Gunakan 'mousedown' agar dieksekusi SEBELUM 'blur' input
@@ -2382,29 +2391,29 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 
 						// B. Event Validasi Ketat saat Blur
 						input.addEventListener('blur', function() {
-							// Delay sedikit untuk memastikan mousedown selesai (jaga-jaga)
+							// Delay sedikit untuk jaga-jaga
 							setTimeout(() => {
 								listContainer.style.display = 'none';
 								
 								const typedVal = this.value.trim();
-								if (typedVal === "") return; // Biarkan kosong (handle required terpisah)
+								if (typedVal === "") return;
 
 								// Cek di Database
 								const match = citiesData.find(city => city.toLowerCase() === typedVal.toLowerCase());
 
 								if (match) {
-									// KOTA ADA -> Pakai format baku dari DB (Fix Uppercase)
+									// KOTA ADA -> Valid
 									this.value = match;
 									this.classList.remove('is-invalid');
 									this.classList.add('is-valid');
 								} else {
-									// KOTA TIDAK ADA -> Hapus & Peringatkan
+									// KOTA TIDAK ADA -> Invalid
 									this.value = ""; 
 									this.classList.remove('is-valid');
 									this.classList.add('is-invalid');
 									this.placeholder = "Wajib pilih kota dari daftar!";
 								}
-							}, 100);
+							}, 150);
 						});
 
 						// C. Tutup list kalau klik di luar
