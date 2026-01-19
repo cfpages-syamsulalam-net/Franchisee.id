@@ -1819,6 +1819,13 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 		</script>
 		<script id="form-daftar-franchise-logic">
 			document.addEventListener('DOMContentLoaded', function() {
+				// --- RESTORE TAB TERAKHIR ---
+				const lastTab = localStorage.getItem('active_registration_tab');
+				if (lastTab) {
+					openTab(lastTab); 
+				} else {
+					openTab('franchisee');
+				}
 				// --- LOGIC TABS SWITCHER ---
 				window.openTab = function(tabName) {
 					// 1. Hide Semua Konten
@@ -1836,12 +1843,25 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 					const selectedContent = document.getElementById('tab-' + tabName);
 					if(selectedContent) {
 						selectedContent.style.display = 'block';
-						// Sedikit delay biar ada efek fade in kalau mau pake CSS animation
 						setTimeout(() => selectedContent.classList.add('active'), 10);
+						// --- FITUR BARU: SIMPAN POSISI TAB ---
+						localStorage.setItem('active_registration_tab', tabName);
+
+						// --- FITUR BARU: RE-VALIDATE SAAT TAB MUNCUL ---
+						setTimeout(() => {
+							const inputs = selectedContent.querySelectorAll('input, select, textarea');
+							inputs.forEach(input => {
+								// Hanya validasi jika ada isinya (biar gak merah semua)
+								if (input.value.trim() !== "") {
+									if (typeof validateSpecificField === "function") {
+										validateSpecificField(input);
+									}
+								}
+							});
+						}, 100);
 					}
 
-					// 4. Activate Tombol yang Diklik (Logic cari tombol berdasarkan onclick attr simpel)
-					// Atau pake event.target kalau mau lebih strict, tapi ini cukup:
+					// 4. Activate Tombol
 					const activeBtn = document.querySelector(`button[onclick="openTab('${tabName}')"]`);
 					if(activeBtn) activeBtn.classList.add('active');
 				};
