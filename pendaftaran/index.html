@@ -2557,6 +2557,85 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 					});
 				}
 
+				// BAGIAN 7: SMART NOMINAL (Logic Bertingkat & Validasi)
+				
+				const moneyInputs = document.querySelectorAll('.rupiah-input');
+
+				moneyInputs.forEach(input => {
+					input.addEventListener('blur', function() {
+						let rawVal = cleanNumber(this.value); 
+						
+						// --- LOGIC 1: AUTO CORRECTION (Juta vs Ribu) ---
+						if (rawVal > 0) {
+							if (rawVal < 100) {
+								// CASE A: Angka 1 - 99 (Sangat Kecil) -> Asumsi JUTA
+								rawVal = rawVal * 1000000;
+								flashHighlight(this); // Efek kedip kuning
+							} 
+							else if (rawVal >= 100 && rawVal < 1000) {
+								// CASE B: Angka 100 - 999 (Tanggung) -> Asumsi RIBU (Safety First)
+								rawVal = rawVal * 1000;
+								flashHighlight(this);
+							}
+						}
+
+						// Update tampilan input dengan hasil koreksi
+						this.value = formatRupiah(rawVal);
+						
+						// Trigger ulang kalkulasi BEP
+						if (typeof calculateAll === "function") calculateAll();
+
+						// --- LOGIC 2: VALIDASI KEWAJARAN (Min & Max) ---
+						let errorMsg = "";
+						let parent = this.parentElement.parentElement; // input-group -> input-col
+						
+						// Batas Bawah: 100.000 (Kecuali ini form omzet, bisa aja 0 kalau baru buka)
+						if (rawVal > 0 && rawVal < 100000) {
+							errorMsg = "Nominal terlalu kecil? (Min. Rp 100.000)";
+						} 
+						// Batas Atas: 10 Miliar (Angka fantastis untuk franchise reguler)
+						else if (rawVal > 10000000000) {
+							errorMsg = "Nominal > 10 Miliar. Pastikan jumlah nol benar.";
+						}
+
+						// Tampilkan/Hapus Pesan Error
+						let existingMsg = parent.querySelector('.validation-error-msg');
+						
+						if (errorMsg) {
+							// Munculkan Error
+							this.classList.add('is-invalid');
+							this.classList.remove('is-valid');
+							
+							if(!existingMsg) {
+								let msg = document.createElement('div');
+								msg.className = 'validation-error-msg';
+								msg.innerText = errorMsg;
+								if (parent.querySelector('.helper-text-bottom')) {
+									parent.insertBefore(msg, parent.querySelector('.helper-text-bottom'));
+								} else {
+									parent.appendChild(msg);
+								}
+							} else {
+								existingMsg.innerText = errorMsg; // Update text error kalau beda case
+							}
+						} else {
+							// Hapus Error (Jika sudah benar)
+							if(existingMsg) existingMsg.remove();
+							this.classList.remove('is-invalid');
+							this.classList.add('is-valid');
+						}
+					});
+				});
+
+				// Helper: Efek visual saat auto-correct jalan
+				function flashHighlight(element) {
+					element.style.transition = "background-color 0.3s";
+					element.style.backgroundColor = "#fff3cd"; // Kuning warning soft
+					setTimeout(() => {
+						element.style.backgroundColor = "";
+					}, 800);
+				}
+
 				// Fungsi Pengirim Data
 				async function submitToCloudflare(formElement, type) {
 					const btn = formElement.querySelector('button[type="submit"]');
