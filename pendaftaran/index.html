@@ -2285,6 +2285,16 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 								isValid = false; errorMsg = "Nomor WhatsApp tidak valid.";
 							}
 						}
+
+						// G. Validasi Nominal Nol (Khusus Paket Pusat)
+						else if (name === 'fee_capex') {
+							const numVal = cleanNumber(val);
+							if (numVal === 0) {
+								// Jangan Merah (Invalid), tapi Kuning (Warning)
+								isValid = false; 
+								errorMsg = "Yakin biaya paket Rp 0? Biasanya ada biaya alat/bahan dari pusat.";
+							}
+						}
 					}
 
 					// --- TERAPKAN UI (Merah/Hijau) ---
@@ -2343,29 +2353,46 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 						try {
 							const data = JSON.parse(savedData);
 							Object.keys(data).forEach(name => {
-								// Cari elemen, tapi exclude type file biar ga error
-								const el = document.querySelector(`[name="${name}"]:not([type="file"])`);
-								
-								if (el) {
-									if (el.type === 'radio') {
-										if (el.value === data[name]) el.checked = true;
-									} else if (el.type === 'checkbox') {
-										// Logic checkbox array (skip dulu)
-									} else {
-										el.value = data[name];
-									}
-									// Trigger event visual
-									el.dispatchEvent(new Event('input'));
-									el.dispatchEvent(new Event('change'));
+								// A. Handle CHECKBOX ARRAY (support[])
+								if (name === 'support[]') {
+									// Logic khusus checkbox
+								} else {
+									// B. Handle Input Biasa & Radio
+									const elements = document.querySelectorAll(`[name="${name}"]:not([type="file"])`);
+									
+									elements.forEach(el => {
+										if (el.type === 'radio') {
+											// Cek apakah value radio ini SAMA dengan data tersimpan
+											if (el.value === data[name]) {
+												el.checked = true;
+												// Trigger logic show/hide (misal HAKI/Outlet Type)
+												el.dispatchEvent(new Event('change')); 
+											}
+										} else if (el.type === 'checkbox') {
+											// Single checkbox (bukan array)
+											if(data[name]) el.checked = true;
+										} else {
+											// Text, Select, Number
+											el.value = data[name];
+											
+											// Pastikan fungsi validasi sudah ada
+											if (typeof validateSpecificField === "function") {
+												validateSpecificField(el);
+											}
+											
+											// Trigger logic lain (misal kalkulasi)
+											el.dispatchEvent(new Event('input'));
+										}
+									});
 								}
 							});
 						} catch (e) {
 							console.error("AutoSave Error:", e);
-							localStorage.removeItem(STORAGE_KEY); // Bersihkan jika corrupt
+							localStorage.removeItem(STORAGE_KEY);
 						}
 					}
 
-					// 2. Save Data (Listener)
+					// 2. Save Data Listener
 					const inputs = document.querySelectorAll('input:not([type="file"]), select, textarea');
 					inputs.forEach(input => {
 						input.addEventListener('input', saveToStorage);
@@ -2595,6 +2622,26 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 						// Batas Atas: 10 Miliar (Angka fantastis untuk franchise reguler)
 						else if (rawVal > 10000000000) {
 							errorMsg = "Nominal > 10 Miliar. Pastikan jumlah nol benar.";
+						}
+
+						// LOGIC 3: CEK NOL (Khusus Paket Pusat)
+						if (this.name === 'fee_capex' && rawVal === 0) {
+							// Tampilkan warning kuning (bukan error merah)
+							let parent = this.parentElement.parentElement;
+							let existingMsg = parent.querySelector('.validation-error-msg');
+							
+							if(!existingMsg) {
+								let msg = document.createElement('div');
+								msg.className = 'validation-error-msg text-warning';
+								msg.style.color = '#ffc107';
+								msg.innerText = "⚠️ Gratis? Pastikan tidak ada biaya alat/bahan.";
+								
+								if (parent.querySelector('.helper-text-bottom')) {
+									parent.insertBefore(msg, parent.querySelector('.helper-text-bottom'));
+								} else {
+									parent.appendChild(msg);
+								}
+							}
 						}
 
 						// Tampilkan/Hapus Pesan Error
