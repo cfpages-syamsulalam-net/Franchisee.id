@@ -2272,29 +2272,36 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				const STORAGE_KEY = 'franchise_form_autosave';
 
 				function initAutoSave() {
-					// 1. Restore Data (Saat Halaman Dimuat)
+					// 1. Restore Data
 					const savedData = localStorage.getItem(STORAGE_KEY);
 					if (savedData) {
-						const data = JSON.parse(savedData);
-						Object.keys(data).forEach(name => {
-							const el = document.querySelector(`[name="${name}"]`);
-							if (el) {
-								if (el.type === 'radio') {
-									if (el.value === data[name]) el.checked = true;
-								} else if (el.type === 'checkbox') {
-									// Logic checkbox array (skip for simplicity or implement loop)
-								} else {
-									el.value = data[name];
+						try {
+							const data = JSON.parse(savedData);
+							Object.keys(data).forEach(name => {
+								// Cari elemen, tapi exclude type file biar ga error
+								const el = document.querySelector(`[name="${name}"]:not([type="file"])`);
+								
+								if (el) {
+									if (el.type === 'radio') {
+										if (el.value === data[name]) el.checked = true;
+									} else if (el.type === 'checkbox') {
+										// Logic checkbox array (skip dulu)
+									} else {
+										el.value = data[name];
+									}
+									// Trigger event visual
+									el.dispatchEvent(new Event('input'));
+									el.dispatchEvent(new Event('change'));
 								}
-								// Trigger event agar logic kalkulasi/validasi jalan ulang
-								el.dispatchEvent(new Event('input'));
-								el.dispatchEvent(new Event('change'));
-							}
-						});
+							});
+						} catch (e) {
+							console.error("AutoSave Error:", e);
+							localStorage.removeItem(STORAGE_KEY); // Bersihkan jika corrupt
+						}
 					}
 
-					// 2. Save Data (Saat User Mengetik)
-					const inputs = document.querySelectorAll('input, select, textarea');
+					// 2. Save Data (Listener)
+					const inputs = document.querySelectorAll('input:not([type="file"]), select, textarea');
 					inputs.forEach(input => {
 						input.addEventListener('input', saveToStorage);
 						input.addEventListener('change', saveToStorage);
@@ -2302,10 +2309,21 @@ var wpformsElementorVars = {"captcha_provider":"recaptcha","recaptcha_type":"v2"
 				}
 
 				function saveToStorage() {
-					const formData = new FormData(document.getElementById('franchiseListingForm'));
-					// Gabungkan juga dengan form franchisee simple jika ada
-					// (Simpelnya kita simpan berdasarkan nama field unique)
-					const data = Object.fromEntries(formData.entries());
+					const form = document.getElementById('franchiseListingForm');
+					if(!form) return; 
+					
+					const formData = new FormData(form);
+					const data = {};
+					
+					// Convert FormData to Object but SKIP Files
+					formData.forEach((value, key) => {
+						// Cek apakah value adalah File object
+						if (value instanceof File) {
+							return; // Skip file
+						}
+						data[key] = value;
+					});
+
 					localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 				}
 
