@@ -1,4 +1,4 @@
-// form-franchise.js v1.02
+// form-franchise.js v1.03
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		currentStep = stepIndex + 1;
 		document.getElementById('step-' + currentStep).classList.add('active');
 		updateProgressBar(currentStep);
-		
+		localStorage.setItem('franchise_form_step', currentStep);
 		setTimeout(function() { scrollToTopForm(); }, 100); 
 	};
 
@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		currentStep = stepIndex - 1;
 		document.getElementById('step-' + currentStep).classList.add('active');
 		updateProgressBar(currentStep);
+		localStorage.setItem('franchise_form_step', currentStep);
 		setTimeout(function() { scrollToTopForm(); }, 100);
 	};
 
@@ -631,7 +632,8 @@ document.addEventListener('DOMContentLoaded', function() {
 			const result = await response.json();
 
 			if (response.ok) {
-				clearStorage(); 
+				clearStorage();
+                localStorage.removeItem('franchise_form_step');
 				btn.innerHTML = '<i class="fas fa-check"></i> Tersimpan!';
 				btn.classList.replace('btn-primary', 'btn-success');
 				btn.classList.replace('btn-warning', 'btn-success');
@@ -694,6 +696,23 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	initAutoSave();
+
+    const savedStep = localStorage.getItem('franchise_form_step');
+	if (savedStep) {
+		const targetStep = parseInt(savedStep);
+		if (targetStep > 1 && targetStep <= 5) {
+			document.getElementById('step-1').classList.remove('active');
+			
+			const targetEl = document.getElementById('step-' + targetStep);
+			if (targetEl) {
+				targetEl.classList.add('active');
+				currentStep = targetStep;
+				updateProgressBar(currentStep);
+			} else {
+                document.getElementById('step-1').classList.add('active');
+            }
+		}
+	}
 
 	const lastTab = localStorage.getItem('active_registration_tab');
 	if (lastTab) openTab(lastTab);
