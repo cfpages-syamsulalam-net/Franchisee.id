@@ -1,4 +1,4 @@
-// form-franchise.js v1.10
+// form-franchise.js v1.11
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -881,7 +881,23 @@ document.addEventListener('DOMContentLoaded', function() {
 			
 			if (files.length === 0) return;
 
-			const originalLabel = this.nextElementSibling ? this.nextElementSibling.innerHTML : '';
+			for (let i = 0; i < files.length; i++) {
+				if (files[i].size > 5 * 1024 * 1024) {
+					alert("File terlalu besar! Maksimal 5MB per file.");
+					this.value = '';
+					return;
+				}
+			}
+
+			if (isMultiple) {
+				const currentCount = targetInput.value ? targetInput.value.split(', ').length : 0;
+				if (currentCount + files.length > 5) {
+					alert("Maksimal 5 foto untuk galeri.");
+					this.value = '';
+					return;
+				}
+			}
+
 			previewContainer.innerHTML = '<div class="text-warning small"><i class="fas fa-spinner fa-spin"></i> Mengompresi & Mengupload...</div>';
 			this.disabled = true;
 
