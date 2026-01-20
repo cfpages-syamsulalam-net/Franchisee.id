@@ -1,4 +1,4 @@
-// form-franchise.js v1.08
+// form-franchise.js v1.09
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -358,6 +358,11 @@ document.addEventListener('DOMContentLoaded', function() {
 		const elRoyaltyPercent = document.getElementById('royalty_percent');
 		const elRoyaltyBasis = document.getElementById('royalty_basis');
 		const elRoyaltyPeriod = document.getElementById('royalty_period');
+		const totalDisplayText = document.getElementById('total_display_text'); 
+		const totalValueHidden = document.getElementById('total_investment_value'); 
+		const bepDisplayText = document.getElementById('bep_display_text'); 
+		const bepValueHidden = document.getElementById('bep_value');
+		const bepYearsDisplay = document.getElementById('bep_years_display');
 
 		if(!elLicense || !elCapex || !elConstruct) return;
 
@@ -375,8 +380,8 @@ document.addEventListener('DOMContentLoaded', function() {
 			let contractYears = parseFloat(elContract.value) || 0;
 			let contractMonths = contractYears * 12;
 			let royPercent = parseFloat(elRoyaltyPercent.value) || 0;
-			let royBasis = elRoyaltyBasis.value;
-			let royPeriod = elRoyaltyPeriod.value;
+			let royBasis = elRoyaltyBasis ? elRoyaltyBasis.value : 'omzet';
+			let royPeriod = elRoyaltyPeriod ? elRoyaltyPeriod.value : 'bulan';
 
 			if (totalModal > 0 && omzet > 0 && marginPercent > 0 && contractYears > 0) {
 				let operationalProfit = omzet * (marginPercent / 100);
@@ -398,27 +403,28 @@ document.addEventListener('DOMContentLoaded', function() {
 					else if (bepMonths > 24) bepDisplayText.classList.add('text-warning'); 
 					else bepDisplayText.classList.add('text-success'); 
 
-					const yearDisplay = document.getElementById('bep_years_display');
-					if (yearDisplay) {
+					if (bepYearsDisplay) {
 						let bepYears = bepMonths / 12;
-						yearDisplay.innerText = `(± ${bepYears.toFixed(1)} Tahun)`;
+						bepYearsDisplay.innerText = `(± ${bepYears.toFixed(1)} Tahun)`;
 					}
+
 				} else {
 					bepDisplayText.innerText = "∞"; 
 					bepDisplayText.className = 'fw-800 text-danger';
 					
-					const yearDisplay = document.getElementById('bep_years_display');
-					if(yearDisplay) yearDisplay.innerText = "";
+					if (bepYearsDisplay) bepYearsDisplay.innerText = "";
 				}
 			} else {
 				bepDisplayText.innerText = "-";
 				bepDisplayText.className = 'fw-800 text-muted';
-				const yearDisplay = document.getElementById('bep_years_display');
-				if(yearDisplay) yearDisplay.innerText = "";
+				
+				if (bepYearsDisplay) bepYearsDisplay.innerText = "";
 			}
 		}
 
-        checkProfitConflict(); 
+		if (typeof checkProfitConflict === "function") {
+			checkProfitConflict(); 
+		}
 	}
 
 	const rupiahInputs = document.querySelectorAll('.rupiah-input');
