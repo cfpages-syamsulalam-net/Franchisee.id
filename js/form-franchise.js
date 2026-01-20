@@ -1,4 +1,4 @@
-// form-franchise.js v1.03
+// form-franchise.js v1.04
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -594,6 +594,40 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		});
 	});
+
+    // --- VALIDASI KHUSUS ROYALTY FEE (Persen) ---
+	const royaltyInput = document.getElementById('royalty_percent');
+	if (royaltyInput) {
+		royaltyInput.addEventListener('blur', function() {
+			const val = parseFloat(this.value) || 0;
+			const parent = this.closest('.input-col') || this.parentElement;
+			
+			let existingMsg = parent.querySelector('.validation-warning-msg');
+			if (existingMsg) existingMsg.remove();
+
+			let msg = document.createElement('div');
+			msg.className = 'validation-warning-msg mt-1';
+			msg.style.fontSize = '0.85rem';
+			
+			if (val === 0) {
+				msg.classList.add('text-primary');
+				msg.innerHTML = '<i class="fas fa-info-circle"></i> <b>Info:</b> 0% berarti <b>Free Royalty</b> (Bebas Biaya Manajemen).';
+				appendMessage(parent, msg);
+			} else if (val > 30) {
+				msg.classList.add('text-danger');
+				msg.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <b>Peringatan:</b> Royalti > 30% sangat tinggi. Pastikan angka benar.';
+				appendMessage(parent, msg);
+			} 
+		});
+	}
+
+	function appendMessage(parent, msgElement) {
+		if (parent.querySelector('.helper-text-bottom')) {
+			parent.insertBefore(msgElement, parent.querySelector('.helper-text-bottom'));
+		} else {
+			parent.appendChild(msgElement);
+		}
+	}
 
 	function flashHighlight(element) {
 		element.style.transition = "background-color 0.3s";
