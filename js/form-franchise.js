@@ -1,4 +1,4 @@
-// form-franchise.js v1.05
+// form-franchise.js v1.06
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -199,6 +199,64 @@ document.addEventListener('DOMContentLoaded', function() {
 		return isValid;
 	};
 
+    function checkProfitConflict() {
+		const elRoyalty = document.getElementById('royalty_percent');
+		const elBasis = document.getElementById('royalty_basis');
+		const elProfit = document.getElementById('net_profit_percent');
+
+		if (!elRoyalty || !elBasis || !elProfit) return;
+
+		const royVal = parseFloat(elRoyalty.value) || 0;
+		const profitVal = parseFloat(elProfit.value) || 0;
+		const basis = elBasis.value;
+
+		document.querySelectorAll('.profit-conflict-msg').forEach(el => el.remove());
+		elRoyalty.classList.remove('is-invalid-logic'); 
+		elProfit.classList.remove('is-invalid-logic');
+
+		if (basis === 'omzet' && royVal > 0 && profitVal > 0) {
+			if (royVal >= profitVal) {
+				const msgText = `
+					<div class="d-flex align-items-start gap-2">
+						<i class="fas fa-skull-crossbones mt-1"></i> 
+						<div>
+							<b>LOGIKA BISNIS FATAL:</b><br>
+							Royalty diambil dari <u>Omzet</u>. Jika Royalty (${royVal}%) ≥ Margin Profit (${profitVal}%), 
+							maka keuntungan mitra <b>MINUS</b>.
+						</div>
+					</div>
+				`;
+
+				showConflictMsg(elRoyalty, msgText);
+				showConflictMsg(elProfit, msgText);
+				elRoyalty.classList.add('is-invalid-logic');
+				elProfit.classList.add('is-invalid-logic');
+			}
+		}
+	}
+
+	function showConflictMsg(inputElement, htmlContent) {
+		const parent = inputElement.closest('.input-col') || inputElement.parentElement;
+		
+		// Cek apakah input ini ada di dalam group (untuk layout royalty yang berjejer)
+		// Kita ingin pesannya muncul di container paling luar agar rapi
+		const grandParent = parent.parentElement;
+		const targetContainer = (inputElement.id === 'royalty_percent') ? grandParent.parentElement : parent;
+
+		const msg = document.createElement('div');
+		msg.className = 'validation-warning-msg profit-conflict-msg text-danger bg-soft-danger p-2 rounded mt-2 border border-danger';
+		msg.style.fontSize = '0.8rem';
+		msg.style.lineHeight = '1.3';
+		msg.innerHTML = htmlContent;
+
+		// Sisipkan pesan
+		if (targetContainer.querySelector('.helper-text-bottom')) {
+			targetContainer.insertBefore(msg, targetContainer.querySelector('.helper-text-bottom'));
+		} else {
+			targetContainer.appendChild(msg);
+		}
+	}
+
 	function showErrorMsg(inputField, msg) {
 		removeErrorMsg(inputField);
 		const parent = inputField.closest('.input-col') || inputField.parentElement;
@@ -348,6 +406,8 @@ document.addEventListener('DOMContentLoaded', function() {
 				bepDisplayText.className = 'fw-800 text-muted';
 			}
 		}
+
+        checkProfitConflict(); 
 	}
 
 	const rupiahInputs = document.querySelectorAll('.rupiah-input');

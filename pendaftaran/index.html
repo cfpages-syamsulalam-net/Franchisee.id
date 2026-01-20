@@ -330,6 +330,15 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 		display: block;
 	}
 
+	.is-invalid-logic {
+		border-color: #dc3545 !important;
+		background-color: #fff8f8 !important;
+		box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.15);
+	}
+	.bg-soft-danger {
+		background-color: #ffe6e6;
+	}
+
 	/* Fix untuk Input Group agar icon tidak tertutup */
 	.input-group .form-control.is-valid,
 	.input-group .form-control.is-invalid {
@@ -1344,7 +1353,11 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 														<div class="grid-item">
 															<label class="small text-muted mb-1">HPP (%)</label>
 															<div class="input-group input-group-sm"><input type="number" class="form-control" name="hpp_percent" placeholder="50"><span class="input-group-text">%</span></div>
+															<small class="text-muted d-block mt-1" style="font-size: 0.7rem; line-height: 1.2;">
+																*HPP = Harga Pokok Penjualan.
+															</small>
 														</div>
+														
 														<div class="grid-item">
 															<label class="small text-muted mb-1 fw-bold text-success">Net Profit (%)</label>
 															<div class="input-group input-group-sm"><input type="number" class="form-control calc-bep" id="net_profit_percent" name="profit_percent" placeholder="20" required=""><span class="input-group-text">%</span></div>
