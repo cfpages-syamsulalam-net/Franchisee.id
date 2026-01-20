@@ -1,4 +1,4 @@
-// form-franchise.js v1.06
+// form-franchise.js v1.07
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -236,12 +236,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	function showConflictMsg(inputElement, htmlContent) {
-		const parent = inputElement.closest('.input-col') || inputElement.parentElement;
-		
-		// Cek apakah input ini ada di dalam group (untuk layout royalty yang berjejer)
-		// Kita ingin pesannya muncul di container paling luar agar rapi
-		const grandParent = parent.parentElement;
-		const targetContainer = (inputElement.id === 'royalty_percent') ? grandParent.parentElement : parent;
+		const container = inputElement.closest('.input-col');
+		if (!container) return;
 
 		const msg = document.createElement('div');
 		msg.className = 'validation-warning-msg profit-conflict-msg text-danger bg-soft-danger p-2 rounded mt-2 border border-danger';
@@ -249,11 +245,11 @@ document.addEventListener('DOMContentLoaded', function() {
 		msg.style.lineHeight = '1.3';
 		msg.innerHTML = htmlContent;
 
-		// Sisipkan pesan
-		if (targetContainer.querySelector('.helper-text-bottom')) {
-			targetContainer.insertBefore(msg, targetContainer.querySelector('.helper-text-bottom'));
+		const helperText = container.querySelector('.helper-text-bottom');
+		if (helperText && helperText.parentNode === container) {
+			container.insertBefore(msg, helperText);
 		} else {
-			targetContainer.appendChild(msg);
+			container.appendChild(msg);
 		}
 	}
 
