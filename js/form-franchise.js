@@ -397,13 +397,24 @@ document.addEventListener('DOMContentLoaded', function() {
 					if(bepMonths > contractMonths) bepDisplayText.classList.add('text-danger'); 
 					else if (bepMonths > 24) bepDisplayText.classList.add('text-warning'); 
 					else bepDisplayText.classList.add('text-success'); 
+
+					const yearDisplay = document.getElementById('bep_years_display');
+					if (yearDisplay) {
+						let bepYears = bepMonths / 12;
+						yearDisplay.innerText = `(± ${bepYears.toFixed(1)} Tahun)`;
+					}
 				} else {
 					bepDisplayText.innerText = "∞"; 
 					bepDisplayText.className = 'fw-800 text-danger';
+					
+					const yearDisplay = document.getElementById('bep_years_display');
+					if(yearDisplay) yearDisplay.innerText = "";
 				}
 			} else {
 				bepDisplayText.innerText = "-";
 				bepDisplayText.className = 'fw-800 text-muted';
+				const yearDisplay = document.getElementById('bep_years_display');
+				if(yearDisplay) yearDisplay.innerText = "";
 			}
 		}
 
