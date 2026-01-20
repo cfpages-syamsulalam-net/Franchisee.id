@@ -1,4 +1,4 @@
-// form-franchise.js v1.09
+// form-franchise.js v1.10
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -859,6 +859,131 @@ document.addEventListener('DOMContentLoaded', function() {
 			calculateAll();
 		}
 
+        restoreFilePreviews(); 
+
 	}, 600);
+
+    // ==========================================
+	// 5. CLOUDINARY UPLOAD INTEGRATION
+	// ==========================================
+	const CLOUD_NAME = 'dmodrgffo';
+	const UPLOAD_PRESET = 'unsigned';
+
+	const fileUploaders = document.querySelectorAll('.file-uploader');
+
+	fileUploaders.forEach(input => {
+		input.addEventListener('change', async function(e) {
+			const files = e.target.files;
+			const targetId = this.getAttribute('data-target');
+			const isMultiple = this.getAttribute('data-type') === 'multiple';
+			const targetInput = document.getElementById(targetId);
+			const previewContainer = document.getElementById('preview_' + targetId);
+			
+			if (files.length === 0) return;
+
+			const originalLabel = this.nextElementSibling ? this.nextElementSibling.innerHTML : '';
+			previewContainer.innerHTML = '<div class="text-warning small"><i class="fas fa-spinner fa-spin"></i> Mengompresi & Mengupload...</div>';
+			this.disabled = true;
+
+			try {
+				let uploadedUrls = [];
+
+				for (let i = 0; i < files.length; i++) {
+					const file = files[i];
+					const formData = new FormData();
+					formData.append('file', file);
+					formData.append('upload_preset', UPLOAD_PRESET);
+
+					const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+						method: 'POST',
+						body: formData
+					});
+
+					if (!response.ok) throw new Error('Upload gagal');
+					const data = await response.json();
+					
+					uploadedUrls.push(data.secure_url);
+				}
+
+				if (isMultiple) {
+					const existing = targetInput.value ? targetInput.value.split(', ') : [];
+					const combined = [...existing, ...uploadedUrls]; 
+					targetInput.value = combined.join(', ');
+				} else {
+					targetInput.value = uploadedUrls[0];
+				}
+
+				targetInput.dispatchEvent(new Event('input'));
+				targetInput.dispatchEvent(new Event('change'));
+
+				renderPreview(targetInput.value, previewContainer, isMultiple);
+				
+				this.value = ''; 
+
+			} catch (error) {
+				console.error(error);
+				previewContainer.innerHTML = '<div class="text-danger small">Gagal upload. Coba lagi / file terlalu besar.</div>';
+			} finally {
+				this.disabled = false;
+			}
+		});
+	});
+
+	function renderPreview(urlSting, container, isMultiple) {
+		container.innerHTML = '';
+		if (!urlSting) return;
+
+		const urls = urlSting.split(', ');
+		
+		urls.forEach(url => {
+			const wrapper = document.createElement('div');
+			wrapper.className = 'position-relative d-inline-block border rounded p-1 bg-light';
+			
+			const isPdf = url.toLowerCase().includes('.pdf');
+
+			if (isPdf) {
+				wrapper.innerHTML = `
+					<a href="${url}" target="_blank" class="text-decoration-none text-dark d-flex align-items-center gap-2 px-2 py-1">
+						<i class="fas fa-file-pdf text-danger fs-4"></i> <span class="small">Dokumen PDF</span>
+					</a>
+				`;
+			} else {
+				const thumbUrl = url.replace('/upload/', '/upload/c_fill,w_100,h_100,q_auto/');
+				wrapper.innerHTML = `<a href="${url}" target="_blank"><img src="${thumbUrl}" alt="Preview" style="width:80px; height:80px; object-fit:cover; border-radius:4px;"></a>`;
+			}
+
+			const btnRemove = document.createElement('button');
+			btnRemove.className = 'btn btn-danger btn-sm position-absolute top-0 start-100 translate-middle rounded-circle p-0 d-flex justify-content-center align-items-center';
+			btnRemove.style.width = '20px';
+			btnRemove.style.height = '20px';
+			btnRemove.innerHTML = '<i class="fas fa-times" style="font-size:10px;"></i>';
+			btnRemove.onclick = function(e) {
+				e.preventDefault();
+				const inputId = container.id.replace('preview_', '');
+				const input = document.getElementById(inputId);
+				let currentUrls = input.value.split(', ');
+				const newUrls = currentUrls.filter(u => u !== url);
+				input.value = newUrls.join(', ');
+				input.dispatchEvent(new Event('input'));
+				renderPreview(input.value, container, isMultiple);
+			};
+
+			wrapper.appendChild(btnRemove);
+			container.appendChild(wrapper);
+		});
+	}
+
+    function restoreFilePreviews() {
+		const urlInputs = ['logo_url', 'cover_url', 'gallery_urls', 'proposal_url'];
+		urlInputs.forEach(id => {
+			const input = document.getElementById(id);
+			if (input && input.value) {
+				const previewId = 'preview_' + id;
+				const container = document.getElementById(previewId);
+				const isMultiple = id === 'gallery_urls';
+				renderPreview(input.value, container, isMultiple);
+			}
+		});
+	}
 
 });
