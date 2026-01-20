@@ -1,4 +1,4 @@
-// form-franchise.js v1.07
+// form-franchise.js v1.08
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -217,15 +217,19 @@ document.addEventListener('DOMContentLoaded', function() {
 		if (basis === 'omzet' && royVal > 0 && profitVal > 0) {
 			if (royVal >= profitVal) {
 				const msgText = `
-					<div class="d-flex align-items-start gap-2">
-						<i class="fas fa-skull-crossbones mt-1"></i> 
-						<div>
-							<b>LOGIKA BISNIS FATAL:</b><br>
-							Royalty diambil dari <u>Omzet</u>. Jika Royalty (${royVal}%) ≥ Margin Profit (${profitVal}%), 
-							maka keuntungan mitra <b>MINUS</b>.
-						</div>
-					</div>
-				`;
+                    <div class="d-flex align-items-start gap-2">
+                        <div style="min-width: 20px;">
+                            <i class="fas fa-skull-crossbones mt-1"></i>
+                        </div>
+                        <div>
+                            <b class="text-uppercase" style="letter-spacing: 0.5px;">Logika Bisnis Fatal:</b><br>
+                            <span style="display:block; margin-top:4px; font-size: 0.9em; opacity: 0.9;">
+                                Royalty diambil dari <u>Omzet</u>. Jika Royalty (${royVal}%) ≥ Margin Profit (${profitVal}%), 
+                                maka keuntungan mitra dipastikan <b>MINUS (Rugi)</b>.
+                            </span>
+                        </div>
+                    </div>
+                `;
 
 				showConflictMsg(elRoyalty, msgText);
 				showConflictMsg(elProfit, msgText);
