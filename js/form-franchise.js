@@ -1,3 +1,4 @@
+// form-franchise.js v1.02
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -84,13 +85,10 @@ document.addEventListener('DOMContentLoaded', function() {
 		document.getElementById('main_progress_bar').style.width = percent + '%';
 	}
 
-	function validateStep(stepIndex) {
+	window.validateStep = function(stepIndex) {
 		// Admin Bypass (?mode=preview)
 		const urlParams = new URLSearchParams(window.location.search);
-		if (urlParams.get('mode') === 'preview') {
-			console.warn('⚡ VALIDATION BYPASSED ⚡');
-			return true; 
-		}
+		if (urlParams.get('mode') === 'preview') { console.warn('⚡ VALIDATION BYPASSED ⚡'); return true; }
 
 		let currentStepDiv = document.getElementById('step-' + stepIndex);
 		let inputs = currentStepDiv.querySelectorAll('input[required], select[required], textarea[required]');
@@ -103,8 +101,36 @@ document.addEventListener('DOMContentLoaded', function() {
 				input.classList.add('is-invalid'); 
 			}
 		});
+
+		if (isValid && stepIndex === 2) {
+			const elCapex = document.getElementById('fee_capex');
+			const elConstruct = document.getElementById('fee_construction');
+			const valCapex = cleanNumber(elCapex.value);
+			const valConstruct = cleanNumber(elConstruct.value);
+
+			if (valCapex === 0 && valConstruct === 0) {
+				const confirmZero = confirm(
+					"⚠️ PERHATIAN PENTING:\n\n" +
+					"Anda mengisi 'Biaya Paket Pusat' dan 'Konstruksi' dengan angka Rp 0.\n\n" +
+					"Apakah benar Franchise/Bisnis ini TANPA MODAL AWAL (Gratis)?\n\n" +
+					"[OK] Ya, lanjut (Gratis).\n" +
+					"[Cancel] Tidak, saya lupa mengisi."
+				);
+				if (!confirmZero) {
+					elCapex.focus();
+					flashHighlight(elCapex);
+					return false; 
+				}
+			} 
+			else if (valCapex === 0) {
+				if(!confirm("⚠️ Konfirmasi:\nBiaya Paket Pusat Rp 0. Apakah benar tidak ada biaya lisensi / peralatan dari pusat?")) {
+					elCapex.focus(); return false;
+				}
+			}
+		}
+
 		return isValid;
-	}
+	};
 	
 	// --- UTILS: Format Angka ---
 	function formatRupiah(angka) {
@@ -517,6 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	moneyInputs.forEach(input => {
 		input.addEventListener('blur', function() {
 			let rawVal = cleanNumber(this.value); 
+			let originalVal = rawVal;
 			
 			// Logic Auto Juta/Ribu
 			if (rawVal > 0) {
@@ -529,39 +556,40 @@ document.addEventListener('DOMContentLoaded', function() {
 				}
 			}
 			this.value = formatRupiah(rawVal);
+			
+			if (originalVal !== rawVal) {
+				this.dispatchEvent(new Event('input', { bubbles: true }));
+				this.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+
 			if (typeof calculateAll === "function") calculateAll();
 
 			// Logic Validasi
 			let errorMsg = "";
-			let parent = this.parentElement.parentElement; 
-			if (rawVal > 0 && rawVal < 100000) { errorMsg = "Nominal terlalu kecil? (Min. Rp 100.000)"; } 
-			else if (rawVal > 10000000000) { errorMsg = "Nominal > 10 Miliar."; }
+			let parent = this.closest('.input-col') || this.parentElement;
+			
+			// Hapus pesan lama dulu
+			let existingMsg = parent.querySelector('.validation-warning-msg');
+			if (existingMsg) existingMsg.remove();
 
-			if (this.name === 'fee_capex' && rawVal === 0) {
-				let existingMsg = parent.querySelector('.validation-error-msg');
-				if(!existingMsg) {
-					let msg = document.createElement('div');
-					msg.className = 'validation-error-msg text-warning';
-					msg.style.color = '#ffc107';
-					msg.innerText = "⚠️ Gratis? Pastikan tidak ada biaya alat / bahan.";
-					if (parent.querySelector('.helper-text-bottom')) parent.insertBefore(msg, parent.querySelector('.helper-text-bottom'));
-					else parent.appendChild(msg);
-				}
+			if (rawVal > 0 && rawVal < 100000) { errorMsg = "Nominal terlalu kecil? (Min. Rp 100.000)"; } else if (rawVal > 10000000000) { errorMsg = "Nominal > 10 Miliar."; }
+
+			if ((this.name === 'fee_capex' || this.name === 'fee_construction') && rawVal === 0) {
+				let msg = document.createElement('div');
+				msg.className = 'validation-warning-msg text-warning mt-1';
+				msg.style.fontSize = '0.85rem';
+				msg.innerHTML = '<i class="fas fa-exclamation-circle"></i> <b>Perhatian:</b> Diisi Rp 0. Pastikan ini benar-benar Gratis / Termasuk Paket.';
+				
+				if (parent.querySelector('.helper-text-bottom')) { parent.insertBefore(msg, parent.querySelector('.helper-text-bottom')); } else { parent.appendChild(msg); }
 			}
 
-			let existingMsg = parent.querySelector('.validation-error-msg');
 			if (errorMsg) {
-				this.classList.add('is-invalid'); this.classList.remove('is-valid');
-				if(!existingMsg) {
-					let msg = document.createElement('div');
-					msg.className = 'validation-error-msg';
-					msg.innerText = errorMsg;
-					if (parent.querySelector('.helper-text-bottom')) parent.insertBefore(msg, parent.querySelector('.helper-text-bottom'));
-					else parent.appendChild(msg);
-				} else { existingMsg.innerText = errorMsg; }
+				this.classList.add('is-invalid'); 
+				this.classList.remove('is-valid');
+				showErrorMsg(this, errorMsg);
 			} else {
-				if(existingMsg && !existingMsg.innerText.includes("Gratis")) existingMsg.remove();
-				this.classList.remove('is-invalid'); this.classList.add('is-valid');
+				this.classList.remove('is-invalid'); 
+				if(rawVal > 0) this.classList.add('is-valid');
 			}
 		});
 	});
