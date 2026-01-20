@@ -1,4 +1,4 @@
-// form-franchise.js v1.04
+// form-franchise.js v1.05
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -704,7 +704,6 @@ document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 3. EKSEKUSI INISIALISASI (URUTAN PENTING)
 	// ==========================================
-
 	const inputsToValidate = document.querySelectorAll('input:not(.country-select):not(.city-autocomplete), select:not(.country-select), textarea');
 	inputsToValidate.forEach(input => {
 		input.addEventListener('blur', function() { validateSpecificField(this); });
@@ -753,5 +752,36 @@ document.addEventListener('DOMContentLoaded', function() {
 	else openTab('franchisee'); 
 
 	setTimeout(calculateAll, 500);
+
+    // ==========================================
+	// 4. RE-VALIDASI SAAT REFRESH (RESTORE STATE)
+	// ==========================================
+	setTimeout(() => {
+		console.log("🔄 Menjalankan Validasi Ulang Data Tersimpan...");
+
+		const criticalCostInputs = [
+			document.getElementById('fee_capex'),
+			document.getElementById('fee_construction'),
+			document.getElementById('royalty_percent'),
+			document.getElementById('rent_input')
+		];
+		criticalCostInputs.forEach(el => {
+			if (el) { el.dispatchEvent(new Event('blur')); }
+		});
+
+		const otherInputs = document.querySelectorAll('input:not([type="file"]):not(.rupiah-input), select, textarea');
+		otherInputs.forEach(el => {
+			if (el.value.trim() !== "" && !criticalCostInputs.includes(el)) {
+				if (typeof validateSpecificField === "function") {
+					validateSpecificField(el);
+				}
+			}
+		});
+
+		if (typeof calculateAll === "function") {
+			calculateAll();
+		}
+
+	}, 600);
 
 });
