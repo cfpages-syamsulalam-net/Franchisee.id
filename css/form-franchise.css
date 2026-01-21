@@ -1,4 +1,4 @@
-/* v1.0 */
+/* v1.1 */
 /* Margins */
 .mt-2 { margin-top: 0.5rem !important; }
 .mt-3 { margin-top: 1rem !important; }
@@ -15,6 +15,8 @@
 .px-4 { padding-left: 20px !important; padding-right: 20px !important; }
 .py-2 { padding-top: 10px !important; padding-bottom: 10px !important; }
 .p-0 { padding: 0 !important; }
+.p-2 { padding: 0.5rem !important; }
+.p-3 { padding: 1rem !important; }
 /* --- Positioning Utilities --- */
 .position-relative {
     position: relative !important;
@@ -67,22 +69,11 @@
     border-radius: 50% !important;
 }
 /* Display */
-.d-inline-block { 
-    display: inline-block !important; 
-}
-.d-flex {
-    display: flex !important;
-}
-.d-none {
-    display: none !important;
-}
-
-.gap-2 {
-    gap: 0.75rem !important;
-}
-.shadow-sm { 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; 
-}
+.d-inline-block { display: inline-block !important; }
+.d-flex { display: flex !important; }
+.d-none { display: none !important; }
+.gap-2 { gap: 0.75rem !important; }
+.shadow-sm { box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
 /* 2. Warna & Border */
 .bg-white { 
     background-color: #ffffff !important; 
@@ -643,6 +634,24 @@
 .city-suggestions::-webkit-scrollbar-thumb {
     background: #ccc;
     border-radius: 3px;
+}
+.alert {
+    position: relative;
+    border: 1px solid transparent;
+    border-radius: 0.5rem !important;
+    width: 100%;
+}
+.alert-primary {
+    color: #0c5460 !important; /* Warna teks biru tua gelap (agar kontras) */
+    background-color: #d1ecf1 !important; /* Background biru muda segar */
+    border-color: #bee5eb !important; /* Border biru halus */
+}
+.text-primary {
+    color: #007bff !important; /* Biru standar untuk Icon & Link */
+}
+.alert-primary a {
+    color: #0056b3 !important;
+    text-decoration: underline;
 }
 
 input[type=number]::-webkit-outer-spin-button,
