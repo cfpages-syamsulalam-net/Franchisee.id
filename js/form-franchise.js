@@ -1,4 +1,4 @@
-// form-franchise.js v1.15
+// form-franchise.js v1.16
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -872,20 +872,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	function saveDeleteToken(url, token) {
 		let tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE_KEY) || '{}');
-		tokens[url] = { 
+		const cleanUrl = url.trim();
+		tokens[cleanUrl] = { 
 			token: token, 
 			expiry: Date.now() + (9.5 * 60 * 1000) 
 		};
 		localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+		console.log("💾 Token tersimpan untuk:", cleanUrl);
 	}
 
 	function getDeleteToken(url) {
 		let tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE_KEY) || '{}');
-		const data = tokens[url];
-		if (!data) return null;
+		const cleanUrl = url.trim();
+		const data = tokens[cleanUrl];
+		
+		if (!data) {
+			console.warn("🔍 Token tidak ditemukan untuk:", cleanUrl);
+			console.log("📂 Isi Storage saat ini:", Object.keys(tokens)); // Cek isi storage
+			return null;
+		}
 
 		if (Date.now() > data.expiry) {
-			delete tokens[url];
+			console.warn("⏰ Token expired untuk:", cleanUrl);
+			delete tokens[cleanUrl];
 			localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
 			return null;
 		}
@@ -1020,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		if (!urlSting) return;
 
-		const urls = urlSting.split(', ');
+		const urls = urlSting.split(',').map(u => u.trim()).filter(u => u !== '');
 		
 		urls.forEach(url => {
 			const wrapper = document.createElement('div');
@@ -1054,7 +1063,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				if (isDeleted) console.log("✅ File dihapus dari Cloud.");
 				else console.log("ℹ️ Hapus dari form saja (Token expired/null).");
 
-				let currentUrls = hiddenInput.value.split(', ');
+				let currentUrls = hiddenInput.value.split(',').map(u => u.trim()).filter(u => u !== '');
 				const newUrls = currentUrls.filter(u => u !== url);
 				hiddenInput.value = newUrls.join(', ');
 				hiddenInput.dispatchEvent(new Event('input'));
