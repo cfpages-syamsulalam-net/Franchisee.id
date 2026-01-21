@@ -1,4 +1,4 @@
-// form-franchise.js v1.14
+// form-franchise.js v1.15
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -868,10 +868,54 @@ document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	const CLOUD_NAME = 'dmodrgffo';
 	const UPLOAD_PRESET = 'unsigned';
+	const TOKEN_STORAGE_KEY = 'cloudinary_delete_tokens';
 
-	const activeUploadTokens = {};
-    const fileUploaders = document.querySelectorAll('.file-uploader');
+	function saveDeleteToken(url, token) {
+		let tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE_KEY) || '{}');
+		tokens[url] = { 
+			token: token, 
+			expiry: Date.now() + (9.5 * 60 * 1000) 
+		};
+		localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+	}
 
+	function getDeleteToken(url) {
+		let tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE_KEY) || '{}');
+		const data = tokens[url];
+		if (!data) return null;
+
+		if (Date.now() > data.expiry) {
+			delete tokens[url];
+			localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+			return null;
+		}
+		return data.token;
+	}
+
+	async function deleteImageFromCloud(url) {
+		const token = getDeleteToken(url);
+		if (!token) return false;
+
+		const formData = new FormData();
+		formData.append('token', token);
+		
+		try {
+			const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/delete_by_token`, {
+				method: 'POST', body: formData
+			});
+			const json = await res.json();
+			
+			if (json.result === 'ok') {
+				let tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE_KEY) || '{}');
+				delete tokens[url];
+				localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+				return true;
+			}
+		} catch (e) { console.error("Del Error:", e); }
+		return false;
+	}
+
+	const fileUploaders = document.querySelectorAll('.file-uploader');
 	fileUploaders.forEach(input => {
 		input.addEventListener('change', async function(e) {
 			const files = e.target.files;
@@ -885,8 +929,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			for (let i = 0; i < files.length; i++) {
 				if (files[i].size > 5 * 1024 * 1024) {
 					alert("File terlalu besar! Maksimal 5MB per file.");
-					this.value = '';
-					return;
+					this.value = ''; return;
 				}
 			}
 
@@ -894,8 +937,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				const currentCount = targetInput.value ? targetInput.value.split(', ').length : 0;
 				if (currentCount + files.length > 5) {
 					alert("Maksimal 5 foto untuk galeri.");
-					this.value = '';
-					return;
+					this.value = ''; return;
 				}
 			}
 
@@ -906,14 +948,13 @@ document.addEventListener('DOMContentLoaded', function() {
 				let uploadedUrls = [];
 
 				for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
+					const file = files[i];
 					const formData = new FormData();
 					formData.append('file', file);
 					formData.append('upload_preset', UPLOAD_PRESET);
 
 					const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
-						method: 'POST',
-						body: formData
+						method: 'POST', body: formData
 					});
 
 					if (!response.ok) throw new Error('Upload gagal');
@@ -921,7 +962,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					
 					uploadedUrls.push(data.secure_url);
 					if (data.delete_token) {
-						activeUploadTokens[data.secure_url] = data.delete_token;
+						saveDeleteToken(data.secure_url, data.delete_token);
 					}
 				}
 
@@ -930,6 +971,10 @@ document.addEventListener('DOMContentLoaded', function() {
 					const combined = [...existing, ...uploadedUrls]; 
 					targetInput.value = combined.join(', ');
 				} else {
+					if (targetInput.value) {
+						console.log("Menghapus gambar lama:", targetInput.value);
+						deleteImageFromCloud(targetInput.value);
+					}
 					targetInput.value = uploadedUrls[0];
 				}
 
@@ -937,12 +982,11 @@ document.addEventListener('DOMContentLoaded', function() {
 				targetInput.dispatchEvent(new Event('change'));
 
 				renderPreview(targetInput.value, previewContainer, isMultiple);
-				
 				this.value = ''; 
 
 			} catch (error) {
 				console.error(error);
-				previewContainer.innerHTML = '<div class="text-danger small">Gagal upload. Coba lagi / file terlalu besar.</div>';
+				previewContainer.innerHTML = '<div class="text-danger small">Gagal upload. Coba lagi.</div>';
 			} finally {
 				this.disabled = false;
 			}
@@ -1005,31 +1049,10 @@ document.addEventListener('DOMContentLoaded', function() {
 				this.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:10px;"></i>';
 				this.disabled = true;
 
-				const deleteToken = activeUploadTokens[url];
-
-				if (deleteToken) {
-					try {
-						console.log("⏳ Menghapus dari Cloudinary...", url);
-						const formData = new FormData();
-						formData.append('token', deleteToken);
-						const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/delete_by_token`, {
-							method: 'POST',
-							body: formData
-						});
-						const resData = await response.json();
-						if (resData.result === 'ok') {
-							console.log("✅ Berhasil dihapus dari Cloudinary.");
-						} else {
-							console.warn("⚠️ Gagal hapus di Cloudinary (Mungkin token expired):", resData);
-						}
-
-					} catch (err) {
-						console.error("❌ Error koneksi saat hapus:", err);
-					}
-					delete activeUploadTokens[url];
-				} else {
-					console.log("ℹ️ Token tidak ditemukan (Mungkin hasil refresh page). Hanya menghapus dari form.");
-				}
+				const isDeleted = await deleteImageFromCloud(url);
+				
+				if (isDeleted) console.log("✅ File dihapus dari Cloud.");
+				else console.log("ℹ️ Hapus dari form saja (Token expired/null).");
 
 				let currentUrls = hiddenInput.value.split(', ');
 				const newUrls = currentUrls.filter(u => u !== url);
