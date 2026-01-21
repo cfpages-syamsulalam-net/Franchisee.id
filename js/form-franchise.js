@@ -1,4 +1,4 @@
-// form-franchise.js v1.12
+// form-franchise.js v1.13
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -951,6 +951,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	function renderPreview(urlSting, container, isMultiple) {
 		container.innerHTML = '';
+		
+		const inputId = container.id.replace('preview_', '');
+		const hiddenInput = document.getElementById(inputId);
+		const visibleUploader = document.querySelector(`.file-uploader[data-target="${inputId}"]`);
+		
+		if (visibleUploader && hiddenInput) {
+			visibleUploader.classList.remove('is-valid', 'is-invalid');
+			const parent = visibleUploader.closest('.input-col');
+			if (parent) {
+				const oldMsg = parent.querySelector('.validation-error-msg');
+				if (oldMsg) oldMsg.remove();
+			}
+
+			if (urlSting && urlSting.trim() !== "") {
+				visibleUploader.classList.add('is-valid');
+			} else {
+				if (hiddenInput.hasAttribute('required')) {
+					visibleUploader.classList.add('is-invalid');
+					if (typeof showErrorMsg === "function") {
+						showErrorMsg(visibleUploader, "Wajib upload file.");
+					}
+				}
+			}
+		}
+
 		if (!urlSting) return;
 
 		const urls = urlSting.split(', ');
@@ -960,7 +985,6 @@ document.addEventListener('DOMContentLoaded', function() {
 			wrapper.className = 'position-relative d-inline-block border rounded p-1 bg-light';
 			
 			const isPdf = url.toLowerCase().includes('.pdf');
-
 			if (isPdf) {
 				wrapper.innerHTML = `
 					<a href="${url}" target="_blank" class="text-decoration-none text-dark d-flex align-items-center gap-2 px-2 py-1">
@@ -995,13 +1019,11 @@ document.addEventListener('DOMContentLoaded', function() {
 					delete activeUploadTokens[url];
 				}
 
-				const inputId = container.id.replace('preview_', '');
-				const input = document.getElementById(inputId);
-				let currentUrls = input.value.split(', ');
+				let currentUrls = hiddenInput.value.split(', ');
 				const newUrls = currentUrls.filter(u => u !== url);
-				input.value = newUrls.join(', ');
-				input.dispatchEvent(new Event('input'));
-				renderPreview(input.value, container, isMultiple);
+				hiddenInput.value = newUrls.join(', ');
+				hiddenInput.dispatchEvent(new Event('input'));
+				renderPreview(hiddenInput.value, container, isMultiple);
 			};
 
 			wrapper.appendChild(btnRemove);
