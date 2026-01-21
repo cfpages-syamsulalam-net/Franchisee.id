@@ -1,4 +1,5 @@
 /* v1.1 */
+.hfe-nav-menu { display: -webkit-box !important; }
 /* Margins */
 .mt-1 { margin-top: 0.35rem !important; }
 .mt-2 { margin-top: 0.5rem !important; }
