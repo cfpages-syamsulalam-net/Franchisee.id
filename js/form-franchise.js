@@ -1,4 +1,4 @@
-// form-franchise.js v1.16
+// form-franchise.js v1.17
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -870,30 +870,31 @@ document.addEventListener('DOMContentLoaded', function() {
 	const UPLOAD_PRESET = 'unsigned';
 	const TOKEN_STORAGE_KEY = 'cloudinary_delete_tokens';
 
+	// --- HELPER: MANAJEMEN TOKEN (localStorage) ---
 	function saveDeleteToken(url, token) {
 		let tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE_KEY) || '{}');
 		const cleanUrl = url.trim();
 		tokens[cleanUrl] = { 
 			token: token, 
-			expiry: Date.now() + (9.5 * 60 * 1000) 
+			expiry: Date.now() + (9.5 * 60 * 1000)
 		};
 		localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
-		console.log("💾 Token tersimpan untuk:", cleanUrl);
+		console.log("💾 Token berhasil disimpan ke Storage:", cleanUrl);
 	}
 
 	function getDeleteToken(url) {
 		let tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE_KEY) || '{}');
 		const cleanUrl = url.trim();
 		const data = tokens[cleanUrl];
-		
+
 		if (!data) {
-			console.warn("🔍 Token tidak ditemukan untuk:", cleanUrl);
-			console.log("📂 Isi Storage saat ini:", Object.keys(tokens)); // Cek isi storage
+			console.warn("🔍 Token tidak ada di Storage untuk:", cleanUrl);
+			console.log("📂 Isi Storage saat ini:", Object.keys(tokens)); 
 			return null;
 		}
 
 		if (Date.now() > data.expiry) {
-			console.warn("⏰ Token expired untuk:", cleanUrl);
+			console.warn("⏰ Token sudah expired (lewat 10 menit):", cleanUrl);
 			delete tokens[cleanUrl];
 			localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
 			return null;
@@ -916,15 +917,19 @@ document.addEventListener('DOMContentLoaded', function() {
 			
 			if (json.result === 'ok') {
 				let tokens = JSON.parse(localStorage.getItem(TOKEN_STORAGE_KEY) || '{}');
-				delete tokens[url];
+				delete tokens[url.trim()];
 				localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
 				return true;
+			} else {
+				console.error("Cloudinary Error:", json);
 			}
-		} catch (e) { console.error("Del Error:", e); }
+		} catch (e) { console.error("Network Error saat delete:", e); }
 		return false;
 	}
 
+	// --- MAIN UPLOAD LOGIC ---
 	const fileUploaders = document.querySelectorAll('.file-uploader');
+
 	fileUploaders.forEach(input => {
 		input.addEventListener('change', async function(e) {
 			const files = e.target.files;
@@ -941,7 +946,6 @@ document.addEventListener('DOMContentLoaded', function() {
 					this.value = ''; return;
 				}
 			}
-
 			if (isMultiple) {
 				const currentCount = targetInput.value ? targetInput.value.split(', ').length : 0;
 				if (currentCount + files.length > 5) {
@@ -968,20 +972,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
 					if (!response.ok) throw new Error('Upload gagal');
 					const data = await response.json();
-					
+					console.log("📡 Cloudinary Response:", data); 
+
 					uploadedUrls.push(data.secure_url);
+					
 					if (data.delete_token) {
 						saveDeleteToken(data.secure_url, data.delete_token);
+					} else {
+						console.warn("⚠️ Cloudinary tidak mengirim delete_token. Cek Preset 'unsigned' Anda.");
 					}
 				}
 
 				if (isMultiple) {
-					const existing = targetInput.value ? targetInput.value.split(', ') : [];
+					const existing = targetInput.value ? targetInput.value.split(',').map(s=>s.trim()).filter(s=>s!=='') : [];
 					const combined = [...existing, ...uploadedUrls]; 
 					targetInput.value = combined.join(', ');
 				} else {
 					if (targetInput.value) {
-						console.log("Menghapus gambar lama:", targetInput.value);
+						console.log("♻️ Mengganti gambar, menghapus yang lama...");
 						deleteImageFromCloud(targetInput.value);
 					}
 					targetInput.value = uploadedUrls[0];
