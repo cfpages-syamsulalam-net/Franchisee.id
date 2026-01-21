@@ -791,6 +791,14 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 										<div class="form-section-card">
 											<h3 class="section-title">4. Media &amp; Aset Visual</h3>
 											
+											<!-- Tips Box -->
+											<div class="alert alert-primary d-flex align-items-start gap-2 mb-4 p-3" role="alert" style="font-size: 0.85rem;">
+												<i class="fas fa-camera text-primary mt-1"></i>
+												<div>
+													<strong>Tips untuk Franchisor:</strong> Gunakan foto yang terang, tidak buram, dan estetis. Visual yang bagus meningkatkan kepercayaan calon investor hingga 80%.
+												</div>
+											</div>
+
 											<!-- 1. LOGO -->
 											<div class="form-group-row">
 												<div class="label-col"><label class="form-label">Logo Brand <span class="text-danger">*</span></label></div>
@@ -798,34 +806,57 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 													<input type="file" class="form-control file-uploader" id="file_logo" accept="image/*" data-target="logo_url">
 													<input type="hidden" name="logo_url" id="logo_url" required>
 													<div class="upload-preview mt-2" id="preview_logo_url"></div>
+													<!-- Helper Text -->
+													<small class="text-muted d-block mt-1">
+														<i class="fas fa-info-circle me-1"></i> Disarankan format <strong>Persegi (1:1)</strong>. File PNG background transparan lebih baik.
+													</small>
 												</div>
 											</div>
 
+											<!-- 2. COVER -->
 											<div class="form-group-row">
-												<div class="label-col"><label class="form-label">Foto Cover</label></div>
+												<div class="label-col"><label class="form-label">Foto Cover / Banner</label></div>
 												<div class="input-col">
 													<input type="file" class="form-control file-uploader" id="file_cover" accept="image/*" data-target="cover_url">
 													<input type="hidden" name="cover_url" id="cover_url">
 													<div class="upload-preview mt-2" id="preview_cover_url"></div>
+													<!-- Helper Text -->
+													<small class="text-muted d-block mt-1">
+														<i class="fas fa-image me-1"></i> Format <strong>Landscape (16:9)</strong>. Foto ini akan menjadi <em>headline</em> (gambar utama) di halaman profil bisnis Anda.
+													</small>
 												</div>
 											</div>
 
+											<!-- 3. GALERI (MULTIPLE) -->
 											<div class="form-group-row">
-												<div class="label-col"><label class="form-label">Galeri Foto</label></div>
+												<div class="label-col"><label class="form-label">Galeri Aktivitas</label></div>
 												<div class="input-col">
 													<input type="file" class="form-control file-uploader" id="file_gallery" accept="image/*" multiple data-target="gallery_urls" data-type="multiple">
 													<input type="hidden" name="gallery_urls" id="gallery_urls">
-													<small class="helper-text-bottom">Max 5 foto.</small>
 													<div class="upload-preview mt-2 d-flex flex-wrap gap-2" id="preview_gallery_urls"></div>
+													<!-- Helper Text -->
+													<small class="text-muted d-block mt-1">
+														<i class="fas fa-images me-1"></i> Maksimal 5 foto. Upload kombinasi: 
+														<ul class="mb-0 ps-3 mt-1" style="font-size: 0.85rem;">
+															<li>Foto Produk (Makanan/Barang)</li>
+															<li>Suasana Outlet / Antrian Pelanggan (Crowd)</li>
+															<li>Desain Interior / Booth</li>
+														</ul>
+													</small>
 												</div>
 											</div>
 
+											<!-- 4. PROPOSAL (PDF) -->
 											<div class="form-group-row">
-												<div class="label-col"><label class="form-label">Proposal PDF</label></div>
+												<div class="label-col"><label class="form-label">Proposal Penawaran</label></div>
 												<div class="input-col">
 													<input type="file" class="form-control file-uploader" id="file_proposal" accept=".pdf" data-target="proposal_url">
 													<input type="hidden" name="proposal_url" id="proposal_url">
 													<div class="upload-preview mt-2" id="preview_proposal_url"></div>
+													<!-- Helper Text -->
+													<small class="text-muted d-block mt-1">
+														<i class="fas fa-file-pdf me-1"></i> File PDF berisi detail paket usaha, simulasi perhitungan profit (ROI), dan skema kerjasama lengkap (jika ada).
+													</small>
 												</div>
 											</div>
 
@@ -846,7 +877,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 													<label class="form-label">Nama PIC</label>
 												</div>
 												<div class="input-col">
-													<input type="text" class="form-control" name="pic_name">
+													<input type="text" class="form-control" name="pic_name" placeholder="Nama Penanggung Jawab" required>
 												</div>
 											</div>
 											<div class="form-group-row">
