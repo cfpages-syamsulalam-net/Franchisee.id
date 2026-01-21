@@ -1,4 +1,4 @@
-// form-franchise.js v1.13
+// form-franchise.js v1.14
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -969,9 +969,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			} else {
 				if (hiddenInput.hasAttribute('required')) {
 					visibleUploader.classList.add('is-invalid');
-					if (typeof showErrorMsg === "function") {
-						showErrorMsg(visibleUploader, "Wajib upload file.");
-					}
+					if (typeof showErrorMsg === "function") showErrorMsg(visibleUploader, "Wajib upload file.");
 				}
 			}
 		}
@@ -1001,22 +999,36 @@ document.addEventListener('DOMContentLoaded', function() {
 			btnRemove.style.width = '20px';
 			btnRemove.style.height = '20px';
 			btnRemove.innerHTML = '<i class="fas fa-times" style="font-size:10px;"></i>';
-			btnRemove.onclick = function(e) {
+			
+			btnRemove.onclick = async function(e) {
 				e.preventDefault();
+				this.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:10px;"></i>';
+				this.disabled = true;
+
 				const deleteToken = activeUploadTokens[url];
 
 				if (deleteToken) {
-					const formData = new FormData();
-					formData.append('token', deleteToken);
-					
-					fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/delete_by_token`, {
-						method: 'POST',
-						body: formData
-					}).then(res => {
-						if(res.ok) console.log("File dihapus dari Cloudinary:", url);
-					}).catch(err => console.error("Gagal hapus di cloud:", err));
-					
+					try {
+						console.log("⏳ Menghapus dari Cloudinary...", url);
+						const formData = new FormData();
+						formData.append('token', deleteToken);
+						const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/delete_by_token`, {
+							method: 'POST',
+							body: formData
+						});
+						const resData = await response.json();
+						if (resData.result === 'ok') {
+							console.log("✅ Berhasil dihapus dari Cloudinary.");
+						} else {
+							console.warn("⚠️ Gagal hapus di Cloudinary (Mungkin token expired):", resData);
+						}
+
+					} catch (err) {
+						console.error("❌ Error koneksi saat hapus:", err);
+					}
 					delete activeUploadTokens[url];
+				} else {
+					console.log("ℹ️ Token tidak ditemukan (Mungkin hasil refresh page). Hanya menghapus dari form.");
 				}
 
 				let currentUrls = hiddenInput.value.split(', ');
