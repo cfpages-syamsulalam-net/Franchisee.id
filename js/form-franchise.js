@@ -1,4 +1,4 @@
-// form-franchise.js v1.11
+// form-franchise.js v1.12
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -869,7 +869,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	const CLOUD_NAME = 'dmodrgffo';
 	const UPLOAD_PRESET = 'unsigned';
 
-	const fileUploaders = document.querySelectorAll('.file-uploader');
+	const activeUploadTokens = {};
+    const fileUploaders = document.querySelectorAll('.file-uploader');
 
 	fileUploaders.forEach(input => {
 		input.addEventListener('change', async function(e) {
@@ -905,7 +906,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				let uploadedUrls = [];
 
 				for (let i = 0; i < files.length; i++) {
-					const file = files[i];
+                    const file = files[i];
 					const formData = new FormData();
 					formData.append('file', file);
 					formData.append('upload_preset', UPLOAD_PRESET);
@@ -919,6 +920,9 @@ document.addEventListener('DOMContentLoaded', function() {
 					const data = await response.json();
 					
 					uploadedUrls.push(data.secure_url);
+					if (data.delete_token) {
+						activeUploadTokens[data.secure_url] = data.delete_token;
+					}
 				}
 
 				if (isMultiple) {
@@ -975,6 +979,22 @@ document.addEventListener('DOMContentLoaded', function() {
 			btnRemove.innerHTML = '<i class="fas fa-times" style="font-size:10px;"></i>';
 			btnRemove.onclick = function(e) {
 				e.preventDefault();
+				const deleteToken = activeUploadTokens[url];
+
+				if (deleteToken) {
+					const formData = new FormData();
+					formData.append('token', deleteToken);
+					
+					fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/delete_by_token`, {
+						method: 'POST',
+						body: formData
+					}).then(res => {
+						if(res.ok) console.log("File dihapus dari Cloudinary:", url);
+					}).catch(err => console.error("Gagal hapus di cloud:", err));
+					
+					delete activeUploadTokens[url];
+				}
+
 				const inputId = container.id.replace('preview_', '');
 				const input = document.getElementById(inputId);
 				let currentUrls = input.value.split(', ');
