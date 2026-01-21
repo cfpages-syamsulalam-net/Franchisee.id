@@ -19,56 +19,30 @@
 .p-2 { padding: 0.5rem !important; }
 .p-3 { padding: 1rem !important; }
 /* --- Positioning Utilities --- */
-.position-relative {
-    position: relative !important;
-}
-.position-absolute {
-    position: absolute !important;
-}
-.top-0 {
-    top: 0 !important;
-}
-.start-100 {
-    left: 100% !important;
-}
-.translate-middle {
-    transform: translate(-50%, -50%) !important;
-}
-.justify-content-center {
-    justify-content: center !important;
-}
+.position-relative { position: relative !important; }
+.position-absolute { position: absolute !important; }
+.top-0 { top: 0 !important; }
+.start-100 { left: 100% !important; }
+.translate-middle { transform: translate(-50%, -50%) !important; }
+.justify-content-center { justify-content: center !important; }
 /* Alignment */
-.align-items-start {
-    align-items: flex-start !important;
-}
-.align-items-center {
-    align-items: center !important;
-}
-.align-items-baseline {
-    align-items: baseline !important;
-}
+.align-items-start { align-items: flex-start !important; }
+.align-items-center { align-items: center !important; }
+.align-items-baseline { align-items: baseline !important; }
 .text-wrap {
     white-space: normal !important;
     word-wrap: break-word !important;
 }
-.text-center {
-    text-align: center !important;
-}
-.rounded {
-    border-radius: 0.375rem !important;
-}
+.text-center { text-align: center !important; }
+.rounded { border-radius: 0.375rem !important; }
 /* 1. Bentuk Kapsul & Spacing */
-.rounded-pill { 
-    border-radius: 50px !important; 
-}
+.rounded-pill { border-radius: 50px !important; }
 .rounded-pill:hover {
     transform: translateY(-2px);
     transition: transform 0.3s ease;
     box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
 }
-.rounded-circle {
-    border-radius: 50% !important;
-}
+.rounded-circle { border-radius: 50% !important; }
 /* Display */
 .d-inline-block { display: inline-block !important; }
 .d-flex { display: flex !important; }
@@ -76,12 +50,8 @@
 .gap-2 { gap: 0.75rem !important; }
 .shadow-sm { box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
 /* 2. Warna & Border */
-.bg-white { 
-    background-color: #ffffff !important; 
-}
-.bg-soft-success {
-    background-color: #f6fff9;
-}
+.bg-white { background-color: #ffffff !important; }
+.bg-soft-success { background-color: #f6fff9; }
 .bg-soft-danger {
     background-color: #fef2f2 !important;
     border: 1px solid #fecaca !important;
@@ -92,33 +62,19 @@
     font-size: 1.1rem;
     margin-top: 2px;
 }
-.border { 
-    border: 1px solid #e0e0e0 !important; 
-}
+.border { border: 1px solid #e0e0e0 !important; }
 /* Warna Spesifik */
-.border-warning { 
-    border-color: #f8b526 !important; /* Kuning Brand */
-}
-.border-primary { 
-    border-color: #0274be !important; /* Biru Profesional */
-}
-.text-warning { 
-    color: #f8b526 !important; 
-}
-.text-primary { 
-    color: #0274be !important; 
-}
+.border-warning { border-color: #f8b526 !important; }
+.border-primary { border-color: #0274be !important; }
+.text-warning { color: #f8b526 !important; }
+.text-primary { color: #0274be !important; }
 .text-dark {
     color: #333 !important;
     font-size: 0.95rem;
 }
 /* 3. Link Style */
-.text-decoration-none { 
-    text-decoration: none !important; 
-}
-.fw-bold { 
-    font-weight: 700 !important; 
-}
+.text-decoration-none { text-decoration: none !important; }
+.fw-bold { font-weight: 700 !important; }
 /* WRAPPER UTAMA */
 .franchise-listing-form-wrapper {
     max-width: 850px;
