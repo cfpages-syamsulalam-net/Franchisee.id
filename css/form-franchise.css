@@ -345,7 +345,7 @@
 }
 .input-group .form-control {
     flex: 1 1 auto !important;
-    width: 1% !important;
+    width: 25%;
     margin-bottom: 0 !important;
 }
 /* 1. Atur "Rp" (Jika di Kiri) */
