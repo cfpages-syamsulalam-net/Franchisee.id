@@ -2,8 +2,8 @@ name: Auto-Update Franchise Listings
 
 on:
   # 1. Jalan otomatis setiap 1 jam
-  schedule:
-    - cron: '0 * * * *'
+  # schedule:
+  #  - cron: '0 * * * *'
   # 2. Jalan manual via tab "Actions" di GitHub
   workflow_dispatch:
 
@@ -42,6 +42,7 @@ jobs:
           G_CLIENT_EMAIL: ${{ secrets.G_CLIENT_EMAIL }}
           G_PRIVATE_KEY: ${{ secrets.G_PRIVATE_KEY }}
         run: node js/build-listing.js
+        run: node js/build-details.js
 
       # 5. Commit & Push (Snippet Anda + Support New Files)
       - name: Commit and push changes
