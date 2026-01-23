@@ -1,0 +1,67 @@
+name: Auto-Update Franchise Listings
+
+on:
+  # 1. Jalan otomatis setiap 1 jam
+  schedule:
+    - cron: '0 * * * *'
+  # 2. Jalan manual via tab "Actions" di GitHub
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout Code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          # Kita gunakan PAT agar workflow bisa nge-push balik ke repo
+          token: ${{ secrets.GH_PAT }}
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # 3. Install Dependencies (Inline)
+      # Kita install library yang dibutuhkan builder script langsung di sini
+      # Flag --no-save agar package.json (jika ada) tidak berubah
+      - name: Install Dependencies
+        run: npm install googleapis dotenv --no-save
+
+      # 4. Run Builder Script
+      # Script ini akan men-generate file HTML baru berdasarkan data Sheet
+      - name: Run SSG Builder
+        env:
+          G_SHEET_ID: ${{ secrets.G_SHEET_ID }}
+          G_CLIENT_EMAIL: ${{ secrets.G_CLIENT_EMAIL }}
+          G_PRIVATE_KEY: ${{ secrets.G_PRIVATE_KEY }}
+        run: node js/build-listing.js
+
+      # 5. Commit & Push (Snippet Anda + Support New Files)
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Add semua perubahan (termasuk file HTML baru yang digenerate)
+          git add .
+          
+          # Cek apakah ada perubahan yang sudah di-stage
+          if ! git diff --cached --quiet; then
+            echo "⚡ Changes detected. Committing..."
+            git commit -m "🤖 Auto-update: Franchise Listings (SSG Data Sync)"
+            
+            # Setup Remote URL dengan PAT
+            git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}
+            
+            # Push ke branch main
+            git push origin HEAD:main
+          else
+            echo "✅ No changes to commit (Data synced)."
+          fi

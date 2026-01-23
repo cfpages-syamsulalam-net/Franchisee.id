@@ -1,4 +1,4 @@
-// form-franchise.js v1.17
+// /js/form-franchise.js v1.17
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
