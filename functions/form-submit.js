@@ -1,4 +1,4 @@
-// /functions/form-submit.js v2.1
+// /functions/form-submit.js v2.2
 export async function onRequestPost({ request, env }) {
   try {
     const data = await request.json();
@@ -10,7 +10,11 @@ export async function onRequestPost({ request, env }) {
     const finalData = {
       id: crypto.randomUUID().split('-')[0].toUpperCase(),
       timestamp: new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }),
-      ...data
+      ...data,
+      status: "FREE",
+      is_verified: "FALSE",
+      video_url: "",
+      expiry_date: ""
     };
 
     // 1. Auth Google
