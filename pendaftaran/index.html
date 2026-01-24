@@ -624,12 +624,17 @@
 																				</div>
 																			</div>
 																		</div>
-																		<!-- STEP 2: BIAYA (WRAPPER HIDDEN) -->
+																		<!-- STEP 2: BIAYA (REVISED) -->
 																		<div class="form-step" id="step-2">
 																			<div class="form-section-card">
 																				<h3 class="section-title">2. Konsep Outlet &amp; Struktur Biaya</h3>
+																				
+																				<!-- Jenis Paket -->
 																				<div class="form-group-row">
-																					<div class="label-col"><label class="form-label">Jenis Paket Utama <span class="text-danger">*</span></label></div>
+																					<div class="label-col">
+																						<label class="form-label">Jenis Paket Utama <span class="text-danger">*</span></label>
+																						<small class="text-muted d-block" style="font-weight:normal; line-height:1.3;">Pilih satu konsep yang menjadi andalan atau paling laku untuk ditawarkan ke mitra.</small>
+																					</div>
 																					<div class="input-col">
 																						<div class="outlet-grid-container">
 																							<label class="card-radio-box"><input type="radio" name="outlet_type" class="outlet-type" value="type_a" required=""><span class="radio-content"><strong>Tipe A</strong><small>Booth / Gerobak</small></span></label>
@@ -641,10 +646,27 @@
 																						</div>
 																					</div>
 																				</div>
+
+																				<!-- Luas Lokasi (Split Input) -->
 																				<div class="form-group-row">
-																					<div class="label-col"><label class="form-label">Luas Lokasi</label></div>
-																					<div class="input-col"><input type="text" class="form-control" name="location_size" placeholder="Contoh: 3x4 Meter"></div>
+																					<div class="label-col"><label class="form-label">Luas Lokasi Minimal</label></div>
+																					<div class="input-col">
+																						<div class="d-flex align-items-center gap-2">
+																							<div class="input-group">
+																								<input type="number" class="form-control text-center" name="loc_width" placeholder="Lebar" min="1" step="0.1">
+																								<span class="input-group-text">Meter</span>
+																							</div>
+																							<span class="fw-bold text-muted">X</span>
+																							<div class="input-group">
+																								<input type="number" class="form-control text-center" name="loc_length" placeholder="Panjang" min="1" step="0.1">
+																								<span class="input-group-text">Meter</span>
+																							</div>
+																						</div>
+																						<small class="helper-text-bottom">Dimensi minimal ruangan/lahan yang wajib disiapkan mitra.</small>
+																					</div>
 																				</div>
+
+																				<!-- Sewa Lahan -->
 																				<div class="form-group-row" id="rent_wrapper">
 																					<div class="label-col"><label class="form-label" id="rent_label">Rekomendasi Sewa</label></div>
 																					<div class="input-col">
@@ -653,26 +675,34 @@
 																							<input type="text" class="form-control rupiah-input" id="rent_input" name="rent_budget" placeholder="Contoh: 10.000.000">
 																							<span class="input-group-text" id="rent_period_label">/ Bulan</span>
 																						</div>
-																						<small class="helper-text-bottom">Estimasi sewa rekomendasi (referensi mitra).</small>
+																						<small class="helper-text-bottom">Acuan budget sewa lokasi agar bisnis tetap profit (tidak boncos di sewa).</small>
 																					</div>
 																				</div>
-																				<h5 class="mb-3 text-dark fw-bold">Rincian Modal &amp; Profitabilitas</h5>
+
+																				<!-- SEPARATOR & TITLE (Added Margin & Border) -->
+																				<div class="mt-5 pt-4 border-top">
+																					<h5 class="mb-3 text-dark fw-bold">Rincian Modal & Profitabilitas</h5>
+																				</div>
+
 																				<!-- Fee & Contract -->
 																				<div class="form-group-row align-items-center">
 																					<div class="label-col"><label class="form-label">Lisensi &amp; Durasi</label></div>
 																					<div class="input-col">
 																						<div class="custom-grid-2-col">
 																							<div class="grid-item">
-																								<label class="small text-muted mb-1">Franchise Fee</label>
+																								<label class="small text-muted mb-1">Franchise Fee (Join Fee)</label>
 																								<div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-input" id="fee_license" name="fee_license" placeholder="0"></div>
+																								<small class="text-muted" style="font-size: 0.7rem;">Biaya penggunaan merek awal.</small>
 																							</div>
 																							<div class="grid-item">
 																								<label class="small text-muted mb-1">Lama Kontrak</label>
 																								<div class="input-group"><input type="number" class="form-control calc-bep" id="contract_years" name="contract_duration" placeholder="5" min="1" required=""><span class="input-group-text">Tahun</span></div>
+																								<small class="text-muted" style="font-size: 0.7rem;">Masa berlaku kerjasama.</small>
 																							</div>
 																						</div>
 																					</div>
 																				</div>
+
 																				<!-- Royalty -->
 																				<div class="form-group-row">
 																					<div class="label-col"><label class="form-label">Royalty / Management Fee</label></div>
@@ -689,43 +719,52 @@
 																								<option value="year">/ Tahun</option>
 																							</select>
 																						</div>
-																						<small class="helper-text-bottom">Biaya manajemen (Isi 0 jika Free Royalty).</small>
+																						<small class="helper-text-bottom">Biaya bagi hasil rutin. <strong>Isi 0 jika Free Royalty (Keuntungan 100% milik mitra).</strong></small>
 																					</div>
 																				</div>
+
 																				<div class="form-group-row">
 																					<div class="label-col"><label class="form-label">Biaya Iklan (Marketing Fee)</label></div>
 																					<div class="input-col">
 																						<div class="input-group">
 																							<input type="number" class="form-control" name="advertising_fee_percent" placeholder="0" step="0.1" style="max-width: 80px;">
 																							<span class="input-group-text">%</span>
-																							<!-- Pilihan periode agar jelas -->
 																							<select class="form-select bg-light" name="advertising_fee_period">
 																								<option value="month">/ Bulan</option>
 																								<option value="year">/ Tahun</option>
 																							</select>
 																						</div>
-																						<small class="helper-text-bottom">Biaya promosi nasional (jika ada).</small>
+																						<small class="helper-text-bottom">Iuran untuk promosi nasional/digital (Opsional, isi 0 jika tidak ada).</small>
 																					</div>
 																				</div>
+
+																				<!-- CAPEX -->
 																				<div class="form-group-row">
-																					<div class="label-col"><label class="form-label">Biaya Paket Pusat</label></div>
+																					<div class="label-col"><label class="form-label">Biaya Paket Pusat (Capex)</label></div>
 																					<div class="input-col">
 																						<div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-input" id="fee_capex" name="fee_capex" placeholder="0"></div>
+																						<small class="helper-text-bottom">Total harga peralatan, mesin, inventaris, dan bahan baku awal yang dibeli dari pusat.</small>
 																					</div>
 																				</div>
+
+																				<!-- CONSTRUCTION -->
 																				<div class="form-group-row">
-																					<div class="label-col"><label class="form-label" id="construction_label">Estimasi Konstruksi</label></div>
+																					<div class="label-col"><label class="form-label" id="construction_label">Estimasi Renovasi / Konstruksi</label></div>
 																					<div class="input-col">
 																						<div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-input" id="fee_construction" name="fee_construction" placeholder="0"></div>
+																						<small class="helper-text-bottom">Perkiraan biaya tukang, cat, interior, partisi, dll (Biasanya disiapkan mitra mandiri).</small>
 																					</div>
 																				</div>
+
 																				<!-- Omzet & Profit -->
 																				<div class="form-group-row">
 																					<div class="label-col"><label class="form-label">Estimasi Omzet / Bulan</label></div>
 																					<div class="input-col">
 																						<div class="input-group"><span class="input-group-text">Rp</span><input type="text" class="form-control rupiah-input calc-bep" id="omzet_monthly" name="omzet_monthly" placeholder="Contoh: 30.000.000" required=""></div>
+																						<small class="helper-text-bottom">Rata-rata pendapatan kotor per bulan (berdasarkan kinerja outlet yang sudah ada).</small>
 																					</div>
 																				</div>
+
 																				<div class="form-group-row align-items-center">
 																					<div class="label-col"><label class="form-label">Margin Bisnis</label></div>
 																					<div class="input-col">
@@ -734,27 +773,31 @@
 																								<label class="small text-muted mb-1">HPP (%)</label>
 																								<div class="input-group input-group-sm"><input type="number" class="form-control" name="hpp_percent" placeholder="50"><span class="input-group-text">%</span></div>
 																								<small class="text-muted d-block mt-1" style="font-size: 0.7rem; line-height: 1.2;">
-																								*HPP = Harga Pokok Penjualan.
+																								*Harga Pokok Penjualan (Food Cost).
 																								</small>
 																							</div>
 																							<div class="grid-item">
 																								<label class="small text-muted mb-1 fw-bold text-success">Net Profit (%)</label>
 																								<div class="input-group input-group-sm"><input type="number" class="form-control calc-bep" id="net_profit_percent" name="profit_percent" placeholder="20" required=""><span class="input-group-text">%</span></div>
+																								<small class="text-muted d-block mt-1" style="font-size: 0.7rem; line-height: 1.2;">
+																								*Keuntungan bersih setelah dikurangi HPP & Operasional.
+																								</small>
 																							</div>
 																						</div>
 																					</div>
 																				</div>
+
 																				<div class="form-group-row">
 																					<div class="label-col"><label class="form-label">Modal Minimal (Net)</label></div>
 																					<div class="input-col">
 																						<div class="input-group">
 																							<span class="input-group-text">Rp</span>
-																							<!-- Class rupiah-input agar auto format juta -->
 																							<input type="text" class="form-control rupiah-input" name="min_capital" placeholder="0">
 																						</div>
-																						<small class="helper-text-bottom">Batas bawah modal yang wajib disiapkan mitra.</small>
+																						<small class="helper-text-bottom">Angka "Start From" yang akan ditampilkan di kartu depan (misal: Mulai 100 Juta).</small>
 																					</div>
 																				</div>
+
 																				<!-- Dashboard Result -->
 																				<div class="result-dashboard mt-4">
 																					<div class="dashboard-flex-wrapper">
@@ -777,6 +820,7 @@
 																						</div>
 																					</div>
 																				</div>
+
 																				<!-- TOMBOL NAVIGASI STEP 2 -->
 																				<div class="d-flex justify-content-center gap-3 mt-4">
 																					<button type="button" class="btn btn-secondary btn-prev" onclick="prevStep(2)"><i class="fas fa-arrow-left me-2"></i> Kembali</button>
