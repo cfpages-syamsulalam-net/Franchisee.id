@@ -1,4 +1,4 @@
-// /js/form-franchise.js v1.17
+// /js/form-franchise.js v1.18
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -342,6 +342,77 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 	}
 
+	// --- LOGIC PAKET DINAMIS ---
+	window.renderPackageInputs = function(count) {
+		const container = document.getElementById('packages_container');
+		container.innerHTML = ''; // Reset
+		
+		for (let i = 1; i <= count; i++) {
+			const label = i === 1 ? 'Paket 1 (Paling Murah/Utama)' : `Paket ${i}`;
+			const html = `
+			<div class="package-item bg-white p-3 rounded mb-2 border shadow-sm position-relative">
+				<span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-primary" style="font-size:0.7em; margin-left:15px; margin-top:10px;">${i}</span>
+				<div class="row g-2 align-items-end mt-1">
+					<div class="col-7">
+						<label class="small text-muted mb-1">Nama Paket</label>
+						<input type="text" class="form-control form-control-sm" name="pkg_name_${i}" placeholder="Contoh: Paket Silver" required>
+					</div>
+					<div class="col-5">
+						<label class="small text-muted mb-1">Harga Investasi</label>
+						<div class="input-group input-group-sm">
+							<span class="input-group-text bg-light border-end-0">Rp</span>
+							<input type="text" class="form-control border-start-0 rupiah-input pkg-price" name="pkg_price_${i}" placeholder="0" required onblur="updateMinCapital()">
+						</div>
+					</div>
+				</div>
+			</div>`;
+			container.insertAdjacentHTML('beforeend', html);
+		}
+		
+		// Re-init rupiah formatter for new inputs
+		initRupiahInputs();
+	};
+
+	window.toggleAdFeeInput = function(type) {
+		const percentInput = document.getElementById('ad_fee_percent');
+		const nominalInput = document.getElementById('ad_fee_nominal');
+		
+		if (type === 'percent') {
+			percentInput.classList.remove('d-none');
+			nominalInput.classList.add('d-none');
+			nominalInput.value = '';
+		} else {
+			percentInput.classList.add('d-none');
+			nominalInput.classList.remove('d-none');
+			percentInput.value = '';
+		}
+	};
+
+	window.updateMinCapital = function() {
+		// Cari harga terendah dari semua paket
+		const prices = document.querySelectorAll('.pkg-price');
+		let minPrice = Infinity;
+		let found = false;
+
+		prices.forEach(el => {
+			let val = cleanNumber(el.value);
+			if (val > 0) {
+				if (val < minPrice) minPrice = val;
+				found = true;
+			}
+		});
+
+		if (found && minPrice !== Infinity) {
+			document.getElementById('total_display_text').innerText = formatRupiah(minPrice);
+			document.getElementById('total_investment_value').value = minPrice;
+			// Trigger BEP Recalc
+			if(typeof calculateAll === 'function') calculateAll();
+		} else {
+			document.getElementById('total_display_text').innerText = "0";
+            document.getElementById('total_investment_value').value = 0;
+		}
+	};
+
 	// --- KALKULASI TOTAL & BEP ---
 	const totalDisplayText = document.getElementById('total_display_text'); 
 	const totalValueHidden = document.getElementById('total_investment_value'); 
@@ -349,58 +420,35 @@ document.addEventListener('DOMContentLoaded', function() {
 	const bepValueHidden = document.getElementById('bep_value');
 
 	function calculateAll() {
-		const elLicense = document.getElementById('fee_license');
-		const elCapex = document.getElementById('fee_capex');
-		const elConstruct = document.getElementById('fee_construction');
+        // Ambil modal dari paket termurah (hidden input updated by updateMinCapital)
+		const totalModal = parseFloat(document.getElementById('total_investment_value').value) || 0;
+		
 		const elOmzet = document.getElementById('omzet_monthly');
 		const elProfitPercent = document.getElementById('net_profit_percent');
 		const elContract = document.getElementById('contract_years');
-		const elRoyaltyPercent = document.getElementById('royalty_percent');
-		const elRoyaltyBasis = document.getElementById('royalty_basis');
-		const elRoyaltyPeriod = document.getElementById('royalty_period');
-		const totalDisplayText = document.getElementById('total_display_text'); 
-		const totalValueHidden = document.getElementById('total_investment_value'); 
 		const bepDisplayText = document.getElementById('bep_display_text'); 
 		const bepValueHidden = document.getElementById('bep_value');
 		const bepYearsDisplay = document.getElementById('bep_years_display');
 
-		if(!elLicense || !elCapex || !elConstruct) return;
-
-		let feeLicense = cleanNumber(elLicense.value);
-		let feeCapex = cleanNumber(elCapex.value);
-		let feeConstruct = cleanNumber(elConstruct.value);
-		let totalModal = feeLicense + feeCapex + feeConstruct;
-		
-		if(totalDisplayText) totalDisplayText.innerText = formatRupiah(totalModal);
-		if(totalValueHidden) totalValueHidden.value = totalModal;
-
 		if(elOmzet && elProfitPercent && elContract && bepDisplayText) {
 			let omzet = cleanNumber(elOmzet.value);
 			let marginPercent = parseFloat(elProfitPercent.value) || 0;
-			let contractYears = parseFloat(elContract.value) || 0;
-			let contractMonths = contractYears * 12;
-			let royPercent = parseFloat(elRoyaltyPercent.value) || 0;
-			let royBasis = elRoyaltyBasis ? elRoyaltyBasis.value : 'omzet';
-			let royPeriod = elRoyaltyPeriod ? elRoyaltyPeriod.value : 'bulan';
-
-			if (totalModal > 0 && omzet > 0 && marginPercent > 0 && contractYears > 0) {
+			
+            // Simple BEP Calculation: Modal / (Omzet * %Profit)
+			if (totalModal > 0 && omzet > 0 && marginPercent > 0) {
 				let operationalProfit = omzet * (marginPercent / 100);
-				let royaltyDeduction = 0;
-				let basisAmount = (royBasis === 'omzet') ? omzet : operationalProfit;
-				let rawRoyalty = basisAmount * (royPercent / 100);
-				if(royPeriod === 'year') { royaltyDeduction = rawRoyalty / 12; } else { royaltyDeduction = rawRoyalty; }
-
-				let finalProfit = operationalProfit - royaltyDeduction;
-
-				if (finalProfit > 0) {
-					let bepMonths = totalModal / finalProfit;
+				
+                // Abaikan royalti detail di BEP kasar ini untuk simplifikasi user experience
+				// Karena user sudah memasukkan "Net Profit %", asumsinya sudah bersih.
+				
+				if (operationalProfit > 0) {
+					let bepMonths = totalModal / operationalProfit;
 					let formattedBEP = bepMonths.toFixed(1);
-					bepDisplayText.innerText = formattedBEP;
+                    bepDisplayText.innerText = formattedBEP;
 					if(bepValueHidden) bepValueHidden.value = formattedBEP;
 					
 					bepDisplayText.className = 'fw-800'; 
-					if(bepMonths > contractMonths) bepDisplayText.classList.add('text-danger'); 
-					else if (bepMonths > 24) bepDisplayText.classList.add('text-warning'); 
+					if (bepMonths > 24) bepDisplayText.classList.add('text-warning'); 
 					else bepDisplayText.classList.add('text-success'); 
 
 					if (bepYearsDisplay) {
@@ -410,33 +458,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 				} else {
 					bepDisplayText.innerText = "∞"; 
-					bepDisplayText.className = 'fw-800 text-danger';
-					
-					if (bepYearsDisplay) bepYearsDisplay.innerText = "";
 				}
 			} else {
 				bepDisplayText.innerText = "-";
-				bepDisplayText.className = 'fw-800 text-muted';
-				
-				if (bepYearsDisplay) bepYearsDisplay.innerText = "";
 			}
-		}
-
-		if (typeof checkProfitConflict === "function") {
-			checkProfitConflict(); 
 		}
 	}
 
-	const rupiahInputs = document.querySelectorAll('.rupiah-input');
-	rupiahInputs.forEach(input => {
-		input.addEventListener('input', function(e) {
-			let rawValue = this.value.replace(/[^0-9]/g, '');
-			this.value = formatRupiah(rawValue);
-			calculateAll();
-		});
-	});
-	
-	document.querySelectorAll('.calc-bep, .calc-input').forEach(el => {
+	document.querySelectorAll('.calc-bep').forEach(el => {
 		el.addEventListener('input', calculateAll);
 		el.addEventListener('change', calculateAll);
 	});
@@ -1095,5 +1124,36 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		});
 	}
+
+	// --- HELPER: RE-INIT RUPIAH LISTENER (Penting untuk elemen dinamis) ---
+    function initRupiahInputs() {
+        const moneyInputs = document.querySelectorAll('.rupiah-input');
+        moneyInputs.forEach(input => {
+            // Hapus listener lama biar gak double (optional, tapi aman)
+            input.removeEventListener('blur', handleRupiahBlur);
+            input.removeEventListener('input', handleRupiahInput);
+
+            input.addEventListener('blur', handleRupiahBlur);
+            input.addEventListener('input', handleRupiahInput);
+        });
+    }
+
+    function handleRupiahInput(e) {
+        let rawValue = this.value.replace(/[^0-9]/g, '');
+        this.value = formatRupiah(rawValue);
+    }
+
+    function handleRupiahBlur(e) {
+        let rawVal = cleanNumber(this.value); 
+        // Logic Auto Juta
+        if (rawVal > 0 && rawVal < 1000) {
+             rawVal = rawVal * 1000000;
+             this.value = formatRupiah(rawVal);
+             flashHighlight(this);
+        }
+        updateMinCapital();
+    }
+
+	renderPackageInputs(1);
 
 });
