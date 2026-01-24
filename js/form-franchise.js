@@ -1,4 +1,4 @@
-// /js/form-franchise.js v1.18
+// /js/form-franchise.js v1.19
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -389,6 +389,12 @@ document.addEventListener('DOMContentLoaded', function() {
 	};
 
 	window.updateMinCapital = function() {
+		// SAFETY CHECK: Pastikan elemen target ada dulu
+		const elTotalDisplay = document.getElementById('total_display_text');
+		const elTotalHidden = document.getElementById('total_investment_value');
+		
+		if (!elTotalDisplay || !elTotalHidden) return;
+
 		// Cari harga terendah dari semua paket
 		const prices = document.querySelectorAll('.pkg-price');
 		let minPrice = Infinity;
@@ -403,13 +409,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 
 		if (found && minPrice !== Infinity) {
-			document.getElementById('total_display_text').innerText = formatRupiah(minPrice);
-			document.getElementById('total_investment_value').value = minPrice;
+			elTotalDisplay.innerText = formatRupiah(minPrice);
+			elTotalHidden.value = minPrice;
 			// Trigger BEP Recalc
-			if(typeof calculateAll === 'function') calculateAll();
+			calculateAll();
 		} else {
-			document.getElementById('total_display_text').innerText = "0";
-            document.getElementById('total_investment_value').value = 0;
+			elTotalDisplay.innerText = "0";
+            elTotalHidden.value = 0;
 		}
 	};
 
@@ -420,9 +426,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	const bepValueHidden = document.getElementById('bep_value');
 
 	function calculateAll() {
-        // Ambil modal dari paket termurah (hidden input updated by updateMinCapital)
-		const totalModal = parseFloat(document.getElementById('total_investment_value').value) || 0;
-		
+        // 1. Definisikan semua elemen
+        const elTotalHidden = document.getElementById('total_investment_value');
 		const elOmzet = document.getElementById('omzet_monthly');
 		const elProfitPercent = document.getElementById('net_profit_percent');
 		const elContract = document.getElementById('contract_years');
@@ -430,38 +435,41 @@ document.addEventListener('DOMContentLoaded', function() {
 		const bepValueHidden = document.getElementById('bep_value');
 		const bepYearsDisplay = document.getElementById('bep_years_display');
 
-		if(elOmzet && elProfitPercent && elContract && bepDisplayText) {
-			let omzet = cleanNumber(elOmzet.value);
-			let marginPercent = parseFloat(elProfitPercent.value) || 0;
+        // 2. SAFETY CHECK: Jika salah satu elemen inti hilang, JANGAN LANJUT (Biar gak error)
+        if (!elTotalHidden || !elOmzet || !elProfitPercent || !elContract || !bepDisplayText) {
+            return; 
+        }
+
+        // 3. Logic Hitungan
+		const totalModal = parseFloat(elTotalHidden.value) || 0;
+		let omzet = cleanNumber(elOmzet.value);
+		let marginPercent = parseFloat(elProfitPercent.value) || 0;
 			
-            // Simple BEP Calculation: Modal / (Omzet * %Profit)
-			if (totalModal > 0 && omzet > 0 && marginPercent > 0) {
-				let operationalProfit = omzet * (marginPercent / 100);
+        // Simple BEP Calculation: Modal / (Omzet * %Profit)
+		if (totalModal > 0 && omzet > 0 && marginPercent > 0) {
+			let operationalProfit = omzet * (marginPercent / 100);
 				
-                // Abaikan royalti detail di BEP kasar ini untuk simplifikasi user experience
-				// Karena user sudah memasukkan "Net Profit %", asumsinya sudah bersih.
-				
-				if (operationalProfit > 0) {
-					let bepMonths = totalModal / operationalProfit;
-					let formattedBEP = bepMonths.toFixed(1);
-                    bepDisplayText.innerText = formattedBEP;
-					if(bepValueHidden) bepValueHidden.value = formattedBEP;
+			if (operationalProfit > 0) {
+				let bepMonths = totalModal / operationalProfit;
+				let formattedBEP = bepMonths.toFixed(1);
 					
-					bepDisplayText.className = 'fw-800'; 
-					if (bepMonths > 24) bepDisplayText.classList.add('text-warning'); 
-					else bepDisplayText.classList.add('text-success'); 
+                bepDisplayText.innerText = formattedBEP;
+				if(bepValueHidden) bepValueHidden.value = formattedBEP;
+					
+				bepDisplayText.className = 'fw-800'; 
+				if (bepMonths > 24) bepDisplayText.classList.add('text-warning'); 
+				else bepDisplayText.classList.add('text-success'); 
 
-					if (bepYearsDisplay) {
-						let bepYears = bepMonths / 12;
-						bepYearsDisplay.innerText = `(± ${bepYears.toFixed(1)} Tahun)`;
-					}
-
-				} else {
-					bepDisplayText.innerText = "∞"; 
+				if (bepYearsDisplay) {
+					let bepYears = bepMonths / 12;
+					bepYearsDisplay.innerText = `(± ${bepYears.toFixed(1)} Tahun)`;
 				}
+
 			} else {
-				bepDisplayText.innerText = "-";
+				bepDisplayText.innerText = "∞"; 
 			}
+		} else {
+			bepDisplayText.innerText = "-";
 		}
 	}
 
