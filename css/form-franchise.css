@@ -612,6 +612,32 @@
     text-decoration: underline;
 }
 
+/* --- UTILITIES & BADGE STYLE --- */
+/* Coordinates */
+.start-0 {
+    left: 0 !important;
+}
+
+/* Badge Component */
+.badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+}
+
+/* Colors */
+.bg-primary {
+    background-color: #0d6efd !important; /* Biru standar, bisa diganti warna brandmu */
+    color: white !important;
+}
+
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button {
 -webkit-appearance: none;
