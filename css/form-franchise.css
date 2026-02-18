@@ -647,6 +647,84 @@ input[type=number] {
 -moz-appearance: textfield;
 }
 
+/* --- COMPACT PACKAGE STYLE --- */
+/* 1. Container Kartu per Paket */
+.package-card-compact {
+    display: flex;
+    align-items: stretch;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+.package-card-compact:hover {
+    border-color: #f8b526; /* Highlight kuning saat hover */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* 2. Kolom Nomor (Kiri) */
+.pkg-num-col {
+    background-color: #f8f9fa;
+    border-right: 1px solid #eee;
+    width: 50px; /* Lebar fix kecil */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.pkg-circle {
+    width: 28px;
+    height: 28px;
+    background-color: #333;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+/* Warna beda untuk paket 1 (utama) */
+.package-card-compact:first-child .pkg-circle {
+    background-color: #0d6efd; /* Biru */
+}
+
+/* 3. Kolom Form (Kanan) */
+.pkg-form-col {
+    flex-grow: 1;
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px; /* Jarak antar baris form */
+}
+
+/* 4. Mini Row (Label Kiri - Input Kanan) */
+.mini-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+.mini-label {
+    width: 35%; /* Samakan proporsi dengan form utama */
+    font-size: 0.85rem;
+    color: #555;
+    font-weight: 600;
+    padding-right: 10px;
+}
+.mini-input {
+    width: 65%;
+}
+
+/* Tweak Input Group di dalam paket agar tidak terlalu tinggi */
+.mini-input .form-control-sm, 
+.mini-input .input-group-sm .input-group-text {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+}
+
 /* RESPONSIVE (MOBILE) */
 @media (max-width: 768px) {
     .form-group-row {
@@ -690,5 +768,23 @@ input[type=number] {
 @media (min-width: 768px) {
     .border-end-md {
         border-right: 2px dashed #e0e0e0;
+    }
+}
+
+@media (max-width: 576px) {
+    .mini-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .mini-label {
+        width: 100%;
+        margin-bottom: 2px;
+    }
+    .mini-input {
+        width: 100%;
+    }
+    .pkg-form-col {
+        padding: 12px;
+        gap: 12px;
     }
 }

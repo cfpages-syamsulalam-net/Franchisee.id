@@ -345,32 +345,49 @@ document.addEventListener('DOMContentLoaded', function() {
 	// --- LOGIC PAKET DINAMIS ---
 	window.renderPackageInputs = function(count) {
 		const container = document.getElementById('packages_container');
-		container.innerHTML = ''; // Reset
+		container.innerHTML = '';
 		
 		for (let i = 1; i <= count; i++) {
-			const label = i === 1 ? 'Paket 1 (Paling Murah/Utama)' : `Paket ${i}`;
+			// Tentukan placeholder nama paket
+			let pkgPlaceholder = "Contoh: Paket Silver";
+			if(i === 1) pkgPlaceholder = "Contoh: Paket Regular (Utama)";
+			if(i === 2) pkgPlaceholder = "Contoh: Paket Premium";
+
 			const html = `
-			<div class="package-item bg-white p-3 rounded mb-2 border shadow-sm position-relative">
-				<span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-primary" style="font-size:0.7em; margin-left:15px; margin-top:10px;">${i}</span>
-				<div class="row g-2 align-items-end mt-1">
-					<div class="col-7">
-						<label class="small text-muted mb-1">Nama Paket</label>
-						<input type="text" class="form-control form-control-sm" name="pkg_name_${i}" placeholder="Contoh: Paket Silver" required>
+			<div class="package-card-compact">
+				<!-- Kolom Nomor (Kiri) -->
+				<div class="pkg-num-col">
+					<div class="pkg-circle">${i}</div>
+				</div>
+				
+				<!-- Kolom Form (Kanan) -->
+				<div class="pkg-form-col">
+					<!-- Baris Nama Paket -->
+					<div class="mini-row">
+						<div class="mini-label">Nama Paket <span class="text-danger">*</span></div>
+						<div class="mini-input">
+							<input type="text" class="form-control form-control-sm" name="pkg_name_${i}" placeholder="${pkgPlaceholder}" required>
+						</div>
 					</div>
-					<div class="col-5">
-						<label class="small text-muted mb-1">Harga Investasi</label>
-						<div class="input-group input-group-sm">
-							<span class="input-group-text bg-light border-end-0">Rp</span>
-							<input type="text" class="form-control border-start-0 rupiah-input pkg-price" name="pkg_price_${i}" placeholder="0" required onblur="updateMinCapital()">
+					
+					<!-- Baris Harga -->
+					<div class="mini-row">
+						<div class="mini-label">Harga Investasi <span class="text-danger">*</span></div>
+						<div class="mini-input">
+							<div class="input-group input-group-sm">
+								<span class="input-group-text bg-light">Rp</span>
+								<input type="text" class="form-control rupiah-input pkg-price" name="pkg_price_${i}" placeholder="0" required onblur="updateMinCapital()">
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>`;
+			
 			container.insertAdjacentHTML('beforeend', html);
 		}
 		
-		// Re-init rupiah formatter for new inputs
-		initRupiahInputs();
+		// Re-init rupiah formatter untuk input baru
+		if(typeof initRupiahInputs === 'function') initRupiahInputs();
 	};
 
 	window.toggleAdFeeInput = function(type) {
