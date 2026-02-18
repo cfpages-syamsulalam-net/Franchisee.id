@@ -1,4 +1,4 @@
-// /js/form-franchise.js v1.20
+// /js/form-franchise.js v1.21
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -345,32 +345,21 @@ document.addEventListener('DOMContentLoaded', function() {
 	// --- LOGIC PAKET DINAMIS ---
 	window.renderPackageInputs = function(count) {
 		const container = document.getElementById('packages_container');
-		container.innerHTML = '';
+		container.innerHTML = ''; 
 		
 		for (let i = 1; i <= count; i++) {
-			// Tentukan placeholder nama paket
-			let pkgPlaceholder = "Contoh: Paket Silver";
-			if(i === 1) pkgPlaceholder = "Contoh: Paket Regular (Utama)";
-			if(i === 2) pkgPlaceholder = "Contoh: Paket Premium";
+			let pkgPlaceholder = i === 1 ? "Contoh: Paket Regular (Utama)" : (i === 2 ? "Contoh: Paket Premium" : "Contoh: Paket Silver");
 
 			const html = `
 			<div class="package-card-compact">
-				<!-- Kolom Nomor (Kiri) -->
-				<div class="pkg-num-col">
-					<div class="pkg-circle">${i}</div>
-				</div>
-				
-				<!-- Kolom Form (Kanan) -->
+				<div class="pkg-num-col"><div class="pkg-circle">${i}</div></div>
 				<div class="pkg-form-col">
-					<!-- Baris Nama Paket -->
 					<div class="mini-row">
 						<div class="mini-label">Nama Paket <span class="text-danger">*</span></div>
 						<div class="mini-input">
 							<input type="text" class="form-control form-control-sm" name="pkg_name_${i}" placeholder="${pkgPlaceholder}" required>
 						</div>
 					</div>
-					
-					<!-- Baris Harga -->
 					<div class="mini-row">
 						<div class="mini-label">Harga Investasi <span class="text-danger">*</span></div>
 						<div class="mini-input">
@@ -382,12 +371,27 @@ document.addEventListener('DOMContentLoaded', function() {
 					</div>
 				</div>
 			</div>`;
-			
 			container.insertAdjacentHTML('beforeend', html);
 		}
 		
-		// Re-init rupiah formatter untuk input baru
+		// 1. Re-init Formatter Rupiah
 		if(typeof initRupiahInputs === 'function') initRupiahInputs();
+
+		// 2. LOGIC TAMBAHAN: Restore Data Lama (Isi ulang data jika ada di storage)
+		const savedData = localStorage.getItem('franchise_form_autosave');
+		if (savedData) {
+			const data = JSON.parse(savedData);
+			container.querySelectorAll('input').forEach(inp => {
+				if(data[inp.name]) inp.value = data[inp.name]; // Restore value
+			});
+			updateMinCapital(); // Hitung ulang total
+		}
+
+		// 3. LOGIC TAMBAHAN: Enable Auto Save untuk input baru ini
+		container.querySelectorAll('input').forEach(input => {
+			input.addEventListener('input', saveToStorage);
+			input.addEventListener('change', saveToStorage);
+		});
 	};
 
 	window.toggleAdFeeInput = function(type) {
