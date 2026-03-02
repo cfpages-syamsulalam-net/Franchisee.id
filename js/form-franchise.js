@@ -1,4 +1,4 @@
-// /js/form-franchise.js v1.21
+// /js/form-franchise.js v1.22
 document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 1. DEFINISI FUNGSI-FUNGSI UTAMA
@@ -351,21 +351,31 @@ document.addEventListener('DOMContentLoaded', function() {
 			let pkgPlaceholder = i === 1 ? "Contoh: Paket Regular (Utama)" : (i === 2 ? "Contoh: Paket Premium" : "Contoh: Paket Silver");
 
 			const html = `
-			<div class="package-card-compact">
-				<div class="pkg-num-col"><div class="pkg-circle">${i}</div></div>
-				<div class="pkg-form-col">
-					<div class="mini-row">
-						<div class="mini-label">Nama Paket <span class="text-danger">*</span></div>
-						<div class="mini-input">
-							<input type="text" class="form-control form-control-sm" name="pkg_name_${i}" placeholder="${pkgPlaceholder}" required>
-						</div>
+			<div class="package-card-compact bg-white border rounded mb-2 overflow-hidden">
+				<div class="d-flex align-items-stretch">
+					<!-- Kolom Nomor -->
+					<div class="bg-light border-end d-flex align-items-center justify-content-center" style="width: 45px;">
+						<span class="badge rounded-pill bg-secondary">${i}</span>
 					</div>
-					<div class="mini-row">
-						<div class="mini-label">Harga Investasi <span class="text-danger">*</span></div>
-						<div class="mini-input">
+					<!-- Kolom Form -->
+					<div class="p-2 flex-grow-1">
+						<!-- Baris Nama -->
+						<div class="d-flex align-items-center mb-1">
+							<label class="small text-muted fw-bold me-2" style="width: 30%;">Nama Paket</label>
+							<input type="text" class="form-control form-control-sm" name="pkg_name_${i}" placeholder="${pkgPlaceholder}" required oninput="saveToStorage()">
+						</div>
+						<!-- Baris Harga -->
+						<div class="d-flex align-items-center">
+							<label class="small text-muted fw-bold me-2" style="width: 30%;">Harga Inv.</label>
 							<div class="input-group input-group-sm">
 								<span class="input-group-text bg-light">Rp</span>
-								<input type="text" class="form-control rupiah-input pkg-price" name="pkg_price_${i}" placeholder="0" required onblur="updateMinCapital()">
+								<input type="text" class="form-control rupiah-input pkg-price" 
+									name="pkg_price_${i}" 
+									placeholder="0" 
+									required 
+									oninput="updateMinCapital(); saveToStorage()" 
+									onkeyup="updateMinCapital()"
+									onblur="updateMinCapital()"> 
 							</div>
 						</div>
 					</div>
@@ -374,24 +384,18 @@ document.addEventListener('DOMContentLoaded', function() {
 			container.insertAdjacentHTML('beforeend', html);
 		}
 		
-		// 1. Re-init Formatter Rupiah
+		// Init format rupiah & Restore data
 		if(typeof initRupiahInputs === 'function') initRupiahInputs();
-
-		// 2. LOGIC TAMBAHAN: Restore Data Lama (Isi ulang data jika ada di storage)
+		
 		const savedData = localStorage.getItem('franchise_form_autosave');
 		if (savedData) {
 			const data = JSON.parse(savedData);
 			container.querySelectorAll('input').forEach(inp => {
-				if(data[inp.name]) inp.value = data[inp.name]; // Restore value
+				if(data[inp.name]) inp.value = data[inp.name];
 			});
-			updateMinCapital(); // Hitung ulang total
+			// Trigger hitung ulang setelah restore
+			setTimeout(updateMinCapital, 500);
 		}
-
-		// 3. LOGIC TAMBAHAN: Enable Auto Save untuk input baru ini
-		container.querySelectorAll('input').forEach(input => {
-			input.addEventListener('input', saveToStorage);
-			input.addEventListener('change', saveToStorage);
-		});
 	};
 
 	window.toggleAdFeeInput = function(type) {
@@ -410,33 +414,38 @@ document.addEventListener('DOMContentLoaded', function() {
 	};
 
 	window.updateMinCapital = function() {
-		// SAFETY CHECK: Pastikan elemen target ada dulu
+		// 1. Ambil elemen hidden & display
 		const elTotalDisplay = document.getElementById('total_display_text');
 		const elTotalHidden = document.getElementById('total_investment_value');
 		
 		if (!elTotalDisplay || !elTotalHidden) return;
 
-		// Cari harga terendah dari semua paket
+		// 2. Cari harga terendah dari semua paket
 		const prices = document.querySelectorAll('.pkg-price');
 		let minPrice = Infinity;
 		let found = false;
 
 		prices.forEach(el => {
-			let val = cleanNumber(el.value);
+			let val = parseFloat(el.value.replace(/\./g, '')) || 0;
 			if (val > 0) {
 				if (val < minPrice) minPrice = val;
 				found = true;
 			}
 		});
 
+		// 3. Update Nilai
 		if (found && minPrice !== Infinity) {
-			elTotalDisplay.innerText = formatRupiah(minPrice);
+			elTotalDisplay.innerText = minPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 			elTotalHidden.value = minPrice;
-			// Trigger BEP Recalc
-			calculateAll();
 		} else {
 			elTotalDisplay.innerText = "0";
-            elTotalHidden.value = 0;
+			elTotalHidden.value = 0;
+		}
+
+		// 4. PENTING: Panggil fungsi kalkulasi BEP
+		// Ini yang bikin dashboard bawah otomatis berubah
+		if(typeof calculateAll === 'function') {
+			calculateAll();
 		}
 	};
 
