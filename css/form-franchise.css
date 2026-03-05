@@ -788,3 +788,24 @@ input[type=number] {
         gap: 12px;
     }
 }
+
+/* ==========================================
+   Klaim Brand & Autocomplete Styles
+   ========================================== */
+.registration-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px; flex-wrap: wrap; }
+.tab-btn { padding: 12px 24px; border: none; background: #f8f9fa; border-radius: 50px; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s ease; border: 1px solid #ddd; }
+.tab-btn i { font-size: 1.1em; }
+.tab-btn.active { background: #ffc107; color: #000; border-color: #ffb300; box-shadow: 0 4px 10px rgba(255,193,7,0.3); transform: translateY(-2px); }
+.tab-btn:hover:not(.active) { background: #e9ecef; }
+.tab-content { animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.data-gap { background-color: rgba(255, 193, 7, 0.05); border-left: 4px solid #ffc107 !important; transition: all 0.3s ease; }
+.data-gap:focus-within { background-color: rgba(255, 193, 7, 0.1); }
+.autocomplete-wrapper { position: relative; width: 100%; }
+.autocomplete-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; z-index: 1000; max-height: 250px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 0 0 8px 8px; }
+.suggestion-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background-color: #fff9e6; }
+.suggestion-item .brand-name { font-weight: 600; color: #333; }
+.suggestion-item .brand-cat { font-size: 0.85em; color: #888; background: #f0f0f0; padding: 2px 8px; border-radius: 4px; }

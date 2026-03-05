@@ -134,8 +134,20 @@ async function build() {
             }
         });
 
-        // 3. Merge All
+        // Merge All
         const allData = [...dataFranchisor, ...dataUnclaimed];
+
+        // --- NEW: Generate Autocomplete JSON for Unclaimed ---
+        const autocompleteData = dataUnclaimed.map(i => ({
+            id: i.id,
+            brand_name: i.brand_name,
+            category: i.category,
+            min_capital: i.min_capital
+        }));
+        const DATA_DIR = path.join(__dirname, '../data');
+        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+        fs.writeFileSync(path.join(DATA_DIR, 'unclaimed-brands.json'), JSON.stringify(autocompleteData));
+        console.log(`✅ Generated data/unclaimed-brands.json (${autocompleteData.length} brands).`);
 
         // 4. Sort Strategy
         // - VERIFIED (Paid)

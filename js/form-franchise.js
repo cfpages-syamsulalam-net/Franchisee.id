@@ -1228,10 +1228,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function fetchUnclaimedBrands() {
         try {
-            const response = await fetch('/api/get-franchises?tab=UNCLAIMED');
-            const data = await response.json();
-            unclaimedBrands = data.data || [];
-            console.log("Loaded unclaimed brands:", unclaimedBrands.length);
+            // Fetch from static JSON generated during SSG build
+            const response = await fetch('/data/unclaimed-brands.json');
+            unclaimedBrands = await response.json();
+            console.log("Loaded unclaimed brands (Static):", unclaimedBrands.length);
 
             // Auto-fill if claim slug is present
             const urlParams = new URLSearchParams(window.location.search);
@@ -1244,7 +1244,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } catch (error) {
-            console.error("Error fetching unclaimed brands:", error);
+            console.error("Error fetching unclaimed brands JSON:", error);
+            // Fallback to API if JSON fails (optional, but good for robustness during transition)
+            try {
+                const response = await fetch('/api/get-franchises?tab=UNCLAIMED');
+                const data = await response.json();
+                unclaimedBrands = data.data || [];
+            } catch (apiErr) {
+                console.error("Fallback API also failed:", apiErr);
+            }
         }
     }
 
