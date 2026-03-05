@@ -1,51 +1,44 @@
 # GEMINI.md - Franchise.id Project Context
 
-This document provides instructional context for Gemini CLI when working on the **Franchise.id** project.
+This document is the **Single Source of Truth** for the Franchise.id project, combining technical implementation details with the strategic roadmap.
 
 ## Project Overview
-Franchise.id is a static site project that originated as a WordPress/Elementor site. It has been converted into a high-performance static site hosted on **Cloudflare Pages**, utilizing **Cloudflare Functions** for serverless backend logic and **Google Sheets** (and **Supabase**) as the data source.
+Franchise.id is a high-performance directory platform (franchise.id, franchisee.id, franchisor.id) connecting Franchisors with potential Franchisees. It is a **WordPress-to-Static** conversion hosted on **Cloudflare Pages**, utilizing **Cloudflare Functions** and **GitHub Actions** for dynamic logic and automation.
 
 ### Core Tech Stack
-- **Hosting:** Cloudflare Pages
-- **Backend:** Cloudflare Functions (Serverless)
-- **Data Source:** Google Sheets API (Spreadsheet ID: `1p3Ke25SYZx0Yanv2MHy73eCbK_jE-qgzVC7ue5Tu3mU`)
-- **Database:** Supabase (for extended features and more complex data)
-- **Image Optimization:** Cloudinary
-- **Frontend:** Static HTML/CSS (exported from WordPress/Elementor) + Custom JavaScript
+- **Hosting:** Cloudflare Pages (Static HTML/CSS/JS).
+- **Backend:** Cloudflare Functions (Edge Runtime) for forms and API access.
+- **Automation (SSG):** Node.js scripts running via GitHub Actions (CRON: 15m to 3h).
+- **CMS:** Google Sheets (Spreadsheet ID: `1p3Ke25SYZx0Yanv2MHy73eCbK_jE-qgzVC7ue5Tu3mU`).
+- **Database/Auth:** Supabase (for analytics, user accounts, and dashboards).
+- **Assets:** Cloudinary (Direct browser uploads + AI-powered optimization).
+
+## Current Goals & Roadmap
+For detailed technical plans, feature requests, and the current to-do list, refer to **[PRD.md](./PRD.md)**.
+
+### Active Priorities
+1.  **Hybrid SSG Engine (Phase 1):** Integrate "Unclaimed" brands into the main listing page.
+2.  **Franchise Claiming:** Implement the third "Claim Brand" tab in the registration form.
+3.  **Action Optimization:** Audit and enhance GitHub Actions for performance and real-time sync.
 
 ## Architecture & Data Flow
-1.  **Data Management:** Franchise data is managed in a Google Spreadsheet with three key tabs:
-    - `FRANCHISOR`: Full details for active, registered, and subscribed franchise members.
-    - `FRANCHISEE`: Investor/lead data captured from forms.
-    - `UNCLAIMED`: Potential franchise listings for brands that are not yet members/registered.
-2.  **Franchise Claiming Workflow:**
-    - Potential franchisors in the `UNCLAIMED` tab can "Claim" their page to become active members.
-    - **Process:** The brand completes the missing data fields (the schema gap between `UNCLAIMED` and `FRANCHISOR`).
-    - **Transition:** Upon successful claim/registration, the record is moved to the `FRANCHISOR` tab and **permanently deleted** from the `UNCLAIMED` tab.
-3.  **Build Process:** Static pages are generated using Node.js scripts (`js/build-listing.js`, `js/build-details.js`) that fetch data from Google Sheets and inject it into HTML templates.
-4.  **Serverless Logic:**
-    - `functions/get-franchises.js`: Fetches and maps franchise data from Google Sheets with 1-hour public caching and Cloudinary optimization.
-    - `functions/form-submit.js`: Handles lead generation and franchise registration forms, pushing data to Google Sheets and Supabase.
-5.  **Client-side Interactivity:** Custom JS in `js/` handles dynamic listing rendering and form validations.
+1.  **Data Tiers:** `UNCLAIMED` (Scraped/Potential), `FREE` (Claimed/Basic), `VERIFIED` (Paid/Priority).
+2.  **Claiming Workflow:** Transition brands from `UNCLAIMED` to `FRANCHISOR` upon data completion.
+3.  **SSG Engine:** Scripts in `js/` fetch data and inject into `templates/` via GitHub Actions.
+4.  **Serverless Logic:** Functions handle API access and form submissions with custom JWT auth.
+
+## Key Technical Components
+- **Smart Form Logic (`js/form-franchise.js`):** Real-time calculations (BEP, ROI) and data validation.
+- **Cloudinary Module:** Automatic image optimization and direct browser uploads.
+- **SEO & Analytics:** Priority sorting and automatic JSON-LD injection for Verified pages.
 
 ## Key Directories & Files
-- `/functions/`: Serverless functions for Cloudflare Pages.
-- `/js/`: Client-side scripts and build-time generation scripts.
-- `/templates/`: HTML templates (e.g., `peluang-usaha-tpl.html`, `detail-franchise-tpl.html`) used by build scripts.
-- `/wp-content/` & `/wp-includes/`: Assets and core files retained from the original WordPress export.
-
-## Data Schemas (CSV Mappings)
-- **FRANCHISOR (`franchisors.csv`):** `id`, `brand_name`, `category`, `fee_license`, `total_investment_value`, `logo_url`, `cover_url`, `estimated_bep_months`, `nib_number`, `full_desc`, etc.
-- **FRANCHISEE (`franchisee.csv`):** `id`, `timestamp`, `name`, `whatsapp`, `email`, `location`, `budget`, `interest`.
-- **UNCLAIMED (`unclaimed.csv`):** `brand_name`, `category`, `subcategory`, `label`, `min_capital`, `max_capital`, `full_desc`.
-
-## Building and Running
-- **Build Listing:** `node js/build-listing.js`
-- **Build Details:** `node js/build-details.js`
-- **Local Development:** Uses `wrangler pages dev .` for testing Cloudflare Functions and the static site locally.
-- **Environment Variables:** Requires `G_CLIENT_EMAIL`, `G_PRIVATE_KEY`, `G_SHEET_ID`, and Supabase credentials.
+- `/functions/`: Serverless edge functions.
+- `/js/`: Client-side logic and SSG builder scripts.
+- `/templates/`: Source HTML templates for the SSG engine.
+- `PRD.md`: Technical project roadmap and feature details.
 
 ## Development Conventions
-- **Static First:** Always prefer pre-generating HTML during the build phase for SEO. Use Cloudflare Functions only for dynamic/secure operations.
-- **Cloudinary Optimization:** Strictly use `e_bgremoval`, `c_pad`, `f_auto`, `q_auto` for all brand assets to ensure visual consistency.
-- **Surgical HTML Edits:** Retain the original Elementor DOM structure when modifying static exports to avoid breaking legacy styles.
+- **Static First:** Pre-generate all content pages for SEO.
+- **Surgical HTML Edits:** Protect Elementor's DOM structure.
+- **Auth Implementation:** Native Web Crypto API in Functions for speed.
