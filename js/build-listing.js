@@ -7,7 +7,8 @@ const { google } = require('googleapis');
 // CONFIG
 const TEMPLATE_PATH = path.join(__dirname, '../templates/peluang-usaha-tpl.html');
 const OUTPUT_PATH = path.join(__dirname, '../peluang-usaha/index.html');
-const SHEET_TAB = 'FRANCHISOR';
+const TAB_FRANCHISOR = 'FRANCHISOR';
+const TAB_UNCLAIMED = 'UNCLAIMED';
 
 // HELPER: Slugify
 function slugify(text) {
@@ -48,13 +49,20 @@ function generateCard(item, index) {
     if (desc.length > 90) desc = desc.substring(0, 90) + '...';
 
     // Tiering Logic
-    const isVerified = (item.status || '').toUpperCase() === 'VERIFIED';
-    const badge = isVerified ? `<i class="fas fa-check-circle" style="color:#2980b9; margin-left:4px;" title="Verified"></i>` : '';
-    const modal = formatRupiah(item.total_investment_value || item.fee_capex);
+    const tier = (item.status || 'UNCLAIMED').toUpperCase();
+    let badge = '';
+    
+    if (tier === 'VERIFIED') {
+        badge = `<i class="fas fa-check-circle" style="color:#2980b9; margin-left:4px;" title="Verified"></i>`;
+    } else if (tier === 'UNCLAIMED') {
+        badge = `<span style="font-size: 10px; background: #eee; color: #777; padding: 1px 5px; border-radius: 3px; margin-left: 5px; font-weight: normal; vertical-align: middle;">Belum Diklaim</span>`;
+    }
+
+    const modal = formatRupiah(item.total_investment_value || item.min_capital);
 
     // HTML Structure (PERSIS ELEMENTOR)
     return `
-    <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item">
+    <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${tier.toLowerCase()}-tier">
         <a class="uc_post_grid_style_one_image" href="${link}">
             <div class="uc_post_image">
                 <img loading="lazy" src="${imgUrl}" alt="${item.brand_name}" width="300" height="150">
@@ -81,7 +89,7 @@ function generateCard(item, index) {
                 </div>
                 <div class="uc_post_button">
                     <a class="uc_more_btn" href="${link}">
-                        <div class="uc_btn_inner"><div class="uc_btn_txt">Info Franchise</div></div>
+                        <div class="uc_btn_inner"><div class="uc_btn_txt">${tier === 'UNCLAIMED' ? 'Klaim Brand' : 'Info Franchise'}</div></div>
                     </a>
                 </div>
             </div>
@@ -91,24 +99,58 @@ function generateCard(item, index) {
 
 // MAIN BUILDER
 async function build() {
-    console.log('🚀 Building Franchise Listing...');
+    console.log('🚀 Building Hybrid Franchise Listing (SSG)...');
     try {
         const privateKey = process.env.G_PRIVATE_KEY.replace(/\\n/g, '\n');
         const auth = new google.auth.JWT(process.env.G_CLIENT_EMAIL, null, privateKey, ['https://www.googleapis.com/auth/spreadsheets.readonly']);
         const sheets = google.sheets({ version: 'v4', auth });
 
-        const res = await sheets.spreadsheets.values.get({ spreadsheetId: process.env.G_SHEET_ID, range: `${SHEET_TAB}!A1:ZZ1000` });
-        if (!res.data.values) throw new Error('No data found');
+        // 1. Fetch FRANCHISOR
+        const resFranchisor = await sheets.spreadsheets.values.get({ 
+            spreadsheetId: process.env.G_SHEET_ID, 
+            range: `${TAB_FRANCHISOR}!A1:ZZ1000` 
+        });
+        const headersFranchisor = resFranchisor.data.values[0].map(h => h.trim());
+        const dataFranchisor = resFranchisor.data.values.slice(1).map(row => {
+            let obj = {}; headersFranchisor.forEach((h, i) => obj[h] = row[i] || ''); return obj;
+        }).filter(i => i.brand_name);
 
-        const headers = res.data.values[0].map(h => h.trim());
-        const data = res.data.values.slice(1).map(row => {
-            let obj = {}; headers.forEach((h, i) => obj[h] = row[i] || ''); return obj;
-        }).filter(i => i.brand_name); // Filter kosong
+        // 2. Fetch UNCLAIMED
+        const resUnclaimed = await sheets.spreadsheets.values.get({ 
+            spreadsheetId: process.env.G_SHEET_ID, 
+            range: `${TAB_UNCLAIMED}!A1:ZZ1000` 
+        });
+        const headersUnclaimed = resUnclaimed.data.values[0].map(h => h.trim());
+        const dataUnclaimed = resUnclaimed.data.values.slice(1).map(row => {
+            let obj = {}; headersUnclaimed.forEach((h, i) => obj[h] = row[i] || ''); return obj;
+        }).filter(i => i.brand_name);
 
-        // Sort: Verified First
-        data.sort((a, b) => (b.status === 'VERIFIED') - (a.status === 'VERIFIED'));
+        // Normalize Unclaimed status
+        dataUnclaimed.forEach(item => {
+            item.status = 'UNCLAIMED';
+            if (!item.short_desc && item.full_desc) {
+                // Strip HTML and take first sentence or 100 chars
+                item.short_desc = item.full_desc.replace(/<[^>]*>?/gm, '').substring(0, 100).trim() + '...';
+            }
+        });
 
-        const gridHtml = data.map((item, i) => generateCard(item, i + 1)).join('');
+        // 3. Merge All
+        const allData = [...dataFranchisor, ...dataUnclaimed];
+
+        // 4. Sort Strategy
+        // - VERIFIED (Paid)
+        // - FREE (Claimed)
+        // - UNCLAIMED (Scraped)
+        const tierWeights = { 'VERIFIED': 3, 'FREE': 2, 'UNCLAIMED': 1 };
+        allData.sort((a, b) => {
+            const weightA = tierWeights[(a.status || 'UNCLAIMED').toUpperCase()] || 0;
+            const weightB = tierWeights[(b.status || 'UNCLAIMED').toUpperCase()] || 0;
+            if (weightB !== weightA) return weightB - weightA;
+            // Secondary sort: Brand Name Alphabetical
+            return a.brand_name.localeCompare(b.brand_name);
+        });
+
+        const gridHtml = allData.map((item, i) => generateCard(item, i + 1)).join('');
         
         let tpl = fs.readFileSync(TEMPLATE_PATH, 'utf8');
         if (!tpl.includes('<!-- DYNAMIC_FRANCHISE_LISTING -->')) throw new Error('Placeholder not found');
@@ -118,7 +160,7 @@ async function build() {
         if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
         fs.writeFileSync(OUTPUT_PATH, tpl.replace('<!-- DYNAMIC_FRANCHISE_LISTING -->', gridHtml));
-        console.log(`✅ Success! Generated ${data.length} listings.`);
+        console.log(`✅ Success! Generated ${allData.length} listings (Hybrid).`);
 
     } catch (e) {
         console.error('❌ Build Failed:', e);

@@ -2,7 +2,13 @@
 export async function onRequestPost({ request, env }) {
   try {
     const data = await request.json();
-    const sheetName = data.form_type || "DATA_UMUM";
+    let sheetName = data.form_type || "DATA_UMUM";
+    const isClaim = data.form_type === "claim";
+    
+    // Mapping claim ke tab FRANCHISOR
+    if (isClaim) {
+        sheetName = "FRANCHISOR";
+    }
     
     delete data.form_type; // Bersihkan data
 
@@ -11,7 +17,7 @@ export async function onRequestPost({ request, env }) {
       id: crypto.randomUUID().split('-')[0].toUpperCase(),
       timestamp: new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }),
       ...data,
-      status: "FREE",
+      status: "FREE", // Default for new/claimed
       is_verified: "FALSE",
       video_url: "",
       expiry_date: ""

@@ -36,6 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
 		// Activate Button
 		const activeBtn = document.querySelector(`button[onclick="openTab('${tabName}')"]`);
 		if(activeBtn) activeBtn.classList.add('active');
+
+        // Jika tab klaim, load data jika belum ada
+        if (tabName === 'klaim' && (typeof unclaimedBrands === 'undefined' || unclaimedBrands.length === 0)) {
+            if (typeof fetchUnclaimedBrands === 'function') fetchUnclaimedBrands();
+        }
 	};
 
 	// --- LOGIC MULTI STEP NAVIGATION ---
@@ -892,9 +897,20 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	const lastTab = localStorage.getItem('active_registration_tab');
-	if (lastTab) openTab(lastTab);
-	else openTab('franchisee'); 
+    
+    // Check URL Params for direct claim link
+    const urlParams = new URLSearchParams(window.location.search);
+    const claimSlug = urlParams.get('claim');
 
+	if (claimSlug) {
+        openTab('klaim');
+        // We need to wait for fetchUnclaimedBrands to finish
+        // We can poll or use a custom event. Let's enhance fetchUnclaimedBrands to return a promise.
+    } else if (lastTab) {
+        openTab(lastTab);
+    } else {
+        openTab('franchisee'); 
+    }
 	setTimeout(calculateAll, 500);
 
     // ==========================================
@@ -1194,4 +1210,166 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	renderPackageInputs(1);
 
+    // ==========================================
+	// 7. KLAIM BRAND LOGIC (HYBRID SSG)
+	// ==========================================
+    let unclaimedBrands = [];
+    let selectedBrand = null;
+
+    function slugify(text) {
+        if (!text) return '';
+        return text.toString().toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^\w\-]+/g, '')
+            .replace(/\-\-+/g, '-')
+            .replace(/^-+/, '')
+            .replace(/-+$/, '');
+    }
+
+    async function fetchUnclaimedBrands() {
+        try {
+            const response = await fetch('/api/get-franchises?tab=UNCLAIMED');
+            const data = await response.json();
+            unclaimedBrands = data.data || [];
+            console.log("Loaded unclaimed brands:", unclaimedBrands.length);
+
+            // Auto-fill if claim slug is present
+            const urlParams = new URLSearchParams(window.location.search);
+            const claimSlug = urlParams.get('claim');
+            if (claimSlug) {
+                const brand = unclaimedBrands.find(b => slugify(b.brand_name) === claimSlug);
+                if (brand) {
+                    fillClaimForm(brand);
+                    if (claimSearchInput) claimSearchInput.value = brand.brand_name;
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching unclaimed brands:", error);
+        }
+    }
+
+    const claimSearchInput = document.getElementById('claim-brand-search');
+    const claimSearchResults = document.getElementById('claim-search-results');
+    const claimFormContainer = document.getElementById('claim-form-container');
+
+    if (claimSearchInput) {
+        claimSearchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            if (query.length < 2) {
+                claimSearchResults.style.display = 'none';
+                return;
+            }
+
+            const matches = unclaimedBrands.filter(b => 
+                b.brand_name.toLowerCase().includes(query) || 
+                (b.category && b.category.toLowerCase().includes(query))
+            ).slice(0, 10);
+
+            if (matches.length > 0) {
+                claimSearchResults.innerHTML = matches.map(b => `
+                    <div class="suggestion-item" data-id="${b.id}">
+                        <span class="brand-name">${b.brand_name}</span>
+                        <span class="brand-cat">${b.category || ''}</span>
+                    </div>
+                `).join('');
+                claimSearchResults.style.display = 'block';
+            } else {
+                claimSearchResults.style.display = 'none';
+            }
+        });
+
+        // Close suggestions on click outside
+        document.addEventListener('click', function(e) {
+            if (!claimSearchInput.contains(e.target) && !claimSearchResults.contains(e.target)) {
+                claimSearchResults.style.display = 'none';
+            }
+        });
+
+        // Handle suggestion click
+        claimSearchResults.addEventListener('click', function(e) {
+            const item = e.target.closest('.suggestion-item');
+            if (item) {
+                const brandId = item.getAttribute('data-id');
+                selectedBrand = unclaimedBrands.find(b => b.id == brandId);
+                if (selectedBrand) {
+                    fillClaimForm(selectedBrand);
+                    claimSearchResults.style.display = 'none';
+                    claimSearchInput.value = selectedBrand.brand_name;
+                }
+            }
+        });
+    }
+
+    function fillClaimForm(brand) {
+        // Show form
+        claimFormContainer.style.display = 'block';
+        
+        // Fill fixed fields
+        document.getElementById('claim_unclaimed_id').value = brand.id;
+        document.getElementById('claim_brand_name').value = brand.brand_name;
+        document.getElementById('claim_min_capital').value = formatRupiah(brand.min_capital || 0);
+        
+        // Scroll to form
+        claimFormContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Highlight gaps logic can be enhanced here if we want to be more dynamic
+        // Currently handled by static .data-gap class in HTML
+    }
+
+    const claimBrandForm = document.getElementById('claimBrandForm');
+    if (claimBrandForm) {
+        claimBrandForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Memproses Klaim...';
+
+            try {
+                const formData = new FormData(this);
+                const payload = Object.fromEntries(formData.entries());
+                
+                // Add select inputs that might be missed by entries()
+                this.querySelectorAll('select').forEach(select => {
+                    payload[select.name] = select.value;
+                });
+
+                const response = await fetch('/api/form-submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Klaim Berhasil Terkirim!',
+                        text: 'Tim kami akan melakukan verifikasi data dalam 1-2 hari kerja. Anda akan dihubungi melalui WhatsApp.',
+                        confirmButtonColor: '#ffc107'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    throw new Error(result.message || 'Gagal mengirim klaim');
+                }
+            } catch (error) {
+                console.error("Claim error:", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Waduh!',
+                    text: error.message || 'Terjadi kesalahan saat mengirim klaim. Silakan coba lagi.',
+                });
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        });
+    }
+
+    // Export to window for global access (tabs)
+    window.fetchUnclaimedBrands = fetchUnclaimedBrands;
 });

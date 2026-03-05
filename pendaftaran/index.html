@@ -200,6 +200,26 @@
 		<script src="https://cekkode.github.io/js/wa-enricher.js"></script>
 		<script src="https://cekkode.github.io/js/formsender.js"></script>
 		<!-- END of .head content -->
+		<style id="custom-registration-styles">
+			.registration-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px; flex-wrap: wrap; }
+			.tab-btn { padding: 12px 24px; border: none; background: #f8f9fa; border-radius: 50px; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s ease; border: 1px solid #ddd; }
+			.tab-btn i { font-size: 1.1em; }
+			.tab-btn.active { background: #ffc107; color: #000; border-color: #ffb300; box-shadow: 0 4px 10px rgba(255,193,7,0.3); transform: translateY(-2px); }
+			.tab-btn:hover:not(.active) { background: #e9ecef; }
+			.tab-content { animation: fadeIn 0.4s ease-out; }
+			@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+            
+            /* Claim Form Styles */
+            .data-gap { background-color: rgba(255, 193, 7, 0.05); border-left: 4px solid #ffc107 !important; transition: all 0.3s ease; }
+            .data-gap:focus-within { background-color: rgba(255, 193, 7, 0.1); }
+            .autocomplete-wrapper { position: relative; width: 100%; }
+            .autocomplete-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; z-index: 1000; max-height: 250px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 0 0 8px 8px; }
+            .suggestion-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+            .suggestion-item:last-child { border-bottom: none; }
+            .suggestion-item:hover { background-color: #fff9e6; }
+            .suggestion-item .brand-name { font-weight: 600; color: #333; }
+            .suggestion-item .brand-cat { font-size: 0.85em; color: #888; background: #f0f0f0; padding: 2px 8px; border-radius: 4px; }
+		</style>
 	</head>
 	<body itemtype="https://schema.org/WebPage" itemscope="itemscope" class="wp-singular page-template-default page page-id-2259 wp-custom-logo wp-theme-astra latepoint ehf-header ehf-footer ehf-template-astra ehf-stylesheet-astra ast-desktop ast-page-builder-template ast-no-sidebar astra-4.11.12 ast-single-post ast-replace-site-logo-transparent ast-inherit-site-logo-transparent ast-theme-transparent-header ast-hfb-header elementor-default elementor-kit-4 elementor-page elementor-page-2259">
 		<a class="skip-link screen-reader-text" href="#content" title="Skip to content">
@@ -371,6 +391,9 @@
 															</button>
 															<button class="tab-btn" onclick="openTab('franchisor')">
 															<i class="fas fa-store me-2"></i> Daftar sebagai Franchisor
+															</button>
+															<button class="tab-btn" onclick="openTab('klaim')">
+															<i class="fas fa-certificate me-2"></i> Klaim Brand (GRATIS)
 															</button>
 														</div>
 													</div>
@@ -1010,6 +1033,147 @@
 															</div>
 														</div>
 													</div>
+
+													<!-- START KLAIM TAB -->
+													<div id="tab-klaim" class="tab-content" style="display: none;">
+														<div class="elementor-element elementor-element-b1a5117 elementor-widget elementor-widget-heading" data-element_type="widget" data-widget_type="heading.default">
+															<div class="elementor-widget-container text-center">
+																<h3 class="elementor-heading-title elementor-size-default">Klaim Brand Anda &amp; Lengkapi Profilnya</h3>
+															</div>
+														</div>
+														<div class="elementor-element elementor-element-0efbcc9 elementor-widget elementor-widget-text-editor" data-element_type="widget" data-widget_type="text-editor.default">
+															<div class="elementor-widget-container">
+																<p class="text-muted">Apakah brand Anda sudah ada di direktori kami? Cari dan klaim sekarang untuk mengelola informasi, membalas minat calon mitra, dan meningkatkan kredibilitas bisnis Anda secara <strong>GRATIS</strong>.</p>
+															</div>
+														</div>
+
+														<div class="franchise-listing-form-wrapper">
+															<!-- SEARCH BRAND SECTION -->
+															<div class="form-section-card mb-4" id="claim-search-section">
+																<h4 class="fw-bold mb-3"><i class="fas fa-search me-2 text-warning"></i> Cari Brand Anda</h4>
+																<div class="form-group-row">
+																	<div class="label-col"><label class="form-label">Nama Brand</label></div>
+																	<div class="input-col">
+																		<div class="autocomplete-wrapper">
+																			<input type="text" class="form-control" id="claim-brand-search" placeholder="Ketik nama brand (misal: Sabana, Kebab, dll)..." autocomplete="off">
+																			<div id="claim-search-results" class="autocomplete-suggestions" style="display:none;"></div>
+																		</div>
+																		<small class="helper-text-bottom">Jika brand tidak ditemukan, silakan gunakan tab <strong>Daftar sebagai Franchisor</strong>.</small>
+																	</div>
+																</div>
+															</div>
+
+															<!-- CLAIM FORM (Initially Hidden) -->
+															<div id="claim-form-container" style="display: none;">
+																<div class="alert alert-warning d-flex align-items-center mb-4">
+																	<i class="fas fa-info-circle me-3 fs-4"></i>
+																	<div>
+																		<strong>Lengkapi Data Gap:</strong> Bidang yang ditandai warna kuning adalah data yang belum kami miliki. Mohon lengkapi untuk verifikasi.
+																	</div>
+																</div>
+																
+																<form id="claimBrandForm" class="async-form">
+																	<input type="hidden" name="unclaimed_id" id="claim_unclaimed_id">
+																	<input type="hidden" name="form_type" value="claim">
+																	
+																	<div class="form-section-card">
+																		<h3 class="section-title">Data Identitas Brand</h3>
+																		<div class="form-group-row">
+																			<div class="label-col"><label class="form-label">Nama Brand</label></div>
+																			<div class="input-col"><input type="text" class="form-control" name="brand_name" id="claim_brand_name" readonly></div>
+																		</div>
+																		<div class="form-group-row data-gap">
+																			<div class="label-col"><label class="form-label">Nama Perusahaan <span class="text-danger">*</span></label></div>
+																			<div class="input-col"><input type="text" class="form-control" name="company_name" required placeholder="PT / CV Pemilik Brand"></div>
+																		</div>
+																		<div class="form-group-row data-gap">
+																			<div class="label-col"><label class="form-label">Tahun Berdiri <span class="text-danger">*</span></label></div>
+																			<div class="input-col"><input type="number" class="form-control" name="year_established" required placeholder="Contoh: 2015"></div>
+																		</div>
+																		<div class="form-group-row data-gap">
+																			<div class="label-col"><label class="form-label">Status HAKI <span class="text-danger">*</span></label></div>
+																			<div class="input-col">
+																				<select class="form-select" name="haki_status" required>
+																					<option value="">Pilih Status...</option>
+																					<option value="registered">Terdaftar</option>
+																					<option value="process">Proses</option>
+																					<option value="none">Belum Ada</option>
+																				</select>
+																			</div>
+																		</div>
+																		<div class="form-group-row data-gap">
+																			<div class="label-col"><label class="form-label">Nomor NIB <span class="text-danger">*</span></label></div>
+																			<div class="input-col"><input type="text" class="form-control" name="nib_number" required placeholder="13 Digit Nomor Induk Berusaha"></div>
+																		</div>
+																	</div>
+
+																	<div class="form-section-card mt-4">
+																		<h3 class="section-title">Data Finansial &amp; Operasional</h3>
+																		<div class="form-group-row">
+																			<div class="label-col"><label class="form-label">Investasi Minimum</label></div>
+																			<div class="input-col">
+																				<div class="input-group">
+																					<span class="input-group-text">Rp</span>
+																					<input type="text" class="form-control" name="min_capital" id="claim_min_capital" readonly>
+																				</div>
+																			</div>
+																		</div>
+																		<div class="form-group-row data-gap">
+																			<div class="label-col"><label class="form-label">Franchise Fee <span class="text-danger">*</span></label></div>
+																			<div class="input-col">
+																				<div class="input-group">
+																					<span class="input-group-text">Rp</span>
+																					<input type="text" class="form-control rupiah-input" name="fee_license" required>
+																				</div>
+																			</div>
+																		</div>
+																		<div class="form-group-row data-gap">
+																			<div class="label-col"><label class="form-label">Royalty Fee (%) <span class="text-danger">*</span></label></div>
+																			<div class="input-col">
+																				<div class="input-group">
+																					<input type="number" class="form-control" name="royalty_percent" step="0.1" required>
+																					<span class="input-group-text">%</span>
+																				</div>
+																			</div>
+																		</div>
+																	</div>
+
+																	<div class="form-section-card mt-4">
+																		<h3 class="section-title">Aset Visual &amp; Kontak</h3>
+																		<div class="form-group-row data-gap">
+																			<div class="label-col"><label class="form-label">Upload Logo <span class="text-danger">*</span></label></div>
+																			<div class="input-col">
+																				<input type="file" class="form-control file-uploader" data-target="claim_logo_url">
+																				<input type="hidden" name="logo_url" id="claim_logo_url" required>
+																				<div class="upload-preview mt-2" id="preview_claim_logo_url"></div>
+																			</div>
+																		</div>
+																		<div class="form-group-row data-gap">
+																			<div class="label-col"><label class="form-label">Email Kontak Bisnis <span class="text-danger">*</span></label></div>
+																			<div class="input-col"><input type="email" class="form-control" name="email_contact" required placeholder="email@bisnisanda.com"></div>
+																		</div>
+																		<div class="form-group-row">
+																			<div class="label-col"><label class="form-label">WhatsApp PIC <span class="text-danger">*</span></label></div>
+																			<div class="input-col">
+																				<div class="input-group phone-input-group">
+																					<select class="form-select country-select" name="country_code">
+																						<option value="+62" selected>🇮🇩 +62</option>
+																					</select>
+																					<input type="tel" class="form-control phone-format" name="whatsapp" required placeholder="812-3456-7890">
+																				</div>
+																			</div>
+																		</div>
+																	</div>
+
+																	<div class="text-center mt-5">
+																		<button type="submit" class="btn btn-warning btn-lg fw-bold px-5 shadow w-100">KLAIM &amp; VERIFIKASI SEKARANG</button>
+																		<p class="mt-3 text-muted small">Dengan mengklik tombol di atas, Anda menyatakan sebagai pemilik sah atau perwakilan resmi dari brand ini.</p>
+																	</div>
+																</form>
+															</div>
+														</div>
+													</div>
+													<!-- END KLAIM TAB -->
 												</div>
 											</div>
 									</section>

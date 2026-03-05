@@ -7,49 +7,53 @@ Expanding Franchise.id from a verified-only directory to a comprehensive databas
 ### Goal
 The main listing page (`/peluang-usaha/index.html`) should display both registered franchisors and unclaimed brands to increase site depth and SEO value.
 
-### Technical Plan
-- **Modify `js/build-listing.js`**:
-  - Fetch both `FRANCHISOR` and `UNCLAIMED` tabs.
-  - Normalize `UNCLAIMED` data to match the `FRANCHISOR` schema (handling missing images/descriptions).
+### Implementation Status: [DONE]
+- **Modified `js/build-listing.js`**:
+  - Fetches both `FRANCHISOR` and `UNCLAIMED` tabs.
+  - Normalizes `UNCLAIMED` data to match the `FRANCHISOR` schema.
   - **Sorting Priority**: `VERIFIED` > `FREE` > `UNCLAIMED`.
-  - **Visual Distinction**: Unclaimed cards should have a subtle "Unverified" or "Claim This" hint instead of the blue checkmark.
-- **Automation**: Ensure GitHub Actions correctly triggers these builds upon Google Sheet updates.
+  - **Visual Distinction**: Added "Belum Diklaim" badge for unclaimed brands.
+- **Automation**: Updated `.github/workflows/generate-pages.yaml` to include all build scripts and cron triggers.
 
 ## 3. Feature 2: Franchise Claiming Workflow
 ### Goal
 Allow owners of "Unclaimed" brands to take control of their pages by providing missing information, moving them to the `FRANCHISOR` tab.
 
-### The "Gap" Analysis
-**Available in UNCLAIMED:** `brand_name`, `category`, `subcategory`, `label`, `min_capital`, `max_capital`, `full_desc`, `phone`, `office_address`, `outlets_location`.
-**Required for FRANCHISOR (The Gap):**
-- **Identitas**: `company_name`, `year_established`, `haki_status`, `nib_number`.
-- **Biaya**: `outlet_type`, `loc_width`, `loc_length`, `rent_budget`, `fee_license`, `contract_duration`, `royalty_percent`, `net_profit_percent`.
-- **Media**: `logo_url`, `cover_url`, `gallery_urls`, `proposal_url`.
-- **Kontak**: `pic_name`, `email_contact`, `website_url`.
-
-### Technical Plan
+### Implementation Status: [DONE]
 - **Frontend (`/pendaftaran/index.html`)**:
-  - Add a **"Klaim Brand"** tab.
-  - Implement a search/dropdown to select from existing `UNCLAIMED` brands.
-  - Pre-fill the form with available data from the selected brand.
-  - Highlight "Required to Claim" fields (The Gap).
+  - Added **"Klaim Brand"** tab with autocomplete search.
+  - Deep-link support via `?claim=slug` to auto-open and pre-fill the form.
+  - Visual "Data Gap" highlighting (yellow background for missing fields).
+- **Backend (`functions/get-franchises.js`)**:
+  - Added support for `?tab=UNCLAIMED` parameter.
 - **Backend (`functions/form-submit.js`)**:
-  - Add logic to handle "Claim" submissions.
-  - Move the record from `UNCLAIMED` to `FRANCHISOR` in Google Sheets.
-  - Trigger a re-build of the SSG engine to update the brand's status.
+  - Added logic to handle `form_type: "claim"` submissions.
+  - Maps claim data to the `FRANCHISOR` sheet with `status: "FREE"`.
 
-## 4. Feature 3: GitHub Actions Audit
-### Current State
-- `generate-pages.yaml`: Manually or on-schedule runs `build-listing.js` and `build-details.js`.
-- `head.yaml`: Handles partial updates? (Needs deeper look).
-- `sitemap-readme.yaml`: Updates sitemap and README.
+## 4. Feature 3: GitHub Actions & SSG Optimization
+### Current State: [IN PROGRESS]
+- **Fixed**: Multiple `run` commands in `generate-pages.yaml`.
+- **Added**: Trigger on `push` for local CSV data sync.
+- **Added**: 12-hour cron schedule for data freshness.
 
-### Optimization Plan
-- **Trigger on Webhook**: Explore triggering the workflow immediately when Google Sheet is saved (using Apps Script to hit GitHub API).
-- **Partial Builds**: If the dataset grows too large, optimize `build-details.js` to only regenerate changed rows.
-- **Dependency Management**: Ensure `npm install` is cached to speed up build times.
+### Next Steps
+- **Trigger on Webhook**: Optimize for real-time builds using GitHub Repository Dispatch.
+- **Data Cleanup**: Implement automatic deletion from `UNCLAIMED` tab after a successful claim (requires Google Sheets API `deleteDimension`).
 
-## 5. Success Metrics
-- Increase in total indexed pages.
+## 5. Development Timeline & Progress
+
+| Date | Milestone | Status | Details |
+|------|-----------|--------|---------|
+| 2026-03-06 | **Project Kickoff** | ✅ DONE | Initial analysis of WordPress-to-Static transition. |
+| 2026-03-06 | **Documentation Sync** | ✅ DONE | Synced PRD, GEMINI.md, and .knowledge.md with codebase and external Google Docs. |
+| 2026-03-06 | **Hybrid SSG Engine** | ✅ DONE | Updated `build-listing.js` and `get-franchises.js` to support `UNCLAIMED` brands. |
+| 2026-03-06 | **Claim Workflow UI** | ✅ DONE | Implemented "Klaim Brand" tab, Autocomplete search, and Data-Gap form in `/pendaftaran`. |
+| 2026-03-06 | **Deep-Linking & Auto-Fill** | ✅ DONE | Added `?claim=slug` support to `js/form-franchise.js` for seamless transitions. |
+| 2026-03-06 | **Actions Optimization** | ✅ DONE | Fixed `generate-pages.yaml` and added sync triggers for CSV files. |
+| 2026-03-07 | **Verification Logic** | ⏳ TODO | Enhance `form-submit.js` to handle brand migration (Delete from Unclaimed). |
+| 2026-03-07 | **Real-time SSG** | ⏳ TODO | Setup GitHub Repository Dispatch from Google Apps Script. |
+
+## 6. Success Metrics
+- Increase in total indexed pages (Target: 2x current listing).
 - Number of successful "Claims" per month.
 - Reduction in manual data entry for new franchisors.
