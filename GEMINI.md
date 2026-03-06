@@ -26,6 +26,11 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 - **Refactor, Don't Delete:** If a file becomes too complex or has hoisting/initialization issues, refactor shared logic into a separate utility file (e.g., `js/form-utils.js`) rather than flattening or simplifying the code and losing features.
 - **Verification before Deletion:** Always verify the full scope of a file's functionality (multi-step forms, calculations, uploads) before assuming code is redundant.
 
+## Logic Inventory & Continuity
+- **Mandatory Tracking:** The `TECHNICAL_INVENTORY.md` file is the source of truth for all functions and key variables in `/js` and `/functions`.
+- **Sync Requirement:** When adding new features or refactoring, update `TECHNICAL_INVENTORY.md` to reflect changes in symbols and responsibilities.
+- **Audit Requirement:** During major "vibe coding" sessions or refactors, perform a comparison against `TECHNICAL_INVENTORY.md` to ensure zero-loss of business logic (e.g., BEP calculations, validation rules).
+
 ## Project Governance & Maintenance
 - **PRD Timeline Preservation:** Do not over-edit or delete existing entries in the `PRD.md` timeline. It serves as an immutable log of progress and steps taken.
 - **Timestamping:** All new entries in the `PRD.md` timeline must include the date and hour (e.g., `2026-03-06 22:30`) for precise tracking.
