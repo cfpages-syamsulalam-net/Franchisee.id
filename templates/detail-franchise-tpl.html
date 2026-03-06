@@ -32,6 +32,7 @@
 		<meta name="twitter:card" content="summary_large_image">
 		<meta name="twitter:title" content="{SEO_TITLE}">
 		<meta name="twitter:description" content="{SEO_DESCRIPTION}">
+        {JSON_LD}
 		<script type="application/ld+json" class="rank-math-schema">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","@id":"/peluang-usaha/{SLUG}#breadcrumb","itemListElement":[{"@type":"ListItem","position":"1","item":{"@id":"","name":"Home"}},{"@type":"ListItem","position":"2","item":{"@id":"/peluang-usaha/{SLUG}","name":"{BRAND_NAME}"}}]}]}</script><!-- /Rank Math WordPress SEO plugin -->
 		<link rel="dns-prefetch" href="//fonts.googleapis.com">
 		<link rel="alternate" type="application/rss+xml" title="Franchise.id &raquo; Feed" href="/feed">
@@ -293,6 +294,7 @@
 									</header>
 									<!-- .entry-header -->
 									<div class="entry-content clear" itemprop="text">
+                                        {BREADCRUMBS}
 										<div data-elementor-type="wp-page" data-elementor-id="2457" class="elementor elementor-2457">
 											<!-- DISCLAIMER SECTION (Hanya muncul jika FREE/UNCLAIMED) -->
 											<!-- DYNAMIC_DISCLAIMER_BOX -->
@@ -1286,5 +1288,6 @@
 		<script>
 			/(trident|msie)/i.test(navigator.userAgent)&&document.getElementById&&window.addEventListener&&window.addEventListener("hashchange",function(){var t,e=location.hash.substring(1);/^[A-z0-9_-]+$/.test(e)&&(t=document.getElementById(e))&&(/^(?:a|select|input|button|textarea)$/i.test(t.tagName)||(t.tabIndex=-1),t.focus())},!1);
 		</script>
+        {CLAIM_STICKY_BAR}
 	</body>
 </html>

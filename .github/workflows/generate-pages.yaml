@@ -54,6 +54,7 @@ jobs:
         run: |
           node js/build-listing.js
           node js/build-details.js
+          node js/build-sitemap.js
 
       # 5. Commit & Push (Snippet Anda + Support New Files)
       - name: Commit and push changes

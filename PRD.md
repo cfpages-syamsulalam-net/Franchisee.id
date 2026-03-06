@@ -29,8 +29,16 @@ Allow owners of "Unclaimed" brands to take control of their pages.
 - Static `data/unclaimed-brands.json` generated during build.
 - Instant search with zero API latency.
 
-### Phase 3: Real-Time Sync [IN PROGRESS]
+### Phase 3: Real-Time Sync [DONE]
 - Google Apps Script + GitHub Repository Dispatch.
+
+### Phase 4: SEO & Conversion Optimization [IN PROGRESS]
+- **Goal**: Increase search visibility and conversion rate for unclaimed listings.
+- **Actions**:
+  - JSON-LD Structured Data: Inject `Brand` and `Service` schema into detail pages.
+  - Breadcrumb Navigation: `Home > Peluang Usaha > [Category] > [Brand]`.
+  - Claim CTAs: Add "Klaim Brand Ini" sticky buttons on all unclaimed pages.
+  - Dynamic Sitemap: Auto-update `sitemap.xml` during SSG build.
 
 ## 5. Development Timeline & Progress
 
@@ -46,6 +54,12 @@ Allow owners of "Unclaimed" brands to take control of their pages.
 | 2026-03-06 22:45 | **Static Autocomplete** | ✅ DONE | Switched from API to `unclaimed-brands.json` for speed. |
 | 2026-03-06 23:15 | **Automated Sync Logic** | ✅ DONE | Designed `onEdit` trigger with debounce for Google Sheets. |
 | 2026-03-07 10:00 | **Post-Claim Cleanup** | ✅ DONE | Auto-delete from `UNCLAIMED` tab after successful claim. |
+| 2026-03-07 11:30 | **SEO & Conversion Plan** | ✅ DONE | Added Phase 4 to PRD. |
+| 2026-03-07 11:45 | **Data Integrity Check** | ✅ DONE | Generated `unclaimed-brands.json` via CSV fallback. |
+| 2026-03-07 12:00 | **JSON-LD & Breadcrumbs** | ✅ DONE | Injected Brand schema and navigation to details. |
+| 2026-03-07 12:15 | **Sticky Claim CTA** | ✅ DONE | Added sticky bar for unclaimed brands in `build-details.js`. |
+| 2026-03-07 12:30 | **Dynamic Sitemap** | ✅ DONE | Automated `sitemap-complete.xml` generation in workflow. |
+| 2026-03-07 13:00 | **Final Review** | ⏳ TODO | Verifying all hybrid SSG components. |
 
 ## 6. Technical Implementation Note: Apps Script Trigger
 ```javascript

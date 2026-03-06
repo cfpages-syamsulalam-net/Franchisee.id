@@ -37,6 +37,25 @@ function getThumb(url) {
     return url.replace('/upload/', '/upload/w_400,h_200,c_fill,q_auto,f_auto/');
 }
 
+// HELPER: Load from CSV (Simple Parser)
+function loadFromCSV(filePath) {
+    if (!fs.existsSync(filePath)) return [];
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lines = content.split('\n').filter(l => l.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+    
+    return lines.slice(1).map(line => {
+        const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+        let obj = {};
+        headers.forEach((h, i) => {
+            obj[h] = values[i] || '';
+        });
+        return obj;
+    }).filter(i => i.brand_name);
+}
+
 // GENERATOR: HTML Card
 function generateCard(item, index) {
     const slug = slugify(item.brand_name);
@@ -100,8 +119,11 @@ function generateCard(item, index) {
 // MAIN BUILDER
 async function build() {
     console.log('🚀 Building Hybrid Franchise Listing (SSG)...');
+    let dataFranchisor = [];
+    let dataUnclaimed = [];
+
     try {
-        const privateKey = process.env.G_PRIVATE_KEY.replace(/\\n/g, '\n');
+        const privateKey = (process.env.G_PRIVATE_KEY || '').replace(/\\n/g, '\n');
         const auth = new google.auth.JWT(process.env.G_CLIENT_EMAIL, null, privateKey, ['https://www.googleapis.com/auth/spreadsheets.readonly']);
         const sheets = google.sheets({ version: 'v4', auth });
 
@@ -110,72 +132,77 @@ async function build() {
             spreadsheetId: process.env.G_SHEET_ID, 
             range: `${TAB_FRANCHISOR}!A1:ZZ1000` 
         });
-        const headersFranchisor = resFranchisor.data.values[0].map(h => h.trim());
-        const dataFranchisor = resFranchisor.data.values.slice(1).map(row => {
-            let obj = {}; headersFranchisor.forEach((h, i) => obj[h] = row[i] || ''); return obj;
-        }).filter(i => i.brand_name);
+        if (resFranchisor.data.values) {
+            const headers = resFranchisor.data.values[0].map(h => h.trim());
+            dataFranchisor = resFranchisor.data.values.slice(1).map(row => {
+                let obj = {}; headers.forEach((h, i) => obj[h] = row[i] || ''); return obj;
+            }).filter(i => i.brand_name);
+        }
 
         // 2. Fetch UNCLAIMED
         const resUnclaimed = await sheets.spreadsheets.values.get({ 
             spreadsheetId: process.env.G_SHEET_ID, 
             range: `${TAB_UNCLAIMED}!A1:ZZ1000` 
         });
-        const headersUnclaimed = resUnclaimed.data.values[0].map(h => h.trim());
-        const dataUnclaimed = resUnclaimed.data.values.slice(1).map(row => {
-            let obj = {}; headersUnclaimed.forEach((h, i) => obj[h] = row[i] || ''); return obj;
-        }).filter(i => i.brand_name);
+        if (resUnclaimed.data.values) {
+            const headers = resUnclaimed.data.values[0].map(h => h.trim());
+            dataUnclaimed = resUnclaimed.data.values.slice(1).map(row => {
+                let obj = {}; headers.forEach((h, i) => obj[h] = row[i] || ''); return obj;
+            }).filter(i => i.brand_name);
+        }
 
-        // Normalize Unclaimed status
-        dataUnclaimed.forEach(item => {
-            item.status = 'UNCLAIMED';
-            if (!item.short_desc && item.full_desc) {
-                // Strip HTML and take first sentence or 100 chars
-                item.short_desc = item.full_desc.replace(/<[^>]*>?/gm, '').substring(0, 100).trim() + '...';
-            }
-        });
+    } catch (e) {
+        console.warn('⚠️ Google Sheets API Failed. Attempting local CSV fallback...');
+        dataFranchisor = loadFromCSV(path.join(__dirname, '../franchisors.csv'));
+        dataUnclaimed = loadFromCSV(path.join(__dirname, '../unclaimed.csv'));
+        console.log(`✅ Loaded from CSV: ${dataFranchisor.length} franchisors, ${dataUnclaimed.length} unclaimed.`);
+    }
 
-        // Merge All
-        const allData = [...dataFranchisor, ...dataUnclaimed];
+    // Normalize Unclaimed status
+    dataUnclaimed.forEach(item => {
+        item.status = 'UNCLAIMED';
+        if (!item.short_desc && item.full_desc) {
+            item.short_desc = item.full_desc.replace(/<[^>]*>?/gm, '').substring(0, 100).trim() + '...';
+        }
+    });
 
-        // --- NEW: Generate Autocomplete JSON for Unclaimed ---
-        const autocompleteData = dataUnclaimed.map(i => ({
-            id: i.id,
-            brand_name: i.brand_name,
-            category: i.category,
-            min_capital: i.min_capital
-        }));
-        const DATA_DIR = path.join(__dirname, '../data');
-        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-        fs.writeFileSync(path.join(DATA_DIR, 'unclaimed-brands.json'), JSON.stringify(autocompleteData));
-        console.log(`✅ Generated data/unclaimed-brands.json (${autocompleteData.length} brands).`);
+    // --- NEW: Generate Autocomplete JSON for Unclaimed ---
+    const autocompleteData = dataUnclaimed.map(i => ({
+        id: i.id,
+        brand_name: i.brand_name,
+        category: i.category,
+        min_capital: i.min_capital
+    }));
+    const DATA_DIR = path.join(__dirname, '../data');
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(path.join(DATA_DIR, 'unclaimed-brands.json'), JSON.stringify(autocompleteData));
+    console.log(`✅ Generated data/unclaimed-brands.json (${autocompleteData.length} brands).`);
 
-        // 4. Sort Strategy
-        // - VERIFIED (Paid)
-        // - FREE (Claimed)
-        // - UNCLAIMED (Scraped)
-        const tierWeights = { 'VERIFIED': 3, 'FREE': 2, 'UNCLAIMED': 1 };
-        allData.sort((a, b) => {
-            const weightA = tierWeights[(a.status || 'UNCLAIMED').toUpperCase()] || 0;
-            const weightB = tierWeights[(b.status || 'UNCLAIMED').toUpperCase()] || 0;
-            if (weightB !== weightA) return weightB - weightA;
-            // Secondary sort: Brand Name Alphabetical
-            return a.brand_name.localeCompare(b.brand_name);
-        });
+    // 3. Merge All
+    const allData = [...dataFranchisor, ...dataUnclaimed];
 
-        const gridHtml = allData.map((item, i) => generateCard(item, i + 1)).join('');
-        
+    // 4. Sort Strategy
+    const tierWeights = { 'VERIFIED': 3, 'FREE': 2, 'UNCLAIMED': 1 };
+    allData.sort((a, b) => {
+        const weightA = tierWeights[(a.status || 'UNCLAIMED').toUpperCase()] || 0;
+        const weightB = tierWeights[(b.status || 'UNCLAIMED').toUpperCase()] || 0;
+        if (weightB !== weightA) return weightB - weightA;
+        return a.brand_name.localeCompare(b.brand_name);
+    });
+
+    const gridHtml = allData.map((item, i) => generateCard(item, i + 1)).join('');
+    
+    try {
         let tpl = fs.readFileSync(TEMPLATE_PATH, 'utf8');
         if (!tpl.includes('<!-- DYNAMIC_FRANCHISE_LISTING -->')) throw new Error('Placeholder not found');
         
-        // Output Directory Check
         const outDir = path.dirname(OUTPUT_PATH);
         if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
         fs.writeFileSync(OUTPUT_PATH, tpl.replace('<!-- DYNAMIC_FRANCHISE_LISTING -->', gridHtml));
         console.log(`✅ Success! Generated ${allData.length} listings (Hybrid).`);
-
-    } catch (e) {
-        console.error('❌ Build Failed:', e);
+    } catch (err) {
+        console.error('❌ Build Error:', err);
         process.exit(1);
     }
 }
