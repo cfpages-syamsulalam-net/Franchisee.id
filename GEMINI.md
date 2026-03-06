@@ -21,6 +21,11 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 2.  **Franchise Claiming:** Implement the third "Claim Brand" tab in the registration form.
 3.  **Action Optimization:** Audit and enhance GitHub Actions for performance and real-time sync.
 
+## Project Governance & Maintenance
+- **PRD Timeline Preservation:** Do not over-edit or delete existing entries in the `PRD.md` timeline. It serves as an immutable log of progress and steps taken.
+- **Timestamping:** All new entries in the `PRD.md` timeline must include the date and hour (e.g., `2026-03-06 22:30`) for precise tracking.
+- **Single Source of Truth:** `GEMINI.md` takes precedence for architectural decisions, while `PRD.md` tracks implementation milestones.
+
 ## Architecture & Data Flow
 1.  **Data Tiers:** `UNCLAIMED` (Scraped/Potential), `FREE` (Claimed/Basic), `VERIFIED` (Paid/Priority).
 2.  **Claiming Workflow:** Transition brands from `UNCLAIMED` to `FRANCHISOR` upon data completion.

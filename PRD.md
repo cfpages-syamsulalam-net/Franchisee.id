@@ -21,57 +21,78 @@ Allow owners of "Unclaimed" brands to take control of their pages.
 
 ## 4. Optimization Plan (v2.0)
 
-### Phase 1: UI & CSS Cleanup
-- **Goal**: Prevent tab overflow and centralize styling.
-- **Actions**:
-  - Shorten Tab Labels: "Franchisee", "Franchisor", "Klaim Brand".
-  - Migrate inline CSS from `pendaftaran/index.html` to `css/form-franchise.css`.
+### Phase 1: UI & CSS Cleanup [DONE]
+- Shortened Tab Labels: "Franchisee", "Franchisor", "Klaim Brand".
+- Migrated inline CSS to `css/form-franchise.css`.
 
-### Phase 2: High-Performance Autocomplete
-- **Goal**: Faster search experience with zero API latency.
-- **Actions**:
-  - Modify `js/build-listing.js` to generate a static `data/unclaimed-brands.json` file during build.
-  - Update `js/form-franchise.js` to fetch this JSON once on page load (or tab open) and use it for local autocomplete, mirroring the `data-kota-id.json` logic.
-  - This ensures the search is "instant" and works offline/statically.
+### Phase 2: High-Performance Autocomplete [DONE]
+- Static `data/unclaimed-brands.json` generated during build.
+- Instant search with zero API latency.
 
-### Phase 3: Real-Time Sync (Low Resource)
-- **Goal**: Reflect Google Sheet changes on the site within seconds without manual triggers.
-- **Strategy**:
-  - **Google Apps Script**: Add a simple script to the "Franchise Data" Google Sheet.
-  - **Trigger**: `onEdit` or a custom "Sync" button in the Sheet menu.
-  - **Action**: Call GitHub's `repository_dispatch` API to trigger the `generate-pages.yaml` workflow immediately.
-  - **Result**: Data stays fresh, and resources are only used when data actually changes.
+### Phase 3: Real-Time Sync [IN PROGRESS]
+- Google Apps Script + GitHub Repository Dispatch.
 
 ## 5. Development Timeline & Progress
 
-| Date | Milestone | Status | Details |
+| Date & Hour | Milestone | Status | Details |
 |------|-----------|--------|---------|
-| 2026-03-06 | **Hybrid SSG Engine** | ✅ DONE | Integrated `UNCLAIMED` brands into listing & details. |
-| 2026-03-06 | **Claim Workflow v1** | ✅ DONE | Form, deep-linking, and submission API active. |
-| 2026-03-06 | **UI & CSS Polish** | ⏳ TODO | Shorten tabs & migrate CSS. |
-| 2026-03-06 | **JSON Autocomplete** | ⏳ TODO | Generate static JSON and update search logic. |
-| 2026-03-07 | **Real-time Sync** | ⏳ TODO | Setup Google Apps Script + GitHub Dispatch. |
-| 2026-03-07 | **Post-Claim Cleanup** | ⏳ TODO | Auto-delete from `UNCLAIMED` tab after successful claim. |
+| 2026-03-06 20:00 | **Project Kickoff** | ✅ DONE | Initial analysis of WordPress-to-Static transition. |
+| 2026-03-06 20:15 | **Documentation Sync** | ✅ DONE | Synced PRD, GEMINI.md with codebase and external docs. |
+| 2026-03-06 20:30 | **Hybrid SSG Engine** | ✅ DONE | Updated `build-listing.js` & `get-franchises.js` for `UNCLAIMED` brands. |
+| 2026-03-06 21:00 | **Claim Workflow UI** | ✅ DONE | Implemented "Klaim Brand" tab, Autocomplete & Data-Gap form. |
+| 2026-03-06 21:30 | **Deep-Linking & Auto-Fill** | ✅ DONE | Added `?claim=slug` support for seamless transitions. |
+| 2026-03-06 22:00 | **Actions Bugfix** | ✅ DONE | Fixed multiple `run` commands in `generate-pages.yaml`. |
+| 2026-03-06 22:30 | **UI & CSS Polish** | ✅ DONE | Shortened tab names & moved CSS to `form-franchise.css`. |
+| 2026-03-06 22:45 | **Static Autocomplete** | ✅ DONE | Switched from API to `unclaimed-brands.json` for speed. |
+| 2026-03-06 23:15 | **Automated Sync Logic** | ✅ DONE | Designed `onEdit` trigger with debounce for Google Sheets. |
+| 2026-03-07 09:00 | **Post-Claim Cleanup** | ⏳ TODO | Auto-delete from `UNCLAIMED` tab after successful claim. |
 
 ## 6. Technical Implementation Note: Apps Script Trigger
 ```javascript
-// To be added to Google Sheets Apps Script
+// To be added to Google Sheets Apps Script (Extensions > Apps Script)
+// 1. Paste this code
+// 2. Set GITHUB_TOKEN (Personal Access Token)
+// 3. Add to a Button or onEdit trigger
 function triggerGithubBuild() {
-  const GITHUB_TOKEN = "GH_PAT_HERE";
-  const REPO_OWNER = "OWNER";
+  const GITHUB_TOKEN = "YOUR_GH_PAT_HERE";
+  const REPO_OWNER = "syamsulalamcom"; // Based on PRD info
   const REPO_NAME = "Franchisee.id";
   
   const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`;
-  const payload = JSON.stringify({ event_type: "sheet_update" });
+  const payload = JSON.stringify({ 
+    event_type: "sheet_update",
+    client_payload: {
+      message: "Data updated via Google Sheets"
+    }
+  });
   
-  UrlFetchApp.fetch(url, {
+  const options = {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${GITHUB_TOKEN}`,
-      "Accept": "application/vnd.github.v3+json"
+      "Accept": "application/vnd.github.v3+json",
+      "User-Agent": "GoogleAppsScript"
     },
     contentType: "application/json",
-    payload: payload
-  });
+    payload: payload,
+    muteHttpExceptions: true
+  };
+  
+  const response = UrlFetchApp.fetch(url, options);
+  Logger.log(response.getContentText());
+  
+  if (response.getResponseCode() === 204) {
+    SpreadsheetApp.getActiveSpreadsheet().toast("🚀 Sync triggered successfully!", "GitHub SSG", 5);
+  } else {
+    SpreadsheetApp.getActiveSpreadsheet().toast("❌ Error: " + response.getContentText(), "Sync Failed", 10);
+  }
+}
+
+// Add a menu to trigger manually
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('🚀 Franchise.id')
+      .addItem('Sync to Website', 'triggerGithubBuild')
+      .addToUi();
 }
 ```

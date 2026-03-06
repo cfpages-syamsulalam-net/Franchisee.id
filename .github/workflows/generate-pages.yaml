@@ -13,6 +13,9 @@ on:
       - 'unclaimed.csv'
       - 'franchisors.csv'
       - 'franchisee.csv'
+  # 4. Trigger via Google Sheets (Webhook)
+  repository_dispatch:
+    types: [ sheet_update ]
 
 permissions:
   contents: write
