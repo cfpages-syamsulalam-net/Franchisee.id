@@ -804,8 +804,8 @@ input[type=number] {
 .data-gap:focus-within { background-color: rgba(255, 193, 7, 0.1); }
 .autocomplete-wrapper { position: relative; width: 100%; }
 .autocomplete-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; z-index: 1000; max-height: 250px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 0 0 8px 8px; }
-.suggestion-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+.suggestion-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s ease; }
 .suggestion-item:last-child { border-bottom: none; }
-.suggestion-item:hover { background-color: #fff9e6; }
-.suggestion-item .brand-name { font-weight: 600; color: #333; }
-.suggestion-item .brand-cat { font-size: 0.85em; color: #888; background: #f0f0f0; padding: 2px 8px; border-radius: 4px; }
+.suggestion-item:hover { background-color: #fff9e6; padding-left: 20px; border-left: 4px solid #ffc107; }
+.suggestion-item .brand-name { font-weight: 600; color: #333; font-size: 1.05rem; }
+.suggestion-item .brand-name strong { color: #ffc107; }

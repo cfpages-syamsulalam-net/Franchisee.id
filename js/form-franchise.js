@@ -1,7 +1,7 @@
-// /js/form-franchise.js v1.24
+// /js/form-franchise.js v1.25
 document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
-	// 1. KLAIM STATE & HELPERS (Hoisted to top)
+	// 1. KLAIM STATE & HELPERS
 	// ==========================================
     let unclaimedBrands = [];
     let selectedBrand = null;
@@ -36,9 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (claimSlug) {
                 const brand = unclaimedBrands.find(b => slugify(b.brand_name) === claimSlug);
                 if (brand) {
-                    fillClaimForm(brand);
-                    const searchInp = document.getElementById('claim-brand-search');
-                    if (searchInp) searchInp.value = brand.brand_name;
+                    fillMainFranchisorForm(brand);
                 }
             }
         } catch (error) {
@@ -230,11 +228,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	// ==========================================
-	// 4. KLAIM BRAND UI LOGIC
+	// 4. UNIFIED CLAIMING WORKFLOW (NEW)
 	// ==========================================
     const claimSearchInput = document.getElementById('claim-brand-search');
     const claimSearchResults = document.getElementById('claim-search-results');
-    const claimFormContainer = document.getElementById('claim-form-container');
 
     if (claimSearchInput) {
         claimSearchInput.addEventListener('input', function() {
@@ -242,29 +239,88 @@ document.addEventListener('DOMContentLoaded', function() {
             if (query.length < 2) { claimSearchResults.style.display = 'none'; return; }
             const matches = unclaimedBrands.filter(b => b.brand_name.toLowerCase().includes(query)).slice(0, 10);
             if (matches.length > 0) {
-                claimSearchResults.innerHTML = matches.map(b => `<div class="suggestion-item" data-id="${b.id}"><span class="brand-name">${b.brand_name}</span></div>`).join('');
+                claimSearchResults.innerHTML = matches.map(b => {
+                    const regex = new RegExp(`(${query})`, "gi");
+                    const highlighted = b.brand_name.replace(regex, "<strong>$1</strong>");
+                    return `<div class="suggestion-item" data-id="${b.id}"><span class="brand-name">${highlighted}</span></div>`;
+                }).join('');
                 claimSearchResults.style.display = 'block';
             } else { claimSearchResults.style.display = 'none'; }
         });
+
         claimSearchResults.addEventListener('click', (e) => {
             const item = e.target.closest('.suggestion-item');
             if (item) {
                 const brand = unclaimedBrands.find(b => b.id == item.dataset.id);
-                if (brand) { fillClaimForm(brand); claimSearchResults.style.display = 'none'; claimSearchInput.value = brand.brand_name; }
+                if (brand) { 
+                    fillMainFranchisorForm(brand); 
+                    claimSearchResults.style.display = 'none'; 
+                    claimSearchInput.value = ''; 
+                }
             }
         });
     }
 
-    function fillClaimForm(brand) {
-        if(!claimFormContainer) return;
-        claimFormContainer.style.display = 'block';
-        const elId = document.getElementById('claim_unclaimed_id');
-        const elName = document.getElementById('claim_brand_name');
-        const elCap = document.getElementById('claim_min_capital');
-        if(elId) elId.value = brand.id;
-        if(elName) elName.value = brand.brand_name;
-        if(elCap) elCap.value = window.formatRupiah(brand.min_capital || 0);
-        claimFormContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    function fillMainFranchisorForm(brand) {
+        // 1. Switch to Franchisor Tab
+        window.openTab('franchisor');
+
+        // 2. Set Hidden Tracker
+        const mainUnclaimedId = document.getElementById('main_unclaimed_id');
+        if (mainUnclaimedId) mainUnclaimedId.value = brand.id;
+
+        // 3. Pre-fill Visual Alert
+        const modeAlert = document.getElementById('claim-mode-alert');
+        const brandDisplay = document.getElementById('claiming-brand-display');
+        if (modeAlert) modeAlert.style.display = 'block';
+        if (brandDisplay) brandDisplay.innerText = brand.brand_name;
+
+        // 4. Map Data to Form Fields
+        const fBrandName = document.querySelector('input[name="brand_name"]');
+        const fCategory = document.querySelector('select[name="category"]');
+        
+        if (fBrandName) {
+            fBrandName.value = brand.brand_name;
+            fBrandName.classList.add('is-valid');
+            fBrandName.readOnly = true; // Protect identity
+        }
+
+        if (fCategory && brand.category) {
+            // Find option matching category string
+            Array.from(fCategory.options).forEach(opt => {
+                if (opt.text.toLowerCase().includes(brand.category.toLowerCase()) || opt.value.toLowerCase() === brand.category.toLowerCase()) {
+                    fCategory.value = opt.value;
+                    fCategory.classList.add('is-valid');
+                }
+            });
+        }
+
+        // Modal (Map to first package price as starter)
+        if (brand.min_capital) {
+            localStorage.setItem('franchise_form_autosave', JSON.stringify({
+                pkg_name_1: 'Paket Standard',
+                pkg_price_1: window.formatRupiah(brand.min_capital)
+            }));
+            window.renderPackageInputs(1);
+        }
+
+        window.scrollToTopForm();
+    }
+
+    window.exitClaimMode = function() {
+        const modeAlert = document.getElementById('claim-mode-alert');
+        const mainUnclaimedId = document.getElementById('main_unclaimed_id');
+        const fBrandName = document.querySelector('input[name="brand_name"]');
+        
+        if (modeAlert) modeAlert.style.display = 'none';
+        if (mainUnclaimedId) mainUnclaimedId.value = '';
+        if (fBrandName) {
+            fBrandName.readOnly = false;
+            fBrandName.value = '';
+            fBrandName.classList.remove('is-valid');
+        }
+        localStorage.removeItem('franchise_form_autosave');
+        window.renderPackageInputs(1);
     }
 
 	// ==========================================
@@ -280,7 +336,11 @@ document.addEventListener('DOMContentLoaded', function() {
 			const formData = new FormData(formElement);
 			const data = Object.fromEntries(formData.entries());
 			data.form_type = type;
-            if (type === 'claim') data.form_type = 'claim';
+            
+            // If it's a claim, the unclaimed_id is already in the hidden input
+            if (data.unclaimed_id) {
+                data.form_type = 'claim';
+            }
 
 			const response = await fetch('/form-submit', {
 				method: 'POST',
@@ -291,8 +351,11 @@ document.addEventListener('DOMContentLoaded', function() {
 			const result = await response.json();
 			if (result.success) {
 				btn.innerHTML = '<i class="fas fa-check"></i> Berhasil!';
-                if (type === 'claim') Swal.fire('Berhasil!', 'Klaim terkirim.', 'success');
-				setTimeout(() => window.location.reload(), 1500);
+                Swal.fire('Berhasil!', 'Data Anda telah tersimpan untuk verifikasi.', 'success').then(() => {
+                    localStorage.removeItem('franchise_form_step');
+                    localStorage.removeItem('franchise_form_autosave');
+                    window.location.reload();
+                });
 			} else { throw new Error(result.message || 'Gagal'); }
 		} catch (error) {
 			alert('Kesalahan: ' + error.message);
@@ -303,11 +366,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	const fForm = document.getElementById('franchiseeForm');
     const lForm = document.getElementById('franchiseListingForm');
-    const cForm = document.getElementById('claimBrandForm');
 
 	if (fForm) fForm.addEventListener('submit', function(e) { e.preventDefault(); submitToCloudflare(this, 'FRANCHISEE'); });
 	if (lForm) lForm.addEventListener('submit', function(e) { e.preventDefault(); submitToCloudflare(this, 'FRANCHISOR'); });
-    if (cForm) cForm.addEventListener('submit', function(e) { e.preventDefault(); submitToCloudflare(this, 'claim'); });
 
 	// Restore State
     const savedStep = localStorage.getItem('franchise_form_step');
@@ -319,9 +380,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	const lastTab = localStorage.getItem('active_registration_tab');
     const urlParams = new URLSearchParams(window.location.search);
-	if (urlParams.get('claim')) openTab('klaim');
-    else if (lastTab) openTab(lastTab);
-    else openTab('franchisee');
+	if (urlParams.get('claim')) {
+        openTab('klaim');
+    } else if (lastTab) {
+        openTab(lastTab);
+    } else {
+        openTab('franchisee');
+    }
 
     window.fetchUnclaimedBrands = fetchUnclaimedBrands;
+    window.fillMainFranchisorForm = fillMainFranchisorForm;
 });

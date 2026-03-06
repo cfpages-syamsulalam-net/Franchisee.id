@@ -537,7 +537,19 @@
 																			<div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" id="main_progress_bar"></div>
 																		</div>
 																	</div>
+																	<!-- CLAIM ALERT (Shown only when claiming) -->
+																	<div id="claim-mode-alert" class="alert alert-warning mb-4" style="display: none;">
+																			<i class="fas fa-certificate me-3 fs-4 text-warning"></i> 
+																			<div>
+																				<h5 class="mb-0 fw-bold">Mode Klaim Aktif</h5>
+																				<span class="small">Anda sedang melengkapi data untuk <span id="claiming-brand-display" class="fw-bold text-dark"></span>.</span>
+																			</div>
+																			<button type="button" class="btn-close ms-auto" onclick="exitClaimMode()" aria-label="Close"></button>
+																		</div>
+																	</div>
+
 																	<form id="franchiseListingForm" class="needs-validation async-form" enctype="multipart/form-data">
+                                                                        <input type="hidden" name="unclaimed_id" id="main_unclaimed_id">
 																		<!-- STEP 1: IDENTITAS (WRAPPER ACTIVE) -->
 																		<div class="form-step active" id="step-1">
 																			<div class="form-section-card">
@@ -1018,7 +1030,7 @@
 													<div id="tab-klaim" class="tab-content" style="display: none;">
 														<div class="elementor-element elementor-element-b1a5117 elementor-widget elementor-widget-heading" data-element_type="widget" data-widget_type="heading.default">
 															<div class="elementor-widget-container text-center">
-																<h3 class="elementor-heading-title elementor-size-default">Klaim Brand Anda &amp; Lengkapi Profilnya</h3>
+																<h3 class="elementor-heading-title elementor-size-default">Cari Brand Anda &amp; Ambil Alih Halaman Profil</h3>
 															</div>
 														</div>
 														<div class="elementor-element elementor-element-0efbcc9 elementor-widget elementor-widget-text-editor" data-element_type="widget" data-widget_type="text-editor.default">
@@ -1030,7 +1042,7 @@
 														<div class="franchise-listing-form-wrapper">
 															<!-- SEARCH BRAND SECTION -->
 															<div class="form-section-card mb-4" id="claim-search-section">
-																<h4 class="fw-bold mb-3"><i class="fas fa-search me-2 text-warning"></i> Cari Brand Anda</h4>
+																<h4 class="fw-bold mb-3"><i class="fas fa-search me-2 text-warning"></i> Pilih Brand untuk Diklaim</h4>
 																<div class="form-group-row">
 																	<div class="label-col"><label class="form-label">Nama Brand</label></div>
 																	<div class="input-col">
@@ -1038,118 +1050,9 @@
 																			<input type="text" class="form-control" id="claim-brand-search" placeholder="Ketik nama brand (misal: Sabana, Kebab, dll)..." autocomplete="off">
 																			<div id="claim-search-results" class="autocomplete-suggestions" style="display:none;"></div>
 																		</div>
-																		<small class="helper-text-bottom">Jika brand tidak ditemukan, silakan gunakan tab <strong>Daftar sebagai Franchisor</strong>.</small>
+																		<small class="helper-text-bottom">Setelah memilih, Anda akan diarahkan untuk melengkapi data profil.</small>
 																	</div>
 																</div>
-															</div>
-
-															<!-- CLAIM FORM (Initially Hidden) -->
-															<div id="claim-form-container" style="display: none;">
-																<div class="alert alert-warning d-flex align-items-center mb-4">
-																	<i class="fas fa-info-circle me-3 fs-4"></i>
-																	<div>
-																		<strong>Lengkapi Data Gap:</strong> Bidang yang ditandai warna kuning adalah data yang belum kami miliki. Mohon lengkapi untuk verifikasi.
-																	</div>
-																</div>
-																
-																<form id="claimBrandForm" class="async-form">
-																	<input type="hidden" name="unclaimed_id" id="claim_unclaimed_id">
-																	<input type="hidden" name="form_type" value="claim">
-																	
-																	<div class="form-section-card">
-																		<h3 class="section-title">Data Identitas Brand</h3>
-																		<div class="form-group-row">
-																			<div class="label-col"><label class="form-label">Nama Brand</label></div>
-																			<div class="input-col"><input type="text" class="form-control" name="brand_name" id="claim_brand_name" readonly></div>
-																		</div>
-																		<div class="form-group-row data-gap">
-																			<div class="label-col"><label class="form-label">Nama Perusahaan <span class="text-danger">*</span></label></div>
-																			<div class="input-col"><input type="text" class="form-control" name="company_name" required placeholder="PT / CV Pemilik Brand"></div>
-																		</div>
-																		<div class="form-group-row data-gap">
-																			<div class="label-col"><label class="form-label">Tahun Berdiri <span class="text-danger">*</span></label></div>
-																			<div class="input-col"><input type="number" class="form-control" name="year_established" required placeholder="Contoh: 2015"></div>
-																		</div>
-																		<div class="form-group-row data-gap">
-																			<div class="label-col"><label class="form-label">Status HAKI <span class="text-danger">*</span></label></div>
-																			<div class="input-col">
-																				<select class="form-select" name="haki_status" required>
-																					<option value="">Pilih Status...</option>
-																					<option value="registered">Terdaftar</option>
-																					<option value="process">Proses</option>
-																					<option value="none">Belum Ada</option>
-																				</select>
-																			</div>
-																		</div>
-																		<div class="form-group-row data-gap">
-																			<div class="label-col"><label class="form-label">Nomor NIB <span class="text-danger">*</span></label></div>
-																			<div class="input-col"><input type="text" class="form-control" name="nib_number" required placeholder="13 Digit Nomor Induk Berusaha"></div>
-																		</div>
-																	</div>
-
-																	<div class="form-section-card mt-4">
-																		<h3 class="section-title">Data Finansial &amp; Operasional</h3>
-																		<div class="form-group-row">
-																			<div class="label-col"><label class="form-label">Investasi Minimum</label></div>
-																			<div class="input-col">
-																				<div class="input-group">
-																					<span class="input-group-text">Rp</span>
-																					<input type="text" class="form-control" name="min_capital" id="claim_min_capital" readonly>
-																				</div>
-																			</div>
-																		</div>
-																		<div class="form-group-row data-gap">
-																			<div class="label-col"><label class="form-label">Franchise Fee <span class="text-danger">*</span></label></div>
-																			<div class="input-col">
-																				<div class="input-group">
-																					<span class="input-group-text">Rp</span>
-																					<input type="text" class="form-control rupiah-input" name="fee_license" required>
-																				</div>
-																			</div>
-																		</div>
-																		<div class="form-group-row data-gap">
-																			<div class="label-col"><label class="form-label">Royalty Fee (%) <span class="text-danger">*</span></label></div>
-																			<div class="input-col">
-																				<div class="input-group">
-																					<input type="number" class="form-control" name="royalty_percent" step="0.1" required>
-																					<span class="input-group-text">%</span>
-																				</div>
-																			</div>
-																		</div>
-																	</div>
-
-																	<div class="form-section-card mt-4">
-																		<h3 class="section-title">Aset Visual &amp; Kontak</h3>
-																		<div class="form-group-row data-gap">
-																			<div class="label-col"><label class="form-label">Upload Logo <span class="text-danger">*</span></label></div>
-																			<div class="input-col">
-																				<input type="file" class="form-control file-uploader" data-target="claim_logo_url">
-																				<input type="hidden" name="logo_url" id="claim_logo_url" required>
-																				<div class="upload-preview mt-2" id="preview_claim_logo_url"></div>
-																			</div>
-																		</div>
-																		<div class="form-group-row data-gap">
-																			<div class="label-col"><label class="form-label">Email Kontak Bisnis <span class="text-danger">*</span></label></div>
-																			<div class="input-col"><input type="email" class="form-control" name="email_contact" required placeholder="email@bisnisanda.com"></div>
-																		</div>
-																		<div class="form-group-row">
-																			<div class="label-col"><label class="form-label">WhatsApp PIC <span class="text-danger">*</span></label></div>
-																			<div class="input-col">
-																				<div class="input-group phone-input-group">
-																					<select class="form-select country-select" name="country_code">
-																						<option value="+62" selected>🇮🇩 +62</option>
-																					</select>
-																					<input type="tel" class="form-control phone-format" name="whatsapp" required placeholder="812-3456-7890">
-																				</div>
-																			</div>
-																		</div>
-																	</div>
-
-																	<div class="text-center mt-5">
-																		<button type="submit" class="btn btn-warning btn-lg fw-bold px-5 shadow w-100">KLAIM &amp; VERIFIKASI SEKARANG</button>
-																		<p class="mt-3 text-muted small">Dengan mengklik tombol di atas, Anda menyatakan sebagai pemilik sah atau perwakilan resmi dari brand ini.</p>
-																	</div>
-																</form>
 															</div>
 														</div>
 													</div>

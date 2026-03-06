@@ -15,8 +15,9 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `calculateAll()`: Core business logic for BEP, ROI, and Profit margins.
 - `window.updateMinCapital()`: Calculates minimum investment based on package pricing.
 - `initCityAutocomplete()`: Setup for Indonesian city search.
-- `fillClaimForm(brand)`: Pre-fills form fields when a brand is selected for claiming.
-- `submitToCloudflare(formElement, type)`: Sends form data to the backend API.
+- `fillMainFranchisorForm(brand)`: Unified workflow - Switches to Franchisor tab and pre-fills brand data + mapping.
+- `window.exitClaimMode()`: Resets claim state and restores normal Franchisor form.
+- `submitToCloudflare(formElement, type)`: Sends form data to backend (Handles claim type automatically).
 
 ### File: `js/form-utils.js` (Restored)
 *Shared utility functions to keep main logic files clean.*

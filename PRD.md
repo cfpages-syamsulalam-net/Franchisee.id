@@ -32,13 +32,17 @@ Allow owners of "Unclaimed" brands to take control of their pages.
 ### Phase 3: Real-Time Sync [DONE]
 - Google Apps Script + GitHub Repository Dispatch.
 
-### Phase 4: SEO & Conversion Optimization [IN PROGRESS]
-- **Goal**: Increase search visibility and conversion rate for unclaimed listings.
+### Phase 4: SEO & Conversion Optimization [DONE]
+- JSON-LD, Breadcrumbs, Sticky CTA, and Dynamic Sitemap active.
+
+### Phase 5: Unified Claiming Workflow [IN PROGRESS]
+- **Goal**: Merge "Claim" into the main "Franchisor" flow for a better user experience and data consistency.
 - **Actions**:
-  - JSON-LD Structured Data: Inject `Brand` and `Service` schema into detail pages.
-  - Breadcrumb Navigation: `Home > Peluang Usaha > [Category] > [Brand]`.
-  - Claim CTAs: Add "Klaim Brand Ini" sticky buttons on all unclaimed pages.
-  - Dynamic Sitemap: Auto-update `sitemap.xml` during SSG build.
+  - **Autocomplete UI**: Simplify to show only `brand_name`.
+  - **CSS Polish**: Enhance `.suggestion-item` hover/active states in `css/form-franchise.css`.
+  - **Workflow Merge**: Selection in "Klaim" tab now redirects to "Franchisor" tab with pre-filled data.
+  - **Data Mapping Fix**: Correctly map `brand_name`, `min_capital`, and `category` to the Franchisor form fields.
+  - **Unclaimed Tracker**: Inject a hidden `unclaimed_id` into the main Franchisor form so `form-submit.js` can perform the post-claim cleanup.
 
 ## 5. Development Timeline & Progress
 
@@ -54,12 +58,10 @@ Allow owners of "Unclaimed" brands to take control of their pages.
 | 2026-03-06 22:45 | **Static Autocomplete** | ✅ DONE | Switched from API to `unclaimed-brands.json` for speed. |
 | 2026-03-06 23:15 | **Automated Sync Logic** | ✅ DONE | Designed `onEdit` trigger with debounce for Google Sheets. |
 | 2026-03-07 10:00 | **Post-Claim Cleanup** | ✅ DONE | Auto-delete from `UNCLAIMED` tab after successful claim. |
-| 2026-03-07 11:30 | **SEO & Conversion Plan** | ✅ DONE | Added Phase 4 to PRD. |
-| 2026-03-07 11:45 | **Data Integrity Check** | ✅ DONE | Generated `unclaimed-brands.json` via CSV fallback. |
-| 2026-03-07 12:00 | **JSON-LD & Breadcrumbs** | ✅ DONE | Injected Brand schema and navigation to details. |
-| 2026-03-07 12:15 | **Sticky Claim CTA** | ✅ DONE | Added sticky bar for unclaimed brands in `build-details.js`. |
-| 2026-03-07 12:30 | **Dynamic Sitemap** | ✅ DONE | Automated `sitemap-complete.xml` generation in workflow. |
-| 2026-03-07 13:00 | **Final Review** | ⏳ TODO | Verifying all hybrid SSG components. |
+| 2026-03-07 12:30 | **SEO & Sitemap** | ✅ DONE | JSON-LD, Breadcrumbs, and sitemap-complete.xml implementation. |
+| 2026-03-07 14:00 | **Logic Inventory** | ✅ DONE | Created `TECHNICAL_INVENTORY.md` and refactored logic. |
+| 2026-03-07 15:00 | **Unified Workflow** | ✅ DONE | Merged Klaim into Franchisor flow + UI Fixes. |
+| 2026-03-07 15:30 | **Final Verification** | ⏳ TODO | End-to-end test of claiming process. |
 
 ## 6. Technical Implementation Note: Apps Script Trigger
 ```javascript
