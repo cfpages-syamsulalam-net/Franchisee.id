@@ -45,7 +45,7 @@ Allow owners of "Unclaimed" brands to take control of their pages.
 | 2026-03-06 22:30 | **UI & CSS Polish** | ✅ DONE | Shortened tab names & moved CSS to `form-franchise.css`. |
 | 2026-03-06 22:45 | **Static Autocomplete** | ✅ DONE | Switched from API to `unclaimed-brands.json` for speed. |
 | 2026-03-06 23:15 | **Automated Sync Logic** | ✅ DONE | Designed `onEdit` trigger with debounce for Google Sheets. |
-| 2026-03-07 09:00 | **Post-Claim Cleanup** | ⏳ TODO | Auto-delete from `UNCLAIMED` tab after successful claim. |
+| 2026-03-07 10:00 | **Post-Claim Cleanup** | ✅ DONE | Auto-delete from `UNCLAIMED` tab after successful claim. |
 
 ## 6. Technical Implementation Note: Apps Script Trigger
 ```javascript

@@ -49,6 +49,17 @@ export async function onRequestPost({ request, env }) {
     // 3. Kalau aman, Simpan Data
     await appendDataSmart(env.G_SHEET_ID, sheetName, sheetId, finalData, token);
 
+    // --- NEW: Post-Claim Cleanup (Delete from UNCLAIMED) ---
+    if (isClaim && data.unclaimed_id) {
+        try {
+            console.log(`🧹 Post-Claim Cleanup: Deleting ${data.unclaimed_id} from UNCLAIMED`);
+            await deleteFromUnclaimed(env.G_SHEET_ID, data.unclaimed_id, token);
+        } catch (cleanupError) {
+            console.error("⚠️ Cleanup Error (Non-critical):", cleanupError.message);
+            // Kita tidak gagalkan submit jika hanya cleanup yang gagal
+        }
+    }
+
     return new Response(JSON.stringify({ success: true, id: finalData.id }), {
       headers: { "Content-Type": "application/json" },
     });
@@ -221,4 +232,63 @@ async function checkForDuplicates(spreadsheetId, sheetName, email, whatsapp, tok
     }
 
     return false;
+}
+
+// 5. FUNCTION BARU: Delete from Unclaimed
+async function deleteFromUnclaimed(spreadsheetId, unclaimedId, token) {
+    // 1. Dapatkan metadata spreadsheet untuk cari sheetId (numerical) dari tab "UNCLAIMED"
+    const metaUrl = "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetId + "?fields=sheets.properties";
+    const metaResp = await fetch(metaUrl, { headers: { Authorization: "Bearer " + token } });
+    const metaData = await metaResp.json();
+    
+    const unclaimedSheet = metaData.sheets.find(s => s.properties.title === "UNCLAIMED");
+    if (!unclaimedSheet) throw new Error("Tab UNCLAIMED tidak ditemukan");
+    const sheetId = unclaimedSheet.properties.sheetId;
+
+    // 2. Cari row index berdasarkan ID (ID ada di kolom A)
+    const dataUrl = "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetId + "/values/UNCLAIMED!A:A";
+    const dataResp = await fetch(dataUrl, { headers: { Authorization: "Bearer " + token } });
+    const dataValues = await dataResp.json();
+    
+    const rows = dataValues.values || [];
+    // Cari row index (0-based)
+    const rowIndex = rows.findIndex(row => row[0] == unclaimedId);
+
+    if (rowIndex === -1) {
+        console.warn("Record " + unclaimedId + " tidak ditemukan di tab UNCLAIMED.");
+        return;
+    }
+
+    // 3. Eksekusi Deletion (batchUpdate)
+    const deleteUrl = "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetId + ":batchUpdate";
+    const deleteRequest = {
+        requests: [
+            {
+                deleteDimension: {
+                    range: {
+                        sheetId: sheetId,
+                        dimension: "ROWS",
+                        startIndex: rowIndex,
+                        endIndex: rowIndex + 1
+                    }
+                }
+            }
+        ]
+    };
+
+    const deleteResp = await fetch(deleteUrl, {
+        method: 'POST',
+        headers: { 
+            Authorization: "Bearer " + token,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(deleteRequest)
+    });
+
+    if (!deleteResp.ok) {
+        const err = await deleteResp.json();
+        throw new Error("Gagal hapus row: " + err.error.message);
+    }
+    
+    console.log("✅ Successfully deleted row index " + rowIndex + " from UNCLAIMED.");
 }

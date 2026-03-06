@@ -1228,10 +1228,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function fetchUnclaimedBrands() {
         try {
-            // Fetch from static JSON generated during SSG build
-            const response = await fetch('/data/unclaimed-brands.json');
-            unclaimedBrands = await response.json();
-            console.log("Loaded unclaimed brands (Static):", unclaimedBrands.length);
+            console.log("🔍 Fetching unclaimed brands...");
+            // Try Static JSON first (Fastest)
+            let response = await fetch('/data/unclaimed-brands.json');
+            if (response.ok) {
+                unclaimedBrands = await response.json();
+                console.log("✅ Loaded from Static JSON:", unclaimedBrands.length);
+            } else {
+                // Fallback to Live API
+                console.log("⚠️ Static JSON not found, falling back to Live API...");
+                response = await fetch('/api/get-franchises?tab=UNCLAIMED');
+                const result = await response.json();
+                unclaimedBrands = result.data || [];
+                console.log("✅ Loaded from Live API:", unclaimedBrands.length);
+            }
+
+            if (unclaimedBrands.length === 0) {
+                console.warn("[Autocomplete] No brands found in data sources.");
+            }
 
             // Auto-fill if claim slug is present
             const urlParams = new URLSearchParams(window.location.search);
@@ -1244,15 +1258,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } catch (error) {
-            console.error("Error fetching unclaimed brands JSON:", error);
-            // Fallback to API if JSON fails (optional, but good for robustness during transition)
-            try {
-                const response = await fetch('/api/get-franchises?tab=UNCLAIMED');
-                const data = await response.json();
-                unclaimedBrands = data.data || [];
-            } catch (apiErr) {
-                console.error("Fallback API also failed:", apiErr);
-            }
+            console.error("❌ Error loading brands for autocomplete:", error);
         }
     }
 
