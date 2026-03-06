@@ -21,6 +21,11 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 2.  **Franchise Claiming:** Implement the third "Claim Brand" tab in the registration form.
 3.  **Action Optimization:** Audit and enhance GitHub Actions for performance and real-time sync.
 
+## Safety & Code Integrity (Lessons Learned)
+- **Avoid Full Overwrites:** For large legacy files (e.g., `js/form-franchise.js`), NEVER perform a full file rewrite if the file contains complex logic (validation, third-party integrations). Use targeted `replace` calls instead.
+- **Refactor, Don't Delete:** If a file becomes too complex or has hoisting/initialization issues, refactor shared logic into a separate utility file (e.g., `js/form-utils.js`) rather than flattening or simplifying the code and losing features.
+- **Verification before Deletion:** Always verify the full scope of a file's functionality (multi-step forms, calculations, uploads) before assuming code is redundant.
+
 ## Project Governance & Maintenance
 - **PRD Timeline Preservation:** Do not over-edit or delete existing entries in the `PRD.md` timeline. It serves as an immutable log of progress and steps taken.
 - **Timestamping:** All new entries in the `PRD.md` timeline must include the date and hour (e.g., `2026-03-06 22:30`) for precise tracking.
