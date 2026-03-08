@@ -301,7 +301,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 pkg_name_1: 'Paket Standard',
                 pkg_price_1: window.formatRupiah(brand.min_capital)
             }));
-            window.renderPackageInputs(1);
+            if (typeof window.renderPackageInputs === 'function') {
+                window.renderPackageInputs(1);
+            }
         }
 
         window.scrollToTopForm();
@@ -320,7 +322,9 @@ document.addEventListener('DOMContentLoaded', function() {
             fBrandName.classList.remove('is-valid');
         }
         localStorage.removeItem('franchise_form_autosave');
-        window.renderPackageInputs(1);
+        if (typeof window.renderPackageInputs === 'function') {
+            window.renderPackageInputs(1);
+        }
     }
 
 	// ==========================================
@@ -356,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.removeItem('franchise_form_autosave');
                     window.location.reload();
                 });
-			} else { throw new Error(result.message || 'Gagal'); }
+			} else { throw new Error(result.message || result.error || 'Gagal'); }
 		} catch (error) {
 			alert('Kesalahan: ' + error.message);
 			btn.innerHTML = originalText;
