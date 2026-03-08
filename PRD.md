@@ -44,24 +44,9 @@ Allow owners of "Unclaimed" brands to take control of their pages.
   - **Data Mapping Fix**: Correctly map `brand_name`, `min_capital`, and `category` to the Franchisor form fields.
   - **Unclaimed Tracker**: Inject a hidden `unclaimed_id` into the main Franchisor form so `form-submit.js` can perform the post-claim cleanup.
 
-## 5. Development Timeline & Progress
-
-| Date & Hour | Milestone | Status | Details |
-|------|-----------|--------|---------|
-| 2026-03-06 20:00 | **Project Kickoff** | ✅ DONE | Initial analysis of WordPress-to-Static transition. |
-| 2026-03-06 20:15 | **Documentation Sync** | ✅ DONE | Synced PRD, GEMINI.md with codebase and external docs. |
-| 2026-03-06 20:30 | **Hybrid SSG Engine** | ✅ DONE | Updated `build-listing.js` & `get-franchises.js` for `UNCLAIMED` brands. |
-| 2026-03-06 21:00 | **Claim Workflow UI** | ✅ DONE | Implemented "Klaim Brand" tab, Autocomplete & Data-Gap form. |
-| 2026-03-06 21:30 | **Deep-Linking & Auto-Fill** | ✅ DONE | Added `?claim=slug` support for seamless transitions. |
-| 2026-03-06 22:00 | **Actions Bugfix** | ✅ DONE | Fixed multiple `run` commands in `generate-pages.yaml`. |
-| 2026-03-06 22:30 | **UI & CSS Polish** | ✅ DONE | Shortened tab names & moved CSS to `form-franchise.css`. |
-| 2026-03-06 22:45 | **Static Autocomplete** | ✅ DONE | Switched from API to `unclaimed-brands.json` for speed. |
-| 2026-03-06 23:15 | **Automated Sync Logic** | ✅ DONE | Designed `onEdit` trigger with debounce for Google Sheets. |
-| 2026-03-07 10:00 | **Post-Claim Cleanup** | ✅ DONE | Auto-delete from `UNCLAIMED` tab after successful claim. |
-| 2026-03-07 12:30 | **SEO & Sitemap** | ✅ DONE | JSON-LD, Breadcrumbs, and sitemap-complete.xml implementation. |
-| 2026-03-07 14:00 | **Logic Inventory** | ✅ DONE | Created `TECHNICAL_INVENTORY.md` and refactored logic. |
-| 2026-03-07 15:00 | **Unified Workflow** | ✅ DONE | Merged Klaim into Franchisor flow + UI Fixes. |
-| 2026-03-07 15:30 | **Final Verification** | ⏳ TODO | End-to-end test of claiming process. |
+## 5. Change Log Location
+- Development timeline and code-change history are now maintained in `CHANGELOG.md` only.
+- `PRD.md` remains focused on product requirements, feature scope, and implementation direction.
 
 ## 6. Technical Implementation Note: Apps Script Trigger
 ```javascript

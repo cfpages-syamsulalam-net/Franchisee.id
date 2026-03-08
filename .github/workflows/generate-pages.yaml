@@ -1,19 +1,12 @@
 name: Auto-Update Franchise Listings
 
 on:
-  # 1. Jalan otomatis setiap 12 jam
+  # Scheduled polling fallback (build only runs if sheet data hash changes)
   schedule:
-    - cron: '0 */12 * * *'
-  # 2. Jalan manual via tab "Actions" di GitHub
+    - cron: '*/15 * * * *'
+  # Manual trigger from Actions tab
   workflow_dispatch:
-  # 3. Jalankan jika ada perubahan pada data CSV lokal (Sync)
-  push:
-    branches: [ main ]
-    paths:
-      - 'unclaimed.csv'
-      - 'franchisors.csv'
-      - 'franchisee.csv'
-  # 4. Trigger via Google Sheets (Webhook)
+  # Triggered by Google Apps Script repository_dispatch webhook
   repository_dispatch:
     types: [ sheet_update ]
 
@@ -23,30 +16,100 @@ permissions:
 jobs:
   build-and-update:
     runs-on: ubuntu-latest
+    concurrency:
+      group: franchise-sheet-sync
+      cancel-in-progress: true
 
     steps:
-      # 1. Checkout Code
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          # Kita gunakan PAT agar workflow bisa nge-push balik ke repo
           token: ${{ secrets.GH_PAT }}
+          fetch-depth: 0
 
-      # 2. Setup Node.js
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      # 3. Install Dependencies (Inline)
-      # Kita install library yang dibutuhkan builder script langsung di sini
-      # Flag --no-save agar package.json (jika ada) tidak berubah
       - name: Install Dependencies
         run: npm install googleapis dotenv --no-save
 
-      # 4. Run Builder Script
-      # Script ini akan men-generate file HTML baru berdasarkan data Sheet
+      - name: Compute Google Sheets Data Hash
+        id: sheet_hash
+        env:
+          G_SHEET_ID: ${{ secrets.G_SHEET_ID }}
+          G_CLIENT_EMAIL: ${{ secrets.G_CLIENT_EMAIL }}
+          G_PRIVATE_KEY: ${{ secrets.G_PRIVATE_KEY }}
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const { google } = require('googleapis');
+
+          async function main() {
+            const privateKey = (process.env.G_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+            const auth = new google.auth.JWT(
+              process.env.G_CLIENT_EMAIL,
+              null,
+              privateKey,
+              ['https://www.googleapis.com/auth/spreadsheets.readonly']
+            );
+            const sheets = google.sheets({ version: 'v4', auth });
+
+            const [franchisor, unclaimed] = await Promise.all([
+              sheets.spreadsheets.values.get({
+                spreadsheetId: process.env.G_SHEET_ID,
+                range: 'FRANCHISOR!A1:ZZ1000',
+              }),
+              sheets.spreadsheets.values.get({
+                spreadsheetId: process.env.G_SHEET_ID,
+                range: 'UNCLAIMED!A1:ZZ1000',
+              }),
+            ]);
+
+            const payload = {
+              FRANCHISOR: franchisor.data.values || [],
+              UNCLAIMED: unclaimed.data.values || [],
+            };
+
+            const hash = crypto
+              .createHash('sha256')
+              .update(JSON.stringify(payload))
+              .digest('hex');
+
+            fs.writeFileSync('.sheet_hash', hash, 'utf8');
+            console.log(`Current sheet hash: ${hash}`);
+          }
+
+          main().catch((err) => {
+            console.error(err);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Compare with Previous Hash
+        id: compare_hash
+        run: |
+          CURRENT_HASH="$(cat .sheet_hash)"
+          PREVIOUS_HASH=""
+
+          if [ -f ".github/sheets-sync-state.json" ]; then
+            PREVIOUS_HASH="$(node -e "const fs=require('fs'); const p='.github/sheets-sync-state.json'; const d=JSON.parse(fs.readFileSync(p,'utf8')); process.stdout.write(d.last_hash||'');")"
+          fi
+
+          echo "current_hash=${CURRENT_HASH}" >> "$GITHUB_OUTPUT"
+
+          if [ "$CURRENT_HASH" = "$PREVIOUS_HASH" ] && [ -n "$CURRENT_HASH" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No Google Sheets changes detected. Skipping build."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Google Sheets changes detected. Running build."
+          fi
+
       - name: Run SSG Builder
+        if: steps.compare_hash.outputs.changed == 'true'
         env:
           G_SHEET_ID: ${{ secrets.G_SHEET_ID }}
           G_CLIENT_EMAIL: ${{ secrets.G_CLIENT_EMAIL }}
@@ -56,25 +119,33 @@ jobs:
           node js/build-details.js
           node js/build-sitemap.js
 
-      # 5. Commit & Push (Snippet Anda + Support New Files)
+      - name: Persist Latest Sheet Hash
+        if: steps.compare_hash.outputs.changed == 'true'
+        env:
+          CURRENT_HASH: ${{ steps.compare_hash.outputs.current_hash }}
+        run: |
+          mkdir -p .github
+          cat > .github/sheets-sync-state.json <<EOF
+          {
+            "last_hash": "${CURRENT_HASH}",
+            "updated_at_utc": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          }
+          EOF
+
       - name: Commit and push changes
+        if: steps.compare_hash.outputs.changed == 'true'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
-          # Add semua perubahan (termasuk file HTML baru yang digenerate)
           git add .
           
-          # Cek apakah ada perubahan yang sudah di-stage
           if ! git diff --cached --quiet; then
-            echo "⚡ Changes detected. Committing..."
-            git commit -m "🤖 Auto-update: Franchise Listings (SSG Data Sync)"
+            echo "Changes detected. Committing..."
+            git commit -m "chore(sync): rebuild static pages from updated Google Sheets data"
             
-            # Setup Remote URL dengan PAT
             git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}
-            
-            # Push ke branch main
             git push origin HEAD:main
           else
-            echo "✅ No changes to commit (Data synced)."
+            echo "No generated file changes to commit."
           fi

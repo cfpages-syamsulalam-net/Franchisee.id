@@ -38,9 +38,10 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 - **Audit Requirement:** During major "vibe coding" sessions or refactors, perform a comparison against both inventory files to ensure zero-loss of business logic or user data points.
 
 ## Project Governance & Maintenance
-- **PRD Timeline Preservation:** Do not over-edit or delete existing entries in the `PRD.md` timeline. It serves as an immutable log of progress and steps taken.
-- **Timestamping:** All new entries in the `PRD.md` timeline must include the date and hour (e.g., `2026-03-06 22:30`) for precise tracking.
-- **Single Source of Truth:** `GEMINI.md` takes precedence for architectural decisions, while `PRD.md` tracks implementation milestones.
+- **Changelog Authority:** All code changes (create/update/delete) must be logged in `CHANGELOG.md`.
+- **Timestamping:** Every new `CHANGELOG.md` entry must include date and hour with timezone (e.g., `2026-03-09 21:45 (Asia/Jakarta)`).
+- **PRD Scope:** `PRD.md` is for requirements, roadmap, and feature plans; it should not be used as an ongoing code-change log.
+- **Single Source of Truth:** `GEMINI.md` takes precedence for architecture and governance; `CHANGELOG.md` is the implementation history log.
 
 ## Architecture & Data Flow
 1.  **Data Tiers:** `UNCLAIMED` (Scraped/Potential), `FREE` (Claimed/Basic), `VERIFIED` (Paid/Priority).
