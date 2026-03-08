@@ -22,14 +22,20 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 3.  **Action Optimization:** Audit and enhance GitHub Actions for performance and real-time sync.
 
 ## Safety & Code Integrity (Lessons Learned)
-- **Avoid Full Overwrites:** For large legacy files (e.g., `js/form-franchise.js`), NEVER perform a full file rewrite if the file contains complex logic (validation, third-party integrations). Use targeted `replace` calls instead.
+- **Avoid Full Overwrites:** For large legacy files (e.g., `js/form-franchise.js`, `pendaftaran/index.html`), NEVER perform a full file rewrite using `write_file` if the file contains complex logic or Elementor boilerplate. Use targeted `replace` calls instead.
+- **Large File Safeguards:**
+    1.  **Mandatory Replace:** For any file exceeding 100 lines, use `replace` instead of `write_file`.
+    2.  **Context Buffering:** When using `replace`, provide at least 5-10 lines of surrounding code in `old_string` to ensure unique matching and prevent accidental overlap deletions.
+    3.  **Integrity Validation:** After editing any file > 500 lines, immediately run `(Get-Content <file_path>).Count` via shell to verify that the line count hasn't dropped drastically (e.g., >10% loss) unless explicitly intended.
+    4.  **No Placeholder Edits:** Never assume sections of a file are "standard" or "unimportant" (like CSS blocks or meta tags). Every line must be treated as critical unless verified otherwise.
 - **Refactor, Don't Delete:** If a file becomes too complex or has hoisting/initialization issues, refactor shared logic into a separate utility file (e.g., `js/form-utils.js`) rather than flattening or simplifying the code and losing features.
 - **Verification before Deletion:** Always verify the full scope of a file's functionality (multi-step forms, calculations, uploads) before assuming code is redundant.
 
 ## Logic Inventory & Continuity
 - **Mandatory Tracking:** The `TECHNICAL_INVENTORY.md` file is the source of truth for all functions and key variables in `/js` and `/functions`.
-- **Sync Requirement:** When adding new features or refactoring, update `TECHNICAL_INVENTORY.md` to reflect changes in symbols and responsibilities.
-- **Audit Requirement:** During major "vibe coding" sessions or refactors, perform a comparison against `TECHNICAL_INVENTORY.md` to ensure zero-loss of business logic (e.g., BEP calculations, validation rules).
+- **Form Schema:** The `FORM_SCHEMA.md` file is the source of truth for all HTML form inputs. NEVER remove an input or a tab from `/pendaftaran` without explicitly updating the schema and confirming with the user.
+- **Sync Requirement:** When adding new features or refactoring, update `TECHNICAL_INVENTORY.md` and `FORM_SCHEMA.md` to reflect changes in symbols and UI fields.
+- **Audit Requirement:** During major "vibe coding" sessions or refactors, perform a comparison against both inventory files to ensure zero-loss of business logic or user data points.
 
 ## Project Governance & Maintenance
 - **PRD Timeline Preservation:** Do not over-edit or delete existing entries in the `PRD.md` timeline. It serves as an immutable log of progress and steps taken.
