@@ -5,6 +5,8 @@ This document is the **Single Source of Truth** for the Franchise.id project, co
 ## Project Overview
 Franchise.id is a high-performance directory platform (franchise.id, franchisee.id, franchisor.id) connecting Franchisors with potential Franchisees. It is a **WordPress-to-Static** conversion hosted on **Cloudflare Pages**, utilizing **Cloudflare Functions** and **GitHub Actions** for dynamic logic and automation.
 
+- **GitHub Repository:** https://github.com/cfpages-syamsulalam-net/Franchisee.id/
+
 ### Core Tech Stack
 - **Hosting:** Cloudflare Pages (Static HTML/CSS/JS).
 - **Backend:** Cloudflare Functions (Edge Runtime) for forms and API access.
@@ -42,6 +44,12 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 - **Timestamping:** Every new `CHANGELOG.md` entry must include date and hour with timezone (e.g., `2026-03-09 21:45 (Asia/Jakarta)`).
 - **PRD Scope:** `PRD.md` is for requirements, roadmap, and feature plans; it should not be used as an ongoing code-change log.
 - **Single Source of Truth:** `GEMINI.md` takes precedence for architecture and governance; `CHANGELOG.md` is the implementation history log.
+- **Branching Strategy:** To protect the `main` branch, all new features or significant edits should be performed in a dedicated branch (e.g., `feature/name` or `fix/issue`).
+    1.  Create a new branch: `git checkout -b feature/your-feature-name`.
+    2.  Perform edits and verify changes.
+    3.  Commit changes to the feature branch.
+    4.  Merge into `main` only after validation.
+    *Note: Gemini CLI should not create or push branches unless explicitly directed by the user.*
 
 ## Architecture & Data Flow
 1.  **Data Tiers:** `UNCLAIMED` (Scraped/Potential), `FREE` (Claimed/Basic), `VERIFIED` (Paid/Priority).
