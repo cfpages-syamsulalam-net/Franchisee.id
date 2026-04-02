@@ -1,4 +1,4 @@
-# Commit History: /pendaftaran/index.html
+# Commit History: /daftar/index.html
 
 | Commit Hash | Date | Message | Line Count |
 |-------------|------|---------|------------|

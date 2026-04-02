@@ -163,7 +163,7 @@ Number of URLs: 204
 - [https://franchisee.id/login/](https://google.com/search?q=site%3Ahttps://franchisee.id/login/)
 - [https://franchisee.id/peraturan-waralaba/](https://google.com/search?q=site%3Ahttps://franchisee.id/peraturan-waralaba/)
 - [https://franchisee.id/franchisepedia/](https://google.com/search?q=site%3Ahttps://franchisee.id/franchisepedia/)
-- [https://franchisee.id/pendaftaran/](https://google.com/search?q=site%3Ahttps://franchisee.id/pendaftaran/)
+- [https://franchisee.id/daftar/](https://google.com/search?q=site%3Ahttps://franchisee.id/daftar/)
 - [https://franchisee.id/usaha-franchise-kecantikan-peluang-bisnis-menarik-dengan-pasar-yang-selalu-tumbuh](https://google.com/search?q=site%3Ahttps://franchisee.id/usaha-franchise-kecantikan-peluang-bisnis-menarik-dengan-pasar-yang-selalu-tumbuh)
 - [https://franchisee.id/peluang-usaha/eden-everyday-english/](https://google.com/search?q=site%3Ahttps://franchisee.id/peluang-usaha/eden-everyday-english/)
 - [https://franchisee.id/peluang-usaha/](https://google.com/search?q=site%3Ahttps://franchisee.id/peluang-usaha/)

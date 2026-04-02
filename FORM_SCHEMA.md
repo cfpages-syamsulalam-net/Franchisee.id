@@ -1,6 +1,6 @@
 # Franchise.id Form Schema Inventory
 
-This file documents every input field for the three registration tabs in `/pendaftaran/index.html` to ensure no data points are lost during future refactors.
+This file documents every input field for the three registration tabs in `/daftar/index.html` to ensure no data points are lost during future refactors.
 
 ## 1. Tab: Franchisee (Calon Mitra)
 *Target: Individuals looking to buy a franchise.*

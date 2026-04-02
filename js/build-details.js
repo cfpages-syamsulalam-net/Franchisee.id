@@ -77,7 +77,7 @@ function generateStickyBar(item, slug, tier) {
             <strong style="display: block; color: #333;">Apakah ini Bisnis Anda?</strong>
             <span style="font-size: 13px; color: #666;">Klaim brand <strong>${item.brand_name}</strong> secara GRATIS untuk mengelola halaman ini.</span>
         </div>
-        <a href="/pendaftaran?claim=${slug}" style="background: #ffc107; color: #000; padding: 10px 25px; border-radius: 50px; font-weight: bold; text-decoration: none; box-shadow: 0 4px 10px rgba(255,193,7,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">KLAIM SEKARANG</a>
+        <a href="/daftar?claim=${slug}" style="background: #ffc107; color: #000; padding: 10px 25px; border-radius: 50px; font-weight: bold; text-decoration: none; box-shadow: 0 4px 10px rgba(255,193,7,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">KLAIM SEKARANG</a>
     </div>
     <style>
         body { padding-bottom: 80px !important; }
@@ -154,7 +154,7 @@ async function build() {
                 disclaimer = `
                 <div class="disclaimer-box">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Halaman Belum Diklaim:</strong> Informasi ini dikumpulkan dari sumber publik. Jika Anda pemilik brand ini, silakan <a href="/pendaftaran?claim=${slug}">klaim halaman ini</a> untuk memperbarui data.
+                    <strong>Halaman Belum Diklaim:</strong> Informasi ini dikumpulkan dari sumber publik. Jika Anda pemilik brand ini, silakan <a href="/daftar?claim=${slug}">klaim halaman ini</a> untuk memperbarui data.
                 </div>`;
             }
             html = html.replace('<!-- DYNAMIC_DISCLAIMER_BOX -->', disclaimer);

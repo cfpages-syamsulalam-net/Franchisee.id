@@ -1,4 +1,4 @@
-# Restoration Plan: /pendaftaran/index.html
+# Restoration Plan: /daftar/index.html
 
 The current version (`10dc93f`) removed significant boilerplate and styles, which disrupted the visual design and SEO integrity. This plan aims to merge the best of both: the "Clean" external logic from the current version and the "Rich Aesthetics" and SEO from the previous version (`362415c`).
 

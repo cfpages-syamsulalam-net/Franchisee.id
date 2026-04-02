@@ -133,7 +133,7 @@ Every session must log changes in `CHANGELOG.md`:
 5. **Refactor, don't delete**: Extract shared logic to utility files instead of removing functionality
 
 ### Form Field Safety
-- Never remove/rename form inputs in `/pendaftaran/index.html` without updating `FORM_SCHEMA.md`
+- Never remove/rename form inputs in `/daftar/index.html` without updating `FORM_SCHEMA.md`
 - The form has 3 tabs: **Franchisee**, **Franchisor**, **Klaim Brand** (Claim)
 - Each tab has specific required fields documented in `FORM_SCHEMA.md`
 
@@ -200,7 +200,7 @@ Google Sheets (write-back) + Supabase (analytics)
 ## Testing & Validation
 
 ### Manual Testing Checklist
-- [ ] Tab switching in `/pendaftaran` form (Franchisee/Franchisor/Klaim)
+- [ ] Tab switching in `/daftar` form (Franchisee/Franchisor/Klaim)
 - [ ] Claim workflow with `?claim=<slug>` deep-link
 - [ ] Financial calculations (BEP, ROI, total investment)
 - [ ] Form validation and error messages

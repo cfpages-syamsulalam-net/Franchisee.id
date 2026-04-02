@@ -75,7 +75,7 @@ async function build() {
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>${BASE_URL}/pendaftaran/</loc>
+        <loc>${BASE_URL}/daftar/</loc>
         <lastmod>${today}</lastmod>
         <priority>0.8</priority>
     </url>`;

@@ -28,7 +28,7 @@ This file gives persistent project context: goals, commands, architecture, conve
   - `/js`: client logic and static site generators (`build-listing.js`, `build-details.js`, `build-sitemap.js`, `form-franchise.js`, `form-utils.js`).
   - `/functions`: Cloudflare Functions (`form-submit.js`, `get-franchises.js`) for API/form handling.
   - `/templates`: source templates used by builder scripts.
-  - `/pendaftaran`: static form page integrating custom JS.
+  - `/daftar`: static form page integrating custom JS.
   - `/data`: generated helper data (`unclaimed-brands.json`) for fast autocomplete.
   - `/.github/workflows`: automation pipelines.
 - Data flow:

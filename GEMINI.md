@@ -35,8 +35,8 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 
 ## Logic Inventory & Continuity
 - **Mandatory Tracking**: The `TECHNICAL_INVENTORY.md` file is the source of truth for all functions and key variables in `/js` and `/functions`.
-- **Folder Context**: Before making changes in any directory (e.g., `/pendaftaran`, `/js`), ALWAYS check for local `.md` files (like `commits.md`, `technical_comparison.md`, `symbols_inventory.md`). These files contain critical historical context, feature lists, and instructions that override general assumptions.
-- **Form Schema**: The `FORM_SCHEMA.md` file is the source of truth for all HTML form inputs. NEVER remove an input or a tab from `/pendaftaran` without explicitly updating the schema and confirming with the user.
+- **Folder Context**: Before making changes in any directory (e.g., `/daftar`, `/js`), ALWAYS check for local `.md` files (like `commits.md`, `technical_comparison.md`, `symbols_inventory.md`). These files contain critical historical context, feature lists, and instructions that override general assumptions.
+- **Form Schema**: The `FORM_SCHEMA.md` file is the source of truth for all HTML form inputs. NEVER remove an input or a tab from `/daftar` without explicitly updating the schema and confirming with the user.
 
 - **Sync Requirement:** When adding new features or refactoring, update `TECHNICAL_INVENTORY.md` and `FORM_SCHEMA.md` to reflect changes in symbols and UI fields.
 - **Audit Requirement:** During major "vibe coding" sessions or refactors, perform a comparison against both inventory files to ensure zero-loss of business logic or user data points.

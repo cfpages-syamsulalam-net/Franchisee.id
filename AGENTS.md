@@ -11,7 +11,7 @@ Last updated: 2026-03-09 (Asia/Jakarta)
 - `GEMINI.md` has been reviewed and is treated as the project context baseline.
 
 ## What Was Checked
-- Repository structure and key runtime areas (`/js`, `/functions`, `/pendaftaran`).
+- Repository structure and key runtime areas (`/js`, `/functions`, `/daftar`).
 - Core custom scripts:
   - `js/form-utils.js`
   - `js/form-franchise.js`

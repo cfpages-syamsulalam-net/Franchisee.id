@@ -1,4 +1,4 @@
-# Technical Comparison: /pendaftaran/index.html
+# Technical Comparison: /daftar/index.html
 
 This document tracks the technical evolution of the registration form, specifically focusing on functions, variables, styles, and structural elements across key commits.
 
