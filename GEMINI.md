@@ -24,7 +24,7 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 3.  **Action Optimization:** Audit and enhance GitHub Actions for performance and real-time sync.
 
 ## Safety & Code Integrity (Lessons Learned)
-- **Avoid Full Overwrites:** For large legacy files (e.g., `js/form-franchise.js`, `pendaftaran/index.html`), NEVER perform a full file rewrite using `write_file` if the file contains complex logic or Elementor boilerplate. Use targeted `replace` calls instead.
+- **Avoid Full Overwrites:** For large legacy files (e.g., `js/form-franchise.js`, `/daftar/index.html`), NEVER perform a full file rewrite using `write_file` if the file contains complex logic or Elementor boilerplate. Use targeted `replace` calls instead.
 - **Large File Safeguards:**
     1.  **Mandatory Replace:** For any file exceeding 100 lines, use `replace` instead of `write_file`.
     2.  **Context Buffering:** When using `replace`, provide at least 5-10 lines of surrounding code in `old_string` to ensure unique matching and prevent accidental overlap deletions.

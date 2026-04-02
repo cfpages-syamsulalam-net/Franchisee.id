@@ -50,7 +50,7 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Log all file create/update/delete operations in `CHANGELOG.md` with timestamp.
   - Preserve static-first approach for SEO (generate pages, avoid runtime-heavy rendering).
 - Things to avoid:
-  - Do not do full rewrites of large legacy files (`pendaftaran/index.html`, `js/form-franchise.js`) unless explicitly required.
+  - Do not do full rewrites of large legacy files (`/daftar/index.html`, `js/form-franchise.js`) unless explicitly required.
   - Do not remove/rename form fields without updating `FORM_SCHEMA.md`.
   - Do not introduce duplicate changelog/timeline logs in PRD.
 

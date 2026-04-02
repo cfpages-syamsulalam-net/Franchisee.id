@@ -232,7 +232,7 @@ node --check js/form-franchise.js
 
 3. **Workflow Trigger Policy**: Primary trigger is `repository_dispatch` from Google Sheets. Scheduled polling is a fallback. Build should only run when sheet hash changes.
 
-4. **Large File Edits**: Files like `pendaftaran/index.html` contain Elementor boilerplate. Use surgical edits to avoid breaking the DOM structure.
+4. **Large File Edits**: Files like `/daftar/index.html` contain Elementor boilerplate. Use surgical edits to avoid breaking the DOM structure.
 
 5. **Cloudinary Integration**: Direct browser uploads require proper credentials. Upload preview logic is in `form-franchise.js`.
 

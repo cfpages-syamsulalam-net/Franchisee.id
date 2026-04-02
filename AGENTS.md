@@ -20,7 +20,7 @@ Last updated: 2026-03-09 (Asia/Jakarta)
   - `js/build-sitemap.js`
   - `functions/get-franchises.js`
   - `functions/form-submit.js`
-- Integration points in `pendaftaran/index.html` for tab switching and form scripts.
+- Integration points in `/daftar/index.html` for tab switching and form scripts.
 
 ## Fix Applied During Audit
 - File: `js/form-franchise.js`
@@ -36,7 +36,7 @@ Last updated: 2026-03-09 (Asia/Jakarta)
 - `KNOWLEDGE.md`: Consolidated operational knowledge (quickstart, architecture, conventions, gotchas). Use as first-stop implementation context.
 - `GEMINI.md`: Primary architecture and governance source of truth; prioritize it for technical direction.
 - `PRD.md`: Feature roadmap and requirement scope (non-changelog).
-- `FORM_SCHEMA.md`: Canonical form input inventory. Do not remove/rename fields in `pendaftaran/index.html` without updating this file.
+- `FORM_SCHEMA.md`: Canonical form input inventory. Do not remove/rename fields in `/daftar/index.html` without updating this file.
 - `TECHNICAL_INVENTORY.md`: Canonical inventory of key functions/variables in `/js` and `/functions`. Update after logic additions/removals/refactors.
 - `franchise-info-form.md`: Detailed UX/data spec for franchise listing form sections and conditional logic; use as reference when revising form UX.
 - `README.md`: Currently auto-generated sitemap URL listing; treat as generated artifact.
