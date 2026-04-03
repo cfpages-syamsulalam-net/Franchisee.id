@@ -3,6 +3,7 @@ export async function onRequestGet({ request, env }) {
   try {
     const { searchParams } = new URL(request.url);
     const tab = searchParams.get('tab') || "FRANCHISOR"; // Nama Tab: FRANCHISOR atau UNCLAIMED
+    const purpose = searchParams.get('purpose') || '';
     
     // 1. Auth Google (Reuse Logic)
     const token = await getGoogleAuthToken(env.G_CLIENT_EMAIL, env.G_PRIVATE_KEY);
@@ -53,12 +54,51 @@ export async function onRequestGet({ request, env }) {
       return item;
     });
 
+    const normalizeText = (value) => (value || '').toString().replace(/\s+/g, ' ').trim();
+    const isUrlLike = (text) => /^(https?:\/\/|www\.)/i.test(normalizeText(text));
+    const isPhoneLike = (text) => {
+      const raw = normalizeText(text);
+      const digits = raw.replace(/\D/g, '');
+      return digits.length >= 9 && digits.length <= 16 && (digits.length / Math.max(raw.length, 1)) > 0.6;
+    };
+    const isLikelyClaimBrandRow = (item) => {
+      const brandName = normalizeText(item.brand_name);
+      if (!brandName || brandName.length < 2) return false;
+      if (isUrlLike(brandName) || isPhoneLike(brandName)) return false;
+      const hasEvidence =
+        normalizeText(item.source_ignore) ||
+        normalizeText(item.full_desc) ||
+        normalizeText(item.company_name) ||
+        normalizeText(item.phone) ||
+        normalizeText(item.label);
+      return Boolean(hasEvidence);
+    };
+
+    let responseData = franchises;
+    if (tab.toUpperCase() === 'UNCLAIMED' && purpose === 'claim-search') {
+      const seen = new Set();
+      responseData = franchises
+        .filter(isLikelyClaimBrandRow)
+        .map((item) => ({
+          ...item,
+          brand_name: normalizeText(item.brand_name),
+          category: normalizeText(item.category),
+          min_capital: normalizeText(item.min_capital),
+        }))
+        .filter((item) => {
+          const key = item.brand_name.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+    }
+
     return new Response(JSON.stringify({
         success: true,
-        data: franchises,
+        data: responseData,
         meta: {
             tab: tab,
-            total: franchises.length,
+            total: responseData.length,
             timestamp: new Date().toISOString()
         }
     }), {

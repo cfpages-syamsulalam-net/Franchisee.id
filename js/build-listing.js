@@ -21,6 +21,37 @@ function slugify(text) {
         .replace(/-+$/, '');
 }
 
+function normalizeText(value) {
+    return (value || '').toString().replace(/\s+/g, ' ').trim();
+}
+
+function isUrlLike(text) {
+    return /^(https?:\/\/|www\.)/i.test(text);
+}
+
+function isPhoneLike(text) {
+    const raw = normalizeText(text);
+    const digits = raw.replace(/\D/g, '');
+    return digits.length >= 9 && digits.length <= 16 && (digits.length / Math.max(raw.length, 1)) > 0.6;
+}
+
+function isLikelyClaimBrandRow(item) {
+    const brandName = normalizeText(item.brand_name);
+    if (!brandName) return false;
+    if (brandName.length < 2) return false;
+    if (isUrlLike(brandName) || isPhoneLike(brandName)) return false;
+
+    // Canonical UNCLAIMED rows generally carry one of these metadata fields.
+    const hasEvidence =
+        normalizeText(item.source_ignore) ||
+        normalizeText(item.full_desc) ||
+        normalizeText(item.company_name) ||
+        normalizeText(item.phone) ||
+        normalizeText(item.label);
+
+    return Boolean(hasEvidence);
+}
+
 // HELPER: Format Rupiah (Juta/Miliar)
 function formatRupiah(angka) {
     if (!angka) return 'Tanya Admin';
@@ -38,19 +69,66 @@ function getThumb(url) {
 }
 
 // HELPER: Load from CSV (Simple Parser)
+function parseCSVRows(content) {
+    const rows = [];
+    let row = [];
+    let field = '';
+    let inQuotes = false;
+
+    const input = (content || '').replace(/^\uFEFF/, '');
+
+    for (let i = 0; i < input.length; i++) {
+        const ch = input[i];
+        const next = input[i + 1];
+
+        if (ch === '"') {
+            if (inQuotes && next === '"') {
+                field += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+
+        if (ch === ',' && !inQuotes) {
+            row.push(field);
+            field = '';
+            continue;
+        }
+
+        if ((ch === '\n' || ch === '\r') && !inQuotes) {
+            if (ch === '\r' && next === '\n') i++;
+            row.push(field);
+            field = '';
+            if (row.some(cell => normalizeText(cell))) rows.push(row);
+            row = [];
+            continue;
+        }
+
+        field += ch;
+    }
+
+    if (field.length > 0 || row.length > 0) {
+        row.push(field);
+        if (row.some(cell => normalizeText(cell))) rows.push(row);
+    }
+
+    return rows;
+}
+
 function loadFromCSV(filePath) {
     if (!fs.existsSync(filePath)) return [];
     const content = fs.readFileSync(filePath, 'utf8');
-    const lines = content.split('\n').filter(l => l.trim());
-    if (lines.length < 2) return [];
+    const rows = parseCSVRows(content);
+    if (rows.length < 2) return [];
 
-    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-    
-    return lines.slice(1).map(line => {
-        const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+    const headers = rows[0].map(h => normalizeText(h));
+
+    return rows.slice(1).map(values => {
         let obj = {};
         headers.forEach((h, i) => {
-            obj[h] = values[i] || '';
+            obj[h] = normalizeText(values[i] || '');
         });
         return obj;
     }).filter(i => i.brand_name);
@@ -167,12 +245,21 @@ async function build() {
     });
 
     // --- NEW: Generate Autocomplete JSON for Unclaimed ---
-    const autocompleteData = dataUnclaimed.map(i => ({
-        id: i.id,
-        brand_name: i.brand_name,
-        category: i.category,
-        min_capital: i.min_capital
-    }));
+    const seenClaimBrands = new Set();
+    const autocompleteData = dataUnclaimed
+        .filter(isLikelyClaimBrandRow)
+        .map(i => ({
+            id: i.id || slugify(i.brand_name),
+            brand_name: normalizeText(i.brand_name),
+            category: normalizeText(i.category),
+            min_capital: normalizeText(i.min_capital)
+        }))
+        .filter(i => {
+            const key = i.brand_name.toLowerCase();
+            if (seenClaimBrands.has(key)) return false;
+            seenClaimBrands.add(key);
+            return true;
+        });
     const DATA_DIR = path.join(__dirname, '../data');
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(path.join(DATA_DIR, 'unclaimed-brands.json'), JSON.stringify(autocompleteData));

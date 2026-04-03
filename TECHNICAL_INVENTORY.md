@@ -4,10 +4,11 @@ This file serves as a comprehensive record of all functions and key variables ac
 
 ## 1. Directory: `/js` (Client-side & SSG Builders)
 
-### File: `js/form-franchise.js` (v1.24)
+### File: `js/form-franchise.js` (v1.25)
 *Main logic for the registration and claiming forms.*
 - `slugify(text)`: Converts brand names to URL-friendly slugs.
 - `fetchUnclaimedBrands()`: Loads unclaimed brands from static JSON or Live API.
+- `buildSearchableClaimBrands(brands)`: Sanitizes UNCLAIMED entries for claim autocomplete (filters URL/phone-like noise, deduplicates display names).
 - `window.openTab(tabName)`: Switches between Franchisee, Franchisor, and Klaim tabs.
 - `window.nextStep(stepIndex)`: Moves forward in multi-step form.
 - `window.prevStep(stepIndex)`: Moves backward in multi-step form.
@@ -32,9 +33,11 @@ This file serves as a comprehensive record of all functions and key variables ac
 
 ### File: `js/build-listing.js`
 *SSG Builder for the main directory page.*
-- `loadFromCSV(filePath)`: Fallback logic to read data if API fails.
+- `parseCSVRows(content)`: Quote-aware CSV parser (handles commas/newlines inside quoted cells) for reliable local-sheet fallback parsing.
+- `loadFromCSV(filePath)`: Fallback logic to read data if API fails, using robust CSV parsing to avoid column-shift corruption.
+- `isLikelyClaimBrandRow(item)`: Heuristic filter to keep canonical brand rows for claim-search dataset generation.
 - `generateCard(item, index)`: HTML generator for franchise cards (Hybrid: Verified/Unclaimed).
-- `async build()`: Orchestrates fetching from Sheet/CSV and writing `/peluang-usaha/index.html`.
+- `async build()`: Orchestrates fetching from Sheet/CSV, writing `/peluang-usaha/index.html`, and generating sanitized `data/unclaimed-brands.json` for claim search.
 
 ### File: `js/build-details.js`
 *SSG Builder for individual franchise profile pages.*
@@ -59,6 +62,7 @@ This file serves as a comprehensive record of all functions and key variables ac
 
 ### File: `functions/get-franchises.js`
 - `onRequestGet()`: API to fetch franchise data with tier-based Cloudinary optimization.
+  - Supports `purpose=claim-search` for `tab=UNCLAIMED` to return sanitized claim-search rows (clean brand_name + deduplication).
 
 ---
 ## 3. Logic Safety Audit

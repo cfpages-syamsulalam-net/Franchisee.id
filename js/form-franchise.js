@@ -26,6 +26,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return digits.length >= 9 && digits.length <= 16 && (digits.length / Math.max(text.length, 1)) > 0.6;
     }
 
+    function isAddressLike(text) {
+        const t = (text || '').toLowerCase();
+        if (!t) return false;
+        const hasAddressToken = /\b(jl|jalan|rt|rw|kel|kec|kab|kota|blok|no)\b/i.test(t);
+        const hasDigits = /\d/.test(t);
+        return hasAddressToken && hasDigits;
+    }
+
+    function isGenericCategoryLike(text) {
+        const t = (text || '').toLowerCase().trim();
+        if (!t) return false;
+        const generic = new Set([
+            'otomotif',
+            'makanan & minuman',
+            'retail & minimarket',
+            'jasa & layanan',
+            'pendidikan',
+            'kesehatan & kecantikan',
+            'anak & balita',
+            'lainnya',
+            'bisnis jasa'
+        ]);
+        return generic.has(t);
+    }
+
     function getCleanBrandName(raw) {
         return (raw || '').toString().replace(/\s+/g, ' ').trim();
     }
@@ -38,6 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const cleanName = getCleanBrandName(brand.brand_name);
             if (!cleanName) return;
             if (isUrlLike(cleanName) || isPhoneLike(cleanName)) return;
+            if (isAddressLike(cleanName) || isGenericCategoryLike(cleanName)) return;
 
             const key = cleanName.toLowerCase();
             if (unique.has(key)) return;
@@ -58,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("✅ Loaded from Static JSON:", unclaimedBrands.length);
             } else {
                 console.log("⚠️ Static JSON not found, falling back to Live API...");
-                response = await fetch('/get-franchises?tab=UNCLAIMED');
+                response = await fetch('/get-franchises?tab=UNCLAIMED&purpose=claim-search');
                 const result = await response.json();
                 unclaimedBrands = result.data || [];
                 console.log("✅ Loaded from Live API:", unclaimedBrands.length);
