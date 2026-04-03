@@ -1,0 +1,148 @@
+/* WRAPPER UTAMA */
+.franchise-listing-form-wrapper {
+    max-width: 850px;
+    margin: 0 auto;
+    font-family: 'DM Sans', sans-serif;
+    color: #333;
+}
+
+/* TABS STYLING */
+.registration-tabs-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 40px;
+    width: 100%;
+}
+.registration-tabs {
+    background: #f1f1f1;
+    padding: 5px;
+    border-radius: 50px;
+    display: inline-flex;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+}
+.tab-btn {
+    border: none;
+    background: transparent;
+    padding: 12px 30px;
+    border-radius: 40px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #777;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tab-btn i {
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+.tab-btn.active {
+    background: #fff;
+    color: #f8b526; /* Kuning Brand */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.tab-btn:hover:not(.active) {
+    color: #333;
+}
+
+/* Helper Class */
+.text-center { text-align: center !important; }
+.mw-800 { max-width: 800px; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+/* 1. Step Indicator (Bulatan Angka) */
+.step-indicator-wrapper {
+    max-width: 700px;
+    margin: 0 auto;
+}
+.step-indicator {
+    display: flex;
+    justify-content: space-between;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+.step-item {
+    text-align: center;
+    width: 20%;
+    position: relative;
+}
+.step-circle {
+    width: 35px;
+    height: 35px;
+    background-color: #e9ecef;
+    border-radius: 50%;
+    margin: 0 auto 5px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #6c757d;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s;
+}
+.step-text {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Active State */
+.step-item.active .step-circle {
+    background-color: #f8b526; /* Kuning Brand */
+    border-color: #f8b526;
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(248, 181, 38, 0.2);
+}
+.step-item.active .step-text {
+    color: #333;
+    font-weight: 700;
+}
+.step-item.completed .step-circle {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: #fff;
+}
+
+/* 2. Form Step Logic (Show/Hide) */
+.form-step {
+    display: none; /* Default hidden */
+    animation: fadeIn 0.5s;
+}
+.form-step.active {
+    display: block; /* Show active */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 3. Navigation Buttons */
+.btn-prev {
+    background-color: #e2e6ea;
+    border: none;
+    color: #555;
+    font-weight: 600;
+}
+.btn-prev:hover {
+    background-color: #dbe0e5;
+    color: #333;
+}
+
+/* Buttons */
+.btn-danger {
+    background-color: #dc3545 !important;
+    border: 1px solid #dc3545 !important;
+    color: white !important;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.btn-danger:hover {
+    background-color: #bb2d3b !important;
+}

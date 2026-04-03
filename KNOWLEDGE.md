@@ -30,6 +30,7 @@ This file gives persistent project context: goals, commands, architecture, conve
   - `/templates`: source templates used by builder scripts.
   - `/daftar`: static form page integrating custom JS.
   - `/data`: generated helper data (`unclaimed-brands.json`) for fast autocomplete.
+  - `/css/form-franchise`: modularized form stylesheet files + selector usage map (`CSS_USAGE_MAP.md`).
   - `/.github/workflows`: automation pipelines.
 - Data flow:
   - Source of content: Google Sheets tabs (`FRANCHISOR`, `UNCLAIMED`, `FRANCHISEE`).
@@ -51,6 +52,7 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Keep `PRD.md` for roadmap/requirements only.
   - Log all file create/update/delete operations in `CHANGELOG.md` with timestamp.
   - Preserve static-first approach for SEO (generate pages, avoid runtime-heavy rendering).
+  - Keep `/css/form-franchise.css` as the aggregator entrypoint; preserve `@import` order when adding/changing form styles.
 - Things to avoid:
   - Do not do full rewrites of large legacy files (`/daftar/index.html`, `js/form-franchise.js`) unless explicitly required.
   - Do not remove/rename form fields without updating `FORM_SCHEMA.md`.

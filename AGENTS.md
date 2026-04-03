@@ -50,6 +50,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - `README.md`: Currently auto-generated sitemap URL listing; treat as generated artifact.
 - `AGENTS.md`: Persistent local operating instructions for future coding sessions.
 - `CHANGELOG.md`: Mandatory running log of repository modifications.
+- `css/form-franchise/CSS_USAGE_MAP.md`: Selector/module mapping for the split form CSS architecture and usage references.
 
 ## Additional Project Notes
 - The registration page was historically developed under `/pendaftaran/index.html` and later renamed to `/daftar/index.html`. When tracing git history or comparing old artifacts such as `old_version.txt`, treat them as the same page lineage.

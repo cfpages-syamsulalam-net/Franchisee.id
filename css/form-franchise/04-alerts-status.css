@@ -1,0 +1,117 @@
+/* --- CITY AUTOCOMPLETE STYLES --- */
+.autocomplete-wrapper {
+    position: relative; /* Anchor untuk dropdown */
+}
+
+.city-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #dcdcdc;
+    border-top: none;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    z-index: 1000;
+    max-height: 250px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: none; /* Default hidden */
+}
+
+.city-suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+
+.city-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.city-suggestion-item:hover, .city-suggestion-item.active {
+    background-color: #fdfbe8; /* Kuning muda */
+    color: #333;
+    font-weight: 500;
+}
+
+/* Scrollbar cantik */
+.city-suggestions::-webkit-scrollbar {
+    width: 6px;
+}
+.city-suggestions::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.city-suggestions::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+.alert {
+    position: relative;
+    border: 1px solid transparent;
+    border-radius: 0.5rem !important;
+    width: 100%;
+}
+.alert-primary {
+    color: #0c5460 !important; /* Warna teks biru tua gelap (agar kontras) */
+    background-color: #d1ecf1 !important; /* Background biru muda segar */
+    border-color: #bee5eb !important; /* Border biru halus */
+}
+.alert-warning {
+    color: #8a6d1d !important;
+    background-color: #fff8e8 !important;
+    border-color: #f7dd9f !important;
+}
+.text-primary {
+    color: #007bff !important; /* Biru standar untuk Icon & Link */
+}
+.alert-primary a {
+    color: #0056b3 !important;
+    text-decoration: underline;
+}
+
+/* Claim mode visual clarity */
+#claim-mode-alert {
+    padding: 14px 16px;
+}
+#claim-mode-alert .fa-certificate {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    background: #ffe6a8;
+    color: #b37400 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem !important;
+}
+#claim-mode-alert .btn-close {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border: 1px solid #e3c56f;
+    border-radius: 8px;
+    background: #fff;
+    color: #8a6d1d;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+#claim-mode-alert .btn-close::before {
+    content: "\00d7";
+    font-size: 1.25rem;
+    line-height: 1;
+}
+#claim-mode-alert .btn-close:hover {
+    background: #fff4cf;
+    border-color: #d7b24d;
+    color: #6f5515;
+}
+

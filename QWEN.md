@@ -46,6 +46,7 @@ Franchisee.id/
 ├── daftar/                  # Registration form pages
 ├── peluang-usaha/           # Generated franchise listing pages
 ├── css/                     # Stylesheets
+│   └── form-franchise/      # Modular form CSS + selector usage map
 ├── wp-content/              # WordPress theme assets (static)
 ├── wp-includes/             # WordPress core assets (static)
 ├── CHANGELOG.md             # Mandatory change log (all modifications)

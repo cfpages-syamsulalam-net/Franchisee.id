@@ -4,6 +4,26 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 05:57 (Asia/Jakarta)
+### Added
+- `css/form-franchise/CSS_USAGE_MAP.md`: documentation map for form CSS selectors, module responsibilities, and file usage references (`/daftar/index.html`, `/js/form-franchise.js`, `/js/form-utils.js`).
+- New modular stylesheet files:
+  - `css/form-franchise/01-utilities.css`
+  - `css/form-franchise/02-layout-tabs-steps.css`
+  - `css/form-franchise/03-form-core.css`
+  - `css/form-franchise/04-alerts-status.css`
+  - `css/form-franchise/05-packages-responsive.css`
+  - `css/form-franchise/06-claim-autocomplete.css`
+
+### Changed
+- `css/form-franchise.css`: converted into an aggregator entrypoint using ordered `@import` directives to load the new modular CSS files while preserving visual cascade order.
+- `AGENTS.md`: updated markdown index to include `css/form-franchise/CSS_USAGE_MAP.md` for future maintenance context.
+- `KNOWLEDGE.md`: documented modular form CSS architecture and aggregator-order convention.
+- `QWEN.md`: updated directory structure to include `css/form-franchise/`.
+
+### Removed
+- None.
+
 ## 2026-04-04 05:49 (Asia/Jakarta)
 ### Added
 - None.
