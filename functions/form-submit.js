@@ -50,10 +50,10 @@ export async function onRequestPost({ request, env }) {
     await appendDataSmart(env.G_SHEET_ID, sheetName, sheetId, finalData, token);
 
     // --- NEW: Post-Claim Cleanup (Delete from UNCLAIMED) ---
-    if (isClaim && data.unclaimed_id) {
+    if (isClaim && (data.unclaimed_id || data.brand_name)) {
         try {
-            console.log(`🧹 Post-Claim Cleanup: Deleting ${data.unclaimed_id} from UNCLAIMED`);
-            await deleteFromUnclaimed(env.G_SHEET_ID, data.unclaimed_id, token);
+            console.log(`🧹 Post-Claim Cleanup: Deleting claim source from UNCLAIMED (id=${data.unclaimed_id || '-'}, brand=${data.brand_name || '-'})`);
+            await deleteFromUnclaimed(env.G_SHEET_ID, data.unclaimed_id, data.brand_name, token);
         } catch (cleanupError) {
             console.error("⚠️ Cleanup Error (Non-critical):", cleanupError.message);
             // Kita tidak gagalkan submit jika hanya cleanup yang gagal
@@ -235,7 +235,9 @@ async function checkForDuplicates(spreadsheetId, sheetName, email, whatsapp, tok
 }
 
 // 5. FUNCTION BARU: Delete from Unclaimed
-async function deleteFromUnclaimed(spreadsheetId, unclaimedId, token) {
+async function deleteFromUnclaimed(spreadsheetId, unclaimedId, brandName, token) {
+    const normalizeText = (v) => (v || '').toString().replace(/\s+/g, ' ').trim().toLowerCase();
+
     // 1. Dapatkan metadata spreadsheet untuk cari sheetId (numerical) dari tab "UNCLAIMED"
     const metaUrl = "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetId + "?fields=sheets.properties";
     const metaResp = await fetch(metaUrl, { headers: { Authorization: "Bearer " + token } });
@@ -245,17 +247,31 @@ async function deleteFromUnclaimed(spreadsheetId, unclaimedId, token) {
     if (!unclaimedSheet) throw new Error("Tab UNCLAIMED tidak ditemukan");
     const sheetId = unclaimedSheet.properties.sheetId;
 
-    // 2. Cari row index berdasarkan ID (ID ada di kolom A)
-    const dataUrl = "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetId + "/values/UNCLAIMED!A:A";
+    // 2. Cari row index berdasarkan ID (kolom A), fallback ke brand_name (kolom B)
+    const dataUrl = "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetId + "/values/UNCLAIMED!A:B";
     const dataResp = await fetch(dataUrl, { headers: { Authorization: "Bearer " + token } });
     const dataValues = await dataResp.json();
     
     const rows = dataValues.values || [];
-    // Cari row index (0-based)
-    const rowIndex = rows.findIndex(row => row[0] == unclaimedId);
+    let rowIndex = -1;
+
+    if (unclaimedId) {
+        rowIndex = rows.findIndex(row => (row[0] || '') == unclaimedId);
+    }
+
+    if (rowIndex === -1 && brandName) {
+        const targetBrand = normalizeText(brandName);
+        rowIndex = rows.findIndex(row => normalizeText(row[1]) === targetBrand);
+    }
 
     if (rowIndex === -1) {
-        console.warn("Record " + unclaimedId + " tidak ditemukan di tab UNCLAIMED.");
+        console.warn("Record claim source tidak ditemukan di tab UNCLAIMED. id=" + (unclaimedId || '-') + ", brand=" + (brandName || '-'));
+        return;
+    }
+
+    // Jangan pernah menghapus baris header
+    if (rowIndex === 0) {
+        console.warn("Header row matched unexpectedly; abort delete.");
         return;
     }
 

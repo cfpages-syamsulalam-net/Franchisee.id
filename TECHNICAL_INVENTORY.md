@@ -4,7 +4,7 @@ This file serves as a comprehensive record of all functions and key variables ac
 
 ## 1. Directory: `/js` (Client-side & SSG Builders)
 
-### File: `js/form-franchise.js` (v1.25)
+### File: `js/form-franchise.js` (v1.26)
 *Main logic for the registration and claiming forms.*
 - `slugify(text)`: Converts brand names to URL-friendly slugs.
 - `fetchUnclaimedBrands()`: Loads unclaimed brands from static JSON or Live API.
@@ -12,6 +12,10 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `saveClaimModeState(brand)`: Persists active claim context into `localStorage` (`franchise_claim_state`) with expiry metadata.
 - `getClaimModeState()`: Safely reads/parses persisted claim context from `localStorage` and enforces a 24-hour TTL.
 - `clearClaimModeState()`: Clears persisted claim context when claim mode ends.
+- `saveFranchisorDraft(form)`: Persists partial Franchisor form values into `localStorage` (`franchisor_form_draft`) with TTL.
+- `getFranchisorDraft()`: Reads/parses Franchisor draft payload and enforces 72-hour TTL.
+- `restoreFranchisorDraft(form)`: Restores saved Franchisor draft values on page load.
+- `clearFranchisorDraft()`: Clears saved Franchisor draft payload after successful submit.
 - `window.openTab(tabName)`: Switches between Franchisee, Franchisor, and Klaim tabs.
 - `window.nextStep(stepIndex)`: Moves forward in multi-step form.
 - `window.prevStep(stepIndex)`: Moves backward in multi-step form.
@@ -61,7 +65,7 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `ensureSheetExists()`: Checks/Creates target tab in Google Sheet.
 - `appendDataSmart()`: Dynamic column-to-header mapping and data insertion.
 - `checkForDuplicates()`: prevents double registration via Email/WA.
-- `deleteFromUnclaimed(id)`: Post-claim cleanup logic (Hapus dari tab UNCLAIMED).
+- `deleteFromUnclaimed(id, brandName)`: Post-claim cleanup logic (hapus dari tab UNCLAIMED by `id`, fallback by normalized `brand_name`).
 
 ### File: `functions/get-franchises.js`
 - `onRequestGet()`: API to fetch franchise data with tier-based Cloudinary optimization.

@@ -19,7 +19,7 @@ This file gives persistent project context: goals, commands, architecture, conve
 - Test:
   - No formal automated test suite currently configured.
   - Validate critical flows manually:
-    - `pendaftaran` tab switching and form submission.
+    - `daftar` tab switching and form submission.
     - Claim workflow (`?claim=<slug>`) including `unclaimed_id` behavior.
     - Generated pages output in `/peluang-usaha`.
 
@@ -39,8 +39,9 @@ This file gives persistent project context: goals, commands, architecture, conve
   - `data/unclaimed-brands.json` must be generated from sanitized UNCLAIMED rows only (exclude URL/phone/address/legal-entity/contact-label noise and dedupe by `brand_name`).
   - Local CSV fallback in `js/build-listing.js` uses quote-aware parsing (`parseCSVRows`) to preserve correct column mapping when cells contain commas/newlines.
   - Claim mode continuity: `js/form-franchise.js` persists active claim context in `localStorage` key `franchise_claim_state`, restores it after refresh, and expires stale state after 24 hours (TTL).
+  - Franchisor partial-entry continuity: `js/form-franchise.js` persists draft values in `localStorage` key `franchisor_form_draft` with 72-hour TTL.
   - Form submission posts to Cloudflare Function `/form-submit`.
-  - On successful claim, backend can remove claimed row from `UNCLAIMED`.
+  - On successful claim, backend appends to `FRANCHISOR` then performs best-effort deletion in `UNCLAIMED` (match by `id`, fallback by normalized `brand_name`).
 
 ## Conventions
 - Formatting/linting:

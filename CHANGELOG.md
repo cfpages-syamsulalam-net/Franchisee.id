@@ -4,6 +4,24 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 06:27 (Asia/Jakarta)
+### Added
+- `CLAIM_WORKFLOW.md`: dedicated reference documenting end-to-end claim flow, step-button behavior (`Lanjut/Kembali` is frontend-only), persistence behavior, backend append/cleanup semantics, and recommended UX scenarios for mixed draft + claim actions.
+
+### Changed
+- `functions/form-submit.js`: improved post-claim cleanup path so `UNCLAIMED` deletion now matches by `id` (primary) and falls back to normalized `brand_name` when `id` is empty/unreliable.
+- `js/form-franchise.js` (v1.26): added Franchisor draft persistence (`franchisor_form_draft`, 72-hour TTL) so partially filled fields survive refresh/session continuation.
+- `js/form-franchise.js` (v1.26): kept claim-mode persistence (`franchise_claim_state`) and ensured claim linkage is not separately persisted inside generic draft (`unclaimed_id` excluded from draft payload).
+- `js/form-franchise.js` (v1.26): integrated draft restore on load + live draft updates on input/change, and draft cleanup on successful submit.
+- Documentation sync:
+  - `FORM_SCHEMA.md`: documented step-navigation non-submit behavior and Franchisor draft persistence.
+  - `TECHNICAL_INVENTORY.md`: added new draft helper functions and updated `deleteFromUnclaimed(id, brandName)` behavior.
+  - `KNOWLEDGE.md`: documented 72-hour Franchisor draft continuity and backend cleanup fallback behavior.
+  - `AGENTS.md`: indexed `CLAIM_WORKFLOW.md` as claim-flow reference.
+
+### Removed
+- None.
+
 ## 2026-04-04 06:09 (Asia/Jakarta)
 ### Added
 - None.

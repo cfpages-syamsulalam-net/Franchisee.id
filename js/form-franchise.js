@@ -1,4 +1,4 @@
-// /js/form-franchise.js v1.25
+// /js/form-franchise.js v1.26
 document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
 	// 1. KLAIM STATE & HELPERS
@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedBrand = null;
     const CLAIM_STORAGE_KEY = 'franchise_claim_state';
     const CLAIM_STORAGE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+    const FRANCHISOR_DRAFT_KEY = 'franchisor_form_draft';
+    const FRANCHISOR_DRAFT_TTL_MS = 72 * 60 * 60 * 1000; // 72 hours
 
     function slugify(text) {
         if (!text) return '';
@@ -141,6 +143,70 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function clearClaimModeState() {
         localStorage.removeItem(CLAIM_STORAGE_KEY);
+    }
+
+    function saveFranchisorDraft(form) {
+        if (!form) return;
+        const payload = { fields: {}, saved_at: Date.now() };
+        const fd = new FormData(form);
+
+        for (const [key, value] of fd.entries()) {
+            if (key === 'unclaimed_id') continue; // claim linkage is persisted separately
+            const text = (value || '').toString();
+            if (payload.fields[key] === undefined) {
+                payload.fields[key] = text;
+            } else if (Array.isArray(payload.fields[key])) {
+                payload.fields[key].push(text);
+            } else {
+                payload.fields[key] = [payload.fields[key], text];
+            }
+        }
+
+        localStorage.setItem(FRANCHISOR_DRAFT_KEY, JSON.stringify(payload));
+    }
+
+    function getFranchisorDraft() {
+        try {
+            const raw = localStorage.getItem(FRANCHISOR_DRAFT_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object' || !parsed.fields) return null;
+            const savedAt = Number(parsed.saved_at || 0);
+            if (!savedAt || (savedAt + FRANCHISOR_DRAFT_TTL_MS) < Date.now()) {
+                localStorage.removeItem(FRANCHISOR_DRAFT_KEY);
+                return null;
+            }
+            return parsed;
+        } catch (e) {
+            localStorage.removeItem(FRANCHISOR_DRAFT_KEY);
+            return null;
+        }
+    }
+
+    function clearFranchisorDraft() {
+        localStorage.removeItem(FRANCHISOR_DRAFT_KEY);
+    }
+
+    function restoreFranchisorDraft(form) {
+        if (!form) return;
+        const draft = getFranchisorDraft();
+        if (!draft || !draft.fields) return;
+
+        Object.entries(draft.fields).forEach(([name, val]) => {
+            const nodes = form.querySelectorAll(`[name="${name}"]`);
+            if (!nodes.length) return;
+
+            const values = Array.isArray(val) ? val.map(v => (v || '').toString()) : [(val || '').toString()];
+
+            nodes.forEach(node => {
+                const type = (node.type || '').toLowerCase();
+                if (type === 'checkbox' || type === 'radio') {
+                    node.checked = values.includes((node.value || '').toString());
+                } else if (node.tagName === 'SELECT' || node.tagName === 'TEXTAREA' || type === 'hidden' || type === 'text' || type === 'number' || type === 'email' || type === 'url' || type === 'tel') {
+                    node.value = values[0] || '';
+                }
+            });
+        });
     }
 
     async function fetchUnclaimedBrands() {
@@ -502,6 +568,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.removeItem('franchise_form_step');
                     localStorage.removeItem('franchise_form_autosave');
                     clearClaimModeState();
+                    clearFranchisorDraft();
                     window.location.reload();
                 });
 			} else { throw new Error(result.message || result.error || 'Gagal'); }
@@ -517,6 +584,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	if (fForm) fForm.addEventListener('submit', function(e) { e.preventDefault(); submitToCloudflare(this, 'FRANCHISEE'); });
 	if (lForm) lForm.addEventListener('submit', function(e) { e.preventDefault(); submitToCloudflare(this, 'FRANCHISOR'); });
+
+    if (lForm) {
+        restoreFranchisorDraft(lForm);
+        const persistDraftHandler = () => saveFranchisorDraft(lForm);
+        lForm.addEventListener('input', persistDraftHandler);
+        lForm.addEventListener('change', persistDraftHandler);
+    }
 
 	// Restore State
     const savedStep = localStorage.getItem('franchise_form_step');
