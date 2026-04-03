@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	// 1. KLAIM STATE & HELPERS
 	// ==========================================
     let unclaimedBrands = [];
+    let searchableClaimBrands = [];
     let selectedBrand = null;
 
     function slugify(text) {
@@ -14,6 +15,38 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/\-\-+/g, '-')
             .replace(/^-+/, '')
             .replace(/-+$/, '');
+    }
+
+    function isUrlLike(text) {
+        return /^(https?:\/\/|www\.)/i.test(text);
+    }
+
+    function isPhoneLike(text) {
+        const digits = text.replace(/\D/g, '');
+        return digits.length >= 9 && digits.length <= 16 && (digits.length / Math.max(text.length, 1)) > 0.6;
+    }
+
+    function getCleanBrandName(raw) {
+        return (raw || '').toString().replace(/\s+/g, ' ').trim();
+    }
+
+    function buildSearchableClaimBrands(brands) {
+        const unique = new Set();
+        const out = [];
+
+        brands.forEach((brand, idx) => {
+            const cleanName = getCleanBrandName(brand.brand_name);
+            if (!cleanName) return;
+            if (isUrlLike(cleanName) || isPhoneLike(cleanName)) return;
+
+            const key = cleanName.toLowerCase();
+            if (unique.has(key)) return;
+            unique.add(key);
+
+            out.push({ ...brand, __idx: idx, __displayName: cleanName });
+        });
+
+        return out;
     }
 
     async function fetchUnclaimedBrands() {
@@ -31,10 +64,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("✅ Loaded from Live API:", unclaimedBrands.length);
             }
 
+            searchableClaimBrands = buildSearchableClaimBrands(unclaimedBrands);
+
             const urlParams = new URLSearchParams(window.location.search);
             const claimSlug = urlParams.get('claim');
             if (claimSlug) {
-                const brand = unclaimedBrands.find(b => slugify(b.brand_name) === claimSlug);
+                const brand = searchableClaimBrands.find(b => slugify(b.__displayName || b.brand_name) === claimSlug);
                 if (brand) {
                     fillMainFranchisorForm(brand);
                 }
@@ -237,12 +272,14 @@ document.addEventListener('DOMContentLoaded', function() {
         claimSearchInput.addEventListener('input', function() {
             const query = this.value.toLowerCase().trim();
             if (query.length < 2) { claimSearchResults.style.display = 'none'; return; }
-            const matches = unclaimedBrands.filter(b => b.brand_name.toLowerCase().includes(query)).slice(0, 10);
+            const matches = searchableClaimBrands
+                .filter(b => (b.__displayName || '').toLowerCase().includes(query))
+                .slice(0, 10);
             if (matches.length > 0) {
                 claimSearchResults.innerHTML = matches.map(b => {
                     const regex = new RegExp(`(${query})`, "gi");
-                    const highlighted = b.brand_name.replace(regex, "<strong>$1</strong>");
-                    return `<div class="suggestion-item" data-id="${b.id}"><span class="brand-name">${highlighted}</span></div>`;
+                    const highlighted = b.__displayName.replace(regex, "<strong>$1</strong>");
+                    return `<div class="suggestion-item" data-idx="${b.__idx}"><span class="brand-name">${highlighted}</span></div>`;
                 }).join('');
                 claimSearchResults.style.display = 'block';
             } else { claimSearchResults.style.display = 'none'; }
@@ -251,7 +288,8 @@ document.addEventListener('DOMContentLoaded', function() {
         claimSearchResults.addEventListener('click', (e) => {
             const item = e.target.closest('.suggestion-item');
             if (item) {
-                const brand = unclaimedBrands.find(b => b.id == item.dataset.id);
+                const idx = parseInt(item.dataset.idx, 10);
+                const brand = Number.isInteger(idx) ? unclaimedBrands[idx] : null;
                 if (brand) { 
                     fillMainFranchisorForm(brand); 
                     claimSearchResults.style.display = 'none'; 
@@ -273,14 +311,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const modeAlert = document.getElementById('claim-mode-alert');
         const brandDisplay = document.getElementById('claiming-brand-display');
         if (modeAlert) modeAlert.style.display = 'block';
-        if (brandDisplay) brandDisplay.innerText = brand.brand_name;
+        if (brandDisplay) brandDisplay.innerText = getCleanBrandName(brand.brand_name);
 
         // 4. Map Data to Form Fields
         const fBrandName = document.querySelector('input[name="brand_name"]');
         const fCategory = document.querySelector('select[name="category"]');
         
         if (fBrandName) {
-            fBrandName.value = brand.brand_name;
+            fBrandName.value = getCleanBrandName(brand.brand_name);
             fBrandName.classList.add('is-valid');
             fBrandName.readOnly = true; // Protect identity
         }
