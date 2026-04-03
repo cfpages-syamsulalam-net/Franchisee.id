@@ -16,6 +16,23 @@ Format:
 - `.knowledge.md` (merged into `KNOWLEDGE.md`).
 - `knowledge.md` (merged into `KNOWLEDGE.md`).
 
+## 2026-04-04 00:45 (Asia/Jakarta)
+### Added
+- Temporary comparison files in `/progress` during `/pendaftaran` to `/daftar` history inspection:
+  - `progress/old-pendaftaran-9699359.html`
+  - `progress/current-astra.txt`
+  - `progress/old-astra.txt`
+
+### Changed
+- `daftar/index.html`: restored missing Elementor `.entry-content` wrapper structure from the historical `/pendaftaran/index.html` lineage, including the outer page node, heading container, and section/column scaffolding, while keeping the current `/daftar` form functionality intact.
+- `AGENTS.md`: added missing guardrails copied from `GEMINI.md` (large-file edit safety, local context-file checks, post-edit line-count verification, inventory/schema sync reminder, changelog timestamp rule) and documented the historical rename from `/pendaftaran` to `/daftar`.
+
+### Removed
+- Temporary comparison files after restoration analysis:
+  - `progress/old-pendaftaran-9699359.html`
+  - `progress/current-astra.txt`
+  - `progress/old-astra.txt`
+
 ## 2026-03-09 21:45 (Asia/Jakarta)
 ### Added
 - Migrated historical development timeline entries from `PRD.md` into `CHANGELOG.md`.

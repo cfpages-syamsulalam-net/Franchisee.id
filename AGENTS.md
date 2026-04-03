@@ -1,14 +1,20 @@
 # AGENTS.md - Local Audit Notes & Working Rules
 
-Last updated: 2026-03-09 (Asia/Jakarta)
+Last updated: 2026-04-04 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
 - Before making form/logic edits, check `GEMINI.md`, `FORM_SCHEMA.md`, and `TECHNICAL_INVENTORY.md` for continuity constraints.
 - Keep this file updated when new project-level conventions are introduced.
+- For large legacy files such as `/daftar/index.html` and `js/form-franchise.js`, avoid full rewrites; use targeted edits with enough surrounding context to prevent accidental loss.
+- After editing files larger than 500 lines, verify line count immediately to catch unintended truncation.
+- Before changing files in a directory, check nearby local `.md` or `.txt` context files first because they may contain restoration notes or historical constraints.
+- When adding or refactoring form/logic features, sync `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` if fields, functions, or key variables change.
+- Every `CHANGELOG.md` entry must include date and hour with timezone.
 
 ## Context Source
 - `GEMINI.md` has been reviewed and is treated as the project context baseline.
+- Historical context for the registration page must account for the route/folder rename from `/pendaftaran` to `/daftar`; older commits, notes, and temporary comparison files may still use the old path.
 
 ## What Was Checked
 - Repository structure and key runtime areas (`/js`, `/functions`, `/daftar`).
@@ -42,3 +48,6 @@ Last updated: 2026-03-09 (Asia/Jakarta)
 - `README.md`: Currently auto-generated sitemap URL listing; treat as generated artifact.
 - `AGENTS.md`: Persistent local operating instructions for future coding sessions.
 - `CHANGELOG.md`: Mandatory running log of repository modifications.
+
+## Additional Project Notes
+- The registration page was historically developed under `/pendaftaran/index.html` and later renamed to `/daftar/index.html`. When tracing git history or comparing old artifacts such as `old_version.txt`, treat them as the same page lineage.
