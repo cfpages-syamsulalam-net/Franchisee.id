@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let unclaimedBrands = [];
     let searchableClaimBrands = [];
     let selectedBrand = null;
+    const CLAIM_STORAGE_KEY = 'franchise_claim_state';
+    const CLAIM_STORAGE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
     function slugify(text) {
         if (!text) return '';
@@ -87,6 +89,58 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         return out;
+    }
+
+    function saveClaimModeState(brand) {
+        if (!brand) return;
+        const now = Date.now();
+        const payload = {
+            active: true,
+            brand: {
+                id: brand.id || '',
+                brand_name: getCleanBrandName(brand.brand_name),
+                category: brand.category || '',
+                min_capital: brand.min_capital || ''
+            },
+            saved_at: new Date(now).toISOString(),
+            expires_at: new Date(now + CLAIM_STORAGE_TTL_MS).toISOString()
+        };
+        localStorage.setItem(CLAIM_STORAGE_KEY, JSON.stringify(payload));
+    }
+
+    function getClaimModeState() {
+        try {
+            const raw = localStorage.getItem(CLAIM_STORAGE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || !parsed.active || !parsed.brand || !parsed.brand.brand_name) return null;
+
+            const now = Date.now();
+            const expiresAt = Date.parse(parsed.expires_at || '');
+            const savedAt = Date.parse(parsed.saved_at || '');
+
+            if (Number.isFinite(expiresAt)) {
+                if (expiresAt <= now) {
+                    localStorage.removeItem(CLAIM_STORAGE_KEY);
+                    return null;
+                }
+            } else if (Number.isFinite(savedAt)) {
+                // Backward compatibility for sessions saved before expires_at existed.
+                if ((savedAt + CLAIM_STORAGE_TTL_MS) <= now) {
+                    localStorage.removeItem(CLAIM_STORAGE_KEY);
+                    return null;
+                }
+            }
+
+            return parsed;
+        } catch (e) {
+            localStorage.removeItem(CLAIM_STORAGE_KEY);
+            return null;
+        }
+    }
+
+    function clearClaimModeState() {
+        localStorage.removeItem(CLAIM_STORAGE_KEY);
     }
 
     async function fetchUnclaimedBrands() {
@@ -339,7 +393,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function fillMainFranchisorForm(brand) {
+    function fillMainFranchisorForm(brand, options = {}) {
+        const { persist = true, skipScroll = false } = options;
+        selectedBrand = brand || null;
+
         // 1. Switch to Franchisor Tab
         window.openTab('franchisor');
 
@@ -384,7 +441,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        window.scrollToTopForm();
+        if (persist) {
+            saveClaimModeState(brand);
+        }
+
+        if (!skipScroll) {
+            window.scrollToTopForm();
+        }
     }
 
     window.exitClaimMode = function() {
@@ -399,6 +462,8 @@ document.addEventListener('DOMContentLoaded', function() {
             fBrandName.value = '';
             fBrandName.classList.remove('is-valid');
         }
+        selectedBrand = null;
+        clearClaimModeState();
         localStorage.removeItem('franchise_form_autosave');
         if (typeof window.renderPackageInputs === 'function') {
             window.renderPackageInputs(1);
@@ -436,6 +501,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Swal.fire('Berhasil!', 'Data Anda telah tersimpan untuk verifikasi.', 'success').then(() => {
                     localStorage.removeItem('franchise_form_step');
                     localStorage.removeItem('franchise_form_autosave');
+                    clearClaimModeState();
                     window.location.reload();
                 });
 			} else { throw new Error(result.message || result.error || 'Gagal'); }
@@ -461,8 +527,11 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	const lastTab = localStorage.getItem('active_registration_tab');
+    const claimState = getClaimModeState();
     const urlParams = new URLSearchParams(window.location.search);
-	if (urlParams.get('claim')) {
+	if (claimState && claimState.active && claimState.brand) {
+        fillMainFranchisorForm(claimState.brand, { persist: false, skipScroll: true });
+    } else if (urlParams.get('claim')) {
         openTab('klaim');
     } else if (lastTab) {
         openTab(lastTab);

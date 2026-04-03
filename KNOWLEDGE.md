@@ -38,6 +38,7 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Claim/search UX reads static `data/unclaimed-brands.json` first; falls back to `/get-franchises?tab=UNCLAIMED&purpose=claim-search`.
   - `data/unclaimed-brands.json` must be generated from sanitized UNCLAIMED rows only (exclude URL/phone/address/legal-entity/contact-label noise and dedupe by `brand_name`).
   - Local CSV fallback in `js/build-listing.js` uses quote-aware parsing (`parseCSVRows`) to preserve correct column mapping when cells contain commas/newlines.
+  - Claim mode continuity: `js/form-franchise.js` persists active claim context in `localStorage` key `franchise_claim_state`, restores it after refresh, and expires stale state after 24 hours (TTL).
   - Form submission posts to Cloudflare Function `/form-submit`.
   - On successful claim, backend can remove claimed row from `UNCLAIMED`.
 

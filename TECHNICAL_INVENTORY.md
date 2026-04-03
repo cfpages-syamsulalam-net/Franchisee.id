@@ -9,6 +9,9 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `slugify(text)`: Converts brand names to URL-friendly slugs.
 - `fetchUnclaimedBrands()`: Loads unclaimed brands from static JSON or Live API.
 - `buildSearchableClaimBrands(brands)`: Sanitizes UNCLAIMED entries for claim autocomplete (filters URL/phone/address/legal-entity/contact-label/category noise, deduplicates display names).
+- `saveClaimModeState(brand)`: Persists active claim context into `localStorage` (`franchise_claim_state`) with expiry metadata.
+- `getClaimModeState()`: Safely reads/parses persisted claim context from `localStorage` and enforces a 24-hour TTL.
+- `clearClaimModeState()`: Clears persisted claim context when claim mode ends.
 - `window.openTab(tabName)`: Switches between Franchisee, Franchisor, and Klaim tabs.
 - `window.nextStep(stepIndex)`: Moves forward in multi-step form.
 - `window.prevStep(stepIndex)`: Moves backward in multi-step form.
@@ -16,7 +19,7 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `calculateAll()`: Core business logic for BEP, ROI, and Profit margins.
 - `window.updateMinCapital()`: Calculates minimum investment based on package pricing.
 - `initCityAutocomplete()`: Setup for Indonesian city search.
-- `fillMainFranchisorForm(brand)`: Unified workflow - Switches to Franchisor tab and pre-fills brand data + mapping.
+- `fillMainFranchisorForm(brand, options)`: Unified workflow - Switches to Franchisor tab, pre-fills brand data + mapping, and persists/restores claim mode context.
 - `window.exitClaimMode()`: Resets claim state and restores normal Franchisor form.
 - `submitToCloudflare(formElement, type)`: Sends form data to backend (Handles claim type automatically).
 

@@ -68,3 +68,5 @@ This file documents every input field for the three registration tabs in `/dafta
 - **Tracking ID**: `unclaimed_id` (Hidden in Franchisor form).
 - **Mode**: Sets `form_type` to `claim` on submission for backend migration.
 - **Search Data Guardrails**: Autocomplete must only show canonical brand labels (exclude URL/phone/address/legal-entity/contact-label rows and generic category-only labels).
+- **Session Persistence**: Active claim mode and selected brand context are persisted in `localStorage` key `franchise_claim_state` and restored after page refresh.
+- **Session TTL**: Persisted claim context automatically expires after 24 hours to prevent stale brand-claim state from resurfacing in later sessions.

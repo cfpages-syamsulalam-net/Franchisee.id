@@ -4,6 +4,32 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 06:09 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-franchise.js`: added TTL for persisted claim-mode session (`franchise_claim_state`) with 24-hour expiry to prevent stale claim context from reappearing after long inactivity.
+- `js/form-franchise.js`: stored `expires_at` metadata and added backward-compatible TTL checks for older records that only have `saved_at`.
+- `FORM_SCHEMA.md`, `TECHNICAL_INVENTORY.md`, `KNOWLEDGE.md`: documented claim-session TTL behavior and rationale for future maintenance continuity.
+
+### Removed
+- None.
+
+## 2026-04-04 06:07 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-franchise.js`: implemented claim-mode session persistence via `localStorage` key `franchise_claim_state` so refresh restores active claim context (selected brand, hidden `unclaimed_id`, read-only brand field, and claim alert) instead of reverting to normal mode.
+- `js/form-franchise.js`: added claim state helpers (`saveClaimModeState`, `getClaimModeState`, `clearClaimModeState`), integrated them into claim select/exit/success-submit flow, and prioritized persisted claim-state restore during page initialization.
+- `FORM_SCHEMA.md`: documented claim-mode session persistence behavior and storage key.
+- `TECHNICAL_INVENTORY.md`: synced new claim-state helper functions and updated `fillMainFranchisorForm` behavior notes.
+- `KNOWLEDGE.md`: added claim continuity note for refresh restore behavior.
+
+### Removed
+- None.
+
 ## 2026-04-04 05:57 (Asia/Jakarta)
 ### Added
 - `css/form-franchise/CSS_USAGE_MAP.md`: documentation map for form CSS selectors, module responsibilities, and file usage references (`/daftar/index.html`, `/js/form-franchise.js`, `/js/form-utils.js`).
