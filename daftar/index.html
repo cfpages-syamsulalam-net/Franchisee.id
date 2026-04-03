@@ -400,7 +400,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 										<div class="elementor-container elementor-column-gap-no">
 											<div class="elementor-column elementor-col-100 elementor-top-column elementor-element elementor-element-f392fb0" data-id="f392fb0" data-element_type="column" data-settings="{&quot;background_background&quot;:&quot;classic&quot;}">
 												<div class="elementor-widget-wrap elementor-element-populated">
-													<div class="registration-tabs-wrapper container mt-5">
+													<div class="registration-tabs-wrapper mb-5">
 										<!-- TABS BUTTONS -->
 										<div class="registration-tabs">
 											<button class="tab-btn active" onclick="openTab('franchisee')">
@@ -523,6 +523,34 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 											<div class="elementor-element elementor-element-1c71114 elementor-widget elementor-widget-wpforms" data-id="1c71114" data-element_type="widget" data-widget_type="wpforms.default">
 												<div class="elementor-widget-container">
 													<div class="franchise-listing-form-wrapper">
+														<div class="step-indicator-wrapper mb-4">
+															<ul class="step-indicator">
+																<li class="step-item active" data-step="1">
+																	<div class="step-circle">1</div>
+																	<div class="step-text">Identitas</div>
+																</li>
+																<li class="step-item" data-step="2">
+																	<div class="step-circle">2</div>
+																	<div class="step-text">Biaya</div>
+																</li>
+																<li class="step-item" data-step="3">
+																	<div class="step-circle">3</div>
+																	<div class="step-text">Profil</div>
+																</li>
+																<li class="step-item" data-step="4">
+																	<div class="step-circle">4</div>
+																	<div class="step-text">Media</div>
+																</li>
+																<li class="step-item" data-step="5">
+																	<div class="step-circle">5</div>
+																	<div class="step-text">Kontak</div>
+																</li>
+															</ul>
+															<div class="progress mt-2" style="height: 4px;">
+																<div id="main_progress_bar" class="progress-bar bg-warning" role="progressbar" style="width: 20%;"></div>
+															</div>
+														</div>
+
 														<div id="claim-mode-alert" class="alert alert-warning mb-4" style="display: none;">
 															<div class="d-flex align-items-center">
 																<i class="fas fa-certificate me-3 fs-4 text-warning"></i> 
@@ -533,19 +561,6 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 																<button type="button" class="btn-close ms-auto" onclick="exitClaimMode()" aria-label="Close"></button>
 															</div>
 														</div>
-
-														<div class="form-progress-wrapper mb-4">
-															<div class="progress" style="height: 10px;">
-																<div id="main_progress_bar" class="progress-bar bg-success" role="progressbar" style="width: 20%;"></div>
-															</div>
-															<div class="d-flex justify-content-between mt-2 small text-muted">
-																<span class="step-item active" data-step="1">Identitas</span>
-																<span class="step-item" data-step="2">Biaya</span>
-																<span class="step-item" data-step="3">Profil</span>
-																<span class="step-item" data-step="4">Media</span>
-																<span class="step-item" data-step="5">Kontak</span>
-															</div>
-												</div>
 
 														<form id="franchiseListingForm" class="async-form">
 															<input type="hidden" name="unclaimed_id" id="main_unclaimed_id">
