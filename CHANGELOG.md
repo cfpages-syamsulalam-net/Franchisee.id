@@ -4,6 +4,19 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 03:56 (Asia/Jakarta)
+### Added
+- `daftar/index.html`: restored Klaim tab informational content block ("Cara Klaim Brand") and fallback CTA link to Franchisor tab to recover missing guidance content without reintroducing deprecated duplicate claim form logic.
+
+### Changed
+- `daftar/index.html`: restored older Klaim tab copy from historical claim-flow lineage:
+  - heading back to "Klaim Brand Anda & Lengkapi Profilnya"
+  - search card title back to "Cari Brand Anda"
+  - helper text restored to direct users to Franchisor tab when brand is not found.
+
+### Removed
+- None.
+
 ## 2026-04-04 03:36 (Asia/Jakarta)
 ### Added
 - None.

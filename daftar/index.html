@@ -672,7 +672,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 										<div id="tab-klaim" class="tab-content" style="display:none;">
 											<div class="elementor-element elementor-element-b1a5117 elementor-widget elementor-widget-heading" data-element_type="widget" data-widget_type="heading.default">
 												<div class="elementor-widget-container text-center">
-													<h3 class="elementor-heading-title elementor-size-default">Cari Brand Anda &amp; Ambil Alih Halaman Profil</h3>
+													<h3 class="elementor-heading-title elementor-size-default">Klaim Brand Anda &amp; Lengkapi Profilnya</h3>
 												</div>
 											</div>
 											<div class="elementor-element elementor-element-0efbcc9 elementor-widget elementor-widget-text-editor" data-element_type="widget" data-widget_type="text-editor.default">
@@ -682,7 +682,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 											</div>
 											<div class="franchise-listing-form-wrapper">
 												<div class="form-section-card mb-4" id="claim-search-section">
-													<h4 class="fw-bold mb-3"><i class="fas fa-search me-2 text-warning"></i> Pilih Brand untuk Diklaim</h4>
+													<h4 class="fw-bold mb-3"><i class="fas fa-search me-2 text-warning"></i> Cari Brand Anda</h4>
 													<div class="form-group-row">
 														<div class="label-col"><label class="form-label">Nama Brand</label></div>
 														<div class="input-col">
@@ -690,8 +690,25 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 																<input type="text" id="claim-brand-search" class="form-control" placeholder="Ketik nama brand (misal: Sabana, Kebab, dll)..." autocomplete="off">
 																<div id="claim-search-results" class="autocomplete-suggestions" style="display:none;"></div>
 															</div>
-															<small class="helper-text-bottom">Setelah memilih, Anda akan diarahkan untuk melengkapi data profil.</small>
+															<small class="helper-text-bottom">Jika brand tidak ditemukan, silakan gunakan tab <strong>Daftar sebagai Franchisor</strong>.</small>
 														</div>
+													</div>
+												</div>
+												<div class="form-section-card">
+													<h4 class="fw-bold mb-3"><i class="fas fa-info-circle me-2 text-primary"></i> Cara Klaim Brand</h4>
+													<div class="form-group-row">
+														<div class="label-col"><label class="form-label">Langkah</label></div>
+														<div class="input-col">
+															<ol class="mb-0">
+																<li>Cari nama brand Anda pada kolom di atas.</li>
+																<li>Pilih brand dari hasil autocomplete.</li>
+																<li>Anda akan otomatis diarahkan ke tab Franchisor untuk melengkapi data.</li>
+															</ol>
+														</div>
+													</div>
+													<div class="alert alert-primary mt-3 mb-0" role="alert">
+														Tidak menemukan brand Anda? 
+														<a href="#" onclick="openTab('franchisor'); return false;" class="fw-bold text-decoration-none">Daftar sebagai Franchisor di sini</a>.
 													</div>
 												</div>
 											</div>
