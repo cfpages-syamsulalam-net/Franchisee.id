@@ -6,6 +6,8 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
 - Before making form/logic edits, check `GEMINI.md`, `FORM_SCHEMA.md`, and `TECHNICAL_INVENTORY.md` for continuity constraints.
 - Keep this file updated when new project-level conventions are introduced.
+- For claim-search data (`UNCLAIMED`), preserve strict brand sanitization (exclude URL/phone/address/legal-entity/contact-label rows) consistently across `js/build-listing.js`, `functions/get-franchises.js`, and `js/form-franchise.js`.
+- Do not reintroduce naive CSV parsing for sheet fallbacks; keep quote-aware parsing to avoid `brand_name` column shifts.
 - For large legacy files such as `/daftar/index.html` and `js/form-franchise.js`, avoid full rewrites; use targeted edits with enough surrounding context to prevent accidental loss.
 - After editing files larger than 500 lines, verify line count immediately to catch unintended truncation.
 - Before changing files in a directory, check nearby local `.md` or `.txt` context files first because they may contain restoration notes or historical constraints.

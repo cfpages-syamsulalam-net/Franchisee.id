@@ -8,7 +8,7 @@ This file serves as a comprehensive record of all functions and key variables ac
 *Main logic for the registration and claiming forms.*
 - `slugify(text)`: Converts brand names to URL-friendly slugs.
 - `fetchUnclaimedBrands()`: Loads unclaimed brands from static JSON or Live API.
-- `buildSearchableClaimBrands(brands)`: Sanitizes UNCLAIMED entries for claim autocomplete (filters URL/phone-like noise, deduplicates display names).
+- `buildSearchableClaimBrands(brands)`: Sanitizes UNCLAIMED entries for claim autocomplete (filters URL/phone/address/legal-entity/contact-label/category noise, deduplicates display names).
 - `window.openTab(tabName)`: Switches between Franchisee, Franchisor, and Klaim tabs.
 - `window.nextStep(stepIndex)`: Moves forward in multi-step form.
 - `window.prevStep(stepIndex)`: Moves backward in multi-step form.
@@ -35,7 +35,7 @@ This file serves as a comprehensive record of all functions and key variables ac
 *SSG Builder for the main directory page.*
 - `parseCSVRows(content)`: Quote-aware CSV parser (handles commas/newlines inside quoted cells) for reliable local-sheet fallback parsing.
 - `loadFromCSV(filePath)`: Fallback logic to read data if API fails, using robust CSV parsing to avoid column-shift corruption.
-- `isLikelyClaimBrandRow(item)`: Heuristic filter to keep canonical brand rows for claim-search dataset generation.
+- `isLikelyClaimBrandRow(item)`: Heuristic filter to keep canonical brand rows for claim-search dataset generation (rejects URL/phone/address/legal-entity/contact-label rows).
 - `generateCard(item, index)`: HTML generator for franchise cards (Hybrid: Verified/Unclaimed).
 - `async build()`: Orchestrates fetching from Sheet/CSV, writing `/peluang-usaha/index.html`, and generating sanitized `data/unclaimed-brands.json` for claim search.
 
@@ -62,7 +62,7 @@ This file serves as a comprehensive record of all functions and key variables ac
 
 ### File: `functions/get-franchises.js`
 - `onRequestGet()`: API to fetch franchise data with tier-based Cloudinary optimization.
-  - Supports `purpose=claim-search` for `tab=UNCLAIMED` to return sanitized claim-search rows (clean brand_name + deduplication).
+  - Supports `purpose=claim-search` for `tab=UNCLAIMED` to return sanitized claim-search rows (clean brand_name + deduplication + row-noise filtering aligned with frontend/builder).
 
 ---
 ## 3. Logic Safety Audit

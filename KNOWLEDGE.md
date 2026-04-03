@@ -34,7 +34,9 @@ This file gives persistent project context: goals, commands, architecture, conve
 - Data flow:
   - Source of content: Google Sheets tabs (`FRANCHISOR`, `UNCLAIMED`, `FRANCHISEE`).
   - Build scripts fetch sheet data and generate static HTML pages.
-  - Claim/search UX reads static `data/unclaimed-brands.json` first; falls back to `/get-franchises?tab=UNCLAIMED`.
+  - Claim/search UX reads static `data/unclaimed-brands.json` first; falls back to `/get-franchises?tab=UNCLAIMED&purpose=claim-search`.
+  - `data/unclaimed-brands.json` must be generated from sanitized UNCLAIMED rows only (exclude URL/phone/address/legal-entity/contact-label noise and dedupe by `brand_name`).
+  - Local CSV fallback in `js/build-listing.js` uses quote-aware parsing (`parseCSVRows`) to preserve correct column mapping when cells contain commas/newlines.
   - Form submission posts to Cloudflare Function `/form-submit`.
   - On successful claim, backend can remove claimed row from `UNCLAIMED`.
 

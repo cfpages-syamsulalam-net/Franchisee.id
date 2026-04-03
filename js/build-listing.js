@@ -35,11 +35,33 @@ function isPhoneLike(text) {
     return digits.length >= 9 && digits.length <= 16 && (digits.length / Math.max(raw.length, 1)) > 0.6;
 }
 
+function isLegalEntityLike(text) {
+    return /^(pt|cv|ud|pd|yayasan|koperasi|perum|tbk)\b\.?/i.test(normalizeText(text));
+}
+
+function isContactLabelLike(text) {
+    const raw = normalizeText(text).toLowerCase();
+    if (!raw) return false;
+    return /\b(call|telp|telepon|whatsapp|wa|marketing|owner|admin|contact|cp|ibu|bpk)\b/.test(raw);
+}
+
+function isAddressLike(text) {
+    const raw = normalizeText(text).toLowerCase();
+    if (!raw) return false;
+    const hasAddressToken = /\b(jl|jalan|rt|rw|kel|kec|kab|kota|blok|no|nomor|ruko|komplek|km|desa|kav|kavling)\b/.test(raw);
+    if (!hasAddressToken) return false;
+    const hasDigits = /\d/.test(raw);
+    const words = raw.split(/\s+/).filter(Boolean).length;
+    return hasDigits || words >= 4;
+}
+
 function isLikelyClaimBrandRow(item) {
     const brandName = normalizeText(item.brand_name);
     if (!brandName) return false;
     if (brandName.length < 2) return false;
+    if (!/[a-z]/i.test(brandName)) return false;
     if (isUrlLike(brandName) || isPhoneLike(brandName)) return false;
+    if (isLegalEntityLike(brandName) || isContactLabelLike(brandName) || isAddressLike(brandName)) return false;
 
     // Canonical UNCLAIMED rows generally carry one of these metadata fields.
     const hasEvidence =

@@ -37,6 +37,7 @@ This document tracks the evolution and current state of the JavaScript logic fil
 
 ### Observations
 - **Logic Sync**: `build-details.js` and `build-listing.js` share similar logic for data fetching but diverge in UI template injection. Any changes to data schema in `unclaimed-brands.json` must be reflected in both.
+- **Claim Search Sync**: Claim-search sanitization rules must stay aligned in `js/build-listing.js`, `functions/get-franchises.js`, and `js/form-franchise.js` to avoid URL/phone/address/entity rows leaking into autocomplete.
 - **Sitemap**: `build-sitemap.js` is a relatively new addition (Mar 2026) to handle the growing scale of unclaimed brands without manual sitemap edits.
 
 ---

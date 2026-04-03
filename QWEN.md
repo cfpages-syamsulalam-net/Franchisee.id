@@ -43,7 +43,7 @@ Franchisee.id/
 │   ├── form-franchise.js    # Main form logic (validation, calculations)
 │   └── form-utils.js        # Shared utility functions
 ├── templates/               # HTML templates for SSG engine
-├── pendaftaran/             # Registration form pages
+├── daftar/                  # Registration form pages
 ├── peluang-usaha/           # Generated franchise listing pages
 ├── css/                     # Stylesheets
 ├── wp-content/              # WordPress theme assets (static)
@@ -188,7 +188,8 @@ Google Sheets (write-back) + Supabase (analytics)
 
 ### Claim Workflow
 ```
-1. User searches unclaimed brand → data/unclaimed-brands.json
+1. User searches unclaimed brand → data/unclaimed-brands.json (sanitized brand-only dataset)
+2. If static JSON unavailable, frontend fallback hits `/get-franchises?tab=UNCLAIMED&purpose=claim-search`
 2. Selection → fillMainFranchisorForm(brand) → switches to Franchisor tab
 3. User completes form → submits with form_type="claim" + unclaimed_id
 4. Backend (form-submit.js) → appends to FRANCHISOR tab
@@ -236,6 +237,8 @@ node --check js/form-franchise.js
 
 5. **Cloudinary Integration**: Direct browser uploads require proper credentials. Upload preview logic is in `form-franchise.js`.
 
+6. **Claim Search Data Hygiene**: Keep edge-case filtering aligned across `js/build-listing.js`, `functions/get-franchises.js`, and `js/form-franchise.js` (exclude URL/phone/address/legal-entity/contact-label rows).
+
 ---
 
 ## Related Documentation
@@ -254,6 +257,7 @@ node --check js/form-franchise.js
 ### `/js/form-franchise.js`
 - `slugify(text)` - URL-friendly slug generator
 - `fetchUnclaimedBrands()` - Load unclaimed brands (static JSON or API fallback)
+- `buildSearchableClaimBrands(brands)` - Frontend sanitizer/deduper for claim suggestions
 - `window.openTab(tabName)` - Tab switching
 - `window.nextStep(stepIndex)` / `window.prevStep(stepIndex)` - Multi-step navigation
 - `calculateAll()` - BEP/ROI/profit calculations
@@ -261,7 +265,9 @@ node --check js/form-franchise.js
 - `submitToCloudflare(formElement, type)` - Form submission
 
 ### `/js/build-listing.js`
+- `parseCSVRows(content)` - Quote-aware CSV parser for fallback data
 - `loadFromCSV(filePath)` - Fallback data loading
+- `isLikelyClaimBrandRow(item)` - Canonical claim row filter
 - `generateCard(item, index)` - HTML card generator
 - `async build()` - Main orchestration
 
@@ -274,4 +280,4 @@ node --check js/form-franchise.js
 
 ---
 
-*Last updated: 2026-03-09 (Asia/Jakarta)*
+*Last updated: 2026-04-04 (Asia/Jakarta)*

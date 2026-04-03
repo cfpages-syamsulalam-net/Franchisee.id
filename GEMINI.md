@@ -56,8 +56,9 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 ## Architecture & Data Flow
 1.  **Data Tiers:** `UNCLAIMED` (Scraped/Potential), `FREE` (Claimed/Basic), `VERIFIED` (Paid/Priority).
 2.  **Claiming Workflow:** Transition brands from `UNCLAIMED` to `FRANCHISOR` upon data completion.
-3.  **SSG Engine:** Scripts in `js/` fetch data and inject into `templates/` via GitHub Actions.
-4.  **Serverless Logic:** Functions handle API access and form submissions with custom JWT auth.
+3.  **Claim Search Hygiene:** Claim autocomplete must consume sanitized brand-only rows (exclude URL/phone/address/legal-entity/contact-label noise) consistently in builder (`js/build-listing.js`), API fallback (`functions/get-franchises.js`), and frontend (`js/form-franchise.js`).
+4.  **SSG Engine:** Scripts in `js/` fetch data and inject into `templates/` via GitHub Actions.
+5.  **Serverless Logic:** Functions handle API access and form submissions with custom JWT auth.
 
 ## Key Technical Components
 - **Smart Form Logic (`js/form-franchise.js`):** Real-time calculations (BEP, ROI) and data validation.

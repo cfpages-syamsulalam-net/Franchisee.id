@@ -7,6 +7,7 @@ This document provides a granular record of every variable and function within t
 ### Functions
 - `slugify(text)`: Converts string to URL slug.
 - `fetchUnclaimedBrands()` (async): Loads data for the claim search.
+- `buildSearchableClaimBrands(brands)`: Frontend claim-search sanitizer and deduper for display suggestions.
 - `window.openTab(tabName)`: Handles tab switching and re-validation of inputs.
 - `window.nextStep(stepIndex)`: Progresses form step, persists to `localStorage`.
 - `window.prevStep(stepIndex)`: Regresses form step.
@@ -56,7 +57,9 @@ This document provides a granular record of every variable and function within t
 
 ### Functions
 - `getThumb(url)`: Cloudinary URL transformer.
+- `parseCSVRows(content)`: Quote-aware CSV parser for robust fallback ingestion.
 - `loadFromCSV(filePath)`: CSV data loader.
+- `isLikelyClaimBrandRow(item)`: Claim-search canonical row filter for static JSON generation.
 - `generateCard(item, index)`: HTML generator for listing cards.
 - `async build()`: Orchestrates listing generation.
 

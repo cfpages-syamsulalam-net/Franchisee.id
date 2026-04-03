@@ -67,3 +67,4 @@ This file documents every input field for the three registration tabs in `/dafta
 - **Pre-filled Data**: `brand_name`, `category`, `min_capital` (maps to `pkg_price_1`).
 - **Tracking ID**: `unclaimed_id` (Hidden in Franchisor form).
 - **Mode**: Sets `form_type` to `claim` on submission for backend migration.
+- **Search Data Guardrails**: Autocomplete must only show canonical brand labels (exclude URL/phone/address/legal-entity/contact-label rows and generic category-only labels).

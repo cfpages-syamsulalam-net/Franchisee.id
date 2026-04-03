@@ -26,12 +26,24 @@ document.addEventListener('DOMContentLoaded', function() {
         return digits.length >= 9 && digits.length <= 16 && (digits.length / Math.max(text.length, 1)) > 0.6;
     }
 
+    function isLegalEntityLike(text) {
+        return /^(pt|cv|ud|pd|yayasan|koperasi|perum|tbk)\b\.?/i.test((text || '').trim());
+    }
+
+    function isContactLabelLike(text) {
+        const t = (text || '').toLowerCase();
+        if (!t) return false;
+        return /\b(call|telp|telepon|whatsapp|wa|marketing|owner|admin|contact|cp|ibu|bpk)\b/i.test(t);
+    }
+
     function isAddressLike(text) {
         const t = (text || '').toLowerCase();
         if (!t) return false;
-        const hasAddressToken = /\b(jl|jalan|rt|rw|kel|kec|kab|kota|blok|no)\b/i.test(t);
+        const hasAddressToken = /\b(jl|jalan|rt|rw|kel|kec|kab|kota|blok|no|nomor|ruko|komplek|km|desa|kav|kavling)\b/i.test(t);
+        if (!hasAddressToken) return false;
         const hasDigits = /\d/.test(t);
-        return hasAddressToken && hasDigits;
+        const words = t.split(/\s+/).filter(Boolean).length;
+        return hasDigits || words >= 4;
     }
 
     function isGenericCategoryLike(text) {
@@ -62,7 +74,9 @@ document.addEventListener('DOMContentLoaded', function() {
         brands.forEach((brand, idx) => {
             const cleanName = getCleanBrandName(brand.brand_name);
             if (!cleanName) return;
+            if (!/[a-z]/i.test(cleanName)) return;
             if (isUrlLike(cleanName) || isPhoneLike(cleanName)) return;
+            if (isLegalEntityLike(cleanName) || isContactLabelLike(cleanName)) return;
             if (isAddressLike(cleanName) || isGenericCategoryLike(cleanName)) return;
 
             const key = cleanName.toLowerCase();

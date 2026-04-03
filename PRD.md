@@ -39,6 +39,7 @@ Allow owners of "Unclaimed" brands to take control of their pages.
 - **Goal**: Merge "Claim" into the main "Franchisor" flow for a better user experience and data consistency.
 - **Actions**:
   - **Autocomplete UI**: Simplify to show only `brand_name`.
+  - **Data Hygiene**: Enforce brand-only extraction/sanitization across builder/API/frontend to exclude URL/phone/address/legal-entity/contact-label rows.
   - **CSS Polish**: Enhance `.suggestion-item` hover/active states in `css/form-franchise.css`.
   - **Workflow Merge**: Selection in "Klaim" tab now redirects to "Franchisor" tab with pre-filled data.
   - **Data Mapping Fix**: Correctly map `brand_name`, `min_capital`, and `category` to the Franchisor form fields.
