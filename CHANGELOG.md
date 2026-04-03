@@ -4,6 +4,16 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 02:42 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `daftar/index.html`: restored historical tab layout by closing `.registration-tabs-wrapper` immediately after `.registration-tabs` and removing the late extra wrapper close, so tab buttons no longer render side-by-side with tab content.
+
+### Removed
+- None.
+
 ## 2026-04-04 02:31 (Asia/Jakarta)
 ### Added
 - None.
