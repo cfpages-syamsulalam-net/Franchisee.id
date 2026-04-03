@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 05:49 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `css/form-franchise.css`: restored visual clarity for claim-active alert by adding missing utility classes used in `/daftar/index.html` (`.ms-auto`, `.me-2`, `.me-3`, `.small`, `.fs-4`) and by adding explicit `.alert-warning` styling.
+- `css/form-franchise.css`: added scoped `#claim-mode-alert` styling for the certificate icon and close button (`.btn-close`) so `fa-certificate` and `exitClaimMode()` control render consistently even without full Bootstrap utility/CSS coverage.
+
+### Removed
+- None.
+
 ## 2026-04-04 05:35 (Asia/Jakarta)
 ### Added
 - None.
