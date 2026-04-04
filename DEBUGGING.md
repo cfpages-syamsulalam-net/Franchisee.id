@@ -8,6 +8,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - Then click the bottom-right debug emoji (`🧪`) to toggle debug mode.
 - When `dev=1` is active:
   - `/css/form-franchise.css` gets a cache-busting query param (`_dbg=<timestamp>`).
+  - All modular form CSS files under `/css/form-franchise/*.css` are loaded directly with `_dbg=<timestamp>` to bypass stale `@import` caches during debug.
   - `/js/form-utils.js` and `/js/form-franchise.js` also get cache-busting query params.
 - Click `🧪` again to disable debug mode (`dev` param removed).
 

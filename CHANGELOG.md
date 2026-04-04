@@ -4,6 +4,22 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 09:53 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `daftar/index.html`: improved debug-mode CSS cache-busting behavior (`?dev=1`) to bypass stale modular `@import` cache by directly loading all `/css/form-franchise/*.css` module files with `_dbg=<timestamp>`.
+- `css/form-franchise/02-layout-tabs-steps.css`: replaced fragile text-symbol step arrows with robust connector line + arrowhead pseudo-elements for inter-step progression visibility.
+- `css/form-franchise/02-layout-tabs-steps.css`: updated arrow progression colors to follow step status:
+  - pending = gray,
+  - active = brand yellow,
+  - completed = green (matching completed step circles).
+- `DEBUGGING.md`: updated debug-mode notes to explain direct modular CSS cache-busting behavior in `dev=1`.
+
+### Removed
+- None.
+
 ## 2026-04-04 09:26 (Asia/Jakarta)
 ### Added
 - None.

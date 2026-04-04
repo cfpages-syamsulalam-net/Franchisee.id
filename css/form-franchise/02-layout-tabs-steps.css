@@ -73,20 +73,44 @@
     position: relative;
 }
 .step-item:not(:last-child)::after {
-    content: "\203A";
+    content: "";
     position: absolute;
-    right: -10px;
+    left: calc(50% + 24px);
     top: 16px;
+    width: calc(100% - 48px);
+    height: 2px;
+    background: #cfd3d8;
+    border-radius: 999px;
     transform: translateY(-50%);
-    color: #b8b8b8;
-    font-size: 1.35rem;
-    font-weight: 700;
-    line-height: 1;
+    pointer-events: none;
+}
+.step-item:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: 16px;
+    width: 8px;
+    height: 8px;
+    border-top: 2px solid #cfd3d8;
+    border-right: 2px solid #cfd3d8;
+    transform: translateY(-50%) rotate(45deg);
     pointer-events: none;
 }
 .step-item.active:not(:last-child)::after,
 .step-item.completed:not(:last-child)::after {
-    color: #f8b526;
+    background: #f8b526;
+}
+.step-item.active:not(:last-child)::before,
+.step-item.completed:not(:last-child)::before {
+    border-top-color: #f8b526;
+    border-right-color: #f8b526;
+}
+.step-item.completed:not(:last-child)::after {
+    background: #28a745;
+}
+.step-item.completed:not(:last-child)::before {
+    border-top-color: #28a745;
+    border-right-color: #28a745;
 }
 .step-circle {
     width: 35px;
@@ -165,8 +189,14 @@
 
 @media (max-width: 576px) {
     .step-item:not(:last-child)::after {
-        right: -6px;
-        font-size: 1rem;
+        left: calc(50% + 20px);
+        width: calc(100% - 40px);
         top: 15px;
+    }
+    .step-item:not(:last-child)::before {
+        right: 6px;
+        top: 15px;
+        width: 7px;
+        height: 7px;
     }
 }

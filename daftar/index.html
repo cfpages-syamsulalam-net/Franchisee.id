@@ -85,13 +85,37 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
     try {
         var params = new URLSearchParams(window.location.search);
         if (params.get('dev') !== '1') return;
+        var bust = Date.now().toString();
         var css = document.getElementById('form-daftar-franchise');
-        if (!css) return;
-        var href = css.getAttribute('href') || '';
-        if (!href) return;
-        var url = new URL(href, window.location.origin);
-        url.searchParams.set('_dbg', Date.now().toString());
-        css.setAttribute('href', url.pathname + url.search);
+
+        // Bust aggregator URL too
+        if (css) {
+            var href = css.getAttribute('href') || '';
+            if (href) {
+                var url = new URL(href, window.location.origin);
+                url.searchParams.set('_dbg', bust);
+                css.setAttribute('href', url.pathname + url.search);
+                css.disabled = true; // avoid stale @import cache; load modules directly below
+            }
+        }
+
+        var modules = [
+            '/css/form-franchise/01-utilities.css',
+            '/css/form-franchise/02-layout-tabs-steps.css',
+            '/css/form-franchise/03-form-core.css',
+            '/css/form-franchise/04-alerts-status.css',
+            '/css/form-franchise/05-packages-responsive.css',
+            '/css/form-franchise/06-claim-autocomplete.css'
+        ];
+
+        modules.forEach(function (path) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.setAttribute('data-dev-css-module', '1');
+            link.href = path + '?_dbg=' + bust;
+            if (css && css.parentNode) css.parentNode.insertBefore(link, css.nextSibling);
+            else document.head.appendChild(link);
+        });
     } catch (e) {}
 })();
 </script>
