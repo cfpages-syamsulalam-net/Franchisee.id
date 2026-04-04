@@ -4,6 +4,75 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 12:15 (Asia/Jakarta)
+### Added
+- `/.context/session-20260404-1215.md`: timestamped summary of this session (country-code/WhatsApp restoration, validation/UI recovery, `/json` + `/csv` consolidation, and lineage context) for cross-session continuity.
+
+### Changed
+- `AGENTS.md`: added persistent convention for timestamped session context snapshots in `/.context/session-YYYYMMDD-HHmm.md` and added `/.context/*.md` to the root markdown instruction index.
+- `KNOWLEDGE.md`: added session-continuity gotcha/working note to maintain and consult timestamped summaries in `/.context`.
+
+### Removed
+- None.
+
+## 2026-04-04 12:08 (Asia/Jakarta)
+### Added
+- `json/country-codes.json`: centralized country-code option source for form WhatsApp inputs.
+- New data-asset directories:
+  - `json/` for centralized JSON assets.
+  - `csv/` for centralized CSV assets.
+
+### Changed
+- `js/form-franchise.js`:
+  - switched claim-search static source to `/json/unclaimed-brands.json`.
+  - added country-code configuration loader from `/json/country-codes.json` with safe defaults.
+  - updated city autocomplete loader to try local `/json/data-kota-id.json` first, then existing remote fallback.
+- `js/build-listing.js`: migrated CSV fallback paths to `/csv/*.csv` and changed generated claim-search dataset output from `data/unclaimed-brands.json` to `json/unclaimed-brands.json`.
+- `js/build-sitemap.js`: migrated CSV fallback paths to `/csv/franchisors.csv` and `/csv/unclaimed.csv`.
+- `AGENTS.md`: added project-level convention to centralize JSON assets in `/json` and CSV assets in `/csv`.
+- `KNOWLEDGE.md`: updated architecture/data-flow docs to reflect `/json` and `/csv` conventions and `/json/unclaimed-brands.json` runtime source.
+- `PRD.md`: updated static autocomplete dataset path to `/json/unclaimed-brands.json`.
+- `TECHNICAL_INVENTORY.md`: bumped `js/form-franchise.js` inventory version to `v1.29` and documented new JSON-driven country-code helpers plus updated claim-search JSON path.
+- `QWEN.md`: updated directory structure and claim-search flow path references for `/json` and `/csv`.
+- `js/symbols_inventory.md`: documented new JSON loaders (`loadCountryCodeOptions`, `loadCitiesData`) in form logic inventory.
+- `js/technical_comparison.md`: updated claim-search dataset reference path to `/json/unclaimed-brands.json`.
+
+### Removed
+- `data/unclaimed-brands.json` (moved to `json/unclaimed-brands.json`).
+- Empty legacy `data/` directory (replaced by centralized `json/` directory usage).
+- Root-level CSV files moved into `/csv`:
+  - `franchisors.csv`
+  - `unclaimed.csv`
+  - `franchisee.csv`
+  - `franchises_data.csv`
+
+## 2026-04-04 11:53 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `daftar/index.html`: restored legacy WhatsApp country-code UI (`country_code` dropdown + `.phone-input-group` and helper text) in both Franchisee and Franchisor Step 5 contact sections, aligned with historical `/pendaftaran/index.html` behavior.
+- `daftar/index.html`: added an inline lineage note to preserve future restoration context (`/pendaftaran/index.html` -> `/daftar/index.html`).
+- `js/form-franchise.js`: restored live validation hooks (`blur`/`input`/`change`) so filled/validated fields reliably show green valid-state feedback again.
+- `css/form-franchise/03-form-core.css`: fixed valid-state visual spacing by restoring right-side space for checkmark icon (`padding-right: 40px`).
+- `FORM_SCHEMA.md`: synced schema to include `country_code` for Franchisee WhatsApp and Franchisor Step 5 contact fields.
+- `TECHNICAL_INVENTORY.md`: bumped `js/form-franchise.js` to `v1.28` and documented `bindLiveValidation(form)`.
+- `KNOWLEDGE.md`: added explicit historical-rename gotcha (`/pendaftaran/index.html` lineage) for future restorations.
+
+### Removed
+- None.
+
+## 2026-04-04 11:45 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-franchise.js`: restored pre-submit WhatsApp normalization to international format before sending to `/form-submit` / Google Sheets (`+62` default fallback, supports optional `country_code`, and handles pasted `+`/`00` prefixes).
+- `TECHNICAL_INVENTORY.md`: bumped `js/form-franchise.js` inventory version to `v1.27` and documented new WhatsApp/country-code normalization helpers.
+
+### Removed
+- None.
+
 ## 2026-04-04 09:53 (Asia/Jakarta)
 ### Added
 - None.

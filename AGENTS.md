@@ -8,6 +8,8 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - Keep this file updated when new project-level conventions are introduced.
 - For claim-search data (`UNCLAIMED`), preserve strict brand sanitization (exclude URL/phone/address/legal-entity/contact-label rows) consistently across `js/build-listing.js`, `functions/get-franchises.js`, and `js/form-franchise.js`.
 - Do not reintroduce naive CSV parsing for sheet fallbacks; keep quote-aware parsing to avoid `brand_name` column shifts.
+- Keep repository data assets centralized: JSON files in `/json` and CSV files in `/csv`. Update script paths/docs together when adding or moving data assets.
+- Keep per-session context snapshots in `/.context` using timestamped Markdown files (`session-YYYYMMDD-HHmm.md`) for new-session continuity.
 - For large legacy files such as `/daftar/index.html` and `js/form-franchise.js`, avoid full rewrites; use targeted edits with enough surrounding context to prevent accidental loss.
 - After editing files larger than 500 lines, verify line count immediately to catch unintended truncation.
 - Before changing files in a directory, check nearby local `.md` or `.txt` context files first because they may contain restoration notes or historical constraints.
@@ -53,6 +55,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - `AGENTS.md`: Persistent local operating instructions for future coding sessions.
 - `CHANGELOG.md`: Mandatory running log of repository modifications.
 - `css/form-franchise/CSS_USAGE_MAP.md`: Selector/module mapping for the split form CSS architecture and usage references.
+- `/.context/*.md`: Timestamped session context snapshots for cross-session continuity.
 
 ## Additional Project Notes
 - The registration page was historically developed under `/pendaftaran/index.html` and later renamed to `/daftar/index.html`. When tracing git history or comparing old artifacts such as `old_version.txt`, treat them as the same page lineage.

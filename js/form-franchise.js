@@ -10,6 +10,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLAIM_STORAGE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
     const FRANCHISOR_DRAFT_KEY = 'franchisor_form_draft';
     const FRANCHISOR_DRAFT_TTL_MS = 72 * 60 * 60 * 1000; // 72 hours
+    const DEFAULT_COUNTRY_CODES = [
+        { code: '+62', label: 'ID +62' },
+        { code: '+60', label: 'MY +60' },
+        { code: '+65', label: 'SG +65' },
+        { code: '+1', label: 'US +1' },
+        { code: '+61', label: 'AU +61' }
+    ];
 
     function slugify(text) {
         if (!text) return '';
@@ -212,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchUnclaimedBrands() {
         try {
             console.log("🔍 Fetching unclaimed brands...");
-            let response = await fetch('/data/unclaimed-brands.json');
+            let response = await fetch('/json/unclaimed-brands.json');
             if (response.ok) {
                 unclaimedBrands = await response.json();
                 console.log("✅ Loaded from Static JSON:", unclaimedBrands.length);
@@ -387,10 +394,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	// --- CITY AUTOCOMPLETE ---
 	let citiesData = [];
-	fetch('https://cekkode.github.io/json/data-kota-id.json')
-		.then(res => res.json())
-		.then(data => { citiesData = data; initCityAutocomplete(); })
-		.catch(err => console.error(err));
+    async function loadCitiesData() {
+        const sources = [
+            '/json/data-kota-id.json',
+            'https://cekkode.github.io/json/data-kota-id.json'
+        ];
+
+        for (const source of sources) {
+            try {
+                const res = await fetch(source);
+                if (!res.ok) continue;
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    citiesData = data;
+                    initCityAutocomplete();
+                    return;
+                }
+            } catch (err) {
+                // Continue to the next source.
+            }
+        }
+
+        console.error('❌ Failed to load city autocomplete JSON from all sources.');
+    }
+    loadCitiesData();
 
 	function initCityAutocomplete() {
 		document.querySelectorAll('.city-autocomplete').forEach(input => {
@@ -516,6 +543,47 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function sanitizeCountryCodeItem(item) {
+        if (!item || typeof item !== 'object') return null;
+        const codeDigits = (item.code || '').toString().replace(/\D/g, '');
+        if (!codeDigits) return null;
+        const code = '+' + codeDigits;
+        const label = (item.label || '').toString().trim() || code;
+        return { code, label };
+    }
+
+    function applyCountryCodeOptions(list) {
+        const safeList = (Array.isArray(list) ? list : [])
+            .map(sanitizeCountryCodeItem)
+            .filter(Boolean);
+        const finalList = safeList.length > 0 ? safeList : DEFAULT_COUNTRY_CODES;
+
+        document.querySelectorAll('select[name="country_code"]').forEach((select) => {
+            const previousValue = (select.value || '').toString().trim();
+            const html = finalList.map((item) => `<option value="${item.code}">${item.label}</option>`).join('');
+            select.innerHTML = html;
+
+            const hasPrevious = finalList.some((item) => item.code === previousValue);
+            if (hasPrevious) {
+                select.value = previousValue;
+            } else {
+                select.value = '+62';
+            }
+        });
+    }
+
+    async function loadCountryCodeOptions() {
+        applyCountryCodeOptions(DEFAULT_COUNTRY_CODES);
+        try {
+            const response = await fetch('/json/country-codes.json');
+            if (!response.ok) return;
+            const payload = await response.json();
+            applyCountryCodeOptions(payload);
+        } catch (error) {
+            console.warn('⚠️ Failed to load /json/country-codes.json, using defaults.');
+        }
+    }
+
     window.exitClaimMode = function() {
         const modeAlert = document.getElementById('claim-mode-alert');
         const mainUnclaimedId = document.getElementById('main_unclaimed_id');
@@ -539,6 +607,79 @@ document.addEventListener('DOMContentLoaded', function() {
 	// ==========================================
 	// 5. SUBMISSION & INIT
 	// ==========================================
+    function normalizeCountryCode(rawCountryCode) {
+        const digits = (rawCountryCode || '').toString().replace(/\D/g, '');
+        return '+' + (digits || '62');
+    }
+
+    function normalizeWhatsappForSubmit(rawWhatsapp, rawCountryCode) {
+        const raw = (rawWhatsapp || '').toString().trim();
+        if (!raw) return '';
+
+        if (raw.startsWith('+')) {
+            const plusDigits = raw.replace(/[^\d+]/g, '');
+            const digitsOnly = plusDigits.replace(/\D/g, '');
+            return digitsOnly ? ('+' + digitsOnly) : '';
+        }
+
+        const digits = raw.replace(/\D/g, '');
+        if (!digits) return '';
+
+        if (digits.startsWith('00')) {
+            return '+' + digits.slice(2);
+        }
+
+        const countryCode = normalizeCountryCode(rawCountryCode);
+        const ccDigits = countryCode.replace(/\D/g, '');
+
+        if (digits.startsWith(ccDigits)) {
+            return '+' + digits;
+        }
+
+        if (digits.startsWith('0')) {
+            return countryCode + digits.slice(1);
+        }
+
+        return countryCode + digits;
+    }
+
+    function bindLiveValidation(form) {
+        if (!form || typeof window.validateSpecificField !== 'function') return;
+
+        const fields = form.querySelectorAll('input, select, textarea');
+        fields.forEach((field) => {
+            const type = (field.type || '').toLowerCase();
+            const isSelectable = field.tagName === 'SELECT' || type === 'radio' || type === 'checkbox';
+
+            field.addEventListener('blur', function() {
+                window.validateSpecificField(this);
+            });
+
+            field.addEventListener('input', function() {
+                this.classList.remove('is-valid', 'is-invalid');
+                if (typeof window.removeErrorMsg === 'function') {
+                    window.removeErrorMsg(this);
+                }
+            });
+
+            if (isSelectable) {
+                field.addEventListener('change', function() {
+                    window.validateSpecificField(this);
+                });
+            }
+        });
+
+        const countryCodeField = form.querySelector('select[name="country_code"]');
+        const whatsappField = form.querySelector('input[name="whatsapp"]');
+        if (countryCodeField && whatsappField) {
+            countryCodeField.addEventListener('change', function() {
+                if (whatsappField.value.trim() !== '') {
+                    window.validateSpecificField(whatsappField);
+                }
+            });
+        }
+    }
+
 	async function submitToCloudflare(formElement, type) {
 		const btn = formElement.querySelector('button[type="submit"]');
 		const originalText = btn.innerHTML;
@@ -549,6 +690,10 @@ document.addEventListener('DOMContentLoaded', function() {
 			const formData = new FormData(formElement);
 			const data = Object.fromEntries(formData.entries());
 			data.form_type = type;
+
+            if (Object.prototype.hasOwnProperty.call(data, 'whatsapp')) {
+                data.whatsapp = normalizeWhatsappForSubmit(data.whatsapp, data.country_code);
+            }
             
             // If it's a claim, the unclaimed_id is already in the hidden input
             if (data.unclaimed_id) {
@@ -581,6 +726,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	const fForm = document.getElementById('franchiseeForm');
     const lForm = document.getElementById('franchiseListingForm');
+
+    loadCountryCodeOptions();
+
+	if (fForm) bindLiveValidation(fForm);
+	if (lForm) bindLiveValidation(lForm);
 
 	if (fForm) fForm.addEventListener('submit', function(e) { e.preventDefault(); submitToCloudflare(this, 'FRANCHISEE'); });
 	if (lForm) lForm.addEventListener('submit', function(e) { e.preventDefault(); submitToCloudflare(this, 'FRANCHISOR'); });

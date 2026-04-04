@@ -253,8 +253,8 @@ async function build() {
 
     } catch (e) {
         console.warn('⚠️ Google Sheets API Failed. Attempting local CSV fallback...');
-        dataFranchisor = loadFromCSV(path.join(__dirname, '../franchisors.csv'));
-        dataUnclaimed = loadFromCSV(path.join(__dirname, '../unclaimed.csv'));
+        dataFranchisor = loadFromCSV(path.join(__dirname, '../csv/franchisors.csv'));
+        dataUnclaimed = loadFromCSV(path.join(__dirname, '../csv/unclaimed.csv'));
         console.log(`✅ Loaded from CSV: ${dataFranchisor.length} franchisors, ${dataUnclaimed.length} unclaimed.`);
     }
 
@@ -282,10 +282,10 @@ async function build() {
             seenClaimBrands.add(key);
             return true;
         });
-    const DATA_DIR = path.join(__dirname, '../data');
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(path.join(DATA_DIR, 'unclaimed-brands.json'), JSON.stringify(autocompleteData));
-    console.log(`✅ Generated data/unclaimed-brands.json (${autocompleteData.length} brands).`);
+    const JSON_DIR = path.join(__dirname, '../json');
+    if (!fs.existsSync(JSON_DIR)) fs.mkdirSync(JSON_DIR, { recursive: true });
+    fs.writeFileSync(path.join(JSON_DIR, 'unclaimed-brands.json'), JSON.stringify(autocompleteData));
+    console.log(`✅ Generated json/unclaimed-brands.json (${autocompleteData.length} brands).`);
 
     // 3. Merge All
     const allData = [...dataFranchisor, ...dataUnclaimed];

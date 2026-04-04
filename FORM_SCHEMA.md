@@ -9,6 +9,7 @@ This file documents every input field for the three registration tabs in `/dafta
 |-------------|----------------|------|----------|-------|
 | Nama Lengkap | `name` | Text | Yes | |
 | Kota Domisili | `city_origin` | Text | Yes | Autocomplete active |
+| Kode Negara WhatsApp | `country_code` | Select | Yes | Default `+62` |
 | WhatsApp | `whatsapp` | Tel | Yes | Phone format (812-xxx) |
 | Email | `email` | Email | Yes | |
 | Minat Kategori | `interest_category`| Select| Yes | F&B, Retail, etc. |
@@ -54,6 +55,7 @@ This file documents every input field for the three registration tabs in `/dafta
 
 ### Section 5: Kontak Leads
 - `pic_name` (Text, Req): Nama Contact Person.
+- `country_code` (Select, Req): WhatsApp country code (default `+62`).
 - `whatsapp` (Tel, Req): WhatsApp Business PIC.
 - `email_contact` (Email, Req): Official Inquiry Email.
 - `website_url` (URL, Opt): Official Website.

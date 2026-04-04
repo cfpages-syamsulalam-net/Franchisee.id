@@ -4,10 +4,10 @@ This file serves as a comprehensive record of all functions and key variables ac
 
 ## 1. Directory: `/js` (Client-side & SSG Builders)
 
-### File: `js/form-franchise.js` (v1.26)
+### File: `js/form-franchise.js` (v1.29)
 *Main logic for the registration and claiming forms.*
 - `slugify(text)`: Converts brand names to URL-friendly slugs.
-- `fetchUnclaimedBrands()`: Loads unclaimed brands from static JSON or Live API.
+- `fetchUnclaimedBrands()`: Loads unclaimed brands from `/json/unclaimed-brands.json` or Live API fallback.
 - `buildSearchableClaimBrands(brands)`: Sanitizes UNCLAIMED entries for claim autocomplete (filters URL/phone/address/legal-entity/contact-label/category noise, deduplicates display names).
 - `saveClaimModeState(brand)`: Persists active claim context into `localStorage` (`franchise_claim_state`) with expiry metadata.
 - `getClaimModeState()`: Safely reads/parses persisted claim context from `localStorage` and enforces a 24-hour TTL.
@@ -25,6 +25,12 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `initCityAutocomplete()`: Setup for Indonesian city search.
 - `fillMainFranchisorForm(brand, options)`: Unified workflow - Switches to Franchisor tab, pre-fills brand data + mapping, and persists/restores claim mode context.
 - `window.exitClaimMode()`: Resets claim state and restores normal Franchisor form.
+- `sanitizeCountryCodeItem(item)`: Sanitizes country-code JSON items into safe `{ code, label }` pairs.
+- `applyCountryCodeOptions(list)`: Applies centralized country-code options into all `country_code` dropdowns.
+- `loadCountryCodeOptions()`: Loads `/json/country-codes.json` with fallback defaults.
+- `normalizeCountryCode(rawCountryCode)`: Normalizes country-code input to `+<digits>` with `+62` fallback.
+- `normalizeWhatsappForSubmit(rawWhatsapp, rawCountryCode)`: Normalizes WhatsApp to international format before submit (`+62...` fallback, supports pasted `+` and `00` prefixes).
+- `bindLiveValidation(form)`: Restores live field validation hooks (`blur`/`input`/`change`) so valid/invalid visual states stay responsive.
 - `submitToCloudflare(formElement, type)`: Sends form data to backend (Handles claim type automatically).
 
 ### File: `js/form-utils.js` (Restored)
@@ -44,7 +50,7 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `loadFromCSV(filePath)`: Fallback logic to read data if API fails, using robust CSV parsing to avoid column-shift corruption.
 - `isLikelyClaimBrandRow(item)`: Heuristic filter to keep canonical brand rows for claim-search dataset generation (rejects URL/phone/address/legal-entity/contact-label rows).
 - `generateCard(item, index)`: HTML generator for franchise cards (Hybrid: Verified/Unclaimed).
-- `async build()`: Orchestrates fetching from Sheet/CSV, writing `/peluang-usaha/index.html`, and generating sanitized `data/unclaimed-brands.json` for claim search.
+- `async build()`: Orchestrates fetching from Sheet/CSV, writing `/peluang-usaha/index.html`, and generating sanitized `/json/unclaimed-brands.json` for claim search.
 
 ### File: `js/build-details.js`
 *SSG Builder for individual franchise profile pages.*

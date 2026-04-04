@@ -31,8 +31,14 @@ Franchisee.id/
 │   ├── generate-pages.yaml  # SSG trigger from Google Sheets updates
 │   ├── head.yaml            # Header management
 │   └── sitemap-readme.yaml  # Sitemap documentation
-├── data/                    # Generated static data files
-│   └── unclaimed-brands.json # Autocomplete data for claim workflow
+├── json/                    # Centralized JSON data assets
+│   ├── unclaimed-brands.json # Autocomplete data for claim workflow
+│   └── country-codes.json    # Country code options for WhatsApp inputs
+├── csv/                     # Centralized CSV fallback/source files
+│   ├── franchisors.csv
+│   ├── unclaimed.csv
+│   ├── franchisee.csv
+│   └── franchises_data.csv
 ├── functions/               # Cloudflare serverless functions
 │   ├── form-submit.js       # Form submission handler
 │   └── get-franchises.js    # API endpoint for franchise data
@@ -189,7 +195,7 @@ Google Sheets (write-back) + Supabase (analytics)
 
 ### Claim Workflow
 ```
-1. User searches unclaimed brand → data/unclaimed-brands.json (sanitized brand-only dataset)
+1. User searches unclaimed brand → /json/unclaimed-brands.json (sanitized brand-only dataset)
 2. If static JSON unavailable, frontend fallback hits `/get-franchises?tab=UNCLAIMED&purpose=claim-search`
 2. Selection → fillMainFranchisorForm(brand) → switches to Franchisor tab
 3. User completes form → submits with form_type="claim" + unclaimed_id

@@ -56,8 +56,8 @@ async function build() {
     } catch (e) {
         console.warn('⚠️ API Failed for sitemap, using CSV.');
         allBrands = [
-            ...loadFromCSV(path.join(__dirname, '../franchisors.csv')).map(i => i.brand_name),
-            ...loadFromCSV(path.join(__dirname, '../unclaimed.csv')).map(i => i.brand_name)
+            ...loadFromCSV(path.join(__dirname, '../csv/franchisors.csv')).map(i => i.brand_name),
+            ...loadFromCSV(path.join(__dirname, '../csv/unclaimed.csv')).map(i => i.brand_name)
         ];
     }
 

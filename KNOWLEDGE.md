@@ -29,14 +29,17 @@ This file gives persistent project context: goals, commands, architecture, conve
   - `/functions`: Cloudflare Functions (`form-submit.js`, `get-franchises.js`) for API/form handling.
   - `/templates`: source templates used by builder scripts.
   - `/daftar`: static form page integrating custom JS.
-  - `/data`: generated helper data (`unclaimed-brands.json`) for fast autocomplete.
+  - `/json`: centralized JSON assets (generated/static), including claim-search dataset and form configuration.
+  - `/csv`: centralized CSV fallback/source files for SSG scripts.
   - `/css/form-franchise`: modularized form stylesheet files + selector usage map (`CSS_USAGE_MAP.md`).
   - `/.github/workflows`: automation pipelines.
 - Data flow:
   - Source of content: Google Sheets tabs (`FRANCHISOR`, `UNCLAIMED`, `FRANCHISEE`).
   - Build scripts fetch sheet data and generate static HTML pages.
-  - Claim/search UX reads static `data/unclaimed-brands.json` first; falls back to `/get-franchises?tab=UNCLAIMED&purpose=claim-search`.
-  - `data/unclaimed-brands.json` must be generated from sanitized UNCLAIMED rows only (exclude URL/phone/address/legal-entity/contact-label noise and dedupe by `brand_name`).
+  - Claim/search UX reads static `/json/unclaimed-brands.json` first; falls back to `/get-franchises?tab=UNCLAIMED&purpose=claim-search`.
+  - `/json/unclaimed-brands.json` must be generated from sanitized UNCLAIMED rows only (exclude URL/phone/address/legal-entity/contact-label noise and dedupe by `brand_name`).
+  - Country-code options for WhatsApp inputs are loaded from `/json/country-codes.json` (frontend fallback defaults exist if file is unavailable).
+  - City autocomplete loader checks local `/json/data-kota-id.json` first, then falls back to `https://cekkode.github.io/json/data-kota-id.json`.
   - Local CSV fallback in `js/build-listing.js` uses quote-aware parsing (`parseCSVRows`) to preserve correct column mapping when cells contain commas/newlines.
   - Claim mode continuity: `js/form-franchise.js` persists active claim context in `localStorage` key `franchise_claim_state`, restores it after refresh, and expires stale state after 24 hours (TTL).
   - Franchisor partial-entry continuity: `js/form-franchise.js` persists draft values in `localStorage` key `franchisor_form_draft` with 72-hour TTL.
@@ -61,6 +64,8 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Do not introduce duplicate changelog/timeline logs in PRD.
 
 ## Gotchas
+- Historical lineage: `/daftar/index.html` is a renamed continuation of `/pendaftaran/index.html`; when restoring legacy behavior, compare both paths in git history.
+- Session continuity: keep/update timestamped summaries in `/.context/session-YYYYMMDD-HHmm.md` so future sessions can quickly recover latest decisions.
 - `node --check` may fail in restricted sandbox environments with path-resolution EPERM; fall back to source inspection and targeted runtime-safe checks.
 - `form-franchise.js` references optional UI helpers; guard optional global calls to prevent runtime errors when helper functions are absent.
 - For personal cache-debugging on `/daftar`, use `?dev=1` via the `🧪` toggle (reveal/hide toggle with `Ctrl+Alt+D`) and/or DevTools `Network > Disable cache`.

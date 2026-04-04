@@ -7,6 +7,7 @@ This document provides a granular record of every variable and function within t
 ### Functions
 - `slugify(text)`: Converts string to URL slug.
 - `fetchUnclaimedBrands()` (async): Loads data for the claim search.
+- `loadCountryCodeOptions()` (async): Loads and applies country-code options from `/json/country-codes.json`.
 - `buildSearchableClaimBrands(brands)`: Frontend claim-search sanitizer and deduper for display suggestions.
 - `window.openTab(tabName)`: Handles tab switching and re-validation of inputs.
 - `window.nextStep(stepIndex)`: Progresses form step, persists to `localStorage`.
@@ -14,6 +15,7 @@ This document provides a granular record of every variable and function within t
 - `window.validateStep(stepIndex)`: Performs HTML5 validity checks and custom logic (e.g., Rp 0 check).
 - `calculateAll()`: Core BEP calculation logic.
 - `window.updateMinCapital()`: Determines lowest package price for display.
+- `loadCitiesData()` (async): Loads city JSON from local `/json/data-kota-id.json` with remote fallback.
 - `initCityAutocomplete()`: Sets up event listeners for city suggestions.
 - `fillMainFranchisorForm(brand)`: Core logic for the **Claim Brand** feature.
 - `window.exitClaimMode()`: Resets form from Claim state back to standard.

@@ -26,7 +26,7 @@ Allow owners of "Unclaimed" brands to take control of their pages.
 - Migrated inline CSS to `css/form-franchise.css`.
 
 ### Phase 2: High-Performance Autocomplete [DONE]
-- Static `data/unclaimed-brands.json` generated during build.
+- Static `/json/unclaimed-brands.json` generated during build.
 - Instant search with zero API latency.
 
 ### Phase 3: Real-Time Sync [DONE]
