@@ -4,6 +4,42 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 21:00 (Asia/Jakarta)
+### Added
+- **Enhanced franchisee step validation**:
+  - Uses `validateSpecificField()` for detailed error messages
+  - Auto-focus and scroll to first invalid field
+  - Console logging for debugging navigation issues
+- **Visual feedback for auto-formatting**:
+  - Flash highlight when name/WhatsApp auto-formatted
+  - Console logs showing before/after values
+- **Context-specific email error messages**:
+  - Missing @ symbol: "Email harus mengandung tanda @..."
+  - Missing TLD: "Email harus mengandung domain yang valid..."
+  - Contains space: "Email tidak boleh mengandung spasi..."
+  - Generic invalid: "Format email salah. Contoh yang benar:..."
+- **Email helper text in HTML**:
+  - Placeholder: `nama@domain.com`
+  - Helper: "Format: nama@domain.com (tanpa spasi)"
+- **Documentation**: `FORM_UX_FIXES.md` comprehensive guide
+
+### Changed
+- `js/form-08-franchisee-steps.js` (174 lines, +29 lines):
+  - Enhanced `validateFranchiseeStep()` to use `validateSpecificField()`
+  - Added focus/scroll to first invalid field on validation failure
+  - Added console logging for step navigation debugging
+  - Improved fallback validation logic
+- `js/form-utils.js` (270 lines, +27 lines):
+  - Enhanced `bindAutoFormatting()` with flash highlights
+  - Added console logging for name/WhatsApp auto-formatting
+  - Enhanced email validation with 4 specific error messages
+- `daftar/index.html` (1255 lines, +2 lines):
+  - Added email placeholder and helper text
+- `TECHNICAL_INVENTORY.md`: Updated form-08 and form-utils entries
+
+### Removed
+- None.
+
 ## 2026-04-04 20:30 (Asia/Jakarta)
 ### Added
 - **Name auto title-case formatting** (`window.autoTitleCase`):

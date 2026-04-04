@@ -8,7 +8,12 @@
     // Navigate to next step in franchisee form
     window.franchiseeNextStep = function (stepIndex) {
         // Validate current step before proceeding
-        if (!validateFranchiseeStep(stepIndex)) return;
+        if (!validateFranchiseeStep(stepIndex)) {
+            console.warn('[Franchisee Steps] Validation failed for step', stepIndex);
+            return;
+        }
+
+        console.log('[Franchisee Steps] Moving from step', stepIndex, 'to', stepIndex + 1);
 
         // Hide current step
         const currentEl = document.getElementById('franchisee-step-' + stepIndex);
@@ -23,6 +28,9 @@
         if (nextEl) {
             nextEl.classList.add('active');
             nextEl.style.display = 'block';
+            console.log('[Franchisee Steps] Step', franchiseeState.currentStep, 'now visible');
+        } else {
+            console.error('[Franchisee Steps] Could not find element: franchisee-step-' + franchiseeState.currentStep);
         }
 
         // Update progress bar
@@ -77,16 +85,38 @@
 
         const inputs = currentStepDiv.querySelectorAll('input[required], select[required], textarea[required]');
         let isValid = true;
+        let firstInvalidField = null;
 
         inputs.forEach((input) => {
-            if (!input.checkValidity()) {
-                input.reportValidity();
-                isValid = false;
-                input.classList.add('is-invalid');
+            // Use the existing validateSpecificField function for better error messages
+            if (typeof window.validateSpecificField === 'function') {
+                const fieldValid = window.validateSpecificField(input);
+                if (!fieldValid) {
+                    isValid = false;
+                    if (!firstInvalidField) {
+                        firstInvalidField = input;
+                    }
+                }
             } else {
-                input.classList.remove('is-invalid');
+                // Fallback to basic HTML validation
+                if (!input.checkValidity()) {
+                    input.reportValidity();
+                    isValid = false;
+                    input.classList.add('is-invalid');
+                    if (!firstInvalidField) {
+                        firstInvalidField = input;
+                    }
+                } else {
+                    input.classList.remove('is-invalid');
+                }
             }
         });
+
+        // Focus on first invalid field and scroll to it
+        if (!isValid && firstInvalidField) {
+            firstInvalidField.focus();
+            firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
 
         return isValid;
     }

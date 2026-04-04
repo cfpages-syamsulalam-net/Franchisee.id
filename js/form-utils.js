@@ -93,9 +93,18 @@ window.bindAutoFormatting = function() {
     document.querySelectorAll('input[name="name"], input[name="brand_name"], input[name="pic_name"], input[name="company_name"]').forEach((input) => {
         input.addEventListener('blur', function() {
             if (this.value && this.value.trim() !== '') {
-                const formatted = window.autoTitleCase(this.value.trim());
-                if (formatted !== this.value) {
+                const original = this.value.trim();
+                const formatted = window.autoTitleCase(original);
+                
+                if (formatted !== original) {
                     this.value = formatted;
+                    console.log('[AutoFormat] Name formatted:', original, '→', formatted);
+                    
+                    // Visual feedback: flash highlight
+                    if (typeof window.flashHighlight === 'function') {
+                        window.flashHighlight(this);
+                    }
+                    
                     // Trigger validation to update visual state
                     if (typeof window.validateSpecificField === 'function') {
                         window.validateSpecificField(this);
@@ -111,8 +120,16 @@ window.bindAutoFormatting = function() {
             if (this.value && this.value.trim() !== '') {
                 const raw = this.value.trim();
                 const formatted = window.formatWhatsAppNumber(raw);
-                if (formatted !== raw) {
+                
+                if (formatted !== raw && formatted.length >= 9) {
                     this.value = formatted;
+                    console.log('[AutoFormat] Phone formatted:', raw, '→', formatted);
+                    
+                    // Visual feedback: flash highlight
+                    if (typeof window.flashHighlight === 'function') {
+                        window.flashHighlight(this);
+                    }
+                    
                     // Trigger validation to update visual state
                     if (typeof window.validateSpecificField === 'function') {
                         window.validateSpecificField(this);
@@ -207,11 +224,21 @@ window.validateSpecificField = function(field) {
             if (val.length < 3) { isValid = false; errorMsg = "Min. 3 karakter."; }
         }
         else if (field.type === 'email' || name === 'email' || name === 'email_contact') {
-            // Strict email validation
+            // Strict email validation with specific error messages
             const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
             if (!emailRegex.test(val)) {
                 isValid = false;
-                errorMsg = "Format email salah. Contoh: nama@domain.com";
+                
+                // Provide specific error messages based on what's wrong
+                if (!val.includes('@')) {
+                    errorMsg = "Email harus mengandung tanda @. Contoh: nama@domain.com";
+                } else if (!val.includes('.') || val.indexOf('.') < val.indexOf('@') + 2) {
+                    errorMsg = "Email harus mengandung domain yang valid. Contoh: nama@domain.com";
+                } else if (val.includes(' ')) {
+                    errorMsg = "Email tidak boleh mengandung spasi. Contoh: nama@domain.com";
+                } else {
+                    errorMsg = "Format email salah. Contoh yang benar: nama@domain.com";
+                }
             }
         }
         else if (field.classList.contains('phone-format') || name === 'whatsapp') {

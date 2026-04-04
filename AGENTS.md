@@ -104,6 +104,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - `AUTO_SAVE.md`: Comprehensive auto-save implementation reference (triggers, lifecycle, UX scenarios, testing).
 - `FRANCHISEE_MULTISTEP.md`: Franchisee form 2-step implementation guide (structure, navigation, validation, testing).
 - `FORM_VALIDATION_FIXES.md`: Form validation and auto-formatting guide (name title-case, WhatsApp formatting, email validation, city autocomplete).
+- `FORM_UX_FIXES.md`: UX improvements guide (step navigation, visual feedback, email errors, console logging).
 - `DEBUGGING.md`: Personal debugging reference (`?dev=1` toggle + DevTools disable-cache workflow).
 - `franchise-info-form.md`: Detailed UX/data spec for franchise listing form sections and conditional logic; use as reference when revising form UX.
 - `README.md`: Currently auto-generated sitemap URL listing; treat as generated artifact.
