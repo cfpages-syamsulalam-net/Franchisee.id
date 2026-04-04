@@ -63,6 +63,7 @@ This file gives persistent project context: goals, commands, architecture, conve
 ## Gotchas
 - `node --check` may fail in restricted sandbox environments with path-resolution EPERM; fall back to source inspection and targeted runtime-safe checks.
 - `form-franchise.js` references optional UI helpers; guard optional global calls to prevent runtime errors when helper functions are absent.
+- For personal cache-debugging on `/daftar`, use `?dev=1` via the `🧪` toggle (reveal/hide toggle with `Ctrl+Alt+D`) and/or DevTools `Network > Disable cache`.
 - Workflow trigger policy:
   - Primary trigger: `repository_dispatch` from Google Sheets update automation.
   - Scheduled polling fallback exists, but actual build should run only when sheet hash changes.

@@ -80,6 +80,21 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/16
 <link rel="stylesheet" id="astra-google-fonts-css" href="https://fonts.googleapis.com/css?family=DM+Sans%3A400%2C%7COutfit%3A600%2C&amp;display=fallback&amp;ver=4.11.12" media="all">
 <link rel="stylesheet" id="hfe-widgets-style-css" href="/wp-content/plugins/header-footer-elementor/inc/widgets-css/frontend.css?ver=2.5.2" media="all">
 <link rel="stylesheet" id="form-daftar-franchise" href="/css/form-franchise.css">
+<script id="dev-mode-css-cachebust">
+(function () {
+    try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('dev') !== '1') return;
+        var css = document.getElementById('form-daftar-franchise');
+        if (!css) return;
+        var href = css.getAttribute('href') || '';
+        if (!href) return;
+        var url = new URL(href, window.location.origin);
+        url.searchParams.set('_dbg', Date.now().toString());
+        css.setAttribute('href', url.pathname + url.search);
+    } catch (e) {}
+})();
+</script>
 <style id="wp-emoji-styles-inline-css">
 
 	img.wp-smiley, img.emoji {
@@ -1003,6 +1018,9 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 				</div>
 				</div>
 		</div>		</footer>
+		<div id="debug-mode-toggle" style="position:fixed;right:12px;bottom:12px;z-index:9999;display:none;">
+			<a href="#" id="debug-toggle-link" title="Enable debug mode" aria-label="Enable debug mode" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#111;color:#fff;text-decoration:none;font-size:16px;opacity:0.7;box-shadow:0 2px 8px rgba(0,0,0,0.2);">🧪</a>
+		</div>
 		</div><!-- #page -->
 <script type="speculationrules">
 {"prefetch":[{"source":"document","where":{"and":[{"href_matches":"\/*"},{"not":{"href_matches":["\/wp-*.php","\/wp-admin\/*","\/wp-content\/uploads\/*","\/wp-content\/*","\/wp-content\/plugins\/*","\/wp-content\/themes\/astra\/*","\/*\\?(.+)"]}},{"not":{"selector_matches":"a[rel~=\"nofollow\"]"}},{"not":{"selector_matches":".no-prefetch, .no-prefetch a"}}]},"eagerness":"conservative"}]}
@@ -1031,8 +1049,105 @@ var elementorFrontendConfig = {"environmentMode":{"edit":false,"wpPreview":false
 <script src="/wp-content/plugins/elementor/assets/js/frontend.min.js?ver=3.32.3" id="elementor-frontend-js"></script>
 <script src="/wp-content/plugins/header-footer-elementor/inc/js/frontend.js?ver=2.5.2" id="hfe-frontend-js-js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/js/form-utils.js"></script>
-<script src="/js/form-franchise.js"></script>
+<script id="dev-mode-js-cachebust">
+(function () {
+    try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('dev') !== '1') return;
+        var bust = function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var src = el.getAttribute('src') || '';
+            if (!src) return;
+            var url = new URL(src, window.location.origin);
+            url.searchParams.set('_dbg', Date.now().toString());
+            el.setAttribute('src', url.pathname + url.search);
+        };
+        bust('form-utils-js');
+        bust('form-franchise-js');
+    } catch (e) {}
+})();
+</script>
+<script src="/js/form-utils.js" id="form-utils-js"></script>
+<script src="/js/form-franchise.js" id="form-franchise-js"></script>
+<script id="dev-mode-toggle-script">
+(function () {
+    var TOGGLE_VIS_KEY = 'debug_toggle_enabled';
+    var toggleWrap = document.getElementById('debug-mode-toggle');
+    var link = document.getElementById('debug-toggle-link');
+    if (!link || !toggleWrap) return;
+
+    function showToggle() {
+        toggleWrap.style.display = 'block';
+    }
+
+    function hideToggle() {
+        toggleWrap.style.display = 'none';
+    }
+
+    function isToggleEnabled() {
+        return localStorage.getItem(TOGGLE_VIS_KEY) === '1';
+    }
+
+    function setToggleEnabled(enabled) {
+        if (enabled) localStorage.setItem(TOGGLE_VIS_KEY, '1');
+        else localStorage.removeItem(TOGGLE_VIS_KEY);
+    }
+
+    var url = new URL(window.location.href);
+    var isDev = url.searchParams.get('dev') === '1';
+
+    if (isToggleEnabled()) {
+        showToggle();
+    } else {
+        hideToggle();
+    }
+
+    if (isDev) {
+        link.style.opacity = '1';
+        link.style.background = '#f8b526';
+        link.style.color = '#111';
+        link.title = 'Debug mode ON (click to disable)';
+        link.setAttribute('aria-label', 'Disable debug mode');
+    } else {
+        link.title = 'Enable debug mode';
+        link.setAttribute('aria-label', 'Enable debug mode');
+    }
+
+    document.addEventListener('keydown', function (e) {
+        var isShortcut = e.ctrlKey && e.altKey && (e.key === 'd' || e.key === 'D');
+        if (!isShortcut) return;
+        e.preventDefault();
+
+        var enabled = !isToggleEnabled();
+        setToggleEnabled(enabled);
+        if (enabled) showToggle(); else hideToggle();
+
+        if (typeof Swal !== 'undefined' && Swal && typeof Swal.fire === 'function') {
+            Swal.fire({
+                icon: 'info',
+                title: enabled ? 'Debug Toggle Enabled' : 'Debug Toggle Hidden',
+                text: enabled ? 'Emoji debug toggle is now visible.' : 'Emoji debug toggle is now hidden.',
+                timer: 1600,
+                showConfirmButton: false
+            });
+        }
+    });
+
+    link.addEventListener('click', function (e) {
+        e.preventDefault();
+        var next = new URL(window.location.href);
+        if (next.searchParams.get('dev') === '1') {
+            next.searchParams.delete('dev');
+            next.searchParams.delete('_dbg');
+        } else {
+            next.searchParams.set('dev', '1');
+            next.searchParams.set('_dbg', Date.now().toString());
+        }
+        window.location.href = next.toString();
+    });
+})();
+</script>
 <script>
 /(trident|msie)/i.test(navigator.userAgent)&&document.getElementById&&window.addEventListener&&window.addEventListener("hashchange",function(){var t,e=location.hash.substring(1);/^[A-z0-9_-]+$/.test(e)&&(t=document.getElementById(e))&&(/^(?:a|select|input|button|textarea)$/i.test(t.tagName)||(t.tabIndex=-1),t.focus())},!1);
 </script>

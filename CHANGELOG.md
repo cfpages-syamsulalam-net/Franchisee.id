@@ -4,6 +4,34 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 09:26 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `daftar/index.html`: changed debug emoji toggle (`🧪`) to hidden-by-default and added secret shortcut `Ctrl+Alt+D` to show/hide it per browser profile.
+- `daftar/index.html`: debug-toggle visibility is now persisted in localStorage key `debug_toggle_enabled`, and shortcut action displays a short SweetAlert status message.
+- `DEBUGGING.md`: documented shortcut-first debug access flow and localStorage-based visibility behavior.
+- `KNOWLEDGE.md`: updated cache-debugging note to include `Ctrl+Alt+D` shortcut for revealing debug toggle.
+
+### Removed
+- None.
+
+## 2026-04-04 09:20 (Asia/Jakarta)
+### Added
+- `DEBUGGING.md`: quick debugging reference documenting personal debug mode (`?dev=1`) and DevTools `Network > Disable cache` workflow.
+
+### Changed
+- `daftar/index.html`: added debug-only cache-busting for form assets when `?dev=1` is present:
+  - CSS: `#form-daftar-franchise` gets `_dbg=<timestamp>`
+  - JS: `/js/form-utils.js` and `/js/form-franchise.js` get `_dbg=<timestamp>`
+- `daftar/index.html`: added footer debug emoji toggle (`🧪`) to enable/disable debug mode without manually editing URL query params.
+- `AGENTS.md`: added `DEBUGGING.md` to root markdown instruction index.
+- `KNOWLEDGE.md`: added reminder note for personal cache-debugging via `?dev=1` or DevTools disable-cache.
+
+### Removed
+- None.
+
 ## 2026-04-04 08:40 (Asia/Jakarta)
 ### Added
 - None.

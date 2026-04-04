@@ -47,6 +47,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - `FORM_SCHEMA.md`: Canonical form input inventory. Do not remove/rename fields in `/daftar/index.html` without updating this file.
 - `TECHNICAL_INVENTORY.md`: Canonical inventory of key functions/variables in `/js` and `/functions`. Update after logic additions/removals/refactors.
 - `CLAIM_WORKFLOW.md`: Canonical claim-flow reference (frontend step behavior, local persistence, backend append/cleanup semantics).
+- `DEBUGGING.md`: Personal debugging reference (`?dev=1` toggle + DevTools disable-cache workflow).
 - `franchise-info-form.md`: Detailed UX/data spec for franchise listing form sections and conditional logic; use as reference when revising form UX.
 - `README.md`: Currently auto-generated sitemap URL listing; treat as generated artifact.
 - `AGENTS.md`: Persistent local operating instructions for future coding sessions.
