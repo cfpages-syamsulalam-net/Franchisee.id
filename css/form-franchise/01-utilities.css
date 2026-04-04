@@ -81,3 +81,33 @@
 .fw-bold { font-weight: 700 !important; }
 .small { font-size: 0.875em !important; }
 .fs-4 { font-size: 1.5rem !important; }
+
+/* AUTO-SAVE INDICATOR */
+#autosave-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    background: #f8b526;
+    color: #fff;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(248, 181, 38, 0.3);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+#autosave-indicator.saving {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#autosave-indicator::before {
+    content: '✓';
+    margin-right: 6px;
+    font-weight: bold;
+}

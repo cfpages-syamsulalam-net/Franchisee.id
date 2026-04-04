@@ -196,6 +196,8 @@ Every session must log changes in `CHANGELOG.md`:
 4. **Media & Visual**: Logo, cover, gallery, video, proposal (Cloudinary uploads)
 5. **Kontak Leads**: PIC name, WhatsApp, email, website, social media
 
+**Auto-Save Protection**: All form fields are protected by aggressive auto-save with 6 independent triggers (debounced input, periodic 5s, step navigation, visibility change, beforeunload, tab switch) ensuring zero data loss on refresh or accidental closure. Draft persists in `localStorage` with 72-hour TTL and includes visual feedback indicator.
+
 ---
 
 ## Data Flow Architecture

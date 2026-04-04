@@ -11,7 +11,7 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `FF.utils.*`: Shared helpers (`slugify`, URL/phone/address/contact/entity filters, clean brand-name normalizer).
 - `FF.buildSearchableClaimBrands(brands)`: Claim-search sanitizer/deduper.
 - `FF.saveClaimModeState/getClaimModeState/clearClaimModeState`: Claim context persistence with TTL.
-- `FF.saveFranchisorDraft/getFranchisorDraft/restoreFranchisorDraft/clearFranchisorDraft`: Draft persistence with TTL.
+- `FF.saveFranchisorDraft/getFranchisorDraft/restoreFranchisorDraft/clearFranchisorDraft`: Draft persistence with TTL + visual feedback indicator.
 
 ### File: `js/form-02-claim-workflow.js`
 *Claim-mode fetch/search/fill/reset behavior.*
@@ -45,10 +45,14 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `FF.normalizeWhatsappForSubmit(rawWhatsapp, rawCountryCode)`: International WA normalization before submit.
 
 ### File: `js/form-06-submit-validation.js`
-*Form validation binding + submit pipeline.*
+*Form validation binding + submit pipeline + aggressive auto-save.*
+- `FF.autoSaveConfig`: Auto-save configuration (enabled, debounceMs, periodicIntervalMs, timers).
+- `FF.debounceAutoSave(form)`: Debounced save after user stops typing (300ms).
+- `FF.startPeriodicAutoSave(form)`: Periodic safety-net save every 5 seconds.
+- `FF.stopPeriodicAutoSave()`: Clears all auto-save timers.
 - `FF.bindLiveValidation(form)`: Live input/select validation hooks (`blur`/`input`/`change`).
 - `FF.submitToCloudflare(formElement, type)`: Unified submit pipeline (handles claim routing + WA normalization).
-- `FF.initFormSubmission()`: Attaches submit listeners and draft persistence hooks.
+- `FF.initFormSubmission()`: Attaches submit listeners, draft persistence hooks, and aggressive auto-save triggers (input, change, step navigation, visibility change, beforeunload, tab switch).
 
 ### File: `js/form-07-init.js`
 *Bootstrap coordinator for the modular form stack.*

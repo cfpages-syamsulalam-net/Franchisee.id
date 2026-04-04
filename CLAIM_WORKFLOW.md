@@ -23,15 +23,37 @@ When a user claims a brand, the final successful submission must:
 - Data is sent only on final form `submit` in Step 5.
 
 ### 3. Persisted Client State
-- Claim state:
-  - key: `franchise_claim_state`
-  - contains: selected brand payload + expiry metadata
-  - TTL: 24 hours
-- Franchisor draft state:
-  - key: `franchisor_form_draft`
-  - contains: partial field values for refresh/session continuity
-  - TTL: 72 hours
-  - excludes `unclaimed_id` (claim linkage is controlled only by claim state)
+
+### Claim State
+- key: `franchise_claim_state`
+- contains: selected brand payload + expiry metadata
+- TTL: 24 hours
+
+### Franchisor Draft State (Aggressive Auto-Save)
+- key: `franchisor_form_draft`
+- contains: partial field values for refresh/session continuity
+- TTL: 72 hours
+- excludes `unclaimed_id` (claim linkage is controlled only by claim state)
+
+### Auto-Save Triggers (Multi-Layer Protection)
+The form implements **aggressive auto-save** with 6 independent save triggers to ensure zero data loss:
+
+1. **Input/Change Events (Debounced)**: Saves 300ms after user stops typing
+2. **Periodic Safety Net**: Saves every 5 seconds regardless of user activity
+3. **Step Navigation**: Saves before moving to next/previous step
+4. **Visibility Change**: Saves when user switches browser tabs or minimizes window
+5. **Before Unload**: Saves before page refresh or close
+6. **Tab Switch**: Saves when switching between registration tabs
+
+All auto-save operations include:
+- Error handling (try/catch with console warnings)
+- Visual feedback via `#autosave-indicator` (bottom-right toast notification)
+- Non-blocking UX (never interrupts user interaction)
+
+### Auto-Save Lifecycle
+- **Starts**: When franchisor form is initialized
+- **Stops**: On successful form submission (clears all timers and localStorage)
+- **Restores**: Automatically on page load (within TTL window)
 
 ### 4. Backend Submit (`functions/form-submit.js`)
 - On final submit:

@@ -43,6 +43,15 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Local CSV fallback in `js/build-listing.js` uses quote-aware parsing (`parseCSVRows`) to preserve correct column mapping when cells contain commas/newlines.
   - Claim mode continuity: modular form scripts persist active claim context in `localStorage` key `franchise_claim_state`, restore it after refresh, and expire stale state after 24 hours (TTL).
   - Franchisor partial-entry continuity: modular form scripts persist draft values in `localStorage` key `franchisor_form_draft` with 72-hour TTL.
+  - **Aggressive Auto-Save**: The franchisor form implements multi-layer auto-save with 6 independent triggers:
+    1. Debounced save on input/change (300ms delay)
+    2. Periodic safety-net save every 5 seconds
+    3. Save before step navigation (next/previous)
+    4. Save on browser visibility change (tab switch/minimize)
+    5. Save before page unload (refresh/close)
+    6. Save on registration tab switch
+  - Auto-save includes error handling, visual feedback (`#autosave-indicator`), and automatic restoration on page load within TTL window.
+  - Auto-save timers stop on successful form submission and clear all persisted data.
   - Form submission posts to Cloudflare Function `/form-submit`.
   - On successful claim, backend appends to `FRANCHISOR` then performs best-effort deletion in `UNCLAIMED` (match by `id`, fallback by normalized `brand_name`).
 

@@ -38,12 +38,29 @@ Last updated: 2026-04-04 (Asia/Jakarta)
   - `functions/get-franchises.js`
   - `functions/form-submit.js`
 - Integration points in `/daftar/index.html` for tab switching and form scripts.
+- CSS architecture in `/css/form-franchise/` (modular split files).
 
 ## Fix Applied During Audit
 - File: modular form runtime (`js/form-02-claim-workflow.js`, previously `js/form-franchise.js`)
 - Issue: `window.renderPackageInputs(1)` was called in claim flow but no local definition exists.
 - Action: Added defensive checks before calling it, so claim mode does not crash if the function is unavailable.
 - Additional hardening: submission error now falls back to `result.error` when `result.message` is missing.
+
+## Enhancement Applied: Aggressive Auto-Save (2026-04-04 19:15)
+- **Files Modified**:
+  - `js/form-01-state-helpers.js`: Enhanced `saveFranchisorDraft` with error handling + visual feedback
+  - `js/form-06-submit-validation.js`: Added 6 independent auto-save triggers (debounced, periodic, navigation, visibility, unload, tab switch)
+  - `daftar/index.html`: Added `#autosave-indicator` HTML element
+  - `css/form-franchise/01-utilities.css`: Added toast notification styles
+- **Documentation Created**:
+  - `AUTO_SAVE.md`: Comprehensive implementation reference with triggers, lifecycle, UX scenarios, and testing checklist
+- **Documentation Updated**:
+  - `TECHNICAL_INVENTORY.md`, `CLAIM_WORKFLOW.md`, `KNOWLEDGE.md`, `QWEN.md`, `FORM_SCHEMA.md`, `AGENTS.md`, `CHANGELOG.md`
+- **Line Count Verification**:
+  - `form-06-submit-validation.js`: 220 lines ✓
+  - `form-01-state-helpers.js`: 236 lines ✓
+  - `daftar/index.html`: 1219 lines ✓
+- **Syntax Validation**: Both JS files pass `node --check` ✓
 
 ## Current Status
 - No other blocking JS wiring issues found in the checked custom paths.
@@ -56,6 +73,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - `FORM_SCHEMA.md`: Canonical form input inventory. Do not remove/rename fields in `/daftar/index.html` without updating this file.
 - `TECHNICAL_INVENTORY.md`: Canonical inventory of key functions/variables in `/js` and `/functions`. Update after logic additions/removals/refactors.
 - `CLAIM_WORKFLOW.md`: Canonical claim-flow reference (frontend step behavior, local persistence, backend append/cleanup semantics).
+- `AUTO_SAVE.md`: Comprehensive auto-save implementation reference (triggers, lifecycle, UX scenarios, testing).
 - `DEBUGGING.md`: Personal debugging reference (`?dev=1` toggle + DevTools disable-cache workflow).
 - `franchise-info-form.md`: Detailed UX/data spec for franchise listing form sections and conditional logic; use as reference when revising form UX.
 - `README.md`: Currently auto-generated sitemap URL listing; treat as generated artifact.

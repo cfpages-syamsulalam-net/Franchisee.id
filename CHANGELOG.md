@@ -4,6 +4,45 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 19:15 (Asia/Jakarta)
+### Added
+- **Aggressive Auto-Save** for Franchisor form with 6 independent triggers to prevent data loss:
+  1. Debounced save on input/change events (300ms delay)
+  2. Periodic safety-net save every 5 seconds
+  3. Save before step navigation (next/previous buttons)
+  4. Save on browser visibility change (tab switch/minimize)
+  5. Save before page unload (refresh/close)
+  6. Save on registration tab switch
+- Visual auto-save indicator (`#autosave-indicator`) with toast notification UX
+- Error handling and console warnings for auto-save failures
+- Auto-save lifecycle management: starts on init, stops on submit, restores on load
+
+### Changed
+- `js/form-01-state-helpers.js`:
+  - Enhanced `FF.saveFranchisorDraft()` with try/catch error handling
+  - Added visual feedback indicator trigger on successful save
+- `js/form-06-submit-validation.js`:
+  - Added `FF.autoSaveConfig` configuration object (enabled, debounceMs, periodicIntervalMs, timers)
+  - Added `FF.debounceAutoSave(form)` for debounced save after user input
+  - Added `FF.startPeriodicAutoSave(form)` for periodic 5-second safety save
+  - Added `FF.stopPeriodicAutoSave()` for cleanup on form submit
+  - Enhanced `FF.initFormSubmission()` with all 6 auto-save triggers
+  - Wrapped `window.nextStep`, `window.prevStep`, and `window.openTab` to inject save calls
+  - Added visibility change and beforeunload event listeners
+- `daftar/index.html`:
+  - Added `#autosave-indicator` HTML element after franchisor form
+- `css/form-franchise/01-utilities.css`:
+  - Added styles for `#autosave-indicator` (fixed position, animated toast)
+- Documentation updates:
+  - `TECHNICAL_INVENTORY.md`: Updated form-01 and form-06 entries with auto-save functions
+  - `CLAIM_WORKFLOW.md`: Added comprehensive auto-save triggers and lifecycle documentation
+  - `KNOWLEDGE.md`: Added aggressive auto-save feature description
+  - `QWEN.md`: Added auto-save protection note in Multi-Step Registration Form section
+  - `FORM_SCHEMA.md`: Added auto-save behavior notes for Franchisor and Klaim tabs
+
+### Removed
+- None.
+
 ## 2026-04-04 18:03 (Asia/Jakarta)
 ### Added
 - `Handoff Checklist` sections in:

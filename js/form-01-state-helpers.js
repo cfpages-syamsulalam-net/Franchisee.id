@@ -161,22 +161,33 @@
 
     FF.saveFranchisorDraft = function (form) {
         if (!form) return;
-        const payload = { fields: {}, saved_at: Date.now() };
-        const fd = new FormData(form);
+        try {
+            const payload = { fields: {}, saved_at: Date.now() };
+            const fd = new FormData(form);
 
-        for (const [key, value] of fd.entries()) {
-            if (key === 'unclaimed_id') continue;
-            const text = (value || '').toString();
-            if (payload.fields[key] === undefined) {
-                payload.fields[key] = text;
-            } else if (Array.isArray(payload.fields[key])) {
-                payload.fields[key].push(text);
-            } else {
-                payload.fields[key] = [payload.fields[key], text];
+            for (const [key, value] of fd.entries()) {
+                if (key === 'unclaimed_id') continue;
+                const text = (value || '').toString();
+                if (payload.fields[key] === undefined) {
+                    payload.fields[key] = text;
+                } else if (Array.isArray(payload.fields[key])) {
+                    payload.fields[key].push(text);
+                } else {
+                    payload.fields[key] = [payload.fields[key], text];
+                }
             }
-        }
 
-        localStorage.setItem(FF.constants.FRANCHISOR_DRAFT_KEY, JSON.stringify(payload));
+            localStorage.setItem(FF.constants.FRANCHISOR_DRAFT_KEY, JSON.stringify(payload));
+            
+            // Visual feedback: subtle indicator that data is saved
+            const indicator = document.getElementById('autosave-indicator');
+            if (indicator) {
+                indicator.classList.add('saving');
+                setTimeout(() => indicator.classList.remove('saving'), 800);
+            }
+        } catch (err) {
+            console.warn('[AutoSave] Failed to save draft:', err);
+        }
     };
 
     FF.getFranchisorDraft = function () {
