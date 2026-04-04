@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 06:41 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `daftar/index.html`: aligned step action buttons to center for improved visual balance:
+  - Step 1 `LANJUT` wrapper changed from `text-end` to `text-center`.
+  - Step 2–5 action rows changed from `justify-content-between` to `justify-content-center` with `gap-2`, so navigation buttons render centered as a group.
+
+### Removed
+- None.
+
 ## 2026-04-04 06:27 (Asia/Jakarta)
 ### Added
 - `CLAIM_WORKFLOW.md`: dedicated reference documenting end-to-end claim flow, step-button behavior (`Lanjut/Kembali` is frontend-only), persistence behavior, backend append/cleanup semantics, and recommended UX scenarios for mixed draft + claim actions.
