@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 20:00 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `css/form-franchise/02-layout-tabs-steps.css`:
+  - Added `#tab-franchisee .step-item` override: width 50% (was inheriting 20% from 5-step franchisor)
+  - Adjusted connector line positioning for 2-step layout (`::after` and `::before` pseudo-elements)
+- `daftar/index.html`:
+  - Centered "LANJUT" button in Step 1 using `text-center` class (was `justify-content-between` with empty div)
+
+### Removed
+- None.
+
 ## 2026-04-04 19:45 (Asia/Jakarta)
 ### Added
 - **Multi-Step Layout for Franchisee Form** (2 steps):
