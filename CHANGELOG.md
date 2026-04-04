@@ -4,6 +4,16 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 08:40 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `css/form-franchise/02-layout-tabs-steps.css`: added visual progression arrows between `.step-item` nodes using pseudo-elements, including active/completed color states and small-screen sizing adjustment.
+
+### Removed
+- None.
+
 ## 2026-04-04 08:00 (Asia/Jakarta)
 ### Added
 - None.

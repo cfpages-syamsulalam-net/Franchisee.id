@@ -72,6 +72,22 @@
     width: 20%;
     position: relative;
 }
+.step-item:not(:last-child)::after {
+    content: "\203A";
+    position: absolute;
+    right: -10px;
+    top: 16px;
+    transform: translateY(-50%);
+    color: #b8b8b8;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
+.step-item.active:not(:last-child)::after,
+.step-item.completed:not(:last-child)::after {
+    color: #f8b526;
+}
 .step-circle {
     width: 35px;
     height: 35px;
@@ -145,4 +161,12 @@
 }
 .btn-danger:hover {
     background-color: #bb2d3b !important;
+}
+
+@media (max-width: 576px) {
+    .step-item:not(:last-child)::after {
+        right: -6px;
+        font-size: 1rem;
+        top: 15px;
+    }
 }
