@@ -477,77 +477,111 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 											<div class="elementor-element elementor-widget elementor-widget-wpforms" data-element_type="widget" data-widget_type="wpforms.default">
 												<div class="elementor-widget-container">
 													<div class="franchise-listing-form-wrapper">
-														<!-- Historical lineage note: this /daftar form originated from /pendaftaran/index.html. Preserve legacy parity for phone country-code + validation UX when refactoring. -->
-														<div class="form-section-card">
-															<form id="franchiseeForm" class="async-form">
-													<div class="form-group-row">
-														<div class="label-col"><label class="form-label">Nama Lengkap</label></div>
-														<div class="input-col"><input type="text" name="name" class="form-control" required></div>
-													</div>
-													<div class="form-group-row">
-														<div class="label-col"><label class="form-label">Kota Domisili</label></div>
-														<div class="input-col"><input type="text" name="city_origin" class="form-control city-autocomplete" required placeholder="Ketik nama kota..."></div>
-													</div>
-													<div class="form-group-row">
-														<div class="label-col"><label class="form-label">WhatsApp</label></div>
-														<div class="input-col">
-															<div class="input-group phone-input-group">
-																<select class="form-select country-select" name="country_code">
-																	<option value="+62" selected>ID +62</option>
-																	<option value="+60">MY +60</option>
-																	<option value="+65">SG +65</option>
-																	<option value="+1">US +1</option>
-																	<option value="+61">AU +61</option>
-																</select>
-																<input type="tel" name="whatsapp" class="form-control phone-number-input phone-format" required placeholder="812-3456-7890">
+														<!-- Step Indicator for Franchisee (2 steps) -->
+														<div class="step-indicator-wrapper mb-4">
+															<ul class="step-indicator">
+																<li class="step-item active" data-step="1">
+																	<div class="step-circle">1</div>
+																	<div class="step-text">Data Pribadi</div>
+																</li>
+																<li class="step-item" data-step="2">
+																	<div class="step-circle">2</div>
+																	<div class="step-text">Minat & Budget</div>
+																</li>
+															</ul>
+															<div class="progress mt-2" style="height: 4px;">
+																<div id="franchisee_progress_bar" class="progress-bar bg-warning" role="progressbar" style="width: 50%;"></div>
 															</div>
-															<small class="helper-text-bottom text-muted">Contoh: 812-3456-7890 (tanpa 0 di depan).</small>
 														</div>
-													</div>
-													<div class="form-group-row">
-														<div class="label-col"><label class="form-label">Email</label></div>
-														<div class="input-col"><input type="email" name="email" class="form-control" required></div>
-													</div>
-													<div class="form-group-row">
-														<div class="label-col"><label class="form-label">Minat Kategori</label></div>
-														<div class="input-col">
-															<select name="interest_category" class="form-select" required>
-																<option value="">Pilih Kategori...</option>
-																<option value="fb">F&B (Makanan & Minuman)</option>
-																<option value="retail">Retail & Minimarket</option>
-																<option value="service">Jasa & Layanan</option>
-																<option value="edu">Pendidikan</option>
-																<option value="beauty">Kecantikan & Kesehatan</option>
-															</select>
-														</div>
-													</div>
-													<div class="form-group-row">
-														<div class="label-col"><label class="form-label">Budget Investasi</label></div>
-														<div class="input-col">
-															<select name="budget_range" class="form-select" required>
-																<option value="">Pilih Range Budget...</option>
-																<option value="<50jt">&lt; 50 Juta</option>
-																<option value="50-100jt">50 - 100 Juta</option>
-																<option value="100-500jt">100 - 500 Juta</option>
-																<option value=">500jt">&gt; 500 Juta</option>
-															</select>
-														</div>
-													</div>
-													<div class="form-group-row">
-														<div class="label-col"><label class="form-label">Rencana Lokasi</label></div>
-														<div class="input-col">
-															<select name="location_plan" class="form-select" required>
-																<option value="">Pilih Rencana Lokasi...</option>
-																<option value="ready">Sudah Ada Lokasi</option>
-																<option value="searching">Masih Mencari</option>
-															</select>
-														</div>
-													</div>
-													<div class="text-center mt-4">
-														<button type="submit" class="btn btn-primary btn-lg px-5">DAFTAR SEKARANG</button>
-													</div>
-															</form>
-														</div>
+
+														<form id="franchiseeForm" class="async-form">
+															<!-- STEP 1: Data Pribadi -->
+															<div id="franchisee-step-1" class="form-step active">
+																<div class="form-section-card">
+																	<div class="form-group-row">
+																		<div class="label-col"><label class="form-label">Nama Lengkap</label></div>
+																		<div class="input-col"><input type="text" name="name" class="form-control" required></div>
+																	</div>
+																	<div class="form-group-row">
+																		<div class="label-col"><label class="form-label">Kota Domisili</label></div>
+																		<div class="input-col"><input type="text" name="city_origin" class="form-control city-autocomplete" required placeholder="Ketik nama kota..."></div>
+																	</div>
+																	<div class="form-group-row">
+																		<div class="label-col"><label class="form-label">WhatsApp</label></div>
+																		<div class="input-col">
+																			<div class="input-group phone-input-group">
+																				<select class="form-select country-select" name="country_code">
+																					<option value="+62" selected>ID +62</option>
+																					<option value="+60">MY +60</option>
+																					<option value="+65">SG +65</option>
+																					<option value="+1">US +1</option>
+																					<option value="+61">AU +61</option>
+																				</select>
+																				<input type="tel" name="whatsapp" class="form-control phone-number-input phone-format" required placeholder="812-3456-7890">
+																			</div>
+																			<small class="helper-text-bottom text-muted">Contoh: 812-3456-7890 (tanpa 0 di depan).</small>
+																		</div>
+																	</div>
+																	<div class="form-group-row">
+																		<div class="label-col"><label class="form-label">Email</label></div>
+																		<div class="input-col"><input type="email" name="email" class="form-control" required></div>
+																	</div>
+																	<div class="d-flex justify-content-between mt-4">
+																		<div></div>
+																		<button type="button" class="btn btn-success" onclick="franchiseeNextStep(2)">LANJUT</button>
+																	</div>
+																</div>
+															</div>
+
+															<!-- STEP 2: Minat & Budget -->
+															<div id="franchisee-step-2" class="form-step" style="display:none;">
+																<div class="form-section-card">
+																	<div class="form-group-row">
+																		<div class="label-col"><label class="form-label">Minat Kategori</label></div>
+																		<div class="input-col">
+																			<select name="interest_category" class="form-select" required>
+																				<option value="">Pilih Kategori...</option>
+																				<option value="fb">F&B (Makanan & Minuman)</option>
+																				<option value="retail">Retail & Minimarket</option>
+																				<option value="service">Jasa & Layanan</option>
+																				<option value="edu">Pendidikan</option>
+																				<option value="beauty">Kecantikan & Kesehatan</option>
+																			</select>
+																		</div>
+																	</div>
+																	<div class="form-group-row">
+																		<div class="label-col"><label class="form-label">Budget Investasi</label></div>
+																		<div class="input-col">
+																			<select name="budget_range" class="form-select" required>
+																				<option value="">Pilih Range Budget...</option>
+																				<option value="<50jt">&lt; 50 Juta</option>
+																				<option value="50-100jt">50 - 100 Juta</option>
+																				<option value="100-500jt">100 - 500 Juta</option>
+																				<option value=">500jt">&gt; 500 Juta</option>
+																			</select>
+																		</div>
+																	</div>
+																	<div class="form-group-row">
+																		<div class="label-col"><label class="form-label">Rencana Lokasi</label></div>
+																		<div class="input-col">
+																			<select name="location_plan" class="form-select" required>
+																				<option value="">Pilih Rencana Lokasi...</option>
+																				<option value="ready">Sudah Ada Lokasi</option>
+																				<option value="searching">Masih Mencari</option>
+																			</select>
+																		</div>
+																	</div>
+																	<div class="form-group-row">
+																		<div class="label-col"><label class="form-label">Pesan Tambahan</label></div>
+																		<div class="input-col"><textarea name="message" class="form-control" rows="3" placeholder="Opsional: Ceritakan kebutuhan Anda..."></textarea></div>
+																	</div>
+																	<div class="d-flex justify-content-between gap-2 mt-4">
+																		<button type="button" class="btn btn-prev" onclick="franchiseePrevStep(2)">KEMBALI</button>
+																		<button type="submit" class="btn btn-primary px-5">DAFTAR SEKARANG</button>
+																	</div>
+																</div>
+															</div>
+														</form>
 													</div>
 												</div>
 											</div>
@@ -1123,6 +1157,7 @@ var elementorFrontendConfig = {"environmentMode":{"edit":false,"wpPreview":false
         bust('form-05-country-whatsapp-js');
         bust('form-06-submit-validation-js');
         bust('form-07-init-js');
+        bust('form-08-franchisee-steps-js');
     } catch (e) {}
 })();
 </script>
@@ -1134,6 +1169,7 @@ var elementorFrontendConfig = {"environmentMode":{"edit":false,"wpPreview":false
 <script src="/js/form-05-country-whatsapp.js" id="form-05-country-whatsapp-js"></script>
 <script src="/js/form-06-submit-validation.js" id="form-06-submit-validation-js"></script>
 <script src="/js/form-07-init.js" id="form-07-init-js"></script>
+<script src="/js/form-08-franchisee-steps.js" id="form-08-franchisee-steps-js"></script>
 <script id="dev-mode-toggle-script">
 (function () {
     var TOGGLE_VIS_KEY = 'debug_toggle_enabled';

@@ -62,6 +62,34 @@ Last updated: 2026-04-04 (Asia/Jakarta)
   - `daftar/index.html`: 1219 lines ✓
 - **Syntax Validation**: Both JS files pass `node --check` ✓
 
+## Enhancement Applied: Franchisee Multi-Step Form (2026-04-04 19:45)
+- **Files Created**:
+  - `js/form-08-franchisee-steps.js`: Franchisee 2-step navigation logic (129 lines)
+  - `FRANCHISEE_MULTISTEP.md`: Comprehensive implementation guide
+- **Files Modified**:
+  - `daftar/index.html`: Converted Franchisee form to 2-step layout with step indicator, progress bar, and navigation buttons
+  - `TECHNICAL_INVENTORY.md`: Added form-08 function inventory
+  - `FORM_SCHEMA.md`: Updated Franchisee table with step column and multi-step documentation
+  - `QWEN.md`: Added Franchisee 2-step structure description
+  - `AGENTS.md`: Added FRANCHISEE_MULTISTEP.md to instruction index
+  - `CHANGELOG.md`: Logged all changes
+- **Key Features**:
+  - Step 1: Data Pribadi (name, city, WhatsApp, email)
+  - Step 2: Minat & Budget (interest, budget, location, message)
+  - Step validation before proceeding
+  - Progress bar and step indicators
+  - localStorage persistence for step restoration
+  - Separate from Franchisor step logic (no interference)
+- **Submission Integrity**:
+  - Form ID unchanged (`franchiseeForm`)
+  - All field names unchanged
+  - Submit listener unchanged (still works identically)
+  - No breaking changes to backend
+- **Line Count Verification**:
+  - `form-08-franchisee-steps.js`: 129 lines ✓
+  - `daftar/index.html`: 1255 lines (grew from 1220, +35 lines) ✓
+- **Syntax Validation**: `form-08-franchisee-steps.js` passes `node --check` ✓
+
 ## Current Status
 - No other blocking JS wiring issues found in the checked custom paths.
 - Note: direct `node --check` validation is restricted in this sandbox due an EPERM path-resolution issue; review was completed via source inspection and targeted cross-reference checks.
@@ -74,6 +102,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - `TECHNICAL_INVENTORY.md`: Canonical inventory of key functions/variables in `/js` and `/functions`. Update after logic additions/removals/refactors.
 - `CLAIM_WORKFLOW.md`: Canonical claim-flow reference (frontend step behavior, local persistence, backend append/cleanup semantics).
 - `AUTO_SAVE.md`: Comprehensive auto-save implementation reference (triggers, lifecycle, UX scenarios, testing).
+- `FRANCHISEE_MULTISTEP.md`: Franchisee form 2-step implementation guide (structure, navigation, validation, testing).
 - `DEBUGGING.md`: Personal debugging reference (`?dev=1` toggle + DevTools disable-cache workflow).
 - `franchise-info-form.md`: Detailed UX/data spec for franchise listing form sections and conditional logic; use as reference when revising form UX.
 - `README.md`: Currently auto-generated sitemap URL listing; treat as generated artifact.

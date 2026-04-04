@@ -5,17 +5,24 @@ This file documents every input field for the three registration tabs in `/dafta
 ## 1. Tab: Franchisee (Calon Mitra)
 *Target: Individuals looking to buy a franchise.*
 
-| Field Label | Name Attribute | Type | Required | Notes |
-|-------------|----------------|------|----------|-------|
-| Nama Lengkap | `name` | Text | Yes | |
-| Kota Domisili | `city_origin` | Text | Yes | Autocomplete active |
-| Kode Negara WhatsApp | `country_code` | Select | Yes | Default `+62` |
-| WhatsApp | `whatsapp` | Tel | Yes | Phone format (812-xxx) |
-| Email | `email` | Email | Yes | |
-| Minat Kategori | `interest_category`| Select| Yes | F&B, Retail, etc. |
-| Budget Investasi| `budget_range` | Select| Yes | <50jt, 50-100jt, etc. |
-| Rencana Lokasi | `location_plan` | Select| Yes | Empty placeholder first (`Pilih Rencana Lokasi...`) |
-| Pesan Tambahan | `message` | Textarea| No | |
+**Multi-Step Layout (2 Steps)**:
+- **Step 1: Data Pribadi** - Personal information (name, city, WhatsApp, email)
+- **Step 2: Minat & Budget** - Business interests and budget details
+- Step navigation: `franchiseeNextStep()` and `franchiseePrevStep()` functions
+- Progress indicator: `#franchisee_progress_bar` with 2-step indicator
+- Step persistence: `localStorage` key `franchisee_form_step`
+
+| Field Label | Name Attribute | Type | Required | Step | Notes |
+|-------------|----------------|------|----------|------|-------|
+| Nama Lengkap | `name` | Text | Yes | 1 | |
+| Kota Domisili | `city_origin` | Text | Yes | 1 | Autocomplete active |
+| Kode Negara WhatsApp | `country_code` | Select | Yes | 1 | Default `+62` |
+| WhatsApp | `whatsapp` | Tel | Yes | 1 | Phone format (812-xxx) |
+| Email | `email` | Email | Yes | 1 | |
+| Minat Kategori | `interest_category`| Select| Yes | 2 | F&B, Retail, etc. |
+| Budget Investasi| `budget_range` | Select| Yes | 2 | <50jt, 50-100jt, etc. |
+| Rencana Lokasi | `location_plan` | Select| Yes | 2 | Empty placeholder first (`Pilih Rencana Lokasi...`) |
+| Pesan Tambahan | `message` | Textarea| No | 2 | Optional message field |
 
 ## 2. Tab: Franchisor (Pemilik Brand)
 *Target: Business owners listing their franchise. (5 Sections / Steps)*

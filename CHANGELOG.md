@@ -4,6 +4,35 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 19:45 (Asia/Jakarta)
+### Added
+- **Multi-Step Layout for Franchisee Form** (2 steps):
+  - Step 1: Data Pribadi (name, city, WhatsApp, email)
+  - Step 2: Minat & Budget (interest category, budget range, location plan, message)
+  - Step indicator with 2-step progress visualization
+  - Progress bar (`#franchisee_progress_bar`) for visual feedback
+- **New Module: `js/form-08-franchisee-steps.js`**:
+  - `franchiseeNextStep(stepIndex)`: Navigate forward with validation
+  - `franchiseePrevStep(stepIndex)`: Navigate backward
+  - `validateFranchiseeStep(stepIndex)`: Per-step required field validation
+  - `updateFranchiseeProgressBar()`: Update step indicators and progress bar
+  - `restoreFranchiseeStep()`: Restore saved step from localStorage on page load
+- **Script Loading**: Added `form-08-franchisee-steps.js` to `/daftar/index.html` with cache busting support
+
+### Changed
+- `daftar/index.html`:
+  - Converted Franchisee form from single-page to 2-step layout
+  - Added step indicator wrapper (`step-indicator-wrapper`)
+  - Wrapped form fields in `franchisee-step-1` and `franchisee-step-2` divs
+  - Added navigation buttons (LANJUT/KEMBALI) matching Franchisor form UX
+  - Added optional "Pesan Tambahan" (message) textarea in Step 2
+- `TECHNICAL_INVENTORY.md`: Added `form-08-franchisee-steps.js` function inventory
+- `FORM_SCHEMA.md`: Updated Franchisee form table with step column and multi-step documentation
+- `QWEN.md`: Added Franchisee form 2-step structure description
+
+### Removed
+- None.
+
 ## 2026-04-04 19:15 (Asia/Jakarta)
 ### Added
 - **Aggressive Auto-Save** for Franchisor form with 6 independent triggers to prevent data loss:

@@ -189,6 +189,10 @@ Every session must log changes in `CHANGELOG.md`:
 - Auto-calculated total investment from component costs
 
 ### 4. Multi-Step Registration Form
+**Franchisee Form (2 Steps):**
+1. **Data Pribadi**: Name, city, WhatsApp, email
+2. **Minat & Budget**: Interest category, budget range, location plan, optional message
+
 **Franchisor Form (5 Sections):**
 1. **Identitas & Legalitas**: Brand name, company, category, HAKI status, NIB
 2. **Konsep & Biaya**: Outlet type, location requirements, fee structure, investment totals
@@ -196,7 +200,7 @@ Every session must log changes in `CHANGELOG.md`:
 4. **Media & Visual**: Logo, cover, gallery, video, proposal (Cloudinary uploads)
 5. **Kontak Leads**: PIC name, WhatsApp, email, website, social media
 
-**Auto-Save Protection**: All form fields are protected by aggressive auto-save with 6 independent triggers (debounced input, periodic 5s, step navigation, visibility change, beforeunload, tab switch) ensuring zero data loss on refresh or accidental closure. Draft persists in `localStorage` with 72-hour TTL and includes visual feedback indicator.
+**Auto-Save Protection**: All Franchisor form fields are protected by aggressive auto-save with 6 independent triggers (debounced input, periodic 5s, step navigation, visibility change, beforeunload, tab switch) ensuring zero data loss on refresh or accidental closure. Draft persists in `localStorage` with 72-hour TTL and includes visual feedback indicator.
 
 ---
 

@@ -19,8 +19,9 @@ This file gives persistent project context: goals, commands, architecture, conve
 - Test:
   - No formal automated test suite currently configured.
   - Validate critical flows manually:
-    - `daftar` tab switching and form submission.
-    - Claim workflow (`?claim=<slug>`) including `unclaimed_id` behavior.
+    - `/daftar` tab switching and form submission.
+    - **Franchisee form**: 2-step navigation (Data Pribadi → Minat & Budget), validation, submission.
+    - **Franchisor form**: 5-step navigation, auto-save, claim workflow (`?claim=<slug>`) including `unclaimed_id` behavior.
     - Generated pages output in `/peluang-usaha`.
 
 ## Architecture

@@ -59,6 +59,15 @@ This file serves as a comprehensive record of all functions and key variables ac
 - DOMContentLoaded orchestrator for claim bindings, calculations/city loader, country-code loader, submit wiring, and state restoration.
 - Re-exposes compatibility globals (`window.fetchUnclaimedBrands`, `window.fillMainFranchisorForm`).
 
+### File: `js/form-08-franchisee-steps.js`
+*Franchisee form step navigation (2-step layout).*
+- `franchiseeState`: Local state for franchisee form (currentStep, totalSteps).
+- `window.franchiseeNextStep(stepIndex)`: Navigate to next step with validation.
+- `window.franchiseePrevStep(stepIndex)`: Navigate to previous step.
+- `validateFranchiseeStep(stepIndex)`: Per-step required field validation.
+- `updateFranchiseeProgressBar()`: Updates step indicators and progress bar.
+- `restoreFranchiseeStep()`: Restores saved step from localStorage on page load.
+
 ### File: `js/form-franchise.js` (Legacy Shim)
 *Deprecated non-executing compatibility marker.*
 - Contains no runtime logic; preserved only as migration marker to prevent monolith reintroduction.
