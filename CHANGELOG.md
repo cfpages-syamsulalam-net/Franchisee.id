@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 08:00 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `css/form-franchise/03-form-core.css`: added focus-attention styling for form fields in `/daftar/index.html`:
+  - default non-focused fields now appear subdued (soft gray background + lower opacity),
+  - focused fields become fully highlighted,
+  - filled/validated/read-only/disabled states remain fully visible to avoid ambiguity during step-by-step completion.
+- `css/form-franchise/03-form-core.css`: added dedicated read-only emphasis style so locked claim-brand fields remain clearly visible in claim mode.
+
+### Removed
+- None.
+
 ## 2026-04-04 06:41 (Asia/Jakarta)
 ### Added
 - None.

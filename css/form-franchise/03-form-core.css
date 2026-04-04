@@ -174,13 +174,38 @@
     border-radius: 6px;
     border: 1px solid #dcdcdc;
     font-size: 0.95rem;
-    background-color: #fafafa;
-    transition: all 0.2s;
+    background-color: #f3f3f3;
+    opacity: 0.72;
+    filter: grayscale(12%);
+    transition: all 0.2s ease;
 }
 .form-control:focus, .form-select:focus {
     background-color: #fff;
     border-color: #f8b526;
     box-shadow: 0 0 0 3px rgba(248, 181, 38, 0.1);
+    opacity: 1;
+    filter: none;
+}
+
+/* Attention guidance: keep active/filled/locked fields visually prominent */
+.franchise-listing-form-wrapper .form-control.is-valid,
+.franchise-listing-form-wrapper .form-select.is-valid,
+.franchise-listing-form-wrapper .form-control.is-invalid,
+.franchise-listing-form-wrapper .form-select.is-invalid,
+.franchise-listing-form-wrapper input.form-control:not(:placeholder-shown),
+.franchise-listing-form-wrapper textarea.form-control:not(:placeholder-shown),
+.franchise-listing-form-wrapper .form-select:valid,
+.franchise-listing-form-wrapper .form-control[readonly],
+.franchise-listing-form-wrapper .form-control[disabled],
+.franchise-listing-form-wrapper .form-select[disabled] {
+    opacity: 1;
+    filter: none;
+    background-color: #fff;
+}
+
+.franchise-listing-form-wrapper .form-control[readonly] {
+    background-color: #fff7e8;
+    border-color: #f3d081;
 }
 
 /* HELPER TEXT (DI BAWAH INPUT) */
