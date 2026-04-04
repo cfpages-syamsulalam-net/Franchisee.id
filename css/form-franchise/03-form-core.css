@@ -25,11 +25,21 @@
     border-bottom: 1px dashed #f0f0f0; /* Garis pemisah tipis biar rapi */
     padding-bottom: 4px;
     margin-bottom: 4px;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
 }
 .form-group-row:last-child {
     border-bottom: none;
     margin-bottom: 0;
     padding-bottom: 0;
+}
+
+/* Focus guidance: keep non-active rows slightly muted while user is filling one row. */
+.franchise-listing-form-wrapper:focus-within .form-group-row {
+    opacity: 0.76;
+}
+.franchise-listing-form-wrapper:focus-within .form-group-row:focus-within {
+    opacity: 1;
+    background-color: #fffdf6;
 }
 /* 1. Valid (Hijau) */
 .form-control.is-valid, .form-select.is-valid {
@@ -87,6 +97,7 @@
     border-right: 0 !important; /* Gabung dengan input kanan */
     background-color: #f8f9fa;
     font-weight: 500;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", "Segoe UI", sans-serif;
 }
 .phone-number-input {
     border-top-left-radius: 0 !important;

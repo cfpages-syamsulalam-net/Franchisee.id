@@ -1,82 +1,77 @@
 # JS Symbols Inventory & Feature Documentation
 
-This document provides a granular record of every variable and function within the `/js` directory, including historical context on removed or modified features.
+This document tracks key runtime/build symbols in `/js` with emphasis on modular form runtime ownership.
 
-## 1. File: `js/form-franchise.js`
+## 1. Form Runtime (Modular, Flat Prefix)
 
-### Functions
-- `slugify(text)`: Converts string to URL slug.
-- `fetchUnclaimedBrands()` (async): Loads data for the claim search.
-- `loadCountryCodeOptions()` (async): Loads and applies country-code options from `/json/country-codes.json`.
-- `buildSearchableClaimBrands(brands)`: Frontend claim-search sanitizer and deduper for display suggestions.
-- `window.openTab(tabName)`: Handles tab switching and re-validation of inputs.
-- `window.nextStep(stepIndex)`: Progresses form step, persists to `localStorage`.
-- `window.prevStep(stepIndex)`: Regresses form step.
-- `window.validateStep(stepIndex)`: Performs HTML5 validity checks and custom logic (e.g., Rp 0 check).
-- `calculateAll()`: Core BEP calculation logic.
-- `window.updateMinCapital()`: Determines lowest package price for display.
-- `loadCitiesData()` (async): Loads city JSON from local `/json/data-kota-id.json` with remote fallback.
-- `initCityAutocomplete()`: Sets up event listeners for city suggestions.
-- `fillMainFranchisorForm(brand)`: Core logic for the **Claim Brand** feature.
-- `window.exitClaimMode()`: Resets form from Claim state back to standard.
-- `submitToCloudflare(formElement, type)` (async): Unified submission logic.
+### `js/form-01-state-helpers.js`
+- Owns shared namespace/state: `window.FranchiseForm.state`, `window.FranchiseForm.constants`, `window.FranchiseForm.utils`.
+- Persists/reads claim mode (`franchise_claim_state`) with TTL.
+- Persists/reads franchisor draft (`franchisor_form_draft`) with TTL.
+- Claim-search sanitization: `buildSearchableClaimBrands`.
 
-### Variables
-- `unclaimedBrands` (Array): Storage for fetched brands.
-- `selectedBrand` (Object): Currently active brand in claim mode.
-- `currentStep` (Number): Tracker for multi-step progress.
-- `citiesData` (Array): List of Indonesian cities.
+### `js/form-02-claim-workflow.js`
+- Loads claim dataset (`/json/unclaimed-brands.json`, API fallback).
+- Claim autocomplete UI bindings.
+- Unified claim fill/reset behavior:
+  - `fillMainFranchisorForm`
+  - `exitClaimMode`
 
----
+### `js/form-03-navigation-steps.js`
+- Tab switching: `window.openTab`.
+- Step controls: `window.nextStep`, `window.prevStep`, `window.validateStep`.
 
-## 2. File: `js/form-utils.js`
+### `js/form-04-calculation-city.js`
+- BEP/min-capital calculations.
+- City autocomplete loader (`/json/data-kota-id.json` first, remote fallback).
 
-### Functions
-- `window.scrollToTopForm()`: UI Helper.
-- `window.updateProgressBar(step, totalSteps)`: UI Helper.
-- `window.formatRupiah(angka)`: Formatter.
-- `window.cleanNumber(str)`: Parser.
-- `window.flashHighlight(element)`: Visual feedback.
-- `window.showErrorMsg(inputField, msg)`: Error display.
-- `window.removeErrorMsg(inputField)`: Error cleanup.
-- `window.validateSpecificField(field)`: Advanced validation (Phone, Email, URL).
+### `js/form-05-country-whatsapp.js`
+- Country-code dropdown renderer from `/json/country-codes.json`.
+- Flag-emoji runtime fallback (emoji or text-only labels).
+- WhatsApp country-code normalization before submit.
 
----
+### `js/form-06-submit-validation.js`
+- Live validation bindings.
+- Unified submit pipeline to `/form-submit`.
+- Draft persistence hooks on form input/change.
 
-## 3. File: `js/build-details.js` (SSG)
+### `js/form-07-init.js`
+- DOMContentLoaded bootstrap coordinator.
+- Restores saved step/tab/claim state.
+- Re-exposes compatibility globals:
+  - `window.fetchUnclaimedBrands`
+  - `window.fillMainFranchisorForm`
 
-### Functions
-- `slugify(text)`: Local copy for node environment.
-- `formatRupiah(angka)`: Local copy for node environment.
-- `generateJSONLD(item, slug)`: Returns SEO schema object.
-- `generateBreadcrumbs(item)`: Generates breadcrumb HTML.
-- `generateStickyBar(item, slug, tier)`: Generates Claim CTA for unclaimed pages.
-- `async build()`: Main script execution logic.
+### `js/form-franchise.js` (Legacy Shim)
+- Non-executing migration marker only.
+- Do not add runtime logic here.
 
----
+## 2. Shared Form Utilities
 
-## 4. File: `js/build-listing.js` (SSG)
+### `js/form-utils.js`
+- `scrollToTopForm`
+- `updateProgressBar`
+- `formatRupiah`
+- `cleanNumber`
+- `flashHighlight`
+- `showErrorMsg`
+- `removeErrorMsg`
+- `validateSpecificField`
 
-### Functions
-- `getThumb(url)`: Cloudinary URL transformer.
-- `parseCSVRows(content)`: Quote-aware CSV parser for robust fallback ingestion.
-- `loadFromCSV(filePath)`: CSV data loader.
-- `isLikelyClaimBrandRow(item)`: Claim-search canonical row filter for static JSON generation.
-- `generateCard(item, index)`: HTML generator for listing cards.
-- `async build()`: Orchestrates listing generation.
+## 3. SSG Scripts
 
----
+### `js/build-listing.js`
+- Hybrid FRANCHISOR+UNCLAIMED listing build.
+- Quote-aware CSV fallback parser.
+- Generates `/json/unclaimed-brands.json` for claim autocomplete.
 
-## 5. Historical & Removed Features Registry
+### `js/build-details.js`
+- Detail-page generation, JSON-LD, breadcrumbs, sticky claim CTA.
 
-### Removed in Mar 2026 Refactor
-- **`window.validateSpecificField` in `form-franchise.js`**: Moved to `form-utils.js` to reduce file size.
-- **Auto-save on every keystroke**: Removed due to performance issues on low-end mobile devices. Replaced with `step` and `tab` persistence.
-- **`pkg_name_1` logic in `fillMainFranchisorForm`**: Slightly modified to use `franchise_form_autosave` object instead of individual `localStorage` keys.
+### `js/build-sitemap.js`
+- Dynamic sitemap generation with CSV fallback support.
 
-### Modified Logic
-- **`submitToCloudflare`**: Previously had separate functions for Franchisor/Franchisee. Now unified with a `type` parameter.
-- **BEP Calculation**: Added `bep_years_display` to show years alongside months (added Mar 2026).
-
-### Potentially Missing (To be monitored)
-- **Cloudinary Widget**: Some older versions had the Cloudinary Upload Widget directly in `index.html`. It's currently expected to be handled by `form-franchise.js` (Verify implementation status).
+## 4. Guardrails
+- Keep form runtime modular in `form-01` ... `form-07`; avoid monolith regression.
+- Keep shared validators/formatters in `form-utils.js` (no duplicate utility forks).
+- Update `TECHNICAL_INVENTORY.md` and `CHANGELOG.md` after symbol/file ownership changes.

@@ -25,7 +25,7 @@ This file gives persistent project context: goals, commands, architecture, conve
 
 ## Architecture
 - Key directories:
-  - `/js`: client logic and static site generators (`build-listing.js`, `build-details.js`, `build-sitemap.js`, `form-franchise.js`, `form-utils.js`).
+  - `/js`: client logic and static site generators (`build-listing.js`, `build-details.js`, `build-sitemap.js`, `form-utils.js`, `form-01-state-helpers.js` ... `form-07-init.js`).
   - `/functions`: Cloudflare Functions (`form-submit.js`, `get-franchises.js`) for API/form handling.
   - `/templates`: source templates used by builder scripts.
   - `/daftar`: static form page integrating custom JS.
@@ -41,8 +41,8 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Country-code options for WhatsApp inputs are loaded from `/json/country-codes.json` (frontend fallback defaults exist if file is unavailable).
   - City autocomplete loader checks local `/json/data-kota-id.json` first, then falls back to `https://cekkode.github.io/json/data-kota-id.json`.
   - Local CSV fallback in `js/build-listing.js` uses quote-aware parsing (`parseCSVRows`) to preserve correct column mapping when cells contain commas/newlines.
-  - Claim mode continuity: `js/form-franchise.js` persists active claim context in `localStorage` key `franchise_claim_state`, restores it after refresh, and expires stale state after 24 hours (TTL).
-  - Franchisor partial-entry continuity: `js/form-franchise.js` persists draft values in `localStorage` key `franchisor_form_draft` with 72-hour TTL.
+  - Claim mode continuity: modular form scripts persist active claim context in `localStorage` key `franchise_claim_state`, restore it after refresh, and expire stale state after 24 hours (TTL).
+  - Franchisor partial-entry continuity: modular form scripts persist draft values in `localStorage` key `franchisor_form_draft` with 72-hour TTL.
   - Form submission posts to Cloudflare Function `/form-submit`.
   - On successful claim, backend appends to `FRANCHISOR` then performs best-effort deletion in `UNCLAIMED` (match by `id`, fallback by normalized `brand_name`).
 
@@ -59,7 +59,8 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Preserve static-first approach for SEO (generate pages, avoid runtime-heavy rendering).
   - Keep `/css/form-franchise.css` as the aggregator entrypoint; preserve `@import` order when adding/changing form styles.
 - Things to avoid:
-  - Do not do full rewrites of large legacy files (`/daftar/index.html`, `js/form-franchise.js`) unless explicitly required.
+  - Do not do full rewrites of large legacy files (`/daftar/index.html`) unless explicitly required.
+  - Do not reintroduce monolithic runtime logic into `js/form-franchise.js`; use the flat modular files (`js/form-01-*.js` ... `js/form-07-*.js`).
   - Do not remove/rename form fields without updating `FORM_SCHEMA.md`.
   - Do not introduce duplicate changelog/timeline logs in PRD.
 
@@ -67,7 +68,9 @@ This file gives persistent project context: goals, commands, architecture, conve
 - Historical lineage: `/daftar/index.html` is a renamed continuation of `/pendaftaran/index.html`; when restoring legacy behavior, compare both paths in git history.
 - Session continuity: keep/update timestamped summaries in `/.context/session-YYYYMMDD-HHmm.md` so future sessions can quickly recover latest decisions.
 - `node --check` may fail in restricted sandbox environments with path-resolution EPERM; fall back to source inspection and targeted runtime-safe checks.
-- `form-franchise.js` references optional UI helpers; guard optional global calls to prevent runtime errors when helper functions are absent.
+- Flag-emoji rendering in country-code dropdowns may vary by OS/browser font support; labels include country initials (`ID/MY/SG/US/AU`) as readable fallback.
+- Runtime fallback is active in `js/form-05-country-whatsapp.js`: if flag glyphs are detected as non-distinct, dropdown labels are auto-rendered text-only (`ID +62`, etc.).
+- Modular form runtime scripts reference optional UI helpers; guard optional global calls to prevent runtime errors when helper functions are absent.
 - For personal cache-debugging on `/daftar`, use `?dev=1` via the `🧪` toggle (reveal/hide toggle with `Ctrl+Alt+D`) and/or DevTools `Network > Disable cache`.
 - Workflow trigger policy:
   - Primary trigger: `repository_dispatch` from Google Sheets update automation.

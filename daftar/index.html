@@ -537,6 +537,7 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 														<div class="label-col"><label class="form-label">Rencana Lokasi</label></div>
 														<div class="input-col">
 															<select name="location_plan" class="form-select" required>
+																<option value="">Pilih Rencana Lokasi...</option>
 																<option value="ready">Sudah Ada Lokasi</option>
 																<option value="searching">Masih Mencari</option>
 															</select>
@@ -1113,12 +1114,24 @@ var elementorFrontendConfig = {"environmentMode":{"edit":false,"wpPreview":false
             el.setAttribute('src', url.pathname + url.search);
         };
         bust('form-utils-js');
-        bust('form-franchise-js');
+        bust('form-01-state-helpers-js');
+        bust('form-02-claim-workflow-js');
+        bust('form-03-navigation-steps-js');
+        bust('form-04-calculation-city-js');
+        bust('form-05-country-whatsapp-js');
+        bust('form-06-submit-validation-js');
+        bust('form-07-init-js');
     } catch (e) {}
 })();
 </script>
 <script src="/js/form-utils.js" id="form-utils-js"></script>
-<script src="/js/form-franchise.js" id="form-franchise-js"></script>
+<script src="/js/form-01-state-helpers.js" id="form-01-state-helpers-js"></script>
+<script src="/js/form-02-claim-workflow.js" id="form-02-claim-workflow-js"></script>
+<script src="/js/form-03-navigation-steps.js" id="form-03-navigation-steps-js"></script>
+<script src="/js/form-04-calculation-city.js" id="form-04-calculation-city-js"></script>
+<script src="/js/form-05-country-whatsapp.js" id="form-05-country-whatsapp-js"></script>
+<script src="/js/form-06-submit-validation.js" id="form-06-submit-validation-js"></script>
+<script src="/js/form-07-init.js" id="form-07-init-js"></script>
 <script id="dev-mode-toggle-script">
 (function () {
     var TOGGLE_VIS_KEY = 'debug_toggle_enabled';

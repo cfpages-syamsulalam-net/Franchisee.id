@@ -6,11 +6,12 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
 - Before making form/logic edits, check `GEMINI.md`, `FORM_SCHEMA.md`, and `TECHNICAL_INVENTORY.md` for continuity constraints.
 - Keep this file updated when new project-level conventions are introduced.
-- For claim-search data (`UNCLAIMED`), preserve strict brand sanitization (exclude URL/phone/address/legal-entity/contact-label rows) consistently across `js/build-listing.js`, `functions/get-franchises.js`, and `js/form-franchise.js`.
+- For claim-search data (`UNCLAIMED`), preserve strict brand sanitization (exclude URL/phone/address/legal-entity/contact-label rows) consistently across `js/build-listing.js`, `functions/get-franchises.js`, and modular form scripts (`js/form-01-state-helpers.js`, `js/form-02-claim-workflow.js`).
 - Do not reintroduce naive CSV parsing for sheet fallbacks; keep quote-aware parsing to avoid `brand_name` column shifts.
 - Keep repository data assets centralized: JSON files in `/json` and CSV files in `/csv`. Update script paths/docs together when adding or moving data assets.
 - Keep per-session context snapshots in `/.context` using timestamped Markdown files (`session-YYYYMMDD-HHmm.md`) for new-session continuity.
-- For large legacy files such as `/daftar/index.html` and `js/form-franchise.js`, avoid full rewrites; use targeted edits with enough surrounding context to prevent accidental loss.
+- For large legacy files such as `/daftar/index.html`, avoid full rewrites; use targeted edits with enough surrounding context to prevent accidental loss.
+- Keep form runtime logic modular in flat prefixed files (`js/form-01-*.js` ... `js/form-07-*.js`); avoid reintroducing monolithic `js/form-franchise.js` logic.
 - After editing files larger than 500 lines, verify line count immediately to catch unintended truncation.
 - Before changing files in a directory, check nearby local `.md` or `.txt` context files first because they may contain restoration notes or historical constraints.
 - When adding or refactoring form/logic features, sync `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` if fields, functions, or key variables change.
@@ -24,7 +25,13 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - Repository structure and key runtime areas (`/js`, `/functions`, `/daftar`).
 - Core custom scripts:
   - `js/form-utils.js`
-  - `js/form-franchise.js`
+  - `js/form-01-state-helpers.js`
+  - `js/form-02-claim-workflow.js`
+  - `js/form-03-navigation-steps.js`
+  - `js/form-04-calculation-city.js`
+  - `js/form-05-country-whatsapp.js`
+  - `js/form-06-submit-validation.js`
+  - `js/form-07-init.js`
   - `js/build-listing.js`
   - `js/build-details.js`
   - `js/build-sitemap.js`
@@ -33,7 +40,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - Integration points in `/daftar/index.html` for tab switching and form scripts.
 
 ## Fix Applied During Audit
-- File: `js/form-franchise.js`
+- File: modular form runtime (`js/form-02-claim-workflow.js`, previously `js/form-franchise.js`)
 - Issue: `window.renderPackageInputs(1)` was called in claim flow but no local definition exists.
 - Action: Added defensive checks before calling it, so claim mode does not crash if the function is unavailable.
 - Additional hardening: submission error now falls back to `result.error` when `result.message` is missing.

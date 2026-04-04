@@ -24,7 +24,7 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 3.  **Action Optimization:** Audit and enhance GitHub Actions for performance and real-time sync.
 
 ## Safety & Code Integrity (Lessons Learned)
-- **Avoid Full Overwrites:** For large legacy files (e.g., `js/form-franchise.js`, `/daftar/index.html`), NEVER perform a full file rewrite using `write_file` if the file contains complex logic or Elementor boilerplate. Use targeted `replace` calls instead.
+- **Avoid Full Overwrites:** For large legacy files (e.g., `/daftar/index.html`), NEVER perform a full file rewrite using `write_file` if the file contains complex logic or Elementor boilerplate. Use targeted `replace` calls instead.
 - **Large File Safeguards:**
     1.  **Mandatory Replace:** For any file exceeding 100 lines, use `replace` instead of `write_file`.
     2.  **Context Buffering:** When using `replace`, provide at least 5-10 lines of surrounding code in `old_string` to ensure unique matching and prevent accidental overlap deletions.
@@ -32,6 +32,24 @@ For detailed technical plans, feature requests, and the current to-do list, refe
     4.  **No Placeholder Edits:** Never assume sections of a file are "standard" or "unimportant" (like CSS blocks or meta tags). Every line must be treated as critical unless verified otherwise.
 - **Refactor, Don't Delete:** If a file becomes too complex or has hoisting/initialization issues, refactor shared logic into a separate utility file (e.g., `js/form-utils.js`) rather than flattening or simplifying the code and losing features.
 - **Verification before Deletion:** Always verify the full scope of a file's functionality (multi-step forms, calculations, uploads) before assuming code is redundant.
+- **Modular Form Runtime Rule:** Keep registration runtime logic in flat modular files (`js/form-01-*.js` ... `js/form-07-*.js`). `js/form-franchise.js` is a legacy shim marker and must not be used for new runtime logic.
+
+## Multi-Model Collaboration Protocol
+- This repository is actively edited by multiple AI providers/models due usage-limit handoffs.
+- All agents must follow the same continuity protocol:
+  1. Read `AGENTS.md`, `GEMINI.md`, `KNOWLEDGE.md`, and the latest `/.context/session-*.md` before edits.
+  2. Preserve shared conventions (JSON in `/json`, CSV in `/csv`, modular form runtime in `js/form-0x-*.js`).
+  3. Log every file create/update/delete in `CHANGELOG.md` with timestamp.
+  4. Sync `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` whenever form fields/functions/ownership change.
+- Do not introduce provider-specific private conventions that diverge from these project documents.
+
+### Handoff Checklist
+1. Read latest `/.context/session-*.md` first.
+2. Read `AGENTS.md` for local working rules.
+3. Confirm architecture/governance alignment in `GEMINI.md` and `KNOWLEDGE.md`.
+4. Apply edits with current conventions (`/json`, `/csv`, `js/form-0x-*.js`).
+5. Update `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` when symbols/fields change.
+6. Append timestamped `CHANGELOG.md` entry before ending the session.
 
 ## Logic Inventory & Continuity
 - **Mandatory Tracking**: The `TECHNICAL_INVENTORY.md` file is the source of truth for all functions and key variables in `/js` and `/functions`.
@@ -56,12 +74,12 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 ## Architecture & Data Flow
 1.  **Data Tiers:** `UNCLAIMED` (Scraped/Potential), `FREE` (Claimed/Basic), `VERIFIED` (Paid/Priority).
 2.  **Claiming Workflow:** Transition brands from `UNCLAIMED` to `FRANCHISOR` upon data completion.
-3.  **Claim Search Hygiene:** Claim autocomplete must consume sanitized brand-only rows (exclude URL/phone/address/legal-entity/contact-label noise) consistently in builder (`js/build-listing.js`), API fallback (`functions/get-franchises.js`), and frontend (`js/form-franchise.js`).
+3.  **Claim Search Hygiene:** Claim autocomplete must consume sanitized brand-only rows (exclude URL/phone/address/legal-entity/contact-label noise) consistently in builder (`js/build-listing.js`), API fallback (`functions/get-franchises.js`), and frontend form modules (`js/form-01-state-helpers.js`, `js/form-02-claim-workflow.js`).
 4.  **SSG Engine:** Scripts in `js/` fetch data and inject into `templates/` via GitHub Actions.
 5.  **Serverless Logic:** Functions handle API access and form submissions with custom JWT auth.
 
 ## Key Technical Components
-- **Smart Form Logic (`js/form-franchise.js`):** Real-time calculations (BEP, ROI) and data validation.
+- **Smart Form Logic (`js/form-01-*.js` ... `js/form-07-*.js`):** Modular runtime handling calculations, validation, claim workflow, and submit orchestration.
 - **Cloudinary Module:** Automatic image optimization and direct browser uploads.
 - **SEO & Analytics:** Priority sorting and automatic JSON-LD injection for Verified pages.
 

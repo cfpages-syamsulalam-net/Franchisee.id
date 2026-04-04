@@ -46,7 +46,14 @@ Franchisee.id/
 │   ├── build-listing.js     # Generates main listing page
 │   ├── build-details.js     # Generates individual franchise pages
 │   ├── build-sitemap.js     # Generates XML sitemap
-│   ├── form-franchise.js    # Main form logic (validation, calculations)
+│   ├── form-01-state-helpers.js
+│   ├── form-02-claim-workflow.js
+│   ├── form-03-navigation-steps.js
+│   ├── form-04-calculation-city.js
+│   ├── form-05-country-whatsapp.js
+│   ├── form-06-submit-validation.js
+│   ├── form-07-init.js      # Modular form runtime bootstrap
+│   ├── form-franchise.js    # Legacy shim marker (no runtime logic)
 │   └── form-utils.js        # Shared utility functions
 ├── templates/               # HTML templates for SSG engine
 ├── daftar/                  # Registration form pages
@@ -117,6 +124,22 @@ node js/build-sitemap.js
 | `TECHNICAL_INVENTORY.md` | Function/variable inventory - update after logic changes |
 | `franchise-info-form.md` | Form UX specification and conditional logic reference |
 | `AGENTS.md` | Local audit notes and session-specific working rules |
+
+### Multi-Provider Continuity Rule
+- This repository is maintained across multiple AI providers/models when one provider hits usage limits.
+- Every model must follow the same handoff protocol:
+  1. Read `AGENTS.md`, `GEMINI.md`, `KNOWLEDGE.md`, and latest `/.context/session-*.md`.
+  2. Keep conventions aligned (`/json`, `/csv`, and modular form files `js/form-0x-*.js`).
+  3. Log all modifications to `CHANGELOG.md` with timestamp.
+  4. Update `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` after form/function ownership changes.
+
+### Handoff Checklist
+1. Read latest `/.context/session-*.md` first.
+2. Read `AGENTS.md` for local working rules.
+3. Confirm architecture/governance alignment in `GEMINI.md` and `KNOWLEDGE.md`.
+4. Apply edits with current conventions (`/json`, `/csv`, `js/form-0x-*.js`).
+5. Update `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` when symbols/fields change.
+6. Append timestamped `CHANGELOG.md` entry before ending the session.
 
 ### Changelog Format
 Every session must log changes in `CHANGELOG.md`:
@@ -219,7 +242,7 @@ Google Sheets (write-back) + Supabase (analytics)
 ### Validation Commands
 ```bash
 # Check JavaScript syntax (may have EPERM issues in some environments)
-node --check js/form-franchise.js
+node --check js/form-07-init.js
 
 # Verify file integrity after edits
 (Get-Content path/to/file.js).Count  # PowerShell line count
@@ -231,7 +254,7 @@ node --check js/form-franchise.js
 
 1. **`node --check` EPERM**: May fail in restricted sandbox environments due to path-resolution issues. Fall back to source inspection.
 
-2. **Optional Function Guards**: `form-franchise.js` references `window.renderPackageInputs(1)` which may not exist. Always guard optional global calls:
+2. **Optional Function Guards**: Form runtime modules may reference optional globals like `window.renderPackageInputs(1)`. Always guard optional global calls:
    ```javascript
    if (typeof window.renderPackageInputs === 'function') {
        window.renderPackageInputs(1);
@@ -242,9 +265,9 @@ node --check js/form-franchise.js
 
 4. **Large File Edits**: Files like `/daftar/index.html` contain Elementor boilerplate. Use surgical edits to avoid breaking the DOM structure.
 
-5. **Cloudinary Integration**: Direct browser uploads require proper credentials. Upload preview logic is in `form-franchise.js`.
+5. **Cloudinary Integration**: Direct browser uploads require proper credentials. Upload preview logic is handled by modular form runtime (`form-0x`) plus `form-utils.js`.
 
-6. **Claim Search Data Hygiene**: Keep edge-case filtering aligned across `js/build-listing.js`, `functions/get-franchises.js`, and `js/form-franchise.js` (exclude URL/phone/address/legal-entity/contact-label rows).
+6. **Claim Search Data Hygiene**: Keep edge-case filtering aligned across `js/build-listing.js`, `functions/get-franchises.js`, and form modules (`js/form-01-state-helpers.js`, `js/form-02-claim-workflow.js`) (exclude URL/phone/address/legal-entity/contact-label rows).
 
 ---
 
@@ -261,15 +284,14 @@ node --check js/form-franchise.js
 
 ## Quick Reference: Key Functions
 
-### `/js/form-franchise.js`
-- `slugify(text)` - URL-friendly slug generator
-- `fetchUnclaimedBrands()` - Load unclaimed brands (static JSON or API fallback)
-- `buildSearchableClaimBrands(brands)` - Frontend sanitizer/deduper for claim suggestions
-- `window.openTab(tabName)` - Tab switching
-- `window.nextStep(stepIndex)` / `window.prevStep(stepIndex)` - Multi-step navigation
-- `calculateAll()` - BEP/ROI/profit calculations
-- `fillMainFranchisorForm(brand)` - Claim workflow pre-fill
-- `submitToCloudflare(formElement, type)` - Form submission
+### `/js/form-01` ... `/js/form-07` (Modular Form Runtime)
+- `form-01-state-helpers.js` - shared state/constants/helpers + localStorage continuity.
+- `form-02-claim-workflow.js` - claim fetch/search/fill/reset.
+- `form-03-navigation-steps.js` - tab and step navigation.
+- `form-04-calculation-city.js` - BEP/min-capital + city autocomplete.
+- `form-05-country-whatsapp.js` - country dropdown config + emoji fallback + WA normalization.
+- `form-06-submit-validation.js` - live validation + submit pipeline.
+- `form-07-init.js` - runtime bootstrap + restoration order.
 
 ### `/js/build-listing.js`
 - `parseCSVRows(content)` - Quote-aware CSV parser for fallback data

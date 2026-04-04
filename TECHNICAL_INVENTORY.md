@@ -4,34 +4,60 @@ This file serves as a comprehensive record of all functions and key variables ac
 
 ## 1. Directory: `/js` (Client-side & SSG Builders)
 
-### File: `js/form-franchise.js` (v1.29)
-*Main logic for the registration and claiming forms.*
-- `slugify(text)`: Converts brand names to URL-friendly slugs.
-- `fetchUnclaimedBrands()`: Loads unclaimed brands from `/json/unclaimed-brands.json` or Live API fallback.
-- `buildSearchableClaimBrands(brands)`: Sanitizes UNCLAIMED entries for claim autocomplete (filters URL/phone/address/legal-entity/contact-label/category noise, deduplicates display names).
-- `saveClaimModeState(brand)`: Persists active claim context into `localStorage` (`franchise_claim_state`) with expiry metadata.
-- `getClaimModeState()`: Safely reads/parses persisted claim context from `localStorage` and enforces a 24-hour TTL.
-- `clearClaimModeState()`: Clears persisted claim context when claim mode ends.
-- `saveFranchisorDraft(form)`: Persists partial Franchisor form values into `localStorage` (`franchisor_form_draft`) with TTL.
-- `getFranchisorDraft()`: Reads/parses Franchisor draft payload and enforces 72-hour TTL.
-- `restoreFranchisorDraft(form)`: Restores saved Franchisor draft values on page load.
-- `clearFranchisorDraft()`: Clears saved Franchisor draft payload after successful submit.
-- `window.openTab(tabName)`: Switches between Franchisee, Franchisor, and Klaim tabs.
-- `window.nextStep(stepIndex)`: Moves forward in multi-step form.
-- `window.prevStep(stepIndex)`: Moves backward in multi-step form.
-- `window.validateStep(stepIndex)`: Validates current form step before progression.
-- `calculateAll()`: Core business logic for BEP, ROI, and Profit margins.
-- `window.updateMinCapital()`: Calculates minimum investment based on package pricing.
-- `initCityAutocomplete()`: Setup for Indonesian city search.
-- `fillMainFranchisorForm(brand, options)`: Unified workflow - Switches to Franchisor tab, pre-fills brand data + mapping, and persists/restores claim mode context.
-- `window.exitClaimMode()`: Resets claim state and restores normal Franchisor form.
-- `sanitizeCountryCodeItem(item)`: Sanitizes country-code JSON items into safe `{ code, label }` pairs.
-- `applyCountryCodeOptions(list)`: Applies centralized country-code options into all `country_code` dropdowns.
-- `loadCountryCodeOptions()`: Loads `/json/country-codes.json` with fallback defaults.
-- `normalizeCountryCode(rawCountryCode)`: Normalizes country-code input to `+<digits>` with `+62` fallback.
-- `normalizeWhatsappForSubmit(rawWhatsapp, rawCountryCode)`: Normalizes WhatsApp to international format before submit (`+62...` fallback, supports pasted `+` and `00` prefixes).
-- `bindLiveValidation(form)`: Restores live field validation hooks (`blur`/`input`/`change`) so valid/invalid visual states stay responsive.
-- `submitToCloudflare(formElement, type)`: Sends form data to backend (Handles claim type automatically).
+### File: `js/form-01-state-helpers.js`
+*Shared state + helper/sanitization + localStorage persistence layer.*
+- `FF.state`: Shared runtime state (brands cache, step tracker, city list).
+- `FF.constants`: Shared constants (`franchise_claim_state`, `franchisor_form_draft`, default country-code list).
+- `FF.utils.*`: Shared helpers (`slugify`, URL/phone/address/contact/entity filters, clean brand-name normalizer).
+- `FF.buildSearchableClaimBrands(brands)`: Claim-search sanitizer/deduper.
+- `FF.saveClaimModeState/getClaimModeState/clearClaimModeState`: Claim context persistence with TTL.
+- `FF.saveFranchisorDraft/getFranchisorDraft/restoreFranchisorDraft/clearFranchisorDraft`: Draft persistence with TTL.
+
+### File: `js/form-02-claim-workflow.js`
+*Claim-mode fetch/search/fill/reset behavior.*
+- `FF.fetchUnclaimedBrands()`: Loads `/json/unclaimed-brands.json` with API fallback.
+- `FF.initClaimSearchBindings()`: Binds claim search input and suggestion click behavior.
+- `FF.fillMainFranchisorForm(brand, options)`: Switches tab + pre-fills brand data for claim flow.
+- `FF.exitClaimMode()` / `window.exitClaimMode`: Clears claim mode and restores editable form state.
+
+### File: `js/form-03-navigation-steps.js`
+*Tab and step navigation wiring.*
+- `window.openTab(tabName)`: Tab switch + revalidation + lazy claim data fetch.
+- `window.nextStep(stepIndex)`: Step-forward navigation with progress tracking.
+- `window.prevStep(stepIndex)`: Step-back navigation with progress tracking.
+- `window.validateStep(stepIndex)`: Required-field and Rp 0 warning validation.
+
+### File: `js/form-04-calculation-city.js`
+*BEP calculation + minimum-capital + city autocomplete.*
+- `window.updateMinCapital()`: Recomputes minimum package capital and triggers BEP refresh.
+- `FF.loadCitiesData()`: Loads city JSON from local `/json` then remote fallback.
+- `FF.initCityAutocomplete()`: City suggestion rendering and input binding.
+- `FF.initCalculationAndCity()`: Boots calc listeners + city loader.
+
+### File: `js/form-05-country-whatsapp.js`
+*Country-code option loader + emoji fallback + WhatsApp normalization.*
+- `FF.sanitizeCountryCodeItem(item)`: Sanitizes JSON country-code entries.
+- `FF.detectFlagEmojiSupport()`: Canvas-based flag emoji support probe.
+- `FF.stripLeadingFlagEmoji(label)`: Text-only fallback label transformer.
+- `FF.applyCountryCodeOptions(list)`: Renders dropdown options for all `country_code` selects.
+- `FF.loadCountryCodeOptions()`: Loads `/json/country-codes.json` with defaults.
+- `FF.normalizeCountryCode(rawCountryCode)`: Ensures `+<digits>` output with `+62` fallback.
+- `FF.normalizeWhatsappForSubmit(rawWhatsapp, rawCountryCode)`: International WA normalization before submit.
+
+### File: `js/form-06-submit-validation.js`
+*Form validation binding + submit pipeline.*
+- `FF.bindLiveValidation(form)`: Live input/select validation hooks (`blur`/`input`/`change`).
+- `FF.submitToCloudflare(formElement, type)`: Unified submit pipeline (handles claim routing + WA normalization).
+- `FF.initFormSubmission()`: Attaches submit listeners and draft persistence hooks.
+
+### File: `js/form-07-init.js`
+*Bootstrap coordinator for the modular form stack.*
+- DOMContentLoaded orchestrator for claim bindings, calculations/city loader, country-code loader, submit wiring, and state restoration.
+- Re-exposes compatibility globals (`window.fetchUnclaimedBrands`, `window.fillMainFranchisorForm`).
+
+### File: `js/form-franchise.js` (Legacy Shim)
+*Deprecated non-executing compatibility marker.*
+- Contains no runtime logic; preserved only as migration marker to prevent monolith reintroduction.
 
 ### File: `js/form-utils.js` (Restored)
 *Shared utility functions to keep main logic files clean.*
@@ -80,4 +106,4 @@ This file serves as a comprehensive record of all functions and key variables ac
 ---
 ## 3. Logic Safety Audit
 - **Status**: Verified.
-- **Lost logic recovered**: BEP calculations, multi-step progress, and Cloudinary upload preview restoration (refactored into `form-franchise.js` and `form-utils.js`).
+- **Lost logic recovered**: BEP calculations, multi-step progress, and Cloudinary upload preview restoration (refactored into modular `form-0x-*.js` files and `form-utils.js`).

@@ -4,6 +4,102 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 18:03 (Asia/Jakarta)
+### Added
+- `Handoff Checklist` sections in:
+  - `GEMINI.md`
+  - `QWEN.md`
+  with `/.context/session-*.md` explicitly set as step 1.
+
+### Changed
+- None.
+
+### Removed
+- None.
+
+## 2026-04-04 18:00 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `GEMINI.md`:
+  - added explicit multi-provider/model collaboration protocol for cross-AI handoffs.
+  - updated governance references from monolithic `js/form-franchise.js` to modular form runtime (`js/form-01-*.js` ... `js/form-07-*.js`).
+  - added rule that `js/form-franchise.js` is legacy shim only.
+- `QWEN.md`:
+  - updated `/js` directory map to include modular `form-01` ... `form-07` files and legacy-shim status of `form-franchise.js`.
+  - added multi-provider continuity section aligned with project docs/context/changelog protocol.
+  - updated gotchas and quick-reference sections to modular form runtime ownership.
+
+### Removed
+- None.
+
+## 2026-04-04 17:55 (Asia/Jakarta)
+### Added
+- `/.context/session-20260404-1755.md`: new timestamped session summary covering modular form-runtime migration (`form-01` ... `form-07`), script-load rewiring, and current conventions for future sessions.
+
+### Changed
+- None.
+
+### Removed
+- None.
+
+## 2026-04-04 17:52 (Asia/Jakarta)
+### Added
+- New modular form runtime files in flat `/js` namespace (no subfolder):
+  - `js/form-01-state-helpers.js`
+  - `js/form-02-claim-workflow.js`
+  - `js/form-03-navigation-steps.js`
+  - `js/form-04-calculation-city.js`
+  - `js/form-05-country-whatsapp.js`
+  - `js/form-06-submit-validation.js`
+  - `js/form-07-init.js`
+
+### Changed
+- `daftar/index.html`:
+  - replaced monolithic `form-franchise.js` include with ordered modular script includes (`form-01` ... `form-07`).
+  - updated `?dev=1` JS cache-buster to bust all modular script IDs.
+- `js/form-franchise.js`: replaced with a non-executing legacy shim/marker to prevent monolithic logic reintroduction.
+- `AGENTS.md`: updated persistent rules and checked-script list to reflect modular `form-0x` runtime ownership.
+- `KNOWLEDGE.md`: updated architecture/conventions/gotchas from monolithic `form-franchise.js` to modular `form-0x` runtime.
+- `TECHNICAL_INVENTORY.md`: replaced monolithic form section with per-module inventory (`form-01` ... `form-07`) and legacy shim note.
+- `js/symbols_inventory.md`: rewritten to document current modular form runtime ownership and guardrails.
+- `js/technical_comparison.md`: updated analysis/recommendations to reference modular runtime instead of monolithic `form-franchise.js`.
+
+### Removed
+- None.
+
+## 2026-04-04 17:35 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-franchise.js`: added tiny runtime flag-emoji fallback for `country_code` dropdown labels:
+  - `detectFlagEmojiSupport()` checks whether flag emoji render distinctly.
+  - `stripLeadingFlagEmoji()` enables text-only label fallback.
+  - `applyCountryCodeOptions()` now auto-renders labels as emoji+text or text-only based on runtime support.
+- `TECHNICAL_INVENTORY.md`: documented the new country-code emoji fallback helpers.
+- `KNOWLEDGE.md`: documented that flag fallback is now handled automatically at runtime in `js/form-franchise.js`.
+
+### Removed
+- None.
+
+## 2026-04-04 17:32 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `daftar/index.html`: `location_plan` now starts from an explicit empty placeholder option (`Pilih Rencana Lokasi...`) so the answer is not auto-selected.
+- `css/form-franchise/03-form-core.css`: refined focus-guidance styling so row-level focus highlighting and valid/invalid icon states work together (muted non-active rows, highlighted active row) without removing green/red validation feedback.
+- `css/form-franchise/03-form-core.css`: updated `.country-select` font stack to include common emoji fonts for better flag-emoji rendering across browsers/OS.
+- `json/country-codes.json`: switched dropdown labels to flag-emoji + country-initial format (e.g., `🇮🇩 ID +62`).
+- `js/form-franchise.js`: updated default country-code fallback labels to the same flag-emoji + country-initial format for consistency when JSON config is unavailable.
+- `FORM_SCHEMA.md`: updated `location_plan` field note to document empty placeholder default behavior.
+- `KNOWLEDGE.md`: added gotcha note about cross-browser emoji rendering variance and text fallback in country-code labels.
+
+### Removed
+- None.
+
 ## 2026-04-04 12:15 (Asia/Jakarta)
 ### Added
 - `/.context/session-20260404-1215.md`: timestamped summary of this session (country-code/WhatsApp restoration, validation/UI recovery, `/json` + `/csv` consolidation, and lineage context) for cross-session continuity.

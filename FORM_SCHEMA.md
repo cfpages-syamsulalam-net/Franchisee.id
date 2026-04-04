@@ -14,7 +14,7 @@ This file documents every input field for the three registration tabs in `/dafta
 | Email | `email` | Email | Yes | |
 | Minat Kategori | `interest_category`| Select| Yes | F&B, Retail, etc. |
 | Budget Investasi| `budget_range` | Select| Yes | <50jt, 50-100jt, etc. |
-| Rencana Lokasi | `location_plan` | Select| Yes | Sudah ada, Masih cari |
+| Rencana Lokasi | `location_plan` | Select| Yes | Empty placeholder first (`Pilih Rencana Lokasi...`) |
 | Pesan Tambahan | `message` | Textarea| No | |
 
 ## 2. Tab: Franchisor (Pemilik Brand)
