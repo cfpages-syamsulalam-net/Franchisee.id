@@ -4,6 +4,47 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 20:30 (Asia/Jakarta)
+### Added
+- **Name auto title-case formatting** (`window.autoTitleCase`):
+  - Smart capitalization with particle exceptions (bin, binti, van, der, etc.)
+  - Detects and preserves existing titles (Dr, Ir, Hj, Prof)
+  - Applied to: name, brand_name, pic_name, company_name fields
+- **WhatsApp auto-formatting** (`window.formatWhatsAppNumber`):
+  - Converts any format to XXX-XXXX-XXXX pattern
+  - Removes leading zeros, strips non-digits
+  - Validates 9-13 digit requirement
+  - Auto-formats on blur and during validation
+- **Strict email validation**:
+  - Enhanced regex: `/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/`
+  - Rejects invalid formats (missing TLD, spaces, incomplete domains)
+  - Helpful error message with example format
+- **Auto-formatting binder** (`window.bindAutoFormatting`):
+  - Binds blur listeners to name and WhatsApp fields
+  - Called once on DOMContentLoaded via form-07-init.js
+- **Documentation**: `FORM_VALIDATION_FIXES.md` comprehensive guide
+
+### Changed
+- `js/form-utils.js` (243 lines, +78 lines):
+  - Added `autoTitleCase(name)` function
+  - Added `formatWhatsAppNumber(phone)` function
+  - Added `bindAutoFormatting()` function
+  - Enhanced email validation regex in `validateSpecificField()`
+  - Enhanced WhatsApp validation with auto-format on validation failure
+- `js/form-04-calculation-city.js` (146 lines, +5 lines):
+  - Added parent positioning check in `initCityAutocomplete()`
+  - Sets `position: relative` on parent if static (fixes dropdown alignment)
+- `js/form-07-init.js` (41 lines, +1 line):
+  - Added `bindAutoFormatting()` call on DOM ready
+- `css/form-franchise/04-alerts-status.css` (123 lines, +6 lines):
+  - Added `margin-top: 2px` to `.city-suggestions` for visual spacing
+  - Added `.input-col:has(.city-autocomplete) { position: relative; }` fallback
+- `TECHNICAL_INVENTORY.md`: Updated form-utils.js function inventory
+- `KNOWLEDGE.md`: Added auto-formatting behavior to gotchas section
+
+### Removed
+- None.
+
 ## 2026-04-04 20:00 (Asia/Jakarta)
 ### Added
 - None.

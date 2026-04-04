@@ -3,14 +3,125 @@
  * Restored Shared Utilities for Franchise.id Forms
  */
 
+/**
+ * Smart title case for names
+ * Handles exceptions: bin, binti, al, ar, etc.
+ * Preserves existing titles/capitalization
+ */
+window.autoTitleCase = function(name) {
+    if (!name || typeof name !== 'string') return name;
+    
+    // Common titles/particles that should remain lowercase in names
+    const lowercaseParticles = new Set([
+        'bin', 'binti', 'al', 'ar', 'van', 'de', 'der', 'den', 'von', 'zu',
+        'di', 'da', 'del', 'los', 'las', 'y', 'e', 'o'
+    ]);
+    
+    // Check if name contains obvious titles
+    const titlePattern = /\b(dr|drs|drh|ir|h|hj|hj|prof|t Hj|Tn|Ny)\b/gi;
+    const hasTitle = titlePattern.test(name);
+    
+    if (hasTitle) {
+        // Capitalize first letter of each word, preserve existing caps
+        return name.replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+    
+    // Split name into words
+    const words = name.split(/\s+/);
+    const result = words.map((word, index) => {
+        const lowerWord = word.toLowerCase();
+        
+        // Keep particle lowercase (except first word)
+        if (index > 0 && lowercaseParticles.has(lowerWord)) {
+            return lowerWord;
+        }
+        
+        // Capitalize first letter
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    });
+    
+    return result.join(' ');
+};
+
+/**
+ * Format phone number to Indonesian style: 812-3456-7890
+ * Accepts: 812345678900123 or any format
+ */
+window.formatWhatsAppNumber = function(phone) {
+    if (!phone) return '';
+    
+    // Strip all non-digits
+    let digits = phone.toString().replace(/\D/g, '');
+    
+    // Remove leading zero if present
+    if (digits.startsWith('0')) {
+        digits = digits.substring(1);
+    }
+    
+    // Validate length
+    if (digits.length < 9 || digits.length > 13) {
+        return digits; // Return as-is if invalid length
+    }
+    
+    // Format: XXX-XXXX-XXXX (adjustable based on length)
+    if (digits.length <= 4) {
+        return digits;
+    } else if (digits.length <= 8) {
+        return digits.slice(0, 3) + '-' + digits.slice(3);
+    } else if (digits.length <= 11) {
+        return digits.slice(0, 3) + '-' + digits.slice(3, 7) + '-' + digits.slice(7);
+    } else {
+        return digits.slice(0, 3) + '-' + digits.slice(3, 7) + '-' + digits.slice(7, 11);
+    }
+};
+
 window.scrollToTopForm = function() {
-    const formWrapper = document.querySelector('.registration-tabs-wrapper'); 
+    const formWrapper = document.querySelector('.registration-tabs-wrapper');
     if (!formWrapper) return;
-    const headerOffset = 140;		   
+    const headerOffset = 140;
     const elementPosition = formWrapper.getBoundingClientRect().top;
     const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
     window.scrollTo({ top: offsetPosition, behavior: "smooth" });
 }
+
+/**
+ * Bind auto-formatting for specific fields
+ * Should be called once on DOM ready
+ */
+window.bindAutoFormatting = function() {
+    // Auto title-case name fields on blur
+    document.querySelectorAll('input[name="name"], input[name="brand_name"], input[name="pic_name"], input[name="company_name"]').forEach((input) => {
+        input.addEventListener('blur', function() {
+            if (this.value && this.value.trim() !== '') {
+                const formatted = window.autoTitleCase(this.value.trim());
+                if (formatted !== this.value) {
+                    this.value = formatted;
+                    // Trigger validation to update visual state
+                    if (typeof window.validateSpecificField === 'function') {
+                        window.validateSpecificField(this);
+                    }
+                }
+            }
+        });
+    });
+
+    // Auto-format WhatsApp numbers on blur
+    document.querySelectorAll('input[name="whatsapp"]').forEach((input) => {
+        input.addEventListener('blur', function() {
+            if (this.value && this.value.trim() !== '') {
+                const raw = this.value.trim();
+                const formatted = window.formatWhatsAppNumber(raw);
+                if (formatted !== raw) {
+                    this.value = formatted;
+                    // Trigger validation to update visual state
+                    if (typeof window.validateSpecificField === 'function') {
+                        window.validateSpecificField(this);
+                    }
+                }
+            }
+        });
+    });
+};
 
 window.updateProgressBar = function(step, totalSteps) {
     document.querySelectorAll('.step-item').forEach(item => {
@@ -76,12 +187,12 @@ window.validateSpecificField = function(field) {
     if (!field.hasAttribute('required') && val === '') {
         field.classList.remove('is-valid', 'is-invalid');
         window.removeErrorMsg(field);
-        return true; 
+        return true;
     }
 
     if (field.hasAttribute('required') && val === '') {
         isValid = false; errorMsg = "Wajib diisi.";
-    } 
+    }
     else if (val !== '') {
         if (name === 'nib_number') {
             if (!/^\d+$/.test(val) || val.length !== 13) { isValid = false; errorMsg = "Harus 13 digit angka."; }
@@ -95,11 +206,27 @@ window.validateSpecificField = function(field) {
         else if (['brand_name', 'company_name', 'pic_name', 'name'].includes(name)) {
             if (val.length < 3) { isValid = false; errorMsg = "Min. 3 karakter."; }
         }
-        else if (field.type === 'email') {
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { isValid = false; errorMsg = "Format email salah."; }
+        else if (field.type === 'email' || name === 'email' || name === 'email_contact') {
+            // Strict email validation
+            const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(val)) {
+                isValid = false;
+                errorMsg = "Format email salah. Contoh: nama@domain.com";
+            }
         }
         else if (field.classList.contains('phone-format') || name === 'whatsapp') {
-            if (val.replace(/\D/g, '').length < 9) { isValid = false; errorMsg = "Nomor WhatsApp tidak valid."; }
+            // WhatsApp validation and auto-formatting
+            const digits = val.replace(/\D/g, '');
+            if (digits.length < 9 || digits.length > 13) {
+                isValid = false;
+                errorMsg = "Nomor WA harus 9-13 digit. Contoh: 812-3456-7890";
+            } else if (!val.includes('-') && digits.length >= 9) {
+                // Auto-format: add dashes if user typed without them
+                const formatted = window.formatWhatsAppNumber(digits);
+                if (formatted !== val) {
+                    field.value = formatted;
+                }
+            }
         }
     }
 

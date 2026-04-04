@@ -85,3 +85,8 @@ This file gives persistent project context: goals, commands, architecture, conve
 - Workflow trigger policy:
   - Primary trigger: `repository_dispatch` from Google Sheets update automation.
   - Scheduled polling fallback exists, but actual build should run only when sheet hash changes.
+- **Auto-formatting behavior**:
+  - Name fields auto title-case on blur (e.g., "john doe" → "John Doe")
+  - WhatsApp fields auto-format on blur (e.g., "081234567890" → "812-3456-7890")
+  - City autocomplete dropdown requires `position: relative` on parent container
+  - Email validation uses strict regex (requires valid TLD, no spaces)

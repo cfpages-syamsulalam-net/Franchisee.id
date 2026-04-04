@@ -74,6 +74,9 @@ This file serves as a comprehensive record of all functions and key variables ac
 
 ### File: `js/form-utils.js` (Restored)
 *Shared utility functions to keep main logic files clean.*
+- `window.autoTitleCase(name)`: Smart title-case formatting for names with particle exceptions.
+- `window.formatWhatsAppNumber(phone)`: Formats phone numbers to XXX-XXXX-XXXX pattern.
+- `window.bindAutoFormatting()`: Binds auto-formatting listeners to name and WhatsApp fields on blur.
 - `window.scrollToTopForm()`: Smooth scrolls to form start.
 - `window.updateProgressBar(step, totalSteps)`: Updates visual progress indicator.
 - `window.formatRupiah(angka)`: Formats numbers to Indonesian IDR format.
@@ -81,7 +84,7 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `window.flashHighlight(element)`: Visual feedback for auto-calculated fields.
 - `window.showErrorMsg(inputField, msg)`: Displays validation errors.
 - `window.removeErrorMsg(inputField)`: Clears validation errors.
-- `window.validateSpecificField(field)`: Detailed regex-based field validation.
+- `window.validateSpecificField(field)`: Detailed regex-based field validation (enhanced email, auto-format WhatsApp).
 
 ### File: `js/build-listing.js`
 *SSG Builder for the main directory page.*

@@ -90,6 +90,11 @@
             if (input.dataset.acInitialized) return;
             input.dataset.acInitialized = 'true';
 
+            // Ensure parent has relative positioning for dropdown
+            if (getComputedStyle(input.closest('.input-col') || input.parentElement).position === 'static') {
+                (input.closest('.input-col') || input.parentElement).style.position = 'relative';
+            }
+
             const listContainer = document.createElement('div');
             listContainer.className = 'city-suggestions';
             input.parentNode.appendChild(listContainer);

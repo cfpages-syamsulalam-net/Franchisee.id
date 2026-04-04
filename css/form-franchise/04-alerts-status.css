@@ -18,6 +18,12 @@
     overflow-y: auto;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     display: none; /* Default hidden */
+    margin-top: 2px; /* Small gap from input */
+}
+
+/* Ensure input container allows absolute positioning */
+.input-col:has(.city-autocomplete) {
+    position: relative;
 }
 
 .city-suggestion-item {

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof FF.initCalculationAndCity === 'function') FF.initCalculationAndCity();
     if (typeof FF.loadCountryCodeOptions === 'function') FF.loadCountryCodeOptions();
     if (typeof FF.initFormSubmission === 'function') FF.initFormSubmission();
+    if (typeof window.bindAutoFormatting === 'function') window.bindAutoFormatting();
 
     const savedStep = localStorage.getItem('franchise_form_step');
     if (savedStep && parseInt(savedStep, 10) > 1) {
