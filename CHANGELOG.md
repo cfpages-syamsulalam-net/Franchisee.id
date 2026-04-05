@@ -4,6 +4,21 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 23:00 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `css/form-franchise/06-claim-autocomplete.css`:
+  - Moved FAB from left:20px/bottom:20px to right:12px/bottom:50px (above debug toggle)
+  - Reduced FAB size from 56px to 36px for better stacking
+  - Menu now opens upward from right-aligned position
+- `js/form-09-test-data-generator.js`:
+  - Moved toast notification to right:12px/bottom:100px (above FAB)
+
+### Removed
+- None.
+
 ## 2026-04-04 22:45 (Asia/Jakarta)
 ### Added
 - None.

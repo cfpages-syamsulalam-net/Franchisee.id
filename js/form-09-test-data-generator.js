@@ -308,16 +308,16 @@
             toast.textContent = message;
             toast.style.cssText = `
                 position: fixed;
-                bottom: 90px;
-                left: 20px;
+                bottom: 100px;
+                right: 12px;
                 background: #7c3aed;
                 color: white;
-                padding: 12px 20px;
+                padding: 10px 16px;
                 border-radius: 8px;
-                font-size: 14px;
+                font-size: 13px;
                 z-index: 9998;
                 box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-                max-width: 300px;
+                max-width: 280px;
                 transition: all 0.3s ease;
             `;
             document.body.appendChild(toast);

@@ -15,8 +15,8 @@
    ========================================== */
 #dev-test-generator-fab {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
+    bottom: 50px;
+    right: 12px;
     z-index: 9999;
     display: none;
 }
@@ -26,15 +26,15 @@
 }
 
 .dev-fab-button {
-    width: 56px;
-    height: 56px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: #7c3aed;
     color: white;
     border: none;
-    font-size: 24px;
+    font-size: 16px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -43,13 +43,13 @@
 
 .dev-fab-button:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.4);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
 }
 
 .dev-fab-menu {
     position: absolute;
-    bottom: 70px;
-    left: 0;
+    bottom: 45px;
+    right: 0;
     background: white;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
