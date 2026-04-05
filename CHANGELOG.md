@@ -4,6 +4,37 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-05 00:15 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-09-test-data-generator.js`:
+  - Converted ALL FAB styles from CSS classes to **inline styles** (no CSS dependency)
+  - Container: `position:fixed; bottom:80px; left:20px; z-index:100000`
+  - Button: Purple circle with white border, fully styled inline
+  - Menu: White dropdown with shadow, fully styled inline
+  - Bypasses dev mode CSS cache busting issues entirely
+- `CHANGELOG.md`: Logged inline styling fix
+
+### Removed
+- None.
+
+## 2026-04-05 00:00 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-09-test-data-generator.js`:
+  - Changed FAB placement from `document.body.appendChild()` to `insertBefore(debugToggle.nextSibling)`
+  - FAB now inserted right after debug-mode-toggle in DOM for better visibility
+  - Restored all event bindings that were accidentally removed
+  - Removed inline z-index override (relying on CSS positioning instead)
+- `CHANGELOG.md`: Logged placement fix
+
+### Removed
+- None.
+
 ## 2026-04-04 23:50 (Asia/Jakarta)
 ### Added
 - None.

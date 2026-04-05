@@ -337,17 +337,47 @@
             
             const fabContainer = document.createElement('div');
             fabContainer.id = 'dev-test-generator-fab';
-            fabContainer.style.cssText = 'display:block !important; z-index:100000 !important;'; // Force visibility
+            fabContainer.style.cssText = 'display:block !important; position:fixed; bottom:80px; left:20px; z-index:100000;';
             fabContainer.innerHTML = `
-                <button id="dev-generator-toggle" class="dev-fab-button" title="Test Data Generator">⚡</button>
-                <div id="dev-generator-menu" class="dev-fab-menu">
+                <button id="dev-generator-toggle" title="Test Data Generator" style="
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: #7c3aed;
+                    color: white;
+                    border: 2px solid white;
+                    font-size: 18px;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">⚡</button>
+                <div id="dev-generator-menu" style="
+                    position: absolute;
+                    bottom: 50px;
+                    left: 0;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+                    padding: 8px 0;
+                    min-width: 260px;
+                    display: none;
+                ">
                     <button id="dev-fill-franchisee">🚀 Fill Franchisee Form</button>
                     <button id="dev-fill-franchisor">🏢 Fill Franchisor Form</button>
                     <button id="dev-fill-claim">🔍 Fill Claim + Create UNCLAIMED</button>
                     <button id="dev-clear-test-data" style="border-top: 1px solid #eee; color: #dc3545;">🗑️ Clear All Test Data</button>
                 </div>
             `;
-            document.body.appendChild(fabContainer);
+            
+            // Insert right after debug-mode-toggle
+            const debugToggle = document.getElementById('debug-mode-toggle');
+            if (debugToggle && debugToggle.parentNode) {
+                debugToggle.parentNode.insertBefore(fabContainer, debugToggle.nextSibling);
+            } else {
+                document.body.appendChild(fabContainer);
+            }
             
             // Bind events
             const toggle = document.getElementById('dev-generator-toggle');
