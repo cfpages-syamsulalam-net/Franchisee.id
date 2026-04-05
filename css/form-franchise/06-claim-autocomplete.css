@@ -18,11 +18,7 @@
     bottom: 80px;
     left: 20px;
     z-index: 9999;
-    display: none;
-}
-
-#dev-test-generator-fab.active {
-    display: block;
+    /* display controlled by JS inline style */
 }
 
 .dev-fab-button {

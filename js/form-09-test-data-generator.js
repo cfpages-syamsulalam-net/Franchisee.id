@@ -337,7 +337,7 @@
             
             const fabContainer = document.createElement('div');
             fabContainer.id = 'dev-test-generator-fab';
-            fabContainer.className = 'active'; // Make it visible!
+            fabContainer.style.cssText = 'display:block !important; z-index:100000 !important;'; // Force visibility
             fabContainer.innerHTML = `
                 <button id="dev-generator-toggle" class="dev-fab-button" title="Test Data Generator">⚡</button>
                 <div id="dev-generator-menu" class="dev-fab-menu">
@@ -394,13 +394,18 @@
             }
             console.log('[TestData] Initializing test data generator...');
             this.createFAB();
+            console.log('[TestData] FAB created successfully! Look for ⚡ button at bottom-left.');
         }
     };
 
     // Auto-init on DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => window.TestDataGenerator.init());
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('[TestData] DOM loaded, checking dev mode...');
+            window.TestDataGenerator.init();
+        });
     } else {
+        console.log('[TestData] DOM already ready, checking dev mode...');
         window.TestDataGenerator.init();
     }
 })(window);

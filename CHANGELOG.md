@@ -4,6 +4,35 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 23:50 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-09-test-data-generator.js`:
+  - Added `z-index: 100000 !important;` to FAB container to prevent any overlap
+  - Added detailed console logs for debugging script initialization
+- `CHANGELOG.md`: Logged z-index fix
+
+### Removed
+- None.
+
+## 2026-04-04 23:45 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-09-test-data-generator.js`:
+  - Changed FAB visibility from CSS class to inline `display:block !important;` style
+  - Added console log to confirm FAB creation: "[TestData] FAB created successfully!"
+  - No longer relies on `.active` class (which was not triggering on refresh)
+- `css/form-franchise/06-claim-autocomplete.css`:
+  - Removed `display: none` from `#dev-test-generator-fab`
+  - Removed `.active` class override (now controlled by JS inline style)
+
+### Removed
+- None.
+
 ## 2026-04-04 23:30 (Asia/Jakarta)
 ### Added
 - None.
