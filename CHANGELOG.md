@@ -4,6 +4,28 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-05 02:15 (Asia/Jakarta)
+### Added
+- **Auto-uppercase PT/CV in company name** (`js/form-utils.js`):
+  - Added `company_name` blur listener to auto-format `pt` → `PT`, `cv` → `CV`, `ud` → `UD`
+  - Visual flash feedback when formatting applied
+  - Regex pattern: `/\b(pt|cv|ud)\b/gi` catches lowercase anywhere in name
+- **Submit-time normalization** (`js/form-06-submit-validation.js`):
+  - Added company name uppercase normalization before sending to backend
+  - Ensures data is properly formatted even if blur handler is bypassed
+
+### Changed
+- `js/form-09-test-data-generator.js` (466 lines, +5 lines):
+  - Fixed `category` values: changed from `['fb', 'retail', 'service', 'edu', 'beauty']` to `['Makanan & Minuman', 'Retail & Minimarket', 'Jasa & Layanan', 'Otomotif', 'Kesehatan & Kecantikan']` (matching HTML `<select>` options)
+  - Added `formatCompanyName()` helper to ensure generated data has uppercase PT/CV
+  - Category now fills correctly, fixing validation blocking step navigation
+- `daftar/index.html` (1254 lines, +1 line):
+  - Added placeholder to `company_name` input: "Contoh: PT. Kopi Maju Jaya"
+  - Guides users to use proper format with uppercase PT/CV
+
+### Removed
+- None.
+
 ## 2026-04-05 02:00 (Asia/Jakarta)
 ### Added
 - **Section titles for Franchisee form** (`daftar/index.html`):

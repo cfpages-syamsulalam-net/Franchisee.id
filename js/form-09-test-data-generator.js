@@ -71,6 +71,11 @@
             return 'PT ' + this.generateBrandName();
         },
 
+        formatCompanyName: function(name) {
+            // Ensure PT/CV/UD is uppercase
+            return name.replace(/\b(pt|cv|ud)\b/gi, (match) => match.toUpperCase());
+        },
+
         generateNIB: function() {
             let nib = '';
             for (let i = 0; i < 13; i++) {
@@ -188,7 +193,7 @@
                 // Step 1: Identitas & Legalitas
                 brand_name: brandName,
                 company_name: this.generateCompanyName(),
-                category: this.randomChoice(['fb', 'retail', 'service', 'edu', 'beauty']),
+                category: this.randomChoice(['Makanan & Minuman', 'Retail & Minimarket', 'Jasa & Layanan', 'Otomotif', 'Kesehatan & Kecantikan']),
                 year_established: String(this.randomRange(2015, 2024)),
                 haki_status: 'registered',
                 haki_number: 'IDM000' + this.randomRange(100, 999),

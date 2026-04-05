@@ -89,8 +89,35 @@ window.scrollToTopForm = function() {
  * Should be called once on DOM ready
  */
 window.bindAutoFormatting = function() {
+    // Auto uppercase PT/CV in company name
+    const companyNameInput = document.querySelector('input[name="company_name"]');
+    if (companyNameInput) {
+        companyNameInput.addEventListener('blur', function() {
+            if (this.value && this.value.trim() !== '') {
+                const original = this.value.trim();
+                // Uppercase PT, CV, UD at start of company name
+                const formatted = original.replace(/\b(pt|cv|ud)\b/gi, (match) => match.toUpperCase());
+
+                if (formatted !== original) {
+                    this.value = formatted;
+                    console.log('[AutoFormat] Company name formatted:', original, '→', formatted);
+
+                    // Visual feedback: flash highlight
+                    if (typeof window.flashHighlight === 'function') {
+                        window.flashHighlight(this);
+                    }
+
+                    // Trigger validation to update visual state
+                    if (typeof window.validateSpecificField === 'function') {
+                        window.validateSpecificField(this);
+                    }
+                }
+            }
+        });
+    }
+
     // Auto title-case name fields on blur
-    document.querySelectorAll('input[name="name"], input[name="brand_name"], input[name="pic_name"], input[name="company_name"]').forEach((input) => {
+    document.querySelectorAll('input[name="name"], input[name="brand_name"], input[name="pic_name"]').forEach((input) => {
         input.addEventListener('blur', function() {
             if (this.value && this.value.trim() !== '') {
                 const original = this.value.trim();

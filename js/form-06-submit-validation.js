@@ -105,8 +105,14 @@
             const data = Object.fromEntries(formData.entries());
             data.form_type = type;
 
+            // Normalize WhatsApp number
             if (Object.prototype.hasOwnProperty.call(data, 'whatsapp')) {
                 data.whatsapp = FF.normalizeWhatsappForSubmit(data.whatsapp, data.country_code);
+            }
+
+            // Uppercase PT/CV/UD in company name
+            if (Object.prototype.hasOwnProperty.call(data, 'company_name') && data.company_name) {
+                data.company_name = data.company_name.replace(/\b(pt|cv|ud)\b/gi, (match) => match.toUpperCase());
             }
 
             if (data.unclaimed_id) {
