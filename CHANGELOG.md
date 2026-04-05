@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-05 01:30 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-09-test-data-generator.js` (461 lines, +6 lines):
+  - Removed random suffix from `generateCity()` - now returns only valid cities from `data-kota-id.json`
+  - Added 40+ valid Indonesian cities matching the remote JSON dataset
+  - Added console logging for city generation debugging
+  - Generated cities now pass autocomplete validation (exact match required)
+
+### Removed
+- None.
+
 ## 2026-04-05 01:15 (Asia/Jakarta)
 ### Added
 - None.

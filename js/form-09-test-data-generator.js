@@ -35,15 +35,21 @@
         },
 
         generateCity: function() {
+            // Valid Indonesian cities from data-kota-id.json
             const cities = [
-                'Jakarta Selatan', 'Jakarta Utara', 'Jakarta Barat', 'Jakarta Timur', 'Jakarta Pusat',
-                'Surabaya', 'Bandung', 'Semarang', 'Medan', 'Makassar',
+                'Surabaya', 'Malang', 'Bandung', 'Semarang', 'Medan', 'Makassar',
                 'Yogyakarta', 'Denpasar', 'Palembang', 'Tangerang', 'Bekasi',
-                'Depok', 'Bogor', 'Malang', 'Padang', 'Pekanbaru',
-                'Manado', 'Balikpapan', 'Batam', 'Samarinda', 'Bandar Lampung'
+                'Depok', 'Bogor', 'Padang', 'Pekanbaru', 'Manado', 'Balikpapan',
+                'Batam', 'Samarinda', 'Bandar Lampung', 'Jakarta Selatan',
+                'Jakarta Utara', 'Jakarta Barat', 'Jakarta Timur', 'Jakarta Pusat',
+                'Pontianak', 'Banjarmasin', 'Palu', 'Kendari', 'Manado',
+                'Ambon', 'Jayapura', 'Sorong', 'Mataram', 'Kupang',
+                'Serang', 'Cilegon', 'Tangerang Selatan', 'Bandar Lampung',
+                'Banda Aceh', 'Dumai', 'Pekanbaru', 'Jambi', 'Bengkulu'
             ];
-            const suffix = Math.floor(Math.random() * 999) + 1;
-            return this.randomChoice(cities) + ' ' + suffix;
+            const selected = this.randomChoice(cities);
+            console.log('[TestData] Generated city:', selected);
+            return selected;
         },
 
         generateBrandName: function() {
