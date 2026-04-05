@@ -4,6 +4,24 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-05 00:30 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `daftar/index.html`:
+  - Removed `?v=2` cache bust from form-09 script tag (existing dev mode cache bust works fine)
+- `js/form-09-test-data-generator.js`:
+  - Matched FAB button styling to debug toggle exactly (30x30px, purple bg, same shadow)
+  - Position: `left:12px; bottom:12px` (mirrored from debug toggle right:12px)
+  - Added hover effect (opacity 0.9 → 1.0) matching debug toggle behavior
+  - Toast notification: `left:12px; bottom:60px` (above FAB)
+  - Menu opens above button: `bottom:40px; left:0`
+- `CHANGELOG.md`: Logged styling and positioning updates
+
+### Removed
+- None.
+
 ## 2026-04-05 00:15 (Asia/Jakarta)
 ### Added
 - None.

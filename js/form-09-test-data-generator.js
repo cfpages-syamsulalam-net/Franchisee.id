@@ -308,14 +308,14 @@
             toast.textContent = message;
             toast.style.cssText = `
                 position: fixed;
-                bottom: 130px;
-                left: 20px;
+                bottom: 60px;
+                left: 12px;
                 background: #7c3aed;
                 color: white;
                 padding: 10px 16px;
                 border-radius: 8px;
                 font-size: 13px;
-                z-index: 9998;
+                z-index: 99999;
                 box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
                 max-width: 280px;
                 transition: all 0.3s ease;
@@ -337,25 +337,29 @@
             
             const fabContainer = document.createElement('div');
             fabContainer.id = 'dev-test-generator-fab';
-            fabContainer.style.cssText = 'display:block !important; position:fixed; bottom:80px; left:20px; z-index:100000;';
+            fabContainer.style.cssText = 'display:block !important; position:fixed; bottom:12px; left:12px; z-index:100000;';
             fabContainer.innerHTML = `
                 <button id="dev-generator-toggle" title="Test Data Generator" style="
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    background: #7c3aed;
-                    color: white;
-                    border: 2px solid white;
-                    font-size: 18px;
-                    cursor: pointer;
-                    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
+                    display:inline-flex;
+                    align-items:center;
+                    justify-content:center;
+                    width:30px;
+                    height:30px;
+                    border-radius:50%;
+                    background:#7c3aed;
+                    color:#fff;
+                    border:none;
+                    text-decoration:none;
+                    font-size:16px;
+                    opacity:0.9;
+                    box-shadow:0 2px 8px rgba(0,0,0,0.2);
+                    cursor:pointer;
+                    padding:0;
+                    margin:0;
                 ">⚡</button>
                 <div id="dev-generator-menu" style="
                     position: absolute;
-                    bottom: 50px;
+                    bottom: 40px;
                     left: 0;
                     background: white;
                     border-radius: 8px;
@@ -383,8 +387,17 @@
             const toggle = document.getElementById('dev-generator-toggle');
             const menu = document.getElementById('dev-generator-menu');
             
+            toggle.addEventListener('mouseenter', () => {
+                toggle.style.opacity = '1';
+            });
+            
+            toggle.addEventListener('mouseleave', () => {
+                toggle.style.opacity = '0.9';
+            });
+            
             toggle.addEventListener('click', () => {
                 menu.classList.toggle('active');
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
             });
             
             document.getElementById('dev-fill-franchisee').addEventListener('click', () => {
