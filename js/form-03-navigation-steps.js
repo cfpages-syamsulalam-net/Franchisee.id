@@ -36,13 +36,27 @@
     };
 
     window.nextStep = function (stepIndex) {
-        if (!window.validateStep(stepIndex)) return;
+        console.log('[Navigation] nextStep called with stepIndex:', stepIndex);
+        console.log('[Navigation] Current state.currentStep:', S.currentStep);
+        
+        if (!window.validateStep(stepIndex)) {
+            console.warn('[Navigation] Validation failed, not proceeding to next step');
+            return;
+        }
+        
         const currentEl = document.getElementById('step-' + stepIndex);
         if (currentEl) currentEl.classList.remove('active');
 
         S.currentStep = stepIndex + 1;
+        console.log('[Navigation] Moving to step', S.currentStep);
+        
         const nextEl = document.getElementById('step-' + S.currentStep);
-        if (nextEl) nextEl.classList.add('active');
+        if (nextEl) {
+            nextEl.classList.add('active');
+            console.log('[Navigation] Step', S.currentStep, 'is now visible');
+        } else {
+            console.error('[Navigation] Step', S.currentStep, 'element not found!');
+        }
 
         window.updateProgressBar(S.currentStep, S.totalSteps);
         localStorage.setItem('franchise_form_step', String(S.currentStep));
@@ -67,18 +81,31 @@
         if (urlParams.get('mode') === 'preview') return true;
 
         const currentStepDiv = document.getElementById('step-' + stepIndex);
-        if (!currentStepDiv) return true;
+        if (!currentStepDiv) {
+            console.error('[Navigation] Step', stepIndex, 'not found!');
+            return true;
+        }
 
         const inputs = currentStepDiv.querySelectorAll('input[required], select[required], textarea[required]');
         let isValid = true;
+        const invalidFields = [];
 
         inputs.forEach((input) => {
             if (!input.checkValidity()) {
                 input.reportValidity();
                 isValid = false;
                 input.classList.add('is-invalid');
+                invalidFields.push(input.name || input.id || 'unknown');
+                console.warn('[Navigation] Invalid field:', input.name || input.id, 'Value:', input.value);
             }
         });
+
+        if (!isValid) {
+            console.error('[Navigation] Validation failed for step', stepIndex, '- Invalid fields:', invalidFields);
+            return false;
+        }
+
+        console.log('[Navigation] Step', stepIndex, 'validation passed!');
 
         if (isValid && stepIndex === 2) {
             const elCapex = document.getElementById('fee_capex');

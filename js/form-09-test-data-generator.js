@@ -186,50 +186,34 @@
         },
 
         fillFranchisorForm: function() {
-            console.log('[TestData] Filling Franchisor form...');
-            
+            console.log('[TestData] Filling Franchisor form (Step 1 only)...');
+
+            // ONLY fill Step 1 data - let user navigate through other steps manually
+            // This prevents state confusion with step validation
             const brandName = this.generateBrandName();
-            const data = {
-                // Step 1: Identitas & Legalitas
+            const step1Data = {
                 brand_name: brandName,
-                company_name: this.generateCompanyName(),
+                company_name: this.formatCompanyName(this.generateCompanyName()),
                 category: this.randomChoice(['Makanan & Minuman', 'Retail & Minimarket', 'Jasa & Layanan', 'Otomotif', 'Kesehatan & Kecantikan']),
                 year_established: String(this.randomRange(2015, 2024)),
+                // HAKI & NIB fields
                 haki_status: 'registered',
                 haki_number: 'IDM000' + this.randomRange(100, 999),
-                nib_number: this.generateNIB(),
-                
-                // Step 2: Konsep & Biaya
-                outlet_type: this.randomChoice(['A', 'B', 'C', 'D']),
-                location_requirement: '3x4 meter',
-                rent_cost: '1000000',
-                fee_license: '5000000',
-                fee_capex: '15000000',
-                fee_construction: '10000000',
-                net_profit_percent: '30',
-                royalty_percent: '5',
-                royalty_basis: 'omzet',
-                
-                // Step 3: Profil Marketing
-                short_desc: 'Test franchise ' + this.randomRange(1, 999),
-                full_desc: 'Auto-generated test data for validation testing.',
-                
-                // Step 4: Media & Visual
-                logo_url: 'https://res.cloudinary.com/test/logo.png',
-                cover_url: 'https://res.cloudinary.com/test/cover.jpg',
-                
-                // Step 5: Kontak
-                pic_name: this.generateName(),
-                country_code: '+62',
-                whatsapp: this.generatePhone(),
-                email_contact: this.generateEmail(),
-                website_url: 'https://example.com',
-                instagram_url: '@test_' + this.randomRange(1, 999)
+                nib_number: this.generateNIB()
             };
+
+            this.fillFormFields(step1Data);
             
-            this.fillFormFields(data);
+            // Trigger HAKI radio change to show haki_number field
+            const hakiRadio = document.querySelector('input[name="haki_status"][value="registered"]');
+            if (hakiRadio) {
+                hakiRadio.checked = true;
+                hakiRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
             this.markFormAsTestData('franchiseListingForm');
-            this.showToast('✅ Franchisor form filled (all 5 steps)! Navigate and submit.');
+            console.log('[TestData] Step 1 filled (including HAKI & NIB). Click LANJUT to proceed to Step 2.');
+            this.showToast('✅ Franchisor Step 1 filled! Click LANJUT to continue.');
         },
 
         fillClaimForm: async function() {

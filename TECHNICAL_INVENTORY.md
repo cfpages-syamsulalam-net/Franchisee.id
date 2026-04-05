@@ -21,11 +21,11 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `FF.exitClaimMode()` / `window.exitClaimMode`: Clears claim mode and restores editable form state.
 
 ### File: `js/form-03-navigation-steps.js`
-*Tab and step navigation wiring.*
+*Tab and step navigation wiring + debug logging.*
 - `window.openTab(tabName)`: Tab switch + revalidation + lazy claim data fetch.
-- `window.nextStep(stepIndex)`: Step-forward navigation with progress tracking.
+- `window.nextStep(stepIndex)`: Step-forward navigation with progress tracking + **detailed console logging** (step index, state.currentStep, validation result, target visibility).
 - `window.prevStep(stepIndex)`: Step-back navigation with progress tracking.
-- `window.validateStep(stepIndex)`: Required-field and Rp 0 warning validation.
+- `window.validateStep(stepIndex)`: Required-field and Rp 0 warning validation + **debug output** (invalid field names, values, validation pass/fail status).
 
 ### File: `js/form-04-calculation-city.js`
 *BEP calculation + minimum-capital + city autocomplete.*
@@ -67,6 +67,18 @@ This file serves as a comprehensive record of all functions and key variables ac
 - `validateFranchiseeStep(stepIndex)`: Per-step required field validation.
 - `updateFranchiseeProgressBar()`: Updates step indicators and progress bar.
 - `restoreFranchiseeStep()`: Restores saved step from localStorage on page load.
+
+### File: `js/form-09-test-data-generator.js`
+*Dev mode test data generator with FAB UI (visible only when `?dev=1`).*
+- `window.TestDataGenerator`: Main namespace.
+- `isDevMode()`: Checks if `?dev=1` in URL.
+- Data generators: `generateName()`, `generateEmail()`, `generatePhone()`, `generateCity()` (valid cities only), `generateBrandName()`, `generateCompanyName()`, `formatCompanyName()`, `generateNIB()`.
+- Form fillers: `fillFranchiseeForm()` (2-step), `fillFranchisorForm()` (Step 1 only), `fillClaimForm()` (async).
+- `fillFormFields(data)`: Generic field filler for text, select, radio, checkbox.
+- `markFormAsTestData(formId)`: Adds `is_test_data=TRUE` hidden input.
+- `clearAllTestData()`: Deletes all test data via backend endpoint.
+- UI: `createFAB()`, `showToast()`.
+- **Important**: Franchisor form filler now only fills Step 1 data to prevent state confusion.
 
 ### File: `js/form-franchise.js` (Legacy Shim)
 *Deprecated non-executing compatibility marker.*

@@ -4,6 +4,73 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-05 02:45 (Asia/Jakarta)
+### Added
+- **HAKI & NIB fields RESTORED** to Franchisor Step 1 (`daftar/index.html`):
+  - `haki_status` (Radio, Required): Terdaftar, Masih Proses, Belum Daftar
+  - `haki_number` (Text, Conditional): Shown when HAKI status is Registered/Process
+  - `nib_number` (Text, Optional): 13 digit NIB with helper text
+  - Conditional visibility: HAKI number field shows/hides based on radio selection
+- **HAKI toggle logic** (`js/form-07-init.js`):
+  - Added change event listeners to `haki_status` radios
+  - Shows `#haki_number_wrapper` when value is "registered" or "process"
+  - Hides and clears `haki_number` when value is "none"
+- **Test data generator updated** (`js/form-09-test-data-generator.js`):
+  - Now fills `haki_status`, `haki_number`, `nib_number` in Step 1
+  - Triggers HAKI radio change event to show conditional field
+- **FORM_PRESERVATION_MANDATE.md** (NEW, 142 lines):
+  - Critical binding constraint document for all AI agents
+  - Lists ALL historical form fields that MUST be preserved
+  - Explicit rules: what's allowed vs forbidden when editing forms
+  - Recovery references from historical file versions
+  - Checklist for agents before editing forms
+
+### Changed
+- `daftar/index.html` (1275 lines, +22 lines):
+  - Restored HAKI status radio group (3 options)
+  - Restored HAKI number input with conditional wrapper
+  - Restored NIB number input with helper text
+- `js/form-07-init.js` (58 lines, +17 lines):
+  - Added HAKI number visibility toggle on DOM ready
+- `js/form-09-test-data-generator.js` (449 lines, +9 lines):
+  - Added HAKI & NIB fields to `fillFranchisorForm()`
+  - Triggers HAKI radio change to show conditional field
+- `AGENTS.md` (121 lines, +2 lines):
+  - Added FORM_PRESERVATION_MANDATE.md to persistent rules
+  - Added to root markdown instruction index
+- `TECHNICAL_INVENTORY.md` (138 lines, updated):
+  - Enhanced form-03 navigation with debug logging documentation
+  - Added form-09 test data generator inventory
+
+### Removed
+- None.
+
+**⚠️ CRITICAL NOTE**: These fields existed in historical versions (`/pendaftaran/index.html` → `/daftar/index.html`) and were accidentally removed during recent refactoring. They have now been restored. Future agents MUST NOT remove form fields without explicit user request. See `FORM_PRESERVATION_MANDATE.md` for enforcement rules.
+
+## 2026-04-05 02:30 (Asia/Jakarta)
+### Added
+- **Navigation debugging** (`js/form-03-navigation-steps.js`):
+  - Added detailed console logging to `nextStep()` and `validateStep()`
+  - Logs step index, state.currentStep, validation results, and invalid field names
+  - Helps identify exactly which field is blocking step navigation
+- **Step-only FAB filling** (`js/form-09-test-data-generator.js`):
+  - `fillFranchisorForm()` now fills ONLY Step 1 data (not all 5 steps)
+  - Prevents state confusion and validation conflicts
+  - User must click LANJUT to navigate through each step manually
+
+### Changed
+- `js/form-03-navigation-steps.js` (128 lines, +24 lines):
+  - Enhanced `nextStep()`: logs step index, current state, validation result, target step visibility
+  - Enhanced `validateStep()`: logs invalid field names and values for debugging
+  - Returns early with console warning if validation fails
+- `js/form-09-test-data-generator.js` (438 lines, -28 lines):
+  - Removed Steps 2-5 data from `fillFranchisorForm()` (outlet_type, min_capital, royalty_percent, etc.)
+  - Now only fills: brand_name, company_name, category, year_established
+  - Uses `formatCompanyName()` to ensure PT/CV is uppercase in generated data
+
+### Removed
+- None.
+
 ## 2026-04-05 02:15 (Asia/Jakarta)
 ### Added
 - **Auto-uppercase PT/CV in company name** (`js/form-utils.js`):

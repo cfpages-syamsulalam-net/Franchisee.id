@@ -7,6 +7,24 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof FF.initFormSubmission === 'function') FF.initFormSubmission();
     if (typeof window.bindAutoFormatting === 'function') window.bindAutoFormatting();
 
+    // HAKI number visibility toggle
+    const hakiRadios = document.querySelectorAll('input[name="haki_status"]');
+    const hakiWrapper = document.getElementById('haki_number_wrapper');
+    if (hakiRadios.length > 0 && hakiWrapper) {
+        hakiRadios.forEach((radio) => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'registered' || this.value === 'process') {
+                    hakiWrapper.classList.remove('d-none');
+                } else {
+                    hakiWrapper.classList.add('d-none');
+                    // Clear value when hidden
+                    const hakiInput = hakiWrapper.querySelector('input[name="haki_number"]');
+                    if (hakiInput) hakiInput.value = '';
+                }
+            });
+        });
+    }
+
     const savedStep = localStorage.getItem('franchise_form_step');
     if (savedStep && parseInt(savedStep, 10) > 1) {
         const firstStep = document.getElementById('step-1');
