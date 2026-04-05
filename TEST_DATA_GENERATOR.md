@@ -205,14 +205,19 @@ const BRAND_SUFFIXES = [
 
 #### 5.1 Franchisee Form Filler
 
-**Fields to fill**:
+**Fields to fill (2 steps)**:
 ```javascript
+// Step 1: Data Pribadi
 {
     name: generateName(),                    // "Budi Pratama 42"
     city_origin: generateCity(),              // "Jakarta Selatan 42"
     country_code: '+62',                      // Fixed
     whatsapp: generatePhone(),                // "812-4567-8901"
     email: generateEmail(),                   // "test_42@example.com"
+}
+
+// Step 2: Minat & Budget
+{
     interest_category: random(['fb', 'retail', 'service', 'edu', 'beauty']),
     budget_range: random(['<50jt', '50-100jt', '100-500jt', '>500jt']),
     location_plan: random(['ready', 'searching']),
@@ -223,23 +228,29 @@ const BRAND_SUFFIXES = [
 **Implementation**:
 ```javascript
 TestDataGenerator.fillFranchiseeForm = function() {
-    const data = this.generateFranchiseeData();
+    const step1Data = this.generateFranchiseeStep1Data();
+    const step2Data = this.generateFranchiseeStep2Data();
     
-    Object.entries(data).forEach(([name, value]) => {
-        const field = document.querySelector(`[name="${name}"]`);
-        if (field) {
-            field.value = value;
-            // Trigger validation and auto-formatting
-            field.dispatchEvent(new Event('input', { bubbles: true }));
-            field.dispatchEvent(new Event('change', { bubbles: true }));
-            field.dispatchEvent(new Event('blur', { bubbles: true }));
-        }
-    });
+    // Fill Step 1 fields
+    this.fillFormFields(step1Data);
+    
+    // Navigate to Step 2
+    if (typeof window.franchiseeNextStep === 'function') {
+        window.franchiseeNextStep(2);
+    }
+    
+    // Fill Step 2 fields
+    this.fillFormFields(step2Data);
+    
+    // Navigate back to Step 1 for user review
+    if (typeof window.franchiseePrevStep === 'function') {
+        window.franchiseePrevStep(2);
+    }
     
     // Mark form for test data submission
     this.markFormAsTestData('franchiseeForm');
     
-    this.showToast('✅ Franchisee form filled with test data!');
+    this.showToast('✅ Franchisee form filled (both steps)! Review and click LANJUT.');
 };
 ```
 
