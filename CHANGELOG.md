@@ -4,6 +4,19 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-05 02:00 (Asia/Jakarta)
+### Added
+- **Section titles for Franchisee form** (`daftar/index.html`):
+  - Step 1: "Langkah 1: Data Pribadi"
+  - Step 2: "Langkah 2: Minat & Budget"
+  - Uses exact same `.section-title` styling as Franchisor form (yellow border, bold, 1.2rem)
+
+### Changed
+- None.
+
+### Removed
+- None.
+
 ## 2026-04-05 01:45 (Asia/Jakarta)
 ### Added
 - None.
