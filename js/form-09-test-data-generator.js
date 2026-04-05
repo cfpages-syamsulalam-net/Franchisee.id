@@ -308,8 +308,8 @@
             toast.textContent = message;
             toast.style.cssText = `
                 position: fixed;
-                bottom: 100px;
-                right: 12px;
+                bottom: 130px;
+                left: 20px;
                 background: #7c3aed;
                 color: white;
                 padding: 10px 16px;

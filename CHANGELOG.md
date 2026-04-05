@@ -4,6 +4,21 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 23:15 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `css/form-franchise/06-claim-autocomplete.css`:
+  - Moved FAB from right:12px to **left:20px** to avoid WhatsApp button overlap
+  - Increased FAB size to 40px with white border for visibility
+  - Position: `bottom:80px, left:20px` (clear of all floating buttons)
+- `js/form-09-test-data-generator.js`:
+  - Moved toast to `left:20px, bottom:130px` (above FAB on left side)
+
+### Removed
+- None.
+
 ## 2026-04-04 23:00 (Asia/Jakarta)
 ### Added
 - None.
