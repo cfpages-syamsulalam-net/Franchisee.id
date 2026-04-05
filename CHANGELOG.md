@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-05 01:45 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `daftar/index.html` (1252 lines, no change):
+  - Centered KEMBALI and DAFTAR SEKARANG buttons in Franchisee Step 2 (`justify-content-center`)
+- `js/form-06-submit-validation.js` (223 lines, +2 lines):
+  - Added `localStorage.removeItem('franchisee_form_step')` to submission success handler
+  - After reload, Franchisee form now correctly resets to Step 1 instead of restoring Step 2
+
+### Removed
+- None.
+
 ## 2026-04-05 01:30 (Asia/Jakarta)
 ### Added
 - None.

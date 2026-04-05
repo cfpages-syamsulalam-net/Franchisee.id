@@ -123,8 +123,10 @@
             if (result.success) {
                 if (btn) btn.innerHTML = '<i class="fas fa-check"></i> Berhasil!';
                 Swal.fire('Berhasil!', 'Data Anda telah tersimpan untuk verifikasi.', 'success').then(() => {
+                    // Clear ALL form data including franchisee step
                     localStorage.removeItem('franchise_form_step');
                     localStorage.removeItem('franchise_form_autosave');
+                    localStorage.removeItem('franchisee_form_step'); // Reset franchisee to Step 1
                     FF.clearClaimModeState();
                     FF.clearFranchisorDraft();
                     window.location.reload();
