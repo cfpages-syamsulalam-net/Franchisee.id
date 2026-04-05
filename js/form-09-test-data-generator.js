@@ -368,10 +368,10 @@
                     min-width: 260px;
                     display: none;
                 ">
-                    <button id="dev-fill-franchisee">🚀 Fill Franchisee Form</button>
-                    <button id="dev-fill-franchisor">🏢 Fill Franchisor Form</button>
-                    <button id="dev-fill-claim">🔍 Fill Claim + Create UNCLAIMED</button>
-                    <button id="dev-clear-test-data" style="border-top: 1px solid #eee; color: #dc3545;">🗑️ Clear All Test Data</button>
+                    <button id="dev-fill-franchisee" style="display: block; width: 100%; padding: 8px 16px; border: none; background: transparent; text-align: left; font-size: 12px; color: #333; cursor: pointer; white-space: nowrap;">🚀 Fill Franchisee Form</button>
+                    <button id="dev-fill-franchisor" style="display: block; width: 100%; padding: 8px 16px; border: none; background: transparent; text-align: left; font-size: 12px; color: #333; cursor: pointer; white-space: nowrap;">🏢 Fill Franchisor Form</button>
+                    <button id="dev-fill-claim" style="display: block; width: 100%; padding: 8px 16px; border: none; background: transparent; text-align: left; font-size: 12px; color: #333; cursor: pointer; white-space: nowrap;">🔍 Fill Claim + Create Unclaimed</button>
+                    <button id="dev-clear-test-data" style="display: block; width: 100%; padding: 8px 16px; border: none; border-top: 1px solid #eee; background: transparent; text-align: left; font-size: 12px; color: #dc3545; cursor: pointer; white-space: nowrap;">🗑️ Clear All Test Data</button>
                 </div>
             `;
             

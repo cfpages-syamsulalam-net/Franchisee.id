@@ -4,6 +4,25 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-05 01:15 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-09-test-data-generator.js` (454 lines, -1 line):
+  - Added inline styles to all FAB menu buttons (font-size: 12px, white-space: nowrap, display: block, width: 100%)
+  - Changed "Create UNCLAIMED" to "Create Unclaimed" (title case)
+  - Buttons now render in single line with smaller, consistent font
+- `daftar/index.html` (1251 lines, -8 lines):
+  - Replaced broken cache busting mechanism with `document.write()` approach
+  - Old approach tried to modify `src` attributes after scripts loaded (too late, browser already cached)
+  - New approach uses `document.write()` to inject scripts with `?_dbg=timestamp` parameter
+  - Works for both dev mode (`?dev=1`) and production mode
+  - Eliminates duplicate script loading issue
+
+### Removed
+- None.
+
 ## 2026-04-05 00:30 (Asia/Jakarta) - Session End
 ### Added
 - **Session context**: `/.context/session-20260404-1900.md` - Complete session summary

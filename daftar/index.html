@@ -1139,41 +1139,33 @@ var elementorFrontendConfig = {"environmentMode":{"edit":false,"wpPreview":false
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script id="dev-mode-js-cachebust">
 (function () {
-    try {
-        var params = new URLSearchParams(window.location.search);
-        if (params.get('dev') !== '1') return;
-        var bust = function (id) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            var src = el.getAttribute('src') || '';
-            if (!src) return;
-            var url = new URL(src, window.location.origin);
-            url.searchParams.set('_dbg', Date.now().toString());
-            el.setAttribute('src', url.pathname + url.search);
-        };
-        bust('form-utils-js');
-        bust('form-01-state-helpers-js');
-        bust('form-02-claim-workflow-js');
-        bust('form-03-navigation-steps-js');
-        bust('form-04-calculation-city-js');
-        bust('form-05-country-whatsapp-js');
-        bust('form-06-submit-validation-js');
-        bust('form-07-init-js');
-        bust('form-08-franchisee-steps-js');
-        bust('form-09-test-data-generator-js');
-    } catch (e) {}
+    var isDev = new URLSearchParams(window.location.search).get('dev') === '1';
+    
+    var scripts = [
+        { id: 'form-utils-js', src: '/js/form-utils.js' },
+        { id: 'form-01-state-helpers-js', src: '/js/form-01-state-helpers.js' },
+        { id: 'form-02-claim-workflow-js', src: '/js/form-02-claim-workflow.js' },
+        { id: 'form-03-navigation-steps-js', src: '/js/form-03-navigation-steps.js' },
+        { id: 'form-04-calculation-city-js', src: '/js/form-04-calculation-city.js' },
+        { id: 'form-05-country-whatsapp-js', src: '/js/form-05-country-whatsapp.js' },
+        { id: 'form-06-submit-validation-js', src: '/js/form-06-submit-validation.js' },
+        { id: 'form-07-init-js', src: '/js/form-07-init.js' },
+        { id: 'form-08-franchisee-steps-js', src: '/js/form-08-franchisee-steps.js' },
+        { id: 'form-09-test-data-generator-js', src: '/js/form-09-test-data-generator.js' }
+    ];
+    
+    if (isDev) {
+        var dbg = Date.now();
+        scripts.forEach(function(s) {
+            document.write('<script src="' + s.src + '?_dbg=' + dbg + '" id="' + s.id + '"><\/script>');
+        });
+    } else {
+        scripts.forEach(function(s) {
+            document.write('<script src="' + s.src + '" id="' + s.id + '"><\/script>');
+        });
+    }
 })();
 </script>
-<script src="/js/form-utils.js" id="form-utils-js"></script>
-<script src="/js/form-01-state-helpers.js" id="form-01-state-helpers-js"></script>
-<script src="/js/form-02-claim-workflow.js" id="form-02-claim-workflow-js"></script>
-<script src="/js/form-03-navigation-steps.js" id="form-03-navigation-steps-js"></script>
-<script src="/js/form-04-calculation-city.js" id="form-04-calculation-city-js"></script>
-<script src="/js/form-05-country-whatsapp.js" id="form-05-country-whatsapp-js"></script>
-<script src="/js/form-06-submit-validation.js" id="form-06-submit-validation-js"></script>
-<script src="/js/form-07-init.js" id="form-07-init-js"></script>
-<script src="/js/form-08-franchisee-steps.js" id="form-08-franchisee-steps-js"></script>
-<script src="/js/form-09-test-data-generator.js" id="form-09-test-data-generator-js"></script>
 <script id="dev-mode-toggle-script">
 (function () {
     var TOGGLE_VIS_KEY = 'debug_toggle_enabled';
