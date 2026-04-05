@@ -1,6 +1,38 @@
 # Form UX Fixes & Improvements
 
-Last updated: 2026-04-04 21:00 (Asia/Jakarta)
+Last updated: 2026-04-04 21:30 (Asia/Jakarta)
+
+## Issues Fixed
+
+### 0. ✅ Step Navigation Validation Bug
+**Problem**: Clicking "LANJUT" in Step 1 showed console error: `[Franchisee Steps] Validation failed for step 2`
+
+**Root Cause**: 
+- `franchiseeNextStep(2)` was validating step 2 (the target) instead of step 1 (the current step)
+- Step 2 has required fields that are empty, so validation always failed
+- User couldn't proceed from Step 1 to Step 2
+
+**Fix**:
+**File: `js/form-08-franchisee-steps.js`**
+
+Changed validation logic to validate the *current visible step* before navigating:
+```javascript
+window.franchiseeNextStep = function (stepIndex) {
+    // Validate the CURRENT step (stepIndex - 1) before proceeding to stepIndex
+    const currentStepToValidate = stepIndex - 1;
+    
+    if (!validateFranchiseeStep(currentStepToValidate)) {
+        return; // Block navigation if current step is invalid
+    }
+    
+    // Hide current step, show target step
+    // ...
+}
+```
+
+**Result**: Users can now navigate from Step 1 to Step 2 successfully.
+
+---
 
 ## Issues Fixed
 

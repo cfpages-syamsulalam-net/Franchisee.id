@@ -16,7 +16,7 @@
             const canvas = document.createElement('canvas');
             canvas.width = 40;
             canvas.height = 20;
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
             if (!ctx) return true;
 
             ctx.textBaseline = 'top';

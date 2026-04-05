@@ -7,23 +7,25 @@
 
     // Navigate to next step in franchisee form
     window.franchiseeNextStep = function (stepIndex) {
-        // Validate current step before proceeding
-        if (!validateFranchiseeStep(stepIndex)) {
-            console.warn('[Franchisee Steps] Validation failed for step', stepIndex);
+        // Validate the CURRENT step (stepIndex - 1) before proceeding to stepIndex
+        const currentStepToValidate = stepIndex - 1;
+        
+        console.log('[Franchisee Steps] Validating step', currentStepToValidate, 'before moving to step', stepIndex);
+        
+        if (!validateFranchiseeStep(currentStepToValidate)) {
+            console.warn('[Franchisee Steps] Validation failed for step', currentStepToValidate);
             return;
         }
 
-        console.log('[Franchisee Steps] Moving from step', stepIndex, 'to', stepIndex + 1);
-
         // Hide current step
-        const currentEl = document.getElementById('franchisee-step-' + stepIndex);
+        const currentEl = document.getElementById('franchisee-step-' + currentStepToValidate);
         if (currentEl) {
             currentEl.classList.remove('active');
             currentEl.style.display = 'none';
         }
 
         // Show next step
-        franchiseeState.currentStep = stepIndex + 1;
+        franchiseeState.currentStep = stepIndex;
         const nextEl = document.getElementById('franchisee-step-' + franchiseeState.currentStep);
         if (nextEl) {
             nextEl.classList.add('active');
@@ -49,6 +51,11 @@
 
     // Navigate to previous step in franchisee form
     window.franchiseePrevStep = function (stepIndex) {
+        // stepIndex is the current step you're on, going back to stepIndex - 1
+        const targetStep = stepIndex - 1;
+        
+        console.log('[Franchisee Steps] Going back from step', stepIndex, 'to step', targetStep);
+
         // Hide current step
         const currentEl = document.getElementById('franchisee-step-' + stepIndex);
         if (currentEl) {
@@ -57,11 +64,12 @@
         }
 
         // Show previous step
-        franchiseeState.currentStep = stepIndex - 1;
+        franchiseeState.currentStep = targetStep;
         const prevEl = document.getElementById('franchisee-step-' + franchiseeState.currentStep);
         if (prevEl) {
             prevEl.classList.add('active');
             prevEl.style.display = 'block';
+            console.log('[Franchisee Steps] Step', franchiseeState.currentStep, 'now visible');
         }
 
         // Update progress bar

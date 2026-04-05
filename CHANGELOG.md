@@ -4,6 +4,31 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 21:30 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-08-franchisee-steps.js`:
+  - Fixed `franchiseeNextStep()`: now validates current step (stepIndex - 1) before navigating to target step
+  - Fixed `franchiseePrevStep()`: correctly calculates target step (stepIndex - 1)
+  - Resolves "Validation failed for step 2" error when clicking LANJUT on step 1
+
+### Removed
+- None.
+
+## 2026-04-04 21:15 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-05-country-whatsapp.js`:
+  - Added `{ willReadFrequently: true }` to `canvas.getContext('2d')` call in `detectFlagEmojiSupport()`
+  - Eliminates Canvas2D performance warning about multiple `getImageData()` operations
+
+### Removed
+- None.
+
 ## 2026-04-04 21:00 (Asia/Jakarta)
 ### Added
 - **Enhanced franchisee step validation**:
