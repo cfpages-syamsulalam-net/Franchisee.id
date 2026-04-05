@@ -4,6 +4,19 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 23:30 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `js/form-09-test-data-generator.js`:
+  - Fixed FAB visibility: added `className = 'active'` to override CSS `display: none`
+  - Changed FAB emoji from 🧪 to ⚡ (avoid conflict with debug toggle)
+- `CHANGELOG.md`: Logged fix
+
+### Removed
+- None.
+
 ## 2026-04-04 23:15 (Asia/Jakarta)
 ### Added
 - None.

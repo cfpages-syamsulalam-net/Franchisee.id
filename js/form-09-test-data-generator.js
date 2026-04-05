@@ -337,8 +337,9 @@
             
             const fabContainer = document.createElement('div');
             fabContainer.id = 'dev-test-generator-fab';
+            fabContainer.className = 'active'; // Make it visible!
             fabContainer.innerHTML = `
-                <button id="dev-generator-toggle" class="dev-fab-button" title="Test Data Generator">🧪</button>
+                <button id="dev-generator-toggle" class="dev-fab-button" title="Test Data Generator">⚡</button>
                 <div id="dev-generator-menu" class="dev-fab-menu">
                     <button id="dev-fill-franchisee">🚀 Fill Franchisee Form</button>
                     <button id="dev-fill-franchisor">🏢 Fill Franchisor Form</button>
