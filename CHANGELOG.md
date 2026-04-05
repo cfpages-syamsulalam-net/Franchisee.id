@@ -4,6 +4,42 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 22:30 (Asia/Jakarta)
+### Added
+- **Test Data Generator** (Phase 1-4 complete):
+  - `js/form-09-test-data-generator.js` (367 lines) - Complete test data generator with FAB UI
+  - Realistic Indonesian name generation (Budi Pratama 42, Siti Wijaya 817, etc.)
+  - Franchisee form filler (2-step auto-fill with navigation)
+  - Franchisor form filler (5-step auto-fill across all sections)
+  - Claim workflow filler (creates UNCLAIMED + auto-searches brand)
+  - Clear all test data button with confirmation
+  - Toast notifications for user feedback
+- **Backend test data support** (`functions/form-submit.js`):
+  - Added `is_test_data` column to all form submissions
+  - New endpoint: `test_action=create_unclaimed` - creates UNCLAIMED test data
+  - New endpoint: `test_action=clear_test_data` - deletes all rows with `is_test_data=TRUE`
+  - Helper functions: `handleCreateUnclaimed`, `handleClearTestData`, `clearTestDataFromSheet`, `deleteSheetRow`
+- **FAB CSS** (`css/form-franchise/06-claim-autocomplete.css`):
+  - Purple floating action button (bottom-left)
+  - Animated dropdown menu
+  - Only visible when `?dev=1` in URL
+- **Script loading** (`daftar/index.html`):
+  - Added `form-09-test-data-generator.js` with cache busting support
+- **Documentation**: `TEST_DATA_GENERATOR.md` comprehensive implementation plan
+
+### Changed
+- `functions/form-submit.js` (467 lines, +156 lines):
+  - Updated version to v2.3
+  - Added `is_test_data` field to `finalData` object
+  - Added test action routing at function start
+- `css/form-franchise/06-claim-autocomplete.css` (89 lines, +76 lines):
+  - Added FAB styles, menu animations, hover effects
+- `daftar/index.html` (1258 lines, +2 lines):
+  - Added form-09 script loading with dev mode cache busting
+
+### Removed
+- None.
+
 ## 2026-04-04 21:30 (Asia/Jakarta)
 ### Added
 - None.

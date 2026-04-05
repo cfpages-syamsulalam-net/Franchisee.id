@@ -1,7 +1,18 @@
-// /functions/form-submit.js v2.2
+// /functions/form-submit.js v2.3
 export async function onRequestPost({ request, env }) {
   try {
     const data = await request.json();
+    
+    // --- TEST DATA HANDLING ---
+    if (data.test_action === 'create_unclaimed') {
+      return await handleCreateUnclaimed(env, data);
+    }
+    
+    if (data.test_action === 'clear_test_data') {
+      return await handleClearTestData(env, data);
+    }
+    // --- END TEST DATA HANDLING ---
+    
     let sheetName = data.form_type || "DATA_UMUM";
     const isClaim = data.form_type === "claim";
     
@@ -20,7 +31,8 @@ export async function onRequestPost({ request, env }) {
       status: "FREE", // Default for new/claimed
       is_verified: "FALSE",
       video_url: "",
-      expiry_date: ""
+      expiry_date: "",
+      is_test_data: data.is_test_data || "" // Mark test data
     };
 
     // 1. Auth Google
@@ -307,4 +319,148 @@ async function deleteFromUnclaimed(spreadsheetId, unclaimedId, brandName, token)
     }
     
     console.log("✅ Successfully deleted row index " + rowIndex + " from UNCLAIMED.");
+}
+
+// --- TEST DATA HELPER FUNCTIONS ---
+
+async function handleCreateUnclaimed(env, data) {
+  try {
+    const token = await getGoogleAuthToken(env.G_CLIENT_EMAIL, env.G_PRIVATE_KEY);
+    const sheetName = "UNCLAIMED";
+    const sheetId = await ensureSheetExists(env.G_SHEET_ID, sheetName, token);
+    
+    const finalData = {
+      id: crypto.randomUUID().split('-')[0].toUpperCase(),
+      timestamp: new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }),
+      brand_name: data.brand_name || "",
+      category: data.category || "",
+      min_capital: data.min_capital || "",
+      city: data.city || "",
+      is_test_data: "TRUE"
+    };
+    
+    await appendDataSmart(env.G_SHEET_ID, sheetName, sheetId, finalData, token);
+    
+    return new Response(JSON.stringify({ 
+      success: true, 
+      id: finalData.id,
+      message: "UNCLAIMED test data created"
+    }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ success: false, error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+async function handleClearTestData(env, data) {
+  try {
+    const token = await getGoogleAuthToken(env.G_CLIENT_EMAIL, env.G_PRIVATE_KEY);
+    let totalDeleted = 0;
+    
+    const sheetsToClear = ["FRANCHISOR", "FRANCHISEE", "UNCLAIMED"];
+    
+    for (const sheetName of sheetsToClear) {
+      const deleted = await clearTestDataFromSheet(env.G_SHEET_ID, sheetName, token);
+      totalDeleted += deleted;
+    }
+    
+    return new Response(JSON.stringify({ 
+      success: true, 
+      deleted: totalDeleted,
+      message: `Cleared ${totalDeleted} test records`
+    }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ success: false, error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+async function clearTestDataFromSheet(spreadsheetId, sheetName, token) {
+  try {
+    // Get all data
+    const range = sheetName + "!A:Z";
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
+    const resp = await fetch(url, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    
+    if (!resp.ok) return 0;
+    
+    const data = await resp.json();
+    const rows = data.values || [];
+    
+    if (rows.length < 2) return 0; // Only header or empty
+    
+    // Find is_test_data column
+    const headers = rows[0];
+    const testDataColIndex = headers.findIndex(h => h === 'is_test_data');
+    
+    if (testDataColIndex === -1) return 0; // Column doesn't exist
+    
+    // Collect rows to delete (where is_test_data = TRUE)
+    // Iterate backwards to avoid index shifting
+    let deletedCount = 0;
+    
+    for (let i = rows.length - 1; i >= 1; i--) {
+      if (rows[i][testDataColIndex] === 'TRUE') {
+        // Delete this row (Google Sheets is 1-indexed, data is 0-indexed)
+        const sheetId = data.sheetId || 0;
+        await deleteSheetRow(spreadsheetId, sheetName, i + 1, token);
+        deletedCount++;
+      }
+    }
+    
+    console.log(`✅ Cleared ${deletedCount} test rows from ${sheetName}`);
+    return deletedCount;
+  } catch (err) {
+    console.error(`❌ Error clearing test data from ${sheetName}:`, err.message);
+    return 0;
+  }
+}
+
+async function deleteSheetRow(spreadsheetId, sheetName, rowIndex, token) {
+  // First get sheetId
+  const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;
+  const metaResp = await fetch(metaUrl, {
+    headers: { Authorization: "Bearer " + token }
+  });
+  
+  if (!metaResp.ok) return;
+  
+  const meta = await metaResp.json();
+  const sheet = meta.sheets.find(s => s.properties.title === sheetName);
+  if (!sheet) return;
+  
+  const sheetId = sheet.properties.sheetId;
+  
+  const deleteUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
+  const deleteRequest = {
+    requests: [{
+      deleteDimension: {
+        range: {
+          sheetId: sheetId,
+          dimension: "ROWS",
+          startIndex: rowIndex,
+          endIndex: rowIndex + 1
+        }
+      }
+    }]
+  };
+  
+  await fetch(deleteUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: "Bearer " + token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(deleteRequest)
+  });
 }
