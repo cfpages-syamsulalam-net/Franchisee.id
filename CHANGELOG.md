@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-04-04 22:45 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `daftar/index.html` (1260 lines, +2 lines):
+  - Fixed Franchisee email helper text positioning: moved inside `.input-col` div to appear directly below input field
+
+### Removed
+- None.
+
 ## 2026-04-04 22:30 (Asia/Jakarta)
 ### Added
 - **Test Data Generator** (Phase 1-4 complete):
