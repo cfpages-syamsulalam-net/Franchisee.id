@@ -95,11 +95,11 @@ G_PRIVATE_KEY=<service_account_private_key>
 | `node js/build-listing.js` | Regenerate main listing page (`/peluang-usaha/index.html`) |
 | `node js/build-details.js` | Regenerate individual franchise detail pages |
 | `node js/build-sitemap.js` | Regenerate XML sitemap |
-| `npm install googleapis dotenv --no-save` | Install build dependencies |
+| `pnpm add googleapis dotenv` | Install build dependencies |
 
 ### Full Build Sequence
 ```bash
-npm install googleapis dotenv --no-save
+pnpm add googleapis dotenv
 node js/build-listing.js
 node js/build-details.js
 node js/build-sitemap.js

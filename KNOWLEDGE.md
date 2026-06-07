@@ -5,7 +5,7 @@ This file gives persistent project context: goals, commands, architecture, conve
 ## Quickstart
 - Setup:
   - Ensure `.env` contains: `G_SHEET_ID`, `G_CLIENT_EMAIL`, `G_PRIVATE_KEY`.
-  - Install runtime deps when needed: `npm install googleapis dotenv --no-save`.
+  - Install runtime deps when needed: `pnpm add googleapis dotenv`.
 - Dev:
   - Regenerate listing page: `node js/build-listing.js`
   - Regenerate detail pages: `node js/build-details.js`

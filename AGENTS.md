@@ -1,6 +1,6 @@
 # AGENTS.md - Local Audit Notes & Working Rules
 
-Last updated: 2026-04-04 (Asia/Jakarta)
+Last updated: 2026-06-08 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -10,6 +10,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - For claim-search data (`UNCLAIMED`), preserve strict brand sanitization (exclude URL/phone/address/legal-entity/contact-label rows) consistently across `js/build-listing.js`, `functions/get-franchises.js`, and modular form scripts (`js/form-01-state-helpers.js`, `js/form-02-claim-workflow.js`).
 - Do not reintroduce naive CSV parsing for sheet fallbacks; keep quote-aware parsing to avoid `brand_name` column shifts.
 - Keep repository data assets centralized: JSON files in `/json` and CSV files in `/csv`. Update script paths/docs together when adding or moving data assets.
+- Keep `CODEBASE.md` current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. Treat stale codebase maps as a project risk.
 - Keep per-session context snapshots in `/.context` using timestamped Markdown files (`session-YYYYMMDD-HHmm.md`) for new-session continuity.
 - For large legacy files such as `/daftar/index.html`, avoid full rewrites; use targeted edits with enough surrounding context to prevent accidental loss.
 - Keep form runtime logic modular in flat prefixed files (`js/form-01-*.js` ... `js/form-07-*.js`); avoid reintroducing monolithic `js/form-franchise.js` logic.
@@ -97,6 +98,8 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 
 ## Root Markdown Instruction Index
 - `KNOWLEDGE.md`: Consolidated operational knowledge (quickstart, architecture, conventions, gotchas). Use as first-stop implementation context.
+- `CODEBASE.md`: Living map of relevant project-owned logic, file relationships, data flows, and migration-critical contracts. Update as code evolves.
+- `AUDIT.md`: Technology migration audit and progress tracker for moving from static/Sheets-backed runtime to Cloudflare D1/R2/Clerk-backed application architecture.
 - `GEMINI.md`: Primary architecture and governance source of truth; prioritize it for technical direction.
 - `PRD.md`: Feature roadmap and requirement scope (non-changelog).
 - `FORM_SCHEMA.md`: Canonical form input inventory. Do not remove/rename fields in `/daftar/index.html` without updating this file.
@@ -118,3 +121,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 
 ## Additional Project Notes
 - The registration page was historically developed under `/pendaftaran/index.html` and later renamed to `/daftar/index.html`. When tracing git history or comparing old artifacts such as `old_version.txt`, treat them as the same page lineage.
+
+## Package Manager
+
+Use pnpm exclusively for this project. Run pnpm install, pnpm run <script>, and pnpm exec <tool>. Keep pnpm-lock.yaml committed, do not create alternate lockfiles, and avoid deleting node_modules unless replacing it with a fresh pnpm install.

@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-08 05:45 (Asia/Jakarta)
+### Added
+- `CODEBASE.md`: Created living map of relevant project-owned logic, data flows, file relationships, runtime modules, Cloudflare Functions, builders, generated assets, and migration-critical contracts.
+- `AUDIT.md`: Created technology audit and migration tracker for moving from the current static/Google Sheets-backed architecture toward Cloudflare D1, R2, Clerk, and an Astro/Cloudflare application stack.
+- `.context/session-20260608-0545.md`: Added session snapshot for future continuity.
+
+### Changed
+- `AGENTS.md`: Added a persistent rule requiring `CODEBASE.md` to stay current and added `CODEBASE.md`/`AUDIT.md` to the root markdown instruction index.
+
+### Removed
+- None.
+
 ## 2026-04-05 02:45 (Asia/Jakarta)
 ### Added
 - **HAKI & NIB fields RESTORED** to Franchisor Step 1 (`daftar/index.html`):

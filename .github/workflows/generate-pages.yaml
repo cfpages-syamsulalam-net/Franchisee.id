@@ -33,7 +33,7 @@ jobs:
           node-version: '18'
 
       - name: Install Dependencies
-        run: npm install googleapis dotenv --no-save
+        run: pnpm add googleapis dotenv
 
       - name: Compute Google Sheets Data Hash
         id: sheet_hash

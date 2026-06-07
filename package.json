@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "packageManager": "pnpm@10.34.1",
   "bugs": {
     "url": "https://github.com/cfpages-syamsulalam-net/Franchisee.id/issues"
   },
