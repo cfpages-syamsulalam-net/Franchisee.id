@@ -1,11 +1,14 @@
 # Form Franchise CSS Usage Map
 
-Last updated: 2026-04-04 (Asia/Jakarta)
+Last updated: 2026-06-08 (Asia/Jakarta)
+
+## Migration Direction
+The form CSS should remain the styling baseline during the D1/R2/Clerk and Astro migration. Keep selectors stable unless the corresponding form markup and `FORM_SCHEMA.md` are updated together.
 
 ## Entry Point
 - Main loaded stylesheet: `/css/form-franchise.css`
 - Loaded by: `/daftar/index.html` (`<link id="form-daftar-franchise" ...>`)
-- Runtime class toggling source: `/js/form-franchise.js` and `/js/form-utils.js`
+- Runtime class toggling source: modular `/js/form-0x-*.js` files and `/js/form-utils.js`. `/js/form-franchise.js` is a legacy shim only.
 
 ## Module Breakdown
 
@@ -28,7 +31,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
   - `.form-step`, `.form-step.active`, `@keyframes fadeIn`, `.btn-prev`, `.btn-danger`
 - Used in:
   - `/daftar/index.html` (tab switcher + step indicator area)
-  - `/js/form-franchise.js` (`openTab`, step navigation toggles)
+  - `/js/form-03-navigation-steps.js` (`openTab`, step navigation toggles)
 
 ### `03-form-core.css`
 - Purpose: core card, field, input, validation, and calculator/dashboard styles.
@@ -41,7 +44,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
   - `.total-box`, `.total-input`, `.custom-grid-2-col`, `.result-dashboard`, `.fw-800`, `#bep_years_display`
 - Used in:
   - `/daftar/index.html` form sections and calculator UI
-  - `/js/form-utils.js` and `/js/form-franchise.js` (adds/removes validation classes)
+  - `/js/form-utils.js` and modular form runtime files (adds/removes validation classes)
 
 ### `04-alerts-status.css`
 - Purpose: autocomplete (city), alert skins, and claim-mode alert visuals.
@@ -51,7 +54,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
   - `#claim-mode-alert`, `#claim-mode-alert .fa-certificate`, `#claim-mode-alert .btn-close`
 - Used in:
   - `/daftar/index.html` claim mode alert block and city autocomplete container
-  - `/js/form-franchise.js` (`fillMainFranchisorForm` and `exitClaimMode` toggling alert visibility)
+  - `/js/form-02-claim-workflow.js` (`fillMainFranchisorForm` and `exitClaimMode` toggling alert visibility)
 
 ### `05-packages-responsive.css`
 - Purpose: shared utility leftovers, compact package card UI, and responsive media queries.
@@ -70,9 +73,9 @@ Last updated: 2026-04-04 (Asia/Jakarta)
   - `.autocomplete-suggestions`, `.suggestion-item`, `.suggestion-item .brand-name`
 - Used in:
   - `/daftar/index.html` (`#claim-brand-search`, `#claim-search-results`)
-  - `/js/form-franchise.js` (suggestion rendering)
+  - `/js/form-02-claim-workflow.js` (suggestion rendering)
 
 ## Notes for Future Changes
 - Keep module import order stable in `/css/form-franchise.css`; later modules intentionally override earlier definitions.
-- If adding/removing claim search classes in `/js/form-franchise.js`, update this map and `TECHNICAL_INVENTORY.md`.
+- If adding/removing claim search classes in `/js/form-02-claim-workflow.js`, update this map and `TECHNICAL_INVENTORY.md`.
 - If moving tab/step markup in `/daftar/index.html`, verify selectors in `02-layout-tabs-steps.css` and `04-alerts-status.css`.

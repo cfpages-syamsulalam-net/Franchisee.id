@@ -5,6 +5,9 @@ Last updated: 2026-04-04 19:15 (Asia/Jakarta)
 ## Overview
 The Franchisor form now features **aggressive multi-layer auto-save** to ensure zero data loss when users refresh, close the browser, or switch tabs. This feature automatically saves form progress in `localStorage` with a 72-hour TTL and restores it on page load.
 
+## Migration Direction
+Auto-save currently uses browser `localStorage` only. During the D1/R2/Clerk migration, keep local auto-save as the immediate safety net and consider adding Clerk-authenticated server-side drafts in D1 for cross-device continuity. Do not introduce Supabase as the draft-sync target.
+
 ## Auto-Save Triggers (6 Independent Layers)
 
 ### 1. **Debounced Input/Change Save** (300ms delay)
@@ -303,7 +306,7 @@ try {
 
 ## Future Enhancements (Optional)
 
-1. **Cloud Sync**: Sync drafts to Supabase for cross-device continuity
+1. **Cloud Sync**: Sync drafts to D1 under the authenticated Clerk user for cross-device continuity
 2. **Conflict Resolution**: Handle multiple tabs editing same form
 3. **Version History**: Keep multiple draft versions with timestamps
 4. **Analytics**: Track auto-save frequency and success rates

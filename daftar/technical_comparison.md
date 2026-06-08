@@ -2,6 +2,9 @@
 
 This document tracks the technical evolution of the registration form, specifically focusing on functions, variables, styles, and structural elements across key commits.
 
+## Migration Note
+`/daftar/index.html` is the current legacy/static integration surface. Preserve its field and UX behavior while migrating backend ownership to D1/R2/Clerk and rebuilding future app routes in Astro/Cloudflare.
+
 ## Version Comparison Summary
 
 | Commit Hash | Logic Type | Key Features | Issues/Observations |

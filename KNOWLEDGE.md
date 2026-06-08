@@ -6,6 +6,10 @@ This file gives persistent project context: goals, commands, architecture, conve
 - Setup:
   - Ensure `.env` contains: `G_SHEET_ID`, `G_CLIENT_EMAIL`, `G_PRIVATE_KEY`.
   - Install runtime deps when needed: `pnpm add googleapis dotenv`.
+- Migration target:
+  - Treat the current Google Sheets setup as the transitional data source.
+  - New application work should move toward Astro on Cloudflare, Cloudflare D1, Cloudflare R2, and Clerk.
+  - Keep existing field names and payload shapes until `FORM_SCHEMA.md`, `CODEBASE.md`, and `AUDIT.md` are updated together.
 - Dev:
   - Regenerate listing page: `node js/build-listing.js`
   - Regenerate detail pages: `node js/build-details.js`
@@ -35,7 +39,10 @@ This file gives persistent project context: goals, commands, architecture, conve
   - `/css/form-franchise`: modularized form stylesheet files + selector usage map (`CSS_USAGE_MAP.md`).
   - `/.github/workflows`: automation pipelines.
 - Data flow:
-  - Source of content: Google Sheets tabs (`FRANCHISOR`, `UNCLAIMED`, `FRANCHISEE`).
+  - Current source of content: Google Sheets tabs (`FRANCHISOR`, `UNCLAIMED`, `FRANCHISEE`), with CSV fallback snapshots.
+  - Target source of truth: Cloudflare D1 tables for users, franchisee profiles, franchisor profiles, franchises, claims, leads, packages, assets, locations, and audit events.
+  - Target asset store: Cloudflare R2 for franchise media and documents.
+  - Target auth: Clerk for login/register and protected franchisee/franchisor/admin routes.
   - Build scripts fetch sheet data and generate static HTML pages.
   - Claim/search UX reads static `/json/unclaimed-brands.json` first; falls back to `/get-franchises?tab=UNCLAIMED&purpose=claim-search`.
   - `/json/unclaimed-brands.json` must be generated from sanitized UNCLAIMED rows only (exclude URL/phone/address/legal-entity/contact-label noise and dedupe by `brand_name`).
@@ -55,6 +62,7 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Auto-save timers stop on successful form submission and clear all persisted data.
   - Form submission posts to Cloudflare Function `/form-submit`.
   - On successful claim, backend appends to `FRANCHISOR` then performs best-effort deletion in `UNCLAIMED` (match by `id`, fallback by normalized `brand_name`).
+  - Migration rule: replace Sheets writes with D1 transactions only after preserving the current frontend payload contract and claim cleanup semantics.
 
 ## Conventions
 - Formatting/linting:
@@ -62,11 +70,14 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Prefer surgical edits on large legacy HTML/JS files.
 - Patterns to follow:
   - Treat `GEMINI.md` as architecture/governance source.
+  - Treat `CODEBASE.md` as the living codebase map and keep it current when route/data/function ownership changes.
+  - Treat `AUDIT.md` as the migration tracker for D1/R2/Clerk work.
   - Treat `FORM_SCHEMA.md` as canonical form-input inventory.
   - Treat `TECHNICAL_INVENTORY.md` as canonical symbol/function inventory.
   - Keep `PRD.md` for roadmap/requirements only.
   - Log all file create/update/delete operations in `CHANGELOG.md` with timestamp.
   - Preserve static-first approach for SEO (generate pages, avoid runtime-heavy rendering).
+  - Prefer Astro for new public directory/application work unless a specific dashboard requirement justifies Next.js.
   - Keep `/css/form-franchise.css` as the aggregator entrypoint; preserve `@import` order when adding/changing form styles.
 - Things to avoid:
   - Do not do full rewrites of large legacy files (`/daftar/index.html`) unless explicitly required.
@@ -83,8 +94,9 @@ This file gives persistent project context: goals, commands, architecture, conve
 - Modular form runtime scripts reference optional UI helpers; guard optional global calls to prevent runtime errors when helper functions are absent.
 - For personal cache-debugging on `/daftar`, use `?dev=1` via the `🧪` toggle (reveal/hide toggle with `Ctrl+Alt+D`) and/or DevTools `Network > Disable cache`.
 - Workflow trigger policy:
-  - Primary trigger: `repository_dispatch` from Google Sheets update automation.
+  - Current primary trigger: `repository_dispatch` from Google Sheets update automation.
   - Scheduled polling fallback exists, but actual build should run only when sheet hash changes.
+  - Target direction: D1-backed import/build or on-demand rendering should replace Sheets polling once the data migration is complete.
 - **Auto-formatting behavior**:
   - Name fields auto title-case on blur (e.g., "john doe" → "John Doe")
   - WhatsApp fields auto-format on blur (e.g., "081234567890" → "812-3456-7890")

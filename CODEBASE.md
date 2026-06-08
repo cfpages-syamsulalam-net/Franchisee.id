@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-08 05:45 (Asia/Jakarta)
+Last updated: 2026-06-08 05:59 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -14,6 +14,14 @@ The current database of record is Google Sheets:
 - `FRANCHISEE`: prospective buyers/leads.
 
 CSV files in `/csv` are local fallback/source snapshots. JSON files in `/json` are frontend runtime data assets, especially the sanitized claim-search list.
+
+## Target Upgrade Direction
+The current Sheets/CSV/functions implementation is a transition layer. The project direction is:
+- Astro on Cloudflare for new public directory and application pages.
+- Cloudflare D1 as the source of truth for users, franchisees, franchisors, franchises, claims, leads, packages, locations, assets metadata, and audit events.
+- Cloudflare R2 for franchise media and proposal assets.
+- Clerk for login/register, identity, roles, and protected franchisee/franchisor/admin routes.
+- Existing CSS and form field names remain compatibility contracts until `FORM_SCHEMA.md`, `AUDIT.md`, and this file are updated together.
 
 ## Project-Owned Logic Files
 
@@ -103,4 +111,3 @@ CSV files in `/csv` are local fallback/source snapshots. JSON files in `/json` a
 - `functions/form-submit.js` is append-oriented and does not model user ownership, listing revisions, approval state transitions, or asset ownership.
 - Login/register routes are currently static legacy pages, not real authenticated app surfaces.
 - `package.json` has no committed builder dependencies even though workflows install `googleapis` and `dotenv` dynamically.
-

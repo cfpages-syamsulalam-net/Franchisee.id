@@ -1,15 +1,19 @@
 # Claim Workflow Reference
 
-Last updated: 2026-04-04 (Asia/Jakarta)
+Last updated: 2026-06-08 (Asia/Jakarta)
+
+## Migration Direction
+This document describes the current claim behavior that must be preserved while migrating from the Google Sheets transition layer to Cloudflare D1/R2/Clerk. Target behavior: a claim should create a durable `franchise_claims` record, associate it with a Clerk user, transition or link the unclaimed brand in D1, and preserve the same frontend step/navigation semantics until the UI is rebuilt.
 
 ## Goal
 When a user claims a brand, the final successful submission must:
-1. Append completed record to `FRANCHISOR`.
-2. Remove original source row from `UNCLAIMED` (best effort, non-critical cleanup).
+1. Current transition layer: append completed record to `FRANCHISOR`.
+2. Current transition layer: remove original source row from `UNCLAIMED` (best effort, non-critical cleanup).
+3. Target D1 layer: create/update `franchises`, `franchisors`, and `franchise_claims` transactionally instead of mutating spreadsheet rows.
 
 ## Actual Runtime Flow
 
-### 1. User Interaction (`/daftar/index.html` + `js/form-franchise.js`)
+### 1. User Interaction (`/daftar/index.html` + modular form runtime)
 - `Klaim` tab only selects the brand source.
 - On brand selection:
   - `fillMainFranchisorForm(brand)` switches to Franchisor tab.
@@ -19,7 +23,7 @@ When a user claims a brand, the final successful submission must:
 
 ### 2. Step Buttons (`Lanjut` / `Kembali`)
 - `Lanjut` and `Kembali` only change step index in frontend.
-- They do **not** send data to Google Sheets.
+- They do **not** send data to the backend.
 - Data is sent only on final form `submit` in Step 5.
 
 ### 3. Persisted Client State
@@ -64,16 +68,17 @@ All auto-save operations include:
     - try delete row from `UNCLAIMED` by `id` (column A),
     - fallback delete by normalized `brand_name` (column B) if `id` is missing/not matched.
 - Cleanup failure is non-blocking (main submission remains successful).
+- Migration target: replace this append/delete behavior with a D1 transaction and Clerk user ownership while preserving duplicate checks and non-destructive claim review/audit history.
 
 ## Expected Outcomes
 
 ### Expected: Claim + Complete Submit
 - User completes required fields and clicks final submit.
-- Data appended to `FRANCHISOR`.
-- Matching source row in `UNCLAIMED` is removed (best effort).
+- Current: data appended to `FRANCHISOR`, matching source row in `UNCLAIMED` is removed (best effort).
+- Target: D1 listing/claim records are created or transitioned with auditable ownership and review state.
 
 ### Not Expected: Step Navigation
-- Pressing `Lanjut` does not write anything to Google Sheets.
+- Pressing `Lanjut` does not write anything to the backend.
 - It only advances local UI step and saves local draft/session state.
 
 ## UX Policy for Mixed Scenarios
@@ -92,8 +97,9 @@ All auto-save operations include:
 - Keep normal draft values so user can continue as non-claim Franchisor.
 
 ## Relevant Files
-- Frontend flow: `js/form-franchise.js`
+- Frontend flow: `js/form-01-state-helpers.js`, `js/form-02-claim-workflow.js`, `js/form-03-navigation-steps.js`, `js/form-06-submit-validation.js`, `js/form-07-init.js`
 - Form page: `daftar/index.html`
-- Backend submit + cleanup: `functions/form-submit.js`
+- Current backend submit + cleanup: `functions/form-submit.js`
+- Migration tracker: `AUDIT.md`
 - Field inventory: `FORM_SCHEMA.md`
 - Function inventory: `TECHNICAL_INVENTORY.md`

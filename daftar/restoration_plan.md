@@ -1,5 +1,7 @@
 # Restoration Plan: /daftar/index.html
 
+> Historical restoration note: this file documents the static `/daftar` recovery work. Future app migration should preserve the restored field/UX behavior while moving backend ownership to D1/R2/Clerk as documented in `AUDIT.md`.
+
 The current version (`10dc93f`) removed significant boilerplate and styles, which disrupted the visual design and SEO integrity. This plan aims to merge the best of both: the "Clean" external logic from the current version and the "Rich Aesthetics" and SEO from the previous version (`362415c`).
 
 ## 1. What to Restore (from 362415c)
@@ -10,7 +12,7 @@ The current version (`10dc93f`) removed significant boilerplate and styles, whic
 - [x] **Footer Structure**: Restore the detailed multi-column footer and copyright section.
 
 ## 2. What to Keep (from current version)
-- [x] **Externalized Logic**: Links to `/js/form-utils.js` and `/js/form-franchise.js`.
+- [x] **Externalized Logic**: Links to `/js/form-utils.js` and the modular `/js/form-0x-*.js` runtime (`/js/form-franchise.js` is now a legacy shim).
 - [x] **SweetAlert2**: Professional UI feedback via `https://cdn.jsdelivr.net/npm/sweetalert2@11`.
 - [x] **Improved Claim Workflow**: The updated `fillMainFranchisorForm` and `exitClaimMode` logic.
 

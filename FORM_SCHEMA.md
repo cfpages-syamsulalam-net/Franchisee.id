@@ -2,6 +2,9 @@
 
 This file documents every input field for the three registration tabs in `/daftar/index.html` to ensure no data points are lost during future refactors.
 
+## Migration Direction
+The field inventory is storage-provider neutral. The current frontend posts these names to `/form-submit`, which still writes through the legacy Google Sheets transition layer. Future D1/R2/Clerk work must preserve or explicitly map every field here before changing the UI.
+
 ## 1. Tab: Franchisee (Calon Mitra)
 *Target: Individuals looking to buy a franchise.*
 
@@ -61,12 +64,13 @@ This file documents every input field for the three registration tabs in `/dafta
 - `full_desc` (Textarea, Req): Keunggulan & Sejarah.
 - `support_system` (Checkbox): List of facilities (Bahan baku, training, etc.).
 
-### Section 4: Media & Visual (Cloudinary)
+### Section 4: Media & Visual (Legacy URL Fields, Target R2)
 - `logo_url` (Hidden, Req): Brand Logo.
 - `cover_url` (Hidden, Req): Banner Utama.
 - `gallery_urls` (Hidden, Opt): Up to 5 photos.
 - `video_url` (URL, Opt): YouTube Link.
 - `proposal_url` (Hidden, Opt): PDF E-Proposal.
+Note: these `*_url` field names must be preserved during the R2 migration as compatibility fields or mapped in the D1 schema.
 
 ### Section 5: Kontak Leads
 - `pic_name` (Text, Req): Nama Contact Person.
@@ -88,4 +92,4 @@ This file documents every input field for the three registration tabs in `/dafta
 - **Session Persistence**: Active claim mode and selected brand context are persisted in `localStorage` key `franchise_claim_state` and restored after page refresh.
 - **Session TTL**: Persisted claim context automatically expires after 24 hours to prevent stale brand-claim state from resurfacing in later sessions.
 - **Draft Persistence**: Partially filled Franchisor fields are persisted in `localStorage` key `franchisor_form_draft` (72-hour TTL) and restored after refresh. **Note**: When claim mode is active, the auto-save includes the pre-filled brand data plus any additional user input.
-- **Important Behavior**: `Lanjut/Kembali` only navigate frontend steps; Google Sheets write occurs only on final submit.
+- **Important Behavior**: `Lanjut/Kembali` only navigate frontend steps; backend write occurs only on final submit. Current backend writes to Google Sheets; target backend writes to D1.

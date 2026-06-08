@@ -8,20 +8,29 @@ Franchise.id is a high-performance directory platform (franchise.id, franchisee.
 - **GitHub Repository:** https://github.com/cfpages-syamsulalam-net/Franchisee.id/
 
 ### Core Tech Stack
-- **Hosting:** Cloudflare Pages (Static HTML/CSS/JS).
-- **Backend:** Cloudflare Functions (Edge Runtime) for forms and API access.
-- **Automation (SSG):** Node.js scripts running via GitHub Actions (CRON: 15m to 3h).
-- **CMS:** Google Sheets (Spreadsheet ID: `1p3Ke25SYZx0Yanv2MHy73eCbK_jE-qgzVC7ue5Tu3mU`).
-- **Database/Auth:** Supabase (for analytics, user accounts, and dashboards).
-- **Assets:** Cloudinary (Direct browser uploads + AI-powered optimization).
+**Current transitional stack:**
+- **Hosting:** Cloudflare Pages serving static HTML/CSS/JS from the WordPress export.
+- **Backend:** Cloudflare Pages Functions for form/API access.
+- **Automation (SSG):** Node.js scripts running via GitHub Actions.
+- **Data source:** Google Sheets tabs (`FRANCHISOR`, `UNCLAIMED`, `FRANCHISEE`) plus CSV fallbacks. Treat this as the legacy/prototype data layer, not the final application database.
+- **Assets:** WordPress uploads, external URLs, and existing Cloudinary URL transforms. Treat this as legacy asset handling.
+
+**Target upgrade direction:**
+- **Framework:** Astro on Cloudflare by default, with Next.js retained as an alternative if dashboard complexity requires a React-heavy app.
+- **Database:** Cloudflare D1 for users, franchisees, franchisors, listings, claims, leads, packages, locations, and audit events.
+- **Assets:** Cloudflare R2 for logos, covers, galleries, proposals, and imported legacy media.
+- **Auth:** Clerk for login/register, user identity, roles, and protected franchisee/franchisor/admin surfaces.
+- **Backend:** Cloudflare Workers/Pages Functions or Astro server routes using D1/R2 bindings instead of Google API write paths.
 
 ## Current Goals & Roadmap
 For detailed technical plans, feature requests, and the current to-do list, refer to **[PRD.md](./PRD.md)**.
 
 ### Active Priorities
-1.  **Hybrid SSG Engine (Phase 1):** Integrate "Unclaimed" brands into the main listing page.
-2.  **Franchise Claiming:** Implement the third "Claim Brand" tab in the registration form.
-3.  **Action Optimization:** Audit and enhance GitHub Actions for performance and real-time sync.
+1. **Documentation Alignment:** Keep `CODEBASE.md`, `AUDIT.md`, and all governance docs aligned around the D1/R2/Clerk migration.
+2. **Data Contract Design:** Define D1 schema and import/mapping from Sheets/CSV without losing existing form fields.
+3. **Auth Foundation:** Replace static `/login` and registration intent with Clerk-backed login/register and protected role pages.
+4. **Backend Replacement:** Migrate `/form-submit` and `/get-franchises` from Google Sheets access to D1-backed APIs while preserving the current frontend payload contract during transition.
+5. **Asset Migration:** Move franchisor media handling toward R2 while preserving existing `*_url` field names until the form schema is formally migrated.
 
 ## Safety & Code Integrity (Lessons Learned)
 - **Avoid Full Overwrites:** For large legacy files (e.g., `/daftar/index.html`), NEVER perform a full file rewrite using `write_file` if the file contains complex logic or Elementor boilerplate. Use targeted `replace` calls instead.
@@ -47,8 +56,8 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 1. Read latest `/.context/session-*.md` first.
 2. Read `AGENTS.md` for local working rules.
 3. Confirm architecture/governance alignment in `GEMINI.md` and `KNOWLEDGE.md`.
-4. Apply edits with current conventions (`/json`, `/csv`, `js/form-0x-*.js`).
-5. Update `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` when symbols/fields change.
+4. Apply edits with current conventions (`/json`, `/csv`, `js/form-0x-*.js`) while steering new backend work toward D1/R2/Clerk.
+5. Update `CODEBASE.md`, `FORM_SCHEMA.md`, and `TECHNICAL_INVENTORY.md` when routes, data contracts, symbols, or fields change.
 6. Append timestamped `CHANGELOG.md` entry before ending the session.
 
 ## Logic Inventory & Continuity
@@ -75,12 +84,13 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 1.  **Data Tiers:** `UNCLAIMED` (Scraped/Potential), `FREE` (Claimed/Basic), `VERIFIED` (Paid/Priority).
 2.  **Claiming Workflow:** Transition brands from `UNCLAIMED` to `FRANCHISOR` upon data completion.
 3.  **Claim Search Hygiene:** Claim autocomplete must consume sanitized brand-only rows (exclude URL/phone/address/legal-entity/contact-label noise) consistently in builder (`js/build-listing.js`), API fallback (`functions/get-franchises.js`), and frontend form modules (`js/form-01-state-helpers.js`, `js/form-02-claim-workflow.js`).
-4.  **SSG Engine:** Scripts in `js/` fetch data and inject into `templates/` via GitHub Actions.
-5.  **Serverless Logic:** Functions handle API access and form submissions with custom JWT auth.
+4.  **SSG Engine (current):** Scripts in `js/` fetch Sheets/CSV data and inject into `templates/` via GitHub Actions.
+5.  **Serverless Logic (current):** Functions handle Sheets API access and form submissions with Google JWT auth.
+6.  **Target Backend:** D1 becomes the source of truth; R2 stores franchise assets; Clerk identifies users and gates protected franchisee/franchisor/admin routes.
 
 ## Key Technical Components
 - **Smart Form Logic (`js/form-01-*.js` ... `js/form-07-*.js`):** Modular runtime handling calculations, validation, claim workflow, and submit orchestration.
-- **Cloudinary Module:** Automatic image optimization and direct browser uploads.
+- **Media Handling:** Existing Cloudinary/legacy URL transforms remain transitional; new upload/storage work should target Cloudflare R2.
 - **SEO & Analytics:** Priority sorting and automatic JSON-LD injection for Verified pages.
 
 ## Key Directories & Files
@@ -92,4 +102,4 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 ## Development Conventions
 - **Static First:** Pre-generate all content pages for SEO.
 - **Surgical HTML Edits:** Protect Elementor's DOM structure.
-- **Auth Implementation:** Native Web Crypto API in Functions for speed.
+- **Auth Implementation:** Current Google API JWT signing uses native Web Crypto in Functions. New user auth must use Clerk rather than custom account logic.

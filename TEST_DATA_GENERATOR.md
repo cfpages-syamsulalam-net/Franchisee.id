@@ -1,10 +1,16 @@
 # Test Data Generator - Implementation Plan
 
-Last updated: 2026-04-04 22:00 (Asia/Jakarta)
+Last updated: 2026-06-08 (Asia/Jakarta)
 
 ## Overview
 
-Dev-mode test data generator that auto-fills Franchisee, Franchisor, and Claim forms with realistic Indonesian-sounding data. Test data is marked with a special `is_test_data` column in Google Sheets for easy identification and cleanup.
+Dev-mode test data generator that auto-fills Franchisee, Franchisor, and Claim forms with realistic Indonesian-sounding data. Current cleanup is implemented against the legacy Google Sheets transition layer. The migration target is D1-backed test records tied to Clerk-aware ownership where relevant.
+
+## Migration Direction
+- Preserve the `is_test_data` marker across the migration.
+- Current implementation writes/deletes test rows in Google Sheets.
+- Target implementation writes/deletes D1 records and any related R2 test assets.
+- Keep the frontend `?dev=1` behavior and form field payloads stable until the new D1-backed API is live.
 
 ---
 
@@ -13,7 +19,7 @@ Dev-mode test data generator that auto-fills Franchisee, Franchisor, and Claim f
 ### ✅ DO
 - Use realistic Indonesian names (Budi Pratama, Siti Wijaya, etc.)
 - Use realistic city names (Jakarta Selatan, Surabaya, Bandung)
-- Mark test data with `is_test_data` column in Google Sheets
+- Mark test data with `is_test_data` in the active backend (currently Google Sheets, target D1)
 - Only show test generator FAB when `?dev=1` is active
 - Let user manually review and submit data
 - Provide clear test data cleanup options
@@ -30,7 +36,7 @@ Dev-mode test data generator that auto-fills Franchisee, Franchisor, and Claim f
 
 ### 1. Test Data Marking Strategy
 
-**Google Sheets: New Column `is_test_data`**
+**Current Google Sheets Column / Target D1 Field `is_test_data`**
 
 | Column A | Column B | ... | Column Z (NEW) |
 |----------|----------|-----|----------------|
@@ -45,9 +51,10 @@ Dev-mode test data generator that auto-fills Franchisee, Franchisor, and Claim f
 - Clear separation of test vs production data
 
 **Implementation**:
-- Backend `form-submit.js` adds `is_test_data` field when `body.is_test_data === true`
+- Current backend `form-submit.js` adds `is_test_data` when `body.is_test_data === true`
 - Frontend sends `is_test_data: true` with all test form submissions
-- Clear test data button calls backend to delete rows where `is_test_data = TRUE`
+- Current clear button deletes spreadsheet rows where `is_test_data = TRUE`
+- Target clear button should delete D1 test records and related R2 test objects without touching real production data
 
 ---
 
@@ -286,8 +293,8 @@ TestDataGenerator.fillFranchiseeForm = function() {
     support_system: ['Bahan baku', 'Training'],
     
     // Step 4: Media & Visual
-    logo_url: 'https://res.cloudinary.com/test/logo.png',
-    cover_url: 'https://res.cloudinary.com/test/cover.jpg',
+    logo_url: 'https://example.com/test/logo.png',
+    cover_url: 'https://example.com/test/cover.jpg',
     
     // Step 5: Kontak
     pic_name: generateName(),
@@ -322,7 +329,7 @@ TestDataGenerator.fillFranchisorForm = function() {
 
 **Two-step process**:
 
-1. **Create UNCLAIMED data in Google Sheets** (backend call)
+1. **Create UNCLAIMED data in the active backend** (currently Google Sheets, target D1)
 2. **Search and claim the brand** (frontend auto-fill)
 
 ```javascript
@@ -374,7 +381,7 @@ TestDataGenerator.fillClaimForm = async function() {
 
 **File**: `functions/form-submit.js`
 
-**Add test data column to sheets**:
+**Current: add test data column to sheets. Target: add `is_test_data` columns to D1 tables.**
 
 ```javascript
 // In appendDataSmart()
@@ -461,7 +468,7 @@ TestDataGenerator.init = function() {
 ### 7.2 Test Data Marker
 
 - **Frontend**: Adds `is_test_data: 'TRUE'` to form data
-- **Backend**: Writes to `is_test_data` column in Google Sheets
+- **Backend**: Currently writes to `is_test_data` in Google Sheets; target writes to D1
 - **Clear function**: Only deletes rows where `is_test_data = TRUE`
 - **Production safety**: Real data (empty `is_test_data`) is never deleted
 
@@ -476,7 +483,7 @@ TestDataGenerator.init = function() {
 3. All fields auto-filled with realistic data
 4. Review data (optional: edit any field)
 5. Click "DAFTAR SEKARANG" to submit
-6. Check Google Sheets: New row with `is_test_data = TRUE`
+6. Check active backend: new row/record with `is_test_data = TRUE`
 7. Repeat with different data (randomized each time)
 8. Click "Clear All Test Data" when done
 
@@ -490,7 +497,7 @@ TestDataGenerator.init = function() {
    - Step 2 → Step 3: Click LANJUT (validates step 2)
    - ... and so on
 5. Click "SIMPAN LISTING" to submit
-6. Check Google Sheets: New row with `is_test_data = TRUE`
+6. Check active backend: new row/record with `is_test_data = TRUE`
 7. Clear test data when done
 
 #### 8.3 Testing Claim Workflow
@@ -658,7 +665,7 @@ TestDataGenerator.showToast = function(message) {
 - [ ] Click FAB → Franchisee form filled
 - [ ] All fields populated with realistic data
 - [ ] Data passes validation (green checkmarks)
-- [ ] Submit to Google Sheets works
+- [ ] Submit to active backend works (currently Google Sheets, target D1)
 - [ ] Row appears in FRANCHISEE tab
 - [ ] `is_test_data` column = `TRUE`
 - [ ] Different data generated each time
@@ -667,7 +674,7 @@ TestDataGenerator.showToast = function(message) {
 - [ ] Click FAB → All 5 steps filled
 - [ ] Navigate step-by-step: no validation errors
 - [ ] Auto-calculated fields work (total investment)
-- [ ] Submit to Google Sheets works
+- [ ] Submit to active backend works (currently Google Sheets, target D1)
 - [ ] Row appears in FRANCHISOR tab
 - [ ] `is_test_data` column = `TRUE`
 - [ ] Different data generated each time
@@ -731,8 +738,8 @@ TestDataGenerator.showToast = function(message) {
     "royalty_basis": "omzet",
     "short_desc": "Franchise test description",
     "full_desc": "Auto-generated test data for validation testing.",
-    "logo_url": "https://res.cloudinary.com/test/logo.png",
-    "cover_url": "https://res.cloudinary.com/test/cover.jpg",
+    "logo_url": "https://example.com/test/logo.png",
+    "cover_url": "https://example.com/test/cover.jpg",
     "pic_name": "Ahmad Wijaya 42",
     "country_code": "+62",
     "whatsapp": "812-3456-7890",
@@ -743,7 +750,7 @@ TestDataGenerator.showToast = function(message) {
 }
 ```
 
-### UNCLAIMED Example (Google Sheets)
+### UNCLAIMED Example (Current Sheets / Target D1 Import Shape)
 ```json
 {
     "brand_name": "Test Brand 817",

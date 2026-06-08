@@ -1,5 +1,7 @@
 ## Instruksi Pembuatan Form Listing Franchise
 
+> Migration note: This is a form UX/data specification. Field names and meanings should remain stable while backend storage moves from the current transition layer to D1/R2/Clerk.
+
 **Role:** Kamu adalah Expert Web Developer.
 **Task:** Buatkan kode HTML form yang profesional, responsif (menggunakan framework Bootstrap 5 atau Tailwind CSS), dengan struktur data sebagai berikut. Pastikan ada validasi input dasar.
 

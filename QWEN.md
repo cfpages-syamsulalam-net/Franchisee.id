@@ -13,11 +13,14 @@
 ### Technology Stack
 | Layer | Technology |
 |-------|------------|
-| **Hosting** | Cloudflare Pages (static assets) |
-| **Backend** | Cloudflare Functions (edge runtime) |
-| **SSG/Automation** | Node.js scripts via GitHub Actions |
-| **CMS/Data Source** | Google Sheets (FRANCHISOR, UNCLAIMED, FRANCHISEE tabs) |
-| **Asset Management** | Cloudinary (direct uploads, AI optimization) |
+| **Current Hosting** | Cloudflare Pages (static WordPress export) |
+| **Current Backend** | Cloudflare Functions (edge runtime) |
+| **Current SSG/Automation** | Node.js scripts via GitHub Actions |
+| **Current Data Source** | Google Sheets + CSV fallback (transition layer only) |
+| **Target Framework** | Astro on Cloudflare (Next.js remains an alternate for React-heavy dashboards) |
+| **Target Database** | Cloudflare D1 |
+| **Target Asset Store** | Cloudflare R2 |
+| **Target Auth** | Clerk |
 | **Frontend** | HTML5, Bootstrap/Tailwind CSS, Vanilla JavaScript |
 | **SEO** | JSON-LD structured data, dynamic sitemaps |
 
@@ -28,7 +31,7 @@
 ```
 Franchisee.id/
 ├── .github/workflows/       # GitHub Actions automation
-│   ├── generate-pages.yaml  # SSG trigger from Google Sheets updates
+│   ├── generate-pages.yaml  # Current SSG trigger from Google Sheets updates
 │   ├── head.yaml            # Header management
 │   └── sitemap-readme.yaml  # Sitemap documentation
 ├── json/                    # Centralized JSON data assets
@@ -63,6 +66,8 @@ Franchisee.id/
 ├── wp-content/              # WordPress theme assets (static)
 ├── wp-includes/             # WordPress core assets (static)
 ├── CHANGELOG.md             # Mandatory change log (all modifications)
+├── CODEBASE.md              # Living project-owned logic and data-flow map
+├── AUDIT.md                 # D1/R2/Clerk technology migration tracker
 ├── GEMINI.md                # Architecture & governance source of truth
 ├── PRD.md                   # Product requirements & roadmap
 ├── FORM_SCHEMA.md           # Canonical form input inventory
@@ -77,7 +82,8 @@ Franchisee.id/
 
 ### Prerequisites
 - Node.js 18+
-- Google Cloud service account with Sheets API access
+- Google Cloud service account with Sheets API access for the current transition layer
+- Future D1/R2/Clerk migration work will add Wrangler/Cloudflare binding and Clerk environment requirements
 - GitHub repository with workflow permissions
 
 ### Environment Variables
@@ -106,9 +112,10 @@ node js/build-sitemap.js
 ```
 
 ### Automation
-- **Primary Trigger**: Google Sheets Apps Script sends `repository_dispatch` webhook on data changes
+- **Current Primary Trigger**: Google Sheets Apps Script sends `repository_dispatch` webhook on data changes
 - **Fallback**: Scheduled GitHub Action runs every 12 hours
 - **Hash-based optimization**: Build only runs when Google Sheets data hash changes (state persisted in `.github/sheets-sync-state.json`)
+- **Target Direction**: Replace Sheets-triggered rebuilds with D1-backed imports/builds or Astro on-demand rendering once the migration is complete
 
 ---
 
@@ -118,6 +125,8 @@ node js/build-sitemap.js
 | File | Purpose |
 |------|---------|
 | `GEMINI.md` | **Primary**: Architecture, governance, technical direction |
+| `CODEBASE.md` | Living map of relevant project-owned logic, file relationships, data flows, and migration-critical contracts |
+| `AUDIT.md` | D1/R2/Clerk technology migration tracker and decision log |
 | `CHANGELOG.md` | **Mandatory**: Log all create/update/delete operations with timestamp |
 | `PRD.md` | Product requirements, feature scope, roadmap (non-changelog) |
 | `FORM_SCHEMA.md` | Canonical form input inventory - update before removing/renaming fields |
@@ -197,7 +206,7 @@ Every session must log changes in `CHANGELOG.md`:
 1. **Identitas & Legalitas**: Brand name, company, category, HAKI status, NIB
 2. **Konsep & Biaya**: Outlet type, location requirements, fee structure, investment totals
 3. **Profil Marketing**: Descriptions, support system checkboxes
-4. **Media & Visual**: Logo, cover, gallery, video, proposal (Cloudinary uploads)
+4. **Media & Visual**: Logo, cover, gallery, video, proposal. Existing URL fields are preserved; new storage work should target R2.
 5. **Kontak Leads**: PIC name, WhatsApp, email, website, social media
 
 **Auto-Save Protection**: All Franchisor form fields are protected by aggressive auto-save with 6 independent triggers (debounced input, periodic 5s, step navigation, visibility change, beforeunload, tab switch) ensuring zero data loss on refresh or accidental closure. Draft persists in `localStorage` with 72-hour TTL and includes visual feedback indicator.
@@ -207,7 +216,7 @@ Every session must log changes in `CHANGELOG.md`:
 ## Data Flow Architecture
 
 ```
-Google Sheets (CMS)
+Current: Google Sheets (transition data source)
        ↓
 GitHub Actions (Scheduled/Webhook)
        ↓
@@ -219,7 +228,14 @@ User Browser
        ↓
 Cloudflare Functions (form-submit.js, get-franchises.js)
        ↓
-Google Sheets (write-back) + Supabase (analytics)
+Current: Google Sheets write-back
+
+Target:
+Clerk auth + Astro/Cloudflare routes
+       ↓
+D1 application database + R2 asset storage
+       ↓
+Static-first public pages and protected franchisee/franchisor/admin dashboards
 ```
 
 ### Claim Workflow
@@ -241,7 +257,7 @@ Google Sheets (write-back) + Supabase (analytics)
 - [ ] Claim workflow with `?claim=<slug>` deep-link
 - [ ] Financial calculations (BEP, ROI, total investment)
 - [ ] Form validation and error messages
-- [ ] Cloudinary image upload preview
+- [ ] Legacy media URL preview and future R2 upload flow
 - [ ] Generated pages in `/peluang-usaha/` directory
 - [ ] Sitemap completeness
 
@@ -267,11 +283,11 @@ node --check js/form-07-init.js
    }
    ```
 
-3. **Workflow Trigger Policy**: Primary trigger is `repository_dispatch` from Google Sheets. Scheduled polling is a fallback. Build should only run when sheet hash changes.
+3. **Workflow Trigger Policy**: Current primary trigger is `repository_dispatch` from Google Sheets. Scheduled polling is a fallback. Build should only run when sheet hash changes. Target migration should replace this with D1-backed build/import or on-demand rendering.
 
 4. **Large File Edits**: Files like `/daftar/index.html` contain Elementor boilerplate. Use surgical edits to avoid breaking the DOM structure.
 
-5. **Cloudinary Integration**: Direct browser uploads require proper credentials. Upload preview logic is handled by modular form runtime (`form-0x`) plus `form-utils.js`.
+5. **Asset Integration**: Existing Cloudinary/legacy URL behavior is transitional. New upload/ownership work should target Cloudflare R2 while preserving form field names until schema migration.
 
 6. **Claim Search Data Hygiene**: Keep edge-case filtering aligned across `js/build-listing.js`, `functions/get-franchises.js`, and form modules (`js/form-01-state-helpers.js`, `js/form-02-claim-workflow.js`) (exclude URL/phone/address/legal-entity/contact-label rows).
 

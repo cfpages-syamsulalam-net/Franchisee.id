@@ -2,6 +2,9 @@
 
 This document tracks key runtime/build symbols in `/js` with emphasis on modular form runtime ownership.
 
+## Migration Direction
+Current symbols are part of the static/Sheets transition layer. Preserve payload names and frontend behavior while migrating backend reads/writes to D1, media ownership to R2, and user identity to Clerk.
+
 ## 1. Form Runtime (Modular, Flat Prefix)
 
 ### `js/form-01-state-helpers.js`
@@ -32,7 +35,7 @@ This document tracks key runtime/build symbols in `/js` with emphasis on modular
 
 ### `js/form-06-submit-validation.js`
 - Live validation bindings.
-- Unified submit pipeline to `/form-submit`.
+- Unified submit pipeline to `/form-submit` (currently Sheets-backed; target D1-backed with same payload shape during transition).
 - Draft persistence hooks on form input/change.
 
 ### `js/form-07-init.js`
@@ -64,6 +67,7 @@ This document tracks key runtime/build symbols in `/js` with emphasis on modular
 - Hybrid FRANCHISOR+UNCLAIMED listing build.
 - Quote-aware CSV fallback parser.
 - Generates `/json/unclaimed-brands.json` for claim autocomplete.
+- Migration target: source rows from D1/import pipeline instead of Google Sheets.
 
 ### `js/build-details.js`
 - Detail-page generation, JSON-LD, breadcrumbs, sticky claim CTA.

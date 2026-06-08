@@ -2,6 +2,9 @@
 
 This file serves as a comprehensive record of all functions and key variables across the `/js` and `/functions` directories to prevent logic loss during rapid development.
 
+## Migration Direction
+This inventory describes the current runtime. Google Sheets and Cloudinary references are transition-layer behavior, not the desired final stack. New backend work should move function ownership toward D1/R2/Clerk and update `CODEBASE.md`, `AUDIT.md`, and this inventory together.
+
 ## 1. Directory: `/js` (Client-side & SSG Builders)
 
 ### File: `js/form-01-state-helpers.js`
@@ -119,19 +122,20 @@ This file serves as a comprehensive record of all functions and key variables ac
 ## 2. Directory: `/functions` (Cloudflare Edge Logic)
 
 ### File: `functions/form-submit.js` (v2.3)
-*Backend processing for all submissions.*
+*Current transition-layer backend processing for all submissions.*
 - `onRequestPost()`: Main entry point for Cloudflare Functions.
-- `getGoogleAuthToken()`: RS256 JWT auth logic for Google APIs.
+- `getGoogleAuthToken()`: RS256 JWT auth logic for Google APIs (legacy Sheets integration; not user auth).
 - `ensureSheetExists()`: Checks/Creates target tab in Google Sheet.
 - `appendDataSmart()`: Dynamic column-to-header mapping and data insertion.
 - `checkForDuplicates()`: prevents double registration via Email/WA.
 - `deleteFromUnclaimed(id, brandName)`: Post-claim cleanup logic (hapus dari tab UNCLAIMED by `id`, fallback by normalized `brand_name`).
 
 ### File: `functions/get-franchises.js`
-- `onRequestGet()`: API to fetch franchise data with tier-based Cloudinary optimization.
+- `onRequestGet()`: API to fetch franchise data with tier-based legacy Cloudinary URL optimization.
   - Supports `purpose=claim-search` for `tab=UNCLAIMED` to return sanitized claim-search rows (clean brand_name + deduplication + row-noise filtering aligned with frontend/builder).
+  - Migration target: replace Sheets reads with D1 queries and R2/legacy media URL resolution.
 
 ---
 ## 3. Logic Safety Audit
 - **Status**: Verified.
-- **Lost logic recovered**: BEP calculations, multi-step progress, and Cloudinary upload preview restoration (refactored into modular `form-0x-*.js` files and `form-utils.js`).
+- **Lost logic recovered**: BEP calculations, multi-step progress, and media URL preview behavior (refactored into modular `form-0x-*.js` files and `form-utils.js`).

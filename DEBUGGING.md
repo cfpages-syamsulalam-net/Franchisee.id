@@ -1,6 +1,9 @@
 # Debugging Quick Guide
 
-Last updated: 2026-04-04 (Asia/Jakarta)
+Last updated: 2026-06-08 (Asia/Jakarta)
+
+## Migration Note
+Debugging guidance still applies during the D1/R2/Clerk migration. The current `/daftar` page remains the legacy static integration surface until the Astro/Clerk routes replace it.
 
 ## 1) Fast Personal Debug Mode (`?dev=1`)
 - Open `/daftar`.
@@ -9,7 +12,7 @@ Last updated: 2026-04-04 (Asia/Jakarta)
 - When `dev=1` is active:
   - `/css/form-franchise.css` gets a cache-busting query param (`_dbg=<timestamp>`).
   - All modular form CSS files under `/css/form-franchise/*.css` are loaded directly with `_dbg=<timestamp>` to bypass stale `@import` caches during debug.
-  - `/js/form-utils.js` and `/js/form-franchise.js` also get cache-busting query params.
+  - `/js/form-utils.js` and modular `/js/form-0x-*.js` files also get cache-busting query params.
 - Click `🧪` again to disable debug mode (`dev` param removed).
 
 This only affects the URL/session you open and does not change behavior for other users.

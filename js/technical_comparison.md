@@ -2,6 +2,9 @@
 
 This document tracks the evolution and current state of the JavaScript logic files, identifying potential regressions or missing features compared to historical versions.
 
+## Migration Direction
+The files listed here are the current static/Sheets transition layer. New app work should preserve these behaviors while moving backend ownership toward D1/R2/Clerk and Astro/Cloudflare routes. Update `CODEBASE.md`, `AUDIT.md`, and `TECHNICAL_INVENTORY.md` whenever a symbol or data contract migrates.
+
 ## File Inventory & Purpose
 
 | File | Purpose | Maintained Since |
@@ -39,6 +42,7 @@ This document tracks the evolution and current state of the JavaScript logic fil
 - **Logic Sync**: `build-details.js` and `build-listing.js` share similar logic for data fetching but diverge in UI template injection. Any changes to data schema in `/json/unclaimed-brands.json` must be reflected in both.
 - **Claim Search Sync**: Claim-search sanitization rules must stay aligned in `js/build-listing.js`, `functions/get-franchises.js`, and form modules (`js/form-01-state-helpers.js`, `js/form-02-claim-workflow.js`) to avoid URL/phone/address/entity rows leaking into autocomplete.
 - **Sitemap**: `build-sitemap.js` is a relatively new addition (Mar 2026) to handle the growing scale of unclaimed brands without manual sitemap edits.
+- **Migration Target**: Replace Sheets fetches with D1-backed queries/imports and preserve static-first SEO output through Astro or equivalent Cloudflare rendering.
 
 ---
 

@@ -1,6 +1,9 @@
 # Form Validation & Auto-Formatting Improvements
 
-Last updated: 2026-04-04 20:30 (Asia/Jakarta)
+Last updated: 2026-06-08 (Asia/Jakarta)
+
+## Migration Note
+These validation and formatting rules are frontend contracts. Preserve them while moving backend persistence to D1 and user identity to Clerk.
 
 ## Overview
 Implemented 4 critical UX improvements to the registration forms:

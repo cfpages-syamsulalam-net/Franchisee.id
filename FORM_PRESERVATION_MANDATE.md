@@ -1,6 +1,6 @@
 # FORM FIELD PRESERVATION MANDATE
 
-**Last Updated**: 2026-04-05 02:45 (Asia/Jakarta)
+**Last Updated**: 2026-06-08 (Asia/Jakarta)
 
 ## ⚠️ CRITICAL RULE: DO NOT REMOVE FORM FIELDS
 
@@ -15,7 +15,7 @@ During recent refactoring, the following fields were **accidentally removed** fr
 These fields existed in the historical versions (`/pendaftaran/index.html` → `/daftar/index.html` old versions) and were part of the complete form specification.
 
 ### Why This Matters
-1. **Data Integrity**: These fields map to Google Sheets columns. Removing them breaks the data pipeline.
+1. **Data Integrity**: These fields map to the current backend payload and legacy Google Sheets columns. During migration, they must be mapped to D1 before any UI/schema change.
 2. **User Expectations**: Franchisors expect to provide legal documentation (HAKI, NIB).
 3. **Backend Validation**: Cloud functions expect these fields for verification workflows.
 4. **Historical Continuity**: Forms should only grow, not shrink, unless explicitly requested.
@@ -53,11 +53,11 @@ These fields MUST exist:
 
 ### Franchisor Step 4: Media & Visual
 These fields MUST exist:
-- ✅ `logo_url` (Hidden, Required, Cloudinary)
-- ✅ `cover_url` (Hidden, Required, Cloudinary)
-- ✅ `gallery_urls` (Hidden, Optional, Cloudinary)
+- ✅ `logo_url` (Hidden, Required, legacy URL field; target R2-compatible)
+- ✅ `cover_url` (Hidden, Required, legacy URL field; target R2-compatible)
+- ✅ `gallery_urls` (Hidden, Optional, legacy URL field; target R2-compatible)
 - ✅ `video_url` (URL, Optional)
-- ✅ `proposal_url` (Hidden, Optional, Cloudinary)
+- ✅ `proposal_url` (Hidden, Optional, legacy URL field; target R2-compatible)
 
 ### Franchisor Step 5: Kontak Leads
 These fields MUST exist:
@@ -126,7 +126,7 @@ If fields are accidentally removed, restore from:
 ## Enforcement
 
 This file serves as a **binding constraint** for all AI agents working on this repository. Violating these rules will result in:
-1. Data loss in Google Sheets submissions
+1. Data loss in current submissions and future D1 migrations
 2. Broken form validation workflows
 3. User trust degradation
 4. Additional recovery work

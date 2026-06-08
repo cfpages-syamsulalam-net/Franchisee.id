@@ -1,5 +1,7 @@
 # Commit History: /daftar/index.html
 
+> Historical reference only. Use this for tracing `/daftar` lineage, not for target architecture decisions. Current migration direction is Astro + D1 + R2 + Clerk.
+
 | Commit Hash | Date | Message | Line Count |
 |-------------|------|---------|------------|
 | (Uncommitted) | 2026-04-02 | Complete Restoration (SEO, Astra/Elementor CSS, Full Footer & Hybrid Logic) | 920 |

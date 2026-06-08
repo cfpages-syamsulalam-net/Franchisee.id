@@ -1,6 +1,9 @@
 # Form UX Fixes & Improvements
 
-Last updated: 2026-04-04 21:30 (Asia/Jakarta)
+Last updated: 2026-06-08 (Asia/Jakarta)
+
+## Migration Note
+These UX fixes are independent of the backend. Preserve the behavior during the Astro/D1/R2/Clerk migration unless `FORM_SCHEMA.md` and `CODEBASE.md` are updated together.
 
 ## Issues Fixed
 

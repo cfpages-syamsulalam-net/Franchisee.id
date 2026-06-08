@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-08 05:45 (Asia/Jakarta)
+Last updated: 2026-06-08 05:59 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
@@ -98,7 +98,7 @@ API/server routes:
 
 | Phase | Status | Scope |
 | --- | --- | --- |
-| 0. Documentation baseline | In progress | Create `CODEBASE.md` and `AUDIT.md`, add upkeep rule to `AGENTS.md`. |
+| 0. Documentation baseline | In progress | Create `CODEBASE.md` and `AUDIT.md`, add upkeep rule to `AGENTS.md`, and align existing Markdown docs around D1/R2/Clerk. |
 | 1. Data contract design | Pending | Define D1 schema, migrations, seed/import scripts, and field mapping from Sheets/CSV. |
 | 2. Cloudflare project config | Pending | Add `wrangler` config, D1 binding, R2 binding, local/preview/prod environments. |
 | 3. Import pipeline | Pending | Import CSV/Sheets snapshots into D1; preserve `UNCLAIMED` sanitization and slugs. |
@@ -132,3 +132,9 @@ API/server routes:
 4. Add Clerk auth scaffold for `/login`, `/register`, and protected role landing pages.
 5. Convert `/form-submit` into a D1-backed endpoint while keeping the existing frontend payload shape.
 
+## Documentation Alignment Rule
+When editing any `.md` file, distinguish between:
+- **Current transition layer:** static WordPress export, Cloudflare Pages Functions, Google Sheets/CSV, generated HTML, and legacy media URLs.
+- **Target architecture:** Astro on Cloudflare, D1, R2, Clerk, and protected role-aware app routes.
+
+Do not describe Google Sheets, Supabase, or Cloudinary as the future application stack.

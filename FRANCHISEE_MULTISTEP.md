@@ -1,6 +1,9 @@
 # Franchisee Multi-Step Form Implementation
 
-Last updated: 2026-04-04 19:45 (Asia/Jakarta)
+Last updated: 2026-06-08 (Asia/Jakarta)
+
+## Migration Note
+This frontend step behavior must be preserved when the submit endpoint migrates from the current Google Sheets transition layer to D1 and Clerk-aware franchisee profiles.
 
 ## Overview
 The Franchisee form has been converted from a single-page layout to a **2-step multi-step form** to improve user experience, reduce cognitive load, and match the UX pattern established in the Franchisor form.

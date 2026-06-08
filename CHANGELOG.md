@@ -4,6 +4,22 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-08 05:59 (Asia/Jakarta)
+### Added
+- `.context/session-20260608-0559.md`: Added session snapshot for the Markdown architecture-alignment pass.
+- `.context/session-20260404-1215.md`, `.context/session-20260404-1755.md`, and `.context/session-20260404-1900.md`: Added historical context notices so older Google Sheets/static-form notes are not mistaken for the target architecture.
+
+### Changed
+- `GEMINI.md`, `KNOWLEDGE.md`, `PRD.md`, and `QWEN.md`: Reframed the project direction around Astro on Cloudflare, D1, R2, and Clerk while marking Google Sheets/CSV and legacy media URLs as the current transition layer.
+- `FORM_SCHEMA.md`, `CLAIM_WORKFLOW.md`, `AUTO_SAVE.md`, `FORM_PRESERVATION_MANDATE.md`, and `TEST_DATA_GENERATOR.md`: Updated form/workflow documentation to preserve current fields and payloads while pointing future backend/storage work to D1/R2/Clerk.
+- `TECHNICAL_INVENTORY.md`, `js/technical_comparison.md`, `js/symbols_inventory.md`, and `css/form-franchise/CSS_USAGE_MAP.md`: Updated technical inventory notes for the D1/R2/Clerk migration and corrected stale modular form runtime references.
+- `CODEBASE.md`, `AUDIT.md`, and `AGENTS.md`: Added/updated documentation-alignment rules and target-architecture references.
+- `progress/summary-20260328.md`: Marked old Google Sheets/Cloudinary references as a historical March 2026 snapshot.
+- `DEBUGGING.md`, `FRANCHISEE_MULTISTEP.md`, `FORM_VALIDATION_FIXES.md`, `FORM_UX_FIXES.md`, `franchise-info-form.md`, `daftar/technical_comparison.md`, `daftar/restoration_plan.md`, and `daftar/commits.md`: Added migration/historical notes so form/debug/restoration references stay aligned with the D1/R2/Clerk direction.
+
+### Removed
+- None.
+
 ## 2026-06-08 05:45 (Asia/Jakarta)
 ### Added
 - `CODEBASE.md`: Created living map of relevant project-owned logic, data flows, file relationships, runtime modules, Cloudflare Functions, builders, generated assets, and migration-critical contracts.
