@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-08 05:59 (Asia/Jakarta)
+Last updated: 2026-06-13 01:46 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -20,7 +20,12 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 - Astro on Cloudflare for new public directory and application pages.
 - Cloudflare D1 as the source of truth for users, franchisees, franchisors, franchises, claims, leads, packages, locations, assets metadata, and audit events.
 - Cloudflare R2 for franchise media and proposal assets.
-- Clerk for login/register, identity, roles, and protected franchisee/franchisor/admin routes.
+- Clerk for login/register, identity/session handling, and protected franchisee/franchisor/admin route entry.
+- TypeScript by default for new app/backend/importer/schema work.
+- Zod for runtime validation of forms, API inputs, imports, Clerk webhooks, env/config, and D1 write inputs.
+- Source-controlled SQL migrations for all D1 schema changes.
+- D1-authoritative roles: `franchisee`, `franchisor`, `staff`, and `admin`; Clerk metadata is a UI hint only.
+- Drizzle can be added when D1-backed route handlers need shared typed queries, but initial schema migrations should remain explicit and reviewable.
 - Existing CSS and form field names remain compatibility contracts until `FORM_SCHEMA.md`, `AUDIT.md`, and this file are updated together.
 
 ## Project-Owned Logic Files
@@ -61,6 +66,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `.github/workflows/generate-pages.yaml` | Scheduled/manual/repository-dispatch builder workflow for regenerated static directory pages. |
 | `.github/workflows/head.yaml` | Legacy automation that injects `.head` content into every HTML file. Use cautiously because it touches many static exports. |
 | `.github/workflows/sitemap-readme.yaml` | Manual workflow for sitemap/readme generation from HTML files. |
+| `TECH_STACK_DECISIONS.md` | Canonical migration stack decisions: TypeScript, Zod, D1 SQL migrations, role model, Clerk/D1 responsibility split, and Drizzle adoption timing. |
 
 ## Main Data Flows
 
@@ -104,6 +110,9 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 - Keep JSON assets in `/json` and CSV assets in `/csv`.
 - Keep static-first public franchise pages for SEO unless a migration plan explicitly replaces generation.
 - Keep `CHANGELOG.md` updated for every file create/update/delete.
+- For new migration code, prefer TypeScript plus Zod validation at runtime boundaries.
+- D1 table changes must be made through committed SQL migrations.
+- Server-side authorization must read D1 roles/permissions; Clerk only supplies identity/session context.
 
 ## Known Implementation Gaps
 - `js/build-sitemap.js` still uses naive CSV splitting in fallback mode, while `js/build-listing.js` uses quote-aware CSV parsing. This can corrupt sitemap entries when CSV fields contain commas/newlines.

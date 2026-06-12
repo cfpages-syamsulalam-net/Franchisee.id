@@ -19,15 +19,19 @@ Franchise.id is a high-performance directory platform (franchise.id, franchisee.
 - **Framework:** Astro on Cloudflare by default, with Next.js retained as an alternative if dashboard complexity requires a React-heavy app.
 - **Database:** Cloudflare D1 for users, franchisees, franchisors, listings, claims, leads, packages, locations, and audit events.
 - **Assets:** Cloudflare R2 for logos, covers, galleries, proposals, and imported legacy media.
-- **Auth:** Clerk for login/register, user identity, roles, and protected franchisee/franchisor/admin surfaces.
+- **Auth:** Clerk for login/register, user identity/session handling, and protected franchisee/franchisor/admin route entry.
 - **Backend:** Cloudflare Workers/Pages Functions or Astro server routes using D1/R2 bindings instead of Google API write paths.
+- **Language:** TypeScript by default for new app, backend, importer, schema, and D1 integration work.
+- **Validation:** Zod for runtime validation at trust boundaries before business logic or D1 writes.
+- **Migrations:** Source-controlled SQL migrations for all D1 schema changes.
+- **Authorization:** Clerk authenticates identity; D1 is authoritative for roles and permissions (`franchisee`, `franchisor`, `staff`, `admin`).
 
 ## Current Goals & Roadmap
 For detailed technical plans, feature requests, and the current to-do list, refer to **[PRD.md](./PRD.md)**.
 
 ### Active Priorities
 1. **Documentation Alignment:** Keep `CODEBASE.md`, `AUDIT.md`, and all governance docs aligned around the D1/R2/Clerk migration.
-2. **Data Contract Design:** Define D1 schema and import/mapping from Sheets/CSV without losing existing form fields.
+2. **Data Contract Design:** Define TypeScript/Zod schemas, D1 SQL migrations, role tables, and import/mapping from Sheets/CSV without losing existing form fields.
 3. **Auth Foundation:** Replace static `/login` and registration intent with Clerk-backed login/register and protected role pages.
 4. **Backend Replacement:** Migrate `/form-submit` and `/get-franchises` from Google Sheets access to D1-backed APIs while preserving the current frontend payload contract during transition.
 5. **Asset Migration:** Move franchisor media handling toward R2 while preserving existing `*_url` field names until the form schema is formally migrated.
@@ -87,6 +91,7 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 4.  **SSG Engine (current):** Scripts in `js/` fetch Sheets/CSV data and inject into `templates/` via GitHub Actions.
 5.  **Serverless Logic (current):** Functions handle Sheets API access and form submissions with Google JWT auth.
 6.  **Target Backend:** D1 becomes the source of truth; R2 stores franchise assets; Clerk identifies users and gates protected franchisee/franchisor/admin routes.
+7.  **Target Validation/Authorization:** Zod validates untrusted runtime input; D1 role records authorize protected actions server-side.
 
 ## Key Technical Components
 - **Smart Form Logic (`js/form-01-*.js` ... `js/form-07-*.js`):** Modular runtime handling calculations, validation, claim workflow, and submit orchestration.
@@ -103,3 +108,4 @@ For detailed technical plans, feature requests, and the current to-do list, refe
 - **Static First:** Pre-generate all content pages for SEO.
 - **Surgical HTML Edits:** Protect Elementor's DOM structure.
 - **Auth Implementation:** Current Google API JWT signing uses native Web Crypto in Functions. New user auth must use Clerk rather than custom account logic.
+- **Role Implementation:** New role checks must use D1 server-side state. Clerk metadata/session claims may be used only for small UI routing hints.

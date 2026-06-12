@@ -9,6 +9,10 @@ This file gives persistent project context: goals, commands, architecture, conve
 - Migration target:
   - Treat the current Google Sheets setup as the transitional data source.
   - New application work should move toward Astro on Cloudflare, Cloudflare D1, Cloudflare R2, and Clerk.
+  - Use TypeScript by default for new app/backend/importer/schema code.
+  - Use Zod to validate untrusted runtime data before D1 writes or protected business logic.
+  - Use committed SQL migrations for D1 schema changes.
+  - Keep roles (`franchisee`, `franchisor`, `staff`, `admin`) authoritative in D1; Clerk supplies identity and session context.
   - Keep existing field names and payload shapes until `FORM_SCHEMA.md`, `CODEBASE.md`, and `AUDIT.md` are updated together.
 - Dev:
   - Regenerate listing page: `node js/build-listing.js`
@@ -43,6 +47,9 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Target source of truth: Cloudflare D1 tables for users, franchisee profiles, franchisor profiles, franchises, claims, leads, packages, assets, locations, and audit events.
   - Target asset store: Cloudflare R2 for franchise media and documents.
   - Target auth: Clerk for login/register and protected franchisee/franchisor/admin routes.
+  - Target language/validation: TypeScript plus Zod for new server routes, importers, schemas, and payload parsing.
+  - Target migrations: source-controlled SQL migrations for every D1 schema change.
+  - Target authorization: D1 role/permission checks on the server for `franchisee`, `franchisor`, `staff`, and `admin`.
   - Build scripts fetch sheet data and generate static HTML pages.
   - Claim/search UX reads static `/json/unclaimed-brands.json` first; falls back to `/get-franchises?tab=UNCLAIMED&purpose=claim-search`.
   - `/json/unclaimed-brands.json` must be generated from sanitized UNCLAIMED rows only (exclude URL/phone/address/legal-entity/contact-label noise and dedupe by `brand_name`).
@@ -78,6 +85,8 @@ This file gives persistent project context: goals, commands, architecture, conve
   - Log all file create/update/delete operations in `CHANGELOG.md` with timestamp.
   - Preserve static-first approach for SEO (generate pages, avoid runtime-heavy rendering).
   - Prefer Astro for new public directory/application work unless a specific dashboard requirement justifies Next.js.
+  - Prefer TypeScript for new migration code and Zod for validation at all runtime trust boundaries.
+  - Keep D1 migrations explicit and committed; introduce Drizzle when typed D1 queries reduce real route/dashboard complexity.
   - Keep `/css/form-franchise.css` as the aggregator entrypoint; preserve `@import` order when adding/changing form styles.
 - Things to avoid:
   - Do not do full rewrites of large legacy files (`/daftar/index.html`) unless explicitly required.

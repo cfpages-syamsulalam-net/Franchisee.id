@@ -1,6 +1,6 @@
 # AGENTS.md - Local Audit Notes & Working Rules
 
-Last updated: 2026-06-08 (Asia/Jakarta)
+Last updated: 2026-06-13 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -12,6 +12,12 @@ Last updated: 2026-06-08 (Asia/Jakarta)
 - Keep repository data assets centralized: JSON files in `/json` and CSV files in `/csv`. Update script paths/docs together when adding or moving data assets.
 - Keep `CODEBASE.md` current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. Treat stale codebase maps as a project risk.
 - Keep per-session context snapshots in `/.context` using timestamped Markdown files (`session-YYYYMMDD-HHmm.md`) for new-session continuity.
+- Be proactive with engineering judgment: when a request can be improved for maintainability, security, performance, UX, data integrity, or migration safety, surface the recommendation clearly before or during implementation. Prefer actionable suggestions with tradeoffs over silent compliance, while still respecting explicit user decisions.
+- Follow `TECH_STACK_DECISIONS.md` for new stack work: TypeScript by default, Zod for runtime validation, source-controlled SQL migrations for D1 schema changes, D1-authoritative roles, Clerk for identity, R2 for assets, and existing CSS for styling.
+- New application/backend/importer code should be TypeScript unless it is a targeted edit to untouched legacy JavaScript. Do not add new large JavaScript application surfaces for the migration.
+- Validate all untrusted runtime inputs with Zod before business logic or D1 writes: form submissions, query params, CSV/Sheets import rows, Clerk webhooks, environment/config values, and admin actions.
+- D1 schema changes must go through committed SQL migrations. Do not rely on ad hoc production table edits as the project database contract.
+- Treat roles (`franchisee`, `franchisor`, `admin`, `staff`) as D1-authoritative. Clerk authenticates identity; server-side D1 checks authorize actions. Clerk metadata can only be a small UI hint, never the final authorization source.
 - For large legacy files such as `/daftar/index.html`, avoid full rewrites; use targeted edits with enough surrounding context to prevent accidental loss.
 - Keep form runtime logic modular in flat prefixed files (`js/form-01-*.js` ... `js/form-07-*.js`); avoid reintroducing monolithic `js/form-franchise.js` logic.
 - After editing files larger than 500 lines, verify line count immediately to catch unintended truncation.
@@ -100,6 +106,7 @@ Last updated: 2026-06-08 (Asia/Jakarta)
 - `KNOWLEDGE.md`: Consolidated operational knowledge (quickstart, architecture, conventions, gotchas). Use as first-stop implementation context.
 - `CODEBASE.md`: Living map of relevant project-owned logic, file relationships, data flows, and migration-critical contracts. Update as code evolves.
 - `AUDIT.md`: Technology migration audit and progress tracker for moving from static/Sheets-backed runtime to Cloudflare D1/R2/Clerk-backed application architecture.
+- `TECH_STACK_DECISIONS.md`: Canonical stack decision log for TypeScript, Zod, SQL migrations, D1 roles, Clerk, R2, and Drizzle adoption timing.
 - `GEMINI.md`: Primary architecture and governance source of truth; prioritize it for technical direction.
 - `PRD.md`: Feature roadmap and requirement scope (non-changelog).
 - `FORM_SCHEMA.md`: Canonical form input inventory. Do not remove/rename fields in `/daftar/index.html` without updating this file.

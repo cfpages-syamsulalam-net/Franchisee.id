@@ -20,7 +20,11 @@
 | **Target Framework** | Astro on Cloudflare (Next.js remains an alternate for React-heavy dashboards) |
 | **Target Database** | Cloudflare D1 |
 | **Target Asset Store** | Cloudflare R2 |
-| **Target Auth** | Clerk |
+| **Target Auth** | Clerk for identity/session handling |
+| **Target Authorization** | D1-authoritative roles: `franchisee`, `franchisor`, `staff`, `admin` |
+| **Target Language** | TypeScript by default for new app/backend/importer/schema work |
+| **Target Validation** | Zod for runtime validation at API/form/import/webhook/config boundaries |
+| **Target Migrations** | Source-controlled SQL migrations for all D1 schema changes |
 | **Frontend** | HTML5, Bootstrap/Tailwind CSS, Vanilla JavaScript |
 | **SEO** | JSON-LD structured data, dynamic sitemaps |
 
@@ -68,6 +72,7 @@ Franchisee.id/
 ├── CHANGELOG.md             # Mandatory change log (all modifications)
 ├── CODEBASE.md              # Living project-owned logic and data-flow map
 ├── AUDIT.md                 # D1/R2/Clerk technology migration tracker
+├── TECH_STACK_DECISIONS.md  # TypeScript, Zod, migrations, roles, Drizzle decisions
 ├── GEMINI.md                # Architecture & governance source of truth
 ├── PRD.md                   # Product requirements & roadmap
 ├── FORM_SCHEMA.md           # Canonical form input inventory
@@ -127,6 +132,7 @@ node js/build-sitemap.js
 | `GEMINI.md` | **Primary**: Architecture, governance, technical direction |
 | `CODEBASE.md` | Living map of relevant project-owned logic, file relationships, data flows, and migration-critical contracts |
 | `AUDIT.md` | D1/R2/Clerk technology migration tracker and decision log |
+| `TECH_STACK_DECISIONS.md` | Canonical stack decisions for TypeScript, Zod, SQL migrations, D1 roles, Clerk/R2, and Drizzle timing |
 | `CHANGELOG.md` | **Mandatory**: Log all create/update/delete operations with timestamp |
 | `PRD.md` | Product requirements, feature scope, roadmap (non-changelog) |
 | `FORM_SCHEMA.md` | Canonical form input inventory - update before removing/renaming fields |
@@ -139,14 +145,15 @@ node js/build-sitemap.js
 - Every model must follow the same handoff protocol:
   1. Read `AGENTS.md`, `GEMINI.md`, `KNOWLEDGE.md`, and latest `/.context/session-*.md`.
   2. Keep conventions aligned (`/json`, `/csv`, and modular form files `js/form-0x-*.js`).
-  3. Log all modifications to `CHANGELOG.md` with timestamp.
-  4. Update `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` after form/function ownership changes.
+  3. Follow `TECH_STACK_DECISIONS.md` for TypeScript, Zod, D1 SQL migrations, role authorization, and Drizzle timing.
+  4. Log all modifications to `CHANGELOG.md` with timestamp.
+  5. Update `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` after form/function ownership changes.
 
 ### Handoff Checklist
 1. Read latest `/.context/session-*.md` first.
 2. Read `AGENTS.md` for local working rules.
 3. Confirm architecture/governance alignment in `GEMINI.md` and `KNOWLEDGE.md`.
-4. Apply edits with current conventions (`/json`, `/csv`, `js/form-0x-*.js`).
+4. Apply edits with current conventions (`/json`, `/csv`, `js/form-0x-*.js`) and new migration defaults (TypeScript, Zod, SQL migrations, D1 roles).
 5. Update `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` when symbols/fields change.
 6. Append timestamped `CHANGELOG.md` entry before ending the session.
 

@@ -4,6 +4,31 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-13 01:46 (Asia/Jakarta)
+### Added
+- `TECH_STACK_DECISIONS.md`: Added canonical migration decisions for TypeScript, Zod, D1 SQL migrations, D1-authoritative roles, Clerk/D1 responsibility split, Drizzle adoption timing, and the Google Sheets to D1 cutover path.
+- `.context/session-20260613-0146.md`: Added session snapshot for the stack-decision documentation update.
+
+### Changed
+- `AGENTS.md`: Added persistent rules for TypeScript-by-default migration work, Zod validation, SQL migrations, D1-authoritative roles, and the new stack-decision reference.
+- `AUDIT.md`: Added TypeScript, Zod, SQL migration, Drizzle, and D1 role-model decisions to the migration tracker and immediate next-work list.
+- `CODEBASE.md`: Added the new migration decisions and `TECH_STACK_DECISIONS.md` to the codebase map.
+- `PRD.md`: Added TypeScript, Zod, SQL migrations, and D1 role model requirements to the v3 technology upgrade plan.
+- `GEMINI.md`, `KNOWLEDGE.md`, and `QWEN.md`: Aligned core architecture/governance notes with TypeScript, Zod, SQL migrations, and D1-authoritative authorization.
+
+### Removed
+- None.
+
+## 2026-06-10 02:16 (Asia/Jakarta)
+### Added
+- `.context/session-20260610-0216.md`: Added session snapshot for the tech-stack recommendation and proactive-agent instruction update.
+
+### Changed
+- `AGENTS.md`: Added a persistent rule requiring proactive engineering judgment and actionable suggestions when maintainability, security, performance, UX, data integrity, or migration safety can be improved.
+
+### Removed
+- None.
+
 ## 2026-06-08 05:59 (Asia/Jakarta)
 ### Added
 - `.context/session-20260608-0559.md`: Added session snapshot for the Markdown architecture-alignment pass.

@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-08 05:59 (Asia/Jakarta)
+Last updated: 2026-06-13 01:46 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
@@ -40,6 +40,11 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 | Auth | Clerk. | Hosted auth, register/login, user identity, and server-side auth context for protected pages/functions. |
 | Backend | Cloudflare Workers/Pages Functions or Astro server routes. | Use D1/R2 bindings instead of Google API secrets and Sheets fetches. |
 | Styling | Existing CSS. | Preserve visual consistency and avoid adding a styling dependency. |
+| Language | TypeScript by default for new app/backend/importer/schema work. | Compile-time safety for the migration while leaving untouched legacy JavaScript stable. |
+| Validation | Zod at runtime trust boundaries. | Validate form payloads, query params, CSV/Sheets imports, Clerk webhooks, env/config, and admin actions before D1 writes. |
+| Migrations | Source-controlled SQL migrations for every D1 schema change. | Keeps database evolution reviewable, repeatable, and recoverable. |
+| Query layer | Start with explicit SQL migrations; add Drizzle when D1 route handlers need shared typed queries. | Drizzle supports Cloudflare D1 and is useful once route/dashboard query complexity grows. |
+| Authorization | Clerk identity plus D1-authoritative roles. | Roles are `franchisee`, `franchisor`, `staff`, and `admin`; Clerk metadata is only a small UI hint. |
 
 Official platform notes checked during this audit:
 - Cloudflare Workers bindings expose D1/R2 and other resources through `env` without embedding service secrets in application code: https://developers.cloudflare.com/workers/runtime-apis/bindings/
@@ -52,7 +57,8 @@ Official platform notes checked during this audit:
 ## Proposed D1 Data Model
 
 Initial tables to replace the Sheets tabs:
-- `users`: Clerk user id, email, role flags, profile status.
+- `users`: Clerk user id, email, display name, account status, profile status.
+- `user_roles`: D1-authoritative role assignments for `franchisee`, `franchisor`, `staff`, and `admin`.
 - `franchisees`: buyer profile fields currently captured by `franchiseeForm`.
 - `franchisors`: owner/company profile tied to Clerk user id.
 - `franchises`: canonical listing record with brand, category, status, verification tier, slug, owner id, source type.
@@ -64,6 +70,13 @@ Initial tables to replace the Sheets tabs:
 - `audit_events`: important ownership, claim, publish, verification, and admin actions.
 
 Keep the current form field names during migration where possible so the HTML/runtime contract can be mapped without losing data.
+
+## Data Contract Decisions
+- New app, backend, importer, and schema-adjacent code should be TypeScript.
+- Zod schemas should define and validate all external payloads before they reach services or D1.
+- D1 schema changes should be SQL migrations committed to the repository and applied locally before remote.
+- Clerk authenticates the user, but D1 roles/permissions authorize actions.
+- Drizzle is recommended when D1-backed Astro/server routes begin to accumulate shared queries; initial schema work can stay as explicit SQL migrations.
 
 ## Route Plan
 
@@ -99,10 +112,10 @@ API/server routes:
 | Phase | Status | Scope |
 | --- | --- | --- |
 | 0. Documentation baseline | In progress | Create `CODEBASE.md` and `AUDIT.md`, add upkeep rule to `AGENTS.md`, and align existing Markdown docs around D1/R2/Clerk. |
-| 1. Data contract design | Pending | Define D1 schema, migrations, seed/import scripts, and field mapping from Sheets/CSV. |
+| 1. Data contract design | Pending | Define TypeScript/Zod payload schemas, D1 SQL migrations, role tables, seed/import scripts, and field mapping from Sheets/CSV. |
 | 2. Cloudflare project config | Pending | Add `wrangler` config, D1 binding, R2 binding, local/preview/prod environments. |
 | 3. Import pipeline | Pending | Import CSV/Sheets snapshots into D1; preserve `UNCLAIMED` sanitization and slugs. |
-| 4. Auth foundation | Pending | Add Clerk register/login, roles, protected server routes, and Clerk user mapping. |
+| 4. Auth foundation | Pending | Add Clerk register/login, D1-authoritative roles, protected server routes, and Clerk user mapping. |
 | 5. Form API replacement | Pending | Replace `/form-submit` Sheets writes with D1 transactions; keep current forms working during transition. |
 | 6. Asset pipeline | Pending | Move uploads to R2 with object ownership, validation, and public/served URLs. |
 | 7. Public directory rebuild | Pending | Rebuild listing/detail/search in Astro using existing styles and D1 data. |
@@ -116,21 +129,25 @@ API/server routes:
 - Keep claim-search sanitization consistent during import, API search, and UI autocomplete.
 - Use existing CSS first. Add framework dependencies for app/runtime only, not for styling.
 - Keep generated/public static pages available until the new app routes are equivalent.
+- Use TypeScript and Zod for new migration code; legacy JavaScript can remain until touched.
+- Apply D1 schema changes through committed SQL migrations only.
+- Keep role authorization in D1 server-side checks; do not trust Clerk unsafe metadata or client-visible hints for protected actions.
 
 ## Risks And Required Decisions
 - Decide Astro vs Next.js before scaffolding. Current recommendation: Astro.
 - Decide whether Cloudflare Pages or Workers static assets should be the deployment target for the new app. Current recommendation: Workers-compatible Cloudflare adapter route, preserving Pages-style static hosting if practical.
-- Clerk roles/organizations need design: simple user roles may be enough initially; organizations may be better if one franchisor manages multiple brands or staff.
+- Clerk organizations need a later product decision: they may be useful if one franchisor manages multiple brands or staff, but the initial authorization source remains D1 roles.
 - D1 needs an approval/revision model before franchisors can edit live public pages.
 - R2 public access strategy must be decided: public bucket/custom domain, signed proxy route, or hybrid.
 - Legacy static HTML volume is large; migration should prioritize app-critical routes instead of converting every exported page at once.
 
 ## Immediate Next Work
-1. Draft D1 schema and migration files.
+1. Draft D1 schema, role model, and first SQL migration.
 2. Add a `wrangler` config with D1/R2 binding names.
-3. Build a one-way importer from `csv/franchisors.csv`, `csv/unclaimed.csv`, and `csv/franchisee.csv`.
-4. Add Clerk auth scaffold for `/login`, `/register`, and protected role landing pages.
-5. Convert `/form-submit` into a D1-backed endpoint while keeping the existing frontend payload shape.
+3. Add TypeScript/Zod schemas for form payloads, CSV rows, and import mapping.
+4. Build an idempotent importer from `csv/franchisors.csv`, `csv/unclaimed.csv`, and `csv/franchisee.csv`.
+5. Add Clerk auth scaffold for `/login`, `/register`, and protected role landing pages.
+6. Convert D1 read paths before D1 write paths, then move `/form-submit` into D1 transactions while keeping the existing frontend payload shape.
 
 ## Documentation Alignment Rule
 When editing any `.md` file, distinguish between:

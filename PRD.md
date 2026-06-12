@@ -58,16 +58,21 @@ Allow owners of "Unclaimed" brands to take control of their pages.
 
 ### Phase 1: D1 Data Contract [PENDING]
 - Define D1 schema for users, franchisees, franchisors, franchises, claims, leads, packages, locations, franchise assets, and audit events.
+- Add source-controlled SQL migrations for every schema change.
+- Add TypeScript and Zod schemas for form/API payloads, CSV import rows, Clerk webhook payloads, and D1 write inputs.
+- Establish the D1-authoritative role model: `franchisee`, `franchisor`, `staff`, and `admin`.
 - Build import/mapping from existing Sheets/CSV fields while preserving `FORM_SCHEMA.md`.
 
 ### Phase 2: Clerk Login/Register [PENDING]
 - Convert `/login` and registration entry points into Clerk-backed auth surfaces.
 - Add role-aware entry points for franchisees, franchisors, and admins.
+- Map Clerk user ids into D1 users and resolve permissions from D1 server-side role checks.
 
 ### Phase 3: D1-Backed APIs [PENDING]
 - Replace `/form-submit` Sheets append behavior with D1 transactions.
 - Replace `/get-franchises` Sheets reads with D1 query/search endpoints.
 - Preserve existing frontend payload shape until the UI is migrated.
+- Use Zod before writes and role checks before protected reads/mutations.
 
 ### Phase 4: R2 Asset Pipeline [PENDING]
 - Store franchisor logo, cover, gallery, proposal, and imported legacy media in R2.
