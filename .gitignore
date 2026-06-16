@@ -1,4 +1,10 @@
 .env
 node_modules/
+.astro/
+dist/
 .DS_Store
 *.log
+.wrangler/
+.context/.wrangler/
+.context/d1-import-franchise-data.sql
+.context/d1-franchise-page-query.sql

@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-13 01:46 (Asia/Jakarta)
+Last updated: 2026-06-17 02:58 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
@@ -35,7 +35,7 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 | --- | --- | --- |
 | Framework | Astro with Cloudflare adapter. | Static-first public pages, islands for interactivity, Cloudflare bindings for dynamic routes. |
 | Alternative | Next.js on Cloudflare via OpenNext. | Better if the dashboard becomes React-heavy, but higher migration/runtime complexity for this mostly static directory. |
-| Database | Cloudflare D1. | SQL model fits users, listings, claims, leads, packages, locations, approval states, and audit logs. |
+| Database | Cloudflare D1 `franchise_db`. | Shared SQL source of truth for all owned network sites, users, listings, claims, leads, packages, locations, approval states, and audit logs. |
 | Assets | Cloudflare R2. | Durable storage for logos, covers, galleries, proposals, and imported legacy assets. |
 | Auth | Clerk. | Hosted auth, register/login, user identity, and server-side auth context for protected pages/functions. |
 | Backend | Cloudflare Workers/Pages Functions or Astro server routes. | Use D1/R2 bindings instead of Google API secrets and Sheets fetches. |
@@ -77,6 +77,10 @@ Keep the current form field names during migration where possible so the HTML/ru
 - D1 schema changes should be SQL migrations committed to the repository and applied locally before remote.
 - Clerk authenticates the user, but D1 roles/permissions authorize actions.
 - Drizzle is recommended when D1-backed Astro/server routes begin to accumulate shared queries; initial schema work can stay as explicit SQL migrations.
+- `franchise_db` is shared across Franchisee.id, Franchisor.id, Franchise.id, Waralaba.id, Franchise.co.id, Waralaba.co.id, and future owned network sites.
+- Canonical franchise data should live once in `franchises`; per-site visibility/slug/canonical behavior belongs in `franchise_site_publications`.
+- Franchisor payment/network distribution should be modeled through `subscriptions` and `subscription_site_entitlements`, so one paid listing can appear across multiple sites.
+- Google Sheets is archive/import-only from this point forward; new writes should go to D1.
 
 ## Route Plan
 
@@ -111,14 +115,14 @@ API/server routes:
 
 | Phase | Status | Scope |
 | --- | --- | --- |
-| 0. Documentation baseline | In progress | Create `CODEBASE.md` and `AUDIT.md`, add upkeep rule to `AGENTS.md`, and align existing Markdown docs around D1/R2/Clerk. |
-| 1. Data contract design | Pending | Define TypeScript/Zod payload schemas, D1 SQL migrations, role tables, seed/import scripts, and field mapping from Sheets/CSV. |
-| 2. Cloudflare project config | Pending | Add `wrangler` config, D1 binding, R2 binding, local/preview/prod environments. |
-| 3. Import pipeline | Pending | Import CSV/Sheets snapshots into D1; preserve `UNCLAIMED` sanitization and slugs. |
-| 4. Auth foundation | Pending | Add Clerk register/login, D1-authoritative roles, protected server routes, and Clerk user mapping. |
-| 5. Form API replacement | Pending | Replace `/form-submit` Sheets writes with D1 transactions; keep current forms working during transition. |
+| 0. Documentation baseline | In progress | Root docs are centralized around `AGENTS.md`, `CODEBASE.md`, `AUDIT.md`, and `docs/README.md`; long form references moved under `docs/`. Keep reducing duplication as implementation changes. |
+| 1. Data contract design | In progress | Initial shared-network D1 SQL migration created and applied remotely; TypeScript/Zod importer now maps current CSV snapshots into the first D1 schema. Next define reusable API/form payload schemas. |
+| 2. Cloudflare project config | In progress | `wrangler.toml` now points to `franchise_db` and migrations are applied through `cfman`; R2 binding and environment split still pending. |
+| 3. Import pipeline | In progress | `scripts/import-csv-to-d1.ts` imports CSV snapshots into D1, preserves `UNCLAIMED` sanitization and stable slugs, and has completed the first remote import. Runtime reads now use D1 first through `/get-franchises`. |
+| 4. Auth foundation | In progress | Custom Clerk login/register surfaces, `/auth-config`, `/auth-sync`, `/clerk-webhook`, `/user-role`, `/sync-clerk-metadata`, D1 user mapping, D1-to-Clerk metadata snapshots, and D1 role checks are implemented. Next configure real Clerk env vars/dashboard settings and verify on Cloudflare Pages. |
+| 5. Form API replacement | In progress | `/form-submit` now performs D1-only writes for franchisee, franchisor, claim, and dev test-data actions with Clerk session verification, D1 role checks, owner fields, and actor audit events. Next verify deployed form submissions against the real Pages binding and Clerk app. |
 | 6. Asset pipeline | Pending | Move uploads to R2 with object ownership, validation, and public/served URLs. |
-| 7. Public directory rebuild | Pending | Rebuild listing/detail/search in Astro using existing styles and D1 data. |
+| 7. Public directory rebuild | In progress | D1-backed static HTML bridge generates root `/peluang-usaha/` output and a D1 snapshot; Astro static routes now generate 198 pages into `dist/` from that snapshot. Next compare output and route deployment strategy before replacing legacy root pages. |
 | 8. Dashboards | Pending | Build franchisee/franchisor/admin dashboards with protected routes. |
 | 9. Decommission Sheets dependency | Pending | Freeze or remove Sheets writes, keep optional import/export admin tooling only. |
 
@@ -142,12 +146,57 @@ API/server routes:
 - Legacy static HTML volume is large; migration should prioritize app-critical routes instead of converting every exported page at once.
 
 ## Immediate Next Work
-1. Draft D1 schema, role model, and first SQL migration.
-2. Add a `wrangler` config with D1/R2 binding names.
-3. Add TypeScript/Zod schemas for form payloads, CSV rows, and import mapping.
-4. Build an idempotent importer from `csv/franchisors.csv`, `csv/unclaimed.csv`, and `csv/franchisee.csv`.
-5. Add Clerk auth scaffold for `/login`, `/register`, and protected role landing pages.
-6. Convert D1 read paths before D1 write paths, then move `/form-submit` into D1 transactions while keeping the existing frontend payload shape.
+1. Deploy/test `/get-franchises` and `/form-submit` against Cloudflare Pages with the `franchise_db` binding and compare real frontend behavior against the previous Sheets-backed behavior.
+2. Decide deployment cutover for Astro output: either deploy `dist/` as the Cloudflare Pages output or continue writing selected generated pages into the legacy root during transition.
+3. Extract reusable TypeScript/Zod schemas into shared modules so the function-level schemas, importer schemas, and future Astro server routes do not drift.
+4. Configure Clerk production/preview environment variables and verify `/login`, `/register`, `/auth-sync`, and `/form-submit` on Cloudflare Pages.
+5. Build protected role landing pages for `/franchisee`, `/franchisor`, and later `/admin`.
+
+## Import Status
+- First D1 CSV importer: `scripts/import-csv-to-d1.ts`.
+- Source snapshots: `csv/franchisors.csv`, `csv/unclaimed.csv`, `csv/franchisee.csv`.
+- Validation: TypeScript compile check and importer dry run pass.
+- Remote import target: Cloudflare D1 `franchise_db` through `npx cfman wrangler --account franchise-network`.
+- Remote result verified on 2026-06-16: 197 franchises, 190 packages, 197 site publications, 2 franchisee profiles, 1 franchisor profile, and 199 legacy source rows.
+- Re-running the importer is idempotent for entity rows because generated ids are stable and inserts use conflict guards.
+- `import_batches` currently contains two completed records for this first import work: the initial timestamped successful apply and the deterministic batch-id rerun. Entity row counts did not duplicate.
+
+## Public Generation Status
+- First D1 public page builder: `scripts/build-d1-franchise-pages.ts`.
+- Build commands: `pnpm run build:d1:franchises:dry` and `pnpm run build:d1:franchises`.
+- Source of truth: published `franchise_site_publications` for `site_franchisee_id` joined to `franchises`.
+- Output generated on 2026-06-16: `/peluang-usaha/index.html`, 197 D1-backed detail pages, `json/unclaimed-brands.json`, and `json/d1-generated-pages-manifest.json`.
+- Rerun verification: dry-run after generation reported 197 detail pages skipped, index skipped, and no unclaimed JSON rewrite.
+- Stale deletion rule: remove only files tracked in `json/d1-generated-pages-manifest.json` and containing the `d1-generated:franchisee.id` marker. Do not delete legacy/example `/peluang-usaha` folders that were not generated by this D1 builder.
+- Astro scaffold: `astro.config.mjs`, `src/lib/franchise-static.ts`, `src/pages/peluang-usaha/index.astro`, and `src/pages/peluang-usaha/[slug].astro` now generate D1-backed static HTML from `json/d1-franchise-static-data.json`.
+- Astro verification on 2026-06-17: `pnpm run build:astro` built 198 pages into `dist/` from the D1 snapshot.
+- Compatibility note: Astro is pinned to 5.x for this Node 20.19.4 workspace; Astro 6 requires Node >=22.12.0.
+
+## Runtime D1 API Status
+- `/get-franchises` now validates query parameters with Zod and uses D1 first when `env.franchise_db` is available.
+- Supported read params include `tab`, `purpose`, `q`, `category`, `limit`, `offset`, and optional `source=sheets` fallback.
+- `purpose=claim-search&tab=UNCLAIMED` preserves strict brand sanitization and deduplication before returning autocomplete rows.
+- Remote D1 SQL join for published `site_franchisee_id` franchise rows was verified on 2026-06-17 through `cfman`.
+
+## Runtime D1 Write Status
+- `/form-submit` now rejects writes if the D1 binding is missing.
+- Franchisee submissions write `franchisee_profiles`, `legacy_source_rows`, and `audit_events`.
+- Franchisor submissions write `franchisor_profiles`, `franchises`, `franchise_packages`, `franchise_site_publications`, `legacy_source_rows`, and `audit_events`.
+- Claim submissions update the matched D1 `UNCLAIMED` franchise into a `FRANCHISOR` listing, add `franchise_claims`, and therefore remove it from D1 unclaimed claim search.
+- Dev test-data create/clear actions now operate in D1, not Google Sheets.
+- `/form-submit` now verifies Clerk bearer tokens through `@clerk/backend`, maps Clerk users into D1 `users`, checks D1 roles, writes `user_id`/`owner_user_id`/`claimant_user_id`, and records `audit_events.actor_user_id`.
+- Dev test-data create/clear actions require `staff` or `admin`.
+- Remaining gap: production Clerk keys and allowed origins must be configured in Cloudflare Pages and Clerk Dashboard before deployed browser testing.
+
+## Clerk Auth Status
+- Dependencies: `@clerk/backend` and `@clerk/clerk-js`.
+- Custom UI: `js/auth-clerk.js` plus `css/auth-clerk.css`; no Clerk prebuilt components are used.
+- Routes/endpoints: `/login/`, `/register/`, `/auth-config`, `/auth-sync`, `/clerk-webhook`, `/user-role`, `/sync-clerk-metadata`.
+- Required env vars: `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, and `CLERK_WEBHOOK_SIGNING_SECRET`; optional hardening via `CLERK_AUTHORIZED_PARTIES`.
+- Clerk-to-D1 sync: `/clerk-webhook` verifies Clerk webhooks and syncs `user.created`, `user.updated`, and `user.deleted`.
+- D1-to-Clerk sync: `/user-role` mutates D1 roles and immediately updates Clerk metadata; `/sync-clerk-metadata` repairs/backfills Clerk metadata from D1 after manual SQL edits.
+- Important constraint: D1 has no automatic outbound trigger, so raw manual D1 role changes need explicit resync.
+- Setup details live in `docs/architecture/CLERK_SETUP.md`.
 
 ## Documentation Alignment Rule
 When editing any `.md` file, distinguish between:

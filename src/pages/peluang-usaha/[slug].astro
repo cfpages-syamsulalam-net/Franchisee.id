@@ -1,0 +1,20 @@
+---
+import {
+  loadFranchiseStaticRows,
+  renderDetailPage,
+  type FranchiseStaticRow,
+} from "../../lib/franchise-static";
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return loadFranchiseStaticRows().map((row) => ({
+    params: { slug: row.slug },
+    props: { row },
+  }));
+}
+
+const { row } = Astro.props as { row: FranchiseStaticRow };
+const html = renderDetailPage(row);
+---
+<Fragment set:html={html} />

@@ -229,10 +229,11 @@
             };
             
             try {
+                const authHeaders = await this.getAuthHeaders();
                 // Try to create UNCLAIMED row via backend
                 const response = await fetch('/form-submit', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', ...authHeaders },
                     body: JSON.stringify({
                         test_action: 'create_unclaimed',
                         is_test_data: true,
@@ -270,14 +271,15 @@
         },
 
         clearAllTestData: async function() {
-            if (!confirm('⚠️ This will delete ALL test data from Google Sheets (rows with is_test_data=TRUE). Continue?')) {
+            if (!confirm('This will delete ALL D1 test data (rows with is_test_data=TRUE). Continue?')) {
                 return;
             }
             
             try {
+                const authHeaders = await this.getAuthHeaders();
                 const response = await fetch('/form-submit?test_action=clear_test_data', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', ...authHeaders },
                     body: JSON.stringify({
                         test_action: 'clear_test_data'
                     })
@@ -294,6 +296,18 @@
                 console.error('[TestData] Error clearing test data:', error);
                 this.showToast('❌ Network error. Check console.');
             }
+        },
+
+        getAuthHeaders: async function() {
+            if (!window.FranchiseAuth || typeof window.FranchiseAuth.getAuthHeaders !== 'function') {
+                throw new Error('Login required for D1 test writes.');
+            }
+
+            const headers = await window.FranchiseAuth.getAuthHeaders();
+            if (!headers.Authorization) {
+                throw new Error('Login required for D1 test writes.');
+            }
+            return headers;
         },
 
         // ==================== UI ====================

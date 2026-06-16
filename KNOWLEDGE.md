@@ -1,113 +1,12 @@
-# Project Knowledge
+# KNOWLEDGE.md - Compatibility Entry Point
 
-This file gives persistent project context: goals, commands, architecture, conventions, and gotchas.
+Last updated: 2026-06-17 02:00 (Asia/Jakarta)
 
-## Quickstart
-- Setup:
-  - Ensure `.env` contains: `G_SHEET_ID`, `G_CLIENT_EMAIL`, `G_PRIVATE_KEY`.
-  - Install runtime deps when needed: `pnpm add googleapis dotenv`.
-- Migration target:
-  - Treat the current Google Sheets setup as the transitional data source.
-  - New application work should move toward Astro on Cloudflare, Cloudflare D1, Cloudflare R2, and Clerk.
-  - Use TypeScript by default for new app/backend/importer/schema code.
-  - Use Zod to validate untrusted runtime data before D1 writes or protected business logic.
-  - Use committed SQL migrations for D1 schema changes.
-  - Keep roles (`franchisee`, `franchisor`, `staff`, `admin`) authoritative in D1; Clerk supplies identity and session context.
-  - Keep existing field names and payload shapes until `FORM_SCHEMA.md`, `CODEBASE.md`, and `AUDIT.md` are updated together.
-- Dev:
-  - Regenerate listing page: `node js/build-listing.js`
-  - Regenerate detail pages: `node js/build-details.js`
-  - Regenerate sitemap: `node js/build-sitemap.js`
-  - Run all builders:
-    ```bash
-    node js/build-listing.js
-    node js/build-details.js
-    node js/build-sitemap.js
-    ```
-- Test:
-  - No formal automated test suite currently configured.
-  - Validate critical flows manually:
-    - `/daftar` tab switching and form submission.
-    - **Franchisee form**: 2-step navigation (Data Pribadi → Minat & Budget), validation, submission.
-    - **Franchisor form**: 5-step navigation, auto-save, claim workflow (`?claim=<slug>`) including `unclaimed_id` behavior.
-    - Generated pages output in `/peluang-usaha`.
+This file no longer duplicates project architecture. Use the canonical docs:
+- `docs/README.md` for the documentation map.
+- `AGENTS.md` for working rules and guardrails.
+- `CODEBASE.md` for file relationships and data flows.
+- `AUDIT.md` for migration status.
+- `docs/architecture/TECH_STACK_DECISIONS.md` for stack direction.
 
-## Architecture
-- Key directories:
-  - `/js`: client logic and static site generators (`build-listing.js`, `build-details.js`, `build-sitemap.js`, `form-utils.js`, `form-01-state-helpers.js` ... `form-07-init.js`).
-  - `/functions`: Cloudflare Functions (`form-submit.js`, `get-franchises.js`) for API/form handling.
-  - `/templates`: source templates used by builder scripts.
-  - `/daftar`: static form page integrating custom JS.
-  - `/json`: centralized JSON assets (generated/static), including claim-search dataset and form configuration.
-  - `/csv`: centralized CSV fallback/source files for SSG scripts.
-  - `/css/form-franchise`: modularized form stylesheet files + selector usage map (`CSS_USAGE_MAP.md`).
-  - `/.github/workflows`: automation pipelines.
-- Data flow:
-  - Current source of content: Google Sheets tabs (`FRANCHISOR`, `UNCLAIMED`, `FRANCHISEE`), with CSV fallback snapshots.
-  - Target source of truth: Cloudflare D1 tables for users, franchisee profiles, franchisor profiles, franchises, claims, leads, packages, assets, locations, and audit events.
-  - Target asset store: Cloudflare R2 for franchise media and documents.
-  - Target auth: Clerk for login/register and protected franchisee/franchisor/admin routes.
-  - Target language/validation: TypeScript plus Zod for new server routes, importers, schemas, and payload parsing.
-  - Target migrations: source-controlled SQL migrations for every D1 schema change.
-  - Target authorization: D1 role/permission checks on the server for `franchisee`, `franchisor`, `staff`, and `admin`.
-  - Build scripts fetch sheet data and generate static HTML pages.
-  - Claim/search UX reads static `/json/unclaimed-brands.json` first; falls back to `/get-franchises?tab=UNCLAIMED&purpose=claim-search`.
-  - `/json/unclaimed-brands.json` must be generated from sanitized UNCLAIMED rows only (exclude URL/phone/address/legal-entity/contact-label noise and dedupe by `brand_name`).
-  - Country-code options for WhatsApp inputs are loaded from `/json/country-codes.json` (frontend fallback defaults exist if file is unavailable).
-  - City autocomplete loader checks local `/json/data-kota-id.json` first, then falls back to `https://cekkode.github.io/json/data-kota-id.json`.
-  - Local CSV fallback in `js/build-listing.js` uses quote-aware parsing (`parseCSVRows`) to preserve correct column mapping when cells contain commas/newlines.
-  - Claim mode continuity: modular form scripts persist active claim context in `localStorage` key `franchise_claim_state`, restore it after refresh, and expire stale state after 24 hours (TTL).
-  - Franchisor partial-entry continuity: modular form scripts persist draft values in `localStorage` key `franchisor_form_draft` with 72-hour TTL.
-  - **Aggressive Auto-Save**: The franchisor form implements multi-layer auto-save with 6 independent triggers:
-    1. Debounced save on input/change (300ms delay)
-    2. Periodic safety-net save every 5 seconds
-    3. Save before step navigation (next/previous)
-    4. Save on browser visibility change (tab switch/minimize)
-    5. Save before page unload (refresh/close)
-    6. Save on registration tab switch
-  - Auto-save includes error handling, visual feedback (`#autosave-indicator`), and automatic restoration on page load within TTL window.
-  - Auto-save timers stop on successful form submission and clear all persisted data.
-  - Form submission posts to Cloudflare Function `/form-submit`.
-  - On successful claim, backend appends to `FRANCHISOR` then performs best-effort deletion in `UNCLAIMED` (match by `id`, fallback by normalized `brand_name`).
-  - Migration rule: replace Sheets writes with D1 transactions only after preserving the current frontend payload contract and claim cleanup semantics.
-
-## Conventions
-- Formatting/linting:
-  - No enforced formatter/linter in repository currently.
-  - Prefer surgical edits on large legacy HTML/JS files.
-- Patterns to follow:
-  - Treat `GEMINI.md` as architecture/governance source.
-  - Treat `CODEBASE.md` as the living codebase map and keep it current when route/data/function ownership changes.
-  - Treat `AUDIT.md` as the migration tracker for D1/R2/Clerk work.
-  - Treat `FORM_SCHEMA.md` as canonical form-input inventory.
-  - Treat `TECHNICAL_INVENTORY.md` as canonical symbol/function inventory.
-  - Keep `PRD.md` for roadmap/requirements only.
-  - Log all file create/update/delete operations in `CHANGELOG.md` with timestamp.
-  - Preserve static-first approach for SEO (generate pages, avoid runtime-heavy rendering).
-  - Prefer Astro for new public directory/application work unless a specific dashboard requirement justifies Next.js.
-  - Prefer TypeScript for new migration code and Zod for validation at all runtime trust boundaries.
-  - Keep D1 migrations explicit and committed; introduce Drizzle when typed D1 queries reduce real route/dashboard complexity.
-  - Keep `/css/form-franchise.css` as the aggregator entrypoint; preserve `@import` order when adding/changing form styles.
-- Things to avoid:
-  - Do not do full rewrites of large legacy files (`/daftar/index.html`) unless explicitly required.
-  - Do not reintroduce monolithic runtime logic into `js/form-franchise.js`; use the flat modular files (`js/form-01-*.js` ... `js/form-07-*.js`).
-  - Do not remove/rename form fields without updating `FORM_SCHEMA.md`.
-  - Do not introduce duplicate changelog/timeline logs in PRD.
-
-## Gotchas
-- Historical lineage: `/daftar/index.html` is a renamed continuation of `/pendaftaran/index.html`; when restoring legacy behavior, compare both paths in git history.
-- Session continuity: keep/update timestamped summaries in `/.context/session-YYYYMMDD-HHmm.md` so future sessions can quickly recover latest decisions.
-- `node --check` may fail in restricted sandbox environments with path-resolution EPERM; fall back to source inspection and targeted runtime-safe checks.
-- Flag-emoji rendering in country-code dropdowns may vary by OS/browser font support; labels include country initials (`ID/MY/SG/US/AU`) as readable fallback.
-- Runtime fallback is active in `js/form-05-country-whatsapp.js`: if flag glyphs are detected as non-distinct, dropdown labels are auto-rendered text-only (`ID +62`, etc.).
-- Modular form runtime scripts reference optional UI helpers; guard optional global calls to prevent runtime errors when helper functions are absent.
-- For personal cache-debugging on `/daftar`, use `?dev=1` via the `🧪` toggle (reveal/hide toggle with `Ctrl+Alt+D`) and/or DevTools `Network > Disable cache`.
-- Workflow trigger policy:
-  - Current primary trigger: `repository_dispatch` from Google Sheets update automation.
-  - Scheduled polling fallback exists, but actual build should run only when sheet hash changes.
-  - Target direction: D1-backed import/build or on-demand rendering should replace Sheets polling once the data migration is complete.
-- **Auto-formatting behavior**:
-  - Name fields auto title-case on blur (e.g., "john doe" → "John Doe")
-  - WhatsApp fields auto-format on blur (e.g., "081234567890" → "812-3456-7890")
-  - City autocomplete dropdown requires `position: relative` on parent container
-  - Email validation uses strict regex (requires valid TLD, no spaces)
+Current direction: Astro static pages should consume D1-backed franchise data, Cloudflare D1 `franchise_db` is shared across the franchise network, R2 will hold assets, Clerk will handle identity, and D1 roles authorize access.

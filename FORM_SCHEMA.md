@@ -92,4 +92,4 @@ Note: these `*_url` field names must be preserved during the R2 migration as com
 - **Session Persistence**: Active claim mode and selected brand context are persisted in `localStorage` key `franchise_claim_state` and restored after page refresh.
 - **Session TTL**: Persisted claim context automatically expires after 24 hours to prevent stale brand-claim state from resurfacing in later sessions.
 - **Draft Persistence**: Partially filled Franchisor fields are persisted in `localStorage` key `franchisor_form_draft` (72-hour TTL) and restored after refresh. **Note**: When claim mode is active, the auto-save includes the pre-filled brand data plus any additional user input.
-- **Important Behavior**: `Lanjut/Kembali` only navigate frontend steps; backend write occurs only on final submit. Current backend writes to Google Sheets; target backend writes to D1.
+- **Important Behavior**: `Lanjut/Kembali` only navigate frontend steps; backend write occurs only on final submit. Current backend writes to D1 through `/form-submit`; Google Sheets is archive/import-only.

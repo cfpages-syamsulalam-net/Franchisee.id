@@ -89,8 +89,8 @@ These fields MUST exist:
 Before making ANY changes to `/daftar/index.html` or form-related JS files:
 
 - [ ] Read `FORM_SCHEMA.md` to understand all existing fields
-- [ ] Read `FORM_UX_FIXES.md` for UX context
-- [ ] Read `FORM_VALIDATION_FIXES.md` for validation rules
+- [ ] Read `docs/forms/FORM_UX_FIXES.md` for UX context
+- [ ] Read `docs/forms/FORM_VALIDATION_FIXES.md` for validation rules
 - [ ] Check `CHANGELOG.md` for recent form changes
 - [ ] Verify NO fields are being removed (only additions allowed)
 - [ ] If removing fields, get explicit user confirmation first

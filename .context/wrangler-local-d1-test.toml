@@ -1,0 +1,8 @@
+name = "franchisee-id-local-d1-test"
+compatibility_date = "2026-06-16"
+
+[[d1_databases]]
+binding = "franchise_db"
+database_name = "franchise_db"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "../migrations"

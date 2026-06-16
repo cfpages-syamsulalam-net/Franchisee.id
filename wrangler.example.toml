@@ -1,0 +1,11 @@
+name = "franchisee-id"
+compatibility_date = "2026-06-16"
+
+# Example only. Copy to wrangler.toml and replace database_id with the
+# real Cloudflare D1 UUID for the shared franchise_db before applying remote migrations.
+
+[[d1_databases]]
+binding = "franchise_db"
+database_name = "franchise_db"
+database_id = "<cloudflare-d1-franchise_db-uuid>"
+migrations_dir = "migrations"

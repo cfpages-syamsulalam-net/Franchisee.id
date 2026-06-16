@@ -119,9 +119,18 @@
                 data.form_type = 'claim';
             }
 
+            let authHeaders = {};
+            if (window.FranchiseAuth && typeof window.FranchiseAuth.getAuthHeaders === 'function') {
+                authHeaders = await window.FranchiseAuth.getAuthHeaders();
+            }
+
+            if (!authHeaders.Authorization) {
+                throw new Error('Silakan login terlebih dahulu sebelum menyimpan data.');
+            }
+
             const response = await fetch('/form-submit', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
                 body: JSON.stringify(data)
             });
 

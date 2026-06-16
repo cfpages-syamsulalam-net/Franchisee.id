@@ -1,0 +1,69 @@
+import { z } from "zod";
+import { authErrorResponse, syncD1User } from "./_clerk-auth.js";
+
+const SyncSchema = z
+  .object({
+    requested_role: z.enum(["franchisee", "franchisor"]).optional(),
+  })
+  .passthrough();
+
+export async function onRequestPost({ request, env }) {
+  try {
+    if (!env.franchise_db) {
+      return jsonResponse(
+        {
+          success: false,
+          error: "D1_BINDING_MISSING",
+          message: "Cloudflare D1 binding `franchise_db` is required for auth sync.",
+        },
+        { status: 503 }
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const parsed = SyncSchema.safeParse(body);
+    if (!parsed.success) {
+      return jsonResponse(
+        {
+          success: false,
+          error: "VALIDATION_ERROR",
+          message: "Role akun tidak valid.",
+          details: parsed.error.flatten(),
+        },
+        { status: 400 }
+      );
+    }
+
+    const user = await syncD1User(request, env, env.franchise_db, parsed.data.requested_role);
+    return jsonResponse({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.primary_email,
+        display_name: user.display_name,
+        roles: user.roles.map((row) => row.role),
+      },
+    });
+  } catch (error) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
+    return jsonResponse(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+function jsonResponse(body, init = {}) {
+  return new Response(JSON.stringify(body), {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init.headers || {}),
+    },
+  });
+}

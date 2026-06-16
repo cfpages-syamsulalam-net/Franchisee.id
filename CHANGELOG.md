@@ -4,6 +4,152 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-17 03:11 (Asia/Jakarta)
+### Added
+- `functions/clerk-webhook.js`: Added a verified Clerk lifecycle webhook endpoint for `user.created`, `user.updated`, and `user.deleted` events so Clerk identity changes are reflected in D1.
+- `functions/user-role.js`: Added an admin-only D1 role mutation endpoint that writes D1 `user_roles` and immediately syncs the resulting role snapshot back to Clerk metadata.
+- `functions/sync-clerk-metadata.js`: Added an admin-only repair/backfill endpoint to sync one or many D1 users into Clerk metadata after manual SQL or operational repair.
+- `.context/session-20260617-0311.md`: Added session snapshot for the D1/Clerk sync contract and implementation.
+
+### Changed
+- `functions/_clerk-auth.js`: Added webhook-safe Clerk user parsing, D1 user deletion marking, D1 role assignment/removal helpers, D1 user lookup helpers, and D1-to-Clerk metadata sync helpers.
+- `functions/_clerk-auth.js`: `/auth-sync` and protected D1 user authorization now refresh Clerk `publicMetadata.franchiseNetwork` and `privateMetadata.franchiseNetwork` from D1 roles/status.
+- `AGENTS.md`, `CODEBASE.md`, `AUDIT.md`, `TECHNICAL_INVENTORY.md`, `docs/README.md`, `docs/architecture/CLERK_SETUP.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the bidirectional sync contract, Clerk webhook setup, D1 admin role endpoint, metadata repair endpoint, and the rule that D1 remains authoritative for authorization.
+
+### Removed
+- None.
+
+## 2026-06-17 02:58 (Asia/Jakarta)
+### Added
+- `@clerk/backend` and `@clerk/clerk-js`: Added Clerk dependencies for server-side session verification and custom browser auth flows.
+- `functions/_clerk-auth.js`: Added shared Clerk bearer-token verification, Clerk user fetch, D1 `users` upsert, D1 role assignment, and role authorization helpers.
+- `functions/auth-config.js`: Added same-origin public Clerk config endpoint for `CLERK_PUBLISHABLE_KEY`.
+- `functions/auth-sync.js`: Added authenticated Clerk-to-D1 user sync endpoint with Zod validation and self-assignable `franchisee`/`franchisor` roles.
+- `js/auth-clerk.js`: Added custom ClerkJS login/register/email-code verification client and `window.FranchiseAuth` token helper.
+- `css/auth-clerk.css`: Added custom auth UI styles using existing site color variables.
+- `register/index.html`: Added dedicated custom account registration page with franchisee/franchisor role selection.
+- `docs/architecture/CLERK_SETUP.md`: Added Clerk Dashboard, Cloudflare Pages env, runtime flow, and D1 role setup instructions.
+
+### Changed
+- `functions/form-submit.js`: Requires Clerk-authenticated D1 users for franchisee, franchisor, claim, and dev test-data writes; writes `user_id`, `owner_user_id`, `claimant_user_id`, and `audit_events.actor_user_id`; enforces D1 roles (`franchisee`, `franchisor`, `staff`, `admin`).
+- `js/form-06-submit-validation.js`: Attaches Clerk bearer auth headers to `/form-submit` and blocks unauthenticated submissions with a login message.
+- `js/form-09-test-data-generator.js`: Sends Clerk auth headers for D1 test-data writes and updates cleanup wording from Google Sheets to D1.
+- `login/index.html`: Loads custom auth CSS/JS so the legacy WPForms block is replaced by the custom Clerk UI at runtime.
+- `daftar/index.html`: Loads auth CSS/JS so existing form submissions can attach Clerk session tokens.
+- `AGENTS.md`, `CODEBASE.md`, `AUDIT.md`, `TECHNICAL_INVENTORY.md`, `docs/README.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented Clerk setup, custom auth routes, D1 user mapping, role checks, and the end of anonymous D1 form writes.
+- `package.json` and `pnpm-lock.yaml`: Updated dependency graph for Clerk packages.
+
+### Removed
+- None.
+
+## 2026-06-17 02:40 (Asia/Jakarta)
+### Added
+- `functions/get-franchises.js`: Added Zod query validation, D1-first directory reads, D1 search/filter/pagination parameters, D1 franchisee-profile reads, and a transition-only Sheets read fallback.
+- `functions/form-submit.js`: Added Zod payload validation and D1-only write handling for franchisee submissions, franchisor submissions, claim submissions, and dev test-data actions.
+
+### Changed
+- `functions/get-franchises.js`: Replaced the default Google Sheets read path with Cloudflare D1 `franchise_db` reads while preserving the existing JSON response envelope, Cloudinary URL optimization, and strict `UNCLAIMED` claim-search sanitization.
+- `functions/form-submit.js`: Replaced Google Sheets append/delete helpers with D1 writes to `franchisee_profiles`, `franchisor_profiles`, `franchises`, `franchise_packages`, `franchise_site_publications`, `franchise_claims`, `legacy_source_rows`, and `audit_events`.
+- `functions/form-submit.js`: Claim submissions now update matched D1 `UNCLAIMED` franchises into `FRANCHISOR` listings so claimed brands leave the unclaimed search pool.
+- `CODEBASE.md`, `AUDIT.md`, `TECHNICAL_INVENTORY.md`, `FORM_SCHEMA.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, and `.context/session-20260617-0206.md`: Documented the D1 runtime read/write cutover and the remaining Clerk ownership gap.
+
+### Removed
+- `functions/form-submit.js`: Removed all Google Sheets write helpers from the active submit path.
+
+## 2026-06-17 02:06 (Asia/Jakarta)
+### Added
+- `astro.config.mjs`: Added Astro static build configuration for Cloudflare Pages-compatible output.
+- `src/env.d.ts`: Added Astro TypeScript environment reference.
+- `src/lib/franchise-static.ts`: Added Zod-validated D1 snapshot loader and shared listing/detail template renderers for Astro static routes.
+- `src/pages/peluang-usaha/index.astro`: Added Astro static route for the D1-backed franchise directory index.
+- `src/pages/peluang-usaha/[slug].astro`: Added Astro static route that uses `getStaticPaths` to generate one detail page per D1 franchise slug.
+- `json/d1-franchise-static-data.json`: Added generated D1 snapshot consumed by Astro static route generation.
+- `docs/README.md`: Added centralized documentation index and source-of-truth rules.
+- `docs/forms/AUTO_SAVE.md`, `docs/forms/CLAIM_WORKFLOW.md`, `docs/forms/FRANCHISEE_MULTISTEP.md`, `docs/forms/FORM_UX_FIXES.md`, `docs/forms/FORM_VALIDATION_FIXES.md`, and `docs/forms/franchise-info-form.md`: Moved detailed form references out of the repository root.
+- `docs/testing/DEBUGGING.md` and `docs/testing/TEST_DATA_GENERATOR.md`: Moved testing/debugging references out of the repository root.
+- `docs/architecture/TECH_STACK_DECISIONS.md`: Moved the stack decision log under architecture docs.
+- `.context/session-20260617-0206.md`: Added session snapshot for documentation centralization and Astro static route scaffolding.
+
+### Changed
+- `package.json`: Added Astro scripts (`astro:sync`, `build:astro`, `dev:astro`, `preview:astro`) and pinned environment-compatible `astro@5.18.2`, `@astrojs/cloudflare@12.6.13`, `wrangler@4.86.0`, `typescript@5.9.3`, and `@types/node@20.19.25`.
+- `pnpm-lock.yaml`: Updated locked dependencies for Astro, the Cloudflare adapter, pinned Wrangler, and Node 20/TypeScript 5-compatible type tooling.
+- `.gitignore`: Ignored Astro generated build/cache directories `.astro/` and `dist/`.
+- `tsconfig.json`: Expanded TypeScript coverage from migration scripts to include `src/**/*.ts` and `src/**/*.d.ts`.
+- `scripts/build-d1-franchise-pages.ts`: Added D1 snapshot output for Astro and switched Wrangler invocation to `pnpm exec wrangler`.
+- `AGENTS.md`: Rebuilt as a concise working rulebook with docs centralization, D1/Astro generation, and form guardrails.
+- `CODEBASE.md`: Documented the Astro routes, D1 snapshot handoff, updated package scripts, and the new Astro static route flow.
+- `AUDIT.md`: Marked Astro scaffold as implemented and updated next work toward D1-backed reads, auth, and D1 writes.
+- `TECHNICAL_INVENTORY.md`: Added `/src` Astro modules/routes and updated the D1 bridge inventory.
+- `FORM_PRESERVATION_MANDATE.md`: Updated moved form-reference paths.
+- `docs/architecture/TECH_STACK_DECISIONS.md`: Added Astro scaffold status, package pins, and `build:astro` verification details.
+- `GEMINI.md`, `KNOWLEDGE.md`, `QWEN.md`, and `PRD.md`: Reduced duplicated architecture content into compatibility pointers to canonical docs.
+
+### Removed
+- Root-level long reference copies were removed after moving them under `docs/`: `AUTO_SAVE.md`, `CLAIM_WORKFLOW.md`, `FRANCHISEE_MULTISTEP.md`, `FORM_UX_FIXES.md`, `FORM_VALIDATION_FIXES.md`, `franchise-info-form.md`, `DEBUGGING.md`, `TEST_DATA_GENERATOR.md`, and `TECH_STACK_DECISIONS.md`.
+
+## 2026-06-16 16:59 (Asia/Jakarta)
+### Added
+- `scripts/build-d1-franchise-pages.ts`: Added the first D1-backed public franchise page generator. It queries published `site_franchisee_id` rows from `franchise_db`, renders listing/detail HTML from existing templates, regenerates claim-search JSON, writes a generated-page manifest, skips unchanged pages, and prunes only manifest-owned D1 pages.
+- `scripts/build-d1-franchise-pages.ts`: Normalizes generated HTML trailing whitespace and mixed indentation so D1-generated pages pass `git diff --check`.
+- `json/d1-generated-pages-manifest.json`: Added generated-page ownership and hash manifest for D1-backed `/peluang-usaha` pages.
+- `peluang-usaha/**/index.html`: Generated new D1-backed franchise detail pages for published D1 listings that did not already exist as legacy folders.
+
+### Changed
+- `package.json`: Added `build:d1:franchises:dry` and `build:d1:franchises` scripts.
+- `.gitignore`: Ignored `.context/d1-franchise-page-query.sql`, a generated diagnostic/query artifact from the D1 page builder iteration.
+- `peluang-usaha/index.html`: Regenerated the franchise directory listing from D1 data.
+- Existing `peluang-usaha/**/index.html` detail pages with matching D1 slugs: Regenerated from D1 data and marked with `d1-generated:franchisee.id`.
+- `json/unclaimed-brands.json`: Regenerated from D1 unclaimed rows instead of the legacy Sheets/CSV builder.
+- `CODEBASE.md`: Documented the D1 public page generator, manifest, D1 generation flow, and safe stale-page pruning contract.
+- `AUDIT.md`: Marked public directory rebuild as in progress, recorded 197 generated D1-backed detail pages, and set the next step as porting the bridge into Astro static routes.
+- `TECH_STACK_DECISIONS.md`: Added the D1 static public generation decision and Astro migration target.
+- `KNOWLEDGE.md`: Added D1 public generation commands, current behavior, cfman-token/Wrangler detail, and stale-page cleanup guardrails.
+- `AGENTS.md`: Added persistent rules for D1-backed SEO page generation and manifest-scoped stale cleanup.
+- `GEMINI.md`, `PRD.md`, `QWEN.md`, and `TECHNICAL_INVENTORY.md`: Added alignment notes for the D1-backed public generation bridge and Astro static-generation target.
+- `.context/session-20260616-1523.md`: Added D1 public page generation notes and verification results.
+
+### Removed
+- None.
+
+## 2026-06-16 16:25 (Asia/Jakarta)
+### Added
+- `scripts/import-csv-to-d1.ts`: Added the first TypeScript/Zod CSV importer for moving `csv/franchisors.csv`, `csv/unclaimed.csv`, and `csv/franchisee.csv` into Cloudflare D1 `franchise_db` with quote-aware parsing, strict `UNCLAIMED` sanitization, stable ids, generated SQL output, and optional remote apply through `cfman`.
+- `tsconfig.json`: Added strict TypeScript configuration for migration scripts.
+
+### Changed
+- `package.json`: Added `import:csv:dry`, `import:csv:sql`, and `import:csv:remote` scripts.
+- `pnpm-lock.yaml`: Added locked dependencies for `zod`, `typescript`, `tsx`, and Node types.
+- `.gitignore`: Ignored generated `.context/d1-import-franchise-data.sql`.
+- `CODEBASE.md`: Documented the D1 importer, generated SQL output, TypeScript config, package scripts, CSV-to-D1 data flow, and verified remote import counts.
+- `AUDIT.md`: Marked Cloudflare config/import pipeline progress, removed duplicated immediate-next-work items, and recorded first remote D1 import status.
+- `TECH_STACK_DECISIONS.md`: Added current importer commands and verified first remote import counts.
+- `KNOWLEDGE.md`: Added importer commands, current import bridge details, D1 count verification, and cfman sequencing caution.
+- `AGENTS.md`: Added the persistent rule to run `cfman wrangler` commands sequentially because repeated immediate invocations can intermittently fail to detect Wrangler in this environment.
+- `.context/session-20260616-1523.md`: Added importer implementation notes, validation results, remote import results, and the cfman batch-query caveat.
+- `AUDIT.md` and `.context/session-20260616-1523.md`: Updated final import batch verification after `cfman` succeeded; recorded the two completed import batch ids and confirmed entity rows did not duplicate.
+
+### Removed
+- None.
+
+## 2026-06-16 15:23 (Asia/Jakarta)
+### Added
+- `migrations/0001_initial_network_schema.sql`: Added the first D1 SQL migration for the shared `franchise_db` network schema, including network sites, users/roles, franchisee/franchisor profiles, franchises, claims, assets, leads, site publications, subscription entitlements, imports, and audit events.
+- `wrangler.toml`: Added active Wrangler config for `franchise_db` using candidate D1 UUID `812cd8ac-edd0-45d9-981f-c9a15358317b`.
+- `wrangler.example.toml`: Added a non-active Wrangler config example for the `franchise_db` binding and migrations directory.
+- `.context/wrangler-local-d1-test.toml`: Added local-only Wrangler config for validating D1 migrations without production credentials.
+- `.context/session-20260616-1523.md`: Added session snapshot for the first D1 migration and shared-network architecture decision.
+
+### Changed
+- `.gitignore`: Ignored Wrangler local state directories generated during local D1 validation.
+- `AGENTS.md`: Added persistent rules for `franchise_db` as the shared multi-site D1 source of truth and Google Sheets as archive/import-only.
+- `TECH_STACK_DECISIONS.md`, `AUDIT.md`, `CODEBASE.md`, `PRD.md`, `GEMINI.md`, `KNOWLEDGE.md`, and `QWEN.md`: Documented the shared-network D1 model, real binding name, one-payment multi-site publication approach, and the remote migration prerequisite.
+- `TECH_STACK_DECISIONS.md`, `AUDIT.md`, `CODEBASE.md`, and `.context/session-20260616-1523.md`: Recorded the remote migration failure caused by the current `CLOUDFLARE_API_TOKEN` account not finding UUID `812cd8ac-edd0-45d9-981f-c9a15358317b`.
+- `AGENTS.md`, `TECH_STACK_DECISIONS.md`, `AUDIT.md`, and `.context/session-20260616-1523.md`: Added `cfman` as the required multi-account Cloudflare workflow for D1 migrations and documented that no cfman accounts are configured yet.
+- `TECH_STACK_DECISIONS.md`, `AUDIT.md`, `CODEBASE.md`, and `.context/session-20260616-1523.md`: Updated remote migration status after `franchise-network` was configured in `cfman`, `0001_initial_network_schema.sql` was applied remotely, and `d1_migrations` verification passed.
+
+### Removed
+- None.
+
 ## 2026-06-13 01:46 (Asia/Jakarta)
 ### Added
 - `TECH_STACK_DECISIONS.md`: Added canonical migration decisions for TypeScript, Zod, D1 SQL migrations, D1-authoritative roles, Clerk/D1 responsibility split, Drizzle adoption timing, and the Google Sheets to D1 cutover path.

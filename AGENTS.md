@@ -1,134 +1,71 @@
-# AGENTS.md - Local Audit Notes & Working Rules
+# AGENTS.md - Working Rules
 
-Last updated: 2026-06-13 (Asia/Jakarta)
+Last updated: 2026-06-17 02:00 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
-- Before making form/logic edits, check `GEMINI.md`, `FORM_SCHEMA.md`, and `TECHNICAL_INVENTORY.md` for continuity constraints.
-- **CRITICAL**: Read `FORM_PRESERVATION_MANDATE.md` before editing `/daftar/index.html` or any form-related files. NEVER remove form fields without explicit user request.
-- Keep this file updated when new project-level conventions are introduced.
-- For claim-search data (`UNCLAIMED`), preserve strict brand sanitization (exclude URL/phone/address/legal-entity/contact-label rows) consistently across `js/build-listing.js`, `functions/get-franchises.js`, and modular form scripts (`js/form-01-state-helpers.js`, `js/form-02-claim-workflow.js`).
-- Do not reintroduce naive CSV parsing for sheet fallbacks; keep quote-aware parsing to avoid `brand_name` column shifts.
-- Keep repository data assets centralized: JSON files in `/json` and CSV files in `/csv`. Update script paths/docs together when adding or moving data assets.
 - Keep `CODEBASE.md` current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. Treat stale codebase maps as a project risk.
+- Keep high-level migration decisions in `docs/architecture/TECH_STACK_DECISIONS.md`; do not duplicate long strategy notes across model-specific docs.
 - Keep per-session context snapshots in `/.context` using timestamped Markdown files (`session-YYYYMMDD-HHmm.md`) for new-session continuity.
-- Be proactive with engineering judgment: when a request can be improved for maintainability, security, performance, UX, data integrity, or migration safety, surface the recommendation clearly before or during implementation. Prefer actionable suggestions with tradeoffs over silent compliance, while still respecting explicit user decisions.
-- Follow `TECH_STACK_DECISIONS.md` for new stack work: TypeScript by default, Zod for runtime validation, source-controlled SQL migrations for D1 schema changes, D1-authoritative roles, Clerk for identity, R2 for assets, and existing CSS for styling.
-- New application/backend/importer code should be TypeScript unless it is a targeted edit to untouched legacy JavaScript. Do not add new large JavaScript application surfaces for the migration.
-- Validate all untrusted runtime inputs with Zod before business logic or D1 writes: form submissions, query params, CSV/Sheets import rows, Clerk webhooks, environment/config values, and admin actions.
-- D1 schema changes must go through committed SQL migrations. Do not rely on ad hoc production table edits as the project database contract.
-- Treat roles (`franchisee`, `franchisor`, `admin`, `staff`) as D1-authoritative. Clerk authenticates identity; server-side D1 checks authorize actions. Clerk metadata can only be a small UI hint, never the final authorization source.
+- Be proactive with engineering judgment: when a request can be improved for maintainability, security, performance, UX, data integrity, or migration safety, surface the recommendation clearly before or during implementation. Prefer actionable suggestions with tradeoffs while respecting explicit user decisions.
+- Use pnpm exclusively. Run `pnpm install`, `pnpm run <script>`, and `pnpm exec <tool>`. Keep `pnpm-lock.yaml` committed and do not create alternate lockfiles.
+
+## Current Stack Direction
+- Astro static routes are the target for public SEO pages, starting with `/peluang-usaha/` and `/peluang-usaha/[slug]/`.
+- Cloudflare D1 `franchise_db` is the shared source of truth across Franchisee.id, Franchisor.id, Franchise.id, Waralaba.id, Franchise.co.id, Waralaba.co.id, and future owned network sites.
+- Cloudflare R2 is the target for franchise media and proposal assets.
+- Clerk handles login/register and identity; D1 authorizes roles and permissions.
+- Clerk integration uses custom UI and existing CSS. Do not switch to Clerk prebuilt components unless the user explicitly asks.
+- Keep Clerk and D1 synchronized: Clerk user lifecycle flows into D1 through `/clerk-webhook`; D1 role changes must use `/user-role` or be followed by `/sync-clerk-metadata`. D1 remains authoritative for authorization; Clerk metadata is only a UI/routing snapshot.
+- TypeScript is the default for new app, backend, importer, schema, and migration-adjacent work.
+- Zod validates untrusted runtime data before business logic or D1 writes: form submissions, query params, CSV/Sheets imports, Clerk webhooks, environment/config, and admin actions.
+- D1 schema changes must go through committed SQL migrations. Do not rely on ad hoc production table edits as the database contract.
+- Roles are D1-authoritative: `franchisee`, `franchisor`, `admin`, and `staff`. Clerk metadata can be a UI hint only.
+- Google Sheets is archive/import-only. Do not add new Google Sheets write paths; new writes must target D1 after validation and authorization.
+- `/form-submit` writes require Clerk session tokens and D1 role checks. Do not reintroduce anonymous D1 writes for franchisee/franchisor/profile/listing/claim/test-data actions.
+- Existing CSS remains the styling foundation unless the user explicitly approves a styling dependency.
+
+## D1 And Cloudflare Rules
+- The active D1 binding/database is `franchise_db`; UUID: `812cd8ac-edd0-45d9-981f-c9a15358317b`.
+- Multi-site writes must preserve source-site attribution and update shared canonical records rather than duplicating brands per domain.
+- Use `network_sites`, `franchise_site_publications`, subscriptions, entitlements, and `audit_events` to track where data came from and where it is published.
+- Use `cfman` for Cloudflare multi-account operations. Prefer an explicit account alias such as `franchise-network`: `npx cfman wrangler --account franchise-network d1 list`.
+- Run `cfman wrangler` commands sequentially; repeated immediate invocations can intermittently fail in this environment.
+- Never commit Cloudflare tokens or paste them into repository files. Store tokens only through `cfman token add` or the local shell environment.
+- Never commit Clerk secret keys. Clerk env requirements are documented in `docs/architecture/CLERK_SETUP.md`.
+- Clerk webhook signing secrets are required for `/clerk-webhook`; do not accept unverified webhook payloads.
+
+## Public Page Generation
+- Public franchise listing/detail pages must be generated from D1 for SEO.
+- Current bridge: `scripts/build-d1-franchise-pages.ts` queries D1, renders legacy template HTML, writes `json/d1-franchise-static-data.json`, updates `json/d1-generated-pages-manifest.json`, and refreshes `json/unclaimed-brands.json`.
+- Astro target: `src/pages/peluang-usaha/index.astro` and `src/pages/peluang-usaha/[slug].astro` consume the D1 snapshot through `src/lib/franchise-static.ts` and generate static HTML during `pnpm run build:astro`.
+- When cleaning stale generated franchise pages, delete only pages tracked in `json/d1-generated-pages-manifest.json` and marked with `d1-generated:franchisee.id`. Do not delete untracked legacy/example `/peluang-usaha` folders during the transition.
+
+## Form Rules
+- Before making form/logic edits, check `FORM_SCHEMA.md`, `FORM_PRESERVATION_MANDATE.md`, `TECHNICAL_INVENTORY.md`, and relevant files under `docs/forms/`.
+- **Critical**: read `FORM_PRESERVATION_MANDATE.md` before editing `/daftar/index.html` or any form-related files. Never remove form fields without explicit user request.
+- Preserve strict claim-search brand sanitization consistently across `js/build-listing.js`, `functions/get-franchises.js`, `scripts/import-csv-to-d1.ts`, `scripts/build-d1-franchise-pages.ts`, and modular form scripts.
+- Do not reintroduce naive CSV parsing for sheet/CSV fallbacks; keep quote-aware parsing to avoid `brand_name` column shifts.
+- Keep form runtime logic modular in flat prefixed files (`js/form-01-*.js` through `js/form-09-*.js`); avoid reintroducing monolithic `js/form-franchise.js` logic.
 - For large legacy files such as `/daftar/index.html`, avoid full rewrites; use targeted edits with enough surrounding context to prevent accidental loss.
-- Keep form runtime logic modular in flat prefixed files (`js/form-01-*.js` ... `js/form-07-*.js`); avoid reintroducing monolithic `js/form-franchise.js` logic.
 - After editing files larger than 500 lines, verify line count immediately to catch unintended truncation.
-- Before changing files in a directory, check nearby local `.md` or `.txt` context files first because they may contain restoration notes or historical constraints.
-- When adding or refactoring form/logic features, sync `FORM_SCHEMA.md` and `TECHNICAL_INVENTORY.md` if fields, functions, or key variables change.
-- Every `CHANGELOG.md` entry must include date and hour with timezone.
+- When adding or refactoring form/logic features, sync `FORM_SCHEMA.md`, `TECHNICAL_INVENTORY.md`, `CODEBASE.md`, and `CHANGELOG.md` if fields, functions, or key variables change.
 
-## Context Source
-- `GEMINI.md` has been reviewed and is treated as the project context baseline.
-- Historical context for the registration page must account for the route/folder rename from `/pendaftaran` to `/daftar`; older commits, notes, and temporary comparison files may still use the old path.
+## Documentation Map
+- `docs/README.md`: centralized documentation index and source-of-truth rules.
+- `CODEBASE.md`: living map of relevant logic, data flows, routes, and contracts.
+- `AUDIT.md`: technology migration audit and progress tracker.
+- `docs/architecture/TECH_STACK_DECISIONS.md`: stack decisions, D1/Clerk/R2/Drizzle direction, migration status.
+- `docs/architecture/CLERK_SETUP.md`: Clerk env setup, custom auth UI, D1 user sync, and role authorization rules.
+- `FORM_SCHEMA.md`: canonical form input inventory.
+- `FORM_PRESERVATION_MANDATE.md`: binding form preservation constraints.
+- `TECHNICAL_INVENTORY.md`: key functions/variables in `/js`, `/functions`, `/scripts`, and `/src`.
+- `docs/forms/*.md`: detailed form behavior, claim flow, validation, autosave, and franchise form UX references.
+- `docs/testing/*.md`: debug/test-data references.
+- `README.md`: currently generated sitemap URL listing; treat as generated artifact.
+- `CHANGELOG.md`: mandatory running log of repository modifications.
+- `/.context/*.md`: timestamped session continuity snapshots.
 
-## What Was Checked
-- Repository structure and key runtime areas (`/js`, `/functions`, `/daftar`).
-- Core custom scripts:
-  - `js/form-utils.js`
-  - `js/form-01-state-helpers.js`
-  - `js/form-02-claim-workflow.js`
-  - `js/form-03-navigation-steps.js`
-  - `js/form-04-calculation-city.js`
-  - `js/form-05-country-whatsapp.js`
-  - `js/form-06-submit-validation.js`
-  - `js/form-07-init.js`
-  - `js/build-listing.js`
-  - `js/build-details.js`
-  - `js/build-sitemap.js`
-  - `functions/get-franchises.js`
-  - `functions/form-submit.js`
-- Integration points in `/daftar/index.html` for tab switching and form scripts.
-- CSS architecture in `/css/form-franchise/` (modular split files).
-
-## Fix Applied During Audit
-- File: modular form runtime (`js/form-02-claim-workflow.js`, previously `js/form-franchise.js`)
-- Issue: `window.renderPackageInputs(1)` was called in claim flow but no local definition exists.
-- Action: Added defensive checks before calling it, so claim mode does not crash if the function is unavailable.
-- Additional hardening: submission error now falls back to `result.error` when `result.message` is missing.
-
-## Enhancement Applied: Aggressive Auto-Save (2026-04-04 19:15)
-- **Files Modified**:
-  - `js/form-01-state-helpers.js`: Enhanced `saveFranchisorDraft` with error handling + visual feedback
-  - `js/form-06-submit-validation.js`: Added 6 independent auto-save triggers (debounced, periodic, navigation, visibility, unload, tab switch)
-  - `daftar/index.html`: Added `#autosave-indicator` HTML element
-  - `css/form-franchise/01-utilities.css`: Added toast notification styles
-- **Documentation Created**:
-  - `AUTO_SAVE.md`: Comprehensive implementation reference with triggers, lifecycle, UX scenarios, and testing checklist
-- **Documentation Updated**:
-  - `TECHNICAL_INVENTORY.md`, `CLAIM_WORKFLOW.md`, `KNOWLEDGE.md`, `QWEN.md`, `FORM_SCHEMA.md`, `AGENTS.md`, `CHANGELOG.md`
-- **Line Count Verification**:
-  - `form-06-submit-validation.js`: 220 lines ✓
-  - `form-01-state-helpers.js`: 236 lines ✓
-  - `daftar/index.html`: 1219 lines ✓
-- **Syntax Validation**: Both JS files pass `node --check` ✓
-
-## Enhancement Applied: Franchisee Multi-Step Form (2026-04-04 19:45)
-- **Files Created**:
-  - `js/form-08-franchisee-steps.js`: Franchisee 2-step navigation logic (129 lines)
-  - `FRANCHISEE_MULTISTEP.md`: Comprehensive implementation guide
-- **Files Modified**:
-  - `daftar/index.html`: Converted Franchisee form to 2-step layout with step indicator, progress bar, and navigation buttons
-  - `TECHNICAL_INVENTORY.md`: Added form-08 function inventory
-  - `FORM_SCHEMA.md`: Updated Franchisee table with step column and multi-step documentation
-  - `QWEN.md`: Added Franchisee 2-step structure description
-  - `AGENTS.md`: Added FRANCHISEE_MULTISTEP.md to instruction index
-  - `CHANGELOG.md`: Logged all changes
-- **Key Features**:
-  - Step 1: Data Pribadi (name, city, WhatsApp, email)
-  - Step 2: Minat & Budget (interest, budget, location, message)
-  - Step validation before proceeding
-  - Progress bar and step indicators
-  - localStorage persistence for step restoration
-  - Separate from Franchisor step logic (no interference)
-- **Submission Integrity**:
-  - Form ID unchanged (`franchiseeForm`)
-  - All field names unchanged
-  - Submit listener unchanged (still works identically)
-  - No breaking changes to backend
-- **Line Count Verification**:
-  - `form-08-franchisee-steps.js`: 129 lines ✓
-  - `daftar/index.html`: 1255 lines (grew from 1220, +35 lines) ✓
-- **Syntax Validation**: `form-08-franchisee-steps.js` passes `node --check` ✓
-
-## Current Status
-- No other blocking JS wiring issues found in the checked custom paths.
-- Note: direct `node --check` validation is restricted in this sandbox due an EPERM path-resolution issue; review was completed via source inspection and targeted cross-reference checks.
-
-## Root Markdown Instruction Index
-- `KNOWLEDGE.md`: Consolidated operational knowledge (quickstart, architecture, conventions, gotchas). Use as first-stop implementation context.
-- `CODEBASE.md`: Living map of relevant project-owned logic, file relationships, data flows, and migration-critical contracts. Update as code evolves.
-- `AUDIT.md`: Technology migration audit and progress tracker for moving from static/Sheets-backed runtime to Cloudflare D1/R2/Clerk-backed application architecture.
-- `TECH_STACK_DECISIONS.md`: Canonical stack decision log for TypeScript, Zod, SQL migrations, D1 roles, Clerk, R2, and Drizzle adoption timing.
-- `GEMINI.md`: Primary architecture and governance source of truth; prioritize it for technical direction.
-- `PRD.md`: Feature roadmap and requirement scope (non-changelog).
-- `FORM_SCHEMA.md`: Canonical form input inventory. Do not remove/rename fields in `/daftar/index.html` without updating this file.
-- `TECHNICAL_INVENTORY.md`: Canonical inventory of key functions/variables in `/js` and `/functions`. Update after logic additions/removals/refactors.
-- `CLAIM_WORKFLOW.md`: Canonical claim-flow reference (frontend step behavior, local persistence, backend append/cleanup semantics).
-- `AUTO_SAVE.md`: Comprehensive auto-save implementation reference (triggers, lifecycle, UX scenarios, testing).
-- `FRANCHISEE_MULTISTEP.md`: Franchisee form 2-step implementation guide (structure, navigation, validation, testing).
-- `FORM_VALIDATION_FIXES.md`: Form validation and auto-formatting guide (name title-case, WhatsApp formatting, email validation, city autocomplete).
-- `FORM_UX_FIXES.md`: UX improvements guide (step navigation, visual feedback, email errors, console logging).
-- `TEST_DATA_GENERATOR.md`: Test data generator implementation plan (FAB, data generation, current Google Sheets cleanup, target D1/R2 cleanup).
-- `DEBUGGING.md`: Personal debugging reference (`?dev=1` toggle + DevTools disable-cache workflow).
-- `franchise-info-form.md`: Detailed UX/data spec for franchise listing form sections and conditional logic; use as reference when revising form UX.
-- `README.md`: Currently auto-generated sitemap URL listing; treat as generated artifact.
-- `AGENTS.md`: Persistent local operating instructions for future coding sessions.
-- `CHANGELOG.md`: Mandatory running log of repository modifications.
-- `css/form-franchise/CSS_USAGE_MAP.md`: Selector/module mapping for the split form CSS architecture and usage references.
-- `/.context/*.md`: Timestamped session context snapshots for cross-session continuity.
-- **`FORM_PRESERVATION_MANDATE.md`**: ⚠️ CRITICAL - Binding constraint document. NEVER remove form fields. Lists all historical fields and enforcement rules.
-
-## Additional Project Notes
-- The registration page was historically developed under `/pendaftaran/index.html` and later renamed to `/daftar/index.html`. When tracing git history or comparing old artifacts such as `old_version.txt`, treat them as the same page lineage.
-
-## Package Manager
-
-Use pnpm exclusively for this project. Run pnpm install, pnpm run <script>, and pnpm exec <tool>. Keep pnpm-lock.yaml committed, do not create alternate lockfiles, and avoid deleting node_modules unless replacing it with a fresh pnpm install.
+## Historical Notes
+- `/daftar/index.html` was historically developed under `/pendaftaran/index.html`; older commits and notes may use the old path.
+- The large WordPress-exported HTML files are mostly static surface. Prefer learning runtime behavior from `/js`, `/functions`, `/scripts`, `/src`, `/templates`, `/json`, `/csv`, and the docs above.

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daftar Akun - Franchise.id</title>
+  <meta name="description" content="Buat akun Franchise.id untuk mencari peluang franchise atau mengelola listing franchise Anda.">
+  <link rel="canonical" href="/register/">
+  <link rel="stylesheet" href="/wp-content/themes/astra/assets/css/minified/main.min.css?ver=4.11.12">
+  <link rel="stylesheet" href="/css/auth-clerk.css">
+  <link rel="icon" href="/wp-content/uploads/2025/09/franchise.id-favicon-logo.png" sizes="32x32">
+  <style>
+    :root {
+      --ast-global-color-0: #ffc03d;
+      --ast-global-color-1: #f8b526;
+      --ast-global-color-2: #000000;
+      --ast-global-color-3: rgba(0, 0, 0, 0.79);
+      --ast-global-color-4: #ebe9e9;
+      --ast-global-color-5: #ffffff;
+    }
+
+    body {
+      background: #ebe9e9;
+      color: rgba(0, 0, 0, 0.79);
+      font-family: "DM Sans", Arial, sans-serif;
+      margin: 0;
+    }
+
+    .fr-register-header {
+      align-items: center;
+      background: #000;
+      display: flex;
+      justify-content: space-between;
+      padding: 16px clamp(18px, 4vw, 54px);
+    }
+
+    .fr-register-header img {
+      display: block;
+      height: auto;
+      width: min(220px, 58vw);
+    }
+
+    .fr-register-nav {
+      display: flex;
+      gap: 18px;
+    }
+
+    .fr-register-nav a {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
+    .fr-register-main {
+      display: grid;
+      gap: 26px;
+      margin: 0 auto;
+      max-width: 1080px;
+      padding: clamp(36px, 8vw, 88px) 20px;
+    }
+
+    .fr-register-copy {
+      max-width: 680px;
+    }
+
+    .fr-register-copy h1 {
+      color: #000;
+      font-family: "Outfit", Arial, sans-serif;
+      font-size: clamp(38px, 7vw, 72px);
+      line-height: 1.05;
+      margin: 0 0 12px;
+    }
+
+    .fr-register-copy p {
+      font-size: 18px;
+      line-height: 1.65;
+      margin: 0;
+    }
+
+    @media (min-width: 900px) {
+      .fr-register-main {
+        grid-template-columns: 1fr 520px;
+        align-items: start;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .fr-register-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="fr-register-header">
+    <a href="/" aria-label="Franchise.id">
+      <img src="/wp-content/uploads/2025/09/logo-website-franchise.id_.png" alt="Franchise.id">
+    </a>
+    <nav class="fr-register-nav" aria-label="Auth navigation">
+      <a href="/login/">Login</a>
+      <a href="/daftar/">Daftar Listing</a>
+    </nav>
+  </header>
+  <main class="fr-register-main">
+    <section class="fr-register-copy">
+      <h1>Daftar Akun</h1>
+      <p>Pilih tipe akun sesuai kebutuhan Anda. Franchisee dapat mencari peluang usaha, sementara franchisor dapat mengelola listing dan klaim brand melalui database D1 bersama jaringan Franchise.id.</p>
+    </section>
+    <section id="franchise-auth-root" data-auth-mode="register" aria-label="Form daftar akun"></section>
+  </main>
+  <script src="/js/auth-clerk.js"></script>
+</body>
+</html>

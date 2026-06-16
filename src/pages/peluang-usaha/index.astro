@@ -1,0 +1,8 @@
+---
+import { loadFranchiseStaticRows, renderListingPage } from "../../lib/franchise-static";
+
+export const prerender = true;
+
+const html = renderListingPage(loadFranchiseStaticRows());
+---
+<Fragment set:html={html} />

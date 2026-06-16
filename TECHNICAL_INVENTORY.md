@@ -1,9 +1,9 @@
 # Technical Inventory: Franchise.id Codebase
 
-This file serves as a comprehensive record of all functions and key variables across the `/js` and `/functions` directories to prevent logic loss during rapid development.
+This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
 ## Migration Direction
-This inventory describes the current runtime. Google Sheets and Cloudinary references are transition-layer behavior, not the desired final stack. New backend work should move function ownership toward D1/R2/Clerk and update `CODEBASE.md`, `AUDIT.md`, and this inventory together.
+This inventory describes the current runtime and migration bridge. Google Sheets and Cloudinary references are transition-layer behavior, not the desired final stack. New backend work should move function ownership toward D1/R2/Clerk and update `CODEBASE.md`, `AUDIT.md`, and this inventory together. `/form-submit` is now Clerk-authenticated and D1-role-authorized.
 
 ## 1. Directory: `/js` (Client-side & SSG Builders)
 
@@ -54,7 +54,7 @@ This inventory describes the current runtime. Google Sheets and Cloudinary refer
 - `FF.startPeriodicAutoSave(form)`: Periodic safety-net save every 5 seconds.
 - `FF.stopPeriodicAutoSave()`: Clears all auto-save timers.
 - `FF.bindLiveValidation(form)`: Live input/select validation hooks (`blur`/`input`/`change`).
-- `FF.submitToCloudflare(formElement, type)`: Unified submit pipeline (handles claim routing + WA normalization).
+- `FF.submitToCloudflare(formElement, type)`: Unified submit pipeline (handles claim routing + WA normalization), requires `window.FranchiseAuth` to attach a Clerk bearer token before posting to `/form-submit`.
 - `FF.initFormSubmission()`: Attaches submit listeners, draft persistence hooks, and aggressive auto-save triggers (input, change, step navigation, visibility change, beforeunload, tab switch).
 
 ### File: `js/form-07-init.js`
@@ -79,7 +79,8 @@ This inventory describes the current runtime. Google Sheets and Cloudinary refer
 - Form fillers: `fillFranchiseeForm()` (2-step), `fillFranchisorForm()` (Step 1 only), `fillClaimForm()` (async).
 - `fillFormFields(data)`: Generic field filler for text, select, radio, checkbox.
 - `markFormAsTestData(formId)`: Adds `is_test_data=TRUE` hidden input.
-- `clearAllTestData()`: Deletes all test data via backend endpoint.
+- `clearAllTestData()`: Deletes all D1 test data via backend endpoint; requires Clerk auth and D1 staff/admin role.
+- `getAuthHeaders()`: Reads Clerk auth headers from `window.FranchiseAuth` for protected D1 test writes.
 - UI: `createFAB()`, `showToast()`.
 - **Important**: Franchisor form filler now only fills Step 1 data to prevent state confusion.
 
@@ -119,23 +120,97 @@ This inventory describes the current runtime. Google Sheets and Cloudinary refer
 ### File: `js/build-sitemap.js`
 - `async build()`: Generates `sitemap-complete.xml` dynamically including all hybrid URLs.
 
-## 2. Directory: `/functions` (Cloudflare Edge Logic)
+### File: `scripts/build-d1-franchise-pages.ts`
+*TypeScript D1-backed public page generation bridge.*
+- `fetchRowsFromD1(options)`: Reads the local cfman-managed token for `franchise-network`, calls Wrangler directly, and loads published `site_franchisee_id` franchise rows from `franchise_db`.
+- `renderDetailPage(row, template)`: Inserts D1 franchise data into `templates/detail-franchise-tpl.html` and marks output with `d1-generated:franchisee.id`.
+- `buildListingIndex(rows, template, previousManifest, nextManifest, options, stats)`: Renders `/peluang-usaha/index.html` from D1 data and skips unchanged output by manifest hash.
+- `buildUnclaimedJson(rows, options, stats)`: Regenerates `json/unclaimed-brands.json` from D1 unclaimed rows for claim search.
+- Snapshot behavior: non-dry runs write `json/d1-franchise-static-data.json`, which Astro consumes for static route generation.
+- Manifest behavior: `json/d1-generated-pages-manifest.json` tracks D1-owned pages; prune only removes tracked files that still contain the D1 marker.
+- Wrangler invocation uses project-pinned `pnpm exec wrangler` so the script does not resolve a newer Node-22-only Wrangler version under Node 20.
 
-### File: `functions/form-submit.js` (v2.3)
-*Current transition-layer backend processing for all submissions.*
-- `onRequestPost()`: Main entry point for Cloudflare Functions.
-- `getGoogleAuthToken()`: RS256 JWT auth logic for Google APIs (legacy Sheets integration; not user auth).
-- `ensureSheetExists()`: Checks/Creates target tab in Google Sheet.
-- `appendDataSmart()`: Dynamic column-to-header mapping and data insertion.
-- `checkForDuplicates()`: prevents double registration via Email/WA.
-- `deleteFromUnclaimed(id, brandName)`: Post-claim cleanup logic (hapus dari tab UNCLAIMED by `id`, fallback by normalized `brand_name`).
+## 2. Directory: `/src` (Astro Static Generation)
+
+### File: `src/lib/franchise-static.ts`
+*Astro D1 snapshot validator and template renderer.*
+- `FranchiseStaticRowSchema`: Zod schema for rows in `json/d1-franchise-static-data.json`.
+- `loadFranchiseStaticRows()`: Reads and validates the generated D1 snapshot.
+- `renderListingPage(rows)`: Renders the existing `/peluang-usaha/` listing template from snapshot rows.
+- `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row.
+- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, and sticky claim CTA.
+
+### File: `src/pages/peluang-usaha/index.astro`
+*Astro static listing page.*
+- `prerender = true`.
+- Loads rows with `loadFranchiseStaticRows()`.
+- Outputs full listing HTML with `renderListingPage(rows)`.
+
+### File: `src/pages/peluang-usaha/[slug].astro`
+*Astro static franchise detail pages.*
+- `prerender = true`.
+- `getStaticPaths()`: Creates one static route per snapshot row using the D1 slug.
+- Outputs full detail HTML with `renderDetailPage(row)`.
+
+## 3. Directory: `/functions` (Cloudflare Edge Logic)
+
+### File: `functions/_clerk-auth.js`
+*Shared Clerk session verification, D1 user sync, and role authorization helper.*
+- `requireD1User(request, env, db, options)`: Verifies Clerk bearer token, upserts D1 user, optionally assigns self-selectable role, and enforces required D1 role.
+- `syncD1User(request, env, db, requestedRole)`: Auth sync variant used by `/auth-sync`; pushes the current D1 role snapshot back into Clerk metadata.
+- `syncWebhookUserToD1(env, db, clerkUser)`: Verifies Clerk webhook identity payloads and upserts D1 `users` from `user.created` / `user.updated`.
+- `markD1UserDeleted(db, clerkUserId)`: Marks the D1 user row as `deleted` after a verified Clerk `user.deleted` webhook.
+- `assignD1Role(db, userId, role, actorUserId)` / `removeD1Role(db, userId, role)`: Mutates D1 network roles used by admin role management.
+- `syncClerkMetadataFromD1(env, user, roles)` / `syncClerkMetadataForD1User(env, db, user)`: Writes D1 user id, role list, status, and sync timestamp into Clerk public/private metadata.
+- `authErrorResponse(error)`: Converts auth/role failures into the standard JSON response shape.
+- Roles: only `franchisee` and `franchisor` are self-assignable; `staff` and `admin` are elevated roles.
+
+### File: `functions/auth-config.js`
+*Public Clerk config endpoint.*
+- `onRequestGet()`: Returns `CLERK_PUBLISHABLE_KEY` and configured status with `Cache-Control: no-store`.
+
+### File: `functions/auth-sync.js`
+*Clerk-to-D1 user mapping endpoint.*
+- `onRequestPost()`: Validates optional requested role with Zod, verifies Clerk session, upserts D1 `users`, assigns allowed role, syncs Clerk metadata from D1, and returns user/role summary.
+
+### File: `functions/clerk-webhook.js`
+*Verified Clerk lifecycle webhook for Clerk-to-D1 sync.*
+- `onRequestPost()`: Requires `CLERK_WEBHOOK_SIGNING_SECRET`, verifies the Svix-signed Clerk webhook, upserts D1 users for `user.created` / `user.updated`, marks users deleted for `user.deleted`, and ignores unrelated event types.
+
+### File: `functions/user-role.js`
+*Admin-only D1 role mutation endpoint with D1-to-Clerk metadata sync.*
+- `onRequestPost()`: Requires Clerk auth plus D1 `admin`, validates role mutation payloads with Zod, assigns/removes `franchisee`, `franchisor`, `staff`, or `admin` in D1, then updates Clerk metadata from the D1 role snapshot.
+
+### File: `functions/sync-clerk-metadata.js`
+*Admin-only repair/backfill endpoint for D1-to-Clerk metadata sync.*
+- `onRequestPost()`: Requires Clerk auth plus D1 `admin`, syncs one D1 user by `user_id` / `clerk_user_id` or up to 500 users with `all=true`, and rewrites Clerk metadata from D1 roles/status.
+
+### File: `functions/form-submit.js` (v2.4)
+*Clerk-authenticated D1-backed backend processing for all current form submissions.*
+- `onRequestPost()`: Main entry point; requires `env.franchise_db`, validates base payload with Zod, requires Clerk/D1 role authorization, routes franchisee/franchisor/claim/test actions, and returns the legacy success/error JSON envelope.
+- `FranchiseeSchema` / `FranchisorSchema`: Zod runtime validation for form payloads before D1 writes.
+- `handleFranchiseeSubmit(db, data, actor)`: Checks duplicates and writes `franchisee_profiles.user_id`, `legacy_source_rows`, and actor-aware `audit_events`.
+- `handleFranchisorSubmit(db, data, isClaim, actor)`: Checks duplicates and writes or updates franchisor/listing/package/publication/claim/audit D1 records with `user_id`, `owner_user_id`, and `claimant_user_id`.
+- `findClaimSource(db, data)`: Finds D1 `UNCLAIMED` franchise rows by `unclaimed_id` or normalized brand name for claim migration.
+- `handleCreateUnclaimed()` / `handleClearTestData()`: Dev test-data actions now operate in D1 instead of Google Sheets.
+- `uniqueSlug()` / `slugExists()`: Generates non-conflicting D1 slugs for new submitted listings.
+- Important: `/form-submit` must remain D1-only and authenticated; do not restore anonymous writes.
 
 ### File: `functions/get-franchises.js`
-- `onRequestGet()`: API to fetch franchise data with tier-based legacy Cloudinary URL optimization.
-  - Supports `purpose=claim-search` for `tab=UNCLAIMED` to return sanitized claim-search rows (clean brand_name + deduplication + row-noise filtering aligned with frontend/builder).
-  - Migration target: replace Sheets reads with D1 queries and R2/legacy media URL resolution.
+- `onRequestGet()`: API to fetch franchise data with Zod query validation, D1-first reads, legacy Cloudinary URL optimization, and a Sheets read fallback only when D1 is unavailable or explicitly requested.
+- `getFranchiseRowsFromD1()`: Reads published `site_franchisee_id` franchise rows from D1 with optional `q`, `category`, `limit`, and `offset` filters.
+- `getFranchiseeProfilesFromD1()`: Reads franchisee profile rows from D1 for operational/admin query compatibility.
+- `filterClaimSearchRows()`: Preserves strict `UNCLAIMED` claim-search sanitization and deduplication.
+- `getFranchisesFromSheets()`: Transition-only read fallback; do not add new Sheets writes.
 
 ---
-## 3. Logic Safety Audit
+## 4. Logic Safety Audit
 - **Status**: Verified.
 - **Lost logic recovered**: BEP calculations, multi-step progress, and media URL preview behavior (refactored into modular `form-0x-*.js` files and `form-utils.js`).
+### File: `js/auth-clerk.js`
+*Custom ClerkJS client integration using existing site CSS.*
+- `Auth.init()`: Fetches `/auth-config`, loads pinned ClerkJS, and initializes Clerk.
+- `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
+- `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1 and optionally assign self-selectable `franchisee`/`franchisor` roles.
+- `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with custom login/register/verification forms.
+- `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI.
