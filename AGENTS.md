@@ -11,7 +11,7 @@ Last updated: 2026-06-17 02:00 (Asia/Jakarta)
 - Use pnpm exclusively. Run `pnpm install`, `pnpm run <script>`, and `pnpm exec <tool>`. Keep `pnpm-lock.yaml` committed and do not create alternate lockfiles.
 
 ## Current Stack Direction
-- Astro static routes are the target for public SEO pages, starting with `/peluang-usaha/` and `/peluang-usaha/[slug]/`.
+- Astro static routes are the target for public SEO pages, starting with `/peluang-usaha/` and `/peluang-usaha/[slug]`.
 - Cloudflare D1 `franchise_db` is the shared source of truth across Franchisee.id, Franchisor.id, Franchise.id, Waralaba.id, Franchise.co.id, Waralaba.co.id, and future owned network sites.
 - Cloudflare R2 is the target for franchise media and proposal assets.
 - Clerk handles login/register and identity; D1 authorizes roles and permissions.
@@ -39,6 +39,7 @@ Last updated: 2026-06-17 02:00 (Asia/Jakarta)
 - Public franchise listing/detail pages must be generated from D1 for SEO.
 - Current bridge: `scripts/build-d1-franchise-pages.ts` queries D1, renders legacy template HTML, writes `json/d1-franchise-static-data.json`, updates `json/d1-generated-pages-manifest.json`, and refreshes `json/unclaimed-brands.json`.
 - Astro target: `src/pages/peluang-usaha/index.astro` and `src/pages/peluang-usaha/[slug].astro` consume the D1 snapshot through `src/lib/franchise-static.ts` and generate static HTML during `pnpm run build:astro`.
+- Franchise detail physical output should be flat `/peluang-usaha/[slug].html`, with extensionless links `/peluang-usaha/[slug]` for Cloudflare Pages routing.
 - When cleaning stale generated franchise pages, delete only pages tracked in `json/d1-generated-pages-manifest.json` and marked with `d1-generated:franchisee.id`. Do not delete untracked legacy/example `/peluang-usaha` folders during the transition.
 
 ## Form Rules

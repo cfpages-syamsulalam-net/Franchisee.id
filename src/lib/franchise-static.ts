@@ -186,7 +186,7 @@ function generateJsonLd(row: FranchiseStaticRow, description: string, logoUrl: s
     "@type": "Brand",
     name: row.brand_name,
     description,
-    url: `https://franchisee.id/peluang-usaha/${row.slug}/`,
+    url: `https://franchisee.id/peluang-usaha/${row.slug}`,
     logo: logoUrl,
     category: row.category || "Franchise",
   };

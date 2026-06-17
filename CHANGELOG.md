@@ -4,6 +4,19 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-17 14:47 (Asia/Jakarta)
+### Added
+- `.context/session-20260617-1447.md`: Added session snapshot for switching D1/Astro franchise detail output to flat `.html` files.
+
+### Changed
+- `astro.config.mjs`: Switched Astro to `build.format: "preserve"` with `trailingSlash: "never"` so listing index output remains an index file while `src/pages/peluang-usaha/[slug].astro` builds flat `.html` files.
+- `scripts/build-d1-franchise-pages.ts`: Changed D1 bridge detail output from `/peluang-usaha/[slug]/index.html` to `/peluang-usaha/[slug].html` and added safe cleanup for old marker-owned folder indexes when manifest paths change.
+- `src/lib/franchise-static.ts` and `scripts/build-d1-franchise-pages.ts`: Updated franchise JSON-LD detail URLs to the extensionless `/peluang-usaha/[slug]` canonical shape.
+- `AGENTS.md`, `CODEBASE.md`, `AUDIT.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented flat physical detail output with extensionless public links.
+
+### Removed
+- None.
+
 ## 2026-06-17 03:11 (Asia/Jakarta)
 ### Added
 - `functions/clerk-webhook.js`: Added a verified Clerk lifecycle webhook endpoint for `user.created`, `user.updated`, and `user.deleted` events so Clerk identity changes are reflected in D1.
@@ -14,6 +27,7 @@ Format:
 ### Changed
 - `functions/_clerk-auth.js`: Added webhook-safe Clerk user parsing, D1 user deletion marking, D1 role assignment/removal helpers, D1 user lookup helpers, and D1-to-Clerk metadata sync helpers.
 - `functions/_clerk-auth.js`: `/auth-sync` and protected D1 user authorization now refresh Clerk `publicMetadata.franchiseNetwork` and `privateMetadata.franchiseNetwork` from D1 roles/status.
+- `functions/auth-config.js` and `js/auth-clerk.js`: Support `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` with `CLERK_PUBLISHABLE_KEY` fallback and use generic browser error wording.
 - `AGENTS.md`, `CODEBASE.md`, `AUDIT.md`, `TECHNICAL_INVENTORY.md`, `docs/README.md`, `docs/architecture/CLERK_SETUP.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the bidirectional sync contract, Clerk webhook setup, D1 admin role endpoint, metadata repair endpoint, and the rule that D1 remains authoritative for authorization.
 
 ### Removed

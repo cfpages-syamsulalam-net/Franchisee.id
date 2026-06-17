@@ -21,7 +21,7 @@
     clerkPromise = (async function () {
       const config = await fetchAuthConfig();
       if (!config.publishableKey) {
-        throw new Error("CLERK_PUBLISHABLE_KEY belum dikonfigurasi di Cloudflare Pages.");
+        throw new Error("Clerk publishable key belum dikonfigurasi di Cloudflare Pages.");
       }
 
       await loadScript(CLERK_JS_URL);

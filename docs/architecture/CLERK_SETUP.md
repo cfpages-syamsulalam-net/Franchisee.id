@@ -1,6 +1,6 @@
 # Clerk Setup For Franchisee.id
 
-Last updated: 2026-06-17 02:58 (Asia/Jakarta)
+Last updated: 2026-06-17 03:11 (Asia/Jakarta)
 
 ## Purpose
 Clerk is the identity/session provider. D1 remains the authorization source of truth through `users` and `user_roles`.
@@ -20,7 +20,7 @@ Clerk is the identity/session provider. D1 remains the authorization source of t
 Set these in Cloudflare Pages project settings for Production and Preview:
 
 ```text
-CLERK_PUBLISHABLE_KEY=pk_...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
 CLERK_SECRET_KEY=sk_...
 CLERK_WEBHOOK_SIGNING_SECRET=whsec_...
 ```
@@ -31,7 +31,7 @@ Optional hardening:
 CLERK_AUTHORIZED_PARTIES=https://franchisee.id,https://<preview-domain>
 ```
 
-Do not commit Clerk secret keys to this repository. `CLERK_PUBLISHABLE_KEY` is public by design, but it is still loaded from the `/auth-config` Function so the static HTML does not need per-environment rewrites.
+Do not commit Clerk secret keys to this repository. `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is public by design, but it is still loaded from the `/auth-config` Function so the static HTML does not need per-environment rewrites. `/auth-config` also accepts `CLERK_PUBLISHABLE_KEY` as a fallback.
 
 ## Current Implementation
 - `/login/` keeps the legacy page shell and replaces the old WPForms block at runtime with a custom Clerk email/password UI.

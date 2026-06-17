@@ -1,5 +1,5 @@
 export async function onRequestGet({ env }) {
-  const publishableKey = env.CLERK_PUBLISHABLE_KEY || "";
+  const publishableKey = env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || env.CLERK_PUBLISHABLE_KEY || "";
 
   return new Response(
     JSON.stringify({

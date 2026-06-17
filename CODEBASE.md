@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-17 02:58 (Asia/Jakarta)
+Last updated: 2026-06-17 14:47 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -46,7 +46,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `functions/get-franchises.js` | Cloudflare Function API for directory/claim-search reads. D1-first through the `franchise_db` binding, validates query params with Zod, preserves `purpose=claim-search` sanitization, and keeps a Sheets read fallback only when D1 is unavailable or explicitly requested. | Cloudflare D1 `franchise_db`, `js/form-02-claim-workflow.js`, legacy Sheets read fallback |
 | `functions/form-submit.js` | Cloudflare Function API for franchisee, franchisor, claim, and dev test-data submissions. D1-only writes with Zod payload validation, duplicate checks, D1 claim cleanup, D1 profile/listing/package/publication/claim/audit writes, and no new Google Sheets writes. | `js/form-06-submit-validation.js`, Cloudflare D1 `franchise_db`, `franchisee_profiles`, `franchisor_profiles`, `franchises`, `franchise_claims`, `franchise_packages`, `franchise_site_publications`, `legacy_source_rows`, `audit_events` |
 | `functions/_clerk-auth.js` | Shared Clerk/D1 auth helper for Pages Functions. Verifies Clerk bearer tokens, fetches Clerk user data, upserts D1 `users`, assigns only self-assignable roles, checks D1 roles before writes, and pushes D1 role snapshots to Clerk metadata. | `@clerk/backend`, `functions/auth-sync.js`, `functions/form-submit.js`, `functions/clerk-webhook.js`, D1 `users`, `user_roles` |
-| `functions/auth-config.js` | Public same-origin config endpoint for Clerk publishable key. Keeps static HTML environment-neutral. | `js/auth-clerk.js`, Cloudflare env `CLERK_PUBLISHABLE_KEY` |
+| `functions/auth-config.js` | Public same-origin config endpoint for Clerk publishable key. Keeps static HTML environment-neutral and accepts `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` with `CLERK_PUBLISHABLE_KEY` fallback. | `js/auth-clerk.js`, Cloudflare env |
 | `functions/auth-sync.js` | Authenticated Clerk-to-D1 user sync endpoint. Maps the active Clerk user into D1 and self-assigns `franchisee` or `franchisor` when requested. | `functions/_clerk-auth.js`, `js/auth-clerk.js`, D1 `users`, `user_roles` |
 | `functions/clerk-webhook.js` | Clerk-to-D1 lifecycle sync endpoint. Verifies Clerk webhooks and upserts/deletes D1 users from Clerk `user.created`, `user.updated`, and `user.deleted` events. | `@clerk/backend/webhooks`, Cloudflare env `CLERK_WEBHOOK_SIGNING_SECRET`, D1 `users` |
 | `functions/user-role.js` | Admin-only D1 role mutation endpoint. Assigns/removes D1 roles and then pushes the D1 role snapshot to Clerk metadata. | `functions/_clerk-auth.js`, D1 `user_roles`, Clerk `users.updateUserMetadata` |
@@ -65,10 +65,10 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `js/form-utils.js` | Shared formatting, validation, UI helpers, and progress helpers exposed as globals. | Form modules and `/daftar/index.html` |
 | `js/form-franchise.js` | Legacy non-executing shim. Do not add runtime logic here. | Historical compatibility only |
 | `scripts/import-csv-to-d1.ts` | TypeScript/Zod importer that validates `csv/franchisors.csv`, `csv/unclaimed.csv`, and `csv/franchisee.csv`, generates idempotent SQL for `franchise_db`, preserves strict `UNCLAIMED` claim-search sanitization, and can apply remotely through `cfman`. | `migrations/0001_initial_network_schema.sql`, `/csv`, `.context/d1-import-franchise-data.sql`, Cloudflare D1 `franchise_db` |
-| `scripts/build-d1-franchise-pages.ts` | TypeScript/Zod D1-backed public page bridge. Reads published `site_franchisee_id` rows from `franchise_db`, renders legacy `/peluang-usaha` HTML when needed, writes the Astro snapshot `json/d1-franchise-static-data.json`, regenerates claim-search JSON, skips unchanged pages by manifest hash, and prunes only previously D1-generated pages. | `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, `json/d1-franchise-static-data.json`, `json/d1-generated-pages-manifest.json`, `json/unclaimed-brands.json`, `/peluang-usaha`, Wrangler |
+| `scripts/build-d1-franchise-pages.ts` | TypeScript/Zod D1-backed public page bridge. Reads published `site_franchisee_id` rows from `franchise_db`, renders `/peluang-usaha/index.html` and flat `/peluang-usaha/{slug}.html` detail files, writes the Astro snapshot `json/d1-franchise-static-data.json`, regenerates claim-search JSON, skips unchanged pages by manifest hash, and prunes only previously D1-generated pages. | `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, `json/d1-franchise-static-data.json`, `json/d1-generated-pages-manifest.json`, `json/unclaimed-brands.json`, `/peluang-usaha`, Wrangler |
 | `src/lib/franchise-static.ts` | Astro-side renderer and Zod validator for the D1 franchise static snapshot. Converts D1 snapshot rows into listing/detail HTML using existing template placeholders and the same SEO/content mapping as the bridge. | `json/d1-franchise-static-data.json`, `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, Astro routes |
 | `src/pages/peluang-usaha/index.astro` | Astro static listing route for `/peluang-usaha/`. Loads the D1 snapshot and renders the existing listing template during build. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json` |
-| `src/pages/peluang-usaha/[slug].astro` | Astro static detail route for `/peluang-usaha/{slug}/`. Uses `getStaticPaths` from the D1 snapshot so each franchise keeps an individually indexable HTML page. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json` |
+| `src/pages/peluang-usaha/[slug].astro` | Astro static detail route that physically builds `/peluang-usaha/{slug}.html` under `build.format: "preserve"` while public links stay `/peluang-usaha/{slug}`. Uses `getStaticPaths` from the D1 snapshot so each franchise keeps an individually indexable HTML page. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json`, `astro.config.mjs` |
 
 ## Supporting Files
 
@@ -88,7 +88,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `csv/franchisors.csv` | Local fallback/source snapshot for `FRANCHISOR`. |
 | `csv/franchisee.csv` | Local fallback/source snapshot for `FRANCHISEE`. |
 | `csv/unclaimed.csv` | Local fallback/source snapshot for `UNCLAIMED`. |
-| `astro.config.mjs` | Astro static build config for Cloudflare Pages-compatible output. |
+| `astro.config.mjs` | Astro static build config for Cloudflare Pages-compatible output. Uses `build.format: "preserve"` so listing index output stays nested while detail source files can build flat `.html` files. |
 | `src/env.d.ts` | Astro TypeScript client reference. |
 | `tsconfig.json` | Strict TypeScript config for migration scripts and Astro support code. Includes `scripts/**/*.ts`, `src/**/*.ts`, and `src/**/*.d.ts`. |
 | `package.json` | Declares pnpm scripts for D1 CSV import, D1 bridge generation, and Astro static builds: `import:csv:*`, `build:d1:franchises:*`, `astro:sync`, `build:astro`, `dev:astro`, and `preview:astro`. |
@@ -162,16 +162,16 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 1. `pnpm run build:d1:franchises:dry` queries remote D1 and renders pages in memory to show write/skip/prune counts.
 2. `pnpm run build:d1:franchises` reads the `franchise-network` token from the local cfman token store, calls Wrangler directly, and selects published `site_franchisee_id` rows from `franchise_db`.
 3. The script renders `/peluang-usaha/index.html` from `templates/peluang-usaha-tpl.html`.
-4. The script renders each `/peluang-usaha/{slug}/index.html` from `templates/detail-franchise-tpl.html` and adds a `d1-generated:franchisee.id` marker comment.
+4. The script renders each `/peluang-usaha/{slug}.html` from `templates/detail-franchise-tpl.html` and adds a `d1-generated:franchisee.id` marker comment.
 5. `json/d1-generated-pages-manifest.json` stores content hashes and D1-owned paths; unchanged pages are skipped on rerun.
-6. Stale cleanup only removes pages that exist in the previous manifest and still contain the D1-generated marker. Legacy/example pages not owned by the manifest are intentionally left alone.
+6. Stale cleanup only removes pages that exist in the previous manifest and still contain the D1-generated marker, including old marker-owned `/peluang-usaha/{slug}/index.html` files when switching to flat `.html` output. Legacy/example pages not owned by the manifest are intentionally left alone.
 7. The script also writes `json/d1-franchise-static-data.json` so Astro can build static routes from the same D1 source without querying D1 inside route files.
 
 ### 8. Astro D1 Static Route Flow
 1. `pnpm run build:astro` first runs `pnpm run astro:sync`, which calls the D1 bridge and refreshes `json/d1-franchise-static-data.json`.
 2. `src/lib/franchise-static.ts` validates the snapshot with Zod and exposes shared listing/detail renderers.
 3. `src/pages/peluang-usaha/index.astro` renders `/peluang-usaha/index.html`.
-4. `src/pages/peluang-usaha/[slug].astro` uses `getStaticPaths` to generate one static detail page per D1 row.
+4. `src/pages/peluang-usaha/[slug].astro` uses `getStaticPaths` to generate one flat `.html` detail page per D1 row because Astro is configured with `build.format: "preserve"`.
 5. Astro currently writes to `dist/`, so existing root `/peluang-usaha` files remain untouched during Astro validation. The bridge manifest/safe-prune rule remains the only pruning mechanism during the transition.
 
 ## Business Rules To Preserve

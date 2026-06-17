@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, rmdirSync, writeFileSync } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
 import { z } from "zod";
 
 const ROOT_DIR = resolve(__dirname, "..");
@@ -159,7 +159,7 @@ function main() {
     currentSlugs.add(row.slug);
     const html = renderDetailPage(row, template);
     const hash = sha256(html);
-    const pagePath = join(OUTPUT_DIR, row.slug, "index.html");
+    const pagePath = join(OUTPUT_DIR, `${row.slug}.html`);
     const relativePath = toRepoPath(pagePath);
     const previous = previousManifest?.pages[row.slug];
 
@@ -186,16 +186,16 @@ function main() {
 
   if (options.prune && previousManifest) {
     for (const [slug, page] of Object.entries(previousManifest.pages)) {
-      if (currentSlugs.has(slug)) continue;
+      const nextPage = nextManifest.pages[slug];
+      if (currentSlugs.has(slug) && nextPage?.path === page.path) continue;
       const pagePath = resolve(ROOT_DIR, page.path);
-      const dirPath = dirname(pagePath);
       if (!existsSync(pagePath)) continue;
       const content = readFileSync(pagePath, "utf8");
       if (!content.includes(GENERATED_MARKER)) continue;
 
       stats.detailPruned++;
       if (!options.dryRun) {
-        rmSync(dirPath, { recursive: true, force: true });
+        pruneGeneratedPage(pagePath);
       }
     }
   }
@@ -508,7 +508,7 @@ function generateJsonLd(row: D1FranchiseRow, description: string, logoUrl: strin
     "@type": "Brand",
     name: row.brand_name,
     description,
-    url: `https://franchisee.id/peluang-usaha/${row.slug}/`,
+    url: `https://franchisee.id/peluang-usaha/${row.slug}`,
     logo: logoUrl,
     category: row.category || "Franchise",
   };
@@ -689,6 +689,17 @@ function normalizeGeneratedHtml(html: string) {
 
 function ensureDir(dirPath: string) {
   if (!existsSync(dirPath)) mkdirSync(dirPath, { recursive: true });
+}
+
+function pruneGeneratedPage(pagePath: string) {
+  rmSync(pagePath, { force: true });
+  if (basename(pagePath) !== "index.html") return;
+
+  const dirPath = dirname(pagePath);
+  if (dirPath === OUTPUT_DIR || !existsSync(dirPath)) return;
+  if (readdirSync(dirPath).length === 0) {
+    rmdirSync(dirPath);
+  }
 }
 
 function toRepoPath(filePath: string) {

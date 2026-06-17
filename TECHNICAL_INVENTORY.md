@@ -127,7 +127,8 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 - `buildListingIndex(rows, template, previousManifest, nextManifest, options, stats)`: Renders `/peluang-usaha/index.html` from D1 data and skips unchanged output by manifest hash.
 - `buildUnclaimedJson(rows, options, stats)`: Regenerates `json/unclaimed-brands.json` from D1 unclaimed rows for claim search.
 - Snapshot behavior: non-dry runs write `json/d1-franchise-static-data.json`, which Astro consumes for static route generation.
-- Manifest behavior: `json/d1-generated-pages-manifest.json` tracks D1-owned pages; prune only removes tracked files that still contain the D1 marker.
+- Detail output behavior: writes flat `/peluang-usaha/[slug].html` files while generated links remain extensionless `/peluang-usaha/[slug]`.
+- Manifest behavior: `json/d1-generated-pages-manifest.json` tracks D1-owned pages; prune only removes tracked files that still contain the D1 marker, including old marker-owned folder indexes when paths change.
 - Wrangler invocation uses project-pinned `pnpm exec wrangler` so the script does not resolve a newer Node-22-only Wrangler version under Node 20.
 
 ## 2. Directory: `/src` (Astro Static Generation)
@@ -147,7 +148,7 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 - Outputs full listing HTML with `renderListingPage(rows)`.
 
 ### File: `src/pages/peluang-usaha/[slug].astro`
-*Astro static franchise detail pages.*
+*Astro static franchise detail pages with flat `.html` output under `build.format: "preserve"`.*
 - `prerender = true`.
 - `getStaticPaths()`: Creates one static route per snapshot row using the D1 slug.
 - Outputs full detail HTML with `renderDetailPage(row)`.
@@ -167,7 +168,7 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 
 ### File: `functions/auth-config.js`
 *Public Clerk config endpoint.*
-- `onRequestGet()`: Returns `CLERK_PUBLISHABLE_KEY` and configured status with `Cache-Control: no-store`.
+- `onRequestGet()`: Returns the Clerk publishable key from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` or fallback `CLERK_PUBLISHABLE_KEY`, plus configured status with `Cache-Control: no-store`.
 
 ### File: `functions/auth-sync.js`
 *Clerk-to-D1 user mapping endpoint.*
