@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-19 06:10 (Asia/Jakarta)
+### Added
+- `.node-version`: Pinned the project build runtime intent to Node `20.19.4` for the Astro 5.x deployment path.
+- `.context/session-20260619-0610.md`: Added session snapshot for the Cloudflare Pages dependency/bundling deploy fix.
+
+### Changed
+- `wrangler.toml`: Added `pages_build_output_dir = "dist"` so Cloudflare Pages treats the Wrangler config as valid for Pages builds.
+- `wrangler.example.toml`: Added the Pages output directory and Cloudflare Pages build-command note.
+- `package.json`: Added conventional `build` script that delegates to `pnpm run build:astro`.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/README.md`, `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the Pages build-command requirement, output directory, and the reason dependency-backed Functions failed when Cloudflare skipped the build step.
+
+### Removed
+- None.
+
 ## 2026-06-18 18:48 (Asia/Jakarta)
 ### Added
 - `migrations/0003_site_publish_queue.sql`: Added `site_rebuild_requests` and `site_publish_state` for D1-to-static publish queueing, publish guardrails, and publish mode tracking.

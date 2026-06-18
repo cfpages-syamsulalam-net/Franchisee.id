@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-06-17 02:58 (Asia/Jakarta)
+Last updated: 2026-06-19 06:10 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -150,6 +150,8 @@ Astro scaffold:
 - `src/pages/peluang-usaha/[slug].astro` uses `getStaticPaths` to build one flat `/peluang-usaha/{slug}.html` file per franchise slug under `build.format: "preserve"`.
 - `astro.config.mjs` uses `build.format: "preserve"` so index routes remain index files while detail pages can be stored as flat `.html` files.
 - `pnpm run build:astro` refreshes the D1 snapshot first, then builds 198 pages into `dist/` from the current D1 data.
+- `pnpm run build` is the conventional Cloudflare Pages entrypoint and delegates to `pnpm run build:astro`; `wrangler.toml` declares `pages_build_output_dir = "dist"`.
+- Cloudflare Pages project settings must still include a build command. If no build command is configured, Pages skips dependency installation and the Functions bundler cannot resolve npm imports such as `zod` or `@clerk/backend`.
 - The manifest/safe-prune rule remains in the D1 bridge. Astro writes to `dist/`, so it does not delete legacy/example root `/peluang-usaha` folders during validation.
 
 ### D1 Change To Static Publish Mechanism

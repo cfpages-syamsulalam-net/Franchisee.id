@@ -11,6 +11,7 @@
     "build:d1:franchises:dry": "tsx scripts/build-d1-franchise-pages.ts --dry-run",
     "build:d1:franchises": "tsx scripts/build-d1-franchise-pages.ts",
     "astro:sync": "pnpm run build:d1:franchises",
+    "build": "pnpm run build:astro",
     "build:astro": "pnpm run astro:sync && astro build",
     "publish:d1:poll": "node scripts/d1-static-publish-poller.mjs",
     "dev:astro": "pnpm run astro:sync && astro dev --host 127.0.0.1",

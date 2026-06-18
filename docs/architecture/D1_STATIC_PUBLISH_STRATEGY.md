@@ -1,6 +1,6 @@
 # D1 Static Publish Strategy
 
-Last updated: 2026-06-18 18:48 (Asia/Jakarta)
+Last updated: 2026-06-19 06:10 (Asia/Jakarta)
 
 ## Problem
 
@@ -12,6 +12,7 @@ D1 is the source of truth for franchise listings, but public franchise detail pa
 - Scheduled workflows run on the default branch. Source: GitHub Actions schedule docs, <https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule>.
 - GitHub Actions is free for standard GitHub-hosted runners in public repositories. Private repositories receive included monthly minutes by plan; GitHub Free currently lists 2,000 minutes per month. Source: GitHub Actions billing docs, <https://docs.github.com/en/billing/concepts/product-billing/github-actions>.
 - Cloudflare Pages build quota must be treated as scarce on the current plan. Do not trigger a Pages build for every D1 edit.
+- Cloudflare Pages Deploy Hook mode depends on the Pages project build settings. The project must run a build command (`pnpm run build` preferred, or `pnpm run build:astro`) and output `dist`; otherwise Pages skips dependency installation and npm-backed Functions imports fail during bundling.
 - If GitHub Actions commits generated files back to the default branch, the connected Cloudflare Pages Git integration can treat that commit as a normal repository push and trigger a Cloudflare Pages build. Content polling workflows must not commit generated output unless that build trigger is intentional.
 
 ## Strategy Options
@@ -135,11 +136,13 @@ Implemented on 2026-06-18:
 - `functions/form-submit.js` enqueues rebuild requests for franchisor listing submissions, claim submissions, dev unclaimed creation, and dev test-data clearing.
 - `scripts/d1-static-publish-poller.mjs` checks D1 through the Cloudflare API, expires stale queued requests, enforces per-site guardrails, calls the deploy hook in the default publish mode, and supports direct deploy fallback state marking.
 - `.github/workflows/d1-static-publish.yaml` runs the poller at minutes 7 and 37 every hour plus manual `workflow_dispatch`.
-- `package.json` exposes `pnpm run publish:d1:poll` for local poller execution when the required environment variables are present.
+- `package.json` exposes `pnpm run publish:d1:poll` for local poller execution when the required environment variables are present, and `pnpm run build` as the conventional Cloudflare Pages build entrypoint.
+- `wrangler.toml` declares `pages_build_output_dir = "dist"` so Pages treats the repository config as valid for Pages builds.
 
 Still required before GitHub automation is live:
 
 - Add GitHub secret `CLOUDFLARE_API_TOKEN` with D1 query/write permission for `franchise_db`.
 - Add GitHub secret `PAGES_DEPLOY_HOOK_FRANCHISEE_ID` containing the full Cloudflare Pages Deploy Hook URL.
+- In Cloudflare Pages project settings, set build command to `pnpm run build` and output directory to `dist` for both Git push builds and Deploy Hook builds.
 - Optionally add GitHub variables `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_D1_DATABASE_ID`, and `PAGES_PROJECT_NAME`; defaults are present for the current `franchisee.id` project.
 - Push the workflow to GitHub and verify the first dirty D1 edit triggers exactly one Pages build.

@@ -4,6 +4,7 @@ This file records important functions, modules, and key variables across `/js`, 
 
 ## Migration Direction
 This inventory describes the current runtime and migration bridge. Google Sheets and Cloudinary references are transition-layer behavior, not the desired final stack. New backend work should move function ownership toward D1/R2/Clerk and update `CODEBASE.md`, `AUDIT.md`, and this inventory together. `/form-submit` is now Clerk-authenticated and D1-role-authorized.
+Cloudflare Pages builds must run `pnpm run build` or `pnpm run build:astro` and output `dist`; otherwise dependency-backed Pages Functions cannot bundle imports such as `zod` and `@clerk/backend`.
 
 ## 1. Directory: `/js` (Client-side & SSG Builders)
 
@@ -220,7 +221,7 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 *Scheduled/manual D1-to-static publish poller.*
 - Schedule: runs at minutes 7 and 37 every hour.
 - `Poll D1 publish queue`: Runs `node scripts/d1-static-publish-poller.mjs`; exits before dependency install/build when D1 has no pending public-page work.
-- Default publish path: the poller calls `PAGES_DEPLOY_HOOK_FRANCHISEE_ID`; Cloudflare Pages runs the configured build, including `pnpm run build:astro`.
+- Default publish path: the poller calls `PAGES_DEPLOY_HOOK_FRANCHISEE_ID`; Cloudflare Pages runs the configured build, preferably `pnpm run build` which delegates to `pnpm run build:astro`.
 - Fallback publish path: if `site_publish_state.publish_mode='github_direct_deploy'`, the workflow installs dependencies, runs `pnpm run build:astro`, deploys `dist/` with Wrangler, then marks D1 requests deployed/failed.
 - Does not commit generated output back to `main`.
 

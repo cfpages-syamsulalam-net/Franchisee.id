@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-06-18 18:48 (Asia/Jakarta)
+Last updated: 2026-06-19 06:10 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -42,3 +42,4 @@ This repository previously accumulated many root-level Markdown files. Going for
 - When a stack decision changes, update `docs/architecture/TECH_STACK_DECISIONS.md`.
 - When a user-facing migration task progresses, update `AUDIT.md`.
 - Every file move or edit still needs a `CHANGELOG.md` entry.
+- For Cloudflare Pages deploy changes, keep `wrangler.toml`, `CODEBASE.md`, `AUDIT.md`, and the relevant architecture doc aligned. The current Pages output is `dist`, and the project build command should be `pnpm run build`.

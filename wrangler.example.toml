@@ -1,8 +1,11 @@
 name = "franchisee-id"
 compatibility_date = "2026-06-16"
+pages_build_output_dir = "dist"
 
 # Example only. Copy to wrangler.toml and replace database_id with the
 # real Cloudflare D1 UUID for the shared franchise_db before applying remote migrations.
+# The Cloudflare Pages project must still have a build command, preferably:
+# pnpm run build
 
 [[d1_databases]]
 binding = "franchise_db"

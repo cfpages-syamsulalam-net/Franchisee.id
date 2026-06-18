@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-18 18:48 (Asia/Jakarta)
+Last updated: 2026-06-19 06:10 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -93,7 +93,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `astro.config.mjs` | Astro static build config for Cloudflare Pages-compatible output. Uses `build.format: "preserve"` so listing index output stays nested while detail source files can build flat `.html` files. |
 | `src/env.d.ts` | Astro TypeScript client reference. |
 | `tsconfig.json` | Strict TypeScript config for migration scripts and Astro support code. Includes `scripts/**/*.ts`, `src/**/*.ts`, and `src/**/*.d.ts`. |
-| `package.json` | Declares pnpm scripts for D1 CSV import, D1 bridge generation, Astro static builds, and publish queue polling: `import:csv:*`, `build:d1:franchises:*`, `astro:sync`, `build:astro`, `publish:d1:poll`, `dev:astro`, and `preview:astro`. |
+| `package.json` | Declares pnpm scripts for D1 CSV import, D1 bridge generation, Astro static builds, and publish queue polling: `import:csv:*`, `build:d1:franchises:*`, `astro:sync`, `build`, `build:astro`, `publish:d1:poll`, `dev:astro`, and `preview:astro`. `build` is a conventional alias for Cloudflare Pages and runs the same Astro pipeline. |
 | `.github/workflows/generate-pages.yaml` | Scheduled/manual/repository-dispatch builder workflow for regenerated static directory pages. |
 | `.github/workflows/d1-static-publish.yaml` | 30-minute/manual D1 publish poller. Runs `scripts/d1-static-publish-poller.mjs`, calls the Cloudflare Pages Deploy Hook only when D1 is dirty and guardrails allow publishing, and supports direct `wrangler pages deploy dist` fallback without committing generated output. |
 | `.github/workflows/head.yaml` | Legacy automation that injects `.head` content into every HTML file. Use cautiously because it touches many static exports. |
@@ -104,8 +104,9 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `migrations/0001_initial_network_schema.sql` | First D1 schema migration for shared network sites, users/roles, profiles, franchises, claims, assets, leads, site publications, subscriptions/entitlements, imports, and audit events. |
 | `migrations/0002_add_franchisor_social_links.sql` | Adds optional Facebook, TikTok, YouTube, and LinkedIn URL columns to `franchisor_profiles`; website and Instagram already existed. |
 | `migrations/0003_site_publish_queue.sql` | Adds `site_rebuild_requests` and `site_publish_state` for D1-to-static publish queueing, per-site guardrails, and publish mode tracking. Applied remotely to `franchise_db` on 2026-06-18. |
-| `wrangler.toml` | Active Wrangler config for shared D1 binding `franchise_db` using database UUID `812cd8ac-edd0-45d9-981f-c9a15358317b`. Remote commands should run through `npx cfman wrangler --account franchise-network ...`. |
-| `wrangler.example.toml` | Non-active Wrangler example showing the `franchise_db` binding and migrations directory; copy to `wrangler.toml` only after adding the real D1 UUID. |
+| `wrangler.toml` | Active Wrangler config for Cloudflare Pages output `dist` and shared D1 binding `franchise_db` using database UUID `812cd8ac-edd0-45d9-981f-c9a15358317b`. Remote commands should run through `npx cfman wrangler --account franchise-network ...`. |
+| `wrangler.example.toml` | Non-active Wrangler example showing Pages output `dist`, the `franchise_db` binding, and migrations directory; copy to `wrangler.toml` only after adding the real D1 UUID. |
+| `.node-version` | Pins local/Cloudflare build runtime intent to Node `20.19.4`, matching the Astro 5.x dependency set. |
 | `.context/wrangler-local-d1-test.toml` | Local-only Wrangler config used to validate D1 migrations without production credentials. Do not use as deployment config. |
 | `.context/d1-import-franchise-data.sql` | Generated import SQL output. Ignored by git because it is reproducible from `/csv` and `scripts/import-csv-to-d1.ts`. |
 

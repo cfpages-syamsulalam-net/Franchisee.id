@@ -1,6 +1,7 @@
 name = "franchisee-id"
 compatibility_date = "2026-06-16"
 account_id = "0ba63b7f0096bc267a93fe5c80b1f571"
+pages_build_output_dir = "dist"
 
 # Active D1 config for the shared franchise network database.
 # Remote apply currently requires a Cloudflare API token/account that can access this UUID.
