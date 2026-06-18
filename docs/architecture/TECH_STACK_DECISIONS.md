@@ -125,6 +125,8 @@ Do not commit tokens to this repository. `cfman` stores them in the user config 
 ## D1 Static Public Generation
 Public franchise listing/detail pages must stay static HTML for SEO. The source of truth is D1, not generated legacy HTML or Google Sheets.
 
+D1 changes do not automatically trigger a Cloudflare Pages build. D1 is a database, not a build event source. Static HTML only reflects a D1 change after a new Pages build/deploy runs `pnpm run build:astro` and regenerates the D1 snapshot/pages.
+
 Current bridge:
 
 ```bash
@@ -142,13 +144,45 @@ pnpm run build:astro
 - Regenerates `json/unclaimed-brands.json` from D1 unclaimed rows for the claim-search frontend.
 
 Astro scaffold:
-- `astro.config.mjs` is configured for static output with trailing slashes.
+- `astro.config.mjs` is configured for static output with `trailingSlash: "never"` and `build.format: "preserve"`.
 - `src/lib/franchise-static.ts` validates the D1 snapshot with Zod and renders the existing listing/detail templates.
 - `src/pages/peluang-usaha/index.astro` builds `/peluang-usaha/index.html`.
 - `src/pages/peluang-usaha/[slug].astro` uses `getStaticPaths` to build one flat `/peluang-usaha/{slug}.html` file per franchise slug under `build.format: "preserve"`.
 - `astro.config.mjs` uses `build.format: "preserve"` so index routes remain index files while detail pages can be stored as flat `.html` files.
 - `pnpm run build:astro` refreshes the D1 snapshot first, then builds 198 pages into `dist/` from the current D1 data.
 - The manifest/safe-prune rule remains in the D1 bridge. Astro writes to `dist/`, so it does not delete legacy/example root `/peluang-usaha` folders during validation.
+
+### D1 Change To Static Publish Mechanism
+Target mechanism for franchisor edits, admin edits, claims, listing deletes, and publication-status changes:
+
+Detailed strategy comparison lives in `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`. Current decision: twice-daily publishing is the safe baseline, but the preferred target after the dirty queue exists is 30-minute GitHub Actions polling where GitHub checks D1 and calls the Cloudflare Pages Deploy Hook only when D1 is dirty and guardrails allow a publish. GitHub direct `dist/` deploy remains the fallback if Cloudflare Pages build quota becomes constrained. The poller must not commit generated output back to `main`, because that can trigger an extra Cloudflare Git build.
+
+1. All app-owned D1 mutation endpoints must write the data change and a `site_rebuild_requests` row in the same logical operation.
+2. Rebuild requests are scoped by `site_id`, `franchise_id`, `reason`, and `status` so multiple edits can be coalesced instead of triggering one build per field edit.
+3. D1 writes must not call the Cloudflare Pages Deploy Hook immediately by default.
+4. Safe baseline: a scheduled publish job runs twice daily, checks for pending rebuild requests, and calls the Cloudflare Pages Deploy Hook for the relevant site only when there is something to publish.
+5. Preferred target: a GitHub Actions poller runs every 30 minutes, checks D1 for pending rebuild requests, and calls the Cloudflare Pages Deploy Hook only when dirty and allowed by guardrails.
+6. GitHub direct `dist/` deploy remains the fallback if Cloudflare Pages build quota becomes constrained.
+7. An authenticated admin-only manual trigger may call the deploy hook for urgent changes, but this should be exceptional.
+8. The cooldown/debounce policy is the publish window itself: all edits before the next scheduled run or poll are batched into one build.
+9. The Pages build runs `pnpm run build:astro`, queries the current remote D1 data, writes the static snapshot, builds `dist/`, and deploys fresh HTML.
+10. After a successful deploy, the job marks requests as `deployed` with the deployment id/time. Failed deploys remain retryable.
+
+Recommended schedule:
+- Twice daily: 09:00 and 21:00 Asia/Jakarta.
+- This is intentionally conservative for Cloudflare Pages free-tier usage.
+- Upgrade path: 30-minute GitHub Actions polling after `site_rebuild_requests` and `site_publish_state` exist, with Cloudflare Deploy Hook as the first publish mode and GitHub direct deploy as the fallback/upgrade mode.
+- If the business later needs near-real-time publishing, increase frequency only after confirming build quota and cost impact.
+
+Recommended implementation order:
+
+- Add `site_rebuild_requests` migration and helper functions such as `markSiteRebuildNeeded(db, { siteId, franchiseId, reason })`.
+- Add `site_publish_state` migration for per-site dirty/published timestamps, publish mode, and guardrail counters.
+- Add Cloudflare Pages secret `PAGES_DEPLOY_HOOK_FRANCHISEE_ID`.
+- Add a scheduled GitHub Actions poller that runs every 30 minutes, checks D1 for pending rebuild requests, and calls the deploy hook only when pending work exists and guardrails allow a publish.
+- Keep direct `wrangler pages deploy dist` as the documented fallback if Cloudflare Pages build quota becomes constrained.
+- Add an authenticated admin endpoint for urgent manual publishing.
+- Update every D1 mutation path (`/form-submit`, future listing edit endpoints, admin publication endpoints, claim approval/delete flows) to enqueue rebuild requests.
 
 Current package pins:
 - `astro@5.18.2` because local Node is 20.19.4.

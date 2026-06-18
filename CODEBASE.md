@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-17 14:47 (Asia/Jakarta)
+Last updated: 2026-06-17 21:48 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -65,8 +65,8 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `js/form-utils.js` | Shared formatting, validation, UI helpers, and progress helpers exposed as globals. | Form modules and `/daftar/index.html` |
 | `js/form-franchise.js` | Legacy non-executing shim. Do not add runtime logic here. | Historical compatibility only |
 | `scripts/import-csv-to-d1.ts` | TypeScript/Zod importer that validates `csv/franchisors.csv`, `csv/unclaimed.csv`, and `csv/franchisee.csv`, generates idempotent SQL for `franchise_db`, preserves strict `UNCLAIMED` claim-search sanitization, and can apply remotely through `cfman`. | `migrations/0001_initial_network_schema.sql`, `/csv`, `.context/d1-import-franchise-data.sql`, Cloudflare D1 `franchise_db` |
-| `scripts/build-d1-franchise-pages.ts` | TypeScript/Zod D1-backed public page bridge. Reads published `site_franchisee_id` rows from `franchise_db`, renders `/peluang-usaha/index.html` and flat `/peluang-usaha/{slug}.html` detail files, writes the Astro snapshot `json/d1-franchise-static-data.json`, regenerates claim-search JSON, skips unchanged pages by manifest hash, and prunes only previously D1-generated pages. | `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, `json/d1-franchise-static-data.json`, `json/d1-generated-pages-manifest.json`, `json/unclaimed-brands.json`, `/peluang-usaha`, Wrangler |
-| `src/lib/franchise-static.ts` | Astro-side renderer and Zod validator for the D1 franchise static snapshot. Converts D1 snapshot rows into listing/detail HTML using existing template placeholders and the same SEO/content mapping as the bridge. | `json/d1-franchise-static-data.json`, `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, Astro routes |
+| `scripts/build-d1-franchise-pages.ts` | TypeScript/Zod D1-backed public page bridge. Reads published `site_franchisee_id` rows from `franchise_db`, renders `/peluang-usaha/index.html` and flat `/peluang-usaha/{slug}.html` detail files, includes franchisor contact/social links when present, writes the Astro snapshot `json/d1-franchise-static-data.json`, regenerates claim-search JSON, skips unchanged pages by manifest hash, and prunes only previously D1-generated pages. | `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, `json/d1-franchise-static-data.json`, `json/d1-generated-pages-manifest.json`, `json/unclaimed-brands.json`, `/peluang-usaha`, Wrangler |
+| `src/lib/franchise-static.ts` | Astro-side renderer and Zod validator for the D1 franchise static snapshot. Converts D1 snapshot rows into listing/detail HTML using existing template placeholders and the same SEO/contact/social mapping as the bridge. | `json/d1-franchise-static-data.json`, `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, Astro routes |
 | `src/pages/peluang-usaha/index.astro` | Astro static listing route for `/peluang-usaha/`. Loads the D1 snapshot and renders the existing listing template during build. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json` |
 | `src/pages/peluang-usaha/[slug].astro` | Astro static detail route that physically builds `/peluang-usaha/{slug}.html` under `build.format: "preserve"` while public links stay `/peluang-usaha/{slug}`. Uses `getStaticPaths` from the D1 snapshot so each franchise keeps an individually indexable HTML page. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json`, `astro.config.mjs` |
 
@@ -97,7 +97,9 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `.github/workflows/sitemap-readme.yaml` | Manual workflow for sitemap/readme generation from HTML files. |
 | `docs/README.md` | Central documentation index and source-of-truth policy. |
 | `docs/architecture/TECH_STACK_DECISIONS.md` | Canonical migration stack decisions: TypeScript, Zod, D1 SQL migrations, role model, Clerk/D1 responsibility split, and Drizzle adoption timing. |
+| `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md` | Compares twice-daily D1 static publishing with GitHub Actions polling, Cloudflare Deploy Hook builds, and GitHub direct deploy fallback. Current target is 30-minute polling after a D1 dirty queue exists, without committing generated output from the poller. |
 | `migrations/0001_initial_network_schema.sql` | First D1 schema migration for shared network sites, users/roles, profiles, franchises, claims, assets, leads, site publications, subscriptions/entitlements, imports, and audit events. |
+| `migrations/0002_add_franchisor_social_links.sql` | Adds optional Facebook, TikTok, YouTube, and LinkedIn URL columns to `franchisor_profiles`; website and Instagram already existed. |
 | `wrangler.toml` | Active Wrangler config for shared D1 binding `franchise_db` using database UUID `812cd8ac-edd0-45d9-981f-c9a15358317b`. Remote commands should run through `npx cfman wrangler --account franchise-network ...`. |
 | `wrangler.example.toml` | Non-active Wrangler example showing the `franchise_db` binding and migrations directory; copy to `wrangler.toml` only after adding the real D1 UUID. |
 | `.context/wrangler-local-d1-test.toml` | Local-only Wrangler config used to validate D1 migrations without production credentials. Do not use as deployment config. |
@@ -166,6 +168,17 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 5. `json/d1-generated-pages-manifest.json` stores content hashes and D1-owned paths; unchanged pages are skipped on rerun.
 6. Stale cleanup only removes pages that exist in the previous manifest and still contain the D1-generated marker, including old marker-owned `/peluang-usaha/{slug}/index.html` files when switching to flat `.html` output. Legacy/example pages not owned by the manifest are intentionally left alone.
 7. The script also writes `json/d1-franchise-static-data.json` so Astro can build static routes from the same D1 source without querying D1 inside route files.
+
+### 7a. D1 Change To Static Publish Flow
+1. D1 updates do not automatically trigger Cloudflare Pages builds.
+2. Until automation is implemented, a public-page-affecting D1 edit requires a rebuild/deploy (`pnpm run build:astro` in the Pages build) before static HTML changes are visible.
+3. Target automation: each franchisor/admin/publication mutation writes a `site_rebuild_requests` row scoped to the changed `site_id` and `franchise_id`.
+4. Safe baseline: a scheduled publish job runs twice daily, checks pending requests, calls the Cloudflare Pages Deploy Hook only when work exists, and marks requests as deployed or failed.
+5. Preferred upgrade after the dirty queue exists: a GitHub Actions workflow polls D1 every 30 minutes, exits quickly when clean, and when dirty calls the Cloudflare Pages Deploy Hook only if publish guardrails allow it.
+6. GitHub direct `dist/` deploy with Wrangler is the fallback/upgrade mode if Cloudflare Pages build quota becomes constrained.
+7. The poller must not commit generated output back to `main`, because the connected Cloudflare Pages Git integration can turn that commit into another build.
+8. Default twice-daily windows are 09:00 and 21:00 Asia/Jakarta; the 30-minute poller becomes the practical cooldown/debounce once enabled because all edits before the next poll are batched into one build.
+9. An authenticated admin-only manual trigger can publish urgent changes before the next scheduled window, but normal franchisor edits should wait for the batch.
 
 ### 8. Astro D1 Static Route Flow
 1. `pnpm run build:astro` first runs `pnpm run astro:sync`, which calls the D1 bridge and refreshes `json/d1-franchise-static-data.json`.

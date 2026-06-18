@@ -67,6 +67,10 @@ const D1FranchiseRowSchema = z.object({
   whatsapp: nullableString,
   website_url: nullableString,
   instagram_url: nullableString,
+  facebook_url: nullableString,
+  tiktok_url: nullableString,
+  youtube_url: nullableString,
+  linkedin_url: nullableString,
   package_name: nullableString,
   package_price_idr: nullableNumber,
   package_min_capital_idr: nullableNumber,
@@ -254,7 +258,7 @@ Options:
 }
 
 function fetchRowsFromD1(options: BuildOptions): D1FranchiseRow[] {
-  const sql = `SELECT f.id,f.brand_name,p.slug,f.category,f.status,f.verification_tier,f.source_sheet,f.year_established,f.fee_license_idr,f.total_investment_idr,f.min_investment_idr,f.max_investment_idr,f.estimated_bep_months,f.royalty_percent,f.short_desc,f.full_desc,f.support_system,f.logo_url,f.cover_url,f.outlets_location,fp.company_name,(SELECT price_idr FROM franchise_packages pkg WHERE pkg.franchise_id=f.id AND pkg.is_active=1 ORDER BY pkg.display_order,pkg.created_at LIMIT 1) package_price_idr,(SELECT min_capital_idr FROM franchise_packages pkg WHERE pkg.franchise_id=f.id AND pkg.is_active=1 ORDER BY pkg.display_order,pkg.created_at LIMIT 1) package_min_capital_idr,(SELECT max_capital_idr FROM franchise_packages pkg WHERE pkg.franchise_id=f.id AND pkg.is_active=1 ORDER BY pkg.display_order,pkg.created_at LIMIT 1) package_max_capital_idr,p.canonical_url,p.publication_status,p.is_primary FROM franchises f JOIN franchise_site_publications p ON p.franchise_id=f.id LEFT JOIN franchisor_profiles fp ON fp.id=f.franchisor_profile_id WHERE p.site_id='${SITE_ID}' AND p.publication_status='published' AND f.status NOT IN ('archived','suspended') ORDER BY CASE f.verification_tier WHEN 'premium' THEN 4 WHEN 'verified' THEN 3 WHEN 'free' THEN 2 WHEN 'unclaimed' THEN 1 ELSE 0 END DESC,f.brand_name ASC;`;
+  const sql = `SELECT f.id,f.brand_name,p.slug,f.category,f.status,f.verification_tier,f.source_sheet,f.year_established,f.fee_license_idr,f.total_investment_idr,f.min_investment_idr,f.max_investment_idr,f.estimated_bep_months,f.royalty_percent,f.short_desc,f.full_desc,f.support_system,f.logo_url,f.cover_url,f.outlets_location,fp.company_name,fp.pic_name,fp.email_contact,fp.whatsapp,fp.website_url,fp.instagram_url,fp.facebook_url,fp.tiktok_url,fp.youtube_url,fp.linkedin_url,(SELECT price_idr FROM franchise_packages pkg WHERE pkg.franchise_id=f.id AND pkg.is_active=1 ORDER BY pkg.display_order,pkg.created_at LIMIT 1) package_price_idr,(SELECT min_capital_idr FROM franchise_packages pkg WHERE pkg.franchise_id=f.id AND pkg.is_active=1 ORDER BY pkg.display_order,pkg.created_at LIMIT 1) package_min_capital_idr,(SELECT max_capital_idr FROM franchise_packages pkg WHERE pkg.franchise_id=f.id AND pkg.is_active=1 ORDER BY pkg.display_order,pkg.created_at LIMIT 1) package_max_capital_idr,p.canonical_url,p.publication_status,p.is_primary FROM franchises f JOIN franchise_site_publications p ON p.franchise_id=f.id LEFT JOIN franchisor_profiles fp ON fp.id=f.franchisor_profile_id WHERE p.site_id='${SITE_ID}' AND p.publication_status='published' AND f.status NOT IN ('archived','suspended') ORDER BY CASE f.verification_tier WHEN 'premium' THEN 4 WHEN 'verified' THEN 3 WHEN 'free' THEN 2 WHEN 'unclaimed' THEN 1 ELSE 0 END DESC,f.brand_name ASC;`;
 
   const token = resolveCloudflareToken(options.account);
   const result =
@@ -559,8 +563,8 @@ function generateDisclaimer(row: D1FranchiseRow) {
 
 function generateTabs(row: D1FranchiseRow, description: string, isUnclaimed: boolean) {
   const contact = isUnclaimed
-    ? "Kontak belum tersedia. Silakan gunakan tombol Klaim untuk memverifikasi kepemilikan."
-    : "Silakan hubungi tim acquisition untuk informasi lebih lanjut.";
+    ? "<p>Kontak belum tersedia. Silakan gunakan tombol Klaim untuk memverifikasi kepemilikan.</p>"
+    : generateContactBlock(row);
   const support = normalizeText(row.support_system);
 
   return `
@@ -575,7 +579,7 @@ function generateTabs(row: D1FranchiseRow, description: string, isUnclaimed: boo
                         <div class="elementor-widget-container">${paragraphs(description)}</div>
                     </div>
                     <div class="e-n-tab-content" data-tab-index="2">
-                        <div class="elementor-widget-container"><p>${escapeHtml(contact)}</p></div>
+                        <div class="elementor-widget-container">${contact}</div>
                     </div>
                     ${
                       support
@@ -584,6 +588,36 @@ function generateTabs(row: D1FranchiseRow, description: string, isUnclaimed: boo
                     }
                 </div>
             </div>`;
+}
+
+function generateContactBlock(row: D1FranchiseRow) {
+  const links = [
+    ["Website", row.website_url],
+    ["Instagram", row.instagram_url],
+    ["Facebook", row.facebook_url],
+    ["TikTok", row.tiktok_url],
+    ["YouTube", row.youtube_url],
+    ["LinkedIn", row.linkedin_url],
+  ]
+    .map(([label, url]) => ({ label, url: normalizeExternalUrl(url) }))
+    .filter((item) => item.url);
+
+  const lead = normalizeText(row.email_contact || row.whatsapp)
+    ? "Gunakan kontak resmi brand untuk informasi kemitraan lebih lanjut."
+    : "Silakan hubungi tim acquisition untuk informasi lebih lanjut.";
+
+  const contactRows = [
+    row.pic_name ? `<li>PIC: ${escapeHtml(row.pic_name)}</li>` : "",
+    row.email_contact ? `<li>Email: ${escapeHtml(row.email_contact)}</li>` : "",
+    row.whatsapp ? `<li>WhatsApp: ${escapeHtml(row.whatsapp)}</li>` : "",
+  ].filter(Boolean);
+
+  const contactList = contactRows.length ? `<ul>${contactRows.join("")}</ul>` : "";
+  const linkList = links.length
+    ? `<ul>${links.map((item) => `<li><a href="${escapeAttr(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.label)}</a></li>`).join("")}</ul>`
+    : "";
+
+  return `<p>${escapeHtml(lead)}</p>${contactList}${linkList}`;
 }
 
 function loadManifest(): Manifest | null {
@@ -654,6 +688,15 @@ function normalizeUrl(value: unknown) {
   const text = normalizeText(value);
   if (!text) return "";
   return text;
+}
+
+function normalizeExternalUrl(value: unknown) {
+  const text = normalizeText(value);
+  if (!text) return "";
+  if (/^https?:\/\//i.test(text)) return text;
+  if (/^\/\//.test(text)) return `https:${text}`;
+  if (/^[\w.-]+\.[a-z]{2,}/i.test(text)) return `https://${text}`;
+  return "";
 }
 
 function escapeHtml(value: unknown) {

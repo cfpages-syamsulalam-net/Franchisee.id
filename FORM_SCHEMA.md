@@ -3,7 +3,7 @@
 This file documents every input field for the three registration tabs in `/daftar/index.html` to ensure no data points are lost during future refactors.
 
 ## Migration Direction
-The field inventory is storage-provider neutral. The current frontend posts these names to `/form-submit`, which still writes through the legacy Google Sheets transition layer. Future D1/R2/Clerk work must preserve or explicitly map every field here before changing the UI.
+The field inventory is storage-provider neutral. The current frontend posts these names to `/form-submit`, which writes to D1 through Clerk-authenticated Pages Functions. Future D1/R2/Clerk work must preserve or explicitly map every field here before changing the UI.
 
 ## 1. Tab: Franchisee (Calon Mitra)
 *Target: Individuals looking to buy a franchise.*
@@ -79,6 +79,10 @@ Note: these `*_url` field names must be preserved during the R2 migration as com
 - `email_contact` (Email, Req): Official Inquiry Email.
 - `website_url` (URL, Opt): Official Website.
 - `instagram_url` (URL, Opt): IG Handle.
+- `facebook_url` (URL, Opt): Facebook page/profile.
+- `tiktok_url` (URL, Opt): TikTok profile.
+- `youtube_url` (URL, Opt): YouTube channel/profile.
+- `linkedin_url` (URL, Opt): LinkedIn company page.
 
 ## 3. Tab: Klaim Brand (Unified Workflow)
 *Target: Owners of pre-listed (Unclaimed) brands.*

@@ -30,6 +30,12 @@ const FranchisorSchema = BaseSubmissionSchema.extend({
   email_contact: z.string().trim().email(),
   country_code: z.string().trim().optional(),
   whatsapp: z.string().trim().min(8),
+  website_url: z.string().trim().optional(),
+  instagram_url: z.string().trim().optional(),
+  facebook_url: z.string().trim().optional(),
+  tiktok_url: z.string().trim().optional(),
+  youtube_url: z.string().trim().optional(),
+  linkedin_url: z.string().trim().optional(),
   unclaimed_id: z.string().trim().optional(),
 }).passthrough();
 
@@ -160,9 +166,10 @@ async function handleFranchisorSubmit(db, data, isClaim, actor) {
       .prepare(
         `INSERT INTO franchisor_profiles (
           id, user_id, source_site_id, company_name, pic_name, email_contact, country_code,
-          whatsapp, website_url, instagram_url, nib_number, haki_status, haki_number,
+          whatsapp, website_url, instagram_url, facebook_url, tiktok_url, youtube_url, linkedin_url,
+          nib_number, haki_status, haki_number,
           legacy_row_id, legacy_timestamp, raw_payload
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         profileId,
@@ -175,6 +182,10 @@ async function handleFranchisorSubmit(db, data, isClaim, actor) {
         normalizeWhatsapp(data.whatsapp),
         textOrNull(data.website_url),
         textOrNull(data.instagram_url),
+        textOrNull(data.facebook_url),
+        textOrNull(data.tiktok_url),
+        textOrNull(data.youtube_url),
+        textOrNull(data.linkedin_url),
         textOrNull(data.nib_number),
         normalizeHakiStatus(data.haki_status),
         textOrNull(data.haki_number),
@@ -259,7 +270,7 @@ async function handleFranchisorSubmit(db, data, isClaim, actor) {
           franchiseId,
           "site_franchisee_id",
           slug,
-          `https://franchisee.id/peluang-usaha/${slug}/`
+          `https://franchisee.id/peluang-usaha/${slug}`
         )
     );
   }

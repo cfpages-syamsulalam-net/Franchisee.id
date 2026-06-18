@@ -124,6 +124,7 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 *TypeScript D1-backed public page generation bridge.*
 - `fetchRowsFromD1(options)`: Reads the local cfman-managed token for `franchise-network`, calls Wrangler directly, and loads published `site_franchisee_id` franchise rows from `franchise_db`.
 - `renderDetailPage(row, template)`: Inserts D1 franchise data into `templates/detail-franchise-tpl.html` and marks output with `d1-generated:franchisee.id`.
+- `generateContactBlock(row)`: Renders public contact and social links from D1 franchisor profile fields when present.
 - `buildListingIndex(rows, template, previousManifest, nextManifest, options, stats)`: Renders `/peluang-usaha/index.html` from D1 data and skips unchanged output by manifest hash.
 - `buildUnclaimedJson(rows, options, stats)`: Regenerates `json/unclaimed-brands.json` from D1 unclaimed rows for claim search.
 - Snapshot behavior: non-dry runs write `json/d1-franchise-static-data.json`, which Astro consumes for static route generation.
@@ -139,7 +140,8 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 - `loadFranchiseStaticRows()`: Reads and validates the generated D1 snapshot.
 - `renderListingPage(rows)`: Renders the existing `/peluang-usaha/` listing template from snapshot rows.
 - `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row.
-- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, and sticky claim CTA.
+- `generateContactBlock(row)`: Renders D1 contact/social links into the detail page contact tab.
+- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, social/contact links, and sticky claim CTA.
 
 ### File: `src/pages/peluang-usaha/index.astro`
 *Astro static listing page.*
@@ -191,7 +193,7 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 - `onRequestPost()`: Main entry point; requires `env.franchise_db`, validates base payload with Zod, requires Clerk/D1 role authorization, routes franchisee/franchisor/claim/test actions, and returns the legacy success/error JSON envelope.
 - `FranchiseeSchema` / `FranchisorSchema`: Zod runtime validation for form payloads before D1 writes.
 - `handleFranchiseeSubmit(db, data, actor)`: Checks duplicates and writes `franchisee_profiles.user_id`, `legacy_source_rows`, and actor-aware `audit_events`.
-- `handleFranchisorSubmit(db, data, isClaim, actor)`: Checks duplicates and writes or updates franchisor/listing/package/publication/claim/audit D1 records with `user_id`, `owner_user_id`, and `claimant_user_id`.
+- `handleFranchisorSubmit(db, data, isClaim, actor)`: Checks duplicates and writes or updates franchisor/listing/package/publication/claim/audit D1 records with `user_id`, `owner_user_id`, `claimant_user_id`, and franchisor profile contact/social URLs.
 - `findClaimSource(db, data)`: Finds D1 `UNCLAIMED` franchise rows by `unclaimed_id` or normalized brand name for claim migration.
 - `handleCreateUnclaimed()` / `handleClearTestData()`: Dev test-data actions now operate in D1 instead of Google Sheets.
 - `uniqueSlug()` / `slugExists()`: Generates non-conflicting D1 slugs for new submitted listings.

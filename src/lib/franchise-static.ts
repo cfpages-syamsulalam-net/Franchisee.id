@@ -58,6 +58,10 @@ export const FranchiseStaticRowSchema = z.object({
   whatsapp: nullableString,
   website_url: nullableString,
   instagram_url: nullableString,
+  facebook_url: nullableString,
+  tiktok_url: nullableString,
+  youtube_url: nullableString,
+  linkedin_url: nullableString,
   package_name: nullableString,
   package_price_idr: nullableNumber,
   package_min_capital_idr: nullableNumber,
@@ -230,8 +234,8 @@ function generateDisclaimer(row: FranchiseStaticRow) {
 
 function generateTabs(row: FranchiseStaticRow, description: string, isUnclaimed: boolean) {
   const contact = isUnclaimed
-    ? "Kontak belum tersedia. Silakan gunakan tombol Klaim untuk memverifikasi kepemilikan."
-    : "Silakan hubungi tim acquisition untuk informasi lebih lanjut.";
+    ? "<p>Kontak belum tersedia. Silakan gunakan tombol Klaim untuk memverifikasi kepemilikan.</p>"
+    : generateContactBlock(row);
   const support = normalizeText(row.support_system);
 
   return `
@@ -246,7 +250,7 @@ function generateTabs(row: FranchiseStaticRow, description: string, isUnclaimed:
                         <div class="elementor-widget-container">${paragraphs(description)}</div>
                     </div>
                     <div class="e-n-tab-content" data-tab-index="2">
-                        <div class="elementor-widget-container"><p>${escapeHtml(contact)}</p></div>
+                        <div class="elementor-widget-container">${contact}</div>
                     </div>
                     ${
                       support
@@ -255,6 +259,36 @@ function generateTabs(row: FranchiseStaticRow, description: string, isUnclaimed:
                     }
                 </div>
             </div>`;
+}
+
+function generateContactBlock(row: FranchiseStaticRow) {
+  const links = [
+    ["Website", row.website_url],
+    ["Instagram", row.instagram_url],
+    ["Facebook", row.facebook_url],
+    ["TikTok", row.tiktok_url],
+    ["YouTube", row.youtube_url],
+    ["LinkedIn", row.linkedin_url],
+  ]
+    .map(([label, url]) => ({ label, url: normalizeExternalUrl(url) }))
+    .filter((item) => item.url);
+
+  const lead = normalizeText(row.email_contact || row.whatsapp)
+    ? "Gunakan kontak resmi brand untuk informasi kemitraan lebih lanjut."
+    : "Silakan hubungi tim acquisition untuk informasi lebih lanjut.";
+
+  const contactRows = [
+    row.pic_name ? `<li>PIC: ${escapeHtml(row.pic_name)}</li>` : "",
+    row.email_contact ? `<li>Email: ${escapeHtml(row.email_contact)}</li>` : "",
+    row.whatsapp ? `<li>WhatsApp: ${escapeHtml(row.whatsapp)}</li>` : "",
+  ].filter(Boolean);
+
+  const contactList = contactRows.length ? `<ul>${contactRows.join("")}</ul>` : "";
+  const linkList = links.length
+    ? `<ul>${links.map((item) => `<li><a href="${escapeAttr(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.label)}</a></li>`).join("")}</ul>`
+    : "";
+
+  return `<p>${escapeHtml(lead)}</p>${contactList}${linkList}`;
 }
 
 function compareFranchises(a: FranchiseStaticRow, b: FranchiseStaticRow) {
@@ -315,6 +349,15 @@ function normalizeText(value: unknown) {
 
 function normalizeUrl(value: unknown) {
   return normalizeText(value);
+}
+
+function normalizeExternalUrl(value: unknown) {
+  const text = normalizeText(value);
+  if (!text) return "";
+  if (/^https?:\/\//i.test(text)) return text;
+  if (/^\/\//.test(text)) return `https:${text}`;
+  if (/^[\w.-]+\.[a-z]{2,}/i.test(text)) return `https://${text}`;
+  return "";
 }
 
 function escapeHtml(value: unknown) {

@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-17 02:00 (Asia/Jakarta)
+Last updated: 2026-06-17 21:48 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -40,6 +40,7 @@ Last updated: 2026-06-17 02:00 (Asia/Jakarta)
 - Current bridge: `scripts/build-d1-franchise-pages.ts` queries D1, renders legacy template HTML, writes `json/d1-franchise-static-data.json`, updates `json/d1-generated-pages-manifest.json`, and refreshes `json/unclaimed-brands.json`.
 - Astro target: `src/pages/peluang-usaha/index.astro` and `src/pages/peluang-usaha/[slug].astro` consume the D1 snapshot through `src/lib/franchise-static.ts` and generate static HTML during `pnpm run build:astro`.
 - Franchise detail physical output should be flat `/peluang-usaha/[slug].html`, with extensionless links `/peluang-usaha/[slug]` for Cloudflare Pages routing.
+- D1 writes do not automatically trigger static rebuilds. Public-page-affecting writes must eventually enqueue a rebuild request. The safe baseline is twice-daily publishing at 09:00 and 21:00 Asia/Jakarta; the preferred target after `site_rebuild_requests`/`site_publish_state` exist is 30-minute GitHub Actions polling that exits when D1 is clean and calls the Cloudflare Pages Deploy Hook only when dirty and allowed by guardrails. GitHub direct `dist/` deploy is the fallback if Cloudflare build quota becomes constrained. Do not let the poller commit generated output to `main`, because that can trigger an extra Cloudflare Git build. Manual admin deploys are for urgent exceptions. See `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md` before implementing publish automation.
 - When cleaning stale generated franchise pages, delete only pages tracked in `json/d1-generated-pages-manifest.json` and marked with `d1-generated:franchisee.id`. Do not delete untracked legacy/example `/peluang-usaha` folders during the transition.
 
 ## Form Rules

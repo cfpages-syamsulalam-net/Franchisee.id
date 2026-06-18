@@ -123,8 +123,9 @@ API/server routes:
 | 5. Form API replacement | In progress | `/form-submit` now performs D1-only writes for franchisee, franchisor, claim, and dev test-data actions with Clerk session verification, D1 role checks, owner fields, and actor audit events. Next verify deployed form submissions against the real Pages binding and Clerk app. |
 | 6. Asset pipeline | Pending | Move uploads to R2 with object ownership, validation, and public/served URLs. |
 | 7. Public directory rebuild | In progress | D1-backed static HTML bridge generates root `/peluang-usaha/` output and a D1 snapshot; Astro static routes now generate 198 pages into `dist/` from that snapshot. Next compare output and route deployment strategy before replacing legacy root pages. |
-| 8. Dashboards | Pending | Build franchisee/franchisor/admin dashboards with protected routes. |
-| 9. Decommission Sheets dependency | Pending | Freeze or remove Sheets writes, keep optional import/export admin tooling only. |
+| 8. D1-to-static publish automation | Planned | D1 writes do not trigger builds by themselves. Twice-daily publishing is the safe baseline; preferred target after the dirty queue exists is 30-minute GitHub Actions polling that triggers Cloudflare Pages builds only when D1 has pending public-page changes and guardrails allow a publish. |
+| 9. Dashboards | Pending | Build franchisee/franchisor/admin dashboards with protected routes. |
+| 10. Decommission Sheets dependency | Pending | Freeze or remove Sheets writes, keep optional import/export admin tooling only. |
 
 ## Migration Rules
 - Do not remove existing form fields while migrating; map every current field to D1 or a deliberate archival field.
@@ -171,6 +172,32 @@ API/server routes:
 - Astro scaffold: `astro.config.mjs`, `src/lib/franchise-static.ts`, `src/pages/peluang-usaha/index.astro`, and `src/pages/peluang-usaha/[slug].astro` now generate D1-backed static HTML from `json/d1-franchise-static-data.json`; Astro `build.format: "preserve"` makes detail output flat `.html`.
 - Astro verification on 2026-06-17: `pnpm run build:astro` built 198 pages into `dist/` from the D1 snapshot.
 - Compatibility note: Astro is pinned to 5.x for this Node 20.19.4 workspace; Astro 6 requires Node >=22.12.0.
+
+## D1-To-Static Publish Automation Tracker
+- Current reality: a D1 row update only changes runtime/API data. Static pages remain unchanged until a new Cloudflare Pages build runs the D1-backed Astro build.
+- Target: every franchisor/admin write that affects public pages must enqueue a rebuild request for the affected `site_id` and `franchise_id`, but it must not trigger a Cloudflare Pages build immediately.
+- Safe baseline trigger: a scheduled publish job runs twice daily and calls the Cloudflare Pages Deploy Hook only when pending rebuild requests exist.
+- Preferred target trigger: a GitHub Actions poller runs every 30 minutes, checks D1 for pending rebuild requests, and calls the Cloudflare Pages Deploy Hook only when dirty and allowed by guardrails.
+- Manual urgent trigger: an authenticated admin-only endpoint can trigger the deploy hook for time-sensitive edits, but this should be exceptional.
+- Build behavior: Pages build runs `pnpm run build:astro`, reads current D1, emits `dist/`, and Cloudflare serves the new static HTML.
+- Freshness target: normal edits appear on the next scheduled publish window or poll window; urgent admin-triggered edits can appear sooner.
+- Recommended schedule: twice daily, e.g. 09:00 and 21:00 Asia/Jakarta.
+- Cooldown/debounce meaning: group many D1 edits into one build window. For this project, the practical cooldown is the scheduled publish window, not a minutes-based timer.
+- Strategy comparison: `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`.
+- Preferred upgrade path after the queue exists: GitHub Actions polls D1 every 30 minutes, exits quickly when no pending requests exist, and when dirty calls the Cloudflare Pages Deploy Hook only if publish guardrails allow it.
+- GitHub direct `dist/` deploy is the fallback/upgrade mode if Cloudflare Pages build quota becomes constrained.
+- Do not let the poller commit generated HTML/JSON output to `main`; that can trigger an extra Cloudflare Git-connected build and spend both systems for one content update.
+- Implementation checklist:
+  - [ ] Add `site_rebuild_requests` migration.
+  - [ ] Add `site_publish_state` migration for per-site dirty/published timestamps and publish counters.
+  - [ ] Add shared enqueue helper for D1 mutation endpoints.
+  - [ ] Add GitHub Actions secrets for D1 query/deploy access through Wrangler.
+  - [ ] Add scheduled GitHub Actions poller that runs every 30 minutes and exits before dependency install/build when D1 is clean.
+  - [ ] Add Cloudflare Pages Deploy Hook publishing when D1 is dirty and guardrails allow a content publish.
+  - [ ] Keep direct `wrangler pages deploy dist` publishing as a documented fallback if Cloudflare build quota becomes constrained.
+  - [ ] Add admin-only manual deploy endpoint for urgent publishing.
+  - [ ] Wire `/form-submit` and future listing edit/delete/admin publish endpoints to enqueue rebuild requests.
+  - [ ] Add deployment verification/logging and stale request alerting.
 
 ## Runtime D1 API Status
 - `/get-franchises` now validates query parameters with Zod and uses D1 first when `env.franchise_db` is available.

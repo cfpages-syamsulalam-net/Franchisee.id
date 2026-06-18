@@ -4,6 +4,52 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-17 21:48 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, `AUDIT.md`, `CODEBASE.md`, `AGENTS.md`, and `.context/session-20260617-1514.md`: Clarified the balanced publish model where GitHub Actions polls D1 and Cloudflare Pages builds only when dirty, while avoiding generated-output commits that would trigger extra Cloudflare Git builds. Documented GitHub direct `dist/` deploy as the fallback if Cloudflare build quota becomes constrained.
+
+### Removed
+- None.
+
+## 2026-06-17 21:32 (Asia/Jakarta)
+### Added
+- `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`: Added comparison of twice-daily D1 static publishing versus GitHub Actions polling/direct deploy, including the recommended 30-minute polling path and guardrails.
+
+### Changed
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `.context/session-20260617-1514.md`, `docs/README.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Linked the new publish strategy and clarified that twice-daily publishing is the safe baseline while 30-minute GitHub Actions polling/direct deploy is the preferred target after dirty queue tables exist.
+
+### Removed
+- None.
+
+## 2026-06-17 21:14 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `AUDIT.md`, `CODEBASE.md`, `AGENTS.md`, `.context/session-20260617-1514.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Clarified that D1 public-page edits should be batched into twice-daily scheduled static publishes at 09:00 and 21:00 Asia/Jakarta, with manual admin deploys reserved for urgent exceptions.
+
+### Removed
+- None.
+
+## 2026-06-17 15:14 (Asia/Jakarta)
+### Added
+- `migrations/0002_add_franchisor_social_links.sql`: Added optional `facebook_url`, `tiktok_url`, `youtube_url`, and `linkedin_url` columns to `franchisor_profiles`.
+- `.context/session-20260617-1514.md`: Added session snapshot for D1-to-static publish automation planning and franchisor social-link fields.
+- `/daftar/index.html`: Added missing Step 5 franchisor contact fields (`pic_name`, `email_contact`, `website_url`, `instagram_url`) plus Facebook, TikTok, YouTube, and LinkedIn URL fields.
+- Remote D1 `franchise_db`: Applied `0002_add_franchisor_social_links.sql` through `npx cfman wrangler --account franchise-network`.
+
+### Changed
+- `functions/form-submit.js`: Stores franchisor social links in D1 and uses extensionless canonical URLs for new franchise site publications.
+- `scripts/import-csv-to-d1.ts`: Maps optional social-link columns from CSV imports into `franchisor_profiles`.
+- `scripts/build-d1-franchise-pages.ts` and `src/lib/franchise-static.ts`: Select, validate, and render franchisor contact/social links into franchise detail contact tabs when present.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `FORM_SCHEMA.md`, `FORM_PRESERVATION_MANDATE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented social-link fields and the D1-to-static publish automation plan.
+
+### Removed
+- None.
+
 ## 2026-06-17 14:47 (Asia/Jakarta)
 ### Added
 - `.context/session-20260617-1447.md`: Added session snapshot for switching D1/Astro franchise detail output to flat `.html` files.

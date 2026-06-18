@@ -67,6 +67,10 @@ These fields MUST exist:
 - ✅ `email_contact` (Email, Required)
 - ✅ `website_url` (URL, Optional)
 - ✅ `instagram_url` (URL, Optional)
+- ✅ `facebook_url` (URL, Optional)
+- ✅ `tiktok_url` (URL, Optional)
+- ✅ `youtube_url` (URL, Optional)
+- ✅ `linkedin_url` (URL, Optional)
 
 ## Rules for AI Agents & Future Editors
 
