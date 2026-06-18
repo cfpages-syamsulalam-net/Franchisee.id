@@ -123,7 +123,7 @@ API/server routes:
 | 5. Form API replacement | In progress | `/form-submit` now performs D1-only writes for franchisee, franchisor, claim, and dev test-data actions with Clerk session verification, D1 role checks, owner fields, and actor audit events. Next verify deployed form submissions against the real Pages binding and Clerk app. |
 | 6. Asset pipeline | Pending | Move uploads to R2 with object ownership, validation, and public/served URLs. |
 | 7. Public directory rebuild | In progress | D1-backed static HTML bridge generates root `/peluang-usaha/` output and a D1 snapshot; Astro static routes now generate 198 pages into `dist/` from that snapshot. Next compare output and route deployment strategy before replacing legacy root pages. |
-| 8. D1-to-static publish automation | Planned | D1 writes do not trigger builds by themselves. Twice-daily publishing is the safe baseline; preferred target after the dirty queue exists is 30-minute GitHub Actions polling that triggers Cloudflare Pages builds only when D1 has pending public-page changes and guardrails allow a publish. |
+| 8. D1-to-static publish automation | In progress | D1 dirty queue tables, `/form-submit` enqueueing, and the 30-minute GitHub Actions poller are implemented. Remaining setup: add GitHub secrets for Cloudflare API/deploy hook, push workflow, and verify the first dirty-to-build cycle. |
 | 9. Dashboards | Pending | Build franchisee/franchisor/admin dashboards with protected routes. |
 | 10. Decommission Sheets dependency | Pending | Freeze or remove Sheets writes, keep optional import/export admin tooling only. |
 
@@ -187,16 +187,22 @@ API/server routes:
 - Preferred upgrade path after the queue exists: GitHub Actions polls D1 every 30 minutes, exits quickly when no pending requests exist, and when dirty calls the Cloudflare Pages Deploy Hook only if publish guardrails allow it.
 - GitHub direct `dist/` deploy is the fallback/upgrade mode if Cloudflare Pages build quota becomes constrained.
 - Do not let the poller commit generated HTML/JSON output to `main`; that can trigger an extra Cloudflare Git-connected build and spend both systems for one content update.
+- Implementation status on 2026-06-18:
+  - Remote D1 migration `0003_site_publish_queue.sql` applied to `franchise_db`.
+  - `site_publish_state` row exists for `site_franchisee_id` with `publish_mode='cloudflare_deploy_hook'`, `daily_publish_limit=12`, and `min_publish_interval_minutes=30`.
+  - `/form-submit` enqueues rebuild requests for franchisor listing submit, claim submit, dev unclaimed create, and dev test-data clear.
+  - `.github/workflows/d1-static-publish.yaml` runs at minutes 7 and 37, exits cleanly when no pending work exists, and does not commit generated output.
 - Implementation checklist:
-  - [ ] Add `site_rebuild_requests` migration.
-  - [ ] Add `site_publish_state` migration for per-site dirty/published timestamps and publish counters.
-  - [ ] Add shared enqueue helper for D1 mutation endpoints.
+  - [x] Add `site_rebuild_requests` migration.
+  - [x] Add `site_publish_state` migration for per-site dirty/published timestamps and publish counters.
+  - [x] Add shared enqueue helper for D1 mutation endpoints.
   - [ ] Add GitHub Actions secrets for D1 query/deploy access through Wrangler.
-  - [ ] Add scheduled GitHub Actions poller that runs every 30 minutes and exits before dependency install/build when D1 is clean.
-  - [ ] Add Cloudflare Pages Deploy Hook publishing when D1 is dirty and guardrails allow a content publish.
-  - [ ] Keep direct `wrangler pages deploy dist` publishing as a documented fallback if Cloudflare build quota becomes constrained.
+  - [x] Add scheduled GitHub Actions poller that runs every 30 minutes and exits before dependency install/build when D1 is clean.
+  - [x] Add Cloudflare Pages Deploy Hook publishing when D1 is dirty and guardrails allow a content publish.
+  - [x] Keep direct `wrangler pages deploy dist` publishing as a documented fallback if Cloudflare build quota becomes constrained.
   - [ ] Add admin-only manual deploy endpoint for urgent publishing.
-  - [ ] Wire `/form-submit` and future listing edit/delete/admin publish endpoints to enqueue rebuild requests.
+  - [x] Wire `/form-submit` public-page writes to enqueue rebuild requests.
+  - [ ] Wire future listing edit/delete/admin publish endpoints to enqueue rebuild requests.
   - [ ] Add deployment verification/logging and stale request alerting.
 
 ## Runtime D1 API Status
@@ -210,7 +216,9 @@ API/server routes:
 - Franchisee submissions write `franchisee_profiles`, `legacy_source_rows`, and `audit_events`.
 - Franchisor submissions write `franchisor_profiles`, `franchises`, `franchise_packages`, `franchise_site_publications`, `legacy_source_rows`, and `audit_events`.
 - Claim submissions update the matched D1 `UNCLAIMED` franchise into a `FRANCHISOR` listing, add `franchise_claims`, and therefore remove it from D1 unclaimed claim search.
+- Franchisor and claim submissions now enqueue `site_rebuild_requests` and update `site_publish_state` for `site_franchisee_id`.
 - Dev test-data create/clear actions now operate in D1, not Google Sheets.
+- Dev test-data create/clear actions now enqueue static publish rebuild requests because they affect public listing/claim-search output.
 - `/form-submit` now verifies Clerk bearer tokens through `@clerk/backend`, maps Clerk users into D1 `users`, checks D1 roles, writes `user_id`/`owner_user_id`/`claimant_user_id`, and records `audit_events.actor_user_id`.
 - Dev test-data create/clear actions require `staff` or `admin`.
 - Remaining gap: production Clerk keys and allowed origins must be configured in Cloudflare Pages and Clerk Dashboard before deployed browser testing.

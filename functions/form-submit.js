@@ -1,6 +1,7 @@
 // /functions/form-submit.js
 import { z } from "zod";
 import { authErrorResponse, requireD1User } from "./_clerk-auth.js";
+import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
 
 const BaseSubmissionSchema = z
   .object({
@@ -316,6 +317,22 @@ async function handleFranchisorSubmit(db, data, isClaim, actor) {
       profile_id: profileId,
     }, actor.id)
   );
+  statements.push(
+    ...siteRebuildStatements(db, {
+      siteId: SITE_FRANCHISEE_ID,
+      franchiseId,
+      reason: isClaim ? "franchise_claim_published" : "franchise_listing_submitted",
+      entityType: "franchises",
+      entityId: franchiseId,
+      actorUserId: actor.id,
+      source: "form-submit",
+      metadata: {
+        slug,
+        brand_name: normalizeText(data.brand_name),
+        claim: isClaim,
+      },
+    })
+  );
 
   await db.batch(statements);
 
@@ -495,6 +512,19 @@ async function handleCreateUnclaimed(db, data, actor) {
       .bind(`publication_${randomId()}`, franchiseId, "site_franchisee_id", slug, `https://franchisee.id/peluang-usaha/${slug}/`),
     legacySourceStatement(db, "UNCLAIMED", publicId, parsed.data.brand_name, "franchises", franchiseId, payload),
     auditStatement(db, "franchise.test_create_unclaimed", "franchises", franchiseId, { source: "form-submit" }, actor.id),
+    ...siteRebuildStatements(db, {
+      siteId: SITE_FRANCHISEE_ID,
+      franchiseId,
+      reason: "test_unclaimed_created",
+      entityType: "franchises",
+      entityId: franchiseId,
+      actorUserId: actor.id,
+      source: "form-submit",
+      metadata: {
+        slug,
+        brand_name: normalizeText(parsed.data.brand_name),
+      },
+    }),
   ]);
 
   return jsonResponse({
@@ -525,6 +555,19 @@ async function handleClearTestData(db, actor) {
     db.prepare("DELETE FROM franchise_claims WHERE franchise_id = ?").bind(id),
     db.prepare("DELETE FROM franchises WHERE id = ?").bind(id),
   ]);
+  statements.push(
+    ...siteRebuildStatements(db, {
+      siteId: SITE_FRANCHISEE_ID,
+      reason: "test_data_cleared",
+      entityType: "franchises",
+      actorUserId: actor.id,
+      source: "form-submit",
+      metadata: {
+        deleted: ids.length,
+        franchise_ids: ids,
+      },
+    })
+  );
 
   await db.batch(statements);
   await auditStatement(db, "franchise.test_clear_data", "franchises", null, { source: "form-submit", deleted: ids.length }, actor.id).run();

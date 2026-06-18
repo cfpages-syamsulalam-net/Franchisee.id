@@ -1,6 +1,6 @@
 # D1 Static Publish Strategy
 
-Last updated: 2026-06-17 21:48 (Asia/Jakarta)
+Last updated: 2026-06-18 18:48 (Asia/Jakarta)
 
 ## Problem
 
@@ -124,3 +124,22 @@ Adopt this as the target direction:
 - Fallback/upgrade content publish mode: GitHub builds Astro and deploys `dist/` directly to Cloudflare Pages when Cloudflare build quota needs stronger protection.
 - Never commit generated publish output from the poller to the default branch unless intentionally accepting a Cloudflare Git-triggered build.
 - Revisit 15-minute polling only after measuring actual edit frequency and Actions usage.
+
+## Implementation Status
+
+Implemented on 2026-06-18:
+
+- `migrations/0003_site_publish_queue.sql` creates `site_rebuild_requests` and `site_publish_state`.
+- The migration has been applied to remote D1 `franchise_db`.
+- `functions/_site-publish-queue.js` provides `siteRebuildStatements()` for Pages Functions.
+- `functions/form-submit.js` enqueues rebuild requests for franchisor listing submissions, claim submissions, dev unclaimed creation, and dev test-data clearing.
+- `scripts/d1-static-publish-poller.mjs` checks D1 through the Cloudflare API, expires stale queued requests, enforces per-site guardrails, calls the deploy hook in the default publish mode, and supports direct deploy fallback state marking.
+- `.github/workflows/d1-static-publish.yaml` runs the poller at minutes 7 and 37 every hour plus manual `workflow_dispatch`.
+- `package.json` exposes `pnpm run publish:d1:poll` for local poller execution when the required environment variables are present.
+
+Still required before GitHub automation is live:
+
+- Add GitHub secret `CLOUDFLARE_API_TOKEN` with D1 query/write permission for `franchise_db`.
+- Add GitHub secret `PAGES_DEPLOY_HOOK_FRANCHISEE_ID` containing the full Cloudflare Pages Deploy Hook URL.
+- Optionally add GitHub variables `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_D1_DATABASE_ID`, and `PAGES_PROJECT_NAME`; defaults are present for the current `franchisee.id` project.
+- Push the workflow to GitHub and verify the first dirty D1 edit triggers exactly one Pages build.

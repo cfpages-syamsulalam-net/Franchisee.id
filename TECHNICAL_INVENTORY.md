@@ -132,6 +132,15 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 - Manifest behavior: `json/d1-generated-pages-manifest.json` tracks D1-owned pages; prune only removes tracked files that still contain the D1 marker, including old marker-owned folder indexes when paths change.
 - Wrangler invocation uses project-pinned `pnpm exec wrangler` so the script does not resolve a newer Node-22-only Wrangler version under Node 20.
 
+### File: `scripts/d1-static-publish-poller.mjs`
+*Dependency-free GitHub Actions poller for D1-backed static publishing.*
+- `pollAndMaybePublish()`: Expires stale queued requests, reads `site_publish_state`, counts pending `site_rebuild_requests`, enforces guardrails, and either exits cleanly or publishes.
+- Default publish mode: calls the Cloudflare Pages Deploy Hook after D1 is dirty and guardrails allow publishing.
+- Direct deploy fallback: emits workflow outputs for `wrangler pages deploy dist`, then `--mark-deployed` or `--mark-failed` updates D1 status.
+- `expireStaleQueuedRequests()`: Moves old `queued` requests back to `failed_retryable` after `stale_queued_after_minutes`.
+- `evaluateGuardrails(state)`: Enforces daily publish limit and minimum interval.
+- D1 access: uses the Cloudflare D1 HTTP API with `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_D1_DATABASE_ID`.
+
 ## 2. Directory: `/src` (Astro Static Generation)
 
 ### File: `src/lib/franchise-static.ts`
@@ -168,6 +177,12 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 - `authErrorResponse(error)`: Converts auth/role failures into the standard JSON response shape.
 - Roles: only `franchisee` and `franchisor` are self-assignable; `staff` and `admin` are elevated roles.
 
+### File: `functions/_site-publish-queue.js`
+*Shared D1 static publish queue helper for Pages Functions.*
+- `SITE_FRANCHISEE_ID`: Canonical site id for `franchisee.id` publications.
+- `siteRebuildStatements(db, options)`: Returns D1 prepared statements that insert a `site_rebuild_requests` row and update `site_publish_state` in the same batch as the public-page-affecting mutation.
+- Used by `/form-submit` for franchisor listing submission, claim submission, dev unclaimed creation, and dev test-data clearing.
+
 ### File: `functions/auth-config.js`
 *Public Clerk config endpoint.*
 - `onRequestGet()`: Returns the Clerk publishable key from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` or fallback `CLERK_PUBLISHABLE_KEY`, plus configured status with `Cache-Control: no-store`.
@@ -188,16 +203,26 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 *Admin-only repair/backfill endpoint for D1-to-Clerk metadata sync.*
 - `onRequestPost()`: Requires Clerk auth plus D1 `admin`, syncs one D1 user by `user_id` / `clerk_user_id` or up to 500 users with `all=true`, and rewrites Clerk metadata from D1 roles/status.
 
-### File: `functions/form-submit.js` (v2.4)
+### File: `functions/form-submit.js` (v2.5)
 *Clerk-authenticated D1-backed backend processing for all current form submissions.*
 - `onRequestPost()`: Main entry point; requires `env.franchise_db`, validates base payload with Zod, requires Clerk/D1 role authorization, routes franchisee/franchisor/claim/test actions, and returns the legacy success/error JSON envelope.
 - `FranchiseeSchema` / `FranchisorSchema`: Zod runtime validation for form payloads before D1 writes.
 - `handleFranchiseeSubmit(db, data, actor)`: Checks duplicates and writes `franchisee_profiles.user_id`, `legacy_source_rows`, and actor-aware `audit_events`.
-- `handleFranchisorSubmit(db, data, isClaim, actor)`: Checks duplicates and writes or updates franchisor/listing/package/publication/claim/audit D1 records with `user_id`, `owner_user_id`, `claimant_user_id`, and franchisor profile contact/social URLs.
+- `handleFranchisorSubmit(db, data, isClaim, actor)`: Checks duplicates and writes or updates franchisor/listing/package/publication/claim/audit D1 records with `user_id`, `owner_user_id`, `claimant_user_id`, franchisor profile contact/social URLs, and static rebuild queue requests for `site_franchisee_id`.
 - `findClaimSource(db, data)`: Finds D1 `UNCLAIMED` franchise rows by `unclaimed_id` or normalized brand name for claim migration.
-- `handleCreateUnclaimed()` / `handleClearTestData()`: Dev test-data actions now operate in D1 instead of Google Sheets.
+- `handleCreateUnclaimed()` / `handleClearTestData()`: Dev test-data actions now operate in D1 instead of Google Sheets and enqueue static rebuild requests because they affect public listing/claim-search output.
 - `uniqueSlug()` / `slugExists()`: Generates non-conflicting D1 slugs for new submitted listings.
 - Important: `/form-submit` must remain D1-only and authenticated; do not restore anonymous writes.
+
+## 3a. Directory: `/.github/workflows` (Automation)
+
+### File: `.github/workflows/d1-static-publish.yaml`
+*Scheduled/manual D1-to-static publish poller.*
+- Schedule: runs at minutes 7 and 37 every hour.
+- `Poll D1 publish queue`: Runs `node scripts/d1-static-publish-poller.mjs`; exits before dependency install/build when D1 has no pending public-page work.
+- Default publish path: the poller calls `PAGES_DEPLOY_HOOK_FRANCHISEE_ID`; Cloudflare Pages runs the configured build, including `pnpm run build:astro`.
+- Fallback publish path: if `site_publish_state.publish_mode='github_direct_deploy'`, the workflow installs dependencies, runs `pnpm run build:astro`, deploys `dist/` with Wrangler, then marks D1 requests deployed/failed.
+- Does not commit generated output back to `main`.
 
 ### File: `functions/get-franchises.js`
 - `onRequestGet()`: API to fetch franchise data with Zod query validation, D1-first reads, legacy Cloudinary URL optimization, and a Sheets read fallback only when D1 is unavailable or explicitly requested.

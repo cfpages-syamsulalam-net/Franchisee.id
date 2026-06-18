@@ -4,6 +4,23 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-18 18:48 (Asia/Jakarta)
+### Added
+- `migrations/0003_site_publish_queue.sql`: Added `site_rebuild_requests` and `site_publish_state` for D1-to-static publish queueing, publish guardrails, and publish mode tracking.
+- `functions/_site-publish-queue.js`: Added shared Pages Functions helper for enqueueing public-page rebuild requests in D1.
+- `scripts/d1-static-publish-poller.mjs`: Added dependency-free GitHub Actions poller that checks D1, enforces guardrails, calls the Cloudflare Pages Deploy Hook when dirty, and supports direct `dist/` deploy fallback status updates.
+- `.github/workflows/d1-static-publish.yaml`: Added 30-minute/manual D1 static publish polling workflow.
+- `.context/session-20260618-1848.md`: Added session snapshot for the publish queue and GitHub Actions poller implementation.
+- `package.json`: Added `publish:d1:poll` script.
+- Remote D1 `franchise_db`: Applied `0003_site_publish_queue.sql` through `npx cfman wrangler --account franchise-network`.
+
+### Changed
+- `functions/form-submit.js`: Enqueues static rebuild requests for franchisor listing submissions, claim submissions, dev unclaimed creation, and dev test-data clearing.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/README.md`, `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented implemented D1 publish queue, workflow behavior, required GitHub secrets, verification status, and remaining publish automation gaps.
+
+### Removed
+- None.
+
 ## 2026-06-17 21:48 (Asia/Jakarta)
 ### Added
 - None.

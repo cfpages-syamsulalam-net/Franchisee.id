@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-06-17 21:32 (Asia/Jakarta)
+Last updated: 2026-06-18 18:48 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 

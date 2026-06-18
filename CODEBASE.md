@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-17 21:48 (Asia/Jakarta)
+Last updated: 2026-06-18 18:48 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -44,7 +44,8 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `js/build-details.js` | Static-site builder for individual `/peluang-usaha/{slug}/index.html` pages; injects brand fields, JSON-LD, breadcrumbs, unclaimed disclaimers, tabs, and sticky claim CTA. | `templates/detail-franchise-tpl.html`, Google Sheets, `/daftar?claim={slug}` |
 | `js/build-sitemap.js` | Generates `sitemap-complete.xml` from franchisor and unclaimed brands. | Google Sheets, CSV fallback, generated detail URLs |
 | `functions/get-franchises.js` | Cloudflare Function API for directory/claim-search reads. D1-first through the `franchise_db` binding, validates query params with Zod, preserves `purpose=claim-search` sanitization, and keeps a Sheets read fallback only when D1 is unavailable or explicitly requested. | Cloudflare D1 `franchise_db`, `js/form-02-claim-workflow.js`, legacy Sheets read fallback |
-| `functions/form-submit.js` | Cloudflare Function API for franchisee, franchisor, claim, and dev test-data submissions. D1-only writes with Zod payload validation, duplicate checks, D1 claim cleanup, D1 profile/listing/package/publication/claim/audit writes, and no new Google Sheets writes. | `js/form-06-submit-validation.js`, Cloudflare D1 `franchise_db`, `franchisee_profiles`, `franchisor_profiles`, `franchises`, `franchise_claims`, `franchise_packages`, `franchise_site_publications`, `legacy_source_rows`, `audit_events` |
+| `functions/form-submit.js` | Cloudflare Function API for franchisee, franchisor, claim, and dev test-data submissions. D1-only writes with Zod payload validation, duplicate checks, D1 claim cleanup, D1 profile/listing/package/publication/claim/audit writes, D1 static rebuild queue writes for public-page-affecting listing changes, and no new Google Sheets writes. | `js/form-06-submit-validation.js`, Cloudflare D1 `franchise_db`, `franchisee_profiles`, `franchisor_profiles`, `franchises`, `franchise_claims`, `franchise_packages`, `franchise_site_publications`, `site_rebuild_requests`, `site_publish_state`, `legacy_source_rows`, `audit_events` |
+| `functions/_site-publish-queue.js` | Shared Pages Functions helper for public-page dirty queue writes. Exposes `SITE_FRANCHISEE_ID` and `siteRebuildStatements()` so D1 mutations can enqueue rebuild requests and update per-site publish state in the same batch. | `functions/form-submit.js`, D1 `site_rebuild_requests`, D1 `site_publish_state` |
 | `functions/_clerk-auth.js` | Shared Clerk/D1 auth helper for Pages Functions. Verifies Clerk bearer tokens, fetches Clerk user data, upserts D1 `users`, assigns only self-assignable roles, checks D1 roles before writes, and pushes D1 role snapshots to Clerk metadata. | `@clerk/backend`, `functions/auth-sync.js`, `functions/form-submit.js`, `functions/clerk-webhook.js`, D1 `users`, `user_roles` |
 | `functions/auth-config.js` | Public same-origin config endpoint for Clerk publishable key. Keeps static HTML environment-neutral and accepts `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` with `CLERK_PUBLISHABLE_KEY` fallback. | `js/auth-clerk.js`, Cloudflare env |
 | `functions/auth-sync.js` | Authenticated Clerk-to-D1 user sync endpoint. Maps the active Clerk user into D1 and self-assigns `franchisee` or `franchisor` when requested. | `functions/_clerk-auth.js`, `js/auth-clerk.js`, D1 `users`, `user_roles` |
@@ -66,6 +67,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `js/form-franchise.js` | Legacy non-executing shim. Do not add runtime logic here. | Historical compatibility only |
 | `scripts/import-csv-to-d1.ts` | TypeScript/Zod importer that validates `csv/franchisors.csv`, `csv/unclaimed.csv`, and `csv/franchisee.csv`, generates idempotent SQL for `franchise_db`, preserves strict `UNCLAIMED` claim-search sanitization, and can apply remotely through `cfman`. | `migrations/0001_initial_network_schema.sql`, `/csv`, `.context/d1-import-franchise-data.sql`, Cloudflare D1 `franchise_db` |
 | `scripts/build-d1-franchise-pages.ts` | TypeScript/Zod D1-backed public page bridge. Reads published `site_franchisee_id` rows from `franchise_db`, renders `/peluang-usaha/index.html` and flat `/peluang-usaha/{slug}.html` detail files, includes franchisor contact/social links when present, writes the Astro snapshot `json/d1-franchise-static-data.json`, regenerates claim-search JSON, skips unchanged pages by manifest hash, and prunes only previously D1-generated pages. | `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, `json/d1-franchise-static-data.json`, `json/d1-generated-pages-manifest.json`, `json/unclaimed-brands.json`, `/peluang-usaha`, Wrangler |
+| `scripts/d1-static-publish-poller.mjs` | Dependency-free Node poller for GitHub Actions. Calls the Cloudflare D1 HTTP API to expire stale queued requests, check pending rebuild work, enforce per-site guardrails, call the Cloudflare Pages Deploy Hook in the default mode, and mark direct-deploy fallback status. | `.github/workflows/d1-static-publish.yaml`, D1 `site_rebuild_requests`, D1 `site_publish_state`, GitHub secrets `CLOUDFLARE_API_TOKEN` and `PAGES_DEPLOY_HOOK_FRANCHISEE_ID` |
 | `src/lib/franchise-static.ts` | Astro-side renderer and Zod validator for the D1 franchise static snapshot. Converts D1 snapshot rows into listing/detail HTML using existing template placeholders and the same SEO/contact/social mapping as the bridge. | `json/d1-franchise-static-data.json`, `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, Astro routes |
 | `src/pages/peluang-usaha/index.astro` | Astro static listing route for `/peluang-usaha/`. Loads the D1 snapshot and renders the existing listing template during build. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json` |
 | `src/pages/peluang-usaha/[slug].astro` | Astro static detail route that physically builds `/peluang-usaha/{slug}.html` under `build.format: "preserve"` while public links stay `/peluang-usaha/{slug}`. Uses `getStaticPaths` from the D1 snapshot so each franchise keeps an individually indexable HTML page. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json`, `astro.config.mjs` |
@@ -91,8 +93,9 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `astro.config.mjs` | Astro static build config for Cloudflare Pages-compatible output. Uses `build.format: "preserve"` so listing index output stays nested while detail source files can build flat `.html` files. |
 | `src/env.d.ts` | Astro TypeScript client reference. |
 | `tsconfig.json` | Strict TypeScript config for migration scripts and Astro support code. Includes `scripts/**/*.ts`, `src/**/*.ts`, and `src/**/*.d.ts`. |
-| `package.json` | Declares pnpm scripts for D1 CSV import, D1 bridge generation, and Astro static builds: `import:csv:*`, `build:d1:franchises:*`, `astro:sync`, `build:astro`, `dev:astro`, and `preview:astro`. |
+| `package.json` | Declares pnpm scripts for D1 CSV import, D1 bridge generation, Astro static builds, and publish queue polling: `import:csv:*`, `build:d1:franchises:*`, `astro:sync`, `build:astro`, `publish:d1:poll`, `dev:astro`, and `preview:astro`. |
 | `.github/workflows/generate-pages.yaml` | Scheduled/manual/repository-dispatch builder workflow for regenerated static directory pages. |
+| `.github/workflows/d1-static-publish.yaml` | 30-minute/manual D1 publish poller. Runs `scripts/d1-static-publish-poller.mjs`, calls the Cloudflare Pages Deploy Hook only when D1 is dirty and guardrails allow publishing, and supports direct `wrangler pages deploy dist` fallback without committing generated output. |
 | `.github/workflows/head.yaml` | Legacy automation that injects `.head` content into every HTML file. Use cautiously because it touches many static exports. |
 | `.github/workflows/sitemap-readme.yaml` | Manual workflow for sitemap/readme generation from HTML files. |
 | `docs/README.md` | Central documentation index and source-of-truth policy. |
@@ -100,6 +103,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md` | Compares twice-daily D1 static publishing with GitHub Actions polling, Cloudflare Deploy Hook builds, and GitHub direct deploy fallback. Current target is 30-minute polling after a D1 dirty queue exists, without committing generated output from the poller. |
 | `migrations/0001_initial_network_schema.sql` | First D1 schema migration for shared network sites, users/roles, profiles, franchises, claims, assets, leads, site publications, subscriptions/entitlements, imports, and audit events. |
 | `migrations/0002_add_franchisor_social_links.sql` | Adds optional Facebook, TikTok, YouTube, and LinkedIn URL columns to `franchisor_profiles`; website and Instagram already existed. |
+| `migrations/0003_site_publish_queue.sql` | Adds `site_rebuild_requests` and `site_publish_state` for D1-to-static publish queueing, per-site guardrails, and publish mode tracking. Applied remotely to `franchise_db` on 2026-06-18. |
 | `wrangler.toml` | Active Wrangler config for shared D1 binding `franchise_db` using database UUID `812cd8ac-edd0-45d9-981f-c9a15358317b`. Remote commands should run through `npx cfman wrangler --account franchise-network ...`. |
 | `wrangler.example.toml` | Non-active Wrangler example showing the `franchise_db` binding and migrations directory; copy to `wrangler.toml` only after adding the real D1 UUID. |
 | `.context/wrangler-local-d1-test.toml` | Local-only Wrangler config used to validate D1 migrations without production credentials. Do not use as deployment config. |
@@ -171,14 +175,15 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 
 ### 7a. D1 Change To Static Publish Flow
 1. D1 updates do not automatically trigger Cloudflare Pages builds.
-2. Until automation is implemented, a public-page-affecting D1 edit requires a rebuild/deploy (`pnpm run build:astro` in the Pages build) before static HTML changes are visible.
-3. Target automation: each franchisor/admin/publication mutation writes a `site_rebuild_requests` row scoped to the changed `site_id` and `franchise_id`.
-4. Safe baseline: a scheduled publish job runs twice daily, checks pending requests, calls the Cloudflare Pages Deploy Hook only when work exists, and marks requests as deployed or failed.
-5. Preferred upgrade after the dirty queue exists: a GitHub Actions workflow polls D1 every 30 minutes, exits quickly when clean, and when dirty calls the Cloudflare Pages Deploy Hook only if publish guardrails allow it.
-6. GitHub direct `dist/` deploy with Wrangler is the fallback/upgrade mode if Cloudflare Pages build quota becomes constrained.
-7. The poller must not commit generated output back to `main`, because the connected Cloudflare Pages Git integration can turn that commit into another build.
-8. Default twice-daily windows are 09:00 and 21:00 Asia/Jakarta; the 30-minute poller becomes the practical cooldown/debounce once enabled because all edits before the next poll are batched into one build.
-9. An authenticated admin-only manual trigger can publish urgent changes before the next scheduled window, but normal franchisor edits should wait for the batch.
+2. A public-page-affecting D1 edit requires a rebuild/deploy (`pnpm run build:astro` in the Pages build) before static HTML changes are visible.
+3. `migrations/0003_site_publish_queue.sql` adds `site_rebuild_requests` and `site_publish_state` for D1 dirty tracking.
+4. `functions/_site-publish-queue.js` provides `siteRebuildStatements()`; `/form-submit` uses it for franchisor listing submit, claim submit, dev unclaimed creation, and dev test-data cleanup.
+5. `.github/workflows/d1-static-publish.yaml` runs every 30 minutes at minutes 7 and 37. It exits when D1 is clean.
+6. When D1 is dirty and guardrails allow it, the workflow calls the Cloudflare Pages Deploy Hook. Cloudflare then runs the configured Pages build, including `pnpm run build:astro`.
+7. The poller marks requests as `queued` after a successful deploy-hook call. Queued requests older than `stale_queued_after_minutes` are moved back to `failed_retryable` for retry.
+8. GitHub direct `dist/` deploy with Wrangler is the fallback/upgrade mode if Cloudflare Pages build quota becomes constrained.
+9. The poller must not commit generated output back to `main`, because the connected Cloudflare Pages Git integration can turn that commit into another build.
+10. Manual `workflow_dispatch` can force a publish, but normal franchisor edits should wait for the next poll window.
 
 ### 8. Astro D1 Static Route Flow
 1. `pnpm run build:astro` first runs `pnpm run astro:sync`, which calls the D1 bridge and refreshes `json/d1-franchise-static-data.json`.
@@ -208,3 +213,4 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 - `functions/form-submit.js` now attaches Clerk-owned D1 users and role checks, but it still needs listing revision workflows, approval state transitions, and asset ownership.
 - Login/register now exist as custom Clerk surfaces, but deployed Clerk environment variables and dashboard settings still need production verification.
 - D1 write behavior still needs deployed Pages verification against the real binding after frontend submission testing.
+- GitHub Actions publish polling needs repository secrets before it can run: `CLOUDFLARE_API_TOKEN` and `PAGES_DEPLOY_HOOK_FRANCHISEE_ID`; optional vars are `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_D1_DATABASE_ID`, and `PAGES_PROJECT_NAME`.

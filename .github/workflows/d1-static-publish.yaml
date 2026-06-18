@@ -1,0 +1,82 @@
+name: D1 Static Publish Poller
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+    inputs:
+      site_id:
+        description: Site id to publish
+        required: false
+        default: site_franchisee_id
+      force_publish:
+        description: Bypass interval/daily guardrails for urgent manual publish
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  poll-and-publish:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: d1-static-publish-${{ github.event.inputs.site_id || 'site_franchisee_id' }}
+      cancel-in-progress: false
+
+    env:
+      SITE_ID: ${{ github.event.inputs.site_id || 'site_franchisee_id' }}
+      FORCE_PUBLISH: ${{ github.event.inputs.force_publish || 'false' }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || '0ba63b7f0096bc267a93fe5c80b1f571' }}
+      CLOUDFLARE_D1_DATABASE_ID: ${{ vars.CLOUDFLARE_D1_DATABASE_ID || '812cd8ac-edd0-45d9-981f-c9a15358317b' }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      PAGES_DEPLOY_HOOK_FRANCHISEE_ID: ${{ secrets.PAGES_DEPLOY_HOOK_FRANCHISEE_ID }}
+      PAGES_PROJECT_NAME: ${{ vars.PAGES_PROJECT_NAME || 'franchisee-id' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js for lightweight D1 poll
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Poll D1 publish queue
+        id: poller
+        run: node scripts/d1-static-publish-poller.mjs
+
+      - name: Setup pnpm for direct deploy fallback
+        if: steps.poller.outputs.should_direct_deploy == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js with pnpm cache
+        if: steps.poller.outputs.should_direct_deploy == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - name: Install dependencies for direct deploy fallback
+        if: steps.poller.outputs.should_direct_deploy == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Astro for direct deploy fallback
+        if: steps.poller.outputs.should_direct_deploy == 'true'
+        run: pnpm run build:astro
+
+      - name: Deploy dist directly to Cloudflare Pages fallback
+        if: steps.poller.outputs.should_direct_deploy == 'true'
+        run: pnpm exec wrangler pages deploy dist --project-name "$PAGES_PROJECT_NAME" --branch main
+
+      - name: Mark direct deploy as deployed
+        if: steps.poller.outputs.should_direct_deploy == 'true' && success()
+        run: node scripts/d1-static-publish-poller.mjs --mark-deployed
+
+      - name: Mark direct deploy as retryable on failure
+        if: steps.poller.outputs.should_direct_deploy == 'true' && failure()
+        env:
+          FAILURE_MESSAGE: GitHub direct deploy fallback failed.
+        run: node scripts/d1-static-publish-poller.mjs --mark-failed

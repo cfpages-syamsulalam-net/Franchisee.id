@@ -157,6 +157,13 @@ Target mechanism for franchisor edits, admin edits, claims, listing deletes, and
 
 Detailed strategy comparison lives in `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`. Current decision: twice-daily publishing is the safe baseline, but the preferred target after the dirty queue exists is 30-minute GitHub Actions polling where GitHub checks D1 and calls the Cloudflare Pages Deploy Hook only when D1 is dirty and guardrails allow a publish. GitHub direct `dist/` deploy remains the fallback if Cloudflare Pages build quota becomes constrained. The poller must not commit generated output back to `main`, because that can trigger an extra Cloudflare Git build.
 
+Implementation status:
+- `migrations/0003_site_publish_queue.sql` creates `site_rebuild_requests` and `site_publish_state`; it was applied to remote `franchise_db` on 2026-06-18.
+- `functions/_site-publish-queue.js` provides queue statements for Pages Functions.
+- `/form-submit` enqueues public-page rebuild requests for franchisor listing submissions, claim submissions, dev unclaimed creation, and dev test-data clearing.
+- `.github/workflows/d1-static-publish.yaml` runs the 30-minute poller and supports Cloudflare Deploy Hook publishing plus direct `dist/` deploy fallback.
+- Repository secrets still need to be set before the workflow can run in GitHub: `CLOUDFLARE_API_TOKEN` and `PAGES_DEPLOY_HOOK_FRANCHISEE_ID`.
+
 1. All app-owned D1 mutation endpoints must write the data change and a `site_rebuild_requests` row in the same logical operation.
 2. Rebuild requests are scoped by `site_id`, `franchise_id`, `reason`, and `status` so multiple edits can be coalesced instead of triggering one build per field edit.
 3. D1 writes must not call the Cloudflare Pages Deploy Hook immediately by default.
@@ -176,13 +183,14 @@ Recommended schedule:
 
 Recommended implementation order:
 
-- Add `site_rebuild_requests` migration and helper functions such as `markSiteRebuildNeeded(db, { siteId, franchiseId, reason })`.
-- Add `site_publish_state` migration for per-site dirty/published timestamps, publish mode, and guardrail counters.
+- Done: add `site_rebuild_requests` migration and helper functions such as `siteRebuildStatements(db, { siteId, franchiseId, reason })`.
+- Done: add `site_publish_state` migration for per-site dirty/published timestamps, publish mode, and guardrail counters.
 - Add Cloudflare Pages secret `PAGES_DEPLOY_HOOK_FRANCHISEE_ID`.
-- Add a scheduled GitHub Actions poller that runs every 30 minutes, checks D1 for pending rebuild requests, and calls the deploy hook only when pending work exists and guardrails allow a publish.
-- Keep direct `wrangler pages deploy dist` as the documented fallback if Cloudflare Pages build quota becomes constrained.
+- Done: add a scheduled GitHub Actions poller that runs every 30 minutes, checks D1 for pending rebuild requests, and calls the deploy hook only when pending work exists and guardrails allow a publish.
+- Done: keep direct `wrangler pages deploy dist` as the documented fallback if Cloudflare Pages build quota becomes constrained.
 - Add an authenticated admin endpoint for urgent manual publishing.
-- Update every D1 mutation path (`/form-submit`, future listing edit endpoints, admin publication endpoints, claim approval/delete flows) to enqueue rebuild requests.
+- Done: update `/form-submit` public-page write paths to enqueue rebuild requests.
+- Pending: update future listing edit endpoints, admin publication endpoints, and claim approval/delete flows to enqueue rebuild requests.
 
 Current package pins:
 - `astro@5.18.2` because local Node is 20.19.4.
