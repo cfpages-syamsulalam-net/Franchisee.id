@@ -158,10 +158,15 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Astro D1 snapshot validator and template renderer.*
 - `FranchiseStaticRowSchema`: Zod schema for rows in `json/d1-franchise-static-data.json`.
 - `loadFranchiseStaticRows()`: Reads and validates the generated D1 snapshot.
-- `renderListingPage(rows)`: Renders the existing `/peluang-usaha/` listing template from snapshot rows.
+- `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with optional route metadata and custom row ordering.
+- `renderCategoryIndexPage(rows)`: Renders `/kategori` category cards and listing counts from the D1 snapshot.
 - `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row.
 - `generateContactBlock(row)`: Renders D1 contact/social links into the detail page contact tab.
-- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, social/contact links, and sticky claim CTA.
+- `getRecommendedRows(rows)`: Sorts directory rows by verification/status and listing completeness for `/rekomendasi`.
+- `getPopularRows(rows)`: Sorts directory rows by a deterministic popularity proxy until real D1 analytics/lead/payment metrics exist.
+- `getAlphabeticalRows(rows)`: Sorts directory rows alphabetically by brand name for `/abjad`.
+- `getCategoryRouteEntries(rows)`: Builds category route entries and legacy aliases for `/kategori/[slug]`, `/category/[slug]`, and top-level category slugs.
+- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, social/contact links, sticky claim CTA, category summaries, and CSS-only missing-image placeholders.
 
 ### File: `src/pages/peluang-usaha/index.astro`
 *Astro static listing page.*
@@ -174,6 +179,43 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `prerender = true`.
 - `getStaticPaths()`: Creates one static route per snapshot row using the D1 slug.
 - Outputs full detail HTML with `renderDetailPage(row)`.
+
+### File: `src/pages/rekomendasi/index.astro`
+*Astro static recommendation archive.*
+- `prerender = true`.
+- Loads D1 snapshot rows, orders them with `getRecommendedRows(rows)`, and renders `/rekomendasi/index.html` through `renderListingPage`.
+
+### File: `src/pages/populer/index.astro`
+*Astro static popular archive.*
+- `prerender = true`.
+- Loads D1 snapshot rows, orders them with `getPopularRows(rows)`, and renders `/populer/index.html`.
+- Current popularity is a deterministic proxy based on listing completeness, image availability, verification/status, and accessible investment level until D1 stores real metrics.
+
+### File: `src/pages/abjad/index.astro`
+*Astro static alphabetical archive.*
+- `prerender = true`.
+- Loads D1 snapshot rows, orders them with `getAlphabeticalRows(rows)`, and renders `/abjad/index.html`.
+
+### File: `src/pages/kategori/index.astro`
+*Astro static category index.*
+- `prerender = true`.
+- Renders one generated category card per D1 category with listing counts and CSS-only category placeholders.
+
+### File: `src/pages/kategori/[slug].astro`
+*Astro static category archive.*
+- `prerender = true`.
+- `getStaticPaths()`: Creates one archive per D1 category and supported alias, including `makanan-minuman-fb`, `perhotelan-travel`, `properti-furniture`, `teknologi-digital`, and `jasa-layanan`.
+- Renders filtered listing cards with category-specific title, description, and canonical path.
+
+### File: `src/pages/category/[slug].astro`
+*Compatibility Astro static category archive.*
+- `prerender = true`.
+- Generates the same category rows under legacy `/category/[slug]` style paths.
+
+### File: `src/pages/[categorySlug].astro`
+*Compatibility Astro static top-level category archive.*
+- `prerender = true`.
+- Generates top-level category slug pages such as `/makanan-minuman-fb.html` for old WordPress-style category links.
 
 ## 3. Directory: `/functions` (Cloudflare Edge Logic)
 

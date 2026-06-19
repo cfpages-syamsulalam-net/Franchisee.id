@@ -4,6 +4,24 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-19 21:53 (Asia/Jakarta)
+### Added
+- `src/pages/rekomendasi/index.astro`: Added D1-backed static recommendation archive.
+- `src/pages/populer/index.astro`: Added D1-backed static popular archive using a deterministic listing-quality proxy.
+- `src/pages/abjad/index.astro`: Added D1-backed static alphabetical archive.
+- `src/pages/kategori/index.astro`: Added D1-backed static category index.
+- `src/pages/kategori/[slug].astro`: Added D1-backed category archive route with legacy aliases.
+- `src/pages/category/[slug].astro`: Added legacy `/category/[slug]` compatibility archive route.
+- `src/pages/[categorySlug].astro`: Added top-level category slug compatibility route.
+- `.context/session-20260619-2153.md`: Added session snapshot for the D1-backed directory route expansion.
+
+### Changed
+- `src/lib/franchise-static.ts`: Added shared directory route rendering, route-specific metadata, category route entries/aliases, recommendation/popular/abjad ordering helpers, category cards, and CSS-only placeholders for franchise/category cards without images.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the D1-backed directory route expansion, category compatibility routes, and missing-image placeholder behavior.
+
+### Removed
+- None.
+
 ## 2026-06-19 21:21 (Asia/Jakarta)
 ### Added
 - `scripts/copy-legacy-static.mjs`: Added post-Astro copy step that copies legacy static HTML/assets/directories into `dist` without overwriting Astro-generated output and skips legacy `/peluang-usaha`.

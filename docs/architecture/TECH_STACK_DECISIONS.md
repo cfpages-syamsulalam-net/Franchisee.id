@@ -145,11 +145,13 @@ pnpm run build:astro
 
 Astro scaffold:
 - `astro.config.mjs` is configured for static output with `trailingSlash: "never"` and `build.format: "preserve"`.
-- `src/lib/franchise-static.ts` validates the D1 snapshot with Zod and renders the existing listing/detail templates.
+- `src/lib/franchise-static.ts` validates the D1 snapshot with Zod and renders the existing listing/detail/category templates.
 - `src/pages/peluang-usaha/index.astro` builds `/peluang-usaha/index.html`.
 - `src/pages/peluang-usaha/[slug].astro` uses `getStaticPaths` to build one flat `/peluang-usaha/{slug}.html` file per franchise slug under `build.format: "preserve"`.
+- `src/pages/rekomendasi/index.astro`, `src/pages/populer/index.astro`, `src/pages/abjad/index.astro`, `src/pages/kategori/index.astro`, category archive routes, and compatibility category slug routes build the legacy directory navigation from the same D1 snapshot.
+- Directory cards use a CSS-only fallback placeholder when D1 has no cover/logo URL, so missing legacy placeholder image assets do not break the public archive layout.
 - `astro.config.mjs` uses `build.format: "preserve"` so index routes remain index files while detail pages can be stored as flat `.html` files.
-- `pnpm run build:astro` refreshes the D1 snapshot first, then builds 198 pages into `dist/` from the current D1 data.
+- `pnpm run build:astro` refreshes the D1 snapshot first, then builds the D1-backed public directory pages into `dist/` from the current D1 data.
 - `pnpm run build` is the conventional Cloudflare Pages entrypoint and delegates to `pnpm run build:astro`; `wrangler.toml` declares `pages_build_output_dir = "dist"`.
 - Cloudflare Pages project settings must still include a build command. If no build command is configured, Pages skips dependency installation and the Functions bundler cannot resolve npm imports such as `zod` or `@clerk/backend`.
 - Cloudflare Pages config validation rejects `account_id` in `wrangler.toml`; account selection must come from the Pages project, `cfman`, or GitHub environment/variables.

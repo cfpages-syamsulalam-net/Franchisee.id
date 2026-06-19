@@ -73,15 +73,81 @@ export const FranchiseStaticRowSchema = z.object({
 
 export type FranchiseStaticRow = z.infer<typeof FranchiseStaticRowSchema>;
 
+export interface DirectoryPageOptions {
+  title: string;
+  description: string;
+  canonicalPath: string;
+  rows?: FranchiseStaticRow[];
+}
+
+export interface CategoryRouteEntry {
+  slug: string;
+  label: string;
+  rows: FranchiseStaticRow[];
+  canonicalPath: string;
+}
+
 export function loadFranchiseStaticRows() {
   const parsed = JSON.parse(readFileSync(STATIC_DATA_PATH, "utf8"));
   return z.array(FranchiseStaticRowSchema).parse(parsed);
 }
 
-export function renderListingPage(rows: FranchiseStaticRow[]) {
+export function renderListingPage(rows: FranchiseStaticRow[], options?: DirectoryPageOptions) {
   const template = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
-  const cards = [...rows].sort(compareFranchises).map((row, index) => generateCard(row, index + 1)).join("");
-  return normalizeGeneratedHtml(template.replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards));
+  const sortedRows = options?.rows || [...rows].sort(compareFranchises);
+  const cards = sortedRows.map((row, index) => generateCard(row, index + 1)).join("");
+  const html = template.replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards);
+  return normalizeGeneratedHtml(injectDirectoryStyles(applyDirectoryMeta(html, options)));
+}
+
+export function renderCategoryIndexPage(rows: FranchiseStaticRow[]) {
+  const template = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
+  const summaries = getCategorySummaries(rows);
+  const cards = summaries.map((summary, index) => generateCategoryCard(summary, index + 1)).join("");
+  const html = template.replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards);
+  return normalizeGeneratedHtml(
+    injectDirectoryStyles(
+      applyDirectoryMeta(html, {
+        title: "Kategori Franchise",
+        description: "Jelajahi peluang franchise berdasarkan kategori bisnis, mulai dari makanan minuman, pendidikan, jasa, retail, otomotif, hingga kesehatan.",
+        canonicalPath: "/kategori",
+      }),
+    ),
+  );
+}
+
+export function getRecommendedRows(rows: FranchiseStaticRow[]) {
+  return [...rows].sort((a, b) => scoreRecommendation(b) - scoreRecommendation(a) || compareFranchises(a, b));
+}
+
+export function getPopularRows(rows: FranchiseStaticRow[]) {
+  return [...rows].sort((a, b) => scorePopularity(b) - scorePopularity(a) || compareFranchises(a, b));
+}
+
+export function getAlphabeticalRows(rows: FranchiseStaticRow[]) {
+  return [...rows].sort((a, b) => normalizeText(a.brand_name).localeCompare(normalizeText(b.brand_name), "id-ID"));
+}
+
+export function getCategoryRouteEntries(rows: FranchiseStaticRow[]) {
+  const summaries = getCategorySummaries(rows);
+  const entries = new Map<string, CategoryRouteEntry>();
+
+  for (const summary of summaries) {
+    entries.set(summary.slug, {
+      slug: summary.slug,
+      label: summary.label,
+      rows: summary.rows,
+      canonicalPath: `/kategori/${summary.slug}`,
+    });
+  }
+
+  addCategoryAlias(entries, "makanan-minuman-fb", "Makanan & Minuman", rows, (row) => categorySlug(row) === "makanan-minuman");
+  addCategoryAlias(entries, "perhotelan-travel", "Penginapan & Agen Travel", rows, (row) => categorySlug(row) === "penginapan-agen-travel");
+  addCategoryAlias(entries, "properti-furniture", "Properti & Furniture", rows, (row) => categorySlug(row) === "furnitur-konstruksi-properti");
+  addCategoryAlias(entries, "teknologi-digital", "Teknologi Digital", rows, (row) => categorySlug(row) === "komputer-teknologi");
+  addCategoryAlias(entries, "jasa-layanan", "Jasa & Layanan", rows, (row) => categorySlug(row).includes("jasa") || categorySlug(row).includes("laundry"));
+
+  return [...entries.values()].filter((entry) => entry.rows.length > 0).sort((a, b) => a.label.localeCompare(b.label, "id-ID"));
 }
 
 export function renderDetailPage(row: FranchiseStaticRow) {
@@ -139,6 +205,9 @@ function generateCard(row: FranchiseStaticRow, index: number) {
   const category = normalizeText(row.category) || "Bisnis Umum";
   const link = `/peluang-usaha/${row.slug}`;
   const imageUrl = getThumb(row.cover_url || row.logo_url);
+  const imageBlock = imageUrl
+    ? `<img loading="lazy" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(brandName)}" width="300" height="150">`
+    : generateCssPlaceholder(brandName, "franchise-css-placeholder");
   const modal = formatRupiah(row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr);
   const desc = truncate(normalizeText(row.short_desc || row.full_desc) || `Peluang usaha franchise ${brandName}.`, 90);
   const badge =
@@ -152,7 +221,7 @@ function generateCard(row: FranchiseStaticRow, index: number) {
     <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${escapeAttr(tier.toLowerCase())}-tier">
         <a class="uc_post_grid_style_one_image" href="${escapeAttr(link)}">
             <div class="uc_post_image">
-                <img loading="lazy" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(brandName)}" width="300" height="150">
+                ${imageBlock}
                 <div class="uc_post_image_overlay"></div>
             </div>
         </a>
@@ -177,6 +246,38 @@ function generateCard(row: FranchiseStaticRow, index: number) {
                 <div class="uc_post_button">
                     <a class="uc_more_btn" href="${escapeAttr(link)}">
                         <div class="uc_btn_inner"><div class="uc_btn_txt">${tier === "UNCLAIMED" ? "Klaim Brand" : "Info Franchise"}</div></div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+function generateCategoryCard(summary: { label: string; slug: string; count: number }, index: number) {
+  return `
+    <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item category-directory-card">
+        <a class="uc_post_grid_style_one_image" href="/kategori/${escapeAttr(summary.slug)}">
+            <div class="uc_post_image">
+                ${generateCssPlaceholder(summary.label, "franchise-css-placeholder category-css-placeholder")}
+                <div class="uc_post_image_overlay"></div>
+            </div>
+        </a>
+        <div class="uc_content">
+            <div class="uc_content_inner">
+                <div class="uc_content-info-wrapper">
+                    <div class="uc_post_title">
+                        <a href="/kategori/${escapeAttr(summary.slug)}" class="ue_p_title">${escapeHtml(summary.label)}</a>
+                    </div>
+                    <div class="ue-meta-data">
+                        <span class="ue-grid-item-category">
+                            <a href="/kategori/${escapeAttr(summary.slug)}">${escapeHtml(summary.count)} franchise</a>
+                        </span>
+                    </div>
+                    <div class="uc_post_text">Lihat peluang franchise kategori ${escapeHtml(summary.label)}.</div>
+                </div>
+                <div class="uc_post_button">
+                    <a class="uc_more_btn" href="/kategori/${escapeAttr(summary.slug)}">
+                        <div class="uc_btn_inner"><div class="uc_btn_txt">Lihat Kategori</div></div>
                     </a>
                 </div>
             </div>
@@ -315,7 +416,7 @@ function formatRupiah(value: number | null | undefined) {
 
 function getThumb(url: string | null | undefined) {
   const normalized = normalizeUrl(url);
-  if (!normalized) return "/wp-content/uploads/woocommerce-placeholder.png";
+  if (!normalized) return "";
   if (!normalized.includes("cloudinary.com")) return normalized;
   return normalized.replace("/upload/", "/upload/w_400,h_200,c_fill,q_auto,f_auto/");
 }
@@ -333,7 +434,7 @@ function truncate(text: string, maxLength: number) {
   return `${normalized.slice(0, maxLength - 3).trim()}...`;
 }
 
-function slugify(text: string) {
+export function slugify(text: string) {
   return normalizeText(text)
     .toLowerCase()
     .replace(/\s+/g, "-")
@@ -381,4 +482,128 @@ function normalizeGeneratedHtml(html: string) {
       return normalized;
     })
     .replace(/[ \t]+$/gm, "");
+}
+
+function applyDirectoryMeta(html: string, options?: DirectoryPageOptions) {
+  if (!options) return html;
+  const title = `${options.title} - Franchise.id`;
+  return html
+    .replace(/<title>.*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
+    .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${escapeAttr(options.description)}">`)
+    .replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${escapeAttr(options.canonicalPath)}">`)
+    .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${escapeAttr(title)}">`)
+    .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${escapeAttr(options.description)}">`)
+    .replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${escapeAttr(options.canonicalPath)}">`)
+    .replace(/<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${escapeAttr(title)}">`)
+    .replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${escapeAttr(options.description)}">`)
+    .replace(/<h1 class="elementor-heading-title elementor-size-default">.*?<\/h1>/, `<h1 class="elementor-heading-title elementor-size-default">${escapeHtml(options.title)}</h1>`)
+    .replace(/<h2 class="elementor-heading-title elementor-size-default">.*?<\/h2>/, `<h2 class="elementor-heading-title elementor-size-default">${escapeHtml(options.title)}</h2>`);
+}
+
+function injectDirectoryStyles(html: string) {
+  if (html.includes("franchise-directory-generated-css")) return html;
+  return html.replace(
+    "</head>",
+    `<style id="franchise-directory-generated-css">
+.franchise-css-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(240, 202, 0, 0.28), transparent 28%),
+    linear-gradient(135deg, #111111 0%, #3a3a3a 54%, #f0ca00 100%);
+  color: #ffffff;
+  font-family: Outfit, "DM Sans", Arial, sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.franchise-css-placeholder span {
+  display: inline-flex;
+  width: 64px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.22);
+}
+.category-css-placeholder {
+  background:
+    radial-gradient(circle at 80% 22%, rgba(255, 255, 255, 0.22), transparent 24%),
+    linear-gradient(135deg, #f0ca00 0%, #222222 62%, #000000 100%);
+}
+</style>
+</head>`,
+  );
+}
+
+function generateCssPlaceholder(label: string, className: string) {
+  return `<div class="${escapeAttr(className)}" aria-label="${escapeAttr(label)}"><span>${escapeHtml(initials(label))}</span></div>`;
+}
+
+function initials(label: string) {
+  const words = normalizeText(label).split(/\s+/).filter(Boolean);
+  const first = words[0]?.[0] || "F";
+  const second = words.find((word) => word.length > 2 && word !== words[0])?.[0] || words[1]?.[0] || "I";
+  return `${first}${second}`.toUpperCase();
+}
+
+function getCategorySummaries(rows: FranchiseStaticRow[]) {
+  const categories = new Map<string, { label: string; slug: string; rows: FranchiseStaticRow[]; count: number }>();
+  for (const row of rows) {
+    const label = normalizeText(row.category) || "Bisnis Umum";
+    const slug = slugify(label);
+    const current = categories.get(slug) || { label, slug, rows: [], count: 0 };
+    current.rows.push(row);
+    current.count += 1;
+    categories.set(slug, current);
+  }
+  return [...categories.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, "id-ID"));
+}
+
+function addCategoryAlias(
+  entries: Map<string, CategoryRouteEntry>,
+  slug: string,
+  label: string,
+  rows: FranchiseStaticRow[],
+  predicate: (row: FranchiseStaticRow) => boolean,
+) {
+  const matchedRows = rows.filter(predicate);
+  if (!matchedRows.length || entries.has(slug)) return;
+  entries.set(slug, {
+    slug,
+    label,
+    rows: matchedRows,
+    canonicalPath: `/kategori/${slug}`,
+  });
+}
+
+function categorySlug(row: FranchiseStaticRow) {
+  return slugify(normalizeText(row.category) || "Bisnis Umum");
+}
+
+function scoreRecommendation(row: FranchiseStaticRow) {
+  const tier = normalizeText(row.verification_tier || row.status).toLowerCase();
+  const tierScore = tier === "premium" ? 500 : tier === "verified" ? 420 : tier === "free" ? 300 : 120;
+  return tierScore + completenessScore(row);
+}
+
+function scorePopularity(row: FranchiseStaticRow) {
+  const knownBrandScore = normalizeUrl(row.logo_url || row.cover_url) ? 80 : 0;
+  const investment = row.total_investment_idr || row.min_investment_idr || row.package_price_idr || 0;
+  const accessibleInvestmentScore = investment > 0 && investment <= 150_000_000 ? 90 : investment > 0 && investment <= 500_000_000 ? 60 : 20;
+  return scoreRecommendation(row) + knownBrandScore + accessibleInvestmentScore;
+}
+
+function completenessScore(row: FranchiseStaticRow) {
+  let score = 0;
+  if (normalizeUrl(row.logo_url)) score += 35;
+  if (normalizeUrl(row.cover_url)) score += 25;
+  if (normalizeText(row.short_desc || row.full_desc).length > 80) score += 35;
+  if (row.total_investment_idr || row.min_investment_idr || row.package_price_idr) score += 35;
+  if (normalizeText(row.website_url || row.instagram_url || row.whatsapp)) score += 20;
+  return score;
 }
