@@ -1,6 +1,6 @@
 # D1 Static Publish Strategy
 
-Last updated: 2026-06-19 06:10 (Asia/Jakarta)
+Last updated: 2026-06-19 06:34 (Asia/Jakarta)
 
 ## Problem
 
@@ -138,11 +138,14 @@ Implemented on 2026-06-18:
 - `.github/workflows/d1-static-publish.yaml` runs the poller at minutes 7 and 37 every hour plus manual `workflow_dispatch`.
 - `package.json` exposes `pnpm run publish:d1:poll` for local poller execution when the required environment variables are present, and `pnpm run build` as the conventional Cloudflare Pages build entrypoint.
 - `wrangler.toml` declares `pages_build_output_dir = "dist"` so Pages treats the repository config as valid for Pages builds.
+- `wrangler.toml` must not include `account_id`; Pages rejects that key before the build starts. The GitHub poller still uses `CLOUDFLARE_ACCOUNT_ID` for D1 HTTP API and direct-deploy fallback context.
+- The Pages build itself runs `pnpm run build`, and the D1 static builder uses the Cloudflare D1 HTTP API when `CLOUDFLARE_API_TOKEN` is present. Set that token as a Cloudflare Pages secret as well as a GitHub secret.
 
 Still required before GitHub automation is live:
 
 - Add GitHub secret `CLOUDFLARE_API_TOKEN` with D1 query/write permission for `franchise_db`.
 - Add GitHub secret `PAGES_DEPLOY_HOOK_FRANCHISEE_ID` containing the full Cloudflare Pages Deploy Hook URL.
 - In Cloudflare Pages project settings, set build command to `pnpm run build` and output directory to `dist` for both Git push builds and Deploy Hook builds.
+- Add Cloudflare Pages secret `CLOUDFLARE_API_TOKEN` so the build can read D1 through the Cloudflare HTTP API. Optional Pages variables: `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID`.
 - Optionally add GitHub variables `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_D1_DATABASE_ID`, and `PAGES_PROJECT_NAME`; defaults are present for the current `franchisee.id` project.
 - Push the workflow to GitHub and verify the first dirty D1 edit triggers exactly one Pages build.

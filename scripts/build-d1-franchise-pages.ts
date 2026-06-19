@@ -14,6 +14,8 @@ const UNCLAIMED_JSON_PATH = join(JSON_DIR, "unclaimed-brands.json");
 const STATIC_DATA_PATH = join(JSON_DIR, "d1-franchise-static-data.json");
 const SITE_ID = "site_franchisee_id";
 const DEFAULT_ACCOUNT = "franchise-network";
+const DEFAULT_CLOUDFLARE_ACCOUNT_ID = "0ba63b7f0096bc267a93fe5c80b1f571";
+const DEFAULT_D1_DATABASE_ID = "812cd8ac-edd0-45d9-981f-c9a15358317b";
 const GENERATOR_NAME = "d1-franchise-pages";
 const GENERATED_MARKER = "<!-- d1-generated:franchisee.id";
 
@@ -125,9 +127,9 @@ interface BuildStats {
   unclaimedWritten: boolean;
 }
 
-function main() {
+async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const rows = options.fromJson ? loadRowsFromJson(options.fromJson) : fetchRowsFromD1(options);
+  const rows = options.fromJson ? loadRowsFromJson(options.fromJson) : await fetchRowsFromD1(options);
   const franchises = options.limit ? rows.slice(0, options.limit) : rows;
   const previousManifest = loadManifest();
   const template = readFileSync(DETAIL_TEMPLATE_PATH, "utf8");
@@ -257,9 +259,41 @@ Options:
 `);
 }
 
-function fetchRowsFromD1(options: BuildOptions): D1FranchiseRow[] {
+async function fetchRowsFromD1(options: BuildOptions): Promise<D1FranchiseRow[]> {
   const sql = `SELECT f.id,f.brand_name,p.slug,f.category,f.status,f.verification_tier,f.source_sheet,f.year_established,f.fee_license_idr,f.total_investment_idr,f.min_investment_idr,f.max_investment_idr,f.estimated_bep_months,f.royalty_percent,f.short_desc,f.full_desc,f.support_system,f.logo_url,f.cover_url,f.outlets_location,fp.company_name,fp.pic_name,fp.email_contact,fp.whatsapp,fp.website_url,fp.instagram_url,fp.facebook_url,fp.tiktok_url,fp.youtube_url,fp.linkedin_url,(SELECT price_idr FROM franchise_packages pkg WHERE pkg.franchise_id=f.id AND pkg.is_active=1 ORDER BY pkg.display_order,pkg.created_at LIMIT 1) package_price_idr,(SELECT min_capital_idr FROM franchise_packages pkg WHERE pkg.franchise_id=f.id AND pkg.is_active=1 ORDER BY pkg.display_order,pkg.created_at LIMIT 1) package_min_capital_idr,(SELECT max_capital_idr FROM franchise_packages pkg WHERE pkg.franchise_id=f.id AND pkg.is_active=1 ORDER BY pkg.display_order,pkg.created_at LIMIT 1) package_max_capital_idr,p.canonical_url,p.publication_status,p.is_primary FROM franchises f JOIN franchise_site_publications p ON p.franchise_id=f.id LEFT JOIN franchisor_profiles fp ON fp.id=f.franchisor_profile_id WHERE p.site_id='${SITE_ID}' AND p.publication_status='published' AND f.status NOT IN ('archived','suspended') ORDER BY CASE f.verification_tier WHEN 'premium' THEN 4 WHEN 'verified' THEN 3 WHEN 'free' THEN 2 WHEN 'unclaimed' THEN 1 ELSE 0 END DESC,f.brand_name ASC;`;
 
+  const token = resolveOptionalCloudflareToken(options.account);
+  if (token) {
+    return fetchRowsFromD1Http(sql, token);
+  }
+
+  return fetchRowsFromD1Wrangler(sql, options);
+}
+
+async function fetchRowsFromD1Http(sql: string, token: string): Promise<D1FranchiseRow[]> {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || DEFAULT_CLOUDFLARE_ACCOUNT_ID;
+  const databaseId = process.env.CLOUDFLARE_D1_DATABASE_ID || DEFAULT_D1_DATABASE_ID;
+  const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/query`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ sql }),
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.success) {
+    const message = payload?.errors?.map((error: { message?: string }) => error.message).join("; ") || response.statusText;
+    throw new Error(`D1 HTTP query failed: ${message}`);
+  }
+
+  const result = Array.isArray(payload.result) ? payload.result[0] : payload.result;
+  const rows = z.array(D1FranchiseRowSchema).parse(result?.results || []);
+  return rows;
+}
+
+function fetchRowsFromD1Wrangler(sql: string, options: BuildOptions): D1FranchiseRow[] {
   const token = resolveCloudflareToken(options.account);
   const result =
     process.platform === "win32"
@@ -288,6 +322,10 @@ function fetchRowsFromD1(options: BuildOptions): D1FranchiseRow[] {
   });
 
   return rows;
+}
+
+function resolveOptionalCloudflareToken(account: string) {
+  return readCfmanToken(account) || process.env.CLOUDFLARE_API_TOKEN || "";
 }
 
 function resolveCloudflareToken(account: string) {
@@ -761,4 +799,7 @@ function printStats(stats: BuildStats, options: BuildOptions) {
   if (options.dryRun) console.log("- dry_run=1");
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-19 06:10 (Asia/Jakarta)
+Last updated: 2026-06-19 06:34 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -66,7 +66,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `js/form-utils.js` | Shared formatting, validation, UI helpers, and progress helpers exposed as globals. | Form modules and `/daftar/index.html` |
 | `js/form-franchise.js` | Legacy non-executing shim. Do not add runtime logic here. | Historical compatibility only |
 | `scripts/import-csv-to-d1.ts` | TypeScript/Zod importer that validates `csv/franchisors.csv`, `csv/unclaimed.csv`, and `csv/franchisee.csv`, generates idempotent SQL for `franchise_db`, preserves strict `UNCLAIMED` claim-search sanitization, and can apply remotely through `cfman`. | `migrations/0001_initial_network_schema.sql`, `/csv`, `.context/d1-import-franchise-data.sql`, Cloudflare D1 `franchise_db` |
-| `scripts/build-d1-franchise-pages.ts` | TypeScript/Zod D1-backed public page bridge. Reads published `site_franchisee_id` rows from `franchise_db`, renders `/peluang-usaha/index.html` and flat `/peluang-usaha/{slug}.html` detail files, includes franchisor contact/social links when present, writes the Astro snapshot `json/d1-franchise-static-data.json`, regenerates claim-search JSON, skips unchanged pages by manifest hash, and prunes only previously D1-generated pages. | `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, `json/d1-franchise-static-data.json`, `json/d1-generated-pages-manifest.json`, `json/unclaimed-brands.json`, `/peluang-usaha`, Wrangler |
+| `scripts/build-d1-franchise-pages.ts` | TypeScript/Zod D1-backed public page bridge. Reads published `site_franchisee_id` rows from `franchise_db` through the Cloudflare D1 HTTP API when `CLOUDFLARE_API_TOKEN` is available, with Wrangler/cfman as local fallback; renders `/peluang-usaha/index.html` and flat `/peluang-usaha/{slug}.html` detail files, includes franchisor contact/social links when present, writes the Astro snapshot `json/d1-franchise-static-data.json`, regenerates claim-search JSON, skips unchanged pages by manifest hash, and prunes only previously D1-generated pages. | `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, `json/d1-franchise-static-data.json`, `json/d1-generated-pages-manifest.json`, `json/unclaimed-brands.json`, `/peluang-usaha`, Cloudflare D1 HTTP API, Wrangler |
 | `scripts/d1-static-publish-poller.mjs` | Dependency-free Node poller for GitHub Actions. Calls the Cloudflare D1 HTTP API to expire stale queued requests, check pending rebuild work, enforce per-site guardrails, call the Cloudflare Pages Deploy Hook in the default mode, and mark direct-deploy fallback status. | `.github/workflows/d1-static-publish.yaml`, D1 `site_rebuild_requests`, D1 `site_publish_state`, GitHub secrets `CLOUDFLARE_API_TOKEN` and `PAGES_DEPLOY_HOOK_FRANCHISEE_ID` |
 | `src/lib/franchise-static.ts` | Astro-side renderer and Zod validator for the D1 franchise static snapshot. Converts D1 snapshot rows into listing/detail HTML using existing template placeholders and the same SEO/contact/social mapping as the bridge. | `json/d1-franchise-static-data.json`, `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, Astro routes |
 | `src/pages/peluang-usaha/index.astro` | Astro static listing route for `/peluang-usaha/`. Loads the D1 snapshot and renders the existing listing template during build. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json` |
@@ -104,7 +104,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `migrations/0001_initial_network_schema.sql` | First D1 schema migration for shared network sites, users/roles, profiles, franchises, claims, assets, leads, site publications, subscriptions/entitlements, imports, and audit events. |
 | `migrations/0002_add_franchisor_social_links.sql` | Adds optional Facebook, TikTok, YouTube, and LinkedIn URL columns to `franchisor_profiles`; website and Instagram already existed. |
 | `migrations/0003_site_publish_queue.sql` | Adds `site_rebuild_requests` and `site_publish_state` for D1-to-static publish queueing, per-site guardrails, and publish mode tracking. Applied remotely to `franchise_db` on 2026-06-18. |
-| `wrangler.toml` | Active Wrangler config for Cloudflare Pages output `dist` and shared D1 binding `franchise_db` using database UUID `812cd8ac-edd0-45d9-981f-c9a15358317b`. Remote commands should run through `npx cfman wrangler --account franchise-network ...`. |
+| `wrangler.toml` | Active Wrangler config for Cloudflare Pages output `dist` and shared D1 binding `franchise_db` using database UUID `812cd8ac-edd0-45d9-981f-c9a15358317b`. It intentionally omits `account_id` because Pages config validation rejects that key. Remote commands should run through `npx cfman wrangler --account franchise-network ...`. |
 | `wrangler.example.toml` | Non-active Wrangler example showing Pages output `dist`, the `franchise_db` binding, and migrations directory; copy to `wrangler.toml` only after adding the real D1 UUID. |
 | `.node-version` | Pins local/Cloudflare build runtime intent to Node `20.19.4`, matching the Astro 5.x dependency set. |
 | `.context/wrangler-local-d1-test.toml` | Local-only Wrangler config used to validate D1 migrations without production credentials. Do not use as deployment config. |
@@ -192,6 +192,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 3. `src/pages/peluang-usaha/index.astro` renders `/peluang-usaha/index.html`.
 4. `src/pages/peluang-usaha/[slug].astro` uses `getStaticPaths` to generate one flat `.html` detail page per D1 row because Astro is configured with `build.format: "preserve"`.
 5. Astro currently writes to `dist/`, so existing root `/peluang-usaha` files remain untouched during Astro validation. The bridge manifest/safe-prune rule remains the only pruning mechanism during the transition.
+6. Cloudflare Pages build-time D1 reads require `CLOUDFLARE_API_TOKEN`; optional `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` override the current project defaults.
 
 ## Business Rules To Preserve
 - Never remove or rename form fields without explicit user request and schema updates.

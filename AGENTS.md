@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-19 06:10 (Asia/Jakarta)
+Last updated: 2026-06-19 06:34 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -31,6 +31,7 @@ Last updated: 2026-06-19 06:10 (Asia/Jakarta)
 - Use `network_sites`, `franchise_site_publications`, subscriptions, entitlements, and `audit_events` to track where data came from and where it is published.
 - Use `cfman` for Cloudflare multi-account operations. Prefer an explicit account alias such as `franchise-network`: `npx cfman wrangler --account franchise-network d1 list`.
 - Run `cfman wrangler` commands sequentially; repeated immediate invocations can intermittently fail in this environment.
+- Do not add `account_id` to `wrangler.toml`; Cloudflare Pages config validation rejects it. Use the Cloudflare Pages project/account context, `cfman`, or GitHub `CLOUDFLARE_ACCOUNT_ID` env/vars for account selection.
 - Never commit Cloudflare tokens or paste them into repository files. Store tokens only through `cfman token add` or the local shell environment.
 - Never commit Clerk secret keys. Clerk env requirements are documented in `docs/architecture/CLERK_SETUP.md`.
 - Clerk webhook signing secrets are required for `/clerk-webhook`; do not accept unverified webhook payloads.
@@ -42,6 +43,7 @@ Last updated: 2026-06-19 06:10 (Asia/Jakarta)
 - Franchise detail physical output should be flat `/peluang-usaha/[slug].html`, with extensionless links `/peluang-usaha/[slug]` for Cloudflare Pages routing.
 - D1 writes do not automatically trigger static rebuilds. Public-page-affecting writes enqueue `site_rebuild_requests` through `functions/_site-publish-queue.js`; `/form-submit` currently queues franchisor listing, claim, and dev test listing changes. `.github/workflows/d1-static-publish.yaml` polls D1 every 30 minutes and calls the Cloudflare Pages Deploy Hook only when dirty and allowed by guardrails. GitHub direct `dist/` deploy is the fallback if Cloudflare build quota becomes constrained. Do not let the poller commit generated output to `main`, because that can trigger an extra Cloudflare Git build. Manual admin deploys are for urgent exceptions. See `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md` before changing publish automation.
 - Cloudflare Pages Git/Deploy Hook builds must have the project build command set to `pnpm run build` or `pnpm run build:astro`, with output directory `dist`. Without a build command, Pages skips dependency installation and Functions bundling fails on npm imports such as `zod` and `@clerk/backend`.
+- Cloudflare Pages builds also need `CLOUDFLARE_API_TOKEN` as a Pages secret so `scripts/build-d1-franchise-pages.ts` can read remote D1 through the Cloudflare D1 HTTP API during `pnpm run build`. GitHub secrets do not automatically exist inside Cloudflare Pages builds.
 - When cleaning stale generated franchise pages, delete only pages tracked in `json/d1-generated-pages-manifest.json` and marked with `d1-generated:franchisee.id`. Do not delete untracked legacy/example `/peluang-usaha` folders during the transition.
 
 ## Form Rules

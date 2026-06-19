@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-19 06:34 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `wrangler.toml`: Removed unsupported `account_id` from the Pages config and documented that account context must come from Cloudflare Pages, `cfman`, or environment variables.
+- `scripts/build-d1-franchise-pages.ts`: Added Cloudflare D1 HTTP API querying for build-time D1 reads when a token is available, with Wrangler/cfman retained as fallback.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented that Cloudflare Pages rejects `account_id` in `wrangler.toml` and that Pages builds need `CLOUDFLARE_API_TOKEN` for D1 static generation.
+
+### Removed
+- None.
+
 ## 2026-06-19 06:10 (Asia/Jakarta)
 ### Added
 - `.node-version`: Pinned the project build runtime intent to Node `20.19.4` for the Astro 5.x deployment path.

@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-19 06:10 (Asia/Jakarta)
+Last updated: 2026-06-19 06:34 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
@@ -117,7 +117,7 @@ API/server routes:
 | --- | --- | --- |
 | 0. Documentation baseline | In progress | Root docs are centralized around `AGENTS.md`, `CODEBASE.md`, `AUDIT.md`, and `docs/README.md`; long form references moved under `docs/`. Keep reducing duplication as implementation changes. |
 | 1. Data contract design | In progress | Initial shared-network D1 SQL migration created and applied remotely; TypeScript/Zod importer now maps current CSV snapshots into the first D1 schema. Next define reusable API/form payload schemas. |
-| 2. Cloudflare project config | In progress | `wrangler.toml` now points to `franchise_db` and declares Pages output `dist`; migrations are applied through `cfman`. Cloudflare Pages project still must keep build command set to `pnpm run build` or `pnpm run build:astro`; R2 binding and environment split still pending. |
+| 2. Cloudflare project config | In progress | `wrangler.toml` now points to `franchise_db` and declares Pages output `dist` without unsupported `account_id`; migrations are applied through `cfman`. Cloudflare Pages project still must keep build command set to `pnpm run build` or `pnpm run build:astro`; R2 binding and environment split still pending. |
 | 3. Import pipeline | In progress | `scripts/import-csv-to-d1.ts` imports CSV snapshots into D1, preserves `UNCLAIMED` sanitization and stable slugs, and has completed the first remote import. Runtime reads now use D1 first through `/get-franchises`. |
 | 4. Auth foundation | In progress | Custom Clerk login/register surfaces, `/auth-config`, `/auth-sync`, `/clerk-webhook`, `/user-role`, `/sync-clerk-metadata`, D1 user mapping, D1-to-Clerk metadata snapshots, and D1 role checks are implemented. Next configure real Clerk env vars/dashboard settings and verify on Cloudflare Pages. |
 | 5. Form API replacement | In progress | `/form-submit` now performs D1-only writes for franchisee, franchisor, claim, and dev test-data actions with Clerk session verification, D1 role checks, owner fields, and actor audit events. Next verify deployed form submissions against the real Pages binding and Clerk app. |
@@ -181,6 +181,8 @@ API/server routes:
 - Manual urgent trigger: an authenticated admin-only endpoint can trigger the deploy hook for time-sensitive edits, but this should be exceptional.
 - Build behavior: Pages build runs `pnpm run build:astro`, reads current D1, emits `dist/`, and Cloudflare serves the new static HTML.
 - Deployment config: Pages output directory is `dist` in `wrangler.toml`; Cloudflare Pages project settings must define a build command (`pnpm run build` preferred, or `pnpm run build:astro`) so dependencies are installed before Pages Functions are bundled.
+- Build-time D1 access: `pnpm run build` reads remote D1 through the Cloudflare D1 HTTP API. Cloudflare Pages must have `CLOUDFLARE_API_TOKEN` as a secret; `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` are optional because current defaults are in the builder.
+- Pages config rule: do not put `account_id` in `wrangler.toml`; Cloudflare Pages rejects it during config validation. Use the connected Pages project account, `cfman`, or GitHub env/vars for account context instead.
 - Freshness target: normal edits appear on the next scheduled publish window or poll window; urgent admin-triggered edits can appear sooner.
 - Recommended schedule: twice daily, e.g. 09:00 and 21:00 Asia/Jakarta.
 - Cooldown/debounce meaning: group many D1 edits into one build window. For this project, the practical cooldown is the scheduled publish window, not a minutes-based timer.
@@ -194,12 +196,14 @@ API/server routes:
   - `/form-submit` enqueues rebuild requests for franchisor listing submit, claim submit, dev unclaimed create, and dev test-data clear.
   - `.github/workflows/d1-static-publish.yaml` runs at minutes 7 and 37, exits cleanly when no pending work exists, and does not commit generated output.
   - `wrangler.toml` declares `pages_build_output_dir = "dist"`, `package.json` exposes `pnpm run build`, and `.node-version` pins Node 20.19.4 for the Astro 5 build path.
+  - `scripts/build-d1-franchise-pages.ts` now queries D1 via the Cloudflare HTTP API when a token is available, avoiding Wrangler account-discovery failures during Cloudflare Pages or CI builds.
 - Implementation checklist:
   - [x] Add `site_rebuild_requests` migration.
   - [x] Add `site_publish_state` migration for per-site dirty/published timestamps and publish counters.
   - [x] Add shared enqueue helper for D1 mutation endpoints.
   - [ ] Add GitHub Actions secrets for D1 query/deploy access through Wrangler.
   - [ ] Verify Cloudflare Pages project build settings: build command `pnpm run build`, output directory `dist`, Node 20.x.
+  - [ ] Add Cloudflare Pages secret `CLOUDFLARE_API_TOKEN` for build-time D1 reads if it is not already present in the Pages project.
   - [x] Add scheduled GitHub Actions poller that runs every 30 minutes and exits before dependency install/build when D1 is clean.
   - [x] Add Cloudflare Pages Deploy Hook publishing when D1 is dirty and guardrails allow a content publish.
   - [x] Keep direct `wrangler pages deploy dist` publishing as a documented fallback if Cloudflare build quota becomes constrained.
