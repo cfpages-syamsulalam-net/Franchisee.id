@@ -12,7 +12,8 @@
     "build:d1:franchises": "tsx scripts/build-d1-franchise-pages.ts",
     "astro:sync": "pnpm run build:d1:franchises",
     "build": "pnpm run build:astro",
-    "build:astro": "pnpm run astro:sync && astro build",
+    "build:astro": "pnpm run astro:sync && astro build && pnpm run copy:legacy-static",
+    "copy:legacy-static": "node scripts/copy-legacy-static.mjs",
     "publish:d1:poll": "node scripts/d1-static-publish-poller.mjs",
     "dev:astro": "pnpm run astro:sync && astro dev --host 127.0.0.1",
     "preview:astro": "astro preview --host 127.0.0.1"

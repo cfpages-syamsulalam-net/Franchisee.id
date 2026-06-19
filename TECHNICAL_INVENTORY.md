@@ -5,6 +5,7 @@ This file records important functions, modules, and key variables across `/js`, 
 ## Migration Direction
 This inventory describes the current runtime and migration bridge. Google Sheets and Cloudinary references are transition-layer behavior, not the desired final stack. New backend work should move function ownership toward D1/R2/Clerk and update `CODEBASE.md`, `AUDIT.md`, and this inventory together. `/form-submit` is now Clerk-authenticated and D1-role-authorized.
 Cloudflare Pages builds must run `pnpm run build` or `pnpm run build:astro` and output `dist`; otherwise dependency-backed Pages Functions cannot bundle imports such as `zod` and `@clerk/backend`.
+The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/copy-legacy-static.mjs` copies legacy static assets/pages into `dist` without overwriting Astro output.
 
 ## 1. Directory: `/js` (Client-side & SSG Builders)
 
@@ -143,6 +144,13 @@ Cloudflare Pages builds must run `pnpm run build` or `pnpm run build:astro` and 
 - `expireStaleQueuedRequests()`: Moves old `queued` requests back to `failed_retryable` after `stale_queued_after_minutes`.
 - `evaluateGuardrails(state)`: Enforces daily publish limit and minimum interval.
 - D1 access: uses the Cloudflare D1 HTTP API with `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_D1_DATABASE_ID`.
+
+### File: `scripts/copy-legacy-static.mjs`
+*Post-Astro legacy static export copier for Cloudflare Pages output.*
+- Copies root legacy HTML/XML/XSL files and public legacy directories into `dist`.
+- Does not overwrite existing files, so Astro-generated D1 pages remain authoritative.
+- Skips source/control directories such as `src`, `scripts`, `functions`, `docs`, `.github`, `node_modules`, `migrations`, and `dist`.
+- Skips top-level `peluang-usaha` so legacy detail folder indexes cannot compete with Astro's flat `/peluang-usaha/[slug].html` output.
 
 ## 2. Directory: `/src` (Astro Static Generation)
 

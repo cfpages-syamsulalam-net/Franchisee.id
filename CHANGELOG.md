@@ -4,6 +4,19 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-19 21:21 (Asia/Jakarta)
+### Added
+- `scripts/copy-legacy-static.mjs`: Added post-Astro copy step that copies legacy static HTML/assets/directories into `dist` without overwriting Astro-generated output and skips legacy `/peluang-usaha`.
+- `.context/session-20260619-2121.md`: Added session snapshot for the hybrid static output fix.
+- `package.json`: Added `copy:legacy-static` script.
+
+### Changed
+- `package.json`: Updated `build:astro` so Cloudflare Pages output includes both Astro-generated D1 pages and legacy static site assets/pages.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the hybrid `dist` output rule and route ownership for `/peluang-usaha`.
+
+### Removed
+- None.
+
 ## 2026-06-19 06:34 (Asia/Jakarta)
 ### Added
 - None.

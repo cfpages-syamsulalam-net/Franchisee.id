@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-19 06:34 (Asia/Jakarta)
+Last updated: 2026-06-19 21:21 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -44,6 +44,7 @@ Last updated: 2026-06-19 06:34 (Asia/Jakarta)
 - D1 writes do not automatically trigger static rebuilds. Public-page-affecting writes enqueue `site_rebuild_requests` through `functions/_site-publish-queue.js`; `/form-submit` currently queues franchisor listing, claim, and dev test listing changes. `.github/workflows/d1-static-publish.yaml` polls D1 every 30 minutes and calls the Cloudflare Pages Deploy Hook only when dirty and allowed by guardrails. GitHub direct `dist/` deploy is the fallback if Cloudflare build quota becomes constrained. Do not let the poller commit generated output to `main`, because that can trigger an extra Cloudflare Git build. Manual admin deploys are for urgent exceptions. See `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md` before changing publish automation.
 - Cloudflare Pages Git/Deploy Hook builds must have the project build command set to `pnpm run build` or `pnpm run build:astro`, with output directory `dist`. Without a build command, Pages skips dependency installation and Functions bundling fails on npm imports such as `zod` and `@clerk/backend`.
 - Cloudflare Pages builds also need `CLOUDFLARE_API_TOKEN` as a Pages secret so `scripts/build-d1-franchise-pages.ts` can read remote D1 through the Cloudflare D1 HTTP API during `pnpm run build`. GitHub secrets do not automatically exist inside Cloudflare Pages builds.
+- The Cloudflare Pages output is hybrid. `astro build` creates D1-backed routes, then `scripts/copy-legacy-static.mjs` copies the legacy static export into `dist` without overwriting Astro output. Keep legacy `/peluang-usaha` excluded from that copy so Astro owns the D1-backed directory route.
 - When cleaning stale generated franchise pages, delete only pages tracked in `json/d1-generated-pages-manifest.json` and marked with `d1-generated:franchisee.id`. Do not delete untracked legacy/example `/peluang-usaha` folders during the transition.
 
 ## Form Rules

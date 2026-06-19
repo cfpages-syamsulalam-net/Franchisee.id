@@ -1,6 +1,6 @@
 # D1 Static Publish Strategy
 
-Last updated: 2026-06-19 06:34 (Asia/Jakarta)
+Last updated: 2026-06-19 21:21 (Asia/Jakarta)
 
 ## Problem
 
@@ -140,6 +140,7 @@ Implemented on 2026-06-18:
 - `wrangler.toml` declares `pages_build_output_dir = "dist"` so Pages treats the repository config as valid for Pages builds.
 - `wrangler.toml` must not include `account_id`; Pages rejects that key before the build starts. The GitHub poller still uses `CLOUDFLARE_ACCOUNT_ID` for D1 HTTP API and direct-deploy fallback context.
 - The Pages build itself runs `pnpm run build`, and the D1 static builder uses the Cloudflare D1 HTTP API when `CLOUDFLARE_API_TOKEN` is present. Set that token as a Cloudflare Pages secret as well as a GitHub secret.
+- The Pages build output is hybrid. `astro build` writes D1-backed pages first, then `scripts/copy-legacy-static.mjs` copies the legacy static export into `dist` without overwriting Astro output and without copying legacy top-level `/peluang-usaha`.
 
 Still required before GitHub automation is live:
 

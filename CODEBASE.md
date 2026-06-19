@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-19 06:34 (Asia/Jakarta)
+Last updated: 2026-06-19 21:21 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -67,6 +67,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `js/form-franchise.js` | Legacy non-executing shim. Do not add runtime logic here. | Historical compatibility only |
 | `scripts/import-csv-to-d1.ts` | TypeScript/Zod importer that validates `csv/franchisors.csv`, `csv/unclaimed.csv`, and `csv/franchisee.csv`, generates idempotent SQL for `franchise_db`, preserves strict `UNCLAIMED` claim-search sanitization, and can apply remotely through `cfman`. | `migrations/0001_initial_network_schema.sql`, `/csv`, `.context/d1-import-franchise-data.sql`, Cloudflare D1 `franchise_db` |
 | `scripts/build-d1-franchise-pages.ts` | TypeScript/Zod D1-backed public page bridge. Reads published `site_franchisee_id` rows from `franchise_db` through the Cloudflare D1 HTTP API when `CLOUDFLARE_API_TOKEN` is available, with Wrangler/cfman as local fallback; renders `/peluang-usaha/index.html` and flat `/peluang-usaha/{slug}.html` detail files, includes franchisor contact/social links when present, writes the Astro snapshot `json/d1-franchise-static-data.json`, regenerates claim-search JSON, skips unchanged pages by manifest hash, and prunes only previously D1-generated pages. | `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, `json/d1-franchise-static-data.json`, `json/d1-generated-pages-manifest.json`, `json/unclaimed-brands.json`, `/peluang-usaha`, Cloudflare D1 HTTP API, Wrangler |
+| `scripts/copy-legacy-static.mjs` | Post-Astro build copier for the hybrid deployment. Copies legacy static HTML/assets/directories into `dist` without overwriting existing Astro output and skips legacy `/peluang-usaha` so the D1-backed Astro route owns that path. | `package.json` `copy:legacy-static`, Cloudflare Pages output `dist`, legacy root static export |
 | `scripts/d1-static-publish-poller.mjs` | Dependency-free Node poller for GitHub Actions. Calls the Cloudflare D1 HTTP API to expire stale queued requests, check pending rebuild work, enforce per-site guardrails, call the Cloudflare Pages Deploy Hook in the default mode, and mark direct-deploy fallback status. | `.github/workflows/d1-static-publish.yaml`, D1 `site_rebuild_requests`, D1 `site_publish_state`, GitHub secrets `CLOUDFLARE_API_TOKEN` and `PAGES_DEPLOY_HOOK_FRANCHISEE_ID` |
 | `src/lib/franchise-static.ts` | Astro-side renderer and Zod validator for the D1 franchise static snapshot. Converts D1 snapshot rows into listing/detail HTML using existing template placeholders and the same SEO/contact/social mapping as the bridge. | `json/d1-franchise-static-data.json`, `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, Astro routes |
 | `src/pages/peluang-usaha/index.astro` | Astro static listing route for `/peluang-usaha/`. Loads the D1 snapshot and renders the existing listing template during build. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json` |
@@ -93,7 +94,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `astro.config.mjs` | Astro static build config for Cloudflare Pages-compatible output. Uses `build.format: "preserve"` so listing index output stays nested while detail source files can build flat `.html` files. |
 | `src/env.d.ts` | Astro TypeScript client reference. |
 | `tsconfig.json` | Strict TypeScript config for migration scripts and Astro support code. Includes `scripts/**/*.ts`, `src/**/*.ts`, and `src/**/*.d.ts`. |
-| `package.json` | Declares pnpm scripts for D1 CSV import, D1 bridge generation, Astro static builds, and publish queue polling: `import:csv:*`, `build:d1:franchises:*`, `astro:sync`, `build`, `build:astro`, `publish:d1:poll`, `dev:astro`, and `preview:astro`. `build` is a conventional alias for Cloudflare Pages and runs the same Astro pipeline. |
+| `package.json` | Declares pnpm scripts for D1 CSV import, D1 bridge generation, Astro static builds, legacy static copying, and publish queue polling: `import:csv:*`, `build:d1:franchises:*`, `astro:sync`, `build`, `build:astro`, `copy:legacy-static`, `publish:d1:poll`, `dev:astro`, and `preview:astro`. `build` is a conventional alias for Cloudflare Pages and runs the Astro pipeline plus legacy static copy. |
 | `.github/workflows/generate-pages.yaml` | Scheduled/manual/repository-dispatch builder workflow for regenerated static directory pages. |
 | `.github/workflows/d1-static-publish.yaml` | 30-minute/manual D1 publish poller. Runs `scripts/d1-static-publish-poller.mjs`, calls the Cloudflare Pages Deploy Hook only when D1 is dirty and guardrails allow publishing, and supports direct `wrangler pages deploy dist` fallback without committing generated output. |
 | `.github/workflows/head.yaml` | Legacy automation that injects `.head` content into every HTML file. Use cautiously because it touches many static exports. |
@@ -191,8 +192,9 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 2. `src/lib/franchise-static.ts` validates the snapshot with Zod and exposes shared listing/detail renderers.
 3. `src/pages/peluang-usaha/index.astro` renders `/peluang-usaha/index.html`.
 4. `src/pages/peluang-usaha/[slug].astro` uses `getStaticPaths` to generate one flat `.html` detail page per D1 row because Astro is configured with `build.format: "preserve"`.
-5. Astro currently writes to `dist/`, so existing root `/peluang-usaha` files remain untouched during Astro validation. The bridge manifest/safe-prune rule remains the only pruning mechanism during the transition.
-6. Cloudflare Pages build-time D1 reads require `CLOUDFLARE_API_TOKEN`; optional `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` override the current project defaults.
+5. `scripts/copy-legacy-static.mjs` copies the legacy static export into `dist` without overwriting Astro-generated files, so old CSS/JS/images/static pages remain available.
+6. The copy step skips legacy root `/peluang-usaha` to avoid route conflicts with Astro's D1-backed `/peluang-usaha` output.
+7. Cloudflare Pages build-time D1 reads require `CLOUDFLARE_API_TOKEN`; optional `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` override the current project defaults.
 
 ## Business Rules To Preserve
 - Never remove or rename form fields without explicit user request and schema updates.

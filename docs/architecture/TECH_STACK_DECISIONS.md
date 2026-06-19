@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-06-19 06:34 (Asia/Jakarta)
+Last updated: 2026-06-19 21:21 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -154,7 +154,8 @@ Astro scaffold:
 - Cloudflare Pages project settings must still include a build command. If no build command is configured, Pages skips dependency installation and the Functions bundler cannot resolve npm imports such as `zod` or `@clerk/backend`.
 - Cloudflare Pages config validation rejects `account_id` in `wrangler.toml`; account selection must come from the Pages project, `cfman`, or GitHub environment/variables.
 - The D1 static builder prefers the Cloudflare D1 HTTP API for build-time reads when `CLOUDFLARE_API_TOKEN` is available. This avoids Wrangler account-discovery calls during Cloudflare Pages and CI builds.
-- The manifest/safe-prune rule remains in the D1 bridge. Astro writes to `dist/`, so it does not delete legacy/example root `/peluang-usaha` folders during validation.
+- The build output is hybrid: Astro writes D1-backed routes to `dist`, then `scripts/copy-legacy-static.mjs` copies legacy static pages/assets into `dist` without overwriting Astro output.
+- The legacy copy skips top-level `/peluang-usaha`, so Astro owns the D1-backed directory route and legacy detail folder indexes do not compete with flat `.html` output.
 
 ### D1 Change To Static Publish Mechanism
 Target mechanism for franchisor edits, admin edits, claims, listing deletes, and publication-status changes:
