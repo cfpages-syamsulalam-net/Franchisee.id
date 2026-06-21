@@ -14,6 +14,7 @@ const SKIP_TOP_LEVEL = new Set([
   ".git",
   ".github",
   ".grok",
+  "category",
   "csv",
   "dist",
   "docs",
@@ -22,6 +23,7 @@ const SKIP_TOP_LEVEL = new Set([
   "node_modules",
   "peluang-usaha",
   "progress",
+  "public",
   "scripts",
   "src",
   "templates",
@@ -62,7 +64,7 @@ console.log("Legacy static copy:");
 console.log(`- directories_scanned=${stats.directories}`);
 console.log(`- files_copied=${stats.filesCopied}`);
 console.log(`- files_skipped=${stats.filesSkipped}`);
-console.log("- skipped_route=peluang-usaha");
+console.log("- skipped_routes=peluang-usaha,category");
 
 function shouldCopyRootFile(fileName) {
   if (ROOT_FILE_NAMES.has(fileName)) return true;

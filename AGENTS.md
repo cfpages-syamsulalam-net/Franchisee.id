@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-19 21:53 (Asia/Jakarta)
+Last updated: 2026-06-21 05:45 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -39,8 +39,10 @@ Last updated: 2026-06-19 21:53 (Asia/Jakarta)
 ## Public Page Generation
 - Public franchise listing/detail pages must be generated from D1 for SEO.
 - Current bridge: `scripts/build-d1-franchise-pages.ts` queries D1, renders legacy template HTML, writes `json/d1-franchise-static-data.json`, updates `json/d1-generated-pages-manifest.json`, and refreshes `json/unclaimed-brands.json`.
-- Astro target: `src/pages/peluang-usaha/index.astro`, `src/pages/peluang-usaha/[slug].astro`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/kategori/[slug]`, `/category/[slug]`, and top-level category slug routes consume the D1 snapshot through `src/lib/franchise-static.ts` and generate static HTML during `pnpm run build:astro`.
+- Astro target: `src/pages/peluang-usaha/index.astro`, `src/pages/peluang-usaha/[slug].astro`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/kategori/[slug]`, and top-level category slug routes consume the D1 snapshot through `src/lib/franchise-static.ts` and generate static HTML during `pnpm run build:astro`.
+- Category permalink policy: canonical category URLs are Indonesian `/kategori/...`. Legacy `/category/...` paths should redirect to `/kategori/...`, not generate duplicate indexable pages.
 - Directory list cards must use the CSS-only placeholder from `src/lib/franchise-static.ts` when a franchise has no cover/logo URL. Do not point missing images at legacy WooCommerce placeholder assets unless that asset is restored and intentionally owned.
+- Franchise listing detail pages are directory/listing pages, not blog posts. Do not show fake WordPress author/date blocks such as `By admin`; show franchise facts and real D1 timestamps only after the snapshot/query includes trustworthy publication/submission dates.
 - Franchise detail physical output should be flat `/peluang-usaha/[slug].html`, with extensionless links `/peluang-usaha/[slug]` for Cloudflare Pages routing.
 - D1 writes do not automatically trigger static rebuilds. Public-page-affecting writes enqueue `site_rebuild_requests` through `functions/_site-publish-queue.js`; `/form-submit` currently queues franchisor listing, claim, and dev test listing changes. `.github/workflows/d1-static-publish.yaml` polls D1 every 30 minutes and calls the Cloudflare Pages Deploy Hook only when dirty and allowed by guardrails. GitHub direct `dist/` deploy is the fallback if Cloudflare build quota becomes constrained. Do not let the poller commit generated output to `main`, because that can trigger an extra Cloudflare Git build. Manual admin deploys are for urgent exceptions. See `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md` before changing publish automation.
 - Cloudflare Pages Git/Deploy Hook builds must have the project build command set to `pnpm run build` or `pnpm run build:astro`, with output directory `dist`. Without a build command, Pages skips dependency installation and Functions bundling fails on npm imports such as `zod` and `@clerk/backend`.

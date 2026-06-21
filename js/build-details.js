@@ -54,7 +54,7 @@ function generateBreadcrumbs(item) {
             <ul class="trail-items">
                 <li class="trail-item"><a href="/">Home</a></li>
                 <li class="trail-item"><a href="/peluang-usaha">Peluang Usaha</a></li>
-                <li class="trail-item"><a href="/category/${catSlug}">${category}</a></li>
+                <li class="trail-item"><a href="/kategori/${catSlug}">${category}</a></li>
                 <li class="trail-item"><span>${item.brand_name}</span></li>
             </ul>
         </div>
@@ -137,7 +137,7 @@ async function build() {
                 '{BEP_PERIOD}': item.bep_period || 'Tanya Admin',
                 '{ADVERTISING_FEE}': item.fee_marketing || 'Tanya Admin',
                 '{LONG_DESCRIPTION}': item.full_desc || `Peluang usaha franchise ${item.brand_name}.`,
-                '{LOGO_URL}': item.logo_url || '/wp-content/uploads/woocommerce-placeholder.png',
+                '{LOGO_URL}': item.logo_url || '',
                 '{HERO_IMAGE}': item.cover_url || item.logo_url || '',
                 '{OG_IMAGE}': item.logo_url || '',
                 '{SEO_TITLE}': `Franchise ${item.brand_name} - Info Modal & Peluang Usaha 2026`,

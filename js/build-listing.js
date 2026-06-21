@@ -86,8 +86,16 @@ function formatRupiah(angka) {
 
 // HELPER: Cloudinary Thumbnail (Biar ringan)
 function getThumb(url) {
-    if (!url || !url.includes('cloudinary.com')) return '/wp-content/uploads/woocommerce-placeholder.png'; // Fallback
+    if (!url) return '';
+    if (!url.includes('cloudinary.com')) return url;
     return url.replace('/upload/', '/upload/w_400,h_200,c_fill,q_auto,f_auto/');
+}
+
+function initials(label) {
+    const words = normalizeText(label).split(/\s+/).filter(Boolean);
+    const first = words[0]?.[0] || 'F';
+    const second = (words.find(word => word.length > 2 && word !== words[0]) || words[1] || 'I')[0];
+    return `${first}${second}`.toUpperCase();
 }
 
 // HELPER: Load from CSV (Simple Parser)
@@ -161,6 +169,9 @@ function generateCard(item, index) {
     const slug = slugify(item.brand_name);
     const link = `/peluang-usaha/${slug}`;
     const imgUrl = getThumb(item.cover_url || item.logo_url);
+    const imageBlock = imgUrl
+        ? `<img loading="lazy" src="${imgUrl}" alt="${item.brand_name}" width="300" height="150">`
+        : `<div class="franchise-css-placeholder" aria-label="${item.brand_name}"><span>${initials(item.brand_name)}</span></div>`;
     const kategori = item.category || 'Bisnis Umum';
     
     // Deskripsi pendek (max 90 chars)
@@ -184,7 +195,7 @@ function generateCard(item, index) {
     <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${tier.toLowerCase()}-tier">
         <a class="uc_post_grid_style_one_image" href="${link}">
             <div class="uc_post_image">
-                <img loading="lazy" src="${imgUrl}" alt="${item.brand_name}" width="300" height="150">
+                ${imageBlock}
                 <div class="uc_post_image_overlay"></div>
             </div>
         </a>

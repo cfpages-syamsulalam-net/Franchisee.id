@@ -21,7 +21,7 @@ const { entry } = Astro.props as { entry: CategoryRouteEntry };
 const html = renderListingPage(entry.rows, {
   title: `Franchise ${entry.label}`,
   description: `Temukan peluang franchise ${entry.label} yang tersedia di Franchisee.id, termasuk estimasi modal, kategori usaha, profil brand, dan tautan detail franchise.`,
-  canonicalPath: `/${entry.slug}`,
+  canonicalPath: entry.canonicalPath,
   rows: getRecommendedRows(entry.rows),
 });
 ---

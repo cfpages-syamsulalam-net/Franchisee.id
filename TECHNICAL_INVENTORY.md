@@ -165,8 +165,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getRecommendedRows(rows)`: Sorts directory rows by verification/status and listing completeness for `/rekomendasi`.
 - `getPopularRows(rows)`: Sorts directory rows by a deterministic popularity proxy until real D1 analytics/lead/payment metrics exist.
 - `getAlphabeticalRows(rows)`: Sorts directory rows alphabetically by brand name for `/abjad`.
-- `getCategoryRouteEntries(rows)`: Builds category route entries and legacy aliases for `/kategori/[slug]`, `/category/[slug]`, and top-level category slugs.
-- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, social/contact links, sticky claim CTA, category summaries, and CSS-only missing-image placeholders.
+- `getCategoryRouteEntries(rows)`: Builds category route entries and legacy aliases for `/kategori/[slug]` and top-level category slugs.
+- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, social/contact links, sticky claim CTA, category summaries, CSS-only missing-image placeholders, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
 
 ### File: `src/pages/peluang-usaha/index.astro`
 *Astro static listing page.*
@@ -207,15 +207,15 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getStaticPaths()`: Creates one archive per D1 category and supported alias, including `makanan-minuman-fb`, `perhotelan-travel`, `properti-furniture`, `teknologi-digital`, and `jasa-layanan`.
 - Renders filtered listing cards with category-specific title, description, and canonical path.
 
-### File: `src/pages/category/[slug].astro`
-*Compatibility Astro static category archive.*
-- `prerender = true`.
-- Generates the same category rows under legacy `/category/[slug]` style paths.
-
 ### File: `src/pages/[categorySlug].astro`
 *Compatibility Astro static top-level category archive.*
 - `prerender = true`.
-- Generates top-level category slug pages such as `/makanan-minuman-fb.html` for old WordPress-style category links.
+- Generates top-level category slug pages such as `/makanan-minuman-fb.html` for old WordPress-style category links, with canonical metadata pointing to `/kategori/[slug]`.
+
+### File: `public/_redirects`
+*Cloudflare Pages redirects.*
+- Redirects `/category/*` to `/kategori/:splat` with `301`.
+- Prevents duplicate generated category permalink families while preserving old external links.
 
 ## 3. Directory: `/functions` (Cloudflare Edge Logic)
 

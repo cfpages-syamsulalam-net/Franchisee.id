@@ -18,6 +18,7 @@ const DEFAULT_CLOUDFLARE_ACCOUNT_ID = "0ba63b7f0096bc267a93fe5c80b1f571";
 const DEFAULT_D1_DATABASE_ID = "812cd8ac-edd0-45d9-981f-c9a15358317b";
 const GENERATOR_NAME = "d1-franchise-pages";
 const GENERATED_MARKER = "<!-- d1-generated:franchisee.id";
+const SITE_FALLBACK_IMAGE = "/wp-content/uploads/2025/09/franchise.id-favicon-logo.png";
 
 const nullableString = z.string().nullish().transform((value) => value ?? null);
 const nullableNumber = z.number().nullish().transform((value) => value ?? null);
@@ -450,8 +451,9 @@ function renderDetailPage(row: D1FranchiseRow, template: string): string {
   const brandName = normalizeText(row.brand_name);
   const category = normalizeText(row.category) || "Bisnis Umum";
   const description = normalizeText(row.full_desc || row.short_desc) || `Peluang usaha franchise ${brandName}.`;
-  const logoUrl = normalizeUrl(row.logo_url) || "/wp-content/uploads/woocommerce-placeholder.png";
-  const heroImage = normalizeUrl(row.cover_url || row.logo_url) || logoUrl;
+  const logoUrl = normalizeUrl(row.logo_url);
+  const heroImage = normalizeUrl(row.cover_url || row.logo_url);
+  const ogImage = logoUrl || heroImage || SITE_FALLBACK_IMAGE;
   const minimumModal = formatRupiah(
     row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr,
   );
@@ -474,7 +476,7 @@ function renderDetailPage(row: D1FranchiseRow, template: string): string {
     "{LONG_DESCRIPTION}": escapeHtml(description),
     "{LOGO_URL}": escapeAttr(logoUrl),
     "{HERO_IMAGE}": escapeAttr(heroImage),
-    "{OG_IMAGE}": escapeAttr(logoUrl),
+    "{OG_IMAGE}": escapeAttr(ogImage),
     "{SEO_TITLE}": escapeHtml(seoTitle),
     "{SEO_DESCRIPTION}": escapeHtml(seoDescription),
     "{VERIFIED_ICON}": tier === "verified" || tier === "premium" ? '<i class="fas fa-check-circle franchise-verified-badge" title="Verified Brand"></i>' : "",
@@ -490,7 +492,9 @@ function renderDetailPage(row: D1FranchiseRow, template: string): string {
     html = html.split(key).join(value);
   }
 
-  return normalizeGeneratedHtml(`${GENERATED_MARKER}:v1 slug=${escapeAttr(row.slug)} franchise_id=${escapeAttr(row.id)} -->\n${html}`);
+  return normalizeGeneratedHtml(
+    `${GENERATED_MARKER}:v1 slug=${escapeAttr(row.slug)} franchise_id=${escapeAttr(row.id)} -->\n${html.replace(/href="\/category\//g, 'href="/kategori/')}`,
+  );
 }
 
 function generateCard(row: D1FranchiseRow, index: number) {
@@ -499,6 +503,9 @@ function generateCard(row: D1FranchiseRow, index: number) {
   const category = normalizeText(row.category) || "Bisnis Umum";
   const link = `/peluang-usaha/${row.slug}`;
   const imageUrl = getThumb(row.cover_url || row.logo_url);
+  const imageBlock = imageUrl
+    ? `<img loading="lazy" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(brandName)}" width="300" height="150">`
+    : `<div class="franchise-css-placeholder" aria-label="${escapeAttr(brandName)}"><span>${escapeHtml(initials(brandName))}</span></div>`;
   const modal = formatRupiah(row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr);
   const desc = truncate(normalizeText(row.short_desc || row.full_desc) || `Peluang usaha franchise ${brandName}.`, 90);
   const badge =
@@ -512,7 +519,7 @@ function generateCard(row: D1FranchiseRow, index: number) {
     <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${escapeAttr(tier.toLowerCase())}-tier">
         <a class="uc_post_grid_style_one_image" href="${escapeAttr(link)}">
             <div class="uc_post_image">
-                <img loading="lazy" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(brandName)}" width="300" height="150">
+                ${imageBlock}
                 <div class="uc_post_image_overlay"></div>
             </div>
         </a>
@@ -566,7 +573,7 @@ function generateBreadcrumbs(row: D1FranchiseRow) {
             <ul class="trail-items">
                 <li class="trail-item"><a href="/">Home</a></li>
                 <li class="trail-item"><a href="/peluang-usaha">Peluang Usaha</a></li>
-                <li class="trail-item"><a href="/category/${escapeAttr(slugify(category))}">${escapeHtml(category)}</a></li>
+                <li class="trail-item"><a href="/kategori/${escapeAttr(slugify(category))}">${escapeHtml(category)}</a></li>
                 <li class="trail-item"><span>${escapeHtml(row.brand_name)}</span></li>
             </ul>
         </div>
@@ -690,9 +697,16 @@ function formatRupiah(value: number | null | undefined) {
 
 function getThumb(url: string | null | undefined) {
   const normalized = normalizeUrl(url);
-  if (!normalized) return "/wp-content/uploads/woocommerce-placeholder.png";
+  if (!normalized) return "";
   if (!normalized.includes("cloudinary.com")) return normalized;
   return normalized.replace("/upload/", "/upload/w_400,h_200,c_fill,q_auto,f_auto/");
+}
+
+function initials(label: string) {
+  const words = normalizeText(label).split(/\s+/).filter(Boolean);
+  const first = words[0]?.[0] || "F";
+  const second = words.find((word) => word.length > 2 && word !== words[0])?.[0] || words[1]?.[0] || "I";
+  return `${first}${second}`.toUpperCase();
 }
 
 function paragraphs(text: string) {

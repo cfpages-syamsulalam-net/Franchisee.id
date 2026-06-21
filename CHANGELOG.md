@@ -4,6 +4,22 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-21 05:45 (Asia/Jakarta)
+### Added
+- `public/_redirects`: Added Cloudflare Pages 301 redirects from legacy `/category/*` and `/category` URLs to canonical Indonesian `/kategori/*` URLs.
+- `.context/session-20260621-0545.md`: Added session snapshot for the franchise listing cosmetic, permalink, and SEO cleanup.
+
+### Changed
+- `src/lib/franchise-static.ts`: Removed missing WooCommerce placeholder image fallbacks, added CSS-only placeholders, made franchise names clickable, improved unclaimed/verified badges with CSS tooltips and fact chips, cleaned detail SEO metadata, generated breadcrumb JSON-LD, normalized category links to `/kategori`, and styled detail breadcrumbs.
+- `templates/detail-franchise-tpl.html`: Removed the black header placeholder and fake WordPress `By admin / October 10, 2025` post metadata from franchise listing detail pages.
+- `scripts/build-d1-franchise-pages.ts`, `js/build-listing.js`, and `js/build-details.js`: Aligned legacy bridge/build helpers with CSS-only placeholders and `/kategori` links.
+- `scripts/copy-legacy-static.mjs`: Skips legacy `/category` during hybrid build output so `/category/*` remains redirect-only instead of duplicate generated pages.
+- `src/pages/[categorySlug].astro`: Canonicalizes top-level legacy category pages to `/kategori/[slug]`.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the canonical `/kategori` policy, redirect-only `/category`, listing-page metadata rules, and placeholder/badge behavior.
+
+### Removed
+- `src/pages/category/[slug].astro`: Removed duplicate Astro `/category/[slug]` generation in favor of Cloudflare Pages redirects.
+
 ## 2026-06-19 21:53 (Asia/Jakarta)
 ### Added
 - `src/pages/rekomendasi/index.astro`: Added D1-backed static recommendation archive.

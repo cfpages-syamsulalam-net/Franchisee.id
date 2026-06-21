@@ -7,6 +7,7 @@ const DETAIL_TEMPLATE_PATH = join(ROOT_DIR, "templates", "detail-franchise-tpl.h
 const LISTING_TEMPLATE_PATH = join(ROOT_DIR, "templates", "peluang-usaha-tpl.html");
 const STATIC_DATA_PATH = join(ROOT_DIR, "json", "d1-franchise-static-data.json");
 const GENERATED_MARKER = "<!-- astro-generated:d1-franchisee.id";
+const SITE_FALLBACK_IMAGE = "/wp-content/uploads/2025/09/franchise.id-favicon-logo.png";
 
 const nullableString = z.string().nullish().transform((value) => value ?? null);
 const nullableNumber = z.number().nullish().transform((value) => value ?? null);
@@ -69,6 +70,8 @@ export const FranchiseStaticRowSchema = z.object({
   canonical_url: nullableString,
   publication_status: nullableString,
   is_primary: nullableNumber,
+  first_published_at: nullableString,
+  updated_at: nullableString,
 });
 
 export type FranchiseStaticRow = z.infer<typeof FranchiseStaticRowSchema>;
@@ -157,13 +160,17 @@ export function renderDetailPage(row: FranchiseStaticRow) {
   const brandName = normalizeText(row.brand_name);
   const category = normalizeText(row.category) || "Bisnis Umum";
   const description = normalizeText(row.full_desc || row.short_desc) || `Peluang usaha franchise ${brandName}.`;
-  const logoUrl = normalizeUrl(row.logo_url) || "/wp-content/uploads/woocommerce-placeholder.png";
-  const heroImage = normalizeUrl(row.cover_url || row.logo_url) || logoUrl;
+  const logoUrl = normalizeUrl(row.logo_url);
+  const heroImage = normalizeUrl(row.cover_url || row.logo_url);
+  const ogImage = logoUrl || heroImage || SITE_FALLBACK_IMAGE;
   const minimumModal = formatRupiah(
     row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr,
   );
-  const seoTitle = `Franchise ${brandName} - Info Modal & Peluang Usaha 2026`;
-  const seoDescription = `Cek modal dan biaya franchise ${brandName}. Dapatkan profil lengkap, syarat jadi mitra, dan kontak resmi franchisor ${brandName} di Franchisee.id.`;
+  const seoTitle = `Franchise ${brandName}: Modal ${minimumModal} - ${category}`;
+  const seoDescription = truncate(
+    `Cek peluang franchise ${brandName} kategori ${category}, estimasi modal ${minimumModal}, profil brand, syarat kemitraan, dan kontak franchisor di Franchisee.id.`,
+    155,
+  );
 
   const replacements: Record<string, string> = {
     "{BRAND_NAME}": escapeHtml(brandName),
@@ -181,11 +188,11 @@ export function renderDetailPage(row: FranchiseStaticRow) {
     "{LONG_DESCRIPTION}": escapeHtml(description),
     "{LOGO_URL}": escapeAttr(logoUrl),
     "{HERO_IMAGE}": escapeAttr(heroImage),
-    "{OG_IMAGE}": escapeAttr(logoUrl),
+    "{OG_IMAGE}": escapeAttr(ogImage),
     "{SEO_TITLE}": escapeHtml(seoTitle),
     "{SEO_DESCRIPTION}": escapeHtml(seoDescription),
-    "{VERIFIED_ICON}": tier === "verified" || tier === "premium" ? '<i class="fas fa-check-circle franchise-verified-badge" title="Verified Brand"></i>' : "",
-    "{JSON_LD}": generateJsonLd(row, description, logoUrl),
+    "{VERIFIED_ICON}": tier === "verified" || tier === "premium" ? '<i class="fas fa-check-circle franchise-verified-badge" aria-label="Brand terverifikasi"></i>' : "",
+    "{JSON_LD}": generateJsonLd(row, description, logoUrl, ogImage),
     "{BREADCRUMBS}": generateBreadcrumbs(row),
     "{CLAIM_STICKY_BAR}": isUnclaimed ? generateStickyBar(row) : "",
     "{DYNAMIC_TABS_CONTENT}": generateTabs(row, description, isUnclaimed),
@@ -195,6 +202,8 @@ export function renderDetailPage(row: FranchiseStaticRow) {
   for (const [key, value] of Object.entries(replacements)) {
     html = html.split(key).join(value);
   }
+
+  html = applyDetailEnhancements(html, row, { logoUrl, heroImage });
 
   return normalizeGeneratedHtml(`${GENERATED_MARKER}:v1 slug=${escapeAttr(row.slug)} franchise_id=${escapeAttr(row.id)} -->\n${html}`);
 }
@@ -210,12 +219,8 @@ function generateCard(row: FranchiseStaticRow, index: number) {
     : generateCssPlaceholder(brandName, "franchise-css-placeholder");
   const modal = formatRupiah(row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr);
   const desc = truncate(normalizeText(row.short_desc || row.full_desc) || `Peluang usaha franchise ${brandName}.`, 90);
-  const badge =
-    tier === "VERIFIED" || tier === "PREMIUM"
-      ? `<i class="fas fa-check-circle" style="color:#2980b9; margin-left:4px;" title="Verified"></i>`
-      : tier === "UNCLAIMED"
-        ? `<span style="font-size: 10px; background: #eee; color: #777; padding: 1px 5px; border-radius: 3px; margin-left: 5px; font-weight: normal; vertical-align: middle;">Belum Diklaim</span>`
-        : "";
+  const badge = generateStatusBadge(tier);
+  const factChips = generateFactChips(row, modal);
 
   return `
     <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${escapeAttr(tier.toLowerCase())}-tier">
@@ -229,7 +234,7 @@ function generateCard(row: FranchiseStaticRow, index: number) {
             <div class="uc_content_inner">
                 <div class="uc_content-info-wrapper">
                     <div class="uc_post_title">
-                        <a href="${escapeAttr(link)}" class="ue_p_title" style="display:flex; align-items:center;">
+                        <a href="${escapeAttr(link)}" class="ue_p_title franchise-card-title">
                             ${escapeHtml(brandName)} ${badge}
                         </a>
                     </div>
@@ -237,9 +242,7 @@ function generateCard(row: FranchiseStaticRow, index: number) {
                         <span class="ue-grid-item-category">
                             <a href="/kategori/${escapeAttr(slugify(category))}">${escapeHtml(category)}</a>
                         </span>
-                        <span style="font-size:11px; color:#666; display:block; width:100%; margin-top:5px;">
-                            Modal: <b>${escapeHtml(modal)}</b>
-                        </span>
+                        ${factChips}
                     </div>
                     <div class="uc_post_text">${escapeHtml(desc)}</div>
                 </div>
@@ -285,17 +288,43 @@ function generateCategoryCard(summary: { label: string; slug: string; count: num
     </div>`;
 }
 
-function generateJsonLd(row: FranchiseStaticRow, description: string, logoUrl: string) {
-  const schema = {
+function generateStatusBadge(tier: string) {
+  if (tier === "VERIFIED" || tier === "PREMIUM") {
+    const label = tier === "PREMIUM" ? "Premium" : "Terverifikasi";
+    const tip = tier === "PREMIUM" ? "Listing premium dengan informasi prioritas." : "Brand sudah diverifikasi oleh tim Franchisee.id.";
+    return `<span class="franchise-status-badge franchise-status-verified" aria-label="${escapeAttr(label)}"><i class="fas fa-check-circle" aria-hidden="true"></i><span>${escapeHtml(label)}</span><span class="franchise-tooltip">${escapeHtml(tip)}</span></span>`;
+  }
+
+  if (tier === "UNCLAIMED") {
+    return `<span class="franchise-status-badge franchise-status-unclaimed" aria-label="Belum diklaim"><i class="fas fa-exclamation-circle" aria-hidden="true"></i><span>Belum diklaim</span><span class="franchise-tooltip">Data berasal dari sumber publik. Pemilik brand dapat klaim untuk memperbarui profil.</span></span>`;
+  }
+
+  return "";
+}
+
+function generateFactChips(row: FranchiseStaticRow, modal: string) {
+  const chips = [
+    ["Modal", modal],
+    row.estimated_bep_months ? ["BEP", `${row.estimated_bep_months} bulan`] : null,
+    row.year_established ? ["Berdiri", String(row.year_established)] : null,
+  ].filter(Boolean) as [string, string][];
+
+  return `<span class="franchise-card-facts">${chips
+    .map(([label, value]) => `<span class="franchise-fact-chip"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></span>`)
+    .join("")}</span>`;
+}
+
+function generateJsonLd(row: FranchiseStaticRow, description: string, logoUrl: string, imageUrl: string) {
+  const brand = {
     "@context": "https://schema.org",
     "@type": "Brand",
     name: row.brand_name,
     description,
     url: `https://franchisee.id/peluang-usaha/${row.slug}`,
-    logo: logoUrl,
     category: row.category || "Franchise",
   };
-  return `<script type="application/ld+json">${JSON.stringify(schema)}</script>`;
+  if (logoUrl) Object.assign(brand, { logo: logoUrl, image: imageUrl });
+  return `<script type="application/ld+json">${JSON.stringify(brand)}</script>`;
 }
 
 function generateBreadcrumbs(row: FranchiseStaticRow) {
@@ -307,11 +336,26 @@ function generateBreadcrumbs(row: FranchiseStaticRow) {
             <ul class="trail-items">
                 <li class="trail-item"><a href="/">Home</a></li>
                 <li class="trail-item"><a href="/peluang-usaha">Peluang Usaha</a></li>
-                <li class="trail-item"><a href="/category/${escapeAttr(slugify(category))}">${escapeHtml(category)}</a></li>
+                <li class="trail-item"><a href="/kategori/${escapeAttr(slugify(category))}">${escapeHtml(category)}</a></li>
                 <li class="trail-item"><span>${escapeHtml(row.brand_name)}</span></li>
             </ul>
         </div>
     </nav>`;
+}
+
+function generateBreadcrumbJsonLd(row: FranchiseStaticRow) {
+  const category = normalizeText(row.category) || "Bisnis";
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://franchisee.id/" },
+      { "@type": "ListItem", position: 2, name: "Peluang Usaha", item: "https://franchisee.id/peluang-usaha" },
+      { "@type": "ListItem", position: 3, name: category, item: `https://franchisee.id/kategori/${slugify(category)}` },
+      { "@type": "ListItem", position: 4, name: row.brand_name, item: `https://franchisee.id/peluang-usaha/${row.slug}` },
+    ],
+  };
+  return `<script type="application/ld+json" class="franchise-breadcrumb-schema">${JSON.stringify(schema)}</script>`;
 }
 
 function generateStickyBar(row: FranchiseStaticRow) {
@@ -500,6 +544,39 @@ function applyDirectoryMeta(html: string, options?: DirectoryPageOptions) {
     .replace(/<h2 class="elementor-heading-title elementor-size-default">.*?<\/h2>/, `<h2 class="elementor-heading-title elementor-size-default">${escapeHtml(options.title)}</h2>`);
 }
 
+function applyDetailEnhancements(
+  html: string,
+  row: FranchiseStaticRow,
+  assets: { logoUrl: string; heroImage: string },
+) {
+  let enhanced = html
+    .replace(/<meta property="og:type" content="article">/, '<meta property="og:type" content="website">')
+    .replace(/\s*<meta property="article:tag" content="[^"]*">\n?/g, "")
+    .replace(/\s*<meta property="article:section" content="[^"]*">\n?/g, "")
+    .replace(/\s*<meta property="og:updated_time" content="[^"]*">\n?/g, "")
+    .replace(
+      /<script type="application\/ld\+json" class="rank-math-schema">.*?<\/script><!-- \/Rank Math WordPress SEO plugin -->/,
+      `${generateBreadcrumbJsonLd(row)}<!-- /Rank Math WordPress SEO plugin -->`,
+    )
+    .replace(/href="\/category\//g, 'href="/kategori/');
+
+  if (!assets.heroImage) {
+    enhanced = enhanced.replace(
+      /background-image: url\(''\); background-size: cover; background-position: center;/g,
+      "background: radial-gradient(circle at 18% 20%, rgba(240, 202, 0, 0.28), transparent 28%), linear-gradient(135deg, #111111 0%, #3a3a3a 54%, #f0ca00 100%); background-size: cover; background-position: center;",
+    );
+  }
+
+  if (!assets.logoUrl) {
+    enhanced = enhanced.replace(
+      /<img([^>]+)src=""([^>]*)>/g,
+      generateCssPlaceholder(row.brand_name, "franchise-css-placeholder franchise-detail-image-placeholder"),
+    );
+  }
+
+  return injectDetailStyles(enhanced);
+}
+
 function injectDirectoryStyles(html: string) {
   if (html.includes("franchise-directory-generated-css")) return html;
   return html.replace(
@@ -534,6 +611,163 @@ function injectDirectoryStyles(html: string) {
   background:
     radial-gradient(circle at 80% 22%, rgba(255, 255, 255, 0.22), transparent 24%),
     linear-gradient(135deg, #f0ca00 0%, #222222 62%, #000000 100%);
+}
+#uc_post_grid_elementor_d0f4a5f .ue_p_title {
+  pointer-events: auto !important;
+}
+.franchise-card-title {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 8px;
+  color: #111111 !important;
+  line-height: 1.24;
+  text-decoration: none !important;
+}
+.franchise-card-title:hover {
+  color: #c28d00 !important;
+}
+.franchise-status-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 118px;
+  min-height: 22px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 700;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.franchise-status-verified {
+  color: #0f5132;
+  background: #d1f1dc;
+  border: 1px solid rgba(15, 81, 50, 0.18);
+}
+.franchise-status-unclaimed {
+  color: #6a4a00;
+  background: #fff2bd;
+  border: 1px solid rgba(194, 141, 0, 0.28);
+}
+.franchise-status-badge > span:not(.franchise-tooltip) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.franchise-tooltip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  z-index: 50;
+  width: 220px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: #111111;
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 500;
+  white-space: normal;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 80ms ease, transform 80ms ease;
+}
+.franchise-status-badge:hover .franchise-tooltip,
+.franchise-status-badge:focus-within .franchise-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.franchise-card-facts {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.franchise-fact-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border-radius: 4px;
+  background: #f6f6f6;
+  color: #222222;
+  font-size: 11px;
+  line-height: 1.2;
+}
+.franchise-fact-chip span {
+  color: #767676;
+}
+.franchise-fact-chip strong {
+  font-weight: 700;
+}
+</style>
+</head>`,
+  );
+}
+
+function injectDetailStyles(html: string) {
+  if (html.includes("franchise-detail-generated-css")) return html;
+  return html.replace(
+    "</head>",
+    `<style id="franchise-detail-generated-css">
+.ast-breadcrumbs {
+  margin: 18px auto 22px;
+  max-width: 1200px;
+  padding: 0 20px;
+  font-size: 13px;
+  color: #5f5f5f;
+}
+.ast-breadcrumbs-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.trail-browse {
+  color: #6b6b6b;
+  font-weight: 600;
+}
+.trail-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.trail-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4b4b4b;
+}
+.trail-item:not(:last-child)::after {
+  content: "/";
+  color: #a5a5a5;
+}
+.trail-item a {
+  color: #3c2d00 !important;
+  background: #fff3c4;
+  border: 1px solid rgba(194, 141, 0, 0.28);
+  border-radius: 4px;
+  padding: 3px 7px;
+  text-decoration: none !important;
+}
+.trail-item a:hover {
+  background: #f0ca00;
+  color: #111111 !important;
+}
+.trail-item span {
+  color: #222222;
+}
+.franchise-detail-image-placeholder {
+  min-height: 138px;
+  aspect-ratio: 300 / 138;
 }
 </style>
 </head>`,
