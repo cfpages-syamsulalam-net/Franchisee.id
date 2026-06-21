@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-22 06:05 (Asia/Jakarta)
+### Added
+- `.context/session-20260622-0605.md`: Added session snapshot for detail-page tabs, placeholders, contrast, and public contact parsing.
+
+### Changed
+- `src/lib/franchise-static.ts`: Styled detail CSS-only placeholders, fixed readable yellow/category/breadcrumb link states, made generated detail tabs self-contained, stripped stale legacy tab comments, and rendered unclaimed public contact/address data with Indonesian phone parsing and claim CTA wording.
+- `scripts/build-d1-franchise-pages.ts`: Added public `phone` and `office_address` fields to the D1 static snapshot query for Astro detail rendering.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented unclaimed public contact display, render-time phone normalization, detail tab behavior, and future normalized contact-model direction.
+
+### Removed
+- None.
+
 ## 2026-06-21 05:45 (Asia/Jakarta)
 ### Added
 - `public/_redirects`: Added Cloudflare Pages 301 redirects from legacy `/category/*` and `/category` URLs to canonical Indonesian `/kategori/*` URLs.

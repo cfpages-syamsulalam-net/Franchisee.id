@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-21 05:45 (Asia/Jakarta)
+Last updated: 2026-06-22 06:05 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -43,6 +43,7 @@ Last updated: 2026-06-21 05:45 (Asia/Jakarta)
 - Category permalink policy: canonical category URLs are Indonesian `/kategori/...`. Legacy `/category/...` paths should redirect to `/kategori/...`, not generate duplicate indexable pages.
 - Directory list cards must use the CSS-only placeholder from `src/lib/franchise-static.ts` when a franchise has no cover/logo URL. Do not point missing images at legacy WooCommerce placeholder assets unless that asset is restored and intentionally owned.
 - Franchise listing detail pages are directory/listing pages, not blog posts. Do not show fake WordPress author/date blocks such as `By admin`; show franchise facts and real D1 timestamps only after the snapshot/query includes trustworthy publication/submission dates.
+- Unclaimed franchise detail pages may still show public imported phone, office address, and social/contact data when D1 has it. Label that data as public/unclaimed, include a claim CTA for corrections, and parse messy Indonesian phone text into labeled rows instead of hiding contact information just because the listing is not yet claimed.
 - Franchise detail physical output should be flat `/peluang-usaha/[slug].html`, with extensionless links `/peluang-usaha/[slug]` for Cloudflare Pages routing.
 - D1 writes do not automatically trigger static rebuilds. Public-page-affecting writes enqueue `site_rebuild_requests` through `functions/_site-publish-queue.js`; `/form-submit` currently queues franchisor listing, claim, and dev test listing changes. `.github/workflows/d1-static-publish.yaml` polls D1 every 30 minutes and calls the Cloudflare Pages Deploy Hook only when dirty and allowed by guardrails. GitHub direct `dist/` deploy is the fallback if Cloudflare build quota becomes constrained. Do not let the poller commit generated output to `main`, because that can trigger an extra Cloudflare Git build. Manual admin deploys are for urgent exceptions. See `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md` before changing publish automation.
 - Cloudflare Pages Git/Deploy Hook builds must have the project build command set to `pnpm run build` or `pnpm run build:astro`, with output directory `dist`. Without a build command, Pages skips dependency installation and Functions bundling fails on npm imports such as `zod` and `@clerk/backend`.

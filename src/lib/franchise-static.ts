@@ -203,6 +203,7 @@ export function renderDetailPage(row: FranchiseStaticRow) {
     html = html.split(key).join(value);
   }
 
+  html = stripLegacyDetailTabComment(html);
   html = applyDetailEnhancements(html, row, { logoUrl, heroImage });
 
   return normalizeGeneratedHtml(`${GENERATED_MARKER}:v1 slug=${escapeAttr(row.slug)} franchise_id=${escapeAttr(row.id)} -->\n${html}`);
@@ -378,9 +379,7 @@ function generateDisclaimer(row: FranchiseStaticRow) {
 }
 
 function generateTabs(row: FranchiseStaticRow, description: string, isUnclaimed: boolean) {
-  const contact = isUnclaimed
-    ? "<p>Kontak belum tersedia. Silakan gunakan tombol Klaim untuk memverifikasi kepemilikan.</p>"
-    : generateContactBlock(row);
+  const contact = generateContactBlock(row, isUnclaimed);
   const support = normalizeText(row.support_system);
 
   return `
@@ -406,7 +405,14 @@ function generateTabs(row: FranchiseStaticRow, description: string, isUnclaimed:
             </div>`;
 }
 
-function generateContactBlock(row: FranchiseStaticRow) {
+interface ParsedPhoneContact {
+  label: string;
+  display: string;
+  href: string;
+  type: "whatsapp" | "mobile" | "landline";
+}
+
+function generateContactBlock(row: FranchiseStaticRow, isUnclaimed = false) {
   const links = [
     ["Website", row.website_url],
     ["Instagram", row.instagram_url],
@@ -418,22 +424,163 @@ function generateContactBlock(row: FranchiseStaticRow) {
     .map(([label, url]) => ({ label, url: normalizeExternalUrl(url) }))
     .filter((item) => item.url);
 
-  const lead = normalizeText(row.email_contact || row.whatsapp)
-    ? "Gunakan kontak resmi brand untuk informasi kemitraan lebih lanjut."
-    : "Silakan hubungi tim acquisition untuk informasi lebih lanjut.";
+  const phoneContacts = [
+    ...parsePhoneContacts(row.whatsapp, "WhatsApp", "whatsapp"),
+    ...parsePhoneContacts(row.phone, "Telepon", "phone"),
+  ].filter((item, index, items) => items.findIndex((candidate) => candidate.href === item.href) === index);
+
+  const hasPublicContact =
+    phoneContacts.length > 0 || normalizeText(row.email_contact) || normalizeText(row.office_address) || links.length > 0;
+
+  const lead = isUnclaimed
+    ? hasPublicContact
+      ? "Data kontak publik di bawah ini belum diklaim pemilik brand. Klaim listing untuk memperbarui atau mengoreksi data."
+      : "Kontak publik belum tersedia. Pemilik brand dapat klaim listing untuk melengkapi data resmi."
+    : hasPublicContact
+      ? "Gunakan kontak resmi brand untuk informasi kemitraan lebih lanjut."
+      : "Silakan hubungi tim acquisition untuk informasi lebih lanjut.";
 
   const contactRows = [
     row.pic_name ? `<li>PIC: ${escapeHtml(row.pic_name)}</li>` : "",
-    row.email_contact ? `<li>Email: ${escapeHtml(row.email_contact)}</li>` : "",
-    row.whatsapp ? `<li>WhatsApp: ${escapeHtml(row.whatsapp)}</li>` : "",
+    row.email_contact ? `<li>Email: <a href="mailto:${escapeAttr(row.email_contact)}">${escapeHtml(row.email_contact)}</a></li>` : "",
+    ...phoneContacts.map((contact) => generatePhoneContactRow(contact)),
+    row.office_address ? `<li>Alamat kantor: ${escapeHtml(row.office_address)}</li>` : "",
   ].filter(Boolean);
 
   const contactList = contactRows.length ? `<ul>${contactRows.join("")}</ul>` : "";
   const linkList = links.length
     ? `<ul>${links.map((item) => `<li><a href="${escapeAttr(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.label)}</a></li>`).join("")}</ul>`
     : "";
+  const claimNote = isUnclaimed
+    ? `<p class="franchise-contact-note"><strong>Pemilik brand?</strong> <a href="/daftar?claim=${escapeAttr(row.slug)}">Klaim listing ini</a> untuk mengelola nomor, alamat, dan informasi resmi.</p>`
+    : "";
 
-  return `<p>${escapeHtml(lead)}</p>${contactList}${linkList}`;
+  return `<div class="franchise-contact-block"><p>${escapeHtml(lead)}</p>${contactList}${linkList}${claimNote}</div>`;
+}
+
+function parsePhoneContacts(value: unknown, defaultLabel: string, source: "whatsapp" | "phone"): ParsedPhoneContact[] {
+  const text = normalizeText(value);
+  if (!text) return [];
+
+  const contacts: ParsedPhoneContact[] = [];
+  const starts = findPhoneStarts(text);
+
+  for (let index = 0; index < starts.length; index += 1) {
+    const start = starts[index];
+    const nextStart = starts[index + 1] ?? text.length;
+    const slice = text.slice(start, nextStart);
+    const raw = slice.match(/^(?:\(\s*)?(?:\+?62|0)(?:[\s().-]*\d){5,15}/)?.[0];
+    if (!raw) continue;
+
+    const digits = raw.replace(/\D/g, "");
+    const normalized = normalizeIndonesianDigits(digits);
+    if (!isUsablePhoneNumber(normalized)) continue;
+
+    const end = start + raw.length;
+    const label = inferPhoneLabel(text, start, end, defaultLabel);
+    const type = classifyPhone(normalized, label, source);
+    contacts.push({
+      label: label || defaultLabel,
+      display: formatIndonesianPhone(normalized, type),
+      href: type === "whatsapp" ? `https://wa.me/${toInternationalDigits(normalized)}` : `tel:+${toInternationalDigits(normalized)}`,
+      type,
+    });
+  }
+
+  return contacts;
+}
+
+function findPhoneStarts(text: string) {
+  const starts: number[] = [];
+  const startPattern = /(?:\(\s*)?(?:\+?62|0)(?=[\s().-]*\d)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = startPattern.exec(text))) {
+    const previous = text[match.index - 1] || "";
+    if (/\d/.test(previous)) continue;
+    starts.push(match.index);
+  }
+
+  return starts;
+}
+
+function inferPhoneLabel(text: string, start: number, end: number, fallback: string) {
+  const before = text.slice(Math.max(0, start - 48), start);
+  const after = text.slice(end, Math.min(text.length, end + 32));
+  const afterParen = after.match(/^\s*\(([^()]{2,24})\)/);
+  if (afterParen?.[1] && /[a-z]/i.test(afterParen[1])) return titleCaseLabel(afterParen[1]);
+
+  const beforeColon = before.match(/([A-Za-z][A-Za-z\s./-]{1,28})\s*[:：]\s*$/);
+  if (beforeColon?.[1]) return titleCaseLabel(beforeColon[1]);
+
+  const keyword = before.match(/\b(marketing|whatsapp|wa|kantor|office|telp kantor|telepon kantor|telepon|telp|owner|admin|cp)\b\s*$/i);
+  if (keyword?.[1]) return titleCaseLabel(keyword[1]);
+
+  return fallback;
+}
+
+function classifyPhone(normalized: string, label: string, source: "whatsapp" | "phone"): ParsedPhoneContact["type"] {
+  const lower = label.toLowerCase();
+  if ((source === "whatsapp" || /\b(wa|whatsapp)\b/.test(lower)) && normalized.startsWith("08")) return "whatsapp";
+  if (normalized.startsWith("08")) return "mobile";
+  return "landline";
+}
+
+function normalizeIndonesianDigits(digits: string) {
+  if (digits.startsWith("620")) return `0${digits.slice(3)}`;
+  if (digits.startsWith("62")) return `0${digits.slice(2)}`;
+  return digits;
+}
+
+function isUsablePhoneNumber(digits: string) {
+  if (!/^0\d{7,13}$/.test(digits)) return false;
+  return new Set(digits.split("")).size > 2;
+}
+
+function toInternationalDigits(normalized: string) {
+  return normalized.startsWith("0") ? `62${normalized.slice(1)}` : normalized;
+}
+
+function formatIndonesianPhone(normalized: string, type: ParsedPhoneContact["type"]) {
+  if (type === "landline") {
+    const areaLength = normalized.startsWith("021") ? 3 : normalized.startsWith("02") || normalized.startsWith("03") || normalized.startsWith("04") ? 4 : 3;
+    const area = normalized.slice(0, areaLength);
+    const local = normalized.slice(areaLength);
+    return `(${area}) ${groupDigits(local, 4)}`;
+  }
+  return groupDigits(normalized, 4);
+}
+
+function groupDigits(value: string, size: number) {
+  const groups: string[] = [];
+  for (let index = 0; index < value.length; index += size) groups.push(value.slice(index, index + size));
+  return groups.join(" ");
+}
+
+function titleCaseLabel(label: string) {
+  const normalized = normalizeText(label).replace(/[./-]+/g, " ");
+  const aliases: Record<string, string> = {
+    wa: "WhatsApp",
+    whatsapp: "WhatsApp",
+    telp: "Telepon",
+    telepon: "Telepon",
+    kantor: "Kantor",
+    office: "Kantor",
+    "telp kantor": "Telepon Kantor",
+    "telepon kantor": "Telepon Kantor",
+    cp: "CP",
+  };
+  const key = normalized.toLowerCase();
+  if (aliases[key]) return aliases[key];
+  return normalized
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function generatePhoneContactRow(contact: ParsedPhoneContact) {
+  const icon = contact.type === "whatsapp" ? "fab fa-whatsapp" : contact.type === "mobile" ? "fas fa-mobile-alt" : "fas fa-phone-alt";
+  return `<li class="franchise-phone-contact franchise-phone-${escapeAttr(contact.type)}"><span><i class="${icon}" aria-hidden="true"></i>${escapeHtml(contact.label)}:</span> <a href="${escapeAttr(contact.href)}" target="${contact.type === "whatsapp" ? "_blank" : "_self"}" rel="noopener noreferrer">${escapeHtml(contact.display)}</a></li>`;
 }
 
 function compareFranchises(a: FranchiseStaticRow, b: FranchiseStaticRow) {
@@ -577,18 +724,29 @@ function applyDetailEnhancements(
   return injectDetailStyles(enhanced);
 }
 
+function stripLegacyDetailTabComment(html: string) {
+  return html.replace(
+    /\s*<!--\s*<div class="e-n-tabs" data-widget-number="26009074"[\s\S]*?<\/div>\s*-->/,
+    "",
+  );
+}
+
 function injectDirectoryStyles(html: string) {
   if (html.includes("franchise-directory-generated-css")) return html;
   return html.replace(
     "</head>",
     `<style id="franchise-directory-generated-css">
 .franchise-css-placeholder {
+  position: relative;
   width: 100%;
   height: 100%;
   min-height: 130px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  overflow: hidden;
   background:
     radial-gradient(circle at 18% 20%, rgba(240, 202, 0, 0.28), transparent 28%),
     linear-gradient(135deg, #111111 0%, #3a3a3a 54%, #f0ca00 100%);
@@ -599,6 +757,8 @@ function injectDirectoryStyles(html: string) {
   text-transform: uppercase;
 }
 .franchise-css-placeholder span {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   width: 64px;
   height: 64px;
@@ -606,6 +766,18 @@ function injectDirectoryStyles(html: string) {
   justify-content: center;
   border: 2px solid rgba(255, 255, 255, 0.7);
   background: rgba(0, 0, 0, 0.22);
+}
+.franchise-css-placeholder small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  max-width: calc(100% - 24px);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: none;
 }
 .category-css-placeholder {
   background:
@@ -712,9 +884,29 @@ function injectDirectoryStyles(html: string) {
 
 function injectDetailStyles(html: string) {
   if (html.includes("franchise-detail-generated-css")) return html;
-  return html.replace(
+  const withStyles = html.replace(
     "</head>",
     `<style id="franchise-detail-generated-css">
+.hfe-post-info a,
+.hfe-post-info__terms-list-item,
+.elementor-widget-post-info-widget a {
+  color: #111111 !important;
+}
+.hfe-post-info__terms-list-item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #fff3c4;
+  border: 1px solid rgba(194, 141, 0, 0.3);
+  text-decoration: none !important;
+  line-height: 1.25;
+}
+.hfe-post-info__terms-list-item:hover {
+  background: #f0ca00;
+  color: #111111 !important;
+}
 .ast-breadcrumbs {
   margin: 18px auto 22px;
   max-width: 1200px;
@@ -765,17 +957,154 @@ function injectDetailStyles(html: string) {
 .trail-item span {
   color: #222222;
 }
+.franchise-css-placeholder {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(240, 202, 0, 0.34), transparent 28%),
+    linear-gradient(135deg, #111111 0%, #3a3a3a 54%, #f0ca00 100%);
+  color: #ffffff;
+  font-family: Outfit, "DM Sans", Arial, sans-serif;
+  text-transform: uppercase;
+}
+.franchise-css-placeholder::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+}
+.franchise-css-placeholder span {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: 72px;
+  height: 72px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.74);
+  background: rgba(0, 0, 0, 0.24);
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.franchise-css-placeholder small {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
 .franchise-detail-image-placeholder {
   min-height: 138px;
   aspect-ratio: 300 / 138;
 }
+.e-n-tabs-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.e-n-tab-title {
+  cursor: pointer;
+  border: 1px solid #dddddd !important;
+  background: #f5f5f5 !important;
+  color: #1f1f1f !important;
+  padding: 10px 16px !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+}
+.e-n-tab-title[aria-selected="true"] {
+  border-color: #f0ca00 !important;
+  background: #f0ca00 !important;
+  color: #111111 !important;
+}
+.e-n-tab-content:not(.e-active) {
+  display: none !important;
+}
+.franchise-contact-block ul {
+  margin: 12px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+.franchise-contact-block li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eeeeee;
+}
+.franchise-contact-block li span {
+  color: #555555;
+  font-weight: 700;
+}
+.franchise-contact-block li i {
+  width: 16px;
+  margin-right: 6px;
+  color: #c28d00;
+}
+.franchise-contact-block a {
+  color: #1d4f91 !important;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+.franchise-contact-block a:hover {
+  color: #c28d00 !important;
+}
+.franchise-contact-note {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-left: 4px solid #f0ca00;
+  background: #fff8dc;
+  color: #333333;
+}
 </style>
 </head>`,
+  );
+  return withStyles.replace(
+    "</body>",
+    `<script id="franchise-detail-tabs-js">
+function setFranchiseDetailTab(tabs, index) {
+  tabs.querySelectorAll(".e-n-tab-title").forEach(function (item) {
+    var active = item.getAttribute("data-tab-index") === index;
+    item.setAttribute("aria-selected", active ? "true" : "false");
+    item.setAttribute("tabindex", active ? "0" : "-1");
+  });
+  tabs.querySelectorAll(".e-n-tab-content").forEach(function (panel) {
+    panel.classList.toggle("e-active", panel.getAttribute("data-tab-index") === index);
+  });
+}
+document.addEventListener("click", function (event) {
+  var target = event.target;
+  var button = target && target.closest ? target.closest(".e-n-tab-title") : null;
+  if (!button) return;
+  var tabs = button.closest(".e-n-tabs");
+  if (!tabs) return;
+  setFranchiseDetailTab(tabs, button.getAttribute("data-tab-index") || "1");
+});
+document.querySelectorAll(".e-n-tabs").forEach(function (tabs) {
+  var selected = tabs.querySelector('.e-n-tab-title[aria-selected="true"]');
+  setFranchiseDetailTab(tabs, selected ? selected.getAttribute("data-tab-index") || "1" : "1");
+});
+</script>
+</body>`,
   );
 }
 
 function generateCssPlaceholder(label: string, className: string) {
-  return `<div class="${escapeAttr(className)}" aria-label="${escapeAttr(label)}"><span>${escapeHtml(initials(label))}</span></div>`;
+  return `<div class="${escapeAttr(className)}" aria-label="${escapeAttr(label)}"><span>${escapeHtml(initials(label))}</span><small>Logo belum tersedia</small></div>`;
 }
 
 function initials(label: string) {

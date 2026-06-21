@@ -124,7 +124,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `scripts/build-d1-franchise-pages.ts`
 *TypeScript D1-backed public page generation bridge.*
-- `fetchRowsFromD1(options)`: Loads published `site_franchisee_id` franchise rows from `franchise_db`, preferring the Cloudflare D1 HTTP API with `CLOUDFLARE_API_TOKEN` or a cfman token and falling back to Wrangler/cfman only when needed.
+- `fetchRowsFromD1(options)`: Loads published `site_franchisee_id` franchise rows from `franchise_db`, including public `phone` and `office_address` fields for Astro detail contact rendering, preferring the Cloudflare D1 HTTP API with `CLOUDFLARE_API_TOKEN` or a cfman token and falling back to Wrangler/cfman only when needed.
 - `fetchRowsFromD1Http(sql, token)`: Build-safe D1 query path for Cloudflare Pages and CI. Uses `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` when set, with current project defaults.
 - `fetchRowsFromD1Wrangler(sql, options)`: Local fallback path that runs `pnpm exec wrangler d1 execute` with a cfman token.
 - `renderDetailPage(row, template)`: Inserts D1 franchise data into `templates/detail-franchise-tpl.html` and marks output with `d1-generated:franchisee.id`.
@@ -161,12 +161,18 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with optional route metadata and custom row ordering.
 - `renderCategoryIndexPage(rows)`: Renders `/kategori` category cards and listing counts from the D1 snapshot.
 - `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row.
-- `generateContactBlock(row)`: Renders D1 contact/social links into the detail page contact tab.
+- `generateContactBlock(row, isUnclaimed)`: Renders D1 contact/social links into the detail page contact tab, including imported public phone/address data for unclaimed listings with a claim CTA.
+- `parsePhoneContacts(value, defaultLabel, source)`: Splits messy Indonesian phone text into contact rows while preserving nearby labels such as Marketing, WA, Kantor, Office, and Owner.
+- `findPhoneStarts(text)`: Locates likely phone-number start positions without splitting inside the same number.
+- `inferPhoneLabel(text, start, end, fallback)`: Derives a readable contact label from text around each detected phone number.
+- `classifyPhone(normalized, label, source)`: Classifies parsed numbers as WhatsApp, mobile, landline/office, or generic phone for display and link generation.
+- `formatIndonesianPhone(normalized, type)`: Formats mobile numbers in 4-digit groups and landlines with area-code grouping.
+- `generatePhoneContactRow(contact)`: Renders parsed phone contacts as styled `tel:` or `wa.me` rows in the detail contact tab.
 - `getRecommendedRows(rows)`: Sorts directory rows by verification/status and listing completeness for `/rekomendasi`.
 - `getPopularRows(rows)`: Sorts directory rows by a deterministic popularity proxy until real D1 analytics/lead/payment metrics exist.
 - `getAlphabeticalRows(rows)`: Sorts directory rows alphabetically by brand name for `/abjad`.
 - `getCategoryRouteEntries(rows)`: Builds category route entries and legacy aliases for `/kategori/[slug]` and top-level category slugs.
-- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, social/contact links, sticky claim CTA, category summaries, CSS-only missing-image placeholders, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
+- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, self-contained detail tab initialization, cards, breadcrumbs, disclaimers, social/contact links, Indonesian phone parsing/display normalization, sticky claim CTA, category summaries, CSS-only missing-image placeholders, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
 
 ### File: `src/pages/peluang-usaha/index.astro`
 *Astro static listing page.*

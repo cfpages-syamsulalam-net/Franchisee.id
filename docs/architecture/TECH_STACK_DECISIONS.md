@@ -137,6 +137,7 @@ pnpm run build:astro
 
 `scripts/build-d1-franchise-pages.ts` currently:
 - Queries published `site_franchisee_id` records from `franchise_db`.
+- Includes imported public `phone` and `office_address` fields in the static snapshot so unclaimed detail pages can still show existing public contact data.
 - Renders `/peluang-usaha/index.html` and flat `/peluang-usaha/{slug}.html` detail files using the existing WordPress-exported templates.
 - Writes `json/d1-franchise-static-data.json` for Astro static routes.
 - Writes `json/d1-generated-pages-manifest.json` so unchanged pages are skipped on rerun.
@@ -152,6 +153,9 @@ Astro scaffold:
 - Canonical category URLs use `/kategori/...`. `public/_redirects` redirects legacy `/category/*` requests to `/kategori/:splat` so duplicate category pages are not indexed.
 - Directory cards use a CSS-only fallback placeholder when D1 has no cover/logo URL, so missing legacy placeholder image assets do not break the public archive layout.
 - Franchise detail pages are listings, not blog posts; generated output removes the legacy header placeholder and fake WordPress `By admin` date block, and detail metadata is generated from the franchise row instead of inherited post metadata.
+- Unclaimed detail pages are not contactless by default. If D1 has imported public phone, office address, or social/contact data, the page may show it with clear public/unclaimed wording and a claim CTA for corrections.
+- Raw legacy phone text is presentation-normalized in `src/lib/franchise-static.ts` during Astro rendering. The renderer splits common Indonesian multi-number strings, preserves labels such as Marketing, WA/WhatsApp, Kantor, Office, and Owner, and outputs `tel:` or `wa.me` links where safe.
+- Future dashboard/edit work should add a normalized contact model, such as a `franchise_contacts` table or structured JSON field, but current public rendering should continue to preserve raw imported D1 fields until that migration exists.
 - `astro.config.mjs` uses `build.format: "preserve"` so index routes remain index files while detail pages can be stored as flat `.html` files.
 - `pnpm run build:astro` refreshes the D1 snapshot first, then builds the D1-backed public directory pages into `dist/` from the current D1 data.
 - `pnpm run build` is the conventional Cloudflare Pages entrypoint and delegates to `pnpm run build:astro`; `wrangler.toml` declares `pages_build_output_dir = "dist"`.
@@ -292,7 +296,7 @@ Clerk setup details:
 Immediate caution areas:
 - Claim cleanup semantics must be preserved when moving `UNCLAIMED` rows into owned `franchises`.
 - Slug collisions must be detected and resolved deterministically.
-- Phone/email normalization must match existing duplicate checks.
+- Phone/email normalization must match existing duplicate checks. Public phone display normalization is currently render-time only and must not be confused with D1 duplicate/identity normalization until a normalized contact table is added.
 - Imports must be idempotent so rerunning them does not duplicate brands or users.
 - Production migrations need backups/export discipline before destructive schema changes.
 
