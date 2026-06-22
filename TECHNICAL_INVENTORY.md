@@ -150,7 +150,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Copies root legacy HTML/XML/XSL files and public legacy directories into `dist`.
 - Does not overwrite existing files, so Astro-generated D1 pages remain authoritative.
 - Skips source/control directories such as `src`, `scripts`, `functions`, `docs`, `.github`, `node_modules`, `migrations`, and `dist`.
-- Skips top-level `peluang-usaha` so legacy detail folder indexes cannot compete with Astro's flat `/peluang-usaha/[slug].html` output.
+- Skips top-level `peluang-usaha`, duplicate directory archives, and known category aliases so legacy pages cannot compete with Astro's flat `/peluang-usaha/[slug].html` output or canonical `/peluang-usaha` directory.
+- Rewrites copied legacy HTML links from `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known top-level category aliases to `/peluang-usaha` query-param URLs.
 
 ## 2. Directory: `/src` (Astro Static Generation)
 
@@ -158,9 +159,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Astro D1 snapshot validator and template renderer.*
 - `FranchiseStaticRowSchema`: Zod schema for rows in `json/d1-franchise-static-data.json`.
 - `loadFranchiseStaticRows()`: Reads and validates the generated D1 snapshot.
-- `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with optional route metadata and custom row ordering.
-- `renderCategoryIndexPage(rows)`: Renders `/kategori` category cards and listing counts from the D1 snapshot.
+- `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, and category filtering.
+- `renderCategoryIndexPage(rows)`: Legacy helper that renders category cards, but canonical category browsing is now `/peluang-usaha?view=kategori` or `/peluang-usaha?kategori=[slug]`.
 - `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row.
+- `normalizeDescriptionText(value, brandName)`: Presentation-normalizes mostly all-uppercase imported descriptions into readable sentence case while preserving legal prefixes/acronyms such as PT, CV, UD, BPOM, NIB, and F&B.
 - `generateContactBlock(row, isUnclaimed)`: Renders D1 contact/social links into the detail page contact tab, including imported public phone/address data for unclaimed listings with a claim CTA.
 - `parsePhoneContacts(value, defaultLabel, source)`: Splits messy Indonesian phone text into contact rows while preserving nearby labels such as Marketing, WA, Kantor, Office, and Owner.
 - `findPhoneStarts(text)`: Locates likely phone-number start positions without splitting inside the same number.
@@ -168,17 +170,17 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `classifyPhone(normalized, label, source)`: Classifies parsed numbers as WhatsApp, mobile, landline/office, or generic phone for display and link generation.
 - `formatIndonesianPhone(normalized, type)`: Formats mobile numbers in 4-digit groups and landlines with area-code grouping.
 - `generatePhoneContactRow(contact, row, isUnclaimed)`: Renders parsed phone contacts as styled `tel:` rows and adds a WhatsApp claim-notification link for unclaimed mobile/WhatsApp-capable numbers.
-- `getRecommendedRows(rows)`: Sorts directory rows by verification/status and listing completeness for `/rekomendasi`.
+- `getRecommendedRows(rows)`: Sorts directory rows by verification/status and listing completeness; public access is now `/peluang-usaha?sort=rekomendasi`.
 - `getPopularRows(rows)`: Sorts directory rows by a deterministic popularity proxy until real D1 analytics/lead/payment metrics exist.
-- `getAlphabeticalRows(rows)`: Sorts directory rows alphabetically by brand name for `/abjad`.
-- `getCategoryRouteEntries(rows)`: Builds category route entries and legacy aliases for `/kategori/[slug]` and top-level category slugs.
-- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, self-contained detail tab initialization, cards, breadcrumbs, disclaimers, social/contact links, Indonesian phone parsing/display normalization, sticky claim CTA, category summaries, CSS-only missing-image placeholders, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
+- `getAlphabeticalRows(rows)`: Sorts directory rows alphabetically by brand name; public access is now `/peluang-usaha?sort=abjad`.
+- `getCategoryRouteEntries(rows)`: Legacy helper for category aliases; do not add new indexable category archive routes without changing the canonical route policy.
+- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, self-contained detail tab initialization, cards, breadcrumbs, disclaimers, social/contact links, Indonesian phone parsing/display normalization, all-caps description presentation normalization, sticky claim CTA, category summaries, CSS-only missing-image placeholders, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
 
 ### File: `src/pages/peluang-usaha/index.astro`
 *Astro static listing page.*
 - `prerender = true`.
 - Loads rows with `loadFranchiseStaticRows()`.
-- Outputs full listing HTML with `renderListingPage(rows)`.
+- Outputs full listing HTML with `renderListingPage(rows)`, including client-side query-param controls for `q`, `sort`, `kategori`, `status`, and `view=kategori`.
 
 ### File: `src/pages/peluang-usaha/[slug].astro`
 *Astro static franchise detail pages with flat `.html` output under `build.format: "preserve"`.*
@@ -186,42 +188,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getStaticPaths()`: Creates one static route per snapshot row using the D1 slug.
 - Outputs full detail HTML with `renderDetailPage(row)`.
 
-### File: `src/pages/rekomendasi/index.astro`
-*Astro static recommendation archive.*
-- `prerender = true`.
-- Loads D1 snapshot rows, orders them with `getRecommendedRows(rows)`, and renders `/rekomendasi/index.html` through `renderListingPage`.
-
-### File: `src/pages/populer/index.astro`
-*Astro static popular archive.*
-- `prerender = true`.
-- Loads D1 snapshot rows, orders them with `getPopularRows(rows)`, and renders `/populer/index.html`.
-- Current popularity is a deterministic proxy based on listing completeness, image availability, verification/status, and accessible investment level until D1 stores real metrics.
-
-### File: `src/pages/abjad/index.astro`
-*Astro static alphabetical archive.*
-- `prerender = true`.
-- Loads D1 snapshot rows, orders them with `getAlphabeticalRows(rows)`, and renders `/abjad/index.html`.
-
-### File: `src/pages/kategori/index.astro`
-*Astro static category index.*
-- `prerender = true`.
-- Renders one generated category card per D1 category with listing counts and CSS-only category placeholders.
-
-### File: `src/pages/kategori/[slug].astro`
-*Astro static category archive.*
-- `prerender = true`.
-- `getStaticPaths()`: Creates one archive per D1 category and supported alias, including `makanan-minuman-fb`, `perhotelan-travel`, `properti-furniture`, `teknologi-digital`, and `jasa-layanan`.
-- Renders filtered listing cards with category-specific title, description, and canonical path.
-
-### File: `src/pages/[categorySlug].astro`
-*Compatibility Astro static top-level category archive.*
-- `prerender = true`.
-- Generates top-level category slug pages such as `/makanan-minuman-fb.html` for old WordPress-style category links, with canonical metadata pointing to `/kategori/[slug]`.
-
 ### File: `public/_redirects`
 *Cloudflare Pages redirects.*
-- Redirects `/category/*` to `/kategori/:splat` with `301`.
-- Prevents duplicate generated category permalink families while preserving old external links.
+- Redirects legacy duplicate directory URLs to canonical `/peluang-usaha` query-param states:
+  `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/kategori/*`, `/category/*`, and known top-level category aliases.
+- Prevents duplicate generated directory/category permalink families while preserving old external links.
 
 ## 3. Directory: `/functions` (Cloudflare Edge Logic)
 

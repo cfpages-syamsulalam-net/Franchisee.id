@@ -86,10 +86,9 @@ Keep the current form field names during migration where possible so the HTML/ru
 
 Public routes:
 - `/`: existing homepage shell, later rebuilt as Astro page.
-- `/peluang-usaha/`: searchable franchise directory.
+- `/peluang-usaha/`: canonical searchable franchise directory with query-param states for search, recommendation/popular/alphabetical/category sorting, status filtering, and category filtering.
 - `/peluang-usaha/[slug]`: franchise detail page with SEO metadata, self-contained tabs, CSS-only missing-logo placeholders, public imported contact/address display when available, and claim CTA; physical generated files should be flat `/peluang-usaha/[slug].html`.
-- `/rekomendasi`, `/populer`, `/abjad`: D1-backed static listing archives using the shared Astro renderer and existing template/CSS.
-- `/kategori`, `/kategori/[slug]`, and top-level category slugs: D1-backed static category index/archive routes with legacy slug aliases. Legacy `/category/*` redirects to `/kategori/*`.
+- `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/kategori/[slug]`, `/category/[slug]`, and top-level category slugs: redirect-only compatibility URLs to `/peluang-usaha` query-param states.
 - `/tag/[slug]/`, article/static pages: migrate gradually from static export.
 
 Auth routes:
@@ -103,6 +102,7 @@ Dashboard routes:
 - `/franchisor/listings/new`: create listing.
 - `/franchisor/listings/[id]/edit`: edit listing.
 - `/admin`: moderation, claim review, verification, data import tools.
+- `DASHBOARD.md`: planning source for admin/staff overview, unclaimed outreach, claim review, listing operations, data quality, publishing, leads, and system health.
 
 API/server routes:
 - `POST /api/franchisees`: create/update franchisee profile.
@@ -124,9 +124,9 @@ API/server routes:
 | 4. Auth foundation | In progress | Custom Clerk login/register surfaces, `/auth-config`, `/auth-sync`, `/clerk-webhook`, `/user-role`, `/sync-clerk-metadata`, D1 user mapping, D1-to-Clerk metadata snapshots, and D1 role checks are implemented. Next configure real Clerk env vars/dashboard settings and verify on Cloudflare Pages. |
 | 5. Form API replacement | In progress | `/form-submit` now performs D1-only writes for franchisee, franchisor, claim, and dev test-data actions with Clerk session verification, D1 role checks, owner fields, and actor audit events. Next verify deployed form submissions against the real Pages binding and Clerk app. |
 | 6. Asset pipeline | Pending | Move uploads to R2 with object ownership, validation, and public/served URLs. |
-| 7. Public directory rebuild | In progress | D1-backed static HTML bridge generates root `/peluang-usaha/` output and a D1 snapshot; Astro static routes now generate `/peluang-usaha`, flat detail pages, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, category archives, top-level legacy category aliases, CSS-only image placeholders, readable yellow/category chip states, self-contained detail tabs, parsed public contact data for unclaimed listings, cleaned metadata, and `/category` to `/kategori` redirects into `dist/`, then the build copies legacy static assets/pages without overwriting Astro output. Next add real popularity/view/lead metrics and verify deployed route precedence. |
+| 7. Public directory rebuild | In progress | D1-backed static HTML bridge generates root `/peluang-usaha/` output and a D1 snapshot; Astro static routes now generate canonical `/peluang-usaha`, flat detail pages, CSS-only image placeholders, readable yellow/category chip states, self-contained detail tabs, parsed public contact data for unclaimed listings, all-caps description presentation normalization, cleaned metadata, and redirect-only compatibility for old directory/category archives, then the build copies legacy static assets/pages without overwriting Astro output. Next add real popularity/view/lead metrics and verify deployed route precedence. |
 | 8. D1-to-static publish automation | In progress | D1 dirty queue tables, `/form-submit` enqueueing, and the 30-minute GitHub Actions poller are implemented. Remaining setup: add GitHub secrets for Cloudflare API/deploy hook, push workflow, and verify the first dirty-to-build cycle. |
-| 9. Dashboards | Pending | Build franchisee/franchisor/admin dashboards with protected routes. |
+| 9. Dashboards | Planning | `DASHBOARD.md` defines the admin/staff dashboard scope: overview, unclaimed WhatsApp outreach, claim review, listing operations, data quality, publish queue, leads, and system health. Next review the plan before implementation. |
 | 10. Decommission Sheets dependency | Pending | Freeze or remove Sheets writes, keep optional import/export admin tooling only. |
 
 ## Migration Rules
@@ -173,11 +173,11 @@ API/server routes:
 - Stale deletion rule: remove only files tracked in `json/d1-generated-pages-manifest.json` and containing the `d1-generated:franchisee.id` marker. Do not delete legacy/example `/peluang-usaha` folders that were not generated by this D1 builder.
 - Astro scaffold: `astro.config.mjs`, `src/lib/franchise-static.ts`, `src/pages/peluang-usaha/index.astro`, and `src/pages/peluang-usaha/[slug].astro` now generate D1-backed static HTML from `json/d1-franchise-static-data.json`; Astro `build.format: "preserve"` makes detail output flat `.html`.
 - Astro verification on 2026-06-17: `pnpm run build:astro` built 198 pages into `dist/` from the D1 snapshot.
-- Directory route expansion on 2026-06-19: Astro now generates `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/kategori/[slug]`, and top-level category slug archives from the same D1 snapshot. Verification build generated 259 Astro pages before `/category` was changed to a redirect-only compatibility path.
+- Directory route consolidation on 2026-06-22: `/peluang-usaha` is now the canonical directory page with manual query-param controls; `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known category aliases are redirect-only compatibility paths.
 - Missing image behavior: directory cards now render a pure CSS placeholder with brand/category initials when D1 has no cover/logo URL, avoiding 404s from absent WooCommerce placeholder images.
-- Cosmetic/metadata cleanup on 2026-06-21: removed the legacy header placeholder and fake blog author/date from detail pages, standardized generated category links to `/kategori`, added `/category/*` redirects, improved breadcrumbs, and replaced detail/listing missing image fallbacks with CSS placeholders or site-owned metadata fallback images.
+- Cosmetic/metadata cleanup on 2026-06-21 and 2026-06-22: removed the legacy header placeholder and fake blog author/date from detail pages, standardized generated category links to canonical `/peluang-usaha?kategori=...`, added compatibility redirects, improved breadcrumbs, replaced detail/listing missing image fallbacks with CSS placeholders or site-owned metadata fallback images, and added render-time all-caps description normalization.
 - Detail contact/tab cleanup on 2026-06-22: detail pages now include self-contained tab JS/CSS, stronger contrast for yellow/category link states, styled CSS-only logo placeholders with fallback label text, stale legacy tab comments stripped from output, and parsed public contact rows for unclaimed listings using imported D1 phone/address data plus a claim CTA for corrections.
-- Current `/populer` limitation: ranking uses a deterministic listing-quality proxy until D1 stores real popularity metrics such as views, saved listings, lead counts, payments, or admin boosts.
+- Current popularity limitation: `/peluang-usaha?sort=populer` uses a deterministic listing-quality proxy until D1 stores real popularity metrics such as views, saved listings, lead counts, payments, or admin boosts.
 - Compatibility note: Astro is pinned to 5.x for this Node 20.19.4 workspace; Astro 6 requires Node >=22.12.0.
 
 ## D1-To-Static Publish Automation Tracker
@@ -188,7 +188,7 @@ API/server routes:
 - Manual urgent trigger: an authenticated admin-only endpoint can trigger the deploy hook for time-sensitive edits, but this should be exceptional.
 - Build behavior: Pages build runs `pnpm run build:astro`, reads current D1, emits `dist/`, and Cloudflare serves the new static HTML.
 - Deployment config: Pages output directory is `dist` in `wrangler.toml`; Cloudflare Pages project settings must define a build command (`pnpm run build` preferred, or `pnpm run build:astro`) so dependencies are installed before Pages Functions are bundled.
-- Hybrid output rule: after Astro builds, `scripts/copy-legacy-static.mjs` copies legacy static pages/assets into `dist` while skipping legacy `/peluang-usaha`. This preserves old CSS/JS/images and lets Astro own the D1-backed directory route.
+- Hybrid output rule: after Astro builds, `scripts/copy-legacy-static.mjs` copies legacy static pages/assets into `dist` while skipping legacy `/peluang-usaha` and duplicate archive/category route folders. It also rewrites copied HTML links to canonical `/peluang-usaha` query URLs. This preserves old CSS/JS/images and lets Astro own the D1-backed directory route.
 - Build-time D1 access: `pnpm run build` reads remote D1 through the Cloudflare D1 HTTP API. Cloudflare Pages must have `CLOUDFLARE_API_TOKEN` as a secret; `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` are optional because current defaults are in the builder.
 - Pages config rule: do not put `account_id` in `wrangler.toml`; Cloudflare Pages rejects it during config validation. Use the connected Pages project account, `cfman`, or GitHub env/vars for account context instead.
 - Freshness target: normal edits appear on the next scheduled publish window or poll window; urgent admin-triggered edits can appear sooner.

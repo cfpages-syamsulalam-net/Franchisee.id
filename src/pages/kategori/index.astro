@@ -1,8 +1,0 @@
----
-import { loadFranchiseStaticRows, renderCategoryIndexPage } from "../../lib/franchise-static";
-
-export const prerender = true;
-
-const html = renderCategoryIndexPage(loadFranchiseStaticRows());
----
-<Fragment set:html={html} />

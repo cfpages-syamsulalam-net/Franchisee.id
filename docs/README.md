@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-06-19 06:10 (Asia/Jakarta)
+Last updated: 2026-06-22 09:04 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -13,6 +13,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `FORM_SCHEMA.md`: canonical form field inventory.
 - `FORM_PRESERVATION_MANDATE.md`: binding rule set for preserving existing form fields and payloads.
 - `TECHNICAL_INVENTORY.md`: function/module inventory for runtime and migration code.
+- `DASHBOARD.md`: admin/staff dashboard planning document.
 - `CHANGELOG.md`: chronological record of every repository file change.
 
 ## Architecture

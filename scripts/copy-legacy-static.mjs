@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,7 +14,28 @@ const SKIP_TOP_LEVEL = new Set([
   ".git",
   ".github",
   ".grok",
+  "abjad",
+  "anak-balita",
+  "bisnis-jasa",
   "category",
+  "direktori-franchise",
+  "fnb",
+  "furnitur-konstruksi-properti",
+  "hiburan-hobi",
+  "jasa-layanan",
+  "kategori",
+  "kesehatan-kecantikan",
+  "komputer-teknologi",
+  "lainnya",
+  "laundry-jasa-kebersihan",
+  "makanan-minuman",
+  "makanan-minuman-fb",
+  "otomotif",
+  "pendidikan-kursus-pelatihan",
+  "penginapan-agen-travel",
+  "perhotelan-travel",
+  "populer",
+  "properti-furniture",
   "csv",
   "dist",
   "docs",
@@ -24,9 +45,40 @@ const SKIP_TOP_LEVEL = new Set([
   "peluang-usaha",
   "progress",
   "public",
+  "rekomendasi",
+  "retail-minimarket",
   "scripts",
   "src",
   "templates",
+  "teknologi-digital",
+]);
+
+const CANONICAL_ROUTE_MAP = new Map([
+  ["/direktori-franchise", "/peluang-usaha"],
+  ["/rekomendasi", "/peluang-usaha?sort=rekomendasi"],
+  ["/populer", "/peluang-usaha?sort=populer"],
+  ["/abjad", "/peluang-usaha?sort=abjad"],
+  ["/kategori", "/peluang-usaha?view=kategori"],
+  ["/category", "/peluang-usaha?view=kategori"],
+  ["/anak-balita", "/peluang-usaha?kategori=anak-balita"],
+  ["/bisnis-jasa", "/peluang-usaha?kategori=bisnis-jasa"],
+  ["/fnb", "/peluang-usaha?kategori=fnb"],
+  ["/furnitur-konstruksi-properti", "/peluang-usaha?kategori=furnitur-konstruksi-properti"],
+  ["/hiburan-hobi", "/peluang-usaha?kategori=hiburan-hobi"],
+  ["/jasa-layanan", "/peluang-usaha?kategori=jasa-layanan"],
+  ["/kesehatan-kecantikan", "/peluang-usaha?kategori=kesehatan-kecantikan"],
+  ["/komputer-teknologi", "/peluang-usaha?kategori=komputer-teknologi"],
+  ["/lainnya", "/peluang-usaha?kategori=lainnya"],
+  ["/laundry-jasa-kebersihan", "/peluang-usaha?kategori=laundry-jasa-kebersihan"],
+  ["/makanan-minuman", "/peluang-usaha?kategori=makanan-minuman"],
+  ["/makanan-minuman-fb", "/peluang-usaha?kategori=makanan-minuman-fb"],
+  ["/otomotif", "/peluang-usaha?kategori=otomotif"],
+  ["/pendidikan-kursus-pelatihan", "/peluang-usaha?kategori=pendidikan-kursus-pelatihan"],
+  ["/penginapan-agen-travel", "/peluang-usaha?kategori=penginapan-agen-travel"],
+  ["/perhotelan-travel", "/peluang-usaha?kategori=perhotelan-travel"],
+  ["/properti-furniture", "/peluang-usaha?kategori=properti-furniture"],
+  ["/retail-minimarket", "/peluang-usaha?kategori=retail-minimarket"],
+  ["/teknologi-digital", "/peluang-usaha?kategori=teknologi-digital"],
 ]);
 
 const ROOT_FILE_NAMES = new Set(["robots.txt", "sitemap.xml", "sitemap_index.xml", "sitemap-complete.xml", "main-sitemap.xsl"]);
@@ -64,7 +116,7 @@ console.log("Legacy static copy:");
 console.log(`- directories_scanned=${stats.directories}`);
 console.log(`- files_copied=${stats.filesCopied}`);
 console.log(`- files_skipped=${stats.filesSkipped}`);
-console.log("- skipped_routes=peluang-usaha,category");
+console.log("- skipped_routes=peluang-usaha,category,kategori,rekomendasi,populer,abjad,direktori-franchise,category-aliases");
 
 function shouldCopyRootFile(fileName) {
   if (ROOT_FILE_NAMES.has(fileName)) return true;
@@ -100,6 +152,33 @@ function copyFileNoOverwrite(sourcePath, targetPath) {
   if (!sourceStats.isFile()) return;
 
   mkdirSync(dirname(targetPath), { recursive: true });
-  copyFileSync(sourcePath, targetPath);
+  if (sourcePath.toLowerCase().endsWith(".html")) {
+    writeFileSync(targetPath, rewriteLegacyHtmlLinks(readFileSync(sourcePath, "utf8")));
+  } else {
+    copyFileSync(sourcePath, targetPath);
+  }
   stats.filesCopied += 1;
+}
+
+function rewriteLegacyHtmlLinks(html) {
+  return html.replace(/\bhref=(["'])(\/[^"'#?]*)(\/)?(\?[^"']*)?(#[^"']*)?\1/g, (match, quote, path, slash, query = "", hash = "") => {
+    const normalizedPath = normalizePath(path, slash);
+    const mapped = mapCanonicalHref(normalizedPath);
+    if (!mapped) return match;
+    return `href=${quote}${mapped}${hash}${quote}`;
+  });
+}
+
+function normalizePath(path, slash = "") {
+  const normalized = `${path}${slash || ""}`.replace(/\/+$/, "");
+  return normalized || "/";
+}
+
+function mapCanonicalHref(path) {
+  if (CANONICAL_ROUTE_MAP.has(path)) return CANONICAL_ROUTE_MAP.get(path);
+
+  const categoryMatch = path.match(/^\/(?:kategori|category)\/([^/]+)$/);
+  if (categoryMatch) return `/peluang-usaha?kategori=${encodeURIComponent(categoryMatch[1])}`;
+
+  return "";
 }

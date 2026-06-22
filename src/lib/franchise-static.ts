@@ -8,6 +8,33 @@ const LISTING_TEMPLATE_PATH = join(ROOT_DIR, "templates", "peluang-usaha-tpl.htm
 const STATIC_DATA_PATH = join(ROOT_DIR, "json", "d1-franchise-static-data.json");
 const GENERATED_MARKER = "<!-- astro-generated:d1-franchisee.id";
 const SITE_FALLBACK_IMAGE = "/wp-content/uploads/2025/09/franchise.id-favicon-logo.png";
+const TITLE_LOWER_WORDS = new Set(["dan", "di", "ke", "dari", "untuk", "yang", "atau", "dengan", "pada", "dalam"]);
+const KNOWN_UPPERCASE_TERMS = new Map(
+  [
+    "pt",
+    "cv",
+    "ud",
+    "tbk",
+    "persero",
+    "umkm",
+    "bpom",
+    "nib",
+    "siup",
+    "npwp",
+    "iso",
+    "sop",
+    "haccp",
+    "b2b",
+    "b2c",
+    "f&b",
+    "fnb",
+    "kfc",
+    "spbu",
+    "atm",
+    "pos",
+    "wa",
+  ].map((term) => [term, term.toUpperCase()]),
+);
 
 const nullableString = z.string().nullish().transform((value) => value ?? null);
 const nullableNumber = z.number().nullish().transform((value) => value ?? null);
@@ -99,7 +126,12 @@ export function renderListingPage(rows: FranchiseStaticRow[], options?: Director
   const template = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
   const sortedRows = options?.rows || [...rows].sort(compareFranchises);
   const cards = sortedRows.map((row, index) => generateCard(row, index + 1)).join("");
-  const html = template.replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards);
+  const html = template
+    .replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)
+    .replace(
+      '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
+      `${generateDirectoryControls(rows)}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+    );
   return normalizeGeneratedHtml(injectDirectoryStyles(applyDirectoryMeta(html, options)));
 }
 
@@ -113,7 +145,7 @@ export function renderCategoryIndexPage(rows: FranchiseStaticRow[]) {
       applyDirectoryMeta(html, {
         title: "Kategori Franchise",
         description: "Jelajahi peluang franchise berdasarkan kategori bisnis, mulai dari makanan minuman, pendidikan, jasa, retail, otomotif, hingga kesehatan.",
-        canonicalPath: "/kategori",
+        canonicalPath: "/peluang-usaha?view=kategori",
       }),
     ),
   );
@@ -140,7 +172,7 @@ export function getCategoryRouteEntries(rows: FranchiseStaticRow[]) {
       slug: summary.slug,
       label: summary.label,
       rows: summary.rows,
-      canonicalPath: `/kategori/${summary.slug}`,
+      canonicalPath: canonicalCategoryHref(summary.slug),
     });
   }
 
@@ -157,9 +189,9 @@ export function renderDetailPage(row: FranchiseStaticRow) {
   const template = readFileSync(DETAIL_TEMPLATE_PATH, "utf8");
   const tier = normalizeText(row.verification_tier || row.status).toLowerCase();
   const isUnclaimed = tier === "unclaimed";
-  const brandName = normalizeText(row.brand_name);
+  const brandName = normalizeBrandName(row.brand_name);
   const category = normalizeText(row.category) || "Bisnis Umum";
-  const description = normalizeText(row.full_desc || row.short_desc) || `Peluang usaha franchise ${brandName}.`;
+  const description = normalizeDescriptionText(row.full_desc || row.short_desc, brandName) || `Peluang usaha franchise ${brandName}.`;
   const logoUrl = normalizeUrl(row.logo_url);
   const heroImage = normalizeUrl(row.cover_url || row.logo_url);
   const ogImage = logoUrl || heroImage || SITE_FALLBACK_IMAGE;
@@ -177,7 +209,7 @@ export function renderDetailPage(row: FranchiseStaticRow) {
     "{SLUG}": escapeAttr(row.slug),
     "{CATEGORY}": escapeHtml(category),
     "{CATEGORY-SLUG}": escapeAttr(slugify(category)),
-    "{COMPANY_NAME}": escapeHtml(normalizeText(row.company_name) || "Hubungi Admin"),
+    "{COMPANY_NAME}": escapeHtml(normalizeCompanyName(row.company_name) || "Hubungi Admin"),
     "{MINIMUM_MODAL}": escapeHtml(minimumModal),
     "{FRANCHISE_FEE}": escapeHtml(formatRupiah(row.fee_license_idr)),
     "{ROYALTY_FEE}": escapeHtml(row.royalty_percent ? `${row.royalty_percent}%` : "Tanya Admin"),
@@ -211,7 +243,7 @@ export function renderDetailPage(row: FranchiseStaticRow) {
 
 function generateCard(row: FranchiseStaticRow, index: number) {
   const tier = normalizeText(row.verification_tier || row.status).toUpperCase() || "UNCLAIMED";
-  const brandName = normalizeText(row.brand_name);
+  const brandName = normalizeBrandName(row.brand_name);
   const category = normalizeText(row.category) || "Bisnis Umum";
   const link = `/peluang-usaha/${row.slug}`;
   const imageUrl = getThumb(row.cover_url || row.logo_url);
@@ -219,12 +251,15 @@ function generateCard(row: FranchiseStaticRow, index: number) {
     ? `<img loading="lazy" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(brandName)}" width="300" height="150">`
     : generateCssPlaceholder(brandName, "franchise-css-placeholder");
   const modal = formatRupiah(row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr);
-  const desc = truncate(normalizeText(row.short_desc || row.full_desc) || `Peluang usaha franchise ${brandName}.`, 90);
+  const desc = truncate(normalizeDescriptionText(row.short_desc || row.full_desc, brandName) || `Peluang usaha franchise ${brandName}.`, 90);
   const badge = generateStatusBadge(tier);
   const factChips = generateFactChips(row, modal);
+  const categorySlugValue = categorySlug(row);
+  const statusKey = tier.toLowerCase();
+  const modalSort = row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr || 0;
 
   return `
-    <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${escapeAttr(tier.toLowerCase())}-tier">
+    <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${escapeAttr(statusKey)}-tier" data-franchise-card data-brand="${escapeAttr(brandName.toLowerCase())}" data-category="${escapeAttr(category.toLowerCase())}" data-category-slug="${escapeAttr(categorySlugValue)}" data-status="${escapeAttr(statusKey)}" data-modal="${escapeAttr(modalSort)}" data-recommendation-score="${escapeAttr(scoreRecommendation(row))}" data-popularity-score="${escapeAttr(scorePopularity(row))}" data-index="${escapeAttr(index)}">
         <a class="uc_post_grid_style_one_image" href="${escapeAttr(link)}">
             <div class="uc_post_image">
                 ${imageBlock}
@@ -241,7 +276,7 @@ function generateCard(row: FranchiseStaticRow, index: number) {
                     </div>
                     <div class="ue-meta-data">
                         <span class="ue-grid-item-category">
-                            <a href="/kategori/${escapeAttr(slugify(category))}">${escapeHtml(category)}</a>
+                            <a href="${escapeAttr(canonicalCategoryHref(category))}">${escapeHtml(category)}</a>
                         </span>
                         ${factChips}
                     </div>
@@ -258,9 +293,10 @@ function generateCard(row: FranchiseStaticRow, index: number) {
 }
 
 function generateCategoryCard(summary: { label: string; slug: string; count: number }, index: number) {
+  const href = canonicalCategoryHref(summary.slug);
   return `
     <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item category-directory-card">
-        <a class="uc_post_grid_style_one_image" href="/kategori/${escapeAttr(summary.slug)}">
+        <a class="uc_post_grid_style_one_image" href="${escapeAttr(href)}">
             <div class="uc_post_image">
                 ${generateCssPlaceholder(summary.label, "franchise-css-placeholder category-css-placeholder")}
                 <div class="uc_post_image_overlay"></div>
@@ -270,23 +306,84 @@ function generateCategoryCard(summary: { label: string; slug: string; count: num
             <div class="uc_content_inner">
                 <div class="uc_content-info-wrapper">
                     <div class="uc_post_title">
-                        <a href="/kategori/${escapeAttr(summary.slug)}" class="ue_p_title">${escapeHtml(summary.label)}</a>
+                        <a href="${escapeAttr(href)}" class="ue_p_title">${escapeHtml(summary.label)}</a>
                     </div>
                     <div class="ue-meta-data">
                         <span class="ue-grid-item-category">
-                            <a href="/kategori/${escapeAttr(summary.slug)}">${escapeHtml(summary.count)} franchise</a>
+                            <a href="${escapeAttr(href)}">${escapeHtml(summary.count)} franchise</a>
                         </span>
                     </div>
                     <div class="uc_post_text">Lihat peluang franchise kategori ${escapeHtml(summary.label)}.</div>
                 </div>
                 <div class="uc_post_button">
-                    <a class="uc_more_btn" href="/kategori/${escapeAttr(summary.slug)}">
+                    <a class="uc_more_btn" href="${escapeAttr(href)}">
                         <div class="uc_btn_inner"><div class="uc_btn_txt">Lihat Kategori</div></div>
                     </a>
                 </div>
             </div>
         </div>
     </div>`;
+}
+
+function generateDirectoryControls(rows: FranchiseStaticRow[]) {
+  const categories = getCategorySummaries(rows);
+  const categoryOptions = categories
+    .map((summary) => `<option value="${escapeAttr(summary.slug)}">${escapeHtml(summary.label)} (${escapeHtml(summary.count)})</option>`)
+    .join("");
+
+  return `
+    <form class="franchise-directory-controls" id="franchise-directory-controls" action="/peluang-usaha" method="get" data-directory-controls>
+      <div class="franchise-directory-control-row">
+        <label class="franchise-directory-search">
+          <span>Cari franchise</span>
+          <input type="search" name="q" placeholder="Nama brand, kategori, atau kata kunci">
+        </label>
+        <label>
+          <span>Urutkan</span>
+          <select name="sort">
+            <option value="">Prioritas</option>
+            <option value="rekomendasi">Rekomendasi</option>
+            <option value="populer">Populer</option>
+            <option value="abjad">A-Z</option>
+            <option value="kategori">Kategori</option>
+            <option value="modal-asc">Modal terendah</option>
+            <option value="modal-desc">Modal tertinggi</option>
+          </select>
+        </label>
+        <label>
+          <span>Kategori</span>
+          <select name="kategori">
+            <option value="">Semua kategori</option>
+            ${categoryOptions}
+          </select>
+        </label>
+        <label>
+          <span>Status</span>
+          <select name="status">
+            <option value="">Semua status</option>
+            <option value="verified">Terverifikasi</option>
+            <option value="premium">Premium</option>
+            <option value="unclaimed">Belum diklaim</option>
+          </select>
+        </label>
+        <div class="franchise-directory-actions">
+          <button type="submit">Terapkan</button>
+          <a href="/peluang-usaha">Reset</a>
+        </div>
+      </div>
+      <div class="franchise-directory-quicklinks" aria-label="Tampilan cepat">
+        <a href="/peluang-usaha">Semua</a>
+        <a href="/peluang-usaha?sort=rekomendasi">Rekomendasi</a>
+        <a href="/peluang-usaha?sort=populer">Populer</a>
+        <a href="/peluang-usaha?sort=abjad">Abjad</a>
+        <a href="/peluang-usaha?view=kategori">Kategori</a>
+      </div>
+      <p class="franchise-directory-result-count" aria-live="polite"></p>
+    </form>`;
+}
+
+function canonicalCategoryHref(categoryOrSlug: string) {
+  return `/peluang-usaha?kategori=${slugify(categoryOrSlug)}`;
 }
 
 function generateStatusBadge(tier: string) {
@@ -319,7 +416,7 @@ function generateJsonLd(row: FranchiseStaticRow, description: string, logoUrl: s
   const brand = {
     "@context": "https://schema.org",
     "@type": "Brand",
-    name: row.brand_name,
+    name: normalizeBrandName(row.brand_name),
     description,
     url: `https://franchisee.id/peluang-usaha/${row.slug}`,
     category: row.category || "Franchise",
@@ -330,6 +427,7 @@ function generateJsonLd(row: FranchiseStaticRow, description: string, logoUrl: s
 
 function generateBreadcrumbs(row: FranchiseStaticRow) {
   const category = normalizeText(row.category) || "Bisnis";
+  const brandName = normalizeBrandName(row.brand_name);
   return `
     <nav class="ast-breadcrumbs" aria-label="Breadcrumbs">
         <div class="ast-breadcrumbs-wrapper">
@@ -337,8 +435,8 @@ function generateBreadcrumbs(row: FranchiseStaticRow) {
             <ul class="trail-items">
                 <li class="trail-item"><a href="/">Home</a></li>
                 <li class="trail-item"><a href="/peluang-usaha">Peluang Usaha</a></li>
-                <li class="trail-item"><a href="/kategori/${escapeAttr(slugify(category))}">${escapeHtml(category)}</a></li>
-                <li class="trail-item"><span>${escapeHtml(row.brand_name)}</span></li>
+                <li class="trail-item"><a href="${escapeAttr(canonicalCategoryHref(category))}">${escapeHtml(category)}</a></li>
+                <li class="trail-item"><span>${escapeHtml(brandName)}</span></li>
             </ul>
         </div>
     </nav>`;
@@ -346,14 +444,15 @@ function generateBreadcrumbs(row: FranchiseStaticRow) {
 
 function generateBreadcrumbJsonLd(row: FranchiseStaticRow) {
   const category = normalizeText(row.category) || "Bisnis";
+  const brandName = normalizeBrandName(row.brand_name);
   const schema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://franchisee.id/" },
       { "@type": "ListItem", position: 2, name: "Peluang Usaha", item: "https://franchisee.id/peluang-usaha" },
-      { "@type": "ListItem", position: 3, name: category, item: `https://franchisee.id/kategori/${slugify(category)}` },
-      { "@type": "ListItem", position: 4, name: row.brand_name, item: `https://franchisee.id/peluang-usaha/${row.slug}` },
+      { "@type": "ListItem", position: 3, name: category, item: `https://franchisee.id${canonicalCategoryHref(category)}` },
+      { "@type": "ListItem", position: 4, name: brandName, item: `https://franchisee.id/peluang-usaha/${row.slug}` },
     ],
   };
   return `<script type="application/ld+json" class="franchise-breadcrumb-schema">${JSON.stringify(schema)}</script>`;
@@ -618,7 +717,7 @@ function compareFranchises(a: FranchiseStaticRow, b: FranchiseStaticRow) {
 
   const diff = weight(b) - weight(a);
   if (diff) return diff;
-  return a.brand_name.localeCompare(b.brand_name, "id-ID");
+  return normalizeBrandName(a.brand_name).localeCompare(normalizeBrandName(b.brand_name), "id-ID");
 }
 
 function formatRupiah(value: number | null | undefined) {
@@ -660,6 +759,139 @@ export function slugify(text: string) {
 
 function normalizeText(value: unknown) {
   return (value ?? "").toString().replace(/\s+/g, " ").trim();
+}
+
+function normalizeBrandName(value: unknown) {
+  return normalizeTitleLikeName(value);
+}
+
+function normalizeCompanyName(value: unknown) {
+  const text = normalizeText(value);
+  if (!text) return "";
+  return text
+    .replace(/\b(PT|CV|UD)\.?\s+([^,.;]+)/gi, (_match, prefix: string, name: string) => `${prefix.toUpperCase()} ${titleCasePhrase(name)}`)
+    .replace(/\b(TBK|PERSERO)\b/gi, (match) => match.toUpperCase());
+}
+
+function normalizeDescriptionText(value: unknown, brandName?: string) {
+  const text = normalizeText(value);
+  if (!text) return "";
+  if (!looksMostlyUppercase(text)) return ensureFinalPunctuation(fixCommonIndonesianCompounds(normalizeCompanyNameInText(text)));
+
+  let normalized = fixCommonIndonesianCompounds(text.toLowerCase());
+  normalized = normalized.replace(/\b(pt|cv|ud)\.?\s+([a-z0-9&.' -]+?)(?=\s+(?:yang|bergerak|merupakan|adalah|dengan|dan|di|ke|untuk|,|\.|;|$))/g, (_match, prefix: string, name: string) => {
+    return `${prefix.toUpperCase()} ${titleCasePhrase(name)}`;
+  });
+  normalized = normalized.replace(/\b(franchisee\.id|franchise\.id)\b/gi, (match) => match.toLowerCase());
+  normalized = restoreKnownUppercaseTerms(normalized);
+  normalized = sentenceCase(normalized);
+
+  const displayBrand = normalizeBrandName(brandName);
+  if (displayBrand) {
+    normalized = replaceCaseInsensitivePhrase(normalized, normalizeText(brandName).toLowerCase(), displayBrand);
+  }
+
+  return ensureFinalPunctuation(normalized);
+}
+
+function normalizeTitleLikeName(value: unknown): string {
+  const text = normalizeText(value);
+  if (!text) return "";
+  if (!looksMostlyUppercase(text)) return normalizeCompanyNameInText(text);
+  return text
+    .toLowerCase()
+    .split(/(\s+|[-/])/)
+    .map((part, index, parts) => {
+      if (/^\s+$|^[-/]$/.test(part)) return part;
+      const previous = parts[index - 1] || "";
+      const lower = part.toLowerCase();
+      if (index > 0 && previous !== "-" && TITLE_LOWER_WORDS.has(lower)) return lower;
+      return formatTitleWord(part);
+    })
+    .join("")
+    .replace(/\b(PT|CV|UD)\.?\s+/gi, (match) => match.toUpperCase().replace(".", ""));
+}
+
+function titleCasePhrase(value: unknown) {
+  return normalizeText(value)
+    .toLowerCase()
+    .split(/(\s+|[-/])/)
+    .map((part, index, parts) => {
+      if (/^\s+$|^[-/]$/.test(part)) return part;
+      const previous = parts[index - 1] || "";
+      const lower = part.toLowerCase();
+      if (index > 0 && previous !== "-" && TITLE_LOWER_WORDS.has(lower)) return lower;
+      return formatTitleWord(part);
+    })
+    .join("");
+}
+
+function looksMostlyUppercase(text: string) {
+  const letters = text.match(/[A-Za-zÀ-ÿ]/g) || [];
+  if (letters.length < 6) return false;
+  const uppercase = letters.filter((letter) => letter === letter.toUpperCase() && letter !== letter.toLowerCase()).length;
+  const lowercase = letters.filter((letter) => letter === letter.toLowerCase() && letter !== letter.toUpperCase()).length;
+  return uppercase / letters.length >= 0.72 && lowercase / letters.length <= 0.12;
+}
+
+function fixCommonIndonesianCompounds(text: string) {
+  return text
+    .replace(/\bdibidang\b/gi, "di bidang")
+    .replace(/\bdi bidang\s+retail\b/gi, "di bidang retail")
+    .replace(/\bkerjasama\b/gi, "kerja sama")
+    .replace(/\bfranchisee\.id\b/gi, "Franchisee.id")
+    .replace(/\bfranchise\.id\b/gi, "Franchise.id");
+}
+
+function normalizeCompanyNameInText(text: string): string {
+  return text
+    .replace(/\b(PT|CV|UD)\.?\s+([^,.;]+)/gi, (_match, prefix: string, name: string) => `${prefix.toUpperCase()} ${titleCasePhrase(name)}`)
+    .replace(/\b(TBK|PERSERO)\b/gi, (match) => match.toUpperCase());
+}
+
+function restoreKnownUppercaseTerms(text: string) {
+  return text.replace(/\b[a-z0-9&.+-]+\b/gi, (word) => {
+    const key = word.toLowerCase();
+    return KNOWN_UPPERCASE_TERMS.get(key) || word;
+  });
+}
+
+function sentenceCase(text: string) {
+  let shouldCapitalize = true;
+  let result = "";
+
+  for (const char of text) {
+    if (/[A-Za-zÀ-ÿ]/.test(char)) {
+      result += shouldCapitalize ? char.toUpperCase() : char;
+      shouldCapitalize = false;
+      continue;
+    }
+    result += char;
+    if (/[.!?]\s*$/.test(char)) shouldCapitalize = true;
+  }
+
+  return result.replace(/\bi\b/g, "I");
+}
+
+function formatTitleWord(word: string) {
+  const key = word.toLowerCase();
+  if (KNOWN_UPPERCASE_TERMS.has(key)) return KNOWN_UPPERCASE_TERMS.get(key) || word.toUpperCase();
+  if (/^\d/.test(word)) return word.toUpperCase();
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+}
+
+function replaceCaseInsensitivePhrase(text: string, needle: string, replacement: string) {
+  if (!needle || !replacement || needle.length < 2) return text;
+  return text.replace(new RegExp(escapeRegExp(needle), "gi"), replacement);
+}
+
+function ensureFinalPunctuation(text: string) {
+  if (!text) return "";
+  return /[.!?)]$/.test(text) ? text : `${text}.`;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function normalizeUrl(value: unknown) {
@@ -728,7 +960,8 @@ function applyDetailEnhancements(
       /<script type="application\/ld\+json" class="rank-math-schema">.*?<\/script><!-- \/Rank Math WordPress SEO plugin -->/,
       `${generateBreadcrumbJsonLd(row)}<!-- /Rank Math WordPress SEO plugin -->`,
     )
-    .replace(/href="\/category\//g, 'href="/kategori/');
+    .replace(/href="\/category\/([^"#?]+)"/g, 'href="/peluang-usaha?kategori=$1"')
+    .replace(/href="\/kategori\/([^"#?]+)"/g, 'href="/peluang-usaha?kategori=$1"');
 
   if (!assets.heroImage) {
     enhanced = enhanced.replace(
@@ -756,9 +989,108 @@ function stripLegacyDetailTabComment(html: string) {
 
 function injectDirectoryStyles(html: string) {
   if (html.includes("franchise-directory-generated-css")) return html;
-  return html.replace(
+  const withStyles = html.replace(
     "</head>",
     `<style id="franchise-directory-generated-css">
+.franchise-directory-controls {
+  max-width: 1200px;
+  margin: 0 auto 24px;
+  padding: 18px;
+  border: 1px solid #e4e4e4;
+  background: #ffffff;
+  font-family: Outfit, "DM Sans", Arial, sans-serif;
+}
+.franchise-directory-control-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(150px, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+}
+.franchise-directory-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #2b2b2b;
+  font-size: 12px;
+  font-weight: 700;
+}
+.franchise-directory-controls input,
+.franchise-directory-controls select {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid #d6d6d6;
+  border-radius: 4px;
+  padding: 8px 10px;
+  background: #ffffff;
+  color: #111111;
+  font: inherit;
+}
+.franchise-directory-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.franchise-directory-actions button,
+.franchise-directory-actions a {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none !important;
+}
+.franchise-directory-actions button {
+  border: 1px solid #111111;
+  background: #111111;
+  color: #ffffff;
+  cursor: pointer;
+}
+.franchise-directory-actions a {
+  border: 1px solid #dedede;
+  background: #f7f7f7;
+  color: #111111 !important;
+}
+.franchise-directory-quicklinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.franchise-directory-quicklinks a {
+  border: 1px solid #e3d083;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #fff8d7;
+  color: #2b2100 !important;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+.franchise-directory-quicklinks a.is-active {
+  background: #f0ca00;
+  border-color: #c28d00;
+  color: #111111 !important;
+}
+.franchise-directory-result-count {
+  margin: 12px 0 0;
+  color: #4d4d4d;
+  font-size: 13px;
+  font-weight: 600;
+}
+.franchise-directory-empty {
+  display: none;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  padding: 14px 18px;
+  border-left: 4px solid #f0ca00;
+  background: #fff9df;
+  color: #312500;
+  font-weight: 700;
+}
 .franchise-css-placeholder {
   position: relative;
   width: 100%;
@@ -900,8 +1232,110 @@ function injectDirectoryStyles(html: string) {
 .franchise-fact-chip strong {
   font-weight: 700;
 }
+@media (max-width: 980px) {
+  .franchise-directory-control-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .franchise-directory-search {
+    grid-column: 1 / -1;
+  }
+  .franchise-directory-actions {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 640px) {
+  .franchise-directory-control-row {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
 </head>`,
+  );
+
+  if (withStyles.includes("franchise-directory-generated-js")) return withStyles;
+
+  return withStyles.replace(
+    "</body>",
+    `<script id="franchise-directory-generated-js">
+(function () {
+  var form = document.querySelector("[data-directory-controls]");
+  var grid = document.querySelector("#uc_post_grid_elementor_d0f4a5f .uc-items-wrapper");
+  if (!form || !grid) return;
+
+  var cards = Array.prototype.slice.call(grid.querySelectorAll("[data-franchise-card]"));
+  var count = form.querySelector(".franchise-directory-result-count");
+  var params = new URLSearchParams(window.location.search);
+  var inputs = {
+    q: form.querySelector('[name="q"]'),
+    sort: form.querySelector('[name="sort"]'),
+    kategori: form.querySelector('[name="kategori"]'),
+    status: form.querySelector('[name="status"]')
+  };
+
+  function setField(name, value) {
+    if (inputs[name]) inputs[name].value = value || "";
+  }
+
+  setField("q", params.get("q"));
+  setField("sort", params.get("sort") || (params.get("view") === "kategori" ? "kategori" : ""));
+  setField("kategori", params.get("kategori"));
+  setField("status", params.get("status"));
+
+  function asNumber(card, attr) {
+    var value = Number(card.getAttribute(attr) || "0");
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  function applyFilters() {
+    var query = (inputs.q && inputs.q.value || "").trim().toLowerCase();
+    var sort = inputs.sort && inputs.sort.value || "";
+    var category = inputs.kategori && inputs.kategori.value || "";
+    var status = inputs.status && inputs.status.value || "";
+    var visible = cards.filter(function (card) {
+      var matchesQuery = !query || card.textContent.toLowerCase().indexOf(query) !== -1;
+      var matchesCategory = !category || card.getAttribute("data-category-slug") === category;
+      var matchesStatus = !status || card.getAttribute("data-status") === status;
+      return matchesQuery && matchesCategory && matchesStatus;
+    });
+
+    visible.sort(function (a, b) {
+      if (sort === "rekomendasi") return asNumber(b, "data-recommendation-score") - asNumber(a, "data-recommendation-score") || a.getAttribute("data-brand").localeCompare(b.getAttribute("data-brand"), "id-ID");
+      if (sort === "populer") return asNumber(b, "data-popularity-score") - asNumber(a, "data-popularity-score") || a.getAttribute("data-brand").localeCompare(b.getAttribute("data-brand"), "id-ID");
+      if (sort === "abjad") return a.getAttribute("data-brand").localeCompare(b.getAttribute("data-brand"), "id-ID");
+      if (sort === "kategori") return a.getAttribute("data-category").localeCompare(b.getAttribute("data-category"), "id-ID") || a.getAttribute("data-brand").localeCompare(b.getAttribute("data-brand"), "id-ID");
+      if (sort === "modal-asc") return asNumber(a, "data-modal") - asNumber(b, "data-modal");
+      if (sort === "modal-desc") return asNumber(b, "data-modal") - asNumber(a, "data-modal");
+      return asNumber(a, "data-index") - asNumber(b, "data-index");
+    });
+
+    cards.forEach(function (card) { card.style.display = "none"; });
+    visible.forEach(function (card) {
+      card.style.display = "";
+      grid.appendChild(card);
+    });
+    if (count) count.textContent = visible.length + " franchise ditampilkan dari " + cards.length + " listing.";
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var next = new URLSearchParams();
+    Object.keys(inputs).forEach(function (key) {
+      var input = inputs[key];
+      if (input && input.value) next.set(key, input.value);
+    });
+    var query = next.toString();
+    window.history.replaceState({}, "", query ? "/peluang-usaha?" + query : "/peluang-usaha");
+    applyFilters();
+  });
+
+  form.querySelectorAll(".franchise-directory-quicklinks a").forEach(function (link) {
+    if (link.href === window.location.href || link.search === window.location.search) link.classList.add("is-active");
+  });
+
+  applyFilters();
+}());
+</script>
+</body>`,
   );
 }
 

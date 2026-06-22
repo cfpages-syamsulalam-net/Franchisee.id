@@ -4,6 +4,25 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-22 09:04 (Asia/Jakarta)
+### Added
+- `DASHBOARD.md`: Added admin/staff dashboard plan covering overview metrics, listing operations, unclaimed WhatsApp outreach, claim review, data quality, publishing, leads, system health, access model, data needs, and MVP sequence.
+- `.context/session-20260622-0904.md`: Added session snapshot for directory route consolidation, dashboard planning, and all-caps description presentation normalization.
+
+### Changed
+- `src/lib/franchise-static.ts`: Made `/peluang-usaha` the canonical directory route with query-param search/sort/category/status controls, rewired generated category links/breadcrumbs/schema to `/peluang-usaha?kategori=...`, added render-time all-caps brand/company/description display normalization, and kept detail pages using flat franchise URLs.
+- `scripts/copy-legacy-static.mjs`: Skips duplicate legacy directory/category route folders and rewrites copied legacy HTML links from old archive URLs to canonical `/peluang-usaha` query-param URLs.
+- `public/_redirects`: Redirects `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known top-level category aliases to canonical `/peluang-usaha` query-param URLs.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/README.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the canonical `/peluang-usaha` route policy, redirect-only duplicate archives, dashboard planning source, legacy link rewriting, and render-time uppercase description normalization.
+
+### Removed
+- `src/pages/[categorySlug].astro`: Removed duplicate top-level category archive generation.
+- `src/pages/abjad/index.astro`: Removed duplicate alphabetical archive generation.
+- `src/pages/kategori/[slug].astro`: Removed duplicate category archive generation.
+- `src/pages/kategori/index.astro`: Removed duplicate category index generation.
+- `src/pages/populer/index.astro`: Removed duplicate popular archive generation.
+- `src/pages/rekomendasi/index.astro`: Removed duplicate recommendation archive generation.
+
 ## 2026-06-22 06:05 (Asia/Jakarta)
 ### Added
 - `.context/session-20260622-0605.md`: Added session snapshot for detail-page tabs, placeholders, contrast, and public contact parsing.

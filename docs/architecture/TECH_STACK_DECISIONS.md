@@ -146,15 +146,15 @@ pnpm run build:astro
 
 Astro scaffold:
 - `astro.config.mjs` is configured for static output with `trailingSlash: "never"` and `build.format: "preserve"`.
-- `src/lib/franchise-static.ts` validates the D1 snapshot with Zod and renders the existing listing/detail/category templates.
-- `src/pages/peluang-usaha/index.astro` builds `/peluang-usaha/index.html`.
+- `src/lib/franchise-static.ts` validates the D1 snapshot with Zod and renders the existing listing/detail templates.
+- `src/pages/peluang-usaha/index.astro` builds canonical `/peluang-usaha/index.html` with query-param controls for search, recommendation/popular/alphabetical/category sorting, status filtering, and category filtering.
 - `src/pages/peluang-usaha/[slug].astro` uses `getStaticPaths` to build one flat `/peluang-usaha/{slug}.html` file per franchise slug under `build.format: "preserve"`.
-- `src/pages/rekomendasi/index.astro`, `src/pages/populer/index.astro`, `src/pages/abjad/index.astro`, `src/pages/kategori/index.astro`, category archive routes, and top-level compatibility category slug routes build the legacy directory navigation from the same D1 snapshot.
-- Canonical category URLs use `/kategori/...`. `public/_redirects` redirects legacy `/category/*` requests to `/kategori/:splat` so duplicate category pages are not indexed.
+- Legacy duplicate directory/category URLs (`/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known category aliases) are redirect-only compatibility paths to `/peluang-usaha` query-param states.
 - Directory cards use a CSS-only fallback placeholder when D1 has no cover/logo URL, so missing legacy placeholder image assets do not break the public archive layout.
 - Franchise detail pages are listings, not blog posts; generated output removes the legacy header placeholder and fake WordPress `By admin` date block, and detail metadata is generated from the franchise row instead of inherited post metadata.
 - Unclaimed detail pages are not contactless by default. If D1 has imported public phone, office address, or social/contact data, the page may show it with clear public/unclaimed wording and a claim CTA for corrections.
 - Raw legacy phone text is presentation-normalized in `src/lib/franchise-static.ts` during Astro rendering. The renderer splits common Indonesian multi-number strings, preserves labels such as Marketing, WA/WhatsApp, Kantor, Office, and Owner, outputs `tel:` links for numbers, and adds WhatsApp claim-notification links for unclaimed mobile/WhatsApp-capable numbers.
+- Mostly all-uppercase imported descriptions are presentation-normalized in `src/lib/franchise-static.ts` during Astro rendering while preserving legal prefixes/acronyms such as PT, CV, UD, BPOM, NIB, and F&B. Raw D1 text is not mutated by the renderer.
 - Future dashboard/edit work should add a normalized contact model, such as a `franchise_contacts` table or structured JSON field, but current public rendering should continue to preserve raw imported D1 fields until that migration exists.
 - `astro.config.mjs` uses `build.format: "preserve"` so index routes remain index files while detail pages can be stored as flat `.html` files.
 - `pnpm run build:astro` refreshes the D1 snapshot first, then builds the D1-backed public directory pages into `dist/` from the current D1 data.
@@ -163,7 +163,7 @@ Astro scaffold:
 - Cloudflare Pages config validation rejects `account_id` in `wrangler.toml`; account selection must come from the Pages project, `cfman`, or GitHub environment/variables.
 - The D1 static builder prefers the Cloudflare D1 HTTP API for build-time reads when `CLOUDFLARE_API_TOKEN` is available. This avoids Wrangler account-discovery calls during Cloudflare Pages and CI builds.
 - The build output is hybrid: Astro writes D1-backed routes to `dist`, then `scripts/copy-legacy-static.mjs` copies legacy static pages/assets into `dist` without overwriting Astro output.
-- The legacy copy skips top-level `/peluang-usaha`, so Astro owns the D1-backed directory route and legacy detail folder indexes do not compete with flat `.html` output.
+- The legacy copy skips top-level `/peluang-usaha`, duplicate directory archives, and known category aliases, then rewrites copied HTML links to canonical `/peluang-usaha` query URLs so legacy static pages do not leak duplicate directory routes.
 
 ### D1 Change To Static Publish Mechanism
 Target mechanism for franchisor edits, admin edits, claims, listing deletes, and publication-status changes:
