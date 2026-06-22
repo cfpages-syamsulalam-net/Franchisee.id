@@ -9,9 +9,9 @@ Format:
 - `.context/session-20260622-0605.md`: Added session snapshot for detail-page tabs, placeholders, contrast, and public contact parsing.
 
 ### Changed
-- `src/lib/franchise-static.ts`: Styled detail CSS-only placeholders, fixed readable yellow/category/breadcrumb link states, made generated detail tabs self-contained, stripped stale legacy tab comments, and rendered unclaimed public contact/address data with Indonesian phone parsing and claim CTA wording.
+- `src/lib/franchise-static.ts`: Styled detail CSS-only placeholders, fixed readable yellow/category/breadcrumb link states, made generated detail tabs self-contained, stripped stale legacy tab comments, removed breadcrumb chip styling from `hfe-post-info` category items, forced readable disclaimer claim links, added an office-address prefix icon, and rendered unclaimed public contact/address data with Indonesian phone parsing, `tel:` links, WhatsApp claim-notification links, and claim CTA wording.
 - `scripts/build-d1-franchise-pages.ts`: Added public `phone` and `office_address` fields to the D1 static snapshot query for Astro detail rendering.
-- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented unclaimed public contact display, render-time phone normalization, detail tab behavior, and future normalized contact-model direction.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented unclaimed public contact display, render-time phone normalization, detail tab behavior, WhatsApp claim-notification links, and future normalized contact-model direction.
 
 ### Removed
 - None.

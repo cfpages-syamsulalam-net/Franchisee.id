@@ -213,7 +213,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 - Keep static-first public franchise pages for SEO unless a migration plan explicitly replaces generation.
 - For D1-generated public pages, prune only files tracked in `json/d1-generated-pages-manifest.json` and marked with `d1-generated:franchisee.id`.
 - Unclaimed listings may show imported public contact, address, and social data when D1 has it. Display it as public/unclaimed data with a claim CTA; do not require claim ownership before showing existing public phone/address details.
-- Phone display from legacy import data is presentation-normalized in `src/lib/franchise-static.ts`: preserve labels such as Marketing, WA/WhatsApp, Kantor, and Owner; distinguish WhatsApp/mobile/landline where possible; keep raw D1 fields until a later normalized contact table/dashboard edit flow exists.
+- Phone display from legacy import data is presentation-normalized in `src/lib/franchise-static.ts`: preserve labels such as Marketing, WA/WhatsApp, Kantor, and Owner; distinguish WhatsApp/mobile/landline where possible; render `tel:` links for numbers; add WhatsApp claim-notification links for unclaimed mobile/WhatsApp-capable numbers; keep raw D1 fields until a later normalized contact table/dashboard edit flow exists.
 - Keep `CHANGELOG.md` updated for every file create/update/delete.
 - For new migration code, prefer TypeScript plus Zod validation at runtime boundaries.
 - D1 table changes must be made through committed SQL migrations.

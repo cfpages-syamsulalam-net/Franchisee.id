@@ -167,7 +167,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `inferPhoneLabel(text, start, end, fallback)`: Derives a readable contact label from text around each detected phone number.
 - `classifyPhone(normalized, label, source)`: Classifies parsed numbers as WhatsApp, mobile, landline/office, or generic phone for display and link generation.
 - `formatIndonesianPhone(normalized, type)`: Formats mobile numbers in 4-digit groups and landlines with area-code grouping.
-- `generatePhoneContactRow(contact)`: Renders parsed phone contacts as styled `tel:` or `wa.me` rows in the detail contact tab.
+- `generatePhoneContactRow(contact, row, isUnclaimed)`: Renders parsed phone contacts as styled `tel:` rows and adds a WhatsApp claim-notification link for unclaimed mobile/WhatsApp-capable numbers.
 - `getRecommendedRows(rows)`: Sorts directory rows by verification/status and listing completeness for `/rekomendasi`.
 - `getPopularRows(rows)`: Sorts directory rows by a deterministic popularity proxy until real D1 analytics/lead/payment metrics exist.
 - `getAlphabeticalRows(rows)`: Sorts directory rows alphabetically by brand name for `/abjad`.

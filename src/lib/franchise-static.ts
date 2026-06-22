@@ -409,6 +409,7 @@ interface ParsedPhoneContact {
   label: string;
   display: string;
   href: string;
+  whatsappHref: string;
   type: "whatsapp" | "mobile" | "landline";
 }
 
@@ -443,8 +444,8 @@ function generateContactBlock(row: FranchiseStaticRow, isUnclaimed = false) {
   const contactRows = [
     row.pic_name ? `<li>PIC: ${escapeHtml(row.pic_name)}</li>` : "",
     row.email_contact ? `<li>Email: <a href="mailto:${escapeAttr(row.email_contact)}">${escapeHtml(row.email_contact)}</a></li>` : "",
-    ...phoneContacts.map((contact) => generatePhoneContactRow(contact)),
-    row.office_address ? `<li>Alamat kantor: ${escapeHtml(row.office_address)}</li>` : "",
+    ...phoneContacts.map((contact) => generatePhoneContactRow(contact, row, isUnclaimed)),
+    row.office_address ? generateOfficeAddressRow(row.office_address) : "",
   ].filter(Boolean);
 
   const contactList = contactRows.length ? `<ul>${contactRows.join("")}</ul>` : "";
@@ -482,7 +483,8 @@ function parsePhoneContacts(value: unknown, defaultLabel: string, source: "whats
     contacts.push({
       label: label || defaultLabel,
       display: formatIndonesianPhone(normalized, type),
-      href: type === "whatsapp" ? `https://wa.me/${toInternationalDigits(normalized)}` : `tel:+${toInternationalDigits(normalized)}`,
+      href: `tel:+${toInternationalDigits(normalized)}`,
+      whatsappHref: normalized.startsWith("08") ? `https://wa.me/${toInternationalDigits(normalized)}` : "",
       type,
     });
   }
@@ -578,9 +580,30 @@ function titleCaseLabel(label: string) {
     .join(" ");
 }
 
-function generatePhoneContactRow(contact: ParsedPhoneContact) {
+function generatePhoneContactRow(contact: ParsedPhoneContact, row: FranchiseStaticRow, isUnclaimed: boolean) {
   const icon = contact.type === "whatsapp" ? "fab fa-whatsapp" : contact.type === "mobile" ? "fas fa-mobile-alt" : "fas fa-phone-alt";
-  return `<li class="franchise-phone-contact franchise-phone-${escapeAttr(contact.type)}"><span><i class="${icon}" aria-hidden="true"></i>${escapeHtml(contact.label)}:</span> <a href="${escapeAttr(contact.href)}" target="${contact.type === "whatsapp" ? "_blank" : "_self"}" rel="noopener noreferrer">${escapeHtml(contact.display)}</a></li>`;
+  const claimMessageHref = isUnclaimed && contact.whatsappHref ? generateWhatsAppClaimHref(contact.whatsappHref, row) : "";
+  const claimMessageLink = claimMessageHref
+    ? ` <a class="franchise-whatsapp-claim-link" href="${escapeAttr(claimMessageHref)}" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp" aria-hidden="true"></i> Kirim info klaim</a>`
+    : "";
+  return `<li class="franchise-phone-contact franchise-phone-${escapeAttr(contact.type)}"><span><i class="${icon}" aria-hidden="true"></i>${escapeHtml(contact.label)}:</span> <a href="${escapeAttr(contact.href)}">${escapeHtml(contact.display)}</a>${claimMessageLink}</li>`;
+}
+
+function generateOfficeAddressRow(address: string) {
+  return `<li class="franchise-office-address"><span><i class="fas fa-map-marker-alt" aria-hidden="true"></i>Alamat kantor:</span> ${escapeHtml(address)}</li>`;
+}
+
+function generateWhatsAppClaimHref(baseHref: string, row: FranchiseStaticRow) {
+  const brandName = normalizeText(row.brand_name);
+  const category = normalizeText(row.category) || "franchise";
+  const listingUrl = `https://franchisee.id/peluang-usaha/${row.slug}`;
+  const claimUrl = `https://franchisee.id/daftar?claim=${row.slug}`;
+  const message = [
+    `Halo, saya menemukan listing ${brandName} (${category}) di Franchisee.id: ${listingUrl}.`,
+    `Status listing ini belum diklaim, jadi data franchise, kontak, dan alamatnya belum dikelola langsung oleh pemilik brand.`,
+    `Mohon tim/pemilik ${brandName} klaim listing ini agar informasi publiknya bisa diperbarui resmi: ${claimUrl}`,
+  ].join(" ");
+  return `${baseHref}?text=${encodeURIComponent(message)}`;
 }
 
 function compareFranchises(a: FranchiseStaticRow, b: FranchiseStaticRow) {
@@ -888,24 +911,39 @@ function injectDetailStyles(html: string) {
     "</head>",
     `<style id="franchise-detail-generated-css">
 .hfe-post-info a,
+.hfe-post-info-item,
 .hfe-post-info__terms-list-item,
 .elementor-widget-post-info-widget a {
   color: #111111 !important;
 }
+.hfe-post-info-item,
 .hfe-post-info__terms-list-item {
-  display: inline-flex;
-  align-items: center;
-  min-height: 22px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: #fff3c4;
-  border: 1px solid rgba(194, 141, 0, 0.3);
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
   text-decoration: none !important;
-  line-height: 1.25;
 }
+.hfe-post-info-item:hover,
 .hfe-post-info__terms-list-item:hover {
-  background: #f0ca00;
+  background: transparent !important;
   color: #111111 !important;
+}
+.disclaimer-box,
+.disclaimer-box strong,
+.disclaimer-box i {
+  color: #332600 !important;
+}
+.disclaimer-box a {
+  color: #111111 !important;
+  font-weight: 800;
+  text-decoration: underline !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 2px;
+}
+.disclaimer-box a:hover,
+.disclaimer-box a:focus {
+  color: #000000 !important;
+  background: rgba(255, 255, 255, 0.45);
 }
 .ast-breadcrumbs {
   margin: 18px auto 22px;
@@ -1062,6 +1100,29 @@ function injectDetailStyles(html: string) {
 }
 .franchise-contact-block a:hover {
   color: #c28d00 !important;
+}
+.franchise-whatsapp-claim-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 2px;
+  padding: 3px 7px;
+  border: 1px solid rgba(18, 140, 126, 0.28);
+  border-radius: 4px;
+  background: #e8f7ef;
+  color: #075e54 !important;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.franchise-whatsapp-claim-link i {
+  width: auto;
+  margin-right: 0;
+  color: #128c7e;
+}
+.franchise-whatsapp-claim-link:hover,
+.franchise-whatsapp-claim-link:focus {
+  background: #d7f0e4;
+  color: #064c45 !important;
 }
 .franchise-contact-note {
   margin-top: 14px;
