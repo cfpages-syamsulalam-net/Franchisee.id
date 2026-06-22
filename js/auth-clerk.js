@@ -1,5 +1,6 @@
 (function (window, document) {
   const CLERK_JS_URL = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6.17.0/dist/clerk.browser.js";
+  const PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsuZnJhbmNoaXNlZS5pZCQ";
   let clerkPromise = null;
   let syncedUser = null;
 
@@ -20,7 +21,8 @@
 
     clerkPromise = (async function () {
       const config = await fetchAuthConfig();
-      if (!config.publishableKey) {
+      const publishableKey = normalizePublishableKey(config.publishableKey) || PUBLIC_CLERK_PUBLISHABLE_KEY;
+      if (!publishableKey) {
         throw new Error("Clerk publishable key belum dikonfigurasi di Cloudflare Pages.");
       }
 
@@ -28,8 +30,8 @@
       const ClerkCtor = window.Clerk;
       if (!ClerkCtor) throw new Error("ClerkJS gagal dimuat.");
 
-      const clerk = new ClerkCtor(config.publishableKey);
-      await clerk.load();
+      const clerk = createClerkInstance(ClerkCtor, publishableKey);
+      await loadClerkInstance(clerk, publishableKey);
       Auth.clerk = clerk;
       return clerk;
     })();
@@ -326,9 +328,36 @@
   }
 
   async function fetchAuthConfig() {
-    const response = await fetch("/auth-config", { cache: "no-store" });
-    if (!response.ok) throw new Error("Konfigurasi login gagal dimuat.");
-    return response.json();
+    try {
+      const response = await fetch("/auth-config", { cache: "no-store" });
+      if (!response.ok) return { publishableKey: PUBLIC_CLERK_PUBLISHABLE_KEY, configured: true, source: "client-fallback" };
+      const config = await response.json();
+      return {
+        ...config,
+        publishableKey: normalizePublishableKey(config.publishableKey) || PUBLIC_CLERK_PUBLISHABLE_KEY,
+      };
+    } catch (error) {
+      return { publishableKey: PUBLIC_CLERK_PUBLISHABLE_KEY, configured: true, source: "client-fallback" };
+    }
+  }
+
+  function normalizePublishableKey(value) {
+    return (value || "").toString().trim();
+  }
+
+  function createClerkInstance(ClerkCtor, publishableKey) {
+    if (typeof ClerkCtor === "function") return new ClerkCtor(publishableKey);
+    return ClerkCtor;
+  }
+
+  async function loadClerkInstance(clerk, publishableKey) {
+    if (!clerk || typeof clerk.load !== "function") throw new Error("ClerkJS gagal diinisialisasi.");
+    try {
+      await clerk.load({ publishableKey: publishableKey });
+    } catch (error) {
+      if (!/publishableKey/i.test(error?.message || "")) throw error;
+      await clerk.load(publishableKey);
+    }
   }
 
   function loadScript(src) {

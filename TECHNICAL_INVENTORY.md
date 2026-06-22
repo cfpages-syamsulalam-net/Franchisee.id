@@ -290,7 +290,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - **Lost logic recovered**: BEP calculations, multi-step progress, and media URL preview behavior (refactored into modular `form-0x-*.js` files and `form-utils.js`).
 ### File: `js/auth-clerk.js`
 *Custom ClerkJS client integration using existing site CSS.*
-- `Auth.init()`: Fetches `/auth-config`, loads pinned ClerkJS, and initializes Clerk.
+- `Auth.init()`: Fetches `/auth-config`, normalizes the publishable key with a public client fallback when config is stale/empty, loads pinned ClerkJS, and initializes Clerk.
+- `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
 - `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1 and optionally assign self-selectable `franchisee`/`franchisor` roles.
 - `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with custom login/register/verification forms.

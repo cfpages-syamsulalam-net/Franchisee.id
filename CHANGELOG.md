@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-22 18:12 (Asia/Jakarta)
+### Added
+- `js/auth-clerk.js`: Added a client-side Clerk publishable-key fallback so `/dashboard`, `/login`, `/register`, and protected forms can initialize Clerk even if `/auth-config` returns an empty or stale config response.
+
+### Changed
+- `js/auth-clerk.js`: Normalizes the publishable key before Clerk initialization and supports both constructor-style and singleton-style ClerkJS CDN initialization.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the client-side Clerk publishable-key fallback.
+
+### Removed
+- None.
+
 ## 2026-06-22 17:59 (Asia/Jakarta)
 ### Added
 - `functions/auth-config.js`: Added the live Clerk publishable key as a public fallback so browser auth can initialize even if the Cloudflare Pages env var is missing from the Functions runtime.
