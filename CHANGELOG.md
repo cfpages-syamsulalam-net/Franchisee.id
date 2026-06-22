@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-22 17:59 (Asia/Jakarta)
+### Added
+- `functions/auth-config.js`: Added the live Clerk publishable key as a public fallback so browser auth can initialize even if the Cloudflare Pages env var is missing from the Functions runtime.
+
+### Changed
+- `templates/peluang-usaha-tpl.html` and `templates/detail-franchise-tpl.html`: Replaced visible legacy navbar/footer links for `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, and `/kategori` with canonical `/peluang-usaha` query URLs.
+- `src/lib/franchise-static.ts`: Added render-time canonicalization for legacy template/menu links and changed category route helper output to canonical `/peluang-usaha?kategori=...` URLs.
+- `scripts/build-d1-franchise-pages.ts`, `js/build-listing.js`, and `js/build-details.js`: Added canonical legacy-link rewriting so older generation paths cannot reintroduce duplicate directory/category URLs.
+- `src/pages/dashboard/index.astro`: Removed the missing legacy Astra dynamic CSS reference that returned HTML/404 and triggered strict MIME stylesheet errors in production.
+- `AGENTS.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented the Clerk public fallback, dashboard CSS dependency cleanup, canonical template link behavior, and the rule that Clerk publishable keys are public while secret keys must remain private.
+
+### Removed
+- None.
+
 ## 2026-06-22 15:22 (Asia/Jakarta)
 ### Added
 - `.context/session-20260622-1522.md`: Added session snapshot for completed dashboard edit/claim workflow implementation.

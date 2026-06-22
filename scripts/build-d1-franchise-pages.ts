@@ -396,7 +396,7 @@ function buildListingIndex(
   stats: BuildStats,
 ) {
   const cards = rows.map((row, index) => generateCard(row, index + 1)).join("");
-  const html = normalizeGeneratedHtml(template.replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards));
+  const html = normalizeGeneratedHtml(canonicalizeLegacyLinks(template.replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)));
   const hash = sha256(html);
   const indexPath = join(OUTPUT_DIR, "index.html");
 
@@ -493,7 +493,7 @@ function renderDetailPage(row: D1FranchiseRow, template: string): string {
   }
 
   return normalizeGeneratedHtml(
-    `${GENERATED_MARKER}:v1 slug=${escapeAttr(row.slug)} franchise_id=${escapeAttr(row.id)} -->\n${html.replace(/href="\/category\//g, 'href="/kategori/')}`,
+    `${GENERATED_MARKER}:v1 slug=${escapeAttr(row.slug)} franchise_id=${escapeAttr(row.id)} -->\n${canonicalizeLegacyLinks(html)}`,
   );
 }
 
@@ -533,7 +533,7 @@ function generateCard(row: D1FranchiseRow, index: number) {
                     </div>
                     <div class="ue-meta-data">
                         <span class="ue-grid-item-category">
-                            <a href="/kategori/${escapeAttr(slugify(category))}">${escapeHtml(category)}</a>
+                            <a href="/peluang-usaha?kategori=${escapeAttr(slugify(category))}">${escapeHtml(category)}</a>
                         </span>
                         <span style="font-size:11px; color:#666; display:block; width:100%; margin-top:5px;">
                             Modal: <b>${escapeHtml(modal)}</b>
@@ -573,7 +573,7 @@ function generateBreadcrumbs(row: D1FranchiseRow) {
             <ul class="trail-items">
                 <li class="trail-item"><a href="/">Home</a></li>
                 <li class="trail-item"><a href="/peluang-usaha">Peluang Usaha</a></li>
-                <li class="trail-item"><a href="/kategori/${escapeAttr(slugify(category))}">${escapeHtml(category)}</a></li>
+                <li class="trail-item"><a href="/peluang-usaha?kategori=${escapeAttr(slugify(category))}">${escapeHtml(category)}</a></li>
                 <li class="trail-item"><span>${escapeHtml(row.brand_name)}</span></li>
             </ul>
         </div>
@@ -780,6 +780,18 @@ function normalizeGeneratedHtml(html: string) {
       return normalized;
     })
     .replace(/[ \t]+$/gm, "");
+}
+
+function canonicalizeLegacyLinks(html: string) {
+  return html
+    .replace(/\bhref=(["'])\/direktori-franchise\/?\1/g, "href=$1/peluang-usaha$1")
+    .replace(/\bhref=(["'])\/rekomendasi\/?\1/g, "href=$1/peluang-usaha?sort=rekomendasi$1")
+    .replace(/\bhref=(["'])\/populer\/?\1/g, "href=$1/peluang-usaha?sort=populer$1")
+    .replace(/\bhref=(["'])\/abjad\/?\1/g, "href=$1/peluang-usaha?sort=abjad$1")
+    .replace(/\bhref=(["'])\/kategori\/?\1/g, "href=$1/peluang-usaha?view=kategori$1")
+    .replace(/\bhref=(["'])\/category\/?\1/g, "href=$1/peluang-usaha?view=kategori$1")
+    .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha?kategori=$2$1")
+    .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha?kategori=$2$1");
 }
 
 function ensureDir(dirPath: string) {

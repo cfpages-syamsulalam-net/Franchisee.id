@@ -54,7 +54,7 @@ function generateBreadcrumbs(item) {
             <ul class="trail-items">
                 <li class="trail-item"><a href="/">Home</a></li>
                 <li class="trail-item"><a href="/peluang-usaha">Peluang Usaha</a></li>
-                <li class="trail-item"><a href="/kategori/${catSlug}">${category}</a></li>
+                <li class="trail-item"><a href="/peluang-usaha?kategori=${catSlug}">${category}</a></li>
                 <li class="trail-item"><span>${item.brand_name}</span></li>
             </ul>
         </div>
@@ -188,7 +188,7 @@ async function build() {
             // Write File
             const itemDir = path.join(OUTPUT_DIR, slug);
             if (!fs.existsSync(itemDir)) fs.mkdirSync(itemDir, { recursive: true });
-            fs.writeFileSync(path.join(itemDir, 'index.html'), html);
+            fs.writeFileSync(path.join(itemDir, 'index.html'), canonicalizeLegacyLinks(html));
             total++;
         }
 
@@ -201,3 +201,15 @@ async function build() {
 }
 
 build();
+
+function canonicalizeLegacyLinks(html) {
+    return html
+        .replace(/\bhref=(["'])\/direktori-franchise\/?\1/g, 'href=$1/peluang-usaha$1')
+        .replace(/\bhref=(["'])\/rekomendasi\/?\1/g, 'href=$1/peluang-usaha?sort=rekomendasi$1')
+        .replace(/\bhref=(["'])\/populer\/?\1/g, 'href=$1/peluang-usaha?sort=populer$1')
+        .replace(/\bhref=(["'])\/abjad\/?\1/g, 'href=$1/peluang-usaha?sort=abjad$1')
+        .replace(/\bhref=(["'])\/kategori\/?\1/g, 'href=$1/peluang-usaha?view=kategori$1')
+        .replace(/\bhref=(["'])\/category\/?\1/g, 'href=$1/peluang-usaha?view=kategori$1')
+        .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, 'href=$1/peluang-usaha?kategori=$2$1')
+        .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, 'href=$1/peluang-usaha?kategori=$2$1');
+}

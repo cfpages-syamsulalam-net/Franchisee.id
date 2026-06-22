@@ -34,7 +34,7 @@ Last updated: 2026-06-22 15:22 (Asia/Jakarta)
 - Run `cfman wrangler` commands sequentially; repeated immediate invocations can intermittently fail in this environment.
 - Do not add `account_id` to `wrangler.toml`; Cloudflare Pages config validation rejects it. Use the Cloudflare Pages project/account context, `cfman`, or GitHub `CLOUDFLARE_ACCOUNT_ID` env/vars for account selection.
 - Never commit Cloudflare tokens or paste them into repository files. Store tokens only through `cfman token add` or the local shell environment.
-- Never commit Clerk secret keys. Clerk env requirements are documented in `docs/architecture/CLERK_SETUP.md`.
+- Never commit Clerk secret keys. Clerk publishable keys (`pk_*`) are browser-safe and may be used as public fallbacks, but secret keys (`sk_*`) must stay only in Cloudflare Pages secrets. Clerk env requirements are documented in `docs/architecture/CLERK_SETUP.md`.
 - Clerk webhook signing secrets are required for `/clerk-webhook`; do not accept unverified webhook payloads.
 
 ## Public Page Generation

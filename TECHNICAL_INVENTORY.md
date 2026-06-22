@@ -162,6 +162,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, and category filtering.
 - `renderCategoryIndexPage(rows)`: Legacy helper that renders category cards, but canonical category browsing is now `/peluang-usaha?view=kategori` or `/peluang-usaha?kategori=[slug]`.
 - `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row.
+- `applyCanonicalLegacyLinks(html)`: Rewrites legacy template/menu hrefs such as `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, and `/category` to canonical `/peluang-usaha` query URLs during Astro rendering.
 - `normalizeDescriptionText(value, brandName)`: Presentation-normalizes mostly all-uppercase imported descriptions into readable sentence case while preserving legal prefixes/acronyms such as PT, CV, UD, BPOM, NIB, and F&B.
 - `generateContactBlock(row, isUnclaimed)`: Renders D1 contact/social links into the detail page contact tab, including imported public phone/address data for unclaimed listings with a claim CTA.
 - `parsePhoneContacts(value, defaultLabel, source)`: Splits messy Indonesian phone text into contact rows while preserving nearby labels such as Marketing, WA, Kantor, Office, and Owner.
@@ -195,6 +196,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Loads `js/auth-clerk.js`, requires a Clerk session in the browser, and fetches `/dashboard-data` with bearer auth.
 - Renders overview metrics, unclaimed WhatsApp outreach, data-quality warnings, publish queue state, pending claims, staff edit policy, lead summary, system health, listing edit suggestion form, and admin approve/reject actions for claims/suggestions.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
+- Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
 - Security note: the static page is not the authorization boundary; `/dashboard-data` performs the server-side D1 role check.
 
 ### File: `public/_redirects`
@@ -224,7 +226,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/auth-config.js`
 *Public Clerk config endpoint.*
-- `onRequestGet()`: Returns the Clerk publishable key from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` or fallback `CLERK_PUBLISHABLE_KEY`, plus configured status with `Cache-Control: no-store`.
+- `onRequestGet()`: Returns the Clerk publishable key from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, fallback `CLERK_PUBLISHABLE_KEY`, or the committed public live publishable-key fallback, plus configured status with `Cache-Control: no-store`.
 
 ### File: `functions/auth-sync.js`
 *Clerk-to-D1 user mapping endpoint.*

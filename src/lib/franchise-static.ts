@@ -132,7 +132,7 @@ export function renderListingPage(rows: FranchiseStaticRow[], options?: Director
       '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
       `${generateDirectoryControls(rows)}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
     );
-  return normalizeGeneratedHtml(injectDirectoryStyles(applyDirectoryMeta(html, options)));
+  return normalizeGeneratedHtml(injectDirectoryStyles(applyCanonicalLegacyLinks(applyDirectoryMeta(html, options))));
 }
 
 export function renderCategoryIndexPage(rows: FranchiseStaticRow[]) {
@@ -142,11 +142,11 @@ export function renderCategoryIndexPage(rows: FranchiseStaticRow[]) {
   const html = template.replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards);
   return normalizeGeneratedHtml(
     injectDirectoryStyles(
-      applyDirectoryMeta(html, {
+      applyCanonicalLegacyLinks(applyDirectoryMeta(html, {
         title: "Kategori Franchise",
         description: "Jelajahi peluang franchise berdasarkan kategori bisnis, mulai dari makanan minuman, pendidikan, jasa, retail, otomotif, hingga kesehatan.",
         canonicalPath: "/peluang-usaha?view=kategori",
-      }),
+      })),
     ),
   );
 }
@@ -930,6 +930,18 @@ function normalizeGeneratedHtml(html: string) {
     .replace(/[ \t]+$/gm, "");
 }
 
+function applyCanonicalLegacyLinks(html: string) {
+  return html
+    .replace(/\bhref=(["'])\/direktori-franchise\/?\1/g, "href=$1/peluang-usaha$1")
+    .replace(/\bhref=(["'])\/rekomendasi\/?\1/g, "href=$1/peluang-usaha?sort=rekomendasi$1")
+    .replace(/\bhref=(["'])\/populer\/?\1/g, "href=$1/peluang-usaha?sort=populer$1")
+    .replace(/\bhref=(["'])\/abjad\/?\1/g, "href=$1/peluang-usaha?sort=abjad$1")
+    .replace(/\bhref=(["'])\/kategori\/?\1/g, "href=$1/peluang-usaha?view=kategori$1")
+    .replace(/\bhref=(["'])\/category\/?\1/g, "href=$1/peluang-usaha?view=kategori$1")
+    .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha?kategori=$2$1")
+    .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha?kategori=$2$1");
+}
+
 function applyDirectoryMeta(html: string, options?: DirectoryPageOptions) {
   if (!options) return html;
   const title = `${options.title} - Franchise.id`;
@@ -962,6 +974,7 @@ function applyDetailEnhancements(
     )
     .replace(/href="\/category\/([^"#?]+)"/g, 'href="/peluang-usaha?kategori=$1"')
     .replace(/href="\/kategori\/([^"#?]+)"/g, 'href="/peluang-usaha?kategori=$1"');
+  enhanced = applyCanonicalLegacyLinks(enhanced);
 
   if (!assets.heroImage) {
     enhanced = enhanced.replace(
@@ -1635,7 +1648,7 @@ function addCategoryAlias(
     slug,
     label,
     rows: matchedRows,
-    canonicalPath: `/kategori/${slug}`,
+    canonicalPath: canonicalCategoryHref(slug),
   });
 }
 
