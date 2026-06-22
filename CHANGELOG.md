@@ -4,6 +4,37 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-22 15:22 (Asia/Jakarta)
+### Added
+- `.context/session-20260622-1522.md`: Added session snapshot for completed dashboard edit/claim workflow implementation.
+
+### Changed
+- `functions/dashboard-data.js`: Added dashboard action routing for structured listing edit suggestions, admin edit suggestion review, admin claim review, editable listing options, lead summary, system-health data, audit writes, field whitelist validation, and static rebuild queue writes for approved public changes.
+- `src/pages/dashboard/index.astro`: Added listing edit suggestion form, pending suggestion table, admin approve/reject controls for suggestions and claims, lead summary panel, system-health panel, and data-quality quick suggestion seeding.
+- `DASHBOARD.md`: Marked edit suggestions, admin approvals, claim review, listing operations MVP, lead summary, and system health as implemented; kept richer field drawers/telemetry/payment metrics as follow-up work.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Synced dashboard API behavior, D1 dirty-queue responsibilities, approval workflow, and remaining dashboard scope.
+
+### Removed
+- None.
+
+## 2026-06-22 09:46 (Asia/Jakarta)
+### Added
+- `src/pages/dashboard/index.astro`: Added static `/dashboard` admin/staff operations shell with Clerk-authenticated data loading, overview metrics, unclaimed WhatsApp outreach, data-quality warnings, publish queue state, pending claims, and staff edit policy notes.
+- `functions/dashboard-data.js`: Added protected dashboard API requiring D1 `staff` or elevated `admin`, returning Franchisee.id D1 dashboard data and logging WhatsApp outreach events.
+- `migrations/0004_dashboard_operations.sql`: Added `listing_outreach_events`, `staff_auto_approval_rules`, and `listing_edit_suggestions` tables for dashboard outreach and edit-review workflows.
+- `.context/session-20260622-0946.md`: Added session snapshot for dashboard implementation decisions and pending work.
+
+### Changed
+- `DASHBOARD.md`: Converted from brainstorm to active progress tracker, recorded the `/dashboard` route decision, staff edit approval policy, staff-personal WhatsApp sender decision, Franchisee.id-only scope, implemented areas, pending dashboard work, and remote migration auth blocker.
+- `src/pages/dashboard/index.astro`: Changed outreach actions so opening WhatsApp and logging outreach are separate; staff must manually click "Catat terkirim" before a D1 outreach event is recorded.
+- `DASHBOARD.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, and `.context/session-20260622-0946.md`: Recorded final dashboard open decisions for structured JSON edit diffs, all-fields trusted staff auto-approval, manual outreach confirmation, data-completeness outreach priority, and the repeated remote migration token/auth blocker.
+- Remote D1 `franchise_db`: Applied `0004_dashboard_operations.sql` successfully after setting `CLOUDFLARE_ACCOUNT_ID=0ba63b7f0096bc267a93fe5c80b1f571` for Wrangler account context.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/README.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the dashboard route/API, D1 migration, access model, outreach logging, and remaining edit/approval workflow gaps.
+- Verified source/legacy HTML outside generated output has no remaining old directory route links; build-time legacy copy rewriting remains in `scripts/copy-legacy-static.mjs`.
+
+### Removed
+- None.
+
 ## 2026-06-22 09:04 (Asia/Jakarta)
 ### Added
 - `DASHBOARD.md`: Added admin/staff dashboard plan covering overview metrics, listing operations, unclaimed WhatsApp outreach, claim review, data quality, publishing, leads, system health, access model, data needs, and MVP sequence.

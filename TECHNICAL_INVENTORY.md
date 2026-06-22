@@ -188,6 +188,15 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getStaticPaths()`: Creates one static route per snapshot row using the D1 slug.
 - Outputs full detail HTML with `renderDetailPage(row)`.
 
+### File: `src/pages/dashboard/index.astro`
+*Static protected admin/staff dashboard shell.*
+- `prerender = true`.
+- Builds `/dashboard/index.html` with `noindex,nofollow`.
+- Loads `js/auth-clerk.js`, requires a Clerk session in the browser, and fetches `/dashboard-data` with bearer auth.
+- Renders overview metrics, unclaimed WhatsApp outreach, data-quality warnings, publish queue state, pending claims, staff edit policy, lead summary, system health, listing edit suggestion form, and admin approve/reject actions for claims/suggestions.
+- Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
+- Security note: the static page is not the authorization boundary; `/dashboard-data` performs the server-side D1 role check.
+
 ### File: `public/_redirects`
 *Cloudflare Pages redirects.*
 - Redirects legacy duplicate directory URLs to canonical `/peluang-usaha` query-param states:
@@ -232,6 +241,18 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/sync-clerk-metadata.js`
 *Admin-only repair/backfill endpoint for D1-to-Clerk metadata sync.*
 - `onRequestPost()`: Requires Clerk auth plus D1 `admin`, syncs one D1 user by `user_id` / `clerk_user_id` or up to 500 users with `all=true`, and rewrites Clerk metadata from D1 roles/status.
+
+### File: `functions/dashboard-data.js`
+*Protected Franchisee.id dashboard data and operations endpoint.*
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Returns Franchisee.id overview counts, unclaimed outreach queue, data-quality warnings, pending claims, publish queue state, recent outreach, editable listing options, pending edit suggestions, lead summary, and system health.
+- `onRequestPost()`: Routes dashboard actions for manually confirmed WhatsApp outreach logging, staff/admin listing edit suggestions, admin edit suggestion review, and admin claim review.
+- `getUnclaimedOutreachQueue(db)`: Reads published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
+- `getDataQuality(db)`: Computes read-time warnings for missing images, contact, description, category, and likely all-caps descriptions.
+- `handleSuggestEdit(db, auth, data)`: Stores structured JSON diffs in `listing_edit_suggestions`. Admin or active trusted staff suggestions apply immediately; normal staff suggestions stay pending.
+- `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs write field-by-field to whitelisted `franchises` columns, write audit events, and queue a static rebuild through `siteRebuildStatements()`.
+- `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
+- `sanitizeChanges(changes)`: Enforces dashboard-editable listing field whitelist and normalizes integer/real/enumerated values before D1 writes.
+- `getLeadSummary(db)` / `getSystemHealth(db)`: Read-only MVP views for Franchisee.id leads and operational health.
 
 ### File: `functions/form-submit.js` (v2.5)
 *Clerk-authenticated D1-backed backend processing for all current form submissions.*

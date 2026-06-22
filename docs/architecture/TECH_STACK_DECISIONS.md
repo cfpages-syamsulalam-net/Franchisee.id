@@ -101,6 +101,7 @@ Active UUID for `franchise_db`: `812cd8ac-edd0-45d9-981f-c9a15358317b`.
 Remote migration status:
 - Earlier direct Wrangler attempts failed because the ambient `CLOUDFLARE_API_TOKEN` was scoped to the wrong account.
 - `cfman` account alias `franchise-network` now reaches account `0ba63b7f0096bc267a93fe5c80b1f571`.
+- If Wrangler fails on `/memberships` with authentication error `10000`, the token may still be valid but unable to perform account discovery. Set `CLOUDFLARE_ACCOUNT_ID=0ba63b7f0096bc267a93fe5c80b1f571` before `cfman wrangler` D1 commands.
 - `0001_initial_network_schema.sql` was applied remotely to `franchise_db` on 2026-06-16.
 - Remote verification confirmed `d1_migrations` contains `0001_initial_network_schema.sql`.
 
@@ -165,6 +166,16 @@ Astro scaffold:
 - The build output is hybrid: Astro writes D1-backed routes to `dist`, then `scripts/copy-legacy-static.mjs` copies legacy static pages/assets into `dist` without overwriting Astro output.
 - The legacy copy skips top-level `/peluang-usaha`, duplicate directory archives, and known category aliases, then rewrites copied HTML links to canonical `/peluang-usaha` query URLs so legacy static pages do not leak duplicate directory routes.
 
+Dashboard scaffold:
+- `/dashboard` is implemented as a static Astro shell so the project can keep the same Cloudflare Pages/Astro deployment path.
+- `/dashboard-data` is the protected Pages Function and authorization boundary. It requires D1 role `staff`; `admin` is allowed through the existing elevated-role rule.
+- Dashboard MVP scope is Franchisee.id only (`site_franchisee_id`). Multi-site centralized dashboard work is deferred.
+- `migrations/0004_dashboard_operations.sql` adds `listing_outreach_events`, `staff_auto_approval_rules`, and `listing_edit_suggestions`.
+- Staff WhatsApp outreach uses generated `wa.me` links with prefilled text; no WhatsApp API is used. Outreach is logged only after staff manually confirms the message was sent.
+- Staff edit policy is implemented in the dashboard MVP: staff submit structured JSON diffs for whitelisted listing fields; admin approve/reject applies approved values field-by-field to D1, writes audit events, and queues static rebuilds. Active `staff_auto_approval_rules` allow trusted staff edits to apply immediately while preserving the same audit/suggestion trail.
+- Claim review is implemented for pending `franchise_claims`: admin approval attaches owner/profile data where present, moves unclaimed listings to free claimed state, writes audit events, and queues static rebuilds. Rejection records the review without changing the public listing.
+- Leads and system health are read-only MVP panels. Payment metrics, Clerk webhook failure telemetry, R2 asset health, and API error tracking still need dedicated data models.
+
 ### D1 Change To Static Publish Mechanism
 Target mechanism for franchisor edits, admin edits, claims, listing deletes, and publication-status changes:
 
@@ -174,6 +185,7 @@ Implementation status:
 - `migrations/0003_site_publish_queue.sql` creates `site_rebuild_requests` and `site_publish_state`; it was applied to remote `franchise_db` on 2026-06-18.
 - `functions/_site-publish-queue.js` provides queue statements for Pages Functions.
 - `/form-submit` enqueues public-page rebuild requests for franchisor listing submissions, claim submissions, dev unclaimed creation, and dev test-data clearing.
+- `/dashboard-data` enqueues public-page rebuild requests for approved listing edit suggestions, auto-approved trusted staff edits, and approved claim reviews.
 - `.github/workflows/d1-static-publish.yaml` runs the 30-minute poller and supports Cloudflare Deploy Hook publishing plus direct `dist/` deploy fallback.
 - Repository secrets still need to be set before the workflow can run in GitHub: `CLOUDFLARE_API_TOKEN` and `PAGES_DEPLOY_HOOK_FRANCHISEE_ID`.
 

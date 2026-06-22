@@ -1,0 +1,833 @@
+---
+export const prerender = true;
+---
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Dashboard Operasional - Franchisee.id</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css">
+    <link rel="stylesheet" href="/wp-content/plugins/elementor/assets/css/frontend.min.css">
+    <style>
+      :root {
+        --dash-ink: #171717;
+        --dash-muted: #646464;
+        --dash-line: #e5e5e5;
+        --dash-soft: #f7f7f7;
+        --dash-accent: #f0ca00;
+        --dash-accent-dark: #5d4500;
+        --dash-good: #0f6b3d;
+        --dash-warn: #8a5a00;
+        --dash-bad: #a42424;
+      }
+      body {
+        margin: 0;
+        background: #f2f2f2;
+        color: var(--dash-ink);
+        font-family: Outfit, "DM Sans", Arial, sans-serif;
+      }
+      .dash-shell {
+        min-height: 100vh;
+      }
+      .dash-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        border-bottom: 1px solid var(--dash-line);
+        background: rgba(255, 255, 255, 0.96);
+      }
+      .dash-header-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .dash-title h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.2;
+      }
+      .dash-title p {
+        margin: 3px 0 0;
+        color: var(--dash-muted);
+        font-size: 13px;
+      }
+      .dash-user {
+        color: var(--dash-muted);
+        font-size: 13px;
+        text-align: right;
+      }
+      .dash-main {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 22px 20px 44px;
+      }
+      .dash-alert {
+        margin-bottom: 16px;
+        border: 1px solid #ead57e;
+        border-left: 4px solid var(--dash-accent);
+        background: #fff9df;
+        padding: 14px 16px;
+        color: #352800;
+        font-size: 14px;
+      }
+      .dash-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .dash-card,
+      .dash-panel {
+        border: 1px solid var(--dash-line);
+        background: #ffffff;
+      }
+      .dash-card {
+        padding: 15px;
+      }
+      .dash-card span {
+        display: block;
+        color: var(--dash-muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .dash-card strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 26px;
+        line-height: 1;
+      }
+      .dash-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.9fr);
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .dash-panel {
+        min-width: 0;
+      }
+      .dash-panel-header {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--dash-line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .dash-panel-header h2 {
+        margin: 0;
+        font-size: 16px;
+      }
+      .dash-panel-header p {
+        margin: 3px 0 0;
+        color: var(--dash-muted);
+        font-size: 12px;
+      }
+      .dash-table-wrap {
+        overflow-x: auto;
+      }
+      .dash-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .dash-table th,
+      .dash-table td {
+        border-bottom: 1px solid var(--dash-line);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .dash-table th {
+        color: var(--dash-muted);
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+      .dash-table a {
+        color: #111111;
+        font-weight: 700;
+      }
+      .dash-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .dash-form {
+        display: grid;
+        grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1fr);
+        gap: 10px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--dash-line);
+      }
+      .dash-form label {
+        display: grid;
+        gap: 5px;
+        color: var(--dash-muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .dash-form select,
+      .dash-form input,
+      .dash-form textarea {
+        width: 100%;
+        min-height: 38px;
+        border: 1px solid #d7d7d7;
+        border-radius: 4px;
+        background: #ffffff;
+        color: #111111;
+        padding: 8px 10px;
+        font: inherit;
+        font-size: 13px;
+      }
+      .dash-form textarea {
+        min-height: 92px;
+        resize: vertical;
+        font-family: Consolas, "Courier New", monospace;
+      }
+      .dash-form .dash-form-wide {
+        grid-column: 1 / -1;
+      }
+      .dash-button {
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #151515;
+        border-radius: 4px;
+        background: #151515;
+        color: #ffffff !important;
+        padding: 7px 10px;
+        font-size: 12px;
+        font-weight: 800;
+        text-decoration: none !important;
+        cursor: pointer;
+      }
+      .dash-button.secondary {
+        border-color: #dedede;
+        background: #f7f7f7;
+        color: #111111 !important;
+      }
+      .dash-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        border-radius: 999px;
+        padding: 3px 8px;
+        background: #fff3bf;
+        color: var(--dash-accent-dark);
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .dash-badge.good {
+        background: #dff3e8;
+        color: var(--dash-good);
+      }
+      .dash-badge.bad {
+        background: #fde3e3;
+        color: var(--dash-bad);
+      }
+      .dash-stack {
+        display: grid;
+        gap: 16px;
+      }
+      .dash-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .dash-list li {
+        padding: 11px 16px;
+        border-bottom: 1px solid var(--dash-line);
+      }
+      .dash-list strong {
+        display: block;
+        font-size: 13px;
+      }
+      .dash-list span {
+        display: block;
+        margin-top: 3px;
+        color: var(--dash-muted);
+        font-size: 12px;
+      }
+      .dash-empty,
+      .dash-loading {
+        padding: 18px 16px;
+        color: var(--dash-muted);
+        font-size: 13px;
+      }
+      .dash-error {
+        border-color: #f1b1b1;
+        background: #fff1f1;
+        color: var(--dash-bad);
+      }
+      .dash-muted {
+        color: var(--dash-muted);
+        font-size: 12px;
+      }
+      @media (max-width: 980px) {
+        .dash-grid,
+        .dash-layout {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 720px) {
+        .dash-header-inner,
+        .dash-layout,
+        .dash-grid {
+          display: block;
+        }
+        .dash-card,
+        .dash-panel {
+          margin-bottom: 12px;
+        }
+        .dash-user {
+          margin-top: 8px;
+          text-align: left;
+        }
+        .dash-form {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dash-shell">
+      <header class="dash-header">
+        <div class="dash-header-inner">
+          <div class="dash-title">
+            <h1>Dashboard Operasional</h1>
+            <p>Franchisee.id site scope. Data langsung dari D1.</p>
+          </div>
+          <div class="dash-user" data-dashboard-user>Memuat sesi...</div>
+        </div>
+      </header>
+
+      <main class="dash-main">
+        <div class="dash-alert" data-dashboard-status>Memeriksa akses admin/staff...</div>
+
+        <section class="dash-grid" aria-label="Ringkasan dashboard">
+          <div class="dash-card"><span>Total listing</span><strong data-metric="total_listings">-</strong></div>
+          <div class="dash-card"><span>Belum diklaim</span><strong data-metric="unclaimed_listings">-</strong></div>
+          <div class="dash-card"><span>Terverifikasi</span><strong data-metric="verified_listings">-</strong></div>
+          <div class="dash-card"><span>Pending publish</span><strong data-metric="pending_publish">-</strong></div>
+        </section>
+
+        <section class="dash-layout">
+          <div class="dash-stack">
+            <section class="dash-panel">
+              <div class="dash-panel-header">
+                <div>
+                  <h2>Unclaimed Outreach</h2>
+                  <p>WhatsApp memakai nomor personal staff melalui link wa.me.</p>
+                </div>
+                <span class="dash-badge" data-outreach-count>-</span>
+              </div>
+              <div class="dash-table-wrap">
+                <table class="dash-table">
+                  <thead>
+                    <tr>
+                      <th>Brand</th>
+                      <th>Kontak</th>
+                      <th>Status</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody data-outreach-rows>
+                    <tr><td colspan="4" class="dash-loading">Memuat antrean outreach...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="dash-panel">
+              <div class="dash-panel-header">
+                <div>
+                  <h2>Data Quality</h2>
+                  <p>Prioritas listing yang perlu dibersihkan.</p>
+                </div>
+              </div>
+              <div class="dash-table-wrap">
+                <table class="dash-table">
+                  <thead>
+                    <tr>
+                      <th>Brand</th>
+                      <th>Kategori</th>
+                      <th>Warning</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody data-quality-rows>
+                    <tr><td colspan="4" class="dash-loading">Memuat quality checks...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="dash-panel">
+              <div class="dash-panel-header">
+                <div>
+                  <h2>Listing Edit Suggestions</h2>
+                  <p>Staff menyarankan edit lewat JSON diff; admin approve sebelum masuk D1.</p>
+                </div>
+                <span class="dash-badge" data-edit-count>-</span>
+              </div>
+              <form class="dash-form" data-edit-form>
+                <label>
+                  Listing
+                  <select data-listing-select required>
+                    <option value="">Memuat listing...</option>
+                  </select>
+                </label>
+                <label>
+                  Reason
+                  <input type="text" data-edit-reason maxlength="1200" placeholder="Contoh: nomor kontak publik salah">
+                </label>
+                <label class="dash-form-wide">
+                  JSON diff
+                  <textarea data-edit-json spellcheck="false" required placeholder="Contoh: phone dan office_address dalam JSON diff"></textarea>
+                </label>
+                <div class="dash-form-wide dash-actions">
+                  <button class="dash-button" type="submit">Submit Suggestion</button>
+                  <span class="dash-muted" data-edit-help>Field yang boleh diedit mengikuti whitelist dashboard di API.</span>
+                </div>
+              </form>
+              <div class="dash-table-wrap">
+                <table class="dash-table">
+                  <thead>
+                    <tr>
+                      <th>Brand</th>
+                      <th>Diff</th>
+                      <th>Reason</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody data-edit-rows>
+                    <tr><td colspan="4" class="dash-loading">Memuat edit suggestions...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <aside class="dash-stack">
+            <section class="dash-panel">
+              <div class="dash-panel-header">
+                <div>
+                  <h2>Publish Queue</h2>
+                  <p>Status static rebuild untuk franchisee.id.</p>
+                </div>
+              </div>
+              <ul class="dash-list" data-publish-state>
+                <li><span>Memuat publish state...</span></li>
+              </ul>
+            </section>
+
+            <section class="dash-panel">
+              <div class="dash-panel-header">
+                <div>
+                  <h2>Claim Review</h2>
+                  <p>Admin menyetujui claim; staff hanya membantu review.</p>
+                </div>
+              </div>
+              <ul class="dash-list" data-claim-rows>
+                <li><span>Memuat claim pending...</span></li>
+              </ul>
+            </section>
+
+            <section class="dash-panel">
+              <div class="dash-panel-header">
+                <div>
+                  <h2>Leads</h2>
+                  <p>Ringkasan inquiry dari Franchisee.id.</p>
+                </div>
+              </div>
+              <ul class="dash-list" data-lead-summary>
+                <li><span>Memuat leads...</span></li>
+              </ul>
+            </section>
+
+            <section class="dash-panel">
+              <div class="dash-panel-header">
+                <div>
+                  <h2>System Health</h2>
+                  <p>D1, Clerk, dan publish workflow.</p>
+                </div>
+              </div>
+              <ul class="dash-list" data-system-health>
+                <li><span>Memuat health check...</span></li>
+              </ul>
+            </section>
+
+            <section class="dash-panel">
+              <div class="dash-panel-header">
+                <div>
+                  <h2>Staff Edit Policy</h2>
+                  <p>Default: staff menyarankan edit, admin approve.</p>
+                </div>
+              </div>
+              <ul class="dash-list" data-edit-policy>
+                <li><strong>Auto approve</strong><span>Hanya berlaku jika admin membuat rule aktif untuk staff tertentu.</span></li>
+                <li><strong>Site scope</strong><span>Dashboard ini hanya untuk franchisee.id; centralized dashboard dibuat nanti.</span></li>
+              </ul>
+            </section>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <script src="/js/auth-clerk.js" is:inline></script>
+    <script is:inline>
+      (function () {
+        var statusEl = document.querySelector("[data-dashboard-status]");
+        var userEl = document.querySelector("[data-dashboard-user]");
+        var outreachRows = document.querySelector("[data-outreach-rows]");
+        var qualityRows = document.querySelector("[data-quality-rows]");
+        var claimRows = document.querySelector("[data-claim-rows]");
+        var publishState = document.querySelector("[data-publish-state]");
+        var outreachCount = document.querySelector("[data-outreach-count]");
+        var editRows = document.querySelector("[data-edit-rows]");
+        var editCount = document.querySelector("[data-edit-count]");
+        var editForm = document.querySelector("[data-edit-form]");
+        var listingSelect = document.querySelector("[data-listing-select]");
+        var editReason = document.querySelector("[data-edit-reason]");
+        var editJson = document.querySelector("[data-edit-json]");
+        var leadSummary = document.querySelector("[data-lead-summary]");
+        var systemHealth = document.querySelector("[data-system-health]");
+        var dashboardState = null;
+        var currentUserIsAdmin = false;
+
+        if (editJson && !editJson.value) {
+          editJson.value = JSON.stringify({ phone: "0812 0000 0000", office_address: "Jakarta" }, null, 2);
+        }
+        if (editForm) {
+          editForm.addEventListener("submit", submitEditSuggestion);
+        }
+        boot();
+
+        async function boot() {
+          try {
+            if (!window.FranchiseAuth) throw new Error("Auth runtime belum tersedia.");
+            await window.FranchiseAuth.init();
+            var headers = await window.FranchiseAuth.getAuthHeaders();
+            if (!headers.Authorization) {
+              setStatus('Silakan <a href="/login/?next=/dashboard">login</a> dengan akun admin/staff untuk membuka dashboard.', true);
+              userEl.textContent = "Belum login";
+              return;
+            }
+
+            var response = await fetch("/dashboard-data", { headers: headers });
+            var data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat.");
+            renderDashboard(data);
+          } catch (error) {
+            setStatus(error.message, true);
+          }
+        }
+
+        function renderDashboard(data) {
+          dashboardState = data;
+          currentUserIsAdmin = (data.user.roles || []).indexOf("admin") >= 0;
+          setStatus("Dashboard aktif untuk site franchisee.id.", false);
+          userEl.textContent = (data.user.name || data.user.email || "Admin/staff") + " - " + data.user.roles.join(", ");
+          setMetric("total_listings", data.overview.total_listings);
+          setMetric("unclaimed_listings", data.overview.unclaimed_listings);
+          setMetric("verified_listings", data.overview.verified_listings + data.overview.premium_listings);
+          setMetric("pending_publish", (data.publish_state.requests_by_status.pending || 0) + (data.publish_state.requests_by_status.failed_retryable || 0));
+          renderOutreach(data.outreach_queue || []);
+          renderQuality(data.data_quality || []);
+          renderClaims(data.pending_claims || []);
+          renderPublish(data.publish_state || {});
+          renderListingOptions(data.editable_listings || []);
+          renderEditSuggestions(data.edit_suggestions || { summary: {}, pending: [] });
+          renderLeads(data.lead_summary || { by_status: {}, recent: [] });
+          renderHealth(data.system_health || {});
+        }
+
+        function renderOutreach(rows) {
+          outreachCount.textContent = rows.length + " listing";
+          if (!rows.length) {
+            outreachRows.innerHTML = '<tr><td colspan="4" class="dash-empty">Tidak ada unclaimed listing dengan nomor WhatsApp/mobile.</td></tr>';
+            return;
+          }
+          outreachRows.innerHTML = rows.map(function (row) {
+            var contact = row.contacts && row.contacts[0];
+            var waUrl = row.primary_whatsapp_url || "";
+            var message = waUrl.indexOf("text=") >= 0 ? decodeURIComponent(waUrl.split("text=")[1] || "") : "";
+            return '<tr>' +
+              '<td><a href="' + escapeAttr(row.public_url) + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a><br><span class="dash-badge">' + escapeHtml(row.category || "Tanpa kategori") + '</span></td>' +
+              '<td>' + (contact ? escapeHtml(contact.label + ": " + contact.display) : '<span class="dash-badge bad">Tidak ada WA</span>') + '</td>' +
+              '<td>' + (row.last_outreach_at ? 'Terakhir: ' + escapeHtml(row.last_outreach_at) : '<span class="dash-badge good">Belum pernah</span>') + '</td>' +
+              '<td><div class="dash-actions">' +
+                (waUrl ? '<a class="dash-button" href="' + escapeAttr(waUrl) + '" target="_blank" rel="noopener">Buka WA</a>' : '') +
+                (waUrl ? '<button class="dash-button secondary" type="button" data-log-outreach data-franchise-id="' + escapeAttr(row.id) + '" data-contact="' + escapeAttr(contact.display) + '" data-message="' + escapeAttr(message) + '">Catat terkirim</button>' : '') +
+                '<a class="dash-button secondary" href="' + escapeAttr(row.claim_url) + '" target="_blank" rel="noopener">Claim</a>' +
+              '</div></td>' +
+            '</tr>';
+          }).join("");
+
+          outreachRows.querySelectorAll("[data-log-outreach]").forEach(function (link) {
+            link.addEventListener("click", function () {
+              logOutreach(link);
+            });
+          });
+        }
+
+        function renderQuality(rows) {
+          if (!rows.length) {
+            qualityRows.innerHTML = '<tr><td colspan="4" class="dash-empty">Tidak ada warning prioritas.</td></tr>';
+            return;
+          }
+          qualityRows.innerHTML = rows.map(function (row) {
+            return '<tr>' +
+              '<td><a href="' + escapeAttr(row.public_url) + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a></td>' +
+              '<td>' + escapeHtml(row.category || "-") + '</td>' +
+              '<td>' + row.warnings.map(function (warning) { return '<span class="dash-badge">' + escapeHtml(warning) + '</span>'; }).join(" ") + '</td>' +
+              '<td><button class="dash-button secondary" type="button" data-quick-edit data-franchise-id="' + escapeAttr(row.id) + '" data-brand="' + escapeAttr(row.brand_name) + '" data-warnings="' + escapeAttr(row.warnings.join(",")) + '">Suggest</button></td>' +
+            '</tr>';
+          }).join("");
+
+          qualityRows.querySelectorAll("[data-quick-edit]").forEach(function (button) {
+            button.addEventListener("click", function () {
+              seedEditSuggestion(button);
+            });
+          });
+        }
+
+        function renderClaims(rows) {
+          if (!rows.length) {
+            claimRows.innerHTML = '<li><strong>Tidak ada claim pending</strong><span>Queue claim kosong.</span></li>';
+            return;
+          }
+          claimRows.innerHTML = rows.map(function (row) {
+            var actions = currentUserIsAdmin
+              ? '<div class="dash-actions"><button class="dash-button" type="button" data-review-claim data-claim-id="' + escapeAttr(row.id) + '" data-decision="approve">Approve</button><button class="dash-button secondary" type="button" data-review-claim data-claim-id="' + escapeAttr(row.id) + '" data-decision="reject">Reject</button></div>'
+              : '<span>Login admin dibutuhkan untuk approve/reject.</span>';
+            return '<li><strong>' + escapeHtml(row.brand_name) + '</strong><span>' + escapeHtml(row.claimant_email || row.claimant_name || "Tanpa claimant") + ' - ' + escapeHtml(row.created_at) + '</span>' + actions + '</li>';
+          }).join("");
+
+          claimRows.querySelectorAll("[data-review-claim]").forEach(function (button) {
+            button.addEventListener("click", function () {
+              reviewClaim(button);
+            });
+          });
+        }
+
+        function renderPublish(state) {
+          var counts = state.requests_by_status || {};
+          publishState.innerHTML = [
+            ["Enabled", state.is_enabled ? "Ya" : "Tidak"],
+            ["Dirty since", state.dirty_since || "-"],
+            ["Pending", counts.pending || 0],
+            ["Queued", counts.queued || 0],
+            ["Failed retryable", counts.failed_retryable || 0],
+            ["Last publish", state.last_publish_triggered_at || state.last_published_at || "-"]
+          ].map(function (item) {
+            return '<li><strong>' + escapeHtml(item[0]) + '</strong><span>' + escapeHtml(item[1]) + '</span></li>';
+          }).join("");
+        }
+
+        function renderListingOptions(rows) {
+          if (!listingSelect) return;
+          listingSelect.innerHTML = '<option value="">Pilih listing...</option>' + rows.map(function (row) {
+            return '<option value="' + escapeAttr(row.id) + '">' + escapeHtml(row.brand_name + " - " + (row.category || "Tanpa kategori")) + '</option>';
+          }).join("");
+        }
+
+        function renderEditSuggestions(data) {
+          var pending = data.pending || [];
+          var summary = data.summary || {};
+          editCount.textContent = (summary.pending || 0) + " pending";
+          if (!pending.length) {
+            editRows.innerHTML = '<tr><td colspan="4" class="dash-empty">Tidak ada edit suggestion pending.</td></tr>';
+            return;
+          }
+
+          editRows.innerHTML = pending.map(function (row) {
+            var diff = Object.keys(row.suggested_value || {}).map(function (field) {
+              return '<span class="dash-badge">' + escapeHtml(field) + '</span>';
+            }).join(" ");
+            var actions = currentUserIsAdmin
+              ? '<div class="dash-actions"><button class="dash-button" type="button" data-review-edit data-suggestion-id="' + escapeAttr(row.id) + '" data-decision="approve">Approve</button><button class="dash-button secondary" type="button" data-review-edit data-suggestion-id="' + escapeAttr(row.id) + '" data-decision="reject">Reject</button></div>'
+              : '<span class="dash-muted">Menunggu admin.</span>';
+            return '<tr>' +
+              '<td><a href="' + escapeAttr(row.public_url || "#") + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a><br><span class="dash-muted">' + escapeHtml(row.suggested_by_email || row.suggested_by_name || "staff") + '</span></td>' +
+              '<td>' + diff + '<pre class="dash-muted">' + escapeHtml(JSON.stringify(row.suggested_value || {}, null, 2)) + '</pre></td>' +
+              '<td>' + escapeHtml(row.reason || "-") + '</td>' +
+              '<td>' + actions + '</td>' +
+            '</tr>';
+          }).join("");
+
+          editRows.querySelectorAll("[data-review-edit]").forEach(function (button) {
+            button.addEventListener("click", function () {
+              reviewEditSuggestion(button);
+            });
+          });
+        }
+
+        function renderLeads(data) {
+          var counts = data.by_status || {};
+          var recent = data.recent || [];
+          var total = Object.keys(counts).reduce(function (sum, key) { return sum + Number(counts[key] || 0); }, 0);
+          leadSummary.innerHTML = [
+            '<li><strong>Total leads</strong><span>' + escapeHtml(total) + '</span></li>',
+            '<li><strong>New</strong><span>' + escapeHtml(counts.new || 0) + '</span></li>',
+            '<li><strong>Contacted/qualified</strong><span>' + escapeHtml(Number(counts.contacted || 0) + Number(counts.qualified || 0)) + '</span></li>'
+          ].concat(recent.slice(0, 4).map(function (row) {
+            return '<li><strong>' + escapeHtml(row.brand_name || "Lead umum") + '</strong><span>' + escapeHtml(row.name || row.email || row.whatsapp || "Tanpa kontak") + ' - ' + escapeHtml(row.status) + '</span></li>';
+          })).join("");
+        }
+
+        function renderHealth(data) {
+          var migration = data.d1 && data.d1.latest_migration;
+          var rebuild = data.publish && data.publish.recent_rebuild;
+          systemHealth.innerHTML = [
+            '<li><strong>D1</strong><span>' + escapeHtml(migration && migration.name ? migration.name : "Connected") + '</span></li>',
+            '<li><strong>Clerk</strong><span>' + escapeHtml(data.clerk && data.clerk.note ? data.clerk.note : "Session verified") + '</span></li>',
+            '<li><strong>Recent rebuild</strong><span>' + escapeHtml(rebuild && rebuild.status ? rebuild.status + " - " + (rebuild.reason || "") : "-") + '</span></li>'
+          ].join("");
+        }
+
+        function seedEditSuggestion(button) {
+          var franchiseId = button.getAttribute("data-franchise-id") || "";
+          var warnings = (button.getAttribute("data-warnings") || "").split(",");
+          listingSelect.value = franchiseId;
+          editReason.value = "Data quality: " + warnings.filter(Boolean).join(", ");
+          editJson.value = JSON.stringify(suggestedEmptyDiff(warnings), null, 2);
+          editJson.focus();
+        }
+
+        function suggestedEmptyDiff(warnings) {
+          var diff = {};
+          if (warnings.indexOf("missing_contact") >= 0) diff.phone = "";
+          if (warnings.indexOf("missing_category") >= 0) diff.category = "";
+          if (warnings.indexOf("missing_description") >= 0 || warnings.indexOf("likely_all_caps") >= 0) diff.short_desc = "";
+          if (warnings.indexOf("missing_image") >= 0) diff.logo_url = "";
+          return Object.keys(diff).length ? diff : { short_desc: "" };
+        }
+
+        async function logOutreach(link) {
+          try {
+            link.disabled = true;
+            link.textContent = "Mencatat...";
+            var headers = await window.FranchiseAuth.getAuthHeaders();
+            var response = await fetch("/dashboard-data", {
+              method: "POST",
+              headers: Object.assign({ "Content-Type": "application/json" }, headers),
+              body: JSON.stringify({
+                action: "log_outreach",
+                franchise_id: link.getAttribute("data-franchise-id"),
+                contact_value: link.getAttribute("data-contact") || "",
+                message_text: link.getAttribute("data-message") || "",
+                outcome: "contacted"
+              })
+            });
+            var result = await response.json().catch(function () { return {}; });
+            if (!response.ok || !result.success) throw new Error(result.message || result.error || "Gagal mencatat outreach.");
+            link.textContent = "Tercatat";
+          } catch (error) {
+            link.disabled = false;
+            link.textContent = "Catat terkirim";
+            console.warn("Outreach log failed", error);
+          }
+        }
+
+        async function submitEditSuggestion(event) {
+          event.preventDefault();
+          try {
+            var changes = JSON.parse(editJson.value || "{}");
+            var result = await postDashboardAction({
+              action: "suggest_edit",
+              franchise_id: listingSelect.value,
+              changes: changes,
+              reason: editReason.value || ""
+            });
+            setStatus(result.applied ? "Edit langsung diterapkan dan publish queue sudah ditandai dirty." : "Edit suggestion dikirim untuk admin review.", false);
+            await reloadDashboard();
+          } catch (error) {
+            setStatus(error.message, true);
+          }
+        }
+
+        async function reviewEditSuggestion(button) {
+          try {
+            button.disabled = true;
+            await postDashboardAction({
+              action: "review_edit_suggestion",
+              suggestion_id: button.getAttribute("data-suggestion-id"),
+              decision: button.getAttribute("data-decision"),
+              notes: ""
+            });
+            await reloadDashboard();
+          } catch (error) {
+            button.disabled = false;
+            setStatus(error.message, true);
+          }
+        }
+
+        async function reviewClaim(button) {
+          try {
+            button.disabled = true;
+            await postDashboardAction({
+              action: "review_claim",
+              claim_id: button.getAttribute("data-claim-id"),
+              decision: button.getAttribute("data-decision"),
+              notes: ""
+            });
+            await reloadDashboard();
+          } catch (error) {
+            button.disabled = false;
+            setStatus(error.message, true);
+          }
+        }
+
+        async function reloadDashboard() {
+          var headers = await window.FranchiseAuth.getAuthHeaders();
+          var response = await fetch("/dashboard-data", { headers: headers });
+          var data = await response.json();
+          if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat ulang.");
+          renderDashboard(data);
+        }
+
+        async function postDashboardAction(payload) {
+          var headers = await window.FranchiseAuth.getAuthHeaders();
+          var response = await fetch("/dashboard-data", {
+            method: "POST",
+            headers: Object.assign({ "Content-Type": "application/json" }, headers),
+            body: JSON.stringify(payload)
+          });
+          var result = await response.json().catch(function () { return {}; });
+          if (!response.ok || !result.success) throw new Error(result.message || result.error || "Dashboard action failed.");
+          return result;
+        }
+
+        function setMetric(name, value) {
+          var el = document.querySelector('[data-metric="' + name + '"]');
+          if (el) el.textContent = Number(value || 0).toLocaleString("id-ID");
+        }
+
+        function setStatus(message, isError) {
+          statusEl.innerHTML = message;
+          statusEl.classList.toggle("dash-error", Boolean(isError));
+        }
+
+        function escapeHtml(value) {
+          return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
+        function escapeAttr(value) {
+          return escapeHtml(value);
+        }
+      }());
+    </script>
+  </body>
+</html>

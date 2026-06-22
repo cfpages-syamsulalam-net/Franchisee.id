@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-06-22 09:04 (Asia/Jakarta)
+Last updated: 2026-06-22 15:22 (Asia/Jakarta)
 
 ## Purpose
 
@@ -16,6 +16,36 @@ This dashboard should not replace the public `/peluang-usaha` directory. It is t
 - `franchisee`: future lead/search dashboard for saved opportunities and inquiry history.
 
 D1 remains authoritative for roles and permissions. Clerk provides identity/session and mirrors role metadata only for UI routing.
+
+## Product Decisions
+
+- Route: use `/dashboard` for the Franchisee.id admin/staff dashboard.
+- Site scope: start with Franchisee.id only (`site_franchisee_id`). A centralized multi-site dashboard can be built later for Franchise.id/Waralaba.id/network operations.
+- Staff edit policy: staff can suggest listing edits only. Admin approval is required unless an admin creates an active auto-approval rule for that staff user.
+- WhatsApp outreach: no WhatsApp API for now. The dashboard generates a `wa.me` link with a prefilled message, and the staff member sends it from their own WhatsApp account.
+- Edit storage policy: use structured JSON diffs for suggestion/review snapshots; once approved into D1, apply the accepted values field-by-field to canonical D1 columns.
+- Trusted staff auto-approval: if admin grants auto-approval to a staff user, all listing fields are safe for that staff user to edit.
+- Outreach logging: opening WhatsApp does not log an event. Staff must manually confirm the message was sent with the dashboard confirmation action.
+- Outreach priority: use data completeness only for now. Add traffic/lead metrics later when reliable analytics/lead data exists.
+
+## Progress Tracker
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| `/dashboard` route | Implemented | `src/pages/dashboard/index.astro` builds a static protected dashboard shell. Sensitive data loads only from the protected API. |
+| Dashboard auth | Implemented | `functions/dashboard-data.js` requires D1 role `staff`; existing auth helper allows `admin` as elevated access. |
+| Overview metrics | Implemented | Total listings, unclaimed, verified/premium, missing image/contact/description, and publish queue counts come from D1. |
+| Unclaimed outreach queue | Implemented | Shows unclaimed published listings with mobile/WhatsApp-capable phone data and generates `wa.me` claim-notification links. |
+| Outreach event logging | Implemented | `listing_outreach_events` records staff, contact, message, outcome, and timestamp only after staff manually confirms the WA message was sent. |
+| Claim review workflow | Implemented | Shows pending D1 `franchise_claims`; admin can approve/reject. Approval attaches ownership/profile data, moves unclaimed listings to free/claimed state, writes audit events, and queues a static rebuild. |
+| Data quality panel | Implemented read-only | Shows listings with missing image/contact/description/category or likely all-caps description. |
+| Publish queue panel | Implemented read-only | Shows `site_publish_state` and `site_rebuild_requests` counts. |
+| Staff edit suggestions | Implemented | Dashboard accepts structured JSON diffs for whitelisted listing fields, stores pending suggestions, allows admin approve/reject, and supports active staff auto-approval rules. |
+| Remote D1 migration | Implemented | `0004_dashboard_operations.sql` validates locally and was applied remotely after setting `CLOUDFLARE_ACCOUNT_ID=0ba63b7f0096bc267a93fe5c80b1f571` for Wrangler account context. |
+| Admin approvals | Implemented | `/dashboard-data` supports admin-only approve/reject for claim reviews and edit suggestions. |
+| Listing operations editor | Implemented MVP | Listing selector plus structured JSON diff form covers all whitelisted public listing fields. A richer field-by-field drawer can be added later. |
+| Leads/commercial view | Implemented read-only MVP | Reads `franchise_leads` status counts and recent leads. Payment/subscription revenue metrics remain pending. |
+| System health | Implemented read-only MVP | Shows D1 connectivity/migration probe, Clerk session verification note, and recent publish queue status. R2 and webhook failure telemetry remain pending. |
 
 ## MVP Sections
 
@@ -91,12 +121,14 @@ Mohon tim/pemilik {brand_name} klaim listing ini agar data publiknya bisa diperb
 
 ## Data Needed
 
-Likely D1 additions:
+D1 additions:
 
-- `listing_outreach_events`: contact attempts, channel, number/email used, staff user, outcome, notes, message template version.
-- `listing_quality_checks`: generated warnings and scores per listing.
-- `claim_reviews`: review status, reviewer, decision reason, evidence snapshot.
-- `admin_notes`: internal notes attached to listing/user/claim.
+- `listing_outreach_events`: contact attempts, channel, number/email used, staff user, outcome, notes, message template version. Implemented in `migrations/0004_dashboard_operations.sql`.
+- `staff_auto_approval_rules`: admin-managed staff auto-approval policy. Implemented in `migrations/0004_dashboard_operations.sql`.
+- `listing_edit_suggestions`: staff suggested edits and admin review state. Implemented in `migrations/0004_dashboard_operations.sql`.
+- `listing_quality_checks`: generated warnings and scores per listing. Pending; current MVP computes quality warnings at read time.
+- `claim_reviews`: review status, reviewer, decision reason, evidence snapshot. Pending; current MVP reuses `franchise_claims` fields.
+- `admin_notes`: internal notes attached to listing/user/claim. Pending.
 
 Existing tables to reuse:
 
@@ -117,17 +149,17 @@ Existing tables to reuse:
 
 ## Implementation Sequence
 
-1. Define dashboard routes and auth guard.
-2. Add read-only overview from D1 for `admin` and `staff`.
-3. Add unclaimed outreach queue with WhatsApp links and event logging.
-4. Add listing operations filters and detail drawer.
-5. Add claim review workflow.
-6. Add publish queue controls and system health.
-7. Add data quality checks and commercial metrics.
+1. Define dashboard routes and auth guard. Done.
+2. Add read-only overview from D1 for `admin` and `staff`. Done.
+3. Add unclaimed outreach queue with WhatsApp links and event logging. Done.
+4. Add listing operations filters and detail drawer. MVP done with listing selector and JSON diff form; richer drawer pending.
+5. Add staff edit suggestion form plus admin approve/reject workflow. Done.
+6. Add claim review workflow. Done.
+7. Add publish queue controls and system health. System health read-only MVP done; manual publish controls pending.
+8. Add data quality checks and commercial metrics. Partially done; read-only quality warnings and lead status counts exist.
 
 ## Open Decisions
 
-- Should the dashboard live under `/admin`, `/dashboard`, or a separate internal subdomain?
-- Should staff be allowed to edit listing content directly, or only suggest edits pending admin approval?
-- Which WhatsApp sender should be used for official outreach: staff personal WhatsApp link, business WhatsApp number, or future API integration?
-- Do we need per-site dashboard scopes when the same D1 powers multiple public domains?
+- Replace JSON diff form with a guided field-by-field drawer once the common staff workflow becomes clear from real usage.
+- Add optional review notes/outreach outcome UI. The API already accepts notes/outcomes, but the current UI keeps the MVP interaction short.
+- Add dashboard telemetry tables for Clerk webhook failures, API errors, R2 asset checks, and payment/subscription metrics.

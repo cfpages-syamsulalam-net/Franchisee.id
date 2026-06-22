@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-22 06:05 (Asia/Jakarta)
+Last updated: 2026-06-22 15:22 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -50,6 +50,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `functions/auth-config.js` | Public same-origin config endpoint for Clerk publishable key. Keeps static HTML environment-neutral and accepts `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` with `CLERK_PUBLISHABLE_KEY` fallback. | `js/auth-clerk.js`, Cloudflare env |
 | `functions/auth-sync.js` | Authenticated Clerk-to-D1 user sync endpoint. Maps the active Clerk user into D1 and self-assigns `franchisee` or `franchisor` when requested. | `functions/_clerk-auth.js`, `js/auth-clerk.js`, D1 `users`, `user_roles` |
 | `functions/clerk-webhook.js` | Clerk-to-D1 lifecycle sync endpoint. Verifies Clerk webhooks and upserts/deletes D1 users from Clerk `user.created`, `user.updated`, and `user.deleted` events. | `@clerk/backend/webhooks`, Cloudflare env `CLERK_WEBHOOK_SIGNING_SECRET`, D1 `users` |
+| `functions/dashboard-data.js` | Protected Franchisee.id dashboard API. Requires D1 role `staff` or elevated `admin`; returns overview metrics, unclaimed WhatsApp outreach queue, data-quality warnings, editable listing options, pending claims, pending edit suggestions, lead summary, publish queue state, and system health. Logs manually confirmed outreach, stores structured listing edit suggestions, lets admin approve/reject suggestions and claims, writes audit events, and queues static rebuilds for public-page-affecting approvals. | `src/pages/dashboard/index.astro`, `functions/_site-publish-queue.js`, `migrations/0004_dashboard_operations.sql`, D1 `listing_outreach_events`, `listing_edit_suggestions`, `staff_auto_approval_rules`, `franchises`, `franchise_claims`, `franchise_leads`, `audit_events`, `site_publish_state`, `site_rebuild_requests` |
 | `functions/user-role.js` | Admin-only D1 role mutation endpoint. Assigns/removes D1 roles and then pushes the D1 role snapshot to Clerk metadata. | `functions/_clerk-auth.js`, D1 `user_roles`, Clerk `users.updateUserMetadata` |
 | `functions/sync-clerk-metadata.js` | Admin-only repair/backfill endpoint for pushing D1 user/role state into Clerk metadata after manual SQL changes. | `functions/_clerk-auth.js`, D1 `users`, `user_roles`, Clerk metadata |
 | `js/auth-clerk.js` | Custom ClerkJS client integration. Replaces the legacy `/login` WPForms block with custom login/register forms, powers `/register`, exposes `window.FranchiseAuth`, and supplies bearer tokens to protected form writes. | `/auth-config`, `/auth-sync`, `/login`, `/register`, `/daftar`, `js/form-06-submit-validation.js` |
@@ -72,6 +73,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `src/lib/franchise-static.ts` | Astro-side renderer and Zod validator for the D1 franchise static snapshot. Converts D1 snapshot rows into listing/detail HTML using existing template placeholders, canonical `/peluang-usaha` query controls, deterministic recommendation/popular/abjad/category ordering, CSS-only missing-image placeholders, cleaned detail metadata, readable breadcrumbs/yellow chip states, self-contained detail tabs, stripped stale legacy tab comments, unclaimed public contact/address rendering, Indonesian phone parsing/normalization, all-caps description display normalization, and the same SEO/contact/social mapping as the bridge. | `json/d1-franchise-static-data.json`, `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, Astro routes |
 | `src/pages/peluang-usaha/index.astro` | Astro static listing route for canonical `/peluang-usaha/`. Loads the D1 snapshot and renders the existing listing template with manual search, sort, category, and status controls during build. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json` |
 | `src/pages/peluang-usaha/[slug].astro` | Astro static detail route that physically builds `/peluang-usaha/{slug}.html` under `build.format: "preserve"` while public links stay `/peluang-usaha/{slug}`. Uses `getStaticPaths` from the D1 snapshot so each franchise keeps an individually indexable HTML page. | `src/lib/franchise-static.ts`, `json/d1-franchise-static-data.json`, `astro.config.mjs` |
+| `src/pages/dashboard/index.astro` | Static protected dashboard shell at `/dashboard`. Loads Clerk auth client, requests protected `/dashboard-data`, and renders overview metrics, unclaimed WhatsApp outreach with manual sent logging, data-quality warnings, listing edit suggestion form, admin approve/reject controls for suggestions and claims, lead summary, system health, publish state, and staff edit policy. | `functions/dashboard-data.js`, `js/auth-clerk.js`, Clerk, D1 |
 | `public/_redirects` | Cloudflare Pages redirect rules. Redirects legacy duplicate directory/category URLs (`/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known category aliases) to canonical `/peluang-usaha` query-param URLs. | Astro public asset copy, Cloudflare Pages |
 
 ## Supporting Files
@@ -107,6 +109,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `migrations/0001_initial_network_schema.sql` | First D1 schema migration for shared network sites, users/roles, profiles, franchises, claims, assets, leads, site publications, subscriptions/entitlements, imports, and audit events. |
 | `migrations/0002_add_franchisor_social_links.sql` | Adds optional Facebook, TikTok, YouTube, and LinkedIn URL columns to `franchisor_profiles`; website and Instagram already existed. |
 | `migrations/0003_site_publish_queue.sql` | Adds `site_rebuild_requests` and `site_publish_state` for D1-to-static publish queueing, per-site guardrails, and publish mode tracking. Applied remotely to `franchise_db` on 2026-06-18. |
+| `migrations/0004_dashboard_operations.sql` | Adds dashboard operation tables for unclaimed outreach events, staff auto-approval rules, and listing edit suggestions. Applied remotely to `franchise_db` on 2026-06-22 after setting `CLOUDFLARE_ACCOUNT_ID` for Wrangler account context. |
 | `wrangler.toml` | Active Wrangler config for Cloudflare Pages output `dist` and shared D1 binding `franchise_db` using database UUID `812cd8ac-edd0-45d9-981f-c9a15358317b`. It intentionally omits `account_id` because Pages config validation rejects that key. Remote commands should run through `npx cfman wrangler --account franchise-network ...`. |
 | `wrangler.example.toml` | Non-active Wrangler example showing Pages output `dist`, the `franchise_db` binding, and migrations directory; copy to `wrangler.toml` only after adding the real D1 UUID. |
 | `.node-version` | Pins local/Cloudflare build runtime intent to Node `20.19.4`, matching the Astro 5.x dependency set. |
@@ -188,6 +191,18 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 8. GitHub direct `dist/` deploy with Wrangler is the fallback/upgrade mode if Cloudflare Pages build quota becomes constrained.
 9. The poller must not commit generated output back to `main`, because the connected Cloudflare Pages Git integration can turn that commit into another build.
 10. Manual `workflow_dispatch` can force a publish, but normal franchisor edits should wait for the next poll window.
+
+### 7b. Admin/Staff Dashboard Flow
+1. `/dashboard` is a static Astro route and should be treated as an internal operations surface for Franchisee.id only.
+2. The page loads `js/auth-clerk.js`; unauthenticated users are sent to `/login/?next=/dashboard`.
+3. Browser code calls `/dashboard-data` with a Clerk bearer token.
+4. `functions/dashboard-data.js` verifies Clerk, upserts the D1 user, requires D1 role `staff`, and therefore allows elevated `admin`.
+5. The API reads overview metrics, unclaimed outreach rows, pending claims, pending edit suggestions, editable listing options, data-quality warnings, lead counts, system-health probes, and publish queue state from D1.
+6. WhatsApp outreach uses staff personal WhatsApp through generated `wa.me` links; no WhatsApp API is involved.
+7. Staff must manually confirm a sent WhatsApp message before the dashboard logs `listing_outreach_events` and an `audit_events` row.
+8. Staff edit suggestions store structured JSON diffs in `listing_edit_suggestions`; admin approvals write accepted values field-by-field to whitelisted `franchises` columns, write audit events, and queue static rebuilds.
+9. Active `staff_auto_approval_rules` let trusted staff edits apply immediately while still recording the suggestion and audit trail.
+10. Claim approvals update `franchise_claims`, attach `owner_user_id`/`franchisor_profile_id` when present, move unclaimed listings to free claimed state, write audit events, and queue static rebuilds.
 
 ### 8. Astro D1 Static Route Flow
 1. `pnpm run build:astro` first runs `pnpm run astro:sync`, which calls the D1 bridge and refreshes `json/d1-franchise-static-data.json`.
