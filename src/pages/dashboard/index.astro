@@ -10,6 +10,7 @@ export const prerender = true;
     <title>Dashboard Operasional - Franchisee.id</title>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="/wp-content/plugins/elementor/assets/css/frontend.min.css">
+    <link rel="stylesheet" href="/css/auth-clerk.css">
     <style>
       :root {
         --dash-ink: #171717;
@@ -66,6 +67,17 @@ export const prerender = true;
         max-width: 1280px;
         margin: 0 auto;
         padding: 22px 20px 44px;
+      }
+      .dash-main[data-dashboard-protected="locked"] .dash-grid,
+      .dash-main[data-dashboard-protected="locked"] .dash-layout {
+        display: none !important;
+      }
+      .dash-login-panel {
+        max-width: 560px;
+        margin: 20px auto 0;
+      }
+      .dash-login-panel[hidden] {
+        display: none !important;
       }
       .dash-alert {
         margin-bottom: 16px;
@@ -306,8 +318,12 @@ export const prerender = true;
         </div>
       </header>
 
-      <main class="dash-main">
+      <main class="dash-main" data-dashboard-protected="locked">
         <div class="dash-alert" data-dashboard-status>Memeriksa akses admin/staff...</div>
+
+        <section class="dash-login-panel" data-dashboard-login aria-label="Login admin dan staff">
+          <div id="franchise-auth-root" data-auth-mode="login" data-auth-variant="staff" data-auth-next="/dashboard"></div>
+        </section>
 
         <section class="dash-grid" aria-label="Ringkasan dashboard">
           <div class="dash-card"><span>Total listing</span><strong data-metric="total_listings">-</strong></div>
@@ -484,6 +500,8 @@ export const prerender = true;
       (function () {
         var statusEl = document.querySelector("[data-dashboard-status]");
         var userEl = document.querySelector("[data-dashboard-user]");
+        var mainEl = document.querySelector("[data-dashboard-protected]");
+        var loginEl = document.querySelector("[data-dashboard-login]");
         var outreachRows = document.querySelector("[data-outreach-rows]");
         var qualityRows = document.querySelector("[data-quality-rows]");
         var claimRows = document.querySelector("[data-claim-rows]");
@@ -514,16 +532,21 @@ export const prerender = true;
             await window.FranchiseAuth.init();
             var headers = await window.FranchiseAuth.getAuthHeaders();
             if (!headers.Authorization) {
-              setStatus('Silakan <a href="/login/?next=/dashboard">login</a> dengan akun admin/staff untuk membuka dashboard.', true);
-              userEl.textContent = "Belum login";
+              showLoginPanel("Login dengan akun admin/staff untuk membuka dashboard.", false);
               return;
             }
 
             var response = await fetch("/dashboard-data", { headers: headers });
+            if (response.status === 401) {
+              showLoginPanel("Sesi login kedaluwarsa. Silakan login ulang.", true);
+              return;
+            }
             var data = await response.json();
             if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat.");
             renderDashboard(data);
           } catch (error) {
+            if (loginEl) loginEl.hidden = false;
+            if (userEl.textContent === "Memuat sesi...") userEl.textContent = "Akses belum diizinkan";
             setStatus(error.message, true);
           }
         }
@@ -531,6 +554,8 @@ export const prerender = true;
         function renderDashboard(data) {
           dashboardState = data;
           currentUserIsAdmin = (data.user.roles || []).indexOf("admin") >= 0;
+          if (mainEl) mainEl.setAttribute("data-dashboard-protected", "ready");
+          if (loginEl) loginEl.hidden = true;
           setStatus("Dashboard aktif untuk site franchisee.id.", false);
           userEl.textContent = (data.user.name || data.user.email || "Admin/staff") + " - " + data.user.roles.join(", ");
           setMetric("total_listings", data.overview.total_listings);
@@ -812,6 +837,12 @@ export const prerender = true;
         function setStatus(message, isError) {
           statusEl.innerHTML = message;
           statusEl.classList.toggle("dash-error", Boolean(isError));
+        }
+
+        function showLoginPanel(message, isError) {
+          userEl.textContent = "Belum login";
+          if (loginEl) loginEl.hidden = false;
+          setStatus(message, isError);
         }
 
         function escapeHtml(value) {

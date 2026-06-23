@@ -4,6 +4,19 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-24 00:29 (Asia/Jakarta)
+### Added
+- `js/auth-clerk.js` and `css/auth-clerk.css`: Added explicit login/register switch prompts (`Belum daftar?` / `Sudah punya akun?`) and CSS/ARIA hidden-state handling so inactive auth panels stay hidden under legacy styles.
+- `js/auth-clerk.js` and `src/pages/dashboard/index.astro`: Added a login-only staff/admin auth variant mounted directly on `/dashboard`, with no register tab and no franchisee/franchisor role picker.
+
+### Changed
+- `functions/_clerk-auth.js`: Tightened role hierarchy so `admin` can satisfy protected-role checks globally, while `staff` only satisfies staff-level access and no longer implicitly passes admin/franchisee/franchisor checks.
+- `src/pages/dashboard/index.astro`: Locks dashboard panels by default, keeps unauthenticated users on `/dashboard` with the internal login form, and only reveals operational sections after `/dashboard-data` authorizes the Clerk session with D1 staff/admin roles.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented dashboard same-URL login protection, the custom Clerk tab isolation contract, and the corrected admin/staff role hierarchy.
+
+### Removed
+- None.
+
 ## 2026-06-24 00:03 (Asia/Jakarta)
 ### Added
 - `js/auth-clerk.js`: Sets `window.__clerk_publishable_key` and Clerk script data attributes before loading `clerk.browser.js`, so the Clerk browser bundle sees the publishable key during script evaluation.

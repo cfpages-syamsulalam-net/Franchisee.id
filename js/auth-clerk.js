@@ -84,24 +84,36 @@
     const root = document.getElementById("franchise-auth-root") || document.getElementById("wpforms-725");
     if (!root) return;
 
+    const variant = root.getAttribute("data-auth-variant") || "public";
+    const isLoginOnly = variant === "staff";
     const defaultMode = root.getAttribute("data-auth-mode") || new URLSearchParams(window.location.search).get("mode") || "login";
-    root.innerHTML = authTemplate(defaultMode === "register" ? "register" : "login");
+    root.innerHTML = authTemplate(defaultMode === "register" && !isLoginOnly ? "register" : "login", {
+      isLoginOnly,
+    });
     bindAuthEvents(root);
     renderSessionState(root);
   }
 
-  function authTemplate(mode) {
+  function authTemplate(mode, options = {}) {
     const isRegister = mode === "register";
+    const isLoginOnly = Boolean(options.isLoginOnly);
     return `
       <div class="fr-auth-shell" data-current-mode="${mode}">
         <div class="fr-auth-panel">
-          <div class="fr-auth-tabs" role="tablist" aria-label="Login dan daftar">
-            <button class="fr-auth-tab ${!isRegister ? "is-active" : ""}" type="button" data-auth-switch="login">Login</button>
-            <button class="fr-auth-tab ${isRegister ? "is-active" : ""}" type="button" data-auth-switch="register">Daftar</button>
-          </div>
+          ${isLoginOnly ? `
+            <div class="fr-auth-context">
+              <h2>Login Admin / Staff</h2>
+              <p>Gunakan akun internal yang sudah diberi peran admin atau staff di D1.</p>
+            </div>
+          ` : `
+            <div class="fr-auth-tabs" role="tablist" aria-label="Login dan daftar">
+              <button class="fr-auth-tab ${!isRegister ? "is-active" : ""}" type="button" data-auth-switch="login">Login</button>
+              <button class="fr-auth-tab ${isRegister ? "is-active" : ""}" type="button" data-auth-switch="register">Daftar</button>
+            </div>
+          `}
           <div class="fr-auth-message" data-auth-message></div>
           <div data-auth-session></div>
-          <form class="fr-auth-form" data-auth-form="login" ${isRegister ? "hidden" : ""}>
+          <form class="fr-auth-form" data-auth-form="login" ${isRegister ? "hidden" : ""} aria-hidden="${isRegister ? "true" : "false"}">
             <div class="fr-auth-field">
               <label for="fr-auth-login-email">Email</label>
               <input id="fr-auth-login-email" name="email" type="email" autocomplete="email" required>
@@ -113,8 +125,12 @@
             <div class="fr-auth-actions">
               <button class="fr-auth-button" type="submit">Login</button>
             </div>
+            ${isLoginOnly ? "" : `<p class="fr-auth-switch-note">
+              Belum daftar?
+              <button class="fr-auth-inline-link" type="button" data-auth-switch="register">Daftar dulu di sini.</button>
+            </p>`}
           </form>
-          <form class="fr-auth-form" data-auth-form="register" ${!isRegister ? "hidden" : ""}>
+          ${isLoginOnly ? "" : `<form class="fr-auth-form" data-auth-form="register" ${!isRegister ? "hidden" : ""} aria-hidden="${!isRegister ? "true" : "false"}">
             <div class="fr-auth-field">
               <label for="fr-auth-register-email">Email</label>
               <input id="fr-auth-register-email" name="email" type="email" autocomplete="email" required>
@@ -139,8 +155,12 @@
             <div class="fr-auth-actions">
               <button class="fr-auth-button" type="submit">Daftar</button>
             </div>
+            <p class="fr-auth-switch-note">
+              Sudah punya akun?
+              <button class="fr-auth-inline-link" type="button" data-auth-switch="login">Login di sini.</button>
+            </p>
           </form>
-          <form class="fr-auth-form" data-auth-form="verify" hidden>
+          <form class="fr-auth-form" data-auth-form="verify" hidden aria-hidden="true">
             <div class="fr-auth-field">
               <label for="fr-auth-code">Kode verifikasi email</label>
               <input id="fr-auth-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" required>
@@ -148,7 +168,7 @@
             <div class="fr-auth-actions">
               <button class="fr-auth-button" type="submit">Verifikasi</button>
             </div>
-          </form>
+          </form>`}
         </div>
       </div>
     `;
@@ -201,7 +221,7 @@
             <div class="fr-auth-muted">${escapeHtml(user?.email || clerk.user?.primaryEmailAddress?.emailAddress || "")}</div>
           </div>
           <div class="fr-auth-actions">
-            <a class="fr-auth-button" href="/daftar/">Lanjutkan</a>
+            <a class="fr-auth-button" href="${escapeHtml(nextUrl(root))}">Lanjutkan</a>
             <button class="fr-auth-link-button" type="button" data-auth-signout>Logout</button>
           </div>
         </div>
@@ -234,7 +254,7 @@
       await clerk.setActive({ session: signIn.createdSessionId });
       await syncUser();
       showMessage(root, "Login berhasil.", "success");
-      window.location.href = nextUrl();
+      window.location.href = nextUrl(root);
     } catch (error) {
       showMessage(root, clerkErrorMessage(error), "error");
     } finally {
@@ -292,7 +312,7 @@
     await clerk.setActive({ session: sessionId });
     await syncUser(role);
     showMessage(root, "Akun berhasil dibuat.", "success");
-    window.location.href = nextUrl();
+    window.location.href = nextUrl(root);
   }
 
   function switchMode(root, mode) {
@@ -301,13 +321,16 @@
       button.classList.toggle("is-active", button.getAttribute("data-auth-switch") === mode);
     });
     root.querySelectorAll("[data-auth-form]").forEach(function (form) {
-      form.hidden = form.getAttribute("data-auth-form") !== mode;
+      const isActive = form.getAttribute("data-auth-form") === mode;
+      form.hidden = !isActive;
+      form.setAttribute("aria-hidden", isActive ? "false" : "true");
     });
   }
 
   function hideForms(root) {
     root.querySelectorAll("[data-auth-form], .fr-auth-tabs").forEach(function (item) {
       item.hidden = true;
+      item.setAttribute("aria-hidden", "true");
     });
   }
 
@@ -418,9 +441,11 @@
     return apiError?.longMessage || apiError?.message || error.message || "Proses autentikasi gagal.";
   }
 
-  function nextUrl() {
+  function nextUrl(root) {
     const next = new URLSearchParams(window.location.search).get("next");
-    return next && next.startsWith("/") ? next : "/daftar/";
+    const rootNext = root?.getAttribute("data-auth-next");
+    if (next && next.startsWith("/")) return next;
+    return rootNext && rootNext.startsWith("/") ? rootNext : "/daftar/";
   }
 
   function escapeHtml(value) {

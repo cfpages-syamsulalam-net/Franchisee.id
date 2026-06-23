@@ -44,7 +44,7 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 | Validation | Zod at runtime trust boundaries. | Validate form payloads, query params, CSV/Sheets imports, Clerk webhooks, env/config, and admin actions before D1 writes. |
 | Migrations | Source-controlled SQL migrations for every D1 schema change. | Keeps database evolution reviewable, repeatable, and recoverable. |
 | Query layer | Start with explicit SQL migrations; add Drizzle when D1 route handlers need shared typed queries. | Drizzle supports Cloudflare D1 and is useful once route/dashboard query complexity grows. |
-| Authorization | Clerk identity plus D1-authoritative roles. | Roles are `franchisee`, `franchisor`, `staff`, and `admin`; Clerk metadata is only a small UI hint. |
+| Authorization | Clerk identity plus D1-authoritative roles. | Roles are `franchisee`, `franchisor`, `staff`, and `admin`; Clerk metadata is only a small UI hint. `admin` is the global elevated role, while `staff` is limited to staff-level operations. |
 
 Official platform notes checked during this audit:
 - Cloudflare Workers bindings expose D1/R2 and other resources through `env` without embedding service secrets in application code: https://developers.cloudflare.com/workers/runtime-apis/bindings/
@@ -92,11 +92,12 @@ Public routes:
 - `/tag/[slug]/`, article/static pages: migrate gradually from static export.
 
 Auth routes:
-- `/login`: Clerk sign-in surface.
+- `/login`: Custom Clerk sign-in/sign-up surface. Login, daftar, and verification panels must be mutually exclusive, with inline links for switching between login and registration.
 - `/register`: role-selection and Clerk sign-up surface.
 - `/daftar`: preserve current registration route during transition, then split into role-specific onboarding.
 
 Dashboard routes:
+- `/dashboard`: Franchisee.id admin/staff operations shell and internal login surface. Unauthenticated users see a login-only Clerk form on the same URL; operational panels stay hidden until `/dashboard-data` authorizes a D1 `staff` or elevated `admin` role.
 - `/franchisee`: franchisee dashboard, saved opportunities, inquiries, profile.
 - `/franchisor`: franchisor dashboard, listings, claim status, leads, assets.
 - `/franchisor/listings/new`: create listing.

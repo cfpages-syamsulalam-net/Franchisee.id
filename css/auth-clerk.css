@@ -18,6 +18,24 @@
   margin-bottom: 22px;
 }
 
+.fr-auth-context {
+  margin-bottom: 22px;
+}
+
+.fr-auth-context h2 {
+  color: rgba(0, 0, 0, 0.9);
+  font-size: 20px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.fr-auth-context p {
+  color: rgba(0, 0, 0, 0.62);
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+
 .fr-auth-tab {
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;
@@ -37,6 +55,12 @@
 .fr-auth-form {
   display: grid;
   gap: 14px;
+}
+
+.fr-auth-form[hidden],
+.fr-auth-tabs[hidden],
+[data-auth-session][hidden] {
+  display: none !important;
 }
 
 .fr-auth-field {
@@ -130,6 +154,30 @@
   font-weight: 700;
   padding: 0;
   text-transform: none;
+}
+
+.fr-auth-switch-note {
+  color: rgba(0, 0, 0, 0.64);
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 2px 0 0;
+}
+
+.fr-auth-inline-link {
+  border: 0;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.86);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.fr-auth-inline-link:hover,
+.fr-auth-inline-link:focus {
+  color: #000;
 }
 
 .fr-auth-message {

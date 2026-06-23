@@ -201,7 +201,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Static protected admin/staff dashboard shell.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
-- Loads `js/auth-clerk.js`, requires a Clerk session in the browser, and fetches `/dashboard-data` with bearer auth.
+- Loads `js/auth-clerk.js`, shows a login-only staff/admin form when no Clerk session exists, and fetches `/dashboard-data` with bearer auth when a session is active.
 - Renders overview metrics, unclaimed WhatsApp outreach, data-quality warnings, publish queue state, pending claims, staff edit policy, lead summary, system health, listing edit suggestion form, and admin approve/reject actions for claims/suggestions.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
@@ -217,14 +217,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_clerk-auth.js`
 *Shared Clerk session verification, D1 user sync, and role authorization helper.*
-- `requireD1User(request, env, db, options)`: Verifies Clerk bearer token, upserts D1 user, optionally assigns self-selectable role, and enforces required D1 role.
+- `requireD1User(request, env, db, options)`: Verifies Clerk bearer token, upserts D1 user, optionally assigns self-selectable role, and enforces required D1 role. `admin` satisfies protected-role checks; `staff` satisfies staff-level checks only.
 - `syncD1User(request, env, db, requestedRole)`: Auth sync variant used by `/auth-sync`; pushes the current D1 role snapshot back into Clerk metadata.
 - `syncWebhookUserToD1(env, db, clerkUser)`: Verifies Clerk webhook identity payloads and upserts D1 `users` from `user.created` / `user.updated`.
 - `markD1UserDeleted(db, clerkUserId)`: Marks the D1 user row as `deleted` after a verified Clerk `user.deleted` webhook.
 - `assignD1Role(db, userId, role, actorUserId)` / `removeD1Role(db, userId, role)`: Mutates D1 network roles used by admin role management.
 - `syncClerkMetadataFromD1(env, user, roles)` / `syncClerkMetadataForD1User(env, db, user)`: Writes D1 user id, role list, status, and sync timestamp into Clerk public/private metadata.
 - `authErrorResponse(error)`: Converts auth/role failures into the standard JSON response shape.
-- Roles: only `franchisee` and `franchisor` are self-assignable; `staff` and `admin` are elevated roles.
+- Roles: only `franchisee` and `franchisor` are self-assignable; `admin` is the global elevated role, while `staff` is limited to staff-level access.
 
 ### File: `functions/_site-publish-queue.js`
 *Shared D1 static publish queue helper for Pages Functions.*
@@ -302,5 +302,6 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
 - `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1 and optionally assign self-selectable `franchisee`/`franchisor` roles.
-- `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with custom login/register/verification forms.
+- `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with public login/register/verification forms; supports `data-auth-variant="staff"` for login-only internal dashboard auth.
+- `switchMode(root, mode)`: Switches login/register/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
 - `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI.

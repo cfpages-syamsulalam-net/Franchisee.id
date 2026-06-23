@@ -2,7 +2,8 @@ import { createClerkClient, verifyToken } from "@clerk/backend";
 
 const SITE_ID = "site_franchisee_id";
 const SELF_ASSIGNABLE_ROLES = new Set(["franchisee", "franchisor"]);
-const ELEVATED_ROLES = ["admin", "staff"];
+const ADMIN_ROLE = "admin";
+const STAFF_ROLE = "staff";
 
 export class AuthError extends Error {
   constructor(message, status = 401, code = "AUTH_REQUIRED") {
@@ -265,7 +266,7 @@ async function getUserRoles(db, userId) {
 
 function hasRequiredRole(roles, requiredRole) {
   const roleNames = new Set(roles.map((row) => row.role));
-  return roleNames.has(requiredRole) || ELEVATED_ROLES.some((role) => roleNames.has(role));
+  return roleNames.has(requiredRole) || roleNames.has(ADMIN_ROLE) || (requiredRole === STAFF_ROLE && roleNames.has(STAFF_ROLE));
 }
 
 function getBearerToken(request) {
