@@ -299,7 +299,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - **Lost logic recovered**: BEP calculations, multi-step progress, and media URL preview behavior (refactored into modular `form-0x-*.js` files and `form-utils.js`).
 ### File: `js/auth-clerk.js`
 *Custom ClerkJS client integration using existing site CSS.*
-- `Auth.init()`: Fetches `/auth-config`, normalizes the publishable key with a public client fallback when config is stale/empty, sets `window.__clerk_publishable_key` plus Clerk script data attributes before browser-bundle evaluation, loads locally copied `/clerk/clerk.browser.js` with CDN fallbacks, and initializes Clerk.
+- `Auth.init()`: Fetches `/auth-config`, normalizes the publishable key with a public client fallback when config is stale/empty, sets `window.__clerk_publishable_key` plus Clerk script data attributes before browser-bundle evaluation, loads locally copied `/clerk/clerk.browser.js` with CDN fallbacks, initializes Clerk, and finalizes any Clerk OAuth redirect callback before token checks run.
 - `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
 - `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign self-selectable `franchisee`/`franchisor` roles.
@@ -307,4 +307,5 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with public login/register/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth.
 - `switchMode(root, mode)`: Switches login/register/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
 - `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI.
-- `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up; public registration stores the selected `franchisee`/`franchisor` role until OAuth completion.
+- `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with stale Clerk callback params stripped from the redirect URL; public registration stores the selected `franchisee`/`franchisor` role and the post-login destination until OAuth completion.
+- `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters, calls `clerk.handleRedirectCallback()`, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.

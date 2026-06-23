@@ -40,7 +40,8 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 - `/dashboard/` uses the same custom auth runtime but mounts a login-only admin/staff Google/email surface on the same URL. It does not show public registration or franchisee/franchisor role choices.
 - `/auth-config` returns the publishable Clerk key to the browser and prefers the Astro-style `PUBLIC_CLERK_PUBLISHABLE_KEY` variable.
 - `js/auth-clerk.js` writes the resolved publishable key to `window.__clerk_publishable_key` and the Clerk script tag before loading `clerk.browser.js`; Clerk's browser bundle needs the key available while the script evaluates, not only later during `clerk.load()`.
-- `js/auth-clerk.js` supports Google sign-in/sign-up through ClerkJS. Public Google registration stores the selected self-assignable role across the OAuth redirect, then syncs that role to D1 after the Clerk session is active.
+- `js/auth-clerk.js` supports Google sign-in/sign-up through ClerkJS. It stores the post-login destination, strips stale Clerk callback params before starting OAuth, and calls Clerk's redirect callback handler before any token/dashboard checks after Google returns.
+- Public Google registration stores the selected self-assignable role across the OAuth redirect, then syncs that role to D1 after the Clerk session is active.
 - `/auth-sync` verifies the active Clerk session, upserts D1 `users`, and self-assigns only `franchisee` or `franchisor`.
 - `email_role_grants` lets admins pre-authorize an email for `admin` or `staff` before a real Clerk user id exists. When that email first logs in through Clerk/Google, `_clerk-auth.js` upserts the real D1 user and applies the pending role grant.
 - `/clerk-webhook` verifies Clerk webhooks and syncs Clerk `user.created`, `user.updated`, and `user.deleted` events into D1.
@@ -55,11 +56,12 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 3. Email/password login uses `clerk.client.signIn.create()`.
 4. Email/password register uses `clerk.client.signUp.create()` and email-code verification when Clerk requires it.
 5. Google sign-in/sign-up uses Clerk OAuth redirect methods from the custom UI.
-6. Public Google registration stores the selected `franchisee` or `franchisor` role in `sessionStorage`; after OAuth completes, the next authenticated request syncs that role through `/auth-sync`.
-7. After a session is active, the browser calls `/auth-sync` with the selected role for new public registrations.
-8. `/auth-sync` maps Clerk user id into D1 `users.clerk_user_id`, applies active `email_role_grants`, and inserts the allowed D1 role.
-9. `/daftar` submissions attach `Authorization: Bearer <session-token>` to `/form-submit`.
-10. `/form-submit` verifies the token with `@clerk/backend`, maps the Clerk user to D1, checks role authorization, and writes ownership fields.
+6. After Google redirects back, `js/auth-clerk.js` detects Clerk callback params and calls `clerk.handleRedirectCallback()` before reading `clerk.session`.
+7. Public Google registration stores the selected `franchisee` or `franchisor` role in `sessionStorage`; after OAuth completes, the next authenticated request syncs that role through `/auth-sync`.
+8. After a session is active, the browser calls `/auth-sync` with the selected role for new public registrations.
+9. `/auth-sync` maps Clerk user id into D1 `users.clerk_user_id`, applies active `email_role_grants`, and inserts the allowed D1 role.
+10. `/daftar` submissions attach `Authorization: Bearer <session-token>` to `/form-submit`.
+11. `/form-submit` verifies the token with `@clerk/backend`, maps the Clerk user to D1, checks role authorization, and writes ownership fields.
 
 ## Bidirectional Sync Contract
 

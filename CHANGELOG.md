@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-24 04:29 (Asia/Jakarta)
+### Added
+- `js/auth-clerk.js`: Added Clerk OAuth redirect callback handling before session-token checks, plus pending post-login destination storage for Google sign-in/sign-up.
+
+### Changed
+- `js/auth-clerk.js`: Strips stale Clerk callback parameters before starting Google OAuth and clears pending OAuth state if redirect start fails.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/CLERK_SETUP.md`: Documented the custom Clerk OAuth callback requirement for `/dashboard`, `/login`, and `/register`.
+
+### Removed
+- None.
+
 ## 2026-06-24 03:27 (Asia/Jakarta)
 ### Added
 - `migrations/0005_email_role_grants.sql`: Added `email_role_grants` so admin/staff roles can be pre-authorized by normalized email before a real Clerk user id exists.

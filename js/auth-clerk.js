@@ -6,7 +6,25 @@
   ];
   const PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsuZnJhbmNoaXNlZS5pZCQ";
   const PENDING_ROLE_KEY = "franchise_auth_pending_role";
+  const PENDING_NEXT_KEY = "franchise_auth_pending_next";
   const SELF_ASSIGNABLE_ROLES = new Set(["franchisee", "franchisor"]);
+  const CLERK_REDIRECT_PARAMS = [
+    "__clerk_status",
+    "__clerk_created_session",
+    "__clerk_invitation_token",
+    "__clerk_ticket",
+    "__clerk_modal_state",
+    "__clerk_handshake",
+    "__clerk_handshake_nonce",
+    "__clerk_help",
+    "__clerk_netlify_cache_bust",
+    "__clerk_synced",
+    "__clerk_satellite_url",
+    "__clerk_db_jwt",
+    "__clerk_oauth_nonce",
+    "__clerk_transfer",
+    "suffixed_cookies",
+  ];
   let clerkPromise = null;
   let syncedUser = null;
   let pendingRoleSyncPromise = null;
@@ -39,6 +57,7 @@
 
       const clerk = createClerkInstance(ClerkCtor, publishableKey);
       await loadClerkInstance(clerk, publishableKey);
+      await handleOAuthRedirectIfNeeded(clerk);
       Auth.clerk = clerk;
       return clerk;
     })();
@@ -301,9 +320,10 @@
 
       const params = {
         strategy: "oauth_google",
-        redirectUrl: window.location.href,
+        redirectUrl: currentAuthUrl(),
         redirectUrlComplete: nextUrl(root),
       };
+      setPendingNext(params.redirectUrlComplete);
 
       if (mode === "register" && clerk.client?.signUp?.authenticateWithRedirect) {
         await clerk.client.signUp.authenticateWithRedirect({
@@ -321,6 +341,7 @@
       throw new Error("Google login belum tersedia di konfigurasi ClerkJS ini.");
     } catch (error) {
       clearPendingRole();
+      clearPendingNext();
       button.disabled = false;
       showMessage(root, clerkErrorMessage(error), "error");
     }
@@ -437,6 +458,32 @@
     Auth.pendingRole = "";
   }
 
+  function setPendingNext(url) {
+    if (!url || !url.startsWith("/")) return;
+    try {
+      sessionStorage.setItem(PENDING_NEXT_KEY, url);
+    } catch (_error) {
+      Auth.pendingNext = url;
+    }
+  }
+
+  function getPendingNext() {
+    try {
+      return sessionStorage.getItem(PENDING_NEXT_KEY) || Auth.pendingNext || "";
+    } catch (_error) {
+      return Auth.pendingNext || "";
+    }
+  }
+
+  function clearPendingNext() {
+    try {
+      sessionStorage.removeItem(PENDING_NEXT_KEY);
+    } catch (_error) {
+      // Ignore storage failures; Auth.pendingNext is still cleared below.
+    }
+    Auth.pendingNext = "";
+  }
+
   async function syncPendingRoleIfNeeded(token) {
     const role = getPendingRole();
     if (!SELF_ASSIGNABLE_ROLES.has(role)) return;
@@ -506,6 +553,62 @@
     }
   }
 
+  async function handleOAuthRedirectIfNeeded(clerk) {
+    if (!hasClerkRedirectParams() || typeof clerk.handleRedirectCallback !== "function") return;
+
+    const redirectUrlComplete = getPendingNext() || nextUrlFromSearch() || currentAuthUrl();
+    const navigateAfterCallback = async function (target) {
+      await navigateAfterOAuth(target || redirectUrlComplete);
+    };
+
+    await clerk.handleRedirectCallback({ redirectUrlComplete }, navigateAfterCallback);
+    clearPendingNext();
+
+    if (hasClerkRedirectParams()) {
+      await navigateAfterOAuth(redirectUrlComplete);
+    }
+  }
+
+  async function navigateAfterOAuth(target) {
+    clearPendingNext();
+    const targetUrl = new URL(target || currentAuthUrl(), window.location.origin);
+    const currentUrl = new URL(window.location.href);
+    removeClerkRedirectParams(currentUrl.searchParams);
+
+    if (
+      targetUrl.origin === currentUrl.origin &&
+      targetUrl.pathname === currentUrl.pathname &&
+      targetUrl.search === currentUrl.search &&
+      targetUrl.hash === currentUrl.hash
+    ) {
+      window.history.replaceState(window.history.state, document.title, targetUrl.href);
+      return;
+    }
+
+    window.location.assign(targetUrl.href);
+    await new Promise(function () {});
+  }
+
+  function hasClerkRedirectParams() {
+    const search = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams((window.location.hash || "").replace(/^#\/?/, ""));
+    return CLERK_REDIRECT_PARAMS.some(function (key) {
+      return search.has(key) || hash.has(key);
+    });
+  }
+
+  function removeClerkRedirectParams(params) {
+    CLERK_REDIRECT_PARAMS.forEach(function (key) {
+      params.delete(key);
+    });
+  }
+
+  function currentAuthUrl() {
+    const url = new URL(window.location.href);
+    removeClerkRedirectParams(url.searchParams);
+    return url.href;
+  }
+
   async function loadScriptWithFallbacks(srcList, publishableKey) {
     if (window.Clerk) return;
 
@@ -565,6 +668,11 @@
     const rootNext = root?.getAttribute("data-auth-next");
     if (next && next.startsWith("/")) return next;
     return rootNext && rootNext.startsWith("/") ? rootNext : "/daftar/";
+  }
+
+  function nextUrlFromSearch() {
+    const next = new URLSearchParams(window.location.search).get("next");
+    return next && next.startsWith("/") ? next : "";
   }
 
   function escapeHtml(value) {

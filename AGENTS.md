@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-24 03:27 (Asia/Jakarta)
+Last updated: 2026-06-24 04:29 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -37,6 +37,7 @@ Last updated: 2026-06-24 03:27 (Asia/Jakarta)
 - Never commit Cloudflare tokens or paste them into repository files. Store tokens only through `cfman token add` or the local shell environment.
 - Never commit Clerk secret keys. Clerk publishable keys (`pk_*`) are browser-safe and may be used as public fallbacks, but secret keys (`sk_*`) must stay only in Cloudflare Pages secrets. Prefer Astro-style `PUBLIC_CLERK_PUBLISHABLE_KEY` for the browser publishable key; `/auth-config` also accepts `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_PUBLISHABLE_KEY` as compatibility fallbacks. Clerk env requirements are documented in `docs/architecture/CLERK_SETUP.md`.
 - The custom Clerk browser loader must set the resolved publishable key on `window.__clerk_publishable_key` and the script tag before loading `clerk.browser.js`; Clerk's browser bundle can throw `Missing publishableKey` during script evaluation if the key is only passed later to `clerk.load()`.
+- The custom Clerk browser bootstrap must call Clerk's OAuth redirect callback handler before any session-token or dashboard role checks. Google sign-in/sign-up is redirect-based; if callback params are left unhandled, `/dashboard` can stay on the login panel even after successful Google SSO.
 - Clerk webhook signing secrets are required for `/clerk-webhook`; do not accept unverified webhook payloads.
 
 ## Public Page Generation
