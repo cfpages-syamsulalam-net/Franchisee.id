@@ -219,13 +219,15 @@ export async function upsertD1User(db, clerkUser) {
       .bind(primaryEmail, displayName, existing.id)
       .run();
 
-    return {
+    const user = {
       id: existing.id,
       clerk_user_id: clerkUser.id,
       primary_email: primaryEmail,
       display_name: displayName,
       status: "active",
     };
+    await applyEmailRoleGrants(db, user);
+    return user;
   }
 
   const userId = `user_${randomId()}`;
@@ -237,13 +239,15 @@ export async function upsertD1User(db, clerkUser) {
     .bind(userId, clerkUser.id, primaryEmail, displayName)
     .run();
 
-  return {
+  const user = {
     id: userId,
     clerk_user_id: clerkUser.id,
     primary_email: primaryEmail,
     display_name: displayName,
     status: "active",
   };
+  await applyEmailRoleGrants(db, user);
+  return user;
 }
 
 async function ensureRole(db, userId, role) {
@@ -254,6 +258,40 @@ async function ensureRole(db, userId, role) {
     )
     .bind(`role_${randomId()}`, userId, role, SITE_ID)
     .run();
+}
+
+async function applyEmailRoleGrants(db, user) {
+  const email = normalizeEmail(user.primary_email);
+  if (!email) return;
+
+  const result = await db
+    .prepare(
+      `SELECT id, role, scope_type, scope_id, site_id
+       FROM email_role_grants
+       WHERE email_normalized = ? AND is_active = 1`
+    )
+    .bind(email)
+    .all();
+
+  const grants = result.results || [];
+  for (const grant of grants) {
+    await db
+      .prepare(
+        `INSERT OR IGNORE INTO user_roles (id, user_id, role, scope_type, scope_id, site_id, assigned_by_user_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(`role_${randomId()}`, user.id, grant.role, grant.scope_type || "network", grant.scope_id || "network", grant.site_id || SITE_ID, grant.granted_by_user_id || null)
+      .run();
+
+    await db
+      .prepare(
+        `UPDATE email_role_grants
+         SET applied_user_id = ?, applied_at = COALESCE(applied_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`
+      )
+      .bind(user.id, grant.id)
+      .run();
+  }
 }
 
 async function getUserRoles(db, userId) {
@@ -281,6 +319,10 @@ function parseAuthorizedParties(value) {
     .map((item) => item.trim())
     .filter(Boolean);
   return parties.length ? parties : undefined;
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function getPrimaryEmail(clerkUser) {

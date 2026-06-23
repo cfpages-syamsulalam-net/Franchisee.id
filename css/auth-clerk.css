@@ -63,6 +63,65 @@
   display: none !important;
 }
 
+.fr-auth-oauth {
+  display: grid;
+  gap: 12px;
+}
+
+.fr-auth-oauth-button {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.86);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 800;
+}
+
+.fr-auth-oauth-button:hover,
+.fr-auth-oauth-button:focus {
+  border-color: rgba(0, 0, 0, 0.36);
+  color: #000000;
+}
+
+.fr-auth-oauth-button[disabled] {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.fr-auth-oauth-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  color: #1a73e8;
+  font-weight: 900;
+}
+
+.fr-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(0, 0, 0, 0.48);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fr-auth-divider::before,
+.fr-auth-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
 .fr-auth-field {
   display: grid;
   gap: 6px;

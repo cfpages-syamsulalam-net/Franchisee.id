@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-24 00:03 (Asia/Jakarta)
+Last updated: 2026-06-24 03:27 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -21,6 +21,7 @@ Last updated: 2026-06-24 00:03 (Asia/Jakarta)
 - Zod validates untrusted runtime data before business logic or D1 writes: form submissions, query params, CSV/Sheets imports, Clerk webhooks, environment/config, and admin actions.
 - D1 schema changes must go through committed SQL migrations. Do not rely on ad hoc production table edits as the database contract.
 - Roles are D1-authoritative: `franchisee`, `franchisor`, `admin`, and `staff`. Clerk metadata can be a UI hint only. `admin` may satisfy protected-role checks globally; `staff` is limited to staff-level dashboard/operations access and must not be treated as admin.
+- For users who should have admin/staff access before their first Clerk login, use `email_role_grants` keyed by normalized email. Do not create fake `users` rows; `users.clerk_user_id` must come from Clerk after Google/email login.
 - Google Sheets is archive/import-only. Do not add new Google Sheets write paths; new writes must target D1 after validation and authorization.
 - `/form-submit` writes require Clerk session tokens and D1 role checks. Do not reintroduce anonymous D1 writes for franchisee/franchisor/profile/listing/claim/test-data actions.
 - Existing CSS remains the styling foundation unless the user explicitly approves a styling dependency.
@@ -44,7 +45,7 @@ Last updated: 2026-06-24 00:03 (Asia/Jakarta)
 - Astro target: `src/pages/peluang-usaha/index.astro` and `src/pages/peluang-usaha/[slug].astro` consume the D1 snapshot through `src/lib/franchise-static.ts` and generate static HTML during `pnpm run build:astro`.
 - Directory permalink policy: `/peluang-usaha` owns directory/search/filter states. Legacy `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/kategori/*`, `/category/*`, and known top-level category aliases redirect to `/peluang-usaha` with `sort`, `view`, or `kategori` query params. Do not add new duplicate indexable archive routes for the same directory data.
 - Dashboard route policy: `/dashboard` is the Franchisee.id admin/staff operations surface and internal login surface. It is static HTML that shows a login-only Clerk form for unauthenticated users, keeps operational panels hidden until authorization succeeds, and loads protected data from `/dashboard-data`; server-side access requires D1 role `staff` or elevated `admin`. Staff edit suggestions use structured JSON diffs, admin approvals apply field-by-field to D1, and approved public listing/claim changes must enqueue static rebuild requests.
-- Auth UI policy: `/login` and `/register` use custom Clerk forms with existing CSS for public franchisee/franchisor users. `/dashboard` uses the same custom Clerk runtime but only the login panel, with no register tab and no franchisee/franchisor role picker. Login, daftar, and verification panels must remain mutually exclusive; preserve explicit `[hidden]` handling because legacy display rules can otherwise expose inactive panels.
+- Auth UI policy: `/login` and `/register` use custom Clerk forms with existing CSS for public franchisee/franchisor users, including Google sign-in/sign-up. Public Google registration only proves identity and syncs the selected self-assignable D1 role; the user still must complete the relevant profile/listing form before becoming a complete member. `/dashboard` uses the same custom Clerk runtime but only the login panel, with no register tab and no franchisee/franchisor role picker. Login, daftar, and verification panels must remain mutually exclusive; preserve explicit `[hidden]` handling because legacy display rules can otherwise expose inactive panels.
 - Directory list cards must use the CSS-only placeholder from `src/lib/franchise-static.ts` when a franchise has no cover/logo URL. Do not point missing images at legacy WooCommerce placeholder assets unless that asset is restored and intentionally owned.
 - Franchise listing detail pages are directory/listing pages, not blog posts. Do not show fake WordPress author/date blocks such as `By admin`; show franchise facts and real D1 timestamps only after the snapshot/query includes trustworthy publication/submission dates.
 - Unclaimed franchise detail pages may still show public imported phone, office address, and social/contact data when D1 has it. Label that data as public/unclaimed, include a claim CTA for corrections, and parse messy Indonesian phone text into labeled rows instead of hiding contact information just because the listing is not yet claimed.

@@ -1,6 +1,6 @@
 # Clerk Setup For Franchisee.id
 
-Last updated: 2026-06-24 00:03 (Asia/Jakarta)
+Last updated: 2026-06-24 03:27 (Asia/Jakarta)
 
 ## Purpose
 Clerk is the identity/session provider. D1 remains the authorization source of truth through `users` and `user_roles`.
@@ -8,8 +8,9 @@ Clerk is the identity/session provider. D1 remains the authorization source of t
 ## Required Clerk Dashboard Settings
 1. Create or open the Clerk application for the franchise network.
 2. Enable email/password authentication.
-3. Enable email verification by code for sign-up.
-4. Add allowed application URLs:
+3. Enable Google SSO as a social connection.
+4. Enable email verification by code for sign-up.
+5. Add allowed application URLs:
    - `https://franchisee.id`
    - `https://franchisee.id/login/`
    - `https://franchisee.id/register/`
@@ -36,9 +37,12 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 ## Current Implementation
 - `/login/` keeps the legacy page shell and replaces the old WPForms block at runtime with a custom Clerk email/password UI.
 - `/register/` is a dedicated custom registration page with a franchisee/franchisor role selector.
+- `/dashboard/` uses the same custom auth runtime but mounts a login-only admin/staff Google/email surface on the same URL. It does not show public registration or franchisee/franchisor role choices.
 - `/auth-config` returns the publishable Clerk key to the browser and prefers the Astro-style `PUBLIC_CLERK_PUBLISHABLE_KEY` variable.
 - `js/auth-clerk.js` writes the resolved publishable key to `window.__clerk_publishable_key` and the Clerk script tag before loading `clerk.browser.js`; Clerk's browser bundle needs the key available while the script evaluates, not only later during `clerk.load()`.
+- `js/auth-clerk.js` supports Google sign-in/sign-up through ClerkJS. Public Google registration stores the selected self-assignable role across the OAuth redirect, then syncs that role to D1 after the Clerk session is active.
 - `/auth-sync` verifies the active Clerk session, upserts D1 `users`, and self-assigns only `franchisee` or `franchisor`.
+- `email_role_grants` lets admins pre-authorize an email for `admin` or `staff` before a real Clerk user id exists. When that email first logs in through Clerk/Google, `_clerk-auth.js` upserts the real D1 user and applies the pending role grant.
 - `/clerk-webhook` verifies Clerk webhooks and syncs Clerk `user.created`, `user.updated`, and `user.deleted` events into D1.
 - `/user-role` lets an authenticated `admin` assign/remove D1 roles and immediately pushes the updated D1 role snapshot to Clerk metadata.
 - `/sync-clerk-metadata` lets an authenticated `admin` resync one or all D1 users into Clerk metadata after manual D1 changes.
@@ -48,12 +52,14 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 ## Runtime Flow
 1. Browser loads `/js/auth-clerk.js`.
 2. The script fetches `/auth-config`, resolves the publishable key, sets Clerk's script-load key globals/attributes, loads the locally copied ClerkJS asset from `/clerk/clerk.browser.js` with CDN fallbacks, and initializes Clerk.
-3. Login uses `clerk.client.signIn.create()`.
-4. Register uses `clerk.client.signUp.create()` and email-code verification when Clerk requires it.
-5. After a session is active, the browser calls `/auth-sync` with the selected role for new registrations.
-6. `/auth-sync` maps Clerk user id into D1 `users.clerk_user_id` and inserts the allowed D1 role.
-7. `/daftar` submissions attach `Authorization: Bearer <session-token>` to `/form-submit`.
-8. `/form-submit` verifies the token with `@clerk/backend`, maps the Clerk user to D1, checks role authorization, and writes ownership fields.
+3. Email/password login uses `clerk.client.signIn.create()`.
+4. Email/password register uses `clerk.client.signUp.create()` and email-code verification when Clerk requires it.
+5. Google sign-in/sign-up uses Clerk OAuth redirect methods from the custom UI.
+6. Public Google registration stores the selected `franchisee` or `franchisor` role in `sessionStorage`; after OAuth completes, the next authenticated request syncs that role through `/auth-sync`.
+7. After a session is active, the browser calls `/auth-sync` with the selected role for new public registrations.
+8. `/auth-sync` maps Clerk user id into D1 `users.clerk_user_id`, applies active `email_role_grants`, and inserts the allowed D1 role.
+9. `/daftar` submissions attach `Authorization: Bearer <session-token>` to `/form-submit`.
+10. `/form-submit` verifies the token with `@clerk/backend`, maps the Clerk user to D1, checks role authorization, and writes ownership fields.
 
 ## Bidirectional Sync Contract
 
@@ -73,6 +79,7 @@ Subscribe to:
 
 Behavior:
 - `user.created` and `user.updated` upsert D1 `users` by `clerk_user_id`.
+- Active `email_role_grants` matching the normalized primary email are applied during upsert, then marked with `applied_user_id` / `applied_at`.
 - `user.deleted` marks the D1 user as `deleted`.
 - After upsert, the current D1 role snapshot is pushed back to Clerk metadata.
 
@@ -112,8 +119,29 @@ Clerk metadata remains non-authoritative. Server permissions must still query D1
 ## Role Rules
 - `franchisee` can write franchisee profile submissions.
 - `franchisor` can write franchisor listing and claim submissions.
-- `staff` and `admin` pass protected write checks for operational actions.
+- `admin` is the global elevated role.
+- `staff` is limited to staff-level operational actions and does not satisfy admin/franchisee/franchisor checks.
 - Dev test-data create/clear actions require `staff` or `admin`.
+
+## Pre-Authorizing Admin/Staff Before First Google Login
+Use `email_role_grants` when the user does not exist in D1 yet because Clerk has not created the Google SSO user.
+
+```sql
+INSERT OR IGNORE INTO email_role_grants (
+  id, email, email_normalized, role, scope_type, scope_id, site_id, note
+) VALUES (
+  'grant_admin_alampintar_org',
+  'admin@alampintar.org',
+  lower('admin@alampintar.org'),
+  'admin',
+  'network',
+  'network',
+  'site_franchisee_id',
+  'Bootstrap admin grant for Google SSO login'
+);
+```
+
+Do not create fake rows in `users`; `users.clerk_user_id` must come from Clerk. After the first Google login, `/auth-sync` or `/dashboard-data` will create the real D1 user and attach the pending role.
 
 ## Manual Role Assignment Example
 Use this only after confirming the target D1 user id:

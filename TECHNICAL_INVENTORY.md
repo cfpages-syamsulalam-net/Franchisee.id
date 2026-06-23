@@ -217,11 +217,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_clerk-auth.js`
 *Shared Clerk session verification, D1 user sync, and role authorization helper.*
-- `requireD1User(request, env, db, options)`: Verifies Clerk bearer token, upserts D1 user, optionally assigns self-selectable role, and enforces required D1 role. `admin` satisfies protected-role checks; `staff` satisfies staff-level checks only.
-- `syncD1User(request, env, db, requestedRole)`: Auth sync variant used by `/auth-sync`; pushes the current D1 role snapshot back into Clerk metadata.
-- `syncWebhookUserToD1(env, db, clerkUser)`: Verifies Clerk webhook identity payloads and upserts D1 `users` from `user.created` / `user.updated`.
+- `requireD1User(request, env, db, options)`: Verifies Clerk bearer token, upserts D1 user, applies active email role grants, optionally assigns self-selectable role, and enforces required D1 role. `admin` satisfies protected-role checks; `staff` satisfies staff-level checks only.
+- `syncD1User(request, env, db, requestedRole)`: Auth sync variant used by `/auth-sync`; applies pending `email_role_grants` and pushes the current D1 role snapshot back into Clerk metadata.
+- `syncWebhookUserToD1(env, db, clerkUser)`: Verifies Clerk webhook identity payloads, upserts D1 `users` from `user.created` / `user.updated`, and applies pending email role grants.
 - `markD1UserDeleted(db, clerkUserId)`: Marks the D1 user row as `deleted` after a verified Clerk `user.deleted` webhook.
 - `assignD1Role(db, userId, role, actorUserId)` / `removeD1Role(db, userId, role)`: Mutates D1 network roles used by admin role management.
+- `applyEmailRoleGrants(db, user)`: Matches `email_role_grants.email_normalized` to the D1 user's primary email, inserts matching roles into `user_roles`, and marks the grant as applied.
 - `syncClerkMetadataFromD1(env, user, roles)` / `syncClerkMetadataForD1User(env, db, user)`: Writes D1 user id, role list, status, and sync timestamp into Clerk public/private metadata.
 - `authErrorResponse(error)`: Converts auth/role failures into the standard JSON response shape.
 - Roles: only `franchisee` and `franchisor` are self-assignable; `admin` is the global elevated role, while `staff` is limited to staff-level access.
@@ -301,7 +302,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `Auth.init()`: Fetches `/auth-config`, normalizes the publishable key with a public client fallback when config is stale/empty, sets `window.__clerk_publishable_key` plus Clerk script data attributes before browser-bundle evaluation, loads locally copied `/clerk/clerk.browser.js` with CDN fallbacks, and initializes Clerk.
 - `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
 - `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
-- `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1 and optionally assign self-selectable `franchisee`/`franchisor` roles.
-- `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with public login/register/verification forms; supports `data-auth-variant="staff"` for login-only internal dashboard auth.
+- `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign self-selectable `franchisee`/`franchisor` roles.
+- `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
+- `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with public login/register/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth.
 - `switchMode(root, mode)`: Switches login/register/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
 - `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI.
+- `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up; public registration stores the selected `franchisee`/`franchisor` role until OAuth completion.

@@ -5,8 +5,11 @@
     "https://unpkg.com/@clerk/clerk-js@6.17.0/dist/clerk.browser.js",
   ];
   const PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsuZnJhbmNoaXNlZS5pZCQ";
+  const PENDING_ROLE_KEY = "franchise_auth_pending_role";
+  const SELF_ASSIGNABLE_ROLES = new Set(["franchisee", "franchisor"]);
   let clerkPromise = null;
   let syncedUser = null;
+  let pendingRoleSyncPromise = null;
 
   const Auth = (window.FranchiseAuth = window.FranchiseAuth || {});
 
@@ -49,8 +52,11 @@
     return clerk.session.getToken();
   }
 
-  async function getAuthHeaders() {
+  async function getAuthHeaders(options = {}) {
     const token = await getToken();
+    if (token && !options.skipPendingRoleSync) {
+      await syncPendingRoleIfNeeded(token);
+    }
     return token ? { Authorization: "Bearer " + token } : {};
   }
 
@@ -63,7 +69,7 @@
   }
 
   async function syncUser(role) {
-    const headers = await getAuthHeaders();
+    const headers = await getAuthHeaders({ skipPendingRoleSync: true });
     if (!headers.Authorization) return null;
 
     const response = await fetch("/auth-sync", {
@@ -114,6 +120,13 @@
           <div class="fr-auth-message" data-auth-message></div>
           <div data-auth-session></div>
           <form class="fr-auth-form" data-auth-form="login" ${isRegister ? "hidden" : ""} aria-hidden="${isRegister ? "true" : "false"}">
+            <div class="fr-auth-oauth">
+              <button class="fr-auth-oauth-button" type="button" data-auth-oauth="google" data-auth-oauth-mode="login">
+                <span class="fr-auth-oauth-icon" aria-hidden="true">G</span>
+                <span>Login dengan Google</span>
+              </button>
+              <div class="fr-auth-divider"><span>atau</span></div>
+            </div>
             <div class="fr-auth-field">
               <label for="fr-auth-login-email">Email</label>
               <input id="fr-auth-login-email" name="email" type="email" autocomplete="email" required>
@@ -131,6 +144,13 @@
             </p>`}
           </form>
           ${isLoginOnly ? "" : `<form class="fr-auth-form" data-auth-form="register" ${!isRegister ? "hidden" : ""} aria-hidden="${!isRegister ? "true" : "false"}">
+            <div class="fr-auth-oauth">
+              <button class="fr-auth-oauth-button" type="button" data-auth-oauth="google" data-auth-oauth-mode="register">
+                <span class="fr-auth-oauth-icon" aria-hidden="true">G</span>
+                <span>Daftar dengan Google</span>
+              </button>
+              <div class="fr-auth-divider"><span>atau</span></div>
+            </div>
             <div class="fr-auth-field">
               <label for="fr-auth-register-email">Email</label>
               <input id="fr-auth-register-email" name="email" type="email" autocomplete="email" required>
@@ -175,6 +195,12 @@
   }
 
   function bindAuthEvents(root) {
+    root.querySelectorAll("[data-auth-oauth]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        handleOAuth(root, button);
+      });
+    });
+
     root.querySelectorAll("[data-auth-switch]").forEach(function (button) {
       button.addEventListener("click", function () {
         switchMode(root, button.getAttribute("data-auth-switch"));
@@ -262,6 +288,44 @@
     }
   }
 
+  async function handleOAuth(root, button) {
+    button.disabled = true;
+    showMessage(root, "", "");
+    try {
+      const clerk = await initClerk();
+      const mode = button.getAttribute("data-auth-oauth-mode") || "login";
+      const role = mode === "register" ? getSelectedRegisterRole(root) : "";
+      if (SELF_ASSIGNABLE_ROLES.has(role)) {
+        setPendingRole(role);
+      }
+
+      const params = {
+        strategy: "oauth_google",
+        redirectUrl: window.location.href,
+        redirectUrlComplete: nextUrl(root),
+      };
+
+      if (mode === "register" && clerk.client?.signUp?.authenticateWithRedirect) {
+        await clerk.client.signUp.authenticateWithRedirect({
+          ...params,
+          unsafeMetadata: role ? { requested_role: role } : undefined,
+        });
+        return;
+      }
+
+      if (clerk.client?.signIn?.authenticateWithRedirect) {
+        await clerk.client.signIn.authenticateWithRedirect(params);
+        return;
+      }
+
+      throw new Error("Google login belum tersedia di konfigurasi ClerkJS ini.");
+    } catch (error) {
+      clearPendingRole();
+      button.disabled = false;
+      showMessage(root, clerkErrorMessage(error), "error");
+    }
+  }
+
   async function handleRegister(root, form) {
     setBusy(form, true);
     showMessage(root, "", "");
@@ -338,10 +402,65 @@
     return Object.fromEntries(new FormData(form).entries());
   }
 
+  function getSelectedRegisterRole(root) {
+    return root.querySelector('[data-auth-form="register"] input[name="role"]:checked')?.value || "franchisee";
+  }
+
   function setBusy(form, busy) {
     form.querySelectorAll("button, input").forEach(function (item) {
       item.disabled = busy;
     });
+  }
+
+  function setPendingRole(role) {
+    try {
+      sessionStorage.setItem(PENDING_ROLE_KEY, role);
+    } catch (_error) {
+      Auth.pendingRole = role;
+    }
+  }
+
+  function getPendingRole() {
+    try {
+      return sessionStorage.getItem(PENDING_ROLE_KEY) || Auth.pendingRole || "";
+    } catch (_error) {
+      return Auth.pendingRole || "";
+    }
+  }
+
+  function clearPendingRole() {
+    try {
+      sessionStorage.removeItem(PENDING_ROLE_KEY);
+    } catch (_error) {
+      // Ignore storage failures; Auth.pendingRole is still cleared below.
+    }
+    Auth.pendingRole = "";
+  }
+
+  async function syncPendingRoleIfNeeded(token) {
+    const role = getPendingRole();
+    if (!SELF_ASSIGNABLE_ROLES.has(role)) return;
+    if (pendingRoleSyncPromise) return pendingRoleSyncPromise;
+
+    pendingRoleSyncPromise = fetch("/auth-sync", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
+      },
+      body: JSON.stringify({ requested_role: role }),
+    })
+      .then(async function (response) {
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || result.error || "Sinkronisasi akun gagal.");
+        syncedUser = result.user;
+        clearPendingRole();
+      })
+      .finally(function () {
+        pendingRoleSyncPromise = null;
+      });
+
+    return pendingRoleSyncPromise;
   }
 
   function showMessage(root, message, type) {

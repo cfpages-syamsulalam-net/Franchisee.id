@@ -4,6 +4,19 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-24 03:27 (Asia/Jakarta)
+### Added
+- `migrations/0005_email_role_grants.sql`: Added `email_role_grants` so admin/staff roles can be pre-authorized by normalized email before a real Clerk user id exists.
+- Remote D1 `franchise_db`: Applied `0005_email_role_grants.sql` and inserted an active pending `admin` grant for `admin@alampintar.org`.
+- `js/auth-clerk.js` and `css/auth-clerk.css`: Added custom Google sign-in/sign-up buttons for public auth and dashboard auth, with pending public role sync across OAuth redirects.
+
+### Changed
+- `functions/_clerk-auth.js`: Applies active email role grants during Clerk-to-D1 user upsert before checking/syncing D1 roles.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/CLERK_SETUP.md`: Documented Google OAuth, email-based role grants, the `admin@alampintar.org` bootstrap grant, and the rule that public users still need profile/listing completion after Google auth.
+
+### Removed
+- None.
+
 ## 2026-06-24 00:29 (Asia/Jakarta)
 ### Added
 - `js/auth-clerk.js` and `css/auth-clerk.css`: Added explicit login/register switch prompts (`Belum daftar?` / `Sudah punya akun?`) and CSS/ARIA hidden-state handling so inactive auth panels stay hidden under legacy styles.

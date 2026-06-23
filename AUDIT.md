@@ -94,6 +94,7 @@ Public routes:
 Auth routes:
 - `/login`: Custom Clerk sign-in/sign-up surface. Login, daftar, and verification panels must be mutually exclusive, with inline links for switching between login and registration.
 - `/register`: role-selection and Clerk sign-up surface.
+- Google OAuth: supported in custom auth UI. Public Google registration stores the selected franchisee/franchisor role across redirect, but profile/listing completion remains required before the account is operationally complete.
 - `/daftar`: preserve current registration route during transition, then split into role-specific onboarding.
 
 Dashboard routes:
@@ -122,7 +123,7 @@ API/server routes:
 | 1. Data contract design | In progress | Initial shared-network D1 SQL migration created and applied remotely; TypeScript/Zod importer now maps current CSV snapshots into the first D1 schema. Next define reusable API/form payload schemas. |
 | 2. Cloudflare project config | In progress | `wrangler.toml` now points to `franchise_db` and declares Pages output `dist` without unsupported `account_id`; migrations are applied through `cfman`. Cloudflare Pages project still must keep build command set to `pnpm run build` or `pnpm run build:astro`; R2 binding and environment split still pending. |
 | 3. Import pipeline | In progress | `scripts/import-csv-to-d1.ts` imports CSV snapshots into D1, preserves `UNCLAIMED` sanitization and stable slugs, and has completed the first remote import. Runtime reads now use D1 first through `/get-franchises`. |
-| 4. Auth foundation | In progress | Custom Clerk login/register surfaces, `/auth-config`, `/auth-sync`, `/clerk-webhook`, `/user-role`, `/sync-clerk-metadata`, D1 user mapping, D1-to-Clerk metadata snapshots, and D1 role checks are implemented. Next configure real Clerk env vars/dashboard settings and verify on Cloudflare Pages. |
+| 4. Auth foundation | In progress | Custom Clerk email/password and Google login/register surfaces, `/auth-config`, `/auth-sync`, `/clerk-webhook`, `/user-role`, `/sync-clerk-metadata`, D1 user mapping, email-based pre-login role grants, D1-to-Clerk metadata snapshots, and D1 role checks are implemented. `admin@alampintar.org` is pre-authorized in remote D1 through `email_role_grants` for first Google SSO login. Next verify Google OAuth on Cloudflare Pages. |
 | 5. Form API replacement | In progress | `/form-submit` now performs D1-only writes for franchisee, franchisor, claim, and dev test-data actions with Clerk session verification, D1 role checks, owner fields, and actor audit events. Next verify deployed form submissions against the real Pages binding and Clerk app. |
 | 6. Asset pipeline | Pending | Move uploads to R2 with object ownership, validation, and public/served URLs. |
 | 7. Public directory rebuild | In progress | D1-backed static HTML bridge generates root `/peluang-usaha/` output and a D1 snapshot; Astro static routes now generate canonical `/peluang-usaha`, flat detail pages, CSS-only image placeholders, readable yellow/category chip states, self-contained detail tabs, parsed public contact data for unclaimed listings, all-caps description presentation normalization, cleaned metadata, and redirect-only compatibility for old directory/category archives, then the build copies legacy static assets/pages without overwriting Astro output. Next add real popularity/view/lead metrics and verify deployed route precedence. |
@@ -160,6 +161,7 @@ Refactor rule: prefer behavior-preserving extraction with validation after each 
 - Decide Astro vs Next.js before scaffolding. Current recommendation: Astro.
 - Decide whether Cloudflare Pages or Workers static assets should be the deployment target for the new app. Current recommendation: Workers-compatible Cloudflare adapter route, preserving Pages-style static hosting if practical.
 - Clerk organizations need a later product decision: they may be useful if one franchisor manages multiple brands or staff, but the initial authorization source remains D1 roles.
+- Pre-first-login admin/staff bootstrap now uses `email_role_grants`; do not insert placeholder `users` rows without a real Clerk user id.
 - D1 needs an approval/revision model before franchisors can edit live public pages.
 - R2 public access strategy must be decided: public bucket/custom domain, signed proxy route, or hybrid.
 - Legacy static HTML volume is large; migration should prioritize app-critical routes instead of converting every exported page at once.
