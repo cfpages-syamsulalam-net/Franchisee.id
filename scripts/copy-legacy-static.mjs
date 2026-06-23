@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DIST_DIR = join(ROOT_DIR, "dist");
+const CLERK_JS_SOURCE_DIR = join(ROOT_DIR, "node_modules", "@clerk", "clerk-js", "dist");
+const CLERK_JS_TARGET_DIR = join(DIST_DIR, "clerk");
 
 const SKIP_TOP_LEVEL = new Set([
   ".agents",
@@ -112,10 +114,15 @@ for (const entry of readdirSync(ROOT_DIR, { withFileTypes: true })) {
   }
 }
 
+if (existsSync(CLERK_JS_SOURCE_DIR)) {
+  copyDirectoryOverwrite(CLERK_JS_SOURCE_DIR, CLERK_JS_TARGET_DIR);
+}
+
 console.log("Legacy static copy:");
 console.log(`- directories_scanned=${stats.directories}`);
 console.log(`- files_copied=${stats.filesCopied}`);
 console.log(`- files_skipped=${stats.filesSkipped}`);
+console.log(`- clerk_assets=${existsSync(CLERK_JS_TARGET_DIR) ? "copied" : "missing"}`);
 console.log("- skipped_routes=peluang-usaha,category,kategori,rekomendasi,populer,abjad,direktori-franchise,category-aliases");
 
 function shouldCopyRootFile(fileName) {
@@ -158,6 +165,25 @@ function copyFileNoOverwrite(sourcePath, targetPath) {
     copyFileSync(sourcePath, targetPath);
   }
   stats.filesCopied += 1;
+}
+
+function copyDirectoryOverwrite(sourceDir, targetDir) {
+  mkdirSync(targetDir, { recursive: true });
+
+  for (const entry of readdirSync(sourceDir, { withFileTypes: true })) {
+    const sourcePath = join(sourceDir, entry.name);
+    const targetPath = join(targetDir, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDirectoryOverwrite(sourcePath, targetPath);
+      continue;
+    }
+
+    if (entry.isFile()) {
+      mkdirSync(dirname(targetPath), { recursive: true });
+      copyFileSync(sourcePath, targetPath);
+    }
+  }
 }
 
 function rewriteLegacyHtmlLinks(html) {

@@ -152,6 +152,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Skips source/control directories such as `src`, `scripts`, `functions`, `docs`, `.github`, `node_modules`, `migrations`, and `dist`.
 - Skips top-level `peluang-usaha`, duplicate directory archives, and known category aliases so legacy pages cannot compete with Astro's flat `/peluang-usaha/[slug].html` output or canonical `/peluang-usaha` directory.
 - Rewrites copied legacy HTML links from `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known top-level category aliases to `/peluang-usaha` query-param URLs.
+- Copies `node_modules/@clerk/clerk-js/dist` into `dist/clerk` so browser auth can load ClerkJS locally before trying CDN fallbacks.
 
 ## 2. Directory: `/src` (Astro Static Generation)
 
@@ -175,7 +176,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getPopularRows(rows)`: Sorts directory rows by a deterministic popularity proxy until real D1 analytics/lead/payment metrics exist.
 - `getAlphabeticalRows(rows)`: Sorts directory rows alphabetically by brand name; public access is now `/peluang-usaha?sort=abjad`.
 - `getCategoryRouteEntries(rows)`: Legacy helper for category aliases; do not add new indexable category archive routes without changing the canonical route policy.
-- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, self-contained detail tab initialization, cards, breadcrumbs, disclaimers, social/contact links, Indonesian phone parsing/display normalization, all-caps description presentation normalization, sticky claim CTA, category summaries, CSS-only missing-image placeholders, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
+- Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, social/contact links, Indonesian phone parsing/display normalization, all-caps description presentation normalization, sticky claim CTA, category summaries, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
+
+### File: `src/lib/franchise-static-assets.ts`
+*Generated CSS/JS and placeholder helper for D1-backed Astro pages.*
+- `injectDirectoryAssets(html)`: Injects the generated directory CSS plus client-side query-param filtering/sorting script.
+- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization script.
+- `generateCssPlaceholder(label, className)`: Renders the CSS-only missing-logo placeholder used by directory cards, category cards, and detail pages.
+- Extracted from `src/lib/franchise-static.ts` on 2026-06-22 to keep the main renderer below the highest-risk long-file threshold.
 
 ### File: `src/pages/peluang-usaha/index.astro`
 *Astro static listing page.*
@@ -226,7 +234,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/auth-config.js`
 *Public Clerk config endpoint.*
-- `onRequestGet()`: Returns the Clerk publishable key from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, fallback `CLERK_PUBLISHABLE_KEY`, or the committed public live publishable-key fallback, plus configured status with `Cache-Control: no-store`.
+- `onRequestGet()`: Returns the Clerk publishable key from `PUBLIC_CLERK_PUBLISHABLE_KEY`, fallback `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, fallback `CLERK_PUBLISHABLE_KEY`, or the committed public live publishable-key fallback, plus configured status with `Cache-Control: no-store`.
 
 ### File: `functions/auth-sync.js`
 *Clerk-to-D1 user mapping endpoint.*
@@ -290,7 +298,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - **Lost logic recovered**: BEP calculations, multi-step progress, and media URL preview behavior (refactored into modular `form-0x-*.js` files and `form-utils.js`).
 ### File: `js/auth-clerk.js`
 *Custom ClerkJS client integration using existing site CSS.*
-- `Auth.init()`: Fetches `/auth-config`, normalizes the publishable key with a public client fallback when config is stale/empty, loads pinned ClerkJS, and initializes Clerk.
+- `Auth.init()`: Fetches `/auth-config`, normalizes the publishable key with a public client fallback when config is stale/empty, loads locally copied `/clerk/clerk.browser.js` with CDN fallbacks, and initializes Clerk.
 - `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
 - `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1 and optionally assign self-selectable `franchisee`/`franchisor` roles.

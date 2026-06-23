@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-22 15:22 (Asia/Jakarta)
+Last updated: 2026-06-22 22:30 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -34,7 +34,7 @@ Last updated: 2026-06-22 15:22 (Asia/Jakarta)
 - Run `cfman wrangler` commands sequentially; repeated immediate invocations can intermittently fail in this environment.
 - Do not add `account_id` to `wrangler.toml`; Cloudflare Pages config validation rejects it. Use the Cloudflare Pages project/account context, `cfman`, or GitHub `CLOUDFLARE_ACCOUNT_ID` env/vars for account selection.
 - Never commit Cloudflare tokens or paste them into repository files. Store tokens only through `cfman token add` or the local shell environment.
-- Never commit Clerk secret keys. Clerk publishable keys (`pk_*`) are browser-safe and may be used as public fallbacks, but secret keys (`sk_*`) must stay only in Cloudflare Pages secrets. Clerk env requirements are documented in `docs/architecture/CLERK_SETUP.md`.
+- Never commit Clerk secret keys. Clerk publishable keys (`pk_*`) are browser-safe and may be used as public fallbacks, but secret keys (`sk_*`) must stay only in Cloudflare Pages secrets. Prefer Astro-style `PUBLIC_CLERK_PUBLISHABLE_KEY` for the browser publishable key; `/auth-config` also accepts `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_PUBLISHABLE_KEY` as compatibility fallbacks. Clerk env requirements are documented in `docs/architecture/CLERK_SETUP.md`.
 - Clerk webhook signing secrets are required for `/clerk-webhook`; do not accept unverified webhook payloads.
 
 ## Public Page Generation

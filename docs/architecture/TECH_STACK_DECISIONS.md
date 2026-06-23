@@ -301,7 +301,7 @@ Runtime cutover status as of 2026-06-17:
 
 Clerk setup details:
 - Custom UI and env setup are documented in `docs/architecture/CLERK_SETUP.md`.
-- Required Cloudflare Pages env vars: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (or fallback `CLERK_PUBLISHABLE_KEY`), `CLERK_SECRET_KEY`, and `CLERK_WEBHOOK_SIGNING_SECRET`.
+- Required Cloudflare Pages env vars: `PUBLIC_CLERK_PUBLISHABLE_KEY` preferred for Astro/static runtime config, `CLERK_SECRET_KEY`, and `CLERK_WEBHOOK_SIGNING_SECRET`. `/auth-config` also accepts `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_PUBLISHABLE_KEY` as compatibility fallbacks.
 - Optional origin hardening: `CLERK_AUTHORIZED_PARTIES`.
 - Raw/manual D1 SQL changes are not automatically visible to Clerk; run `/sync-clerk-metadata` after manual role edits.
 

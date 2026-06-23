@@ -4,6 +4,30 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-22 22:45 (Asia/Jakarta)
+### Added
+- `src/lib/franchise-static-assets.ts`: Added extracted helpers for generated directory/detail CSS/JS injection and CSS-only franchise image placeholders.
+
+### Changed
+- `src/lib/franchise-static.ts`: Refactored generated asset injection and placeholder rendering into `src/lib/franchise-static-assets.ts`, reducing the main renderer from about 1,549 lines to 944 lines without changing route output intent.
+- `AUDIT.md`: Added and updated the long-file refactor tracker, including the completed first extraction and remaining long-file candidates.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the new static asset helper module and updated `src/lib/franchise-static.ts` responsibilities.
+
+### Removed
+- None.
+
+## 2026-06-22 22:30 (Asia/Jakarta)
+### Added
+- `scripts/copy-legacy-static.mjs`: Copies the installed ClerkJS browser bundle into `dist/clerk` so `/login`, `/register`, and `/dashboard` can load `/clerk/clerk.browser.js` locally before trying CDN fallbacks.
+
+### Changed
+- `functions/auth-config.js`: Prefers Astro-style `PUBLIC_CLERK_PUBLISHABLE_KEY`, keeps `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_PUBLISHABLE_KEY` compatibility fallbacks, and retains the public live-key fallback for stale/empty runtime config.
+- `js/auth-clerk.js`: Loads locally hosted ClerkJS first, falls back to pinned CDN URLs, and simplifies existing script detection.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/CLERK_SETUP.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the Astro Clerk env name, ClerkJS local asset behavior, and compatibility fallback policy.
+
+### Removed
+- None.
+
 ## 2026-06-22 18:12 (Asia/Jakarta)
 ### Added
 - `js/auth-clerk.js`: Added a client-side Clerk publishable-key fallback so `/dashboard`, `/login`, `/register`, and protected forms can initialize Clerk even if `/auth-config` returns an empty or stale config response.

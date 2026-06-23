@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-19 21:21 (Asia/Jakarta)
+Last updated: 2026-06-22 22:45 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
@@ -129,6 +129,21 @@ API/server routes:
 | 9. Dashboards | In progress | `/dashboard` and `/dashboard-data` now implement the Franchisee.id admin/staff MVP: protected D1 overview metrics, unclaimed WhatsApp outreach links, manual outreach logging, data-quality warnings, listing edit JSON-diff suggestions, admin approve/reject for suggestions and claims, lead summary, system-health readout, publish queue state, audit writes, and rebuild queue writes for approved public changes. `DASHBOARD.md` remains the progress tracker for richer field drawers, publish controls, payment metrics, and telemetry. |
 | 10. Decommission Sheets dependency | Pending | Freeze or remove Sheets writes, keep optional import/export admin tooling only. |
 
+## Long File Refactor Tracker
+
+Current maintained code hotspots by line count:
+
+| File | Approx. lines | Risk | Refactor direction | Status |
+| --- | ---: | --- | --- | --- |
+| `src/lib/franchise-static.ts` | 944 after first extraction | Still mixes D1 snapshot validation, directory/detail rendering, contact parsing, SEO, text normalization, and scoring. The generated CSS/JS injection and CSS placeholder rendering were extracted to `src/lib/franchise-static-assets.ts` on 2026-06-22. | Next split contact parsing, text normalization, and scoring into focused modules. | First extraction complete |
+| `src/lib/franchise-static-assets.ts` | 620 | New helper owns generated directory/detail CSS/JS injection and CSS-only missing-image placeholders. Its length is mostly literal CSS/JS copied from the prior renderer. | Later move literal CSS into owned static CSS assets if the build pipeline can guarantee those assets on all generated pages. | Extracted |
+| `functions/dashboard-data.js` | 845 | Dashboard API mixes action validation, authorization, reads, write workflows, and response shaping. | Split action handlers and query builders after dashboard behavior stabilizes. | Pending |
+| `src/pages/dashboard/index.astro` | 792 | Static dashboard shell mixes markup, client JS, and role-aware UX states. | Extract client JS and section render helpers once dashboard sections settle. | Pending |
+| `scripts/build-d1-franchise-pages.ts` | 736 | Builder mixes D1 fetch, snapshot shaping, file writing, manifest/prune behavior, and remote access fallback. | Split D1 fetch/snapshot writer/manifest pruning into modules after the Astro route bridge is stable. | Pending |
+| `scripts/import-csv-to-d1.ts` | 664 | Importer mixes CSV parsing, validation, row mapping, SQL generation, and remote apply. | Split parser, mappers, and SQL writer before the next large import source is added. | Pending |
+
+Refactor rule: prefer behavior-preserving extraction with validation after each step. Do not combine extraction with feature changes unless the feature needs the boundary.
+
 ## Migration Rules
 - Do not remove existing form fields while migrating; map every current field to D1 or a deliberate archival field.
 - Preserve `/peluang-usaha/[slug]` URLs where possible for SEO continuity.
@@ -242,7 +257,7 @@ API/server routes:
 - Dependencies: `@clerk/backend` and `@clerk/clerk-js`.
 - Custom UI: `js/auth-clerk.js` plus `css/auth-clerk.css`; no Clerk prebuilt components are used.
 - Routes/endpoints: `/login/`, `/register/`, `/auth-config`, `/auth-sync`, `/clerk-webhook`, `/user-role`, `/sync-clerk-metadata`.
-- Required env vars: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (or fallback `CLERK_PUBLISHABLE_KEY`), `CLERK_SECRET_KEY`, and `CLERK_WEBHOOK_SIGNING_SECRET`; optional hardening via `CLERK_AUTHORIZED_PARTIES`.
+- Required env vars: `PUBLIC_CLERK_PUBLISHABLE_KEY` preferred for Astro/static runtime config, `CLERK_SECRET_KEY`, and `CLERK_WEBHOOK_SIGNING_SECRET`; optional hardening via `CLERK_AUTHORIZED_PARTIES`. `/auth-config` also accepts `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_PUBLISHABLE_KEY` as compatibility fallbacks, and the browser auth script loads local `/clerk/clerk.browser.js` before CDN fallbacks.
 - Clerk-to-D1 sync: `/clerk-webhook` verifies Clerk webhooks and syncs `user.created`, `user.updated`, and `user.deleted`.
 - D1-to-Clerk sync: `/user-role` mutates D1 roles and immediately updates Clerk metadata; `/sync-clerk-metadata` repairs/backfills Clerk metadata from D1 after manual SQL edits.
 - Important constraint: D1 has no automatic outbound trigger, so raw manual D1 role changes need explicit resync.

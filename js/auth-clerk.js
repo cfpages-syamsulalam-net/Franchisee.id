@@ -1,5 +1,9 @@
 (function (window, document) {
-  const CLERK_JS_URL = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6.17.0/dist/clerk.browser.js";
+  const CLERK_JS_URLS = [
+    "/clerk/clerk.browser.js",
+    "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6.17.0/dist/clerk.browser.js",
+    "https://unpkg.com/@clerk/clerk-js@6.17.0/dist/clerk.browser.js",
+  ];
   const PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsuZnJhbmNoaXNlZS5pZCQ";
   let clerkPromise = null;
   let syncedUser = null;
@@ -26,7 +30,7 @@
         throw new Error("Clerk publishable key belum dikonfigurasi di Cloudflare Pages.");
       }
 
-      await loadScript(CLERK_JS_URL);
+      await loadScriptWithFallbacks(CLERK_JS_URLS);
       const ClerkCtor = window.Clerk;
       if (!ClerkCtor) throw new Error("ClerkJS gagal dimuat.");
 
@@ -360,10 +364,29 @@
     }
   }
 
+  async function loadScriptWithFallbacks(srcList) {
+    if (window.Clerk) return;
+
+    let lastError = null;
+    for (const src of srcList) {
+      try {
+        await loadScript(src);
+        if (window.Clerk) return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError || new Error("ClerkJS gagal dimuat.");
+  }
+
   function loadScript(src) {
     if (window.Clerk) return Promise.resolve();
     return new Promise(function (resolve, reject) {
-      const existing = document.querySelector('script[data-franchise-clerk="true"]');
+      const existing = Array.from(document.querySelectorAll('script[data-franchise-clerk="true"]'))
+        .find(function (script) {
+          return script.getAttribute("src") === src;
+        });
       if (existing) {
         existing.addEventListener("load", resolve, { once: true });
         existing.addEventListener("error", reject, { once: true });
@@ -375,6 +398,7 @@
       script.dataset.franchiseClerk = "true";
       script.addEventListener("load", resolve, { once: true });
       script.addEventListener("error", function () {
+        script.remove();
         reject(new Error("ClerkJS gagal dimuat."));
       }, { once: true });
       document.head.appendChild(script);

@@ -1,6 +1,6 @@
 # Clerk Setup For Franchisee.id
 
-Last updated: 2026-06-17 03:11 (Asia/Jakarta)
+Last updated: 2026-06-22 22:30 (Asia/Jakarta)
 
 ## Purpose
 Clerk is the identity/session provider. D1 remains the authorization source of truth through `users` and `user_roles`.
@@ -20,7 +20,7 @@ Clerk is the identity/session provider. D1 remains the authorization source of t
 Set these in Cloudflare Pages project settings for Production and Preview:
 
 ```text
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
 CLERK_SECRET_KEY=sk_...
 CLERK_WEBHOOK_SIGNING_SECRET=whsec_...
 ```
@@ -31,12 +31,12 @@ Optional hardening:
 CLERK_AUTHORIZED_PARTIES=https://franchisee.id,https://<preview-domain>
 ```
 
-Do not commit Clerk secret keys to this repository. `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is public by design, but it is still loaded from the `/auth-config` Function so the static HTML does not need per-environment rewrites. `/auth-config` also accepts `CLERK_PUBLISHABLE_KEY` as a fallback.
+Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KEY` is public by design, but it is still loaded from the `/auth-config` Function so the static HTML does not need per-environment rewrites. `/auth-config` also accepts `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_PUBLISHABLE_KEY` as compatibility fallbacks.
 
 ## Current Implementation
 - `/login/` keeps the legacy page shell and replaces the old WPForms block at runtime with a custom Clerk email/password UI.
 - `/register/` is a dedicated custom registration page with a franchisee/franchisor role selector.
-- `/auth-config` returns the publishable Clerk key to the browser.
+- `/auth-config` returns the publishable Clerk key to the browser and prefers the Astro-style `PUBLIC_CLERK_PUBLISHABLE_KEY` variable.
 - `/auth-sync` verifies the active Clerk session, upserts D1 `users`, and self-assigns only `franchisee` or `franchisor`.
 - `/clerk-webhook` verifies Clerk webhooks and syncs Clerk `user.created`, `user.updated`, and `user.deleted` events into D1.
 - `/user-role` lets an authenticated `admin` assign/remove D1 roles and immediately pushes the updated D1 role snapshot to Clerk metadata.
@@ -46,7 +46,7 @@ Do not commit Clerk secret keys to this repository. `NEXT_PUBLIC_CLERK_PUBLISHAB
 
 ## Runtime Flow
 1. Browser loads `/js/auth-clerk.js`.
-2. The script fetches `/auth-config`, loads pinned ClerkJS, and initializes Clerk.
+2. The script fetches `/auth-config`, loads the locally copied ClerkJS asset from `/clerk/clerk.browser.js` with CDN fallbacks, and initializes Clerk.
 3. Login uses `clerk.client.signIn.create()`.
 4. Register uses `clerk.client.signUp.create()` and email-code verification when Clerk requires it.
 5. After a session is active, the browser calls `/auth-sync` with the selected role for new registrations.
