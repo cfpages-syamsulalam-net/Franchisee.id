@@ -30,7 +30,7 @@
         throw new Error("Clerk publishable key belum dikonfigurasi di Cloudflare Pages.");
       }
 
-      await loadScriptWithFallbacks(CLERK_JS_URLS);
+      await loadScriptWithFallbacks(CLERK_JS_URLS, publishableKey);
       const ClerkCtor = window.Clerk;
       if (!ClerkCtor) throw new Error("ClerkJS gagal dimuat.");
 
@@ -364,13 +364,15 @@
     }
   }
 
-  async function loadScriptWithFallbacks(srcList) {
+  async function loadScriptWithFallbacks(srcList, publishableKey) {
     if (window.Clerk) return;
+
+    applyPublishableKeyGlobals(publishableKey);
 
     let lastError = null;
     for (const src of srcList) {
       try {
-        await loadScript(src);
+        await loadScript(src, publishableKey);
         if (window.Clerk) return;
       } catch (error) {
         lastError = error;
@@ -380,7 +382,7 @@
     throw lastError || new Error("ClerkJS gagal dimuat.");
   }
 
-  function loadScript(src) {
+  function loadScript(src, publishableKey) {
     if (window.Clerk) return Promise.resolve();
     return new Promise(function (resolve, reject) {
       const existing = Array.from(document.querySelectorAll('script[data-franchise-clerk="true"]'))
@@ -396,6 +398,8 @@
       script.src = src;
       script.async = true;
       script.dataset.franchiseClerk = "true";
+      script.dataset.clerkPublishableKey = publishableKey;
+      script.setAttribute("data-clerk-publishable-key", publishableKey);
       script.addEventListener("load", resolve, { once: true });
       script.addEventListener("error", function () {
         script.remove();
@@ -403,6 +407,10 @@
       }, { once: true });
       document.head.appendChild(script);
     });
+  }
+
+  function applyPublishableKeyGlobals(publishableKey) {
+    window.__clerk_publishable_key = publishableKey;
   }
 
   function clerkErrorMessage(error) {

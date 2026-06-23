@@ -4,6 +4,16 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-24 00:03 (Asia/Jakarta)
+### Added
+- `js/auth-clerk.js`: Sets `window.__clerk_publishable_key` and Clerk script data attributes before loading `clerk.browser.js`, so the Clerk browser bundle sees the publishable key during script evaluation.
+
+### Changed
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/CLERK_SETUP.md`: Documented that Clerk's browser bundle requires the publishable key at script-load time, not only during later `clerk.load()` initialization.
+
+### Removed
+- None.
+
 ## 2026-06-22 22:45 (Asia/Jakarta)
 ### Added
 - `src/lib/franchise-static-assets.ts`: Added extracted helpers for generated directory/detail CSS/JS injection and CSS-only franchise image placeholders.

@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-22 15:22 (Asia/Jakarta)
+Last updated: 2026-06-24 00:03 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -53,7 +53,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `functions/dashboard-data.js` | Protected Franchisee.id dashboard API. Requires D1 role `staff` or elevated `admin`; returns overview metrics, unclaimed WhatsApp outreach queue, data-quality warnings, editable listing options, pending claims, pending edit suggestions, lead summary, publish queue state, and system health. Logs manually confirmed outreach, stores structured listing edit suggestions, lets admin approve/reject suggestions and claims, writes audit events, and queues static rebuilds for public-page-affecting approvals. | `src/pages/dashboard/index.astro`, `functions/_site-publish-queue.js`, `migrations/0004_dashboard_operations.sql`, D1 `listing_outreach_events`, `listing_edit_suggestions`, `staff_auto_approval_rules`, `franchises`, `franchise_claims`, `franchise_leads`, `audit_events`, `site_publish_state`, `site_rebuild_requests` |
 | `functions/user-role.js` | Admin-only D1 role mutation endpoint. Assigns/removes D1 roles and then pushes the D1 role snapshot to Clerk metadata. | `functions/_clerk-auth.js`, D1 `user_roles`, Clerk `users.updateUserMetadata` |
 | `functions/sync-clerk-metadata.js` | Admin-only repair/backfill endpoint for pushing D1 user/role state into Clerk metadata after manual SQL changes. | `functions/_clerk-auth.js`, D1 `users`, `user_roles`, Clerk metadata |
-| `js/auth-clerk.js` | Custom ClerkJS client integration. Replaces the legacy `/login` WPForms block with custom login/register forms, powers `/register`, exposes `window.FranchiseAuth`, supplies bearer tokens to protected form writes, has a public publishable-key fallback if `/auth-config` is stale or empty, and loads locally copied ClerkJS before CDN fallbacks. | `/auth-config`, `/auth-sync`, `/login`, `/register`, `/daftar`, `js/form-06-submit-validation.js`, `/clerk/clerk.browser.js` |
+| `js/auth-clerk.js` | Custom ClerkJS client integration. Replaces the legacy `/login` WPForms block with custom login/register forms, powers `/register`, exposes `window.FranchiseAuth`, supplies bearer tokens to protected form writes, has a public publishable-key fallback if `/auth-config` is stale or empty, sets Clerk's script-load publishable-key global/attributes, and loads locally copied ClerkJS before CDN fallbacks. | `/auth-config`, `/auth-sync`, `/login`, `/register`, `/daftar`, `js/form-06-submit-validation.js`, `/clerk/clerk.browser.js` |
 | `css/auth-clerk.css` | Custom auth UI styling built on existing Astra/global colors. | `/login`, `/register`, `/daftar` |
 | `js/form-01-state-helpers.js` | Shared `window.FranchiseForm` state, constants, sanitizers, claim persistence, and franchisor draft persistence. | All form modules, `localStorage`, claim search, autosave |
 | `js/form-02-claim-workflow.js` | Claim-search data loading, autocomplete UI, claim-mode prefill, and claim-mode exit. | `json/unclaimed-brands.json`, `/get-franchises`, `window.openTab`, franchisor form |
@@ -157,7 +157,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 ### 5. Clerk Login/Register And D1 User Mapping Flow
 1. `/login/` loads the legacy static page shell and `js/auth-clerk.js` replaces `#wpforms-725` with a custom login/register UI.
 2. `/register/` loads a dedicated custom registration page with franchisee/franchisor role selection.
-3. Browser code fetches `/auth-config`, loads locally copied ClerkJS from `/clerk/clerk.browser.js` with pinned CDN fallbacks, and signs users in/up with Clerk client APIs.
+3. Browser code fetches `/auth-config`, sets the resolved publishable key on Clerk's script-load global/attributes, loads locally copied ClerkJS from `/clerk/clerk.browser.js` with pinned CDN fallbacks, and signs users in/up with Clerk client APIs.
 4. After sign-up or sign-in, `/auth-sync` verifies the Clerk session, upserts D1 `users`, inserts self-assignable `franchisee`/`franchisor` roles when requested, and pushes the D1 role snapshot into Clerk metadata.
 5. Clerk Dashboard webhooks call `/clerk-webhook` for `user.created`, `user.updated`, and `user.deleted`; the endpoint verifies signatures and syncs D1 `users`.
 6. D1 role changes initiated by the app use `/user-role`, which mutates D1 and then updates Clerk metadata. Manual SQL changes require `/sync-clerk-metadata` because D1 has no outbound webhook trigger.
