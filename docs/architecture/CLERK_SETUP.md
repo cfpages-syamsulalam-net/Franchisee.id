@@ -130,20 +130,33 @@ Use `email_role_grants` when the user does not exist in D1 yet because Clerk has
 
 ```sql
 INSERT OR IGNORE INTO email_role_grants (
-  id, email, email_normalized, role, scope_type, scope_id, site_id, note
-) VALUES (
-  'grant_admin_alampintar_org',
-  'admin@alampintar.org',
-  lower('admin@alampintar.org'),
-  'admin',
-  'network',
-  'network',
-  'site_franchisee_id',
-  'Bootstrap admin grant for Google SSO login'
-);
+  id, email, email_normalized, role, scope_type, scope_id, site_id, note, is_active
+) VALUES
+  (
+    'grant_admin_alampintar_org',
+    'admin@alampintar.org',
+    lower('admin@alampintar.org'),
+    'admin',
+    'network',
+    'network',
+    'site_franchisee_id',
+    'Bootstrap admin grant for admin@alampintar.org Google/email login.',
+    1
+  ),
+  (
+    'grant_admin_email_franchisor_id',
+    'email@franchisor.id',
+    lower('email@franchisor.id'),
+    'admin',
+    'network',
+    'network',
+    'site_franchisee_id',
+    'Bootstrap admin grant for email@franchisor.id Google/email login.',
+    1
+  );
 ```
 
-Do not create fake rows in `users`; `users.clerk_user_id` must come from Clerk. After the first Google login, `/auth-sync` or `/dashboard-data` will create the real D1 user and attach the pending role.
+Do not create fake rows in `users`; `users.clerk_user_id` must come from Clerk. After the first Google/email login, `/auth-sync` or `/dashboard-data` will create the real D1 user and attach the pending role.
 
 ## Manual Role Assignment Example
 Use this only after confirming the target D1 user id:

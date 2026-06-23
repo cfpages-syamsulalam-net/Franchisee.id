@@ -557,16 +557,18 @@
     if (!hasClerkRedirectParams() || typeof clerk.handleRedirectCallback !== "function") return;
 
     const redirectUrlComplete = getPendingNext() || nextUrlFromSearch() || currentAuthUrl();
-    const navigateAfterCallback = async function (target) {
-      await navigateAfterOAuth(target || redirectUrlComplete);
-    };
-
-    await clerk.handleRedirectCallback({ redirectUrlComplete }, navigateAfterCallback);
+    let callbackTarget = redirectUrlComplete;
+    const createdSessionId = getClerkRedirectParam("__clerk_created_session");
+    await clerk.handleRedirectCallback({ redirectUrlComplete }, async function (target) {
+      callbackTarget = target || redirectUrlComplete;
+    });
+    if (!clerk.session && createdSessionId && typeof clerk.setActive === "function") {
+      await clerk.setActive({ session: createdSessionId });
+    }
+    await refreshClerkResources(clerk);
     clearPendingNext();
 
-    if (hasClerkRedirectParams()) {
-      await navigateAfterOAuth(redirectUrlComplete);
-    }
+    await navigateAfterOAuth(callbackTarget);
   }
 
   async function navigateAfterOAuth(target) {
@@ -589,12 +591,28 @@
     await new Promise(function () {});
   }
 
+  async function refreshClerkResources(clerk) {
+    if (typeof clerk.__internal_reloadInitialResources === "function") {
+      await clerk.__internal_reloadInitialResources();
+      return;
+    }
+    if (typeof clerk.load === "function") {
+      await clerk.load();
+    }
+  }
+
   function hasClerkRedirectParams() {
     const search = new URLSearchParams(window.location.search);
     const hash = new URLSearchParams((window.location.hash || "").replace(/^#\/?/, ""));
     return CLERK_REDIRECT_PARAMS.some(function (key) {
       return search.has(key) || hash.has(key);
     });
+  }
+
+  function getClerkRedirectParam(key) {
+    const search = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams((window.location.hash || "").replace(/^#\/?/, ""));
+    return search.get(key) || hash.get(key) || "";
   }
 
   function removeClerkRedirectParams(params) {

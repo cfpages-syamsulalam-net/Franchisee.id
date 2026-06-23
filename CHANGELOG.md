@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-24 05:04 (Asia/Jakarta)
+### Added
+- Remote D1 `franchise_db`: Inserted an active pending `admin` email role grant for `email@franchisor.id`.
+- `migrations/0005_email_role_grants.sql`: Added bootstrap seed rows for `admin@alampintar.org` and `email@franchisor.id`.
+
+### Changed
+- `js/auth-clerk.js`: Revised Google OAuth callback finalization to capture Clerk's completion target without navigating early, fall back to `setActive()` from `__clerk_created_session` when needed, and refresh Clerk resources before dashboard token checks.
+- `AGENTS.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/CLERK_SETUP.md`: Documented the second admin bootstrap grant and the stronger OAuth callback/session refresh behavior.
+
+### Removed
+- None.
+
 ## 2026-06-24 04:29 (Asia/Jakarta)
 ### Added
 - `js/auth-clerk.js`: Added Clerk OAuth redirect callback handling before session-token checks, plus pending post-login destination storage for Google sign-in/sign-up.

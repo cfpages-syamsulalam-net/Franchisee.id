@@ -26,3 +26,29 @@ CREATE TABLE IF NOT EXISTS email_role_grants (
 
 CREATE INDEX IF NOT EXISTS idx_email_role_grants_email ON email_role_grants(email_normalized, is_active);
 CREATE INDEX IF NOT EXISTS idx_email_role_grants_applied_user ON email_role_grants(applied_user_id);
+
+INSERT OR IGNORE INTO email_role_grants (
+  id, email, email_normalized, role, scope_type, scope_id, site_id, note, is_active
+) VALUES
+  (
+    'grant_admin_alampintar_org',
+    'admin@alampintar.org',
+    lower('admin@alampintar.org'),
+    'admin',
+    'network',
+    'network',
+    'site_franchisee_id',
+    'Bootstrap admin grant for admin@alampintar.org Google/email login.',
+    1
+  ),
+  (
+    'grant_admin_email_franchisor_id',
+    'email@franchisor.id',
+    lower('email@franchisor.id'),
+    'admin',
+    'network',
+    'network',
+    'site_franchisee_id',
+    'Bootstrap admin grant for email@franchisor.id Google/email login.',
+    1
+  );

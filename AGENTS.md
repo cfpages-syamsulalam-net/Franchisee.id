@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-24 04:29 (Asia/Jakarta)
+Last updated: 2026-06-24 05:04 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -22,6 +22,7 @@ Last updated: 2026-06-24 04:29 (Asia/Jakarta)
 - D1 schema changes must go through committed SQL migrations. Do not rely on ad hoc production table edits as the database contract.
 - Roles are D1-authoritative: `franchisee`, `franchisor`, `admin`, and `staff`. Clerk metadata can be a UI hint only. `admin` may satisfy protected-role checks globally; `staff` is limited to staff-level dashboard/operations access and must not be treated as admin.
 - For users who should have admin/staff access before their first Clerk login, use `email_role_grants` keyed by normalized email. Do not create fake `users` rows; `users.clerk_user_id` must come from Clerk after Google/email login.
+- Current bootstrap admin email grants in remote D1 are `admin@alampintar.org` and `email@franchisor.id`; both remain pending until a real Clerk login creates the D1 `users` row.
 - Google Sheets is archive/import-only. Do not add new Google Sheets write paths; new writes must target D1 after validation and authorization.
 - `/form-submit` writes require Clerk session tokens and D1 role checks. Do not reintroduce anonymous D1 writes for franchisee/franchisor/profile/listing/claim/test-data actions.
 - Existing CSS remains the styling foundation unless the user explicitly approves a styling dependency.
