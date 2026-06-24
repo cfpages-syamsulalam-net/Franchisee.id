@@ -1,6 +1,6 @@
 # Auth Onboarding And Navbar Plan
 
-Last updated: 2026-06-25 03:56 (Asia/Jakarta)
+Last updated: 2026-06-25 04:32 (Asia/Jakarta)
 
 ## Objective
 Make public account entry feel like one connected flow:
@@ -31,7 +31,7 @@ This avoids making users think `/login` registration and `/daftar` are duplicate
 - `js/auth-clerk.js` already owns custom Clerk login/register/verification UI, public Google OAuth, pending role storage, pending next storage, `/auth-sync`, and the `window.FranchiseAuth` helper.
 - `css/auth-clerk.css` already isolates custom auth styling and protects `[hidden]` state from legacy CSS.
 - `/login/index.html` is still a legacy WordPress shell whose WPForms block is replaced at runtime by `js/auth-clerk.js`.
-- `/register/index.html` is a dedicated auth page using the same shared auth root.
+- `/register/index.html` now redirects to `/login?mode=register`; the canonical public registration surface is the `/login` register tab.
 - `/daftar/index.html` is the multi-step business/profile form and must keep every existing field. It has hard-coded tabs for `franchisee`, `franchisor`, and `klaim`.
 - `js/form-03-navigation-steps.js` controls `/daftar` tab switching through `window.openTab()`.
 - `js/form-07-init.js` restores the last tab, handles claim deep links, and bootstraps form modules.
@@ -60,22 +60,23 @@ This avoids making users think `/login` registration and `/daftar` are duplicate
 1. `/daftar` initializes Clerk through the existing custom runtime.
 2. If `?role=franchisee`, open the franchisee tab. If `?role=franchisor`, open the franchisor tab. If `?claim=...`, claim flow still wins.
 3. Prefill only empty fields:
-   - Franchisee: `input[name="email"]` from Clerk primary email, and `input[name="full_name"]` from Clerk display name when empty.
+   - Franchisee: `input[name="email"]` from Clerk primary email, and `input[name="name"]` from Clerk display name when empty.
    - Franchisor: `input[name="email_contact"]` from Clerk primary email, and contact/PIC name only if a matching existing field is present and empty.
 4. Submission remains protected by `/form-submit` bearer tokens and D1 role checks.
 
 ## Navbar Auth State Plan
 Create a small public navbar controller instead of duplicating auth logic in static HTML:
 
-- Candidate file: `js/auth-navbar.js`.
+- Implemented file: `js/auth-navbar.js`.
 - It should load after `js/auth-clerk-debug.js` and `js/auth-clerk.js` on public pages with the legacy Elementor/HFE navbar.
 - It should call `window.FranchiseAuth.init()` and then `/auth-sync` when a Clerk session exists.
 - It should find login/register anchors by normalized href/text, not brittle menu item ids.
-- Logged-out state keeps existing links.
+- Logged-out state relabels `Login` to `Masuk` and routes `Daftar`/`Daftar Mitra` to `/login?mode=register` because `/daftar` is now a protected completion form.
 - Logged-in public state replaces the two auth links with one compact account control:
   - Primary text: Clerk/D1 display name or email prefix.
   - Badge: `Franchisee` or `Franchisor` from D1 roles.
-  - Menu links: `Lengkapi Profil`, future `Profil Saya`, and `Logout`.
+  - Direct link: `Lengkapi Profil`.
+  - Logout: immediate red icon-only button in the navbar.
 - Staff/admin dashboard behavior should remain separate. Public navbar can show `Dashboard` only for `staff` or `admin`, but server authorization remains D1-enforced.
 
 ## UI Plan
@@ -92,16 +93,16 @@ Create a small public navbar controller instead of duplicating auth logic in sta
 | --- | --- | --- |
 | Done | Audit current auth and form constraints | Read form preservation, schema, Clerk setup, technical inventory, auth runtime, and form navigation modules. |
 | Done | Create planning tracker | This document records the route, role, navbar, and UI plan before code changes. |
-| Planned | Add shared public navbar auth controller | Prefer `js/auth-navbar.js` with selector-based legacy menu replacement. |
-| Planned | Wire navbar script into public page surfaces | Use the least-broad static/template insertion point available after inspecting build/copy behavior. Avoid unnecessary full legacy rewrites. |
-| Planned | Update `/login` auth template | Role-first register panel, inline fields, animated segmented tabs, and better post-register copy. |
-| Planned | Reconcile `/register` with `/login` | Either keep `/register` as a direct register-mode page using the same component or redirect/canonicalize to `/login?mode=register`. |
-| Planned | Redirect completed registration to `/daftar` | Set role-specific pending next for email/password and Google SSO registration. |
-| Planned | Add `/daftar` role deep-link and prefill | Extend form init with `role` query handling and safe Clerk email/name prefill. Claim deep links still take priority. |
-| Planned | Animate `/daftar` role tabs | Add a sliding indicator with reduced-motion fallback in the modular form CSS and `openTab()` state update. |
-| Planned | Update documentation and tests | Sync `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `CHANGELOG.md`, and run syntax/build checks for touched JS/CSS surfaces. |
+| Done | Add shared public navbar auth controller | `js/auth-navbar.js` replaces legacy nav auth links with name, D1 role badge, and red icon-only logout when a session exists. |
+| Done | Wire navbar script into public page surfaces | Added auth CSS/runtime/navbar hooks to `/login`, `/daftar`, and D1 page templates. |
+| Done | Update `/login` auth template | Role-first register panel, inline fields, animated segmented tabs, and better post-register copy. |
+| Done | Reconcile `/register` with `/login` | `/register` redirects to `/login?mode=register` through `_redirects` and static fallback metadata/script. |
+| Done | Redirect completed registration to `/daftar` | Set role-specific pending next for email/password and Google SSO registration. |
+| Done | Add `/daftar` role deep-link and prefill | Extend form init with `role` query handling and safe Clerk email/name prefill. Claim deep links still take priority. |
+| Done | Animate `/daftar` role tabs | Add a sliding indicator with reduced-motion fallback in the modular form CSS and `openTab()`. |
+| Done | Update documentation and tests | Synced `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `CLERK_SETUP.md`, `CHANGELOG.md`, and ran syntax, TypeScript, and full build checks. |
 
 ## Open Decisions
-- Should `/register/` stay public, or should it become a redirect to `/login?mode=register`? Keeping it is lower risk because it already exists and shares the auth root.
-- Should the logged-in navbar dropdown include `Logout` immediately, or should logout live only in the future profile/dashboard page? Immediate logout is more useful and can use Clerk directly.
-- Should `/daftar` require login before users type the multi-step form? The current protected submit path allows typing before login but fails on submit without Clerk. A softer gate can show a logged-in identity banner and only require login at submit time.
+- Resolved: `/register/` redirects to `/login?mode=register`.
+- Resolved: logout is immediate, icon-only, and red in the navbar.
+- Resolved: `/daftar` requires a Clerk session before profile/listing completion.

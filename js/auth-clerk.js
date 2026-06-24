@@ -142,6 +142,7 @@
   async function syncUser(role) {
     const headers = await getAuthHeaders({ skipPendingRoleSync: true });
     if (!headers.Authorization) return null;
+    const requestedRole = SELF_ASSIGNABLE_ROLES.has(role) ? role : getPendingRole();
 
     const response = await fetch("/auth-sync", {
       method: "POST",
@@ -149,11 +150,12 @@
         "Content-Type": "application/json",
         ...headers,
       },
-      body: JSON.stringify(role ? { requested_role: role } : {}),
+      body: JSON.stringify(SELF_ASSIGNABLE_ROLES.has(requestedRole) ? { requested_role: requestedRole } : {}),
     });
     const result = await response.json();
     if (!result.success) throw new Error(result.message || result.error || "Sinkronisasi akun gagal.");
     syncedUser = result.user;
+    if (SELF_ASSIGNABLE_ROLES.has(requestedRole)) clearPendingRole();
     return syncedUser;
   }
 
@@ -184,8 +186,8 @@
             </div>
           ` : `
             <div class="fr-auth-tabs" role="tablist" aria-label="Login dan daftar">
-              <button class="fr-auth-tab ${!isRegister ? "is-active" : ""}" type="button" data-auth-switch="login">Login</button>
-              <button class="fr-auth-tab ${isRegister ? "is-active" : ""}" type="button" data-auth-switch="register">Daftar</button>
+              <button class="fr-auth-tab ${!isRegister ? "is-active" : ""}" type="button" data-auth-switch="login">Masuk</button>
+              <button class="fr-auth-tab ${isRegister ? "is-active" : ""}" type="button" data-auth-switch="register">Buat Akun</button>
             </div>
           `}
           <div class="fr-auth-message" data-auth-message></div>
@@ -194,7 +196,7 @@
             <div class="fr-auth-oauth">
               <button class="fr-auth-oauth-button" type="button" data-auth-oauth="google" data-auth-oauth-mode="login">
                 <span class="fr-auth-oauth-icon" aria-hidden="true">${GOOGLE_ICON}</span>
-                <span>Login dengan Google</span>
+                <span>Masuk dengan Google</span>
               </button>
               <div class="fr-auth-divider"><span>atau</span></div>
             </div>
@@ -207,14 +209,27 @@
               <input id="fr-auth-login-password" name="password" type="password" autocomplete="current-password" required>
             </div>
             <div class="fr-auth-actions">
-              <button class="fr-auth-button" type="submit">Login</button>
+              <button class="fr-auth-button" type="submit">Masuk</button>
             </div>
             ${isLoginOnly ? "" : `<p class="fr-auth-switch-note">
               Belum daftar?
-              <button class="fr-auth-inline-link" type="button" data-auth-switch="register">Daftar dulu di sini.</button>
+              <button class="fr-auth-inline-link" type="button" data-auth-switch="register">Buat akun dulu di sini.</button>
             </p>`}
           </form>
           ${isLoginOnly ? "" : `<form class="fr-auth-form" data-auth-form="register" ${!isRegister ? "hidden" : ""} aria-hidden="${!isRegister ? "true" : "false"}">
+            <div class="fr-auth-role-control" aria-label="Daftar sebagai">
+              <div class="fr-auth-role-title">Daftar sebagai</div>
+              <div class="fr-auth-role-grid">
+                <label class="fr-auth-role">
+                  <input type="radio" name="role" value="franchisee" checked>
+                  <span>Franchisee</span>
+                </label>
+                <label class="fr-auth-role">
+                  <input type="radio" name="role" value="franchisor">
+                  <span>Franchisor</span>
+                </label>
+              </div>
+            </div>
             <div class="fr-auth-oauth">
               <button class="fr-auth-oauth-button" type="button" data-auth-oauth="google" data-auth-oauth-mode="register">
                 <span class="fr-auth-oauth-icon" aria-hidden="true">${GOOGLE_ICON}</span>
@@ -230,25 +245,12 @@
               <label for="fr-auth-register-password">Password</label>
               <input id="fr-auth-register-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
             </div>
-            <div>
-              <div class="fr-auth-role-title">Tipe akun</div>
-              <div class="fr-auth-role-grid">
-                <label class="fr-auth-role">
-                  <input type="radio" name="role" value="franchisee" checked>
-                  <span>Franchisee</span>
-                </label>
-                <label class="fr-auth-role">
-                  <input type="radio" name="role" value="franchisor">
-                  <span>Franchisor</span>
-                </label>
-              </div>
-            </div>
             <div class="fr-auth-actions">
-              <button class="fr-auth-button" type="submit">Daftar</button>
+              <button class="fr-auth-button" type="submit">Buat Akun</button>
             </div>
             <p class="fr-auth-switch-note">
               Sudah punya akun?
-              <button class="fr-auth-inline-link" type="button" data-auth-switch="login">Login di sini.</button>
+              <button class="fr-auth-inline-link" type="button" data-auth-switch="login">Masuk di sini.</button>
             </p>
           </form>
           <form class="fr-auth-form" data-auth-form="verify" hidden aria-hidden="true">
@@ -369,11 +371,12 @@
       if (SELF_ASSIGNABLE_ROLES.has(role)) {
         setPendingRole(role);
       }
+      const redirectUrlComplete = mode === "register" ? registrationNextUrl(role) : nextUrl(root);
 
       const params = {
         strategy: "oauth_google",
         redirectUrl: oauthCallbackUrl(),
-        redirectUrlComplete: nextUrl(root),
+        redirectUrlComplete,
       };
       setPendingNext(params.redirectUrlComplete);
 
@@ -406,6 +409,8 @@
       const clerk = await initClerk();
       const data = formData(form);
       Auth.pendingRole = data.role;
+      setPendingRole(data.role);
+      setPendingNext(registrationNextUrl(data.role));
       const signUp = await clerk.client.signUp.create({
         emailAddress: data.email,
         password: data.password,
@@ -448,8 +453,10 @@
   async function finishRegistration(root, clerk, sessionId, role) {
     await clerk.setActive({ session: sessionId });
     await syncUser(role);
+    clearPendingRole();
+    clearPendingNext();
     showMessage(root, "Akun berhasil dibuat.", "success");
-    window.location.href = nextUrl(root);
+    window.location.href = registrationNextUrl(role);
   }
 
   function switchMode(root, mode) {
@@ -796,6 +803,14 @@
     }
     if (next && next.startsWith("/")) return next;
     return rootNext && rootNext.startsWith("/") ? rootNext : "/daftar/";
+  }
+
+  function registrationNextUrl(role) {
+    const normalizedRole = SELF_ASSIGNABLE_ROLES.has(role) ? role : "franchisee";
+    const url = new URL("/daftar/", window.location.origin);
+    url.searchParams.set("role", normalizedRole);
+    url.searchParams.set("continue", "1");
+    return url.pathname + url.search;
   }
 
   function nextUrlFromSearch() {

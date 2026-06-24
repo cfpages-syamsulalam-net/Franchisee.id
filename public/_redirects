@@ -1,3 +1,5 @@
+/register /login?mode=register 301
+/register/ /login?mode=register 301
 /direktori-franchise /peluang-usaha 301
 /rekomendasi /peluang-usaha?sort=rekomendasi 301
 /populer /peluang-usaha?sort=populer 301

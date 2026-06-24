@@ -1,6 +1,6 @@
 # Clerk Setup For Franchisee.id
 
-Last updated: 2026-06-24 15:49 (Asia/Jakarta)
+Last updated: 2026-06-25 04:32 (Asia/Jakarta)
 
 ## Purpose
 Clerk is the identity/session provider. D1 remains the authorization source of truth through `users` and `user_roles`.
@@ -13,7 +13,6 @@ Clerk is the identity/session provider. D1 remains the authorization source of t
 5. Add allowed application URLs:
    - `https://franchisee.id`
    - `https://franchisee.id/login/`
-   - `https://franchisee.id/register/`
    - `https://franchisee.id/sso-callback/`
    - Any Cloudflare Pages preview domain you use for testing.
    - Local dev URL when testing with Wrangler or Astro locally.
@@ -36,15 +35,19 @@ CLERK_AUTHORIZED_PARTIES=https://franchisee.id,https://<preview-domain>
 Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KEY` is public by design, but it is still loaded from the `/auth-config` Function so the static HTML does not need per-environment rewrites. `/auth-config` also accepts `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_PUBLISHABLE_KEY` as compatibility fallbacks.
 
 ## Current Implementation
-- `/login/` keeps the legacy page shell and replaces the old WPForms block at runtime with a custom Clerk email/password UI.
-- `/register/` is a dedicated custom registration page with a franchisee/franchisor role selector.
+- `/login/` keeps the legacy page shell and replaces the old WPForms block at runtime with a custom Clerk `Masuk` / `Buat Akun` email/password and Google UI.
+- `/register/` redirects to `/login?mode=register`; do not add a second public registration surface.
+- Public registration requires selecting `Daftar sebagai` (`franchisee` or `franchisor`) before email/password or Google SSO starts.
+- New public accounts redirect to `/daftar/?role=franchisee&continue=1` or `/daftar/?role=franchisor&continue=1` for profile/listing completion after Clerk identity creation.
+- `/daftar/` requires a Clerk session before completion, opens the requested role tab from `?role=`, and prefills empty email/name/PIC fields from Clerk/D1 identity.
+- `js/auth-navbar.js` normalizes logged-out nav links to `Masuk` and `Daftar Mitra`; logged-in public users see their name, D1 role badge, `/daftar` account link, and immediate red icon-only logout.
 - `/dashboard/` uses the same custom auth runtime but mounts a login-only admin/staff Google/email surface on the same URL. It does not show public registration or franchisee/franchisor role choices.
 - `/sso-callback/` is a hidden technical callback route for Google OAuth. It must be allowed in Clerk but is not a user-facing login page.
 - `/auth-config` returns the publishable Clerk key to the browser and prefers the Astro-style `PUBLIC_CLERK_PUBLISHABLE_KEY` variable.
 - `js/auth-clerk.js` writes the resolved publishable key to `window.__clerk_publishable_key` and the Clerk script tag before loading `clerk.browser.js`; Clerk's browser bundle needs the key available while the script evaluates, not only later during `clerk.load()`.
 - `js/auth-clerk.js` supports Google sign-in/sign-up through ClerkJS. It stores the post-login destination, strips stale Clerk callback params before starting OAuth, and calls Clerk's redirect callback handler before any token/dashboard checks after Google returns. The handler runs on `/sso-callback/` even when Clerk returns without visible `__clerk_*` URL parameters.
 - `/dashboard/` includes a masked Auth Debug panel while locked. Use it to diagnose Google SSO by checking `clerk.hasUser`, `clerk.hasSession`, `clerk.clientSessionCount`, redirect callback state, and recent `FranchiseAuth` events without exposing raw tokens.
-- Public Google registration stores the selected self-assignable role across the OAuth redirect, then syncs that role to D1 after the Clerk session is active.
+- Public Google registration stores the selected self-assignable role across the OAuth redirect, then syncs that role to D1 as soon as `Auth.syncUser()` or a protected token request runs after the Clerk session is active.
 - `/auth-sync` verifies the active Clerk session, upserts D1 `users`, and self-assigns only `franchisee` or `franchisor`.
 - `email_role_grants` lets admins pre-authorize an email for `admin` or `staff` before a real Clerk user id exists. When that email first logs in through Clerk/Google, `_clerk-auth.js` upserts the real D1 user and applies the pending role grant.
 - `/clerk-webhook` verifies Clerk webhooks and syncs Clerk `user.created`, `user.updated`, and `user.deleted` events into D1.
@@ -57,15 +60,16 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 1. Browser loads `/js/auth-clerk.js`.
 2. The script fetches `/auth-config`, resolves the publishable key, sets Clerk's script-load key globals/attributes, loads the locally copied ClerkJS asset from `/clerk/clerk.browser.js` with CDN fallbacks, and initializes Clerk.
 3. Email/password login uses `clerk.client.signIn.create()`.
-4. Email/password register uses `clerk.client.signUp.create()` and email-code verification when Clerk requires it.
-5. Google sign-in/sign-up uses Clerk OAuth redirect methods from the custom UI.
+4. Email/password register uses `clerk.client.signUp.create()` and email-code verification when Clerk requires it; public registration must include the selected role.
+5. Google sign-in/sign-up uses Clerk OAuth redirect methods from the custom UI; public sign-up stores selected role and role-specific `/daftar` completion URL before redirect.
 6. Google redirects back to `/sso-callback/`, where `js/auth-clerk.js` calls `clerk.handleRedirectCallback()` before reading `clerk.session`; the route itself is treated as the callback signal even if no Clerk query/hash parameters are visible.
-7. After callback completion, Clerk redirects to the saved destination such as `/dashboard` or `/daftar`.
-8. Public Google registration stores the selected `franchisee` or `franchisor` role in `sessionStorage`; after OAuth completes, the next authenticated request syncs that role through `/auth-sync`.
+7. After callback completion, Clerk redirects to the saved destination such as `/dashboard` or `/daftar/?role=franchisor&continue=1`.
+8. Public Google registration stores the selected `franchisee` or `franchisor` role in `sessionStorage`; after OAuth completes, `Auth.syncUser()` or the next authenticated token request syncs that role through `/auth-sync`.
 9. After a session is active, the browser calls `/auth-sync` with the selected role for new public registrations.
 10. `/auth-sync` maps Clerk user id into D1 `users.clerk_user_id`, applies active `email_role_grants`, and inserts the allowed D1 role.
-11. `/daftar` submissions attach `Authorization: Bearer <session-token>` to `/form-submit`.
-12. `/form-submit` verifies the token with `@clerk/backend`, maps the Clerk user to D1, checks role authorization, and writes ownership fields.
+11. `/daftar` initializes Clerk, redirects anonymous users to `/login?next=<current-url>`, opens the requested role tab, and prefills empty identity fields.
+12. `/daftar` submissions attach `Authorization: Bearer <session-token>` to `/form-submit`.
+13. `/form-submit` verifies the token with `@clerk/backend`, maps the Clerk user to D1, checks role authorization, and writes ownership fields.
 
 ## Dashboard SSO Troubleshooting
 When Google says it is returning to `franchisee.id` but `/dashboard/` still shows `Belum login`, inspect the `Auth Debug` panel and browser console entry `[DashboardAuthDebug]`.

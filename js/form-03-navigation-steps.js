@@ -29,11 +29,24 @@
 
         const activeBtn = document.querySelector(`button[onclick="openTab('${tabName}')"]`);
         if (activeBtn) activeBtn.classList.add('active');
+        updateRegistrationTabIndicator(activeBtn, tabName);
 
         if (tabName === 'klaim' && S.unclaimedBrands.length === 0 && typeof FF.fetchUnclaimedBrands === 'function') {
             FF.fetchUnclaimedBrands();
         }
     };
+
+    function updateRegistrationTabIndicator(activeBtn, tabName) {
+        const tabs = document.querySelector('.registration-tabs');
+        if (!tabs) return;
+        tabs.setAttribute('data-active-tab', tabName || '');
+        const button = activeBtn || tabs.querySelector('.tab-btn.active');
+        if (!button) return;
+        requestAnimationFrame(() => {
+            tabs.style.setProperty('--tab-indicator-left', button.offsetLeft + 'px');
+            tabs.style.setProperty('--tab-indicator-width', button.offsetWidth + 'px');
+        });
+    }
 
     window.nextStep = function (stepIndex) {
         console.log('[Navigation] nextStep called with stepIndex:', stepIndex);

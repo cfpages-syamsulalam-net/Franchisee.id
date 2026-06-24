@@ -27,7 +27,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/form-03-navigation-steps.js`
 *Tab and step navigation wiring + debug logging.*
-- `window.openTab(tabName)`: Tab switch + revalidation + lazy claim data fetch.
+- `window.openTab(tabName)`: Tab switch + animated segmented-control indicator positioning + revalidation + lazy claim data fetch.
 - `window.nextStep(stepIndex)`: Step-forward navigation with progress tracking + **detailed console logging** (step index, state.currentStep, validation result, target visibility).
 - `window.prevStep(stepIndex)`: Step-back navigation with progress tracking.
 - `window.validateStep(stepIndex)`: Required-field and Rp 0 warning validation + **debug output** (invalid field names, values, validation pass/fail status).
@@ -61,7 +61,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/form-07-init.js`
 *Bootstrap coordinator for the modular form stack.*
-- DOMContentLoaded orchestrator for claim bindings, calculations/city loader, country-code loader, submit wiring, and state restoration.
+- DOMContentLoaded orchestrator for claim bindings, calculations/city loader, country-code loader, submit wiring, state restoration, role query tab selection, and `/daftar` Clerk login enforcement.
+- `enforceDaftarAuthAndPrefill()`: Initializes `window.FranchiseAuth`, redirects anonymous users to `/login?next=<current-daftar-url>`, syncs D1 user state, and prefills empty franchisee/franchisor email/name/PIC fields from Clerk/D1 identity.
 - Re-exposes compatibility globals (`window.fetchUnclaimedBrands`, `window.fillMainFranchisorForm`).
 
 ### File: `js/form-08-franchisee-steps.js`
@@ -119,13 +120,19 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
 - `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
 - `Auth.getDebugSnapshot()` / `Auth.recordDebug()`: Delegates masked Clerk lifecycle diagnostics to `js/auth-clerk-debug.js` for `/dashboard` and `/sso-callback/`.
-- `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign self-selectable `franchisee`/`franchisor` roles.
+- `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign explicit or pending self-selectable `franchisee`/`franchisor` roles.
 - `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
-- `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with public login/register/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
+- `mountAuthPage()`: Replaces `/login` legacy WPForms markup with public `Masuk`/`Buat Akun`/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
 - `switchMode(root, mode)`: Switches login/register/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
-- `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI.
-- `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration stores the selected `franchisee`/`franchisor` role and the post-login destination until OAuth completion.
+- `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI; public registration redirects to `/daftar/?role=...&continue=1` after account creation.
+- `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration requires selected `franchisee`/`franchisor` role and stores the role-specific `/daftar` completion destination until OAuth completion.
 - `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to `clerk.setActive()` with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
+
+### File: `js/auth-navbar.js`
+*Public navbar auth-state controller for legacy HFE nav menus.*
+- `initNavbarAuth()`: Finds legacy nav login/register pairs, normalizes logged-out labels to `Masuk` and `Daftar Mitra`, initializes Clerk, syncs D1 user state, and replaces auth links when a session exists.
+- `createAccountItem(clerk, user)`: Builds the logged-in navbar item with display name, D1 role badge, `/daftar/` completion link, and red icon-only logout.
+- `bindLogout(item, clerk)`: Signs the active Clerk session out and returns to `/`.
 
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*

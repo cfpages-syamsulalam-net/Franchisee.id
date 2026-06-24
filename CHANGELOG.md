@@ -4,6 +4,21 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-25 04:32 (Asia/Jakarta)
+### Added
+- `js/auth-navbar.js`: Added a public navbar auth-state controller that normalizes logged-out auth links and replaces them after Clerk/D1 sync with account name, role badge, `/daftar` link, and red icon-only logout.
+- `.context/session-20260625-0432.md`: Added a session snapshot for the auth onboarding and navbar implementation pass.
+
+### Changed
+- `js/auth-clerk.js`: Changed the public auth UI to `Masuk` / `Buat Akun`, moved role selection before registration SSO/email flows, synced pending public roles during `Auth.syncUser()`, and sent new public accounts to role-specific `/daftar` completion URLs.
+- `css/auth-clerk.css`: Added animated segmented auth tabs, inline label/input auth fields, role-first registration layout, and navbar account/logout styles.
+- `js/form-03-navigation-steps.js` and `css/form-franchise/02-layout-tabs-steps.css`: Added a sliding animated indicator for `/daftar` role tabs with reduced-motion fallback.
+- `js/form-07-init.js`: Added `/daftar` Clerk login enforcement, role query tab selection, and safe Clerk/D1 identity prefill for empty franchisee/franchisor email/name/PIC fields.
+- `login/index.html`, `daftar/index.html`, `templates/peluang-usaha-tpl.html`, and `templates/detail-franchise-tpl.html`: Loaded the shared navbar auth runtime; franchise page templates also load the auth CSS needed for the account state.
+- `peluang-usaha/*.html`, `json/d1-franchise-static-data.json`, and `json/d1-generated-pages-manifest.json`: Regenerated D1-backed public franchise pages and manifests so the updated templates include the shared auth CSS/runtime/navbar hooks.
+- `public/_redirects` and `register/index.html`: Redirected `/register` to `/login?mode=register` and kept a static fallback redirect for direct file access.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/CLERK_SETUP.md`, and `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: Documented the implemented onboarding, protected `/daftar`, `/register` redirect, navbar account state, and animated toggle behavior.
+
 ## 2026-06-25 03:56 (Asia/Jakarta)
 ### Added
 - `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: Added a progress tracker for public auth onboarding, role-first registration, `/daftar` completion, animated toggles, and logged-in navbar state.

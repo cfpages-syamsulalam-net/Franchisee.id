@@ -15,13 +15,29 @@
     width: 100%;
 }
 .registration-tabs {
+    position: relative;
     background: #f1f1f1;
     padding: 5px;
     border-radius: 50px;
     display: inline-flex;
     box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+.registration-tabs::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    left: var(--tab-indicator-left, 5px);
+    width: var(--tab-indicator-width, 160px);
+    border-radius: 40px;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: left 0.25s ease, width 0.25s ease;
 }
 .tab-btn {
+    position: relative;
+    z-index: 1;
     border: none;
     background: transparent;
     padding: 12px 30px;
@@ -40,12 +56,17 @@
     font-size: 1.1rem;
 }
 .tab-btn.active {
-    background: #fff;
     color: #f8b526; /* Kuning Brand */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 .tab-btn:hover:not(.active) {
     color: #333;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .registration-tabs::before,
+    .tab-btn {
+        transition: none;
+    }
 }
 
 /* Helper Class */
