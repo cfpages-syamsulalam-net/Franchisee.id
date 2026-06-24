@@ -60,7 +60,14 @@
 }
 .tab-btn:hover,
 .tab-btn:focus {
-    color: #f8b526;
+    background: rgba(248, 181, 38, 0.12);
+    color: #111;
+}
+
+.identity-locked-field {
+    background: #f3f4f6 !important;
+    color: #4b5563 !important;
+    cursor: not-allowed;
 }
 
 @media (prefers-reduced-motion: reduce) {

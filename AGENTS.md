@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-24 18:25 (Asia/Jakarta)
+Last updated: 2026-06-25 06:23 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -11,6 +11,7 @@ Last updated: 2026-06-24 18:25 (Asia/Jakarta)
 - Code modularly by default. Prefer small, purpose-owned files/modules for new or touched runtime logic instead of growing monolithic scripts, functions, or Astro pages. When refactoring, preserve behavior first, validate, then update `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `CHANGELOG.md`.
 - Prioritize finishing the current pending task over progress narration. Keep user-facing updates minimal and reserve final reporting for work that is actually completed or genuinely blocked.
 - Use pnpm exclusively. Run `pnpm install`, `pnpm run <script>`, and `pnpm exec <tool>`. Keep `pnpm-lock.yaml` committed and do not create alternate lockfiles.
+- Do not start local dev or preview servers by default. Manual browser QA happens directly on the production site `https://franchisee.id` after the user pushes code. Use local static/build/type checks for validation, and start a local server only when the user explicitly asks for one.
 
 ## Current Stack Direction
 - Astro static routes are the target for public SEO pages. `/peluang-usaha/` is the canonical directory route with query-param states for recommendation, popularity, alphabetical sorting, and category filtering; `/peluang-usaha/[slug]` is the canonical detail route.

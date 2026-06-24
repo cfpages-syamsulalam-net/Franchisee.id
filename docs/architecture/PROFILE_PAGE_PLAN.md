@@ -1,6 +1,6 @@
 # Profil Page Plan
 
-Last updated: 2026-06-25 05:18 (Asia/Jakarta)
+Last updated: 2026-06-25 06:09 (Asia/Jakarta)
 
 ## Objective
 Create `/profil` as the logged-in user control center for Franchisee.id:
@@ -118,19 +118,19 @@ Add a protected profile API instead of overloading `/form-submit`:
 
 | Status | Step | Notes |
 | --- | --- | --- |
-| Pending | Fix segmented toggle colors | Replace full-yellow hover/active effects with subtle tint/border and dark text. Apply to `/login` and `/daftar`. |
-| Pending | Lock `/daftar` identity fields | Read-only known Clerk/D1 name/email/PIC fields and add `Dikelola dari Profil` helper. Preserve all field names. |
-| Pending | Create protected `/profil` shell | New Astro route using public site styling, auth runtime, navbar controller, side tabs, and loading states. |
-| Pending | Add profile API GET | `functions/profile-data.js` returns user, roles, profiles, owned franchises, claims, completion state. |
-| Pending | Wire `/profil` client controller | `js/profile-page.js` loads API data, renders side-tab content, handles locked/empty/error states. |
-| Pending | Move logged-in navbar account link | Point logged-in account control to `/profil/`; keep incomplete-profile CTAs inside `/profil`. |
-| Pending | Add owner profile edit actions | Start with non-public franchisee/franchisor profile fields; validate with Zod and audit writes. |
-| Pending | Add owner listing edit workflow | Decide direct owner update versus owner suggestion workflow; queue static rebuilds for public listing changes. |
-| Pending | Documentation and verification | Update `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, Clerk/auth docs, changelog, and run syntax/type/build checks. |
+| Done | Fix segmented toggle colors | `/login` and `/daftar` hover/active states now use subtle tint and dark text instead of high-contrast yellow text/fill conflicts. |
+| Done | Lock `/daftar` identity fields | Known Clerk/D1 name/email/PIC fields are read-only and keep original field names/required attributes. |
+| Done | Create protected `/profil` shell | Added `src/pages/profil/index.astro` with public-site header, protected loading state, and profile root. |
+| Done | Add profile API GET | `functions/profile-data.js` returns user, roles, profiles, owned franchises, claims, completion state. |
+| Done | Wire `/profil` client controller | `js/profile-page.js` loads API data, renders side-tab content, and handles edits/empty/error states. |
+| Done | Move logged-in navbar account link | Logged-in account control now points to `/profil/`; logged-out `Daftar Mitra` remains `/daftar/`. |
+| Done | Add owner profile edit actions | Account, franchisee profile, and franchisor profile edits validate with Zod and write audit events. |
+| Done | Add owner listing edit workflow | Owner listing edits apply to D1, are limited to one edit per listing per 6 hours, and queue static rebuilds. |
+| Done | Documentation and verification | Updated repo docs/changelog/context and ran syntax checks for changed browser scripts; full build verification is pending. |
 
 ## Open Decisions Before Coding
 
-- Should account name/email editing be custom Clerk API in `/profil`, or initially read-only with a future “Kelola akun” action?
-- Should franchisor listing edits by owners apply directly, or create pending suggestions for admin/staff review?
-- Should `/daftar` redirect logged-in users with completed profiles to `/profil`, or keep `/daftar` available as a completion/edit entry for now?
-- Should `/profil` show admin/staff dashboard shortcuts for privileged users, or stay public-user-only with dashboard linked separately?
+- Resolved: account name/email are read-only by default with an edit icon that unlocks editing and updates Clerk and D1 together.
+- Resolved: franchisor owner listing edits apply directly, but are rate-limited and only queue static rebuilds instead of triggering immediate builds.
+- Resolved: `/daftar` redirects completed users to `/profil`; `/daftar` remains initial completion.
+- Resolved: `/profil` shows a `/dashboard` shortcut for admin/staff only.

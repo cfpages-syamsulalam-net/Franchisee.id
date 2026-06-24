@@ -93,7 +93,7 @@
     const item = document.createElement("li");
     item.className = "menu-item menu-item-type-custom menu-item-object-custom parent hfe-creative-menu fr-auth-nav-account";
     item.innerHTML = `
-      <a href="/daftar/" class="hfe-menu-item fr-auth-nav-link">
+      <a href="/profil/" class="hfe-menu-item fr-auth-nav-link">
         <i class="fas fa-user-circle fr-auth-nav-icon" aria-hidden="true"></i>
         <span class="fr-auth-nav-name">${escapeHtml(name)}</span>
         <span class="fr-auth-nav-role">${escapeHtml(ROLE_LABELS[role] || "Akun")}</span>

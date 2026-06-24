@@ -345,8 +345,13 @@
 
   function showInitialAuthMessage(root) {
     const next = new URLSearchParams(window.location.search).get("next") || "";
-    if (!next.startsWith("/daftar")) return;
-    showMessage(root, "Silakan masuk dulu untuk melanjutkan ke form daftar mitra.", "info");
+    if (next.startsWith("/daftar")) {
+      showMessage(root, "Silakan masuk dulu untuk melanjutkan ke form daftar mitra.", "info");
+      return;
+    }
+    if (next.startsWith("/profil")) {
+      showMessage(root, "Silakan masuk dulu untuk membuka profil akun.", "info");
+    }
   }
 
   async function handleLogin(root, form) {
@@ -824,7 +829,7 @@
       return rootNext;
     }
     if (next && next.startsWith("/")) return next;
-    return rootNext && rootNext.startsWith("/") ? rootNext : "/daftar/";
+    return rootNext && rootNext.startsWith("/") ? rootNext : "/profil/";
   }
 
   function registrationNextUrl(role) {

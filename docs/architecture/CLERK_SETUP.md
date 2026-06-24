@@ -1,6 +1,6 @@
 # Clerk Setup For Franchisee.id
 
-Last updated: 2026-06-25 04:59 (Asia/Jakarta)
+Last updated: 2026-06-25 06:09 (Asia/Jakarta)
 
 ## Purpose
 Clerk is the identity/session provider. D1 remains the authorization source of truth through `users` and `user_roles`.
@@ -39,8 +39,10 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 - `/register/` redirects to `/login?mode=register`; do not add a second public registration surface.
 - Public registration requires selecting `Daftar sebagai` (`franchisee` or `franchisor`) before email/password or Google SSO starts.
 - New public accounts redirect to `/daftar/?role=franchisee&continue=1` or `/daftar/?role=franchisor&continue=1` for profile/listing completion after Clerk identity creation.
-- `/daftar/` requires a Clerk session before completion, opens the requested role tab from `?role=`, and prefills empty email/name/PIC fields from Clerk/D1 identity. Anonymous visitors are redirected to `/login?next=<current-daftar-url>`, where the auth UI explains that login is required before continuing.
-- `js/auth-navbar.js` normalizes logged-out nav links to `Masuk` and `Daftar Mitra`; `Daftar Mitra` points to protected `/daftar/`, not `/login?mode=register`, so the completion form remains the canonical CTA. Logged-in public users see their name, D1 role badge, `/daftar` account link, and immediate red icon-only logout with Font Awesome icons.
+- `/daftar/` requires a Clerk session before completion, opens the requested role tab from `?role=`, and locks email/name/PIC fields from Clerk/D1 identity. Anonymous visitors are redirected to `/login?next=<current-daftar-url>`, where the auth UI explains that login is required before continuing. Users whose selected role is already complete are redirected to `/profil/`.
+- `/profil/` is the protected account center. It reads `/profile-data`, keeps account name/email read-only until the edit icon unlocks them, writes account changes to Clerk first and D1 second, and lets owners edit role-specific D1 profile rows plus owned listing fields.
+- Owner listing edits from `/profil/` apply directly to D1 but are limited to one edit per listing per 6 hours and enqueue static rebuild requests instead of publishing immediately.
+- `js/auth-navbar.js` normalizes logged-out nav links to `Masuk` and `Daftar Mitra`; `Daftar Mitra` points to protected `/daftar/`, not `/login?mode=register`, so the completion form remains the canonical CTA. Logged-in public users see their name, D1 role badge, `/profil` account link, and immediate red icon-only logout with Font Awesome icons.
 - `/dashboard/` uses the same custom auth runtime but mounts a login-only admin/staff Google/email surface on the same URL. It does not show public registration or franchisee/franchisor role choices.
 - Admin/staff sessions can still inspect `/login` auth forms while logged in; public logged-in users see the compact already-logged-in continue state.
 - `/sso-callback/` is a hidden technical callback route for Google OAuth. It must be allowed in Clerk but is not a user-facing login page.
@@ -68,9 +70,10 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 8. Public Google registration stores the selected `franchisee` or `franchisor` role in `sessionStorage`; after OAuth completes, `Auth.syncUser()` or the next authenticated token request syncs that role through `/auth-sync`.
 9. After a session is active, the browser calls `/auth-sync` with the selected role for new public registrations.
 10. `/auth-sync` maps Clerk user id into D1 `users.clerk_user_id`, applies active `email_role_grants`, and inserts the allowed D1 role.
-11. `/daftar` initializes Clerk, redirects anonymous users to `/login?next=<current-url>`, opens the requested role tab, and prefills empty identity fields. `/login` shows a login-required message when this redirect happens.
+11. `/daftar` initializes Clerk, redirects anonymous users to `/login?next=<current-url>`, opens the requested role tab, locks known identity fields, and redirects completed users to `/profil/`. `/login` shows a login-required message when `/daftar` or `/profil` redirects happen.
 12. `/daftar` submissions attach `Authorization: Bearer <session-token>` to `/form-submit`.
 13. `/form-submit` verifies the token with `@clerk/backend`, maps the Clerk user to D1, checks role authorization, and writes ownership fields.
+14. `/profil` calls `/profile-data` with the same bearer token; the API reads D1 profile/listing ownership and handles audited profile/listing mutations.
 
 ## Dashboard SSO Troubleshooting
 When Google says it is returning to `franchisee.id` but `/dashboard/` still shows `Belum login`, inspect the `Auth Debug` panel and browser console entry `[DashboardAuthDebug]`.

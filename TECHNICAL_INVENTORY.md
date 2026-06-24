@@ -62,7 +62,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/form-07-init.js`
 *Bootstrap coordinator for the modular form stack.*
 - DOMContentLoaded orchestrator for claim bindings, calculations/city loader, country-code loader, submit wiring, state restoration, role query tab selection, and `/daftar` Clerk login enforcement.
-- `enforceDaftarAuthAndPrefill()`: Initializes `window.FranchiseAuth`, redirects anonymous users to `/login?next=<current-daftar-url>`, syncs D1 user state, and prefills empty franchisee/franchisor email/name/PIC fields from Clerk/D1 identity.
+- `enforceDaftarAuthAndPrefill()`: Initializes `window.FranchiseAuth`, redirects anonymous users to `/login?next=<current-daftar-url>`, syncs D1 user state, locks franchisee/franchisor email/name/PIC fields from Clerk/D1 identity, and redirects completed profiles to `/profil/`.
+- `redirectCompletedProfileIfNeeded()`: Reads `/profile-data` after auth and sends users whose selected role is already complete away from first-time `/daftar` to `/profil/`.
+- `lockIdentityValue()`: Writes Clerk/D1 identity into preserved form fields, keeps them read-only instead of disabled so existing submit contracts remain intact, and appends the identity lock note.
 - Re-exposes compatibility globals (`window.fetchUnclaimedBrands`, `window.fillMainFranchisorForm`).
 
 ### File: `js/form-08-franchisee-steps.js`
@@ -134,8 +136,18 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Public navbar auth-state controller for legacy HFE nav menus.*
 - `initNavbarAuth()`: Finds legacy nav login/register pairs, normalizes logged-out labels to `Masuk` and `Daftar Mitra`, initializes Clerk, syncs D1 user state, and replaces auth links when a session exists.
 - Logged-out `Daftar Mitra` points to protected `/daftar/`; anonymous users are then redirected by `js/form-07-init.js` to `/login?next=...` with an auth message.
-- `createAccountItem(clerk, user)`: Builds the logged-in navbar item with Font Awesome account/logout icons, display name, D1 role badge, `/daftar/` completion link, and red icon-only logout.
+- `createAccountItem(clerk, user)`: Builds the logged-in navbar item with Font Awesome account/logout icons, display name, D1 role badge, `/profil/` account link, and red icon-only logout.
 - `bindLogout(item, clerk)`: Signs the active Clerk session out and returns to `/`.
+
+### File: `js/profile-page.js`
+*Client controller for the protected `/profil` profile center.*
+- `init()`: Requires a Clerk session and redirects anonymous users to `/login/?next=/profil/`.
+- `loadProfile()`: Fetches `/profile-data` with `window.FranchiseAuth.getAuthHeaders()`.
+- `render()` / `renderActivePanel()`: Renders side tabs for summary, account, franchisee, franchisor, owner listing, and claims.
+- `accountPanel()`: Keeps name/email read-only until the edit icon unlocks them for Clerk+D1 save.
+- `franchiseePanel()` / `franchisorPanel()`: Shows role-specific D1 profile rows and preserves identity fields as read-only.
+- `listingPanel()`: Shows owned D1 `franchises`, selects a listing, and disables saving when the owner edit rate limit is active.
+- `submitProfileForm(form)`: Posts account/profile/listing mutations to `/profile-data` with a Clerk bearer token.
 
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
@@ -200,6 +212,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Copies `node_modules/@clerk/clerk-js/dist` into `dist/clerk` so browser auth can load ClerkJS locally before trying CDN fallbacks.
 
 ## 2. Directory: `/src` (Astro Static Generation)
+
+### File: `src/pages/profil/index.astro`
+*Protected profile page shell.*
+- Static Astro route at `/profil/` with `noindex,nofollow`.
+- Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, `css/profile.css`, and `js/profile-page.js`.
+- Anonymous protection is client-side; all profile data and writes are protected again by `/profile-data`.
 
 ### File: `src/lib/franchise-static.ts`
 *Astro D1 snapshot validator and template renderer.*
@@ -269,6 +287,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Prevents duplicate generated directory/category permalink families while preserving old external links.
 
 ## 3. Directory: `/functions` (Cloudflare Edge Logic)
+
+### File: `functions/profile-data.js`
+*Protected profile read/write API for `/profil`.*
+- `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and returns D1 user, roles, franchisee profile, franchisor profile, owned franchises, claims, and completion flags.
+- `onRequestPost()`: Dispatches Zod-validated mutations for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, and `update_listing`.
+- `updateAccount()`: Updates Clerk identity first, then D1 `users` plus profile identity fields, writes audit events, and resyncs Clerk metadata from D1 roles.
+- `updateOwnedListing()`: Allows owner-scoped edits to whitelisted public listing fields, limits each listing to one owner edit per 6 hours, writes audit events, and queues static rebuild requests through `siteRebuildStatements()`.
+- Profile edit actions require existing first-time profile rows; missing rows are completed through `/daftar/`.
 
 ### File: `functions/_clerk-auth.js`
 *Shared Clerk session verification, D1 user sync, and role authorization helper.*

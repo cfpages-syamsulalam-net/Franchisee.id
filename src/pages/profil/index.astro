@@ -1,0 +1,48 @@
+---
+const title = "Profil Akun | Franchisee.id";
+---
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="/wp-content/uploads/astra-addon/astra-addon-68132ac76d3753-93837280.css?ver=4.11.1" />
+    <link rel="stylesheet" href="/css/auth-clerk.css" />
+    <link rel="stylesheet" href="/css/profile.css" />
+  </head>
+  <body class="fr-profile-body">
+    <header class="fr-profile-header">
+      <a class="fr-profile-brand" href="/" aria-label="Franchisee.id">
+        <span class="fr-profile-brand-mark">F</span>
+        <span>Franchisee.id</span>
+      </a>
+      <nav class="fr-profile-nav" aria-label="Navigasi utama">
+        <ul class="hfe-nav-menu">
+          <li class="menu-item"><a class="hfe-menu-item" href="/peluang-usaha/">Peluang Usaha</a></li>
+          <li class="menu-item"><a class="hfe-menu-item" href="/login/">Login</a></li>
+          <li class="menu-item"><a class="hfe-menu-item" href="/daftar/">Daftar</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="fr-profile-main">
+      <section class="fr-profile-shell" id="fr-profile-root" data-profile-root>
+        <div class="fr-profile-loading">
+          <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>
+          <span>Memuat profil...</span>
+        </div>
+      </section>
+    </main>
+
+    <script src="/js/auth-clerk-debug.js" is:inline></script>
+    <script src="/js/auth-clerk.js" is:inline></script>
+    <script src="/js/auth-navbar.js" is:inline></script>
+    <script src="/js/profile-page.js" is:inline></script>
+  </body>
+</html>

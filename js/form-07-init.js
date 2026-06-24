@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? await window.FranchiseAuth.syncUser()
                 : null;
             prefillKnownIdentity(clerk, user);
+            await redirectCompletedProfileIfNeeded(urlParams, roleParam, claimState);
             updateDaftarHeading(true);
         } catch (error) {
             console.warn('[FranchiseForm] Auth check failed:', error && error.message ? error.message : error);
@@ -91,19 +92,57 @@ document.addEventListener('DOMContentLoaded', function () {
     function prefillKnownIdentity(clerk, user) {
         const email = user?.email || clerk?.user?.primaryEmailAddress?.emailAddress || '';
         const name = user?.display_name || clerk?.user?.fullName || clerk?.user?.firstName || '';
-        setEmptyValue('#franchiseeForm input[name="email"]', email);
-        setEmptyValue('#franchiseeForm input[name="name"]', name);
-        setEmptyValue('#franchiseListingForm input[name="email_contact"]', email);
-        setEmptyValue('#franchiseListingForm input[name="pic_name"]', name);
+        lockIdentityValue('#franchiseeForm input[name="email"]', email);
+        lockIdentityValue('#franchiseeForm input[name="name"]', name);
+        lockIdentityValue('#franchiseListingForm input[name="email_contact"]', email);
+        lockIdentityValue('#franchiseListingForm input[name="pic_name"]', name);
     }
 
-    function setEmptyValue(selector, value) {
+    async function redirectCompletedProfileIfNeeded(currentParams, selectedRole, activeClaimState) {
+        if (currentParams.get('force') === '1' || currentParams.get('claim') || currentParams.get('dev') === '1') return;
+        if (activeClaimState && activeClaimState.active) return;
+        if (!window.FranchiseAuth || typeof window.FranchiseAuth.getAuthHeaders !== 'function') return;
+
+        const headers = await window.FranchiseAuth.getAuthHeaders({ skipPendingRoleSync: true });
+        if (!headers.Authorization) return;
+        const response = await fetch('/profile-data', { headers });
+        if (!response.ok) return;
+        const profile = await response.json();
+        if (!profile.success) return;
+
+        const franchiseeComplete = Boolean(profile.completion && profile.completion.franchisee);
+        const franchisorComplete = Boolean(profile.completion && profile.completion.franchisor);
+        const shouldRedirect =
+            (selectedRole === 'franchisee' && franchiseeComplete) ||
+            (selectedRole === 'franchisor' && franchisorComplete) ||
+            (!selectedRole && (franchiseeComplete || franchisorComplete));
+
+        if (shouldRedirect) {
+            window.location.replace('/profil/');
+        }
+    }
+
+    function lockIdentityValue(selector, value) {
         if (!value) return;
         const field = document.querySelector(selector);
-        if (!field || (field.value || '').trim()) return;
+        if (!field) return;
         field.value = value;
+        field.readOnly = true;
+        field.setAttribute('aria-readonly', 'true');
+        field.classList.add('identity-locked-field');
+        field.title = 'Data ini mengikuti akun login. Ubah lewat halaman Profil.';
         field.dispatchEvent(new Event('input', { bubbles: true }));
         field.dispatchEvent(new Event('change', { bubbles: true }));
+        addIdentityLockNote(field);
+    }
+
+    function addIdentityLockNote(field) {
+        const parent = field.parentElement;
+        if (!parent || parent.querySelector('.identity-lock-note')) return;
+        const note = document.createElement('small');
+        note.className = 'identity-lock-note';
+        note.textContent = 'Terkunci dari akun login. Ubah lewat Profil.';
+        parent.appendChild(note);
     }
 
     function updateDaftarHeading(isSignedIn) {

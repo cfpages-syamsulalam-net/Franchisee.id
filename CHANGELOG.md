@@ -4,6 +4,27 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-25 06:23 (Asia/Jakarta)
+### Added
+- `.context/session-20260625-0623.md`: Added a session snapshot for the production-only manual QA rule update.
+
+### Changed
+- `AGENTS.md`: Added the rule that local dev/preview servers should not be started by default because manual browser QA is done on production `franchisee.id` after code is pushed.
+
+## 2026-06-25 06:09 (Asia/Jakarta)
+### Added
+- `functions/profile-data.js`: Added the protected `/profile-data` API for `/profil` reads and audited account/profile/listing mutations, including owner listing edit throttling and static rebuild queue writes.
+- `src/pages/profil/index.astro`, `js/profile-page.js`, and `css/profile.css`: Added the protected `/profil` account center with side tabs for account, franchisee profile, franchisor profile, owner listings, claims, and admin/staff dashboard access.
+- `.context/session-20260625-0609.md`: Added a session snapshot for the `/profil` implementation pass.
+
+### Changed
+- `js/auth-navbar.js`: Changed logged-in account links from `/daftar/` to `/profil/`.
+- `js/auth-clerk.js`: Changed the default post-login destination to `/profil/` and added the `/profil` login-required message path.
+- `js/form-07-init.js`: Locked Clerk/D1 identity fields in `/daftar`, added identity helper notes, and redirected completed profiles to `/profil/`.
+- `css/auth-clerk.css` and `css/form-franchise/02-layout-tabs-steps.css`: Softened toggle hover/active colors so the text stays readable during animation.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification after adding the `/profil` Astro route.
+- `docs/architecture/PROFILE_PAGE_PLAN.md`, `docs/architecture/CLERK_SETUP.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented `/profil`, `/profile-data`, the identity-lock flow, and owner listing edit guardrails.
+
 ## 2026-06-25 05:18 (Asia/Jakarta)
 ### Added
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: Added the `/profil` planning tracker covering subtle toggle colors, read-only Clerk/D1 identity fields in `/daftar`, side-tab profile sections, profile API contracts, owner listing/claim workflows, and implementation sequencing.
