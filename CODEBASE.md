@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-25 04:59 (Asia/Jakarta)
+Last updated: 2026-06-25 05:18 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -116,6 +116,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `docs/architecture/TECH_STACK_DECISIONS.md` | Canonical migration stack decisions: TypeScript, Zod, D1 SQL migrations, role model, Clerk/D1 responsibility split, and Drizzle adoption timing. |
 | `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md` | Compares twice-daily D1 static publishing with GitHub Actions polling, Cloudflare Deploy Hook builds, and GitHub direct deploy fallback. Current target is 30-minute polling after a D1 dirty queue exists, without committing generated output from the poller. |
 | `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md` | Progress tracker and implementation plan for public account entry: role-first registration, post-auth `/daftar` completion, Clerk-prefilled form fields, animated auth/form toggles, and logged-in navbar account state. |
+| `docs/architecture/PROFILE_PAGE_PLAN.md` | Progress tracker and implementation plan for protected `/profil`: account identity, franchisee/franchisor profile ownership, owned listing management, claim status, `/daftar` read-only identity fields, and owner-facing profile APIs. |
 | `DASHBOARD.md` | Admin/staff dashboard plan covering overview, listing operations, unclaimed outreach, claim review, data quality, publishing, leads, system health, roles, and MVP sequencing. |
 | `migrations/0001_initial_network_schema.sql` | First D1 schema migration for shared network sites, users/roles, profiles, franchises, claims, assets, leads, site publications, subscriptions/entitlements, imports, and audit events. |
 | `migrations/0002_add_franchisor_social_links.sql` | Adds optional Facebook, TikTok, YouTube, and LinkedIn URL columns to `franchisor_profiles`; website and Instagram already existed. |

@@ -4,6 +4,15 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-25 05:18 (Asia/Jakarta)
+### Added
+- `docs/architecture/PROFILE_PAGE_PLAN.md`: Added the `/profil` planning tracker covering subtle toggle colors, read-only Clerk/D1 identity fields in `/daftar`, side-tab profile sections, profile API contracts, owner listing/claim workflows, and implementation sequencing.
+- `.context/session-20260625-0518.md`: Added a session snapshot for the `/profil` planning pass.
+
+### Changed
+- `docs/README.md`: Linked the new profile page plan from the documentation index.
+- `CODEBASE.md`: Documented the new profile page planning tracker in the supporting file map.
+
 ## 2026-06-25 04:59 (Asia/Jakarta)
 ### Added
 - `.context/session-20260625-0459.md`: Added a session snapshot for the auth/navbar icon and protected `/daftar` UX follow-up.
