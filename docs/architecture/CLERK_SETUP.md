@@ -1,6 +1,6 @@
 # Clerk Setup For Franchisee.id
 
-Last updated: 2026-06-24 03:27 (Asia/Jakarta)
+Last updated: 2026-06-24 14:46 (Asia/Jakarta)
 
 ## Purpose
 Clerk is the identity/session provider. D1 remains the authorization source of truth through `users` and `user_roles`.
@@ -41,6 +41,7 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 - `/auth-config` returns the publishable Clerk key to the browser and prefers the Astro-style `PUBLIC_CLERK_PUBLISHABLE_KEY` variable.
 - `js/auth-clerk.js` writes the resolved publishable key to `window.__clerk_publishable_key` and the Clerk script tag before loading `clerk.browser.js`; Clerk's browser bundle needs the key available while the script evaluates, not only later during `clerk.load()`.
 - `js/auth-clerk.js` supports Google sign-in/sign-up through ClerkJS. It stores the post-login destination, strips stale Clerk callback params before starting OAuth, and calls Clerk's redirect callback handler before any token/dashboard checks after Google returns.
+- `/dashboard/` includes a masked Auth Debug panel while locked. Use it to diagnose Google SSO by checking `clerk.hasUser`, `clerk.hasSession`, `clerk.clientSessionCount`, redirect callback state, and recent `FranchiseAuth` events without exposing raw tokens.
 - Public Google registration stores the selected self-assignable role across the OAuth redirect, then syncs that role to D1 after the Clerk session is active.
 - `/auth-sync` verifies the active Clerk session, upserts D1 `users`, and self-assigns only `franchisee` or `franchisor`.
 - `email_role_grants` lets admins pre-authorize an email for `admin` or `staff` before a real Clerk user id exists. When that email first logs in through Clerk/Google, `_clerk-auth.js` upserts the real D1 user and applies the pending role grant.
@@ -62,6 +63,19 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 9. `/auth-sync` maps Clerk user id into D1 `users.clerk_user_id`, applies active `email_role_grants`, and inserts the allowed D1 role.
 10. `/daftar` submissions attach `Authorization: Bearer <session-token>` to `/form-submit`.
 11. `/form-submit` verifies the token with `@clerk/backend`, maps the Clerk user to D1, checks role authorization, and writes ownership fields.
+
+## Dashboard SSO Troubleshooting
+When Google says it is returning to `franchisee.id` but `/dashboard/` still shows `Belum login`, inspect the `Auth Debug` panel and browser console entry `[DashboardAuthDebug]`.
+
+Key readings:
+- `hasWindowClerk=false`: ClerkJS did not load.
+- `clerk.loaded=false`: Clerk script loaded but initialization did not finish.
+- `clerk.hasUser=false` and `clerk.clientSessionCount=0`: Clerk has no browser session after the Google redirect.
+- `clerk.clientSessionCount>0` but `clerk.hasSession=false`: Clerk sees a session candidate but it is not active.
+- `clerk.hasSession=true` but `hasAuthorization=false` in the `boot:after_headers` stage: token creation failed.
+- `dashboard_data:response` status `401` or `403`: Clerk token exists, but server-side D1 role authorization failed.
+
+The panel masks token/session values by design, so screenshots of it are safe for debugging.
 
 ## Bidirectional Sync Contract
 

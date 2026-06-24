@@ -276,6 +276,44 @@ export const prerender = true;
         background: #fff1f1;
         color: var(--dash-bad);
       }
+      .dash-debug-panel {
+        margin-top: 14px;
+        border: 1px solid #d7d7d7;
+        background: #ffffff;
+      }
+      .dash-debug-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--dash-line);
+      }
+      .dash-debug-head strong {
+        font-size: 13px;
+      }
+      .dash-debug-head span,
+      .dash-debug-summary {
+        color: var(--dash-muted);
+        font-size: 12px;
+      }
+      .dash-debug-body {
+        display: grid;
+        gap: 10px;
+        padding: 12px 14px;
+      }
+      .dash-debug-output {
+        max-height: 360px;
+        margin: 0;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        border: 1px solid #ededed;
+        background: #f8f8f8;
+        color: #171717;
+        padding: 10px;
+        font: 12px/1.45 Consolas, "Courier New", monospace;
+      }
       .dash-muted {
         color: var(--dash-muted);
         font-size: 12px;
@@ -323,6 +361,19 @@ export const prerender = true;
 
         <section class="dash-login-panel" data-dashboard-login aria-label="Login admin dan staff">
           <div id="franchise-auth-root" data-auth-mode="login" data-auth-variant="staff" data-auth-next="/dashboard"></div>
+          <div class="dash-debug-panel" data-auth-debug>
+            <div class="dash-debug-head">
+              <div>
+                <strong>Auth Debug</strong>
+                <span>Safe to screenshot: token values are masked.</span>
+              </div>
+              <button class="dash-button secondary" type="button" data-auth-debug-refresh>Refresh</button>
+            </div>
+            <div class="dash-debug-body">
+              <div class="dash-debug-summary" data-auth-debug-summary>Menunggu auth runtime...</div>
+              <pre class="dash-debug-output" data-auth-debug-output>{}</pre>
+            </div>
+          </div>
         </section>
 
         <section class="dash-grid" aria-label="Ringkasan dashboard">
@@ -502,6 +553,9 @@ export const prerender = true;
         var userEl = document.querySelector("[data-dashboard-user]");
         var mainEl = document.querySelector("[data-dashboard-protected]");
         var loginEl = document.querySelector("[data-dashboard-login]");
+        var authDebugSummary = document.querySelector("[data-auth-debug-summary]");
+        var authDebugOutput = document.querySelector("[data-auth-debug-output]");
+        var authDebugRefresh = document.querySelector("[data-auth-debug-refresh]");
         var outreachRows = document.querySelector("[data-outreach-rows]");
         var qualityRows = document.querySelector("[data-quality-rows]");
         var claimRows = document.querySelector("[data-claim-rows]");
@@ -518,6 +572,12 @@ export const prerender = true;
         var dashboardState = null;
         var currentUserIsAdmin = false;
 
+        window.FRANCHISE_AUTH_DEBUG = true;
+        if (authDebugRefresh) {
+          authDebugRefresh.addEventListener("click", function () {
+            renderAuthDebug("manual_refresh");
+          });
+        }
         if (editJson && !editJson.value) {
           editJson.value = JSON.stringify({ phone: "0812 0000 0000", office_address: "Jakarta" }, null, 2);
         }
@@ -529,14 +589,18 @@ export const prerender = true;
         async function boot() {
           try {
             if (!window.FranchiseAuth) throw new Error("Auth runtime belum tersedia.");
+            renderAuthDebug("boot:start");
             await window.FranchiseAuth.init();
+            renderAuthDebug("boot:after_init");
             var headers = await window.FranchiseAuth.getAuthHeaders();
+            renderAuthDebug("boot:after_headers", { hasAuthorization: Boolean(headers.Authorization) });
             if (!headers.Authorization) {
               showLoginPanel("Login dengan akun admin/staff untuk membuka dashboard.", false);
               return;
             }
 
             var response = await fetch("/dashboard-data", { headers: headers });
+            renderAuthDebug("dashboard_data:response", { status: response.status, ok: response.ok });
             if (response.status === 401) {
               showLoginPanel("Sesi login kedaluwarsa. Silakan login ulang.", true);
               return;
@@ -548,6 +612,7 @@ export const prerender = true;
             if (loginEl) loginEl.hidden = false;
             if (userEl.textContent === "Memuat sesi...") userEl.textContent = "Akses belum diizinkan";
             setStatus(error.message, true);
+            renderAuthDebug("boot:error", { message: error.message || String(error) });
           }
         }
 
@@ -557,6 +622,7 @@ export const prerender = true;
           if (mainEl) mainEl.setAttribute("data-dashboard-protected", "ready");
           if (loginEl) loginEl.hidden = true;
           setStatus("Dashboard aktif untuk site franchisee.id.", false);
+          renderAuthDebug("dashboard:ready", { roles: data.user.roles || [] });
           userEl.textContent = (data.user.name || data.user.email || "Admin/staff") + " - " + data.user.roles.join(", ");
           setMetric("total_listings", data.overview.total_listings);
           setMetric("unclaimed_listings", data.overview.unclaimed_listings);
@@ -843,6 +909,37 @@ export const prerender = true;
           userEl.textContent = "Belum login";
           if (loginEl) loginEl.hidden = false;
           setStatus(message, isError);
+          renderAuthDebug("dashboard:login_panel", { message: message, isError: Boolean(isError) });
+        }
+
+        function renderAuthDebug(stage, extra) {
+          if (!authDebugOutput || !authDebugSummary) return;
+          var snapshot = window.FranchiseAuth && typeof window.FranchiseAuth.getDebugSnapshot === "function"
+            ? window.FranchiseAuth.getDebugSnapshot()
+            : { generatedAt: new Date().toISOString(), events: [], note: "FranchiseAuth.getDebugSnapshot belum tersedia." };
+          var clerk = snapshot.clerk || {};
+          var view = {
+            stage: stage,
+            extra: extra || {},
+            generatedAt: snapshot.generatedAt,
+            location: snapshot.location,
+            hasWindowClerk: snapshot.hasWindowClerk,
+            hasAuthClerk: snapshot.hasAuthClerk,
+            clerk: clerk,
+            storage: snapshot.storage,
+            redirect: snapshot.redirect,
+            syncedUser: snapshot.syncedUser,
+            recentEvents: (snapshot.events || []).slice(-18)
+          };
+          authDebugSummary.textContent = [
+            "stage=" + stage,
+            "loaded=" + Boolean(clerk.loaded),
+            "user=" + Boolean(clerk.hasUser),
+            "session=" + Boolean(clerk.hasSession),
+            "clientSessions=" + Number(clerk.clientSessionCount || 0)
+          ].join(" | ");
+          authDebugOutput.textContent = JSON.stringify(view, null, 2);
+          if (window.console && console.info) console.info("[DashboardAuthDebug]", view);
         }
 
         function escapeHtml(value) {

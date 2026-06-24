@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-24 14:46 (Asia/Jakarta)
+### Added
+- `js/auth-clerk.js`: Added sanitized Clerk lifecycle debug events and `window.FranchiseAuth.getDebugSnapshot()` for diagnosing Google OAuth/session/token failures without exposing raw bearer tokens.
+- `src/pages/dashboard/index.astro`: Added a dashboard auth debug panel that shows Clerk loaded/user/session state, client session count, redirect callback state, pending auth storage, and recent auth events while the dashboard is locked.
+
+### Changed
+- `js/auth-clerk.js` and `css/auth-clerk.css`: Replaced the plain `G` text in Google OAuth buttons with an inline Google logo.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AGENTS.md`, and `docs/architecture/CLERK_SETUP.md`: Documented the dashboard auth debug behavior.
+
+### Removed
+- None.
+
 ## 2026-06-24 05:04 (Asia/Jakarta)
 ### Added
 - Remote D1 `franchise_db`: Inserted an active pending `admin` email role grant for `email@franchisor.id`.

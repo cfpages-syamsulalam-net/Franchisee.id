@@ -7,6 +7,15 @@
   const PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsuZnJhbmNoaXNlZS5pZCQ";
   const PENDING_ROLE_KEY = "franchise_auth_pending_role";
   const PENDING_NEXT_KEY = "franchise_auth_pending_next";
+  const MAX_DEBUG_EVENTS = 60;
+  const GOOGLE_ICON = `
+    <svg class="fr-auth-google-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.54 5.54 0 0 1-2.4 3.63v3.01h3.88c2.27-2.09 3.54-5.17 3.54-8.88z"/>
+      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.9l-3.88-3.01c-1.08.72-2.45 1.14-4.05 1.14-3.11 0-5.75-2.1-6.7-4.93H1.29v3.1A11.99 11.99 0 0 0 12 24z"/>
+      <path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.29a12.02 12.02 0 0 0 0 10.8l4.01-3.1z"/>
+      <path fill="#EA4335" d="M12 4.77c1.76 0 3.34.61 4.59 1.79l3.43-3.43A11.52 11.52 0 0 0 12 0 11.99 11.99 0 0 0 1.29 6.6L5.3 9.7C6.25 6.87 8.89 4.77 12 4.77z"/>
+    </svg>
+  `;
   const SELF_ASSIGNABLE_ROLES = new Set(["franchisee", "franchisor"]);
   const CLERK_REDIRECT_PARAMS = [
     "__clerk_status",
@@ -36,6 +45,9 @@
   Auth.getAuthHeaders = getAuthHeaders;
   Auth.syncUser = syncUser;
   Auth.ensureSignedIn = ensureSignedIn;
+  Auth.debugEvents = Auth.debugEvents || [];
+  Auth.getDebugSnapshot = getDebugSnapshot;
+  Auth.recordDebug = recordDebug;
 
   document.addEventListener("DOMContentLoaded", function () {
     mountAuthPage();
@@ -45,30 +57,49 @@
     if (clerkPromise) return clerkPromise;
 
     clerkPromise = (async function () {
+      recordDebug("init:start", { href: sanitizedLocation() });
       const config = await fetchAuthConfig();
       const publishableKey = normalizePublishableKey(config.publishableKey) || PUBLIC_CLERK_PUBLISHABLE_KEY;
+      recordDebug("config:resolved", {
+        configured: Boolean(config.configured),
+        source: config.source || "unknown",
+        hasPublishableKey: Boolean(publishableKey),
+        publishableKeyHint: keyHint(publishableKey),
+      });
       if (!publishableKey) {
         throw new Error("Clerk publishable key belum dikonfigurasi di Cloudflare Pages.");
       }
 
       await loadScriptWithFallbacks(CLERK_JS_URLS, publishableKey);
+      recordDebug("script:loaded", { hasWindowClerk: Boolean(window.Clerk) });
       const ClerkCtor = window.Clerk;
       if (!ClerkCtor) throw new Error("ClerkJS gagal dimuat.");
 
       const clerk = createClerkInstance(ClerkCtor, publishableKey);
       await loadClerkInstance(clerk, publishableKey);
+      recordDebug("clerk:loaded", summarizeClerk(clerk));
       await handleOAuthRedirectIfNeeded(clerk);
+      recordDebug("init:ready", summarizeClerk(clerk));
       Auth.clerk = clerk;
       return clerk;
-    })();
+    })().catch(function (error) {
+      recordDebug("init:error", { message: clerkErrorMessage(error) });
+      clerkPromise = null;
+      throw error;
+    });
 
     return clerkPromise;
   }
 
   async function getToken() {
     const clerk = await initClerk();
-    if (!clerk.session) return null;
-    return clerk.session.getToken();
+    if (!clerk.session) {
+      recordDebug("token:missing_session", summarizeClerk(clerk));
+      return null;
+    }
+    const token = await clerk.session.getToken();
+    recordDebug("token:resolved", { hasToken: Boolean(token), tokenHint: tokenHint(token), ...summarizeClerk(clerk) });
+    return token;
   }
 
   async function getAuthHeaders(options = {}) {
@@ -76,6 +107,7 @@
     if (token && !options.skipPendingRoleSync) {
       await syncPendingRoleIfNeeded(token);
     }
+    recordDebug("headers:resolved", { hasAuthorization: Boolean(token), skipPendingRoleSync: Boolean(options.skipPendingRoleSync) });
     return token ? { Authorization: "Bearer " + token } : {};
   }
 
@@ -141,7 +173,7 @@
           <form class="fr-auth-form" data-auth-form="login" ${isRegister ? "hidden" : ""} aria-hidden="${isRegister ? "true" : "false"}">
             <div class="fr-auth-oauth">
               <button class="fr-auth-oauth-button" type="button" data-auth-oauth="google" data-auth-oauth-mode="login">
-                <span class="fr-auth-oauth-icon" aria-hidden="true">G</span>
+                <span class="fr-auth-oauth-icon" aria-hidden="true">${GOOGLE_ICON}</span>
                 <span>Login dengan Google</span>
               </button>
               <div class="fr-auth-divider"><span>atau</span></div>
@@ -165,7 +197,7 @@
           ${isLoginOnly ? "" : `<form class="fr-auth-form" data-auth-form="register" ${!isRegister ? "hidden" : ""} aria-hidden="${!isRegister ? "true" : "false"}">
             <div class="fr-auth-oauth">
               <button class="fr-auth-oauth-button" type="button" data-auth-oauth="google" data-auth-oauth-mode="register">
-                <span class="fr-auth-oauth-icon" aria-hidden="true">G</span>
+                <span class="fr-auth-oauth-icon" aria-hidden="true">${GOOGLE_ICON}</span>
                 <span>Daftar dengan Google</span>
               </button>
               <div class="fr-auth-divider"><span>atau</span></div>
@@ -486,9 +518,13 @@
 
   async function syncPendingRoleIfNeeded(token) {
     const role = getPendingRole();
-    if (!SELF_ASSIGNABLE_ROLES.has(role)) return;
+    if (!SELF_ASSIGNABLE_ROLES.has(role)) {
+      recordDebug("pending_role:skip", { role: role || "", reason: role ? "not_self_assignable" : "none" });
+      return;
+    }
     if (pendingRoleSyncPromise) return pendingRoleSyncPromise;
 
+    recordDebug("pending_role:sync_start", { role });
     pendingRoleSyncPromise = fetch("/auth-sync", {
       method: "POST",
       headers: {
@@ -502,6 +538,15 @@
         if (!result.success) throw new Error(result.message || result.error || "Sinkronisasi akun gagal.");
         syncedUser = result.user;
         clearPendingRole();
+        recordDebug("pending_role:sync_ok", {
+          role,
+          userId: result.user?.id || "",
+          roles: result.user?.roles || [],
+        });
+      })
+      .catch(function (error) {
+        recordDebug("pending_role:sync_error", { role, message: clerkErrorMessage(error) });
+        throw error;
       })
       .finally(function () {
         pendingRoleSyncPromise = null;
@@ -523,6 +568,7 @@
   async function fetchAuthConfig() {
     try {
       const response = await fetch("/auth-config", { cache: "no-store" });
+      recordDebug("config:response", { ok: response.ok, status: response.status });
       if (!response.ok) return { publishableKey: PUBLIC_CLERK_PUBLISHABLE_KEY, configured: true, source: "client-fallback" };
       const config = await response.json();
       return {
@@ -530,6 +576,7 @@
         publishableKey: normalizePublishableKey(config.publishableKey) || PUBLIC_CLERK_PUBLISHABLE_KEY,
       };
     } catch (error) {
+      recordDebug("config:error", { message: clerkErrorMessage(error) });
       return { publishableKey: PUBLIC_CLERK_PUBLISHABLE_KEY, configured: true, source: "client-fallback" };
     }
   }
@@ -547,25 +594,43 @@
     if (!clerk || typeof clerk.load !== "function") throw new Error("ClerkJS gagal diinisialisasi.");
     try {
       await clerk.load({ publishableKey: publishableKey });
+      recordDebug("clerk:load_object_ok", summarizeClerk(clerk));
     } catch (error) {
       if (!/publishableKey/i.test(error?.message || "")) throw error;
       await clerk.load(publishableKey);
+      recordDebug("clerk:load_string_ok", summarizeClerk(clerk));
     }
   }
 
   async function handleOAuthRedirectIfNeeded(clerk) {
-    if (!hasClerkRedirectParams() || typeof clerk.handleRedirectCallback !== "function") return;
+    if (!hasClerkRedirectParams() || typeof clerk.handleRedirectCallback !== "function") {
+      recordDebug("oauth_callback:skip", {
+        hasRedirectParams: hasClerkRedirectParams(),
+        hasHandler: typeof clerk.handleRedirectCallback === "function",
+      });
+      return;
+    }
 
     const redirectUrlComplete = getPendingNext() || nextUrlFromSearch() || currentAuthUrl();
     let callbackTarget = redirectUrlComplete;
     const createdSessionId = getClerkRedirectParam("__clerk_created_session");
+    recordDebug("oauth_callback:start", {
+      redirectUrlComplete,
+      hasCreatedSessionId: Boolean(createdSessionId),
+      createdSessionHint: sessionHint(createdSessionId),
+      before: summarizeClerk(clerk),
+    });
     await clerk.handleRedirectCallback({ redirectUrlComplete }, async function (target) {
       callbackTarget = target || redirectUrlComplete;
+      recordDebug("oauth_callback:navigate_target", { target: callbackTarget });
     });
+    recordDebug("oauth_callback:handled", summarizeClerk(clerk));
     if (!clerk.session && createdSessionId && typeof clerk.setActive === "function") {
       await clerk.setActive({ session: createdSessionId });
+      recordDebug("oauth_callback:set_active_from_param", summarizeClerk(clerk));
     }
     await refreshClerkResources(clerk);
+    recordDebug("oauth_callback:refreshed", summarizeClerk(clerk));
     clearPendingNext();
 
     await navigateAfterOAuth(callbackTarget);
@@ -584,9 +649,11 @@
       targetUrl.hash === currentUrl.hash
     ) {
       window.history.replaceState(window.history.state, document.title, targetUrl.href);
+      recordDebug("oauth_callback:clean_url", { target: targetUrl.href });
       return;
     }
 
+    recordDebug("oauth_callback:redirect", { target: targetUrl.href });
     window.location.assign(targetUrl.href);
     await new Promise(function () {});
   }
@@ -594,10 +661,12 @@
   async function refreshClerkResources(clerk) {
     if (typeof clerk.__internal_reloadInitialResources === "function") {
       await clerk.__internal_reloadInitialResources();
+      recordDebug("clerk:resources_reloaded_internal", summarizeClerk(clerk));
       return;
     }
     if (typeof clerk.load === "function") {
       await clerk.load();
+      recordDebug("clerk:resources_reloaded_load", summarizeClerk(clerk));
     }
   }
 
@@ -655,6 +724,7 @@
       if (existing) {
         existing.addEventListener("load", resolve, { once: true });
         existing.addEventListener("error", reject, { once: true });
+        recordDebug("script:reuse", { src });
         return;
       }
       const script = document.createElement("script");
@@ -666,8 +736,10 @@
       script.addEventListener("load", resolve, { once: true });
       script.addEventListener("error", function () {
         script.remove();
+        recordDebug("script:error", { src });
         reject(new Error("ClerkJS gagal dimuat."));
       }, { once: true });
+      recordDebug("script:append", { src });
       document.head.appendChild(script);
     });
   }
@@ -691,6 +763,121 @@
   function nextUrlFromSearch() {
     const next = new URLSearchParams(window.location.search).get("next");
     return next && next.startsWith("/") ? next : "";
+  }
+
+  function getDebugSnapshot() {
+    const clerk = Auth.clerk || null;
+    return {
+      generatedAt: new Date().toISOString(),
+      location: sanitizedLocation(),
+      hasWindowClerk: Boolean(window.Clerk),
+      hasAuthClerk: Boolean(clerk),
+      clerk: summarizeClerk(clerk),
+      storage: {
+        pendingRole: getPendingRole(),
+        pendingNext: getPendingNext(),
+      },
+      redirect: {
+        hasParams: hasClerkRedirectParams(),
+        createdSessionHint: sessionHint(getClerkRedirectParam("__clerk_created_session")),
+      },
+      syncedUser: syncedUser
+        ? {
+            id: syncedUser.id || "",
+            email: syncedUser.email || syncedUser.primary_email || "",
+            roles: syncedUser.roles || [],
+          }
+        : null,
+      events: (Auth.debugEvents || []).slice(-MAX_DEBUG_EVENTS),
+    };
+  }
+
+  function recordDebug(event, details = {}) {
+    const entry = {
+      at: new Date().toISOString(),
+      event,
+      details: sanitizeDebugValue(details),
+    };
+    Auth.debugEvents = Auth.debugEvents || [];
+    Auth.debugEvents.push(entry);
+    if (Auth.debugEvents.length > MAX_DEBUG_EVENTS) {
+      Auth.debugEvents.splice(0, Auth.debugEvents.length - MAX_DEBUG_EVENTS);
+    }
+    if (window.FRANCHISE_AUTH_DEBUG || /(?:\?|&)auth_debug=1(?:&|$)/.test(window.location.search)) {
+      console.info("[FranchiseAuth]", event, entry.details);
+    }
+    return entry;
+  }
+
+  function summarizeClerk(clerk) {
+    if (!clerk) {
+      return {
+        loaded: false,
+        hasUser: false,
+        hasSession: false,
+        sessionHint: "",
+        userIdHint: "",
+        email: "",
+        clientSessionCount: 0,
+        clientActiveSessionHint: "",
+      };
+    }
+    const sessions = Array.isArray(clerk.client?.sessions) ? clerk.client.sessions : [];
+    const activeSession = clerk.session || clerk.client?.activeSessions?.[0] || null;
+    return {
+      loaded: Boolean(clerk.loaded),
+      hasUser: Boolean(clerk.user),
+      hasSession: Boolean(clerk.session),
+      sessionHint: sessionHint(activeSession?.id || clerk.session?.id || ""),
+      userIdHint: sessionHint(clerk.user?.id || activeSession?.user?.id || ""),
+      email: clerk.user?.primaryEmailAddress?.emailAddress || activeSession?.user?.primaryEmailAddress?.emailAddress || "",
+      clientSessionCount: sessions.length,
+      clientActiveSessionHint: sessionHint(clerk.client?.activeSession?.id || ""),
+    };
+  }
+
+  function sanitizeDebugValue(value) {
+    if (value == null) return value;
+    if (typeof value === "string") {
+      if (/^eyJ/.test(value) || value.length > 180) return tokenHint(value);
+      return value;
+    }
+    if (Array.isArray(value)) return value.map(sanitizeDebugValue);
+    if (typeof value === "object") {
+      return Object.keys(value).reduce(function (result, key) {
+        if (/token|secret|password/i.test(key)) {
+          result[key] = tokenHint(value[key] || "");
+        } else {
+          result[key] = sanitizeDebugValue(value[key]);
+        }
+        return result;
+      }, {});
+    }
+    return value;
+  }
+
+  function sanitizedLocation() {
+    const url = new URL(window.location.href);
+    removeClerkRedirectParams(url.searchParams);
+    return url.pathname + url.search + url.hash;
+  }
+
+  function keyHint(value) {
+    if (!value) return "";
+    const text = String(value);
+    return text.slice(0, 8) + "..." + text.slice(-6);
+  }
+
+  function tokenHint(value) {
+    if (!value) return "";
+    const text = String(value);
+    return text.slice(0, 10) + "...len" + text.length;
+  }
+
+  function sessionHint(value) {
+    if (!value) return "";
+    const text = String(value);
+    return text.length <= 10 ? text : text.slice(0, 6) + "..." + text.slice(-4);
   }
 
   function escapeHtml(value) {

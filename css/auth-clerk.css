@@ -99,10 +99,13 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  color: #1a73e8;
-  font-weight: 900;
+  flex: 0 0 24px;
+}
+
+.fr-auth-google-logo {
+  display: block;
+  width: 20px;
+  height: 20px;
 }
 
 .fr-auth-divider {
