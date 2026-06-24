@@ -4,6 +4,31 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-24 17:55 (Asia/Jakarta)
+### Added
+- `js/auth-clerk-debug.js`: Extracted masked Clerk/auth diagnostics, persisted debug events, safe session/key/token hints, storage/cookie key inspection, and `window.FranchiseAuth.getDebugSnapshot()` support from the main auth runtime.
+- `js/dashboard-admin.js`: Extracted the `/dashboard` client controller for auth boot, `/dashboard-data` loading, section rendering, outreach logging, edit suggestions, admin review actions, and auth debug copy/refresh behavior.
+
+### Changed
+- `js/auth-clerk.js`: Delegates debug snapshots and event persistence to `js/auth-clerk-debug.js`, reducing the main auth runtime while keeping `window.FranchiseAuth` compatibility.
+- `login/index.html`, `register/index.html`, `daftar/index.html`, `src/pages/dashboard/index.astro`, and `src/pages/sso-callback/index.astro`: Load `js/auth-clerk-debug.js` before `js/auth-clerk.js` on Clerk-enabled surfaces.
+- `src/pages/dashboard/index.astro`: Replaced the large inline dashboard client script with `js/dashboard-admin.js`, leaving the Astro page as the static dashboard shell and styles.
+- `AUDIT.md`: Marked auth debug extraction and dashboard client extraction complete, refreshed long-file line counts, and kept the remaining UI/core/CSS/API split order.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the new auth debug and dashboard client modules plus their route/API relationships.
+
+### Removed
+- `src/pages/dashboard/index.astro`: Removed the inline dashboard client script after moving it to `js/dashboard-admin.js`.
+
+## 2026-06-24 17:45 (Asia/Jakarta)
+### Added
+- `AUDIT.md`: Added a focused long-file refactor implementation order with `js/auth-clerk.js` as Priority 1 and dashboard extraction as the next sequence.
+
+### Changed
+- `AUDIT.md`: Refreshed maintained runtime file line counts and expanded the refactor tracker for auth, dashboard, D1 public generation, importer, and form-submit hotspots.
+
+### Removed
+- None.
+
 ## 2026-06-24 17:20 (Asia/Jakarta)
 ### Added
 - None.

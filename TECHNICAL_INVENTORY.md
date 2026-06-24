@@ -104,6 +104,38 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `window.removeErrorMsg(inputField)`: Clears validation errors.
 - `window.validateSpecificField(field)`: Detailed regex-based field validation (enhanced email, auto-format WhatsApp).
 
+### File: `js/auth-clerk-debug.js`
+*Masked auth diagnostics module for custom ClerkJS surfaces.*
+- `window.FranchiseAuthDebug.create(options)`: Creates diagnostics helpers bound to `window.FranchiseAuth` and runtime storage/redirect callbacks.
+- `initEvents(current)`: Merges persisted `sessionStorage` auth events with current events while preserving the event cap.
+- `getDebugSnapshot()`: Returns the masked snapshot consumed by `/dashboard` and `/sso-callback`, including Clerk session summary, pending role/next state, filtered storage/cookie key names, redirect state, synced D1 user summary, and recent events.
+- `recordDebug(event, details)`: Sanitizes and stores debug events without raw tokens/secrets; also logs to console when `window.FRANCHISE_AUTH_DEBUG` or `?auth_debug=1` is active.
+- `summarizeClerk(clerk)`: Converts Clerk runtime/session/client state into safe booleans, counts, and short id hints.
+- `keyHint(value)` / `tokenHint(value)` / `sessionHint(value)`: Generates masked hints for public keys, bearer tokens, and Clerk session/user ids.
+
+### File: `js/auth-clerk.js`
+*Custom ClerkJS client integration using existing site CSS.*
+- `Auth.init()`: Fetches `/auth-config`, normalizes the publishable key with a public client fallback when config is stale/empty, sets `window.__clerk_publishable_key` plus Clerk script data attributes before browser-bundle evaluation, loads locally copied `/clerk/clerk.browser.js` with CDN fallbacks, initializes Clerk, and finalizes any Clerk OAuth redirect callback before token checks run.
+- `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
+- `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
+- `Auth.getDebugSnapshot()` / `Auth.recordDebug()`: Delegates masked Clerk lifecycle diagnostics to `js/auth-clerk-debug.js` for `/dashboard` and `/sso-callback/`.
+- `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign self-selectable `franchisee`/`franchisor` roles.
+- `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
+- `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with public login/register/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
+- `switchMode(root, mode)`: Switches login/register/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
+- `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI.
+- `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration stores the selected `franchisee`/`franchisor` role and the post-login destination until OAuth completion.
+- `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to `clerk.setActive()` with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
+
+### File: `js/dashboard-admin.js`
+*Client controller for the protected `/dashboard` shell.*
+- `boot()`: Initializes `window.FranchiseAuth`, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
+- `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics, outreach, quality, claims, publish, editable listings, edit suggestions, leads, and health renderers.
+- `renderOutreach()` / `logOutreach(link)`: Renders staff-personal WhatsApp links and records manually confirmed outreach through `/dashboard-data`.
+- `renderQuality()` / `seedEditSuggestion(button)`: Shows data-quality warnings and seeds structured JSON edit suggestions.
+- `submitEditSuggestion()` / `reviewEditSuggestion()` / `reviewClaim()`: Posts dashboard actions for staff/admin workflows.
+- `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
+
 ### File: `js/build-listing.js`
 *SSG Builder for the main directory page.*
 - `parseCSVRows(content)`: Quote-aware CSV parser (handles commas/newlines inside quoted cells) for reliable local-sheet fallback parsing.
@@ -201,8 +233,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Static protected admin/staff dashboard shell.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
-- Loads `js/auth-clerk.js`, shows a login-only staff/admin form when no Clerk session exists, and fetches `/dashboard-data` with bearer auth when a session is active.
-- Renders overview metrics, unclaimed WhatsApp outreach, data-quality warnings, publish queue state, pending claims, staff edit policy, lead summary, system health, listing edit suggestion form, and admin approve/reject actions for claims/suggestions.
+- Loads `js/auth-clerk-debug.js`, `js/auth-clerk.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
+- Renders the static dashboard shell, locked/login state, debug panel shell, and dashboard-only CSS. Runtime data rendering and actions are owned by `js/dashboard-admin.js`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
 - Security note: the static page is not the authorization boundary; `/dashboard-data` performs the server-side D1 role check.
@@ -211,7 +243,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Hidden Clerk OAuth callback route.*
 - `prerender = true`.
 - Builds `/sso-callback/index.html` with `noindex,nofollow`.
-- Loads `js/auth-clerk.js` and calls `window.FranchiseAuth.init()` so Clerk can run `handleRedirectCallback()` on Google OAuth return.
+- Loads `js/auth-clerk-debug.js` and `js/auth-clerk.js`, then calls `window.FranchiseAuth.init()` so Clerk can run `handleRedirectCallback()` on Google OAuth return.
 - Redirects to the saved pending destination from the masked auth snapshot only when Clerk has an active session.
 - Shows a minimal masked debug fallback with an icon-only copy button when callback processing fails or returns without an active session.
 
@@ -305,16 +337,3 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ## 4. Logic Safety Audit
 - **Status**: Verified.
 - **Lost logic recovered**: BEP calculations, multi-step progress, and media URL preview behavior (refactored into modular `form-0x-*.js` files and `form-utils.js`).
-### File: `js/auth-clerk.js`
-*Custom ClerkJS client integration using existing site CSS.*
-- `Auth.init()`: Fetches `/auth-config`, normalizes the publishable key with a public client fallback when config is stale/empty, sets `window.__clerk_publishable_key` plus Clerk script data attributes before browser-bundle evaluation, loads locally copied `/clerk/clerk.browser.js` with CDN fallbacks, initializes Clerk, and finalizes any Clerk OAuth redirect callback before token checks run.
-- `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
-- `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
-- `Auth.getDebugSnapshot()` / `Auth.recordDebug()`: Exposes and persists masked Clerk lifecycle diagnostics for `/dashboard` and `/sso-callback/`, including config/script/load/callback/token/header stages without raw bearer tokens or secrets.
-- `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign self-selectable `franchisee`/`franchisor` roles.
-- `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
-- `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with public login/register/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
-- `switchMode(root, mode)`: Switches login/register/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
-- `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI.
-- `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration stores the selected `franchisee`/`franchisor` role and the post-login destination until OAuth completion.
-- `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to `clerk.setActive()` with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.

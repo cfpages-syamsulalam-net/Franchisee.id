@@ -7,9 +7,7 @@
   const PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsuZnJhbmNoaXNlZS5pZCQ";
   const PENDING_ROLE_KEY = "franchise_auth_pending_role";
   const PENDING_NEXT_KEY = "franchise_auth_pending_next";
-  const DEBUG_EVENTS_KEY = "franchise_auth_debug_events";
   const SSO_CALLBACK_PATH = "/sso-callback/";
-  const MAX_DEBUG_EVENTS = 60;
   const GOOGLE_ICON = `
     <svg class="fr-auth-google-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.54 5.54 0 0 1-2.4 3.63v3.01h3.88c2.27-2.09 3.54-5.17 3.54-8.88z"/>
@@ -41,14 +39,34 @@
   let pendingRoleSyncPromise = null;
 
   const Auth = (window.FranchiseAuth = window.FranchiseAuth || {});
+  if (!window.FranchiseAuthDebug || typeof window.FranchiseAuthDebug.create !== "function") {
+    throw new Error("FranchiseAuthDebug belum dimuat.");
+  }
+
+  const Debug = window.FranchiseAuthDebug.create({
+    auth: Auth,
+    getSyncedUser: function () {
+      return syncedUser;
+    },
+    getPendingRole,
+    getPendingNext,
+    hasClerkRedirectParams,
+    getClerkRedirectParam,
+    removeClerkRedirectParams,
+  });
+  const recordDebug = Debug.recordDebug;
+  const summarizeClerk = Debug.summarizeClerk;
+  const keyHint = Debug.keyHint;
+  const tokenHint = Debug.tokenHint;
+  const sessionHint = Debug.sessionHint;
 
   Auth.init = initClerk;
   Auth.getToken = getToken;
   Auth.getAuthHeaders = getAuthHeaders;
   Auth.syncUser = syncUser;
   Auth.ensureSignedIn = ensureSignedIn;
-  Auth.debugEvents = mergeDebugEvents(loadStoredDebugEvents(), Auth.debugEvents || []);
-  Auth.getDebugSnapshot = getDebugSnapshot;
+  Auth.debugEvents = Debug.initEvents(Auth.debugEvents || []);
+  Auth.getDebugSnapshot = Debug.getDebugSnapshot;
   Auth.recordDebug = recordDebug;
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -785,193 +803,10 @@
     return next && next.startsWith("/") ? next : "";
   }
 
-  function getDebugSnapshot() {
-    const clerk = Auth.clerk || null;
-    return {
-      generatedAt: new Date().toISOString(),
-      location: sanitizedLocation(),
-      locationParts: locationParts(),
-      hasWindowClerk: Boolean(window.Clerk),
-      hasAuthClerk: Boolean(clerk),
-      clerk: summarizeClerk(clerk),
-      storage: {
-        pendingRole: getPendingRole(),
-        pendingNext: getPendingNext(),
-      },
-      browserState: {
-        clerkCookieNames: getClerkCookieNames(),
-        sessionStorageKeys: getStorageKeys(window.sessionStorage),
-        localStorageKeys: getStorageKeys(window.localStorage),
-      },
-      redirect: {
-        hasParams: hasClerkRedirectParams(),
-        createdSessionHint: sessionHint(getClerkRedirectParam("__clerk_created_session")),
-      },
-      syncedUser: syncedUser
-        ? {
-            id: syncedUser.id || "",
-            email: syncedUser.email || syncedUser.primary_email || "",
-            roles: syncedUser.roles || [],
-          }
-        : null,
-      events: (Auth.debugEvents || []).slice(-MAX_DEBUG_EVENTS),
-    };
-  }
-
-  function recordDebug(event, details = {}) {
-    const entry = {
-      at: new Date().toISOString(),
-      event,
-      details: sanitizeDebugValue(details),
-    };
-    Auth.debugEvents = Auth.debugEvents || [];
-    Auth.debugEvents.push(entry);
-    if (Auth.debugEvents.length > MAX_DEBUG_EVENTS) {
-      Auth.debugEvents.splice(0, Auth.debugEvents.length - MAX_DEBUG_EVENTS);
-    }
-    storeDebugEvents(Auth.debugEvents);
-    if (window.FRANCHISE_AUTH_DEBUG || /(?:\?|&)auth_debug=1(?:&|$)/.test(window.location.search)) {
-      console.info("[FranchiseAuth]", event, entry.details);
-    }
-    return entry;
-  }
-
-  function summarizeClerk(clerk) {
-    if (!clerk) {
-      return {
-        loaded: false,
-        hasUser: false,
-        hasSession: false,
-        sessionHint: "",
-        userIdHint: "",
-        email: "",
-        clientSessionCount: 0,
-        clientActiveSessionHint: "",
-      };
-    }
-    const sessions = Array.isArray(clerk.client?.sessions) ? clerk.client.sessions : [];
-    const activeSession = clerk.session || clerk.client?.activeSessions?.[0] || null;
-    return {
-      loaded: Boolean(clerk.loaded),
-      hasUser: Boolean(clerk.user),
-      hasSession: Boolean(clerk.session),
-      sessionHint: sessionHint(activeSession?.id || clerk.session?.id || ""),
-      userIdHint: sessionHint(clerk.user?.id || activeSession?.user?.id || ""),
-      email: clerk.user?.primaryEmailAddress?.emailAddress || activeSession?.user?.primaryEmailAddress?.emailAddress || "",
-      clientSessionCount: sessions.length,
-      clientActiveSessionHint: sessionHint(clerk.client?.activeSession?.id || ""),
-    };
-  }
-
-  function sanitizeDebugValue(value) {
-    if (value == null) return value;
-    if (typeof value === "string") {
-      if (/^eyJ/.test(value) || value.length > 180) return tokenHint(value);
-      return value;
-    }
-    if (Array.isArray(value)) return value.map(sanitizeDebugValue);
-    if (typeof value === "object") {
-      return Object.keys(value).reduce(function (result, key) {
-        if (/token|secret|password/i.test(key)) {
-          result[key] = tokenHint(value[key] || "");
-        } else {
-          result[key] = sanitizeDebugValue(value[key]);
-        }
-        return result;
-      }, {});
-    }
-    return value;
-  }
-
   function sanitizedLocation() {
     const url = new URL(window.location.href);
     removeClerkRedirectParams(url.searchParams);
     return url.pathname + url.search + url.hash;
-  }
-
-  function locationParts() {
-    const search = new URLSearchParams(window.location.search);
-    const hash = new URLSearchParams((window.location.hash || "").replace(/^#\/?/, ""));
-    return {
-      pathname: window.location.pathname,
-      searchKeys: Array.from(search.keys()).sort(),
-      hashKeys: Array.from(hash.keys()).sort(),
-      hasHash: Boolean(window.location.hash),
-    };
-  }
-
-  function keyHint(value) {
-    if (!value) return "";
-    const text = String(value);
-    return text.slice(0, 8) + "..." + text.slice(-6);
-  }
-
-  function tokenHint(value) {
-    if (!value) return "";
-    const text = String(value);
-    return text.slice(0, 10) + "...len" + text.length;
-  }
-
-  function sessionHint(value) {
-    if (!value) return "";
-    const text = String(value);
-    return text.length <= 10 ? text : text.slice(0, 6) + "..." + text.slice(-4);
-  }
-
-  function getClerkCookieNames() {
-    try {
-      return document.cookie
-        .split(";")
-        .map(function (part) {
-          return part.trim().split("=")[0];
-        })
-        .filter(function (name) {
-          return /clerk|__client|__session|sess/i.test(name);
-        })
-        .sort();
-    } catch (_error) {
-      return [];
-    }
-  }
-
-  function getStorageKeys(storage) {
-    try {
-      return Object.keys(storage || {})
-        .filter(function (key) {
-          return /clerk|franchise_auth/i.test(key);
-        })
-        .sort();
-    } catch (_error) {
-      return [];
-    }
-  }
-
-  function loadStoredDebugEvents() {
-    try {
-      const raw = sessionStorage.getItem(DEBUG_EVENTS_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed.slice(-MAX_DEBUG_EVENTS) : [];
-    } catch (_error) {
-      return [];
-    }
-  }
-
-  function storeDebugEvents(events) {
-    try {
-      sessionStorage.setItem(DEBUG_EVENTS_KEY, JSON.stringify((events || []).slice(-MAX_DEBUG_EVENTS)));
-    } catch (_error) {
-      // Debug persistence is best-effort only.
-    }
-  }
-
-  function mergeDebugEvents(stored, current) {
-    const seen = new Set();
-    return (stored || []).concat(current || []).filter(function (event) {
-      const key = [event.at, event.event, JSON.stringify(event.details || {})].join("|");
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).slice(-MAX_DEBUG_EVENTS);
   }
 
   function escapeHtml(value) {

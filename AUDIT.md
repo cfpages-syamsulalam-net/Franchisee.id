@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-24 00:03 (Asia/Jakarta)
+Last updated: 2026-06-24 17:55 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
@@ -133,18 +133,34 @@ API/server routes:
 
 ## Long File Refactor Tracker
 
-Current maintained code hotspots by line count:
+Current maintained code hotspots by line count, excluding generated legacy HTML and copied build output:
 
 | File | Approx. lines | Risk | Refactor direction | Status |
 | --- | ---: | --- | --- | --- |
-| `src/lib/franchise-static.ts` | 944 after first extraction | Still mixes D1 snapshot validation, directory/detail rendering, contact parsing, SEO, text normalization, and scoring. The generated CSS/JS injection and CSS placeholder rendering were extracted to `src/lib/franchise-static-assets.ts` on 2026-06-22. | Next split contact parsing, text normalization, and scoring into focused modules. | First extraction complete |
-| `src/lib/franchise-static-assets.ts` | 620 | New helper owns generated directory/detail CSS/JS injection and CSS-only missing-image placeholders. Its length is mostly literal CSS/JS copied from the prior renderer. | Later move literal CSS into owned static CSS assets if the build pipeline can guarantee those assets on all generated pages. | Extracted |
-| `functions/dashboard-data.js` | 845 | Dashboard API mixes action validation, authorization, reads, write workflows, and response shaping. | Split action handlers and query builders after dashboard behavior stabilizes. | Pending |
-| `src/pages/dashboard/index.astro` | 792 | Static dashboard shell mixes markup, client JS, and role-aware UX states. | Extract client JS and section render helpers once dashboard sections settle. | Pending |
+| `src/pages/dashboard/index.astro` | 575 after client extraction | Static dashboard shell still mixes markup and dashboard-only CSS, but client boot/data/action logic has been extracted. | Move dashboard-only CSS into `css/dashboard.css` if route rendering remains stable. Keep `js/dashboard-admin.js` as the dashboard client controller. | Client JS extracted; CSS pending |
+| `src/lib/franchise-static.ts` | 944 after first extraction | Still mixes D1 snapshot validation, directory/detail rendering, contact parsing, SEO, text normalization, and scoring. The generated CSS/JS injection and CSS placeholder rendering were extracted to `src/lib/franchise-static-assets.ts` on 2026-06-22. | Split contact parsing into `src/lib/franchise-contact.ts`, text normalization into `src/lib/franchise-text.ts`, and scoring/category helpers into `src/lib/franchise-ranking.ts`. | Pending |
+| `js/auth-clerk.js` | 742 after debug extraction | High-priority browser auth hotspot. It still owns Clerk config/script loading, session token helpers, `/auth-sync`, public login/register HTML, OAuth start/callback handling, and pending role/next storage. Masked diagnostics now live in `js/auth-clerk-debug.js`. | Continue splitting into behavior-preserving browser modules loaded in order: `js/auth-clerk-core.js` for Clerk boot/token/sync and `js/auth-clerk-ui.js` for login/register DOM. Keep `js/auth-clerk.js` as the compatibility facade until every route is updated. | Debug extracted; UI/core pending |
+| `functions/dashboard-data.js` | 868 | Dashboard API mixes action validation, authorization, reads, write workflows, response shaping, WhatsApp formatting, and data-quality heuristics. The recent D1 `GLOB` issue shows query heuristics need clearer ownership. | Split into `functions/_dashboard-schemas.js`, `_dashboard-queries.js`, `_dashboard-actions.js`, and `_dashboard-utils.js`. Keep `/dashboard-data` as a thin router. | Priority 2 |
 | `scripts/build-d1-franchise-pages.ts` | 736 | Builder mixes D1 fetch, snapshot shaping, file writing, manifest/prune behavior, and remote access fallback. | Split D1 fetch/snapshot writer/manifest pruning into modules after the Astro route bridge is stable. | Pending |
 | `scripts/import-csv-to-d1.ts` | 664 | Importer mixes CSV parsing, validation, row mapping, SQL generation, and remote apply. | Split parser, mappers, and SQL writer before the next large import source is added. | Pending |
+| `functions/form-submit.js` | 621 | Form API still handles multiple submission types, role checks, D1 writes, duplicate checks, test-data actions, and publish queueing in one file. | Split by workflow after dashboard/auth refactors: franchisee submit, franchisor submit, claim submit, and dev/test actions. | Pending |
+| `src/lib/franchise-static-assets.ts` | 620 | Helper owns generated directory/detail CSS/JS injection and CSS-only missing-image placeholders. Its length is mostly literal CSS/JS copied from the prior renderer. | Later move literal CSS into owned static CSS assets if the build pipeline can guarantee those assets on all generated pages. | Extracted |
 
 Refactor rule: prefer behavior-preserving extraction with validation after each step. Do not combine extraction with feature changes unless the feature needs the boundary.
+
+### Refactor Implementation Order
+
+Use this checklist as the next implementation tracker:
+
+| Order | Task | Done when | Status |
+| ---: | --- | --- | --- |
+| 1 | Extract `js/auth-clerk.js` debug utilities. | `window.FranchiseAuth.getDebugSnapshot()` and existing dashboard/sso debug panels still work; `node --check` passes for all auth scripts; deployed SSO behavior is unchanged. | Done |
+| 2 | Extract `js/auth-clerk.js` UI renderer/events. | `/login`, `/register`, and `/dashboard` still render the same custom login/register/staff auth UI; Google and email/password paths still use the same public API. | Pending |
+| 3 | Extract `js/auth-clerk.js` Clerk boot/token/sync core. | `window.FranchiseAuth` remains backward compatible for `/daftar`, `/dashboard`, and future route scripts. | Pending |
+| 4 | Extract dashboard inline client JS from `src/pages/dashboard/index.astro`. | `/dashboard` markup becomes mostly static shell; all current sections still render from `/dashboard-data`; admin action buttons still work. | Done |
+| 5 | Split `functions/dashboard-data.js` into schemas, queries, actions, and utilities. | `/dashboard-data` remains the only public endpoint, but file length drops and each module has one responsibility. | Pending |
+| 6 | Split `src/lib/franchise-static.ts` contact/text/ranking helpers. | Public `/peluang-usaha` output hash should remain unchanged except for intentional formatting differences. | Pending |
+| 7 | Split D1 builder/importer scripts. | Existing `pnpm run build:d1:franchises`, `pnpm run import:csv:dry`, and build pipeline behavior remains unchanged. | Pending |
 
 ## Migration Rules
 - Do not remove existing form fields while migrating; map every current field to D1 or a deliberate archival field.
