@@ -8,6 +8,8 @@ import {
   parseWhatsAppContacts,
 } from "./_dashboard-utils.js";
 
+const OUTREACH_QUEUE_LIMIT = 250;
+
 export async function getOverview(db) {
   const row = await db
     .prepare(
@@ -131,7 +133,7 @@ export async function getUnclaimedOutreachQueue(db) {
         CASE WHEN last_outreach_at IS NULL THEN 0 ELSE 1 END,
         f.total_investment_idr DESC,
         f.updated_at DESC
-      LIMIT 75`,
+      LIMIT ${OUTREACH_QUEUE_LIMIT}`,
     )
     .bind(SITE_ID)
     .all();
@@ -146,6 +148,28 @@ export async function getUnclaimedOutreachQueue(db) {
       primary_whatsapp_url: contacts[0] ? buildWhatsAppUrl(contacts[0].international_digits, row) : "",
     };
   });
+}
+
+export async function getUnclaimedOutreachSummary(db) {
+  const row = await db
+    .prepare(
+      `SELECT
+        COUNT(*) AS published_unclaimed,
+        SUM(CASE WHEN COALESCE(f.phone, '') != '' THEN 1 ELSE 0 END) AS contact_ready,
+        SUM(CASE WHEN COALESCE(f.phone, '') = '' THEN 1 ELSE 0 END) AS missing_phone
+      FROM franchise_site_publications p
+      JOIN franchises f ON f.id = p.franchise_id
+      WHERE p.site_id = ?
+        AND p.publication_status = 'published'
+        AND (f.source_sheet = 'UNCLAIMED' OR f.verification_tier = 'unclaimed' OR f.status = 'unclaimed')`,
+    )
+    .bind(SITE_ID)
+    .first();
+
+  return {
+    ...normalizeNumberObject(row),
+    queue_limit: OUTREACH_QUEUE_LIMIT,
+  };
 }
 
 export async function getPendingClaims(db) {

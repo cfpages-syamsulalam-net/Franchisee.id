@@ -127,7 +127,7 @@
     setMetric("unclaimed_listings", data.overview.unclaimed_listings);
     setMetric("verified_listings", data.overview.verified_listings + data.overview.premium_listings);
     setMetric("pending_publish", (data.publish_state.requests_by_status.pending || 0) + (data.publish_state.requests_by_status.failed_retryable || 0));
-    renderOutreach(data.outreach_queue || []);
+    renderOutreach(data.outreach_queue || [], data.outreach_summary || {});
     renderQuality(data.data_quality || []);
     renderClaims(data.pending_claims || []);
     renderPublish(data.publish_state || {});
@@ -137,8 +137,17 @@
     renderHealth(data.system_health || {});
   }
 
-  function renderOutreach(rows) {
-    outreachCount.textContent = rows.length + " listing";
+  function renderOutreach(rows, summary) {
+    var contactReady = Number(summary.contact_ready || 0);
+    var publishedUnclaimed = Number(summary.published_unclaimed || 0);
+    var queueLimit = Number(summary.queue_limit || 0);
+    var badge = rows.length + " listing";
+    if (contactReady || publishedUnclaimed) {
+      badge = rows.length + " dari " + contactReady + " kontak siap";
+      if (publishedUnclaimed > contactReady) badge += " / " + publishedUnclaimed + " unclaimed published";
+      if (queueLimit && contactReady > rows.length) badge += " (limit " + queueLimit + ")";
+    }
+    outreachCount.textContent = badge;
     if (!rows.length) {
       outreachRows.innerHTML = '<tr><td colspan="4" class="dash-empty">Tidak ada unclaimed listing dengan nomor WhatsApp/mobile.</td></tr>';
       return;

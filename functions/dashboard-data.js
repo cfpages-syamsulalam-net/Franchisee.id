@@ -16,6 +16,7 @@ import {
   getRecentOutreach,
   getSystemHealth,
   getUnclaimedOutreachQueue,
+  getUnclaimedOutreachSummary,
 } from "./_dashboard-queries.js";
 import { DashboardActionSchema, SITE_ID } from "./_dashboard-schemas.js";
 import { jsonResponse } from "./_dashboard-utils.js";
@@ -25,11 +26,12 @@ export async function onRequestGet({ request, env }) {
     const auth = await requireDashboardAccess(request, env);
     const db = env.franchise_db;
 
-    const [overview, dataQuality, publishState, outreachQueue, pendingClaims, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth] = await Promise.all([
+    const [overview, dataQuality, publishState, outreachQueue, outreachSummary, pendingClaims, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth] = await Promise.all([
       getOverview(db),
       getDataQuality(db),
       getPublishState(db),
       getUnclaimedOutreachQueue(db),
+      getUnclaimedOutreachSummary(db),
       getPendingClaims(db),
       getRecentOutreach(db),
       getEditSuggestions(db),
@@ -55,6 +57,7 @@ export async function onRequestGet({ request, env }) {
       data_quality: dataQuality,
       publish_state: publishState,
       outreach_queue: outreachQueue,
+      outreach_summary: outreachSummary,
       pending_claims: pendingClaims,
       recent_outreach: recentOutreach,
       edit_suggestions: editSuggestions,

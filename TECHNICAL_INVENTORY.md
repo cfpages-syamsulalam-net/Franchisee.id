@@ -132,7 +132,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `boot()`: Initializes `window.FranchiseAuth`, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
 - `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, and Operations, including arrow/Home/End keyboard navigation.
 - `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics, outreach, quality, claims, publish, editable listings, edit suggestions, leads, and health renderers.
-- `renderOutreach()` / `logOutreach(link)`: Renders staff-personal WhatsApp links and records manually confirmed outreach through `/dashboard-data`.
+- `renderOutreach(rows, summary)` / `logOutreach(link)`: Renders staff-personal WhatsApp links, shows contact-ready/published-unclaimed subset counts from `outreach_summary`, and records manually confirmed outreach through `/dashboard-data`.
 - `renderQuality()` / `seedEditSuggestion(button)`: Shows data-quality warnings and seeds structured JSON edit suggestions.
 - `submitEditSuggestion()` / `reviewEditSuggestion()` / `reviewClaim()`: Posts dashboard actions for staff/admin workflows.
 - `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
@@ -296,7 +296,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach, quality, review, lead, publish, and health data from `_dashboard-queries.js`.
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach queue, outreach summary, quality, review, lead, publish, and health data from `_dashboard-queries.js`.
 - `onRequestPost()`: Validates the discriminated action payload from `_dashboard-schemas.js`, then routes to `_dashboard-actions.js`.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
@@ -310,7 +310,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Read-only D1 data model for `/dashboard-data`.*
 - `getOverview(db)`: Returns Franchisee.id listing counts and completeness counts.
 - `getDataQuality(db)`: Computes read-time warnings for missing images, contact, description, category, and likely all-caps descriptions; keeps all-caps detection in JavaScript so D1 does not evaluate complex `GLOB`/`LIKE` patterns.
-- `getUnclaimedOutreachQueue(db)`: Reads published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
+- `getUnclaimedOutreachQueue(db)`: Reads up to 250 published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
+- `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
 - `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab.
 - `getPublishState(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab.
 

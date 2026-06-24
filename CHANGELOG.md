@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-24 23:23 (Asia/Jakarta)
+### Added
+- `functions/_dashboard-queries.js`: Added `getUnclaimedOutreachSummary()` so `/dashboard-data` reports published unclaimed, contact-ready, missing-phone, and outreach queue-limit counts.
+- `.context/session-20260624-2323.md`: Added a session snapshot for the dashboard outreach-count investigation and fix.
+
+### Changed
+- `functions/_dashboard-queries.js`: Raised the unclaimed outreach queue cap from 75 to 250 rows.
+- `functions/dashboard-data.js`: Added `outreach_summary` to the protected dashboard GET response.
+- `js/dashboard-admin.js`: Changed the outreach badge to show visible rows against contact-ready and published-unclaimed totals, including a limit hint when applicable.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the dashboard outreach summary contract and queue behavior.
+
 ## 2026-06-24 22:55 (Asia/Jakarta)
 ### Added
 - `css/dashboard.css`: Added extracted dashboard-only styles for metrics, tabs, panels, tables, forms, badges, debug UI, and responsive dashboard layout.
