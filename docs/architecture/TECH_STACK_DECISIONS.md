@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-06-19 21:21 (Asia/Jakarta)
+Last updated: 2026-06-25 03:56 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -15,6 +15,7 @@ This document records stack decisions for the migration from a static WordPress 
 | Migrations | Source-controlled SQL migrations from the beginning. | Use Wrangler D1 migrations or Drizzle-generated SQL, but keep migration files committed and reviewable. |
 | Auth | Clerk for login/register and identity. | Clerk user ids map into D1 `users.clerk_user_id`. |
 | Roles | D1-authoritative roles: `franchisee`, `franchisor`, `admin`, `staff`. | Clerk metadata/session claims may cache small UI hints only; server authorization must verify D1 role/permission state. |
+| Public onboarding | Lightweight account creation happens in the custom Clerk auth UI; business/profile completion happens in `/daftar`. | Role must be selected before public registration, including Google SSO. `/daftar` keeps its URL but should be presented as profile/listing completion after login. See `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`. |
 | Assets | Cloudflare R2 for logos, covers, gallery images, proposal PDFs, and imported legacy assets. | D1 stores metadata and R2 object keys; R2 stores binary files. |
 | Framework | Astro on Cloudflare by default. | Current workspace uses Astro 5.x because local Node is 20.19.4. Astro 6 requires Node >=22.12.0. Next.js remains an option only if dashboard complexity becomes strongly React-heavy. |
 | Styling | Existing CSS only unless explicitly approved. | Do not add a styling framework for the migration. |

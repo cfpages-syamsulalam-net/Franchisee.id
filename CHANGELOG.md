@@ -4,6 +4,16 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-25 03:56 (Asia/Jakarta)
+### Added
+- `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: Added a progress tracker for public auth onboarding, role-first registration, `/daftar` completion, animated toggles, and logged-in navbar state.
+- `.context/session-20260625-0356.md`: Added a session snapshot for the auth/onboarding/navbar planning pass.
+
+### Changed
+- `docs/README.md`: Linked the new auth onboarding and navbar plan from the documentation index.
+- `docs/architecture/TECH_STACK_DECISIONS.md`: Recorded the public onboarding split between lightweight Clerk account creation and `/daftar` profile/listing completion.
+- `CODEBASE.md`: Documented the new auth onboarding plan in the supporting file map.
+
 ## 2026-06-25 00:43 (Asia/Jakarta)
 ### Added
 - `.context/session-20260625-0043.md`: Added a session snapshot for the `/peluang-usaha` card CTA and tooltip stacking update.

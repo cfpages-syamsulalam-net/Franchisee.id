@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-06-22 09:46 (Asia/Jakarta)
+Last updated: 2026-06-25 03:56 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -10,6 +10,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `AUDIT.md`: migration audit and progress tracker.
 - `docs/architecture/TECH_STACK_DECISIONS.md`: stack decisions for Astro, D1, R2, Clerk, TypeScript, Zod, SQL migrations, roles, and Drizzle timing.
 - `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`: comparison of twice-daily static publishing versus GitHub Actions polling/direct deploy for D1-backed SEO pages.
+- `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: implementation tracker for public login/register, role-first onboarding, `/daftar` completion, and logged-in navbar state.
 - `FORM_SCHEMA.md`: canonical form field inventory.
 - `FORM_PRESERVATION_MANDATE.md`: binding rule set for preserving existing form fields and payloads.
 - `TECHNICAL_INVENTORY.md`: function/module inventory for runtime and migration code.
@@ -20,6 +21,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/TECH_STACK_DECISIONS.md`: migration direction and operational notes for D1, Cloudflare account switching, static generation, roles, and importer cutover.
 - `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`: D1-to-static freshness strategy, polling/build options, recommended 30-minute GitHub Actions path, and guardrails.
 - `docs/architecture/CLERK_SETUP.md`: Clerk dashboard/env setup, custom auth flow, D1 user mapping, bidirectional sync endpoints, and role authorization rules.
+- `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: staged plan for reconciling lightweight account creation with `/daftar` profile/listing completion and public navbar account state.
 
 ## Forms
 - `docs/forms/AUTO_SAVE.md`: franchisor draft autosave behavior.
