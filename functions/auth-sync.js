@@ -14,7 +14,7 @@ export async function onRequestPost({ request, env }) {
         {
           success: false,
           error: "D1_BINDING_MISSING",
-          message: "Cloudflare D1 binding `franchise_db` is required for auth sync.",
+          message: "Layanan akun belum siap. Silakan coba lagi nanti.",
         },
         { status: 503 }
       );

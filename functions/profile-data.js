@@ -245,7 +245,7 @@ async function updateAccount(env, db, actor, data) {
 
   if (nextEmail !== currentEmail) {
     if (typeof clerk.users.replaceUserEmailAddress !== "function") {
-      throw new Error("Perubahan email belum didukung oleh versi Clerk backend yang terpasang.");
+      throw new Error("Perubahan email belum tersedia. Coba ubah nama terlebih dahulu, atau hubungi tim kami.");
     }
     await clerk.users.replaceUserEmailAddress(actor.clerk_user_id, { emailAddress: nextEmail });
     clerkUser = await clerk.users.getUser(actor.clerk_user_id);
@@ -290,7 +290,7 @@ async function updateFranchiseeProfile(db, actor, data) {
     .bind(actor.id)
     .first();
   if (!existing) {
-    return jsonResponse({ success: false, message: "Lengkapi data franchisee awal di /daftar terlebih dahulu." }, { status: 404 });
+    return jsonResponse({ success: false, message: "Silakan lengkapi form minat usaha terlebih dahulu." }, { status: 404 });
   }
 
   await db.batch([
@@ -323,7 +323,7 @@ async function updateFranchisorProfile(db, actor, data) {
     .bind(actor.id)
     .first();
   if (!existing) {
-    return jsonResponse({ success: false, message: "Lengkapi data franchisor awal di /daftar terlebih dahulu." }, { status: 404 });
+    return jsonResponse({ success: false, message: "Silakan lengkapi form data brand terlebih dahulu." }, { status: 404 });
   }
 
   await db.batch([
@@ -391,7 +391,7 @@ async function updateOwnedListing(db, actor, data) {
       {
         success: false,
         error: "LISTING_EDIT_RATE_LIMITED",
-        message: `Listing hanya bisa diedit sekali setiap ${OWNER_LISTING_EDIT_INTERVAL_HOURS} jam agar publish queue tetap terkendali.`,
+        message: `Listing hanya bisa diedit sekali setiap ${OWNER_LISTING_EDIT_INTERVAL_HOURS} jam. Silakan coba lagi nanti.`,
         last_owner_edit_at: rate.last_edit_at,
         edit_interval_hours: OWNER_LISTING_EDIT_INTERVAL_HOURS,
       },
@@ -566,7 +566,7 @@ function optionalMoney() {
 
 function getDb(env) {
   if (!env.franchise_db) {
-    throw new Error("Cloudflare D1 binding `franchise_db` belum tersedia.");
+    throw new Error("Layanan profil belum siap. Silakan coba lagi nanti.");
   }
   return env.franchise_db;
 }

@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-25 06:36 (Asia/Jakarta)
+### Added
+- `.context/session-20260625-0636.md`: Added a session snapshot for the public-facing copy cleanup pass.
+
+### Changed
+- `js/profile-page.js` and `css/profile.css`: Reworded `/profil` copy to plain user-facing language, replaced technical completion notices with direct CTA buttons, and renamed visible profile sections to minat usaha/data brand where appropriate.
+- `js/form-07-init.js`: Reworded `/daftar` identity helper text to avoid technical login/infrastructure wording.
+- `js/auth-clerk.js` and `src/pages/sso-callback/index.astro`: Reworded login and Google callback fallback messages to avoid implementation terms.
+- `functions/profile-data.js`, `functions/auth-sync.js`, `functions/form-submit.js`, and `functions/get-franchises.js`: Reworded API error messages that can surface in the UI so they do not expose infrastructure names.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification.
+
 ## 2026-06-25 06:23 (Asia/Jakarta)
 ### Added
 - `.context/session-20260625-0623.md`: Added a session snapshot for the production-only manual QA rule update.

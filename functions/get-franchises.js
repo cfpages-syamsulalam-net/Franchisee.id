@@ -75,7 +75,7 @@ export async function onRequestGet({ request, env }) {
 
 async function getFranchisesFromD1(env, query) {
   if (!env.franchise_db) {
-    throw new Error("Cloudflare D1 binding `franchise_db` is not available.");
+    throw new Error("Data franchise belum tersedia. Silakan coba lagi nanti.");
   }
 
   const data =

@@ -47,7 +47,7 @@ export async function onRequestPost({ request, env }) {
         {
           success: false,
           error: "D1_BINDING_MISSING",
-          message: "Cloudflare D1 binding `franchise_db` is required for form submissions.",
+          message: "Layanan formulir belum siap. Silakan coba lagi nanti.",
         },
         { status: 503 }
       );
@@ -531,7 +531,7 @@ async function handleCreateUnclaimed(db, data, actor) {
     success: true,
     id: publicId,
     franchise_id: franchiseId,
-    message: "UNCLAIMED test data created in D1",
+    message: "Test data berhasil dibuat.",
   });
 }
 

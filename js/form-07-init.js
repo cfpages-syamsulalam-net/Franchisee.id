@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
         field.readOnly = true;
         field.setAttribute('aria-readonly', 'true');
         field.classList.add('identity-locked-field');
-        field.title = 'Data ini mengikuti akun login. Ubah lewat halaman Profil.';
+        field.title = 'Data ini mengikuti akun Anda. Ubah lewat halaman Profil.';
         field.dispatchEvent(new Event('input', { bubbles: true }));
         field.dispatchEvent(new Event('change', { bubbles: true }));
         addIdentityLockNote(field);
@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!parent || parent.querySelector('.identity-lock-note')) return;
         const note = document.createElement('small');
         note.className = 'identity-lock-note';
-        note.textContent = 'Terkunci dari akun login. Ubah lewat Profil.';
+        note.textContent = 'Mengikuti akun Anda. Ubah lewat Profil.';
         parent.appendChild(note);
     }
 

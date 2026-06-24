@@ -93,7 +93,7 @@
         <div>
           <p class="fr-profile-kicker">Profil Akun</p>
           <h1 class="fr-profile-title">${escapeHtml(data.user.display_name || "Akun")}</h1>
-          <p class="fr-profile-subtitle">Kelola akun, data franchisee, data franchisor, dan listing brand dari satu tempat.</p>
+      <p class="fr-profile-subtitle">Kelola akun, minat kemitraan, data brand, dan listing dari satu tempat.</p>
         </div>
         <div class="fr-profile-badges">${roleBadges(data.user.roles)}</div>
       </div>
@@ -128,15 +128,21 @@
       <h2 class="fr-profile-section-title"><i class="fas fa-gauge-high" aria-hidden="true"></i> Ringkasan</h2>
       <p class="fr-profile-copy">Status data utama akun Anda di Franchisee.id.</p>
       <div class="fr-profile-summary">
-        <div class="fr-profile-stat"><strong>${data.completion.franchisee ? "Lengkap" : "Belum"}</strong><span>Profil franchisee</span></div>
-        <div class="fr-profile-stat"><strong>${data.completion.franchisor ? "Lengkap" : "Belum"}</strong><span>Profil franchisor</span></div>
+        <div class="fr-profile-stat"><strong>${data.completion.franchisee ? "Lengkap" : "Belum"}</strong><span>Minat usaha</span></div>
+        <div class="fr-profile-stat"><strong>${data.completion.franchisor ? "Lengkap" : "Belum"}</strong><span>Data brand</span></div>
         <div class="fr-profile-stat"><strong>${data.owned_franchises.length}</strong><span>Listing dimiliki</span></div>
       </div>
       ${data.user.is_staff_access ? `<p><a class="fr-profile-secondary" href="/dashboard/"><i class="fas fa-table-columns" aria-hidden="true"></i> Buka Dashboard</a></p>` : ""}
       ${!data.completion.franchisee || !data.completion.franchisor ? `
         <div class="fr-profile-notice">
           <i class="fas fa-circle-info" aria-hidden="true"></i>
-          <div>Data awal tetap dilengkapi lewat halaman daftar. Setelah lengkap, halaman daftar akan mengarahkan kembali ke profil ini.</div>
+          <div>
+            <strong>Ada data yang belum lengkap.</strong>
+            <div class="fr-profile-notice-actions">
+              ${!data.completion.franchisee ? `<a class="fr-profile-inline-cta" href="/daftar/?role=franchisee&continue=1"><i class="fas fa-user-tie" aria-hidden="true"></i> Lengkapi minat usaha</a>` : ""}
+              ${!data.completion.franchisor ? `<a class="fr-profile-inline-cta" href="/daftar/?role=franchisor&continue=1"><i class="fas fa-store" aria-hidden="true"></i> Lengkapi data brand</a>` : ""}
+            </div>
+          </div>
         </div>
       ` : ""}
     `;
@@ -147,7 +153,7 @@
     const readonly = state.accountEditing ? "" : "readonly";
     return `
       <h2 class="fr-profile-section-title"><i class="fas fa-user-gear" aria-hidden="true"></i> Akun</h2>
-      <p class="fr-profile-copy">Nama dan email berasal dari identitas Clerk dan disinkronkan ke D1.</p>
+      <p class="fr-profile-copy">Nama dan email digunakan sebagai identitas akun Anda.</p>
       <form data-profile-form="account">
         <div class="fr-profile-grid">
           <div class="fr-profile-field">
@@ -175,10 +181,10 @@
 
   function franchiseePanel() {
     const profile = state.data.franchisee_profile;
-    if (!profile) return emptyState("fa-user-tie", "Profil franchisee belum lengkap", "/daftar/?role=franchisee&continue=1");
+    if (!profile) return emptyState("fa-user-tie", "Minat usaha belum lengkap", "/daftar/?role=franchisee&continue=1");
     return `
-      <h2 class="fr-profile-section-title"><i class="fas fa-user-tie" aria-hidden="true"></i> Data Franchisee</h2>
-      <p class="fr-profile-copy">Nama dan email dikunci dari data akun. Field minat dapat diperbarui di sini.</p>
+      <h2 class="fr-profile-section-title"><i class="fas fa-user-tie" aria-hidden="true"></i> Minat Usaha</h2>
+      <p class="fr-profile-copy">Nama dan email mengikuti akun Anda. Minat dan preferensi bisa diperbarui di sini.</p>
       <form data-profile-form="franchisee">
         <div class="fr-profile-grid">
           ${readonlyIdentity("Nama", "name", profile.name)}
@@ -193,7 +199,7 @@
         </div>
         <p class="fr-profile-message" data-profile-message></p>
         <div class="fr-profile-actions">
-          <button class="fr-profile-button" type="submit"><i class="fas fa-floppy-disk" aria-hidden="true"></i> Simpan Franchisee</button>
+          <button class="fr-profile-button" type="submit"><i class="fas fa-floppy-disk" aria-hidden="true"></i> Simpan Minat</button>
         </div>
       </form>
     `;
@@ -201,10 +207,10 @@
 
   function franchisorPanel() {
     const profile = state.data.franchisor_profile;
-    if (!profile) return emptyState("fa-store", "Profil franchisor belum lengkap", "/daftar/?role=franchisor&continue=1");
+    if (!profile) return emptyState("fa-store", "Data brand belum lengkap", "/daftar/?role=franchisor&continue=1");
     return `
-      <h2 class="fr-profile-section-title"><i class="fas fa-store" aria-hidden="true"></i> Data Franchisor</h2>
-      <p class="fr-profile-copy">PIC dan email kontak mengikuti identitas akun. Data perusahaan dan kanal resmi dapat diperbarui.</p>
+      <h2 class="fr-profile-section-title"><i class="fas fa-store" aria-hidden="true"></i> Data Brand</h2>
+      <p class="fr-profile-copy">Nama kontak dan email mengikuti akun Anda. Data perusahaan dan kanal resmi bisa diperbarui.</p>
       <form data-profile-form="franchisor">
         <div class="fr-profile-grid">
           ${readonlyIdentity("PIC", "pic_name", profile.pic_name)}
@@ -224,7 +230,7 @@
         </div>
         <p class="fr-profile-message" data-profile-message></p>
         <div class="fr-profile-actions">
-          <button class="fr-profile-button" type="submit"><i class="fas fa-floppy-disk" aria-hidden="true"></i> Simpan Franchisor</button>
+          <button class="fr-profile-button" type="submit"><i class="fas fa-floppy-disk" aria-hidden="true"></i> Simpan Brand</button>
         </div>
       </form>
     `;
@@ -236,7 +242,7 @@
     const selected = listings.find((item) => item.id === state.selectedFranchiseId) || listings[0];
     return `
       <h2 class="fr-profile-section-title"><i class="fas fa-pen-to-square" aria-hidden="true"></i> Listing Brand</h2>
-      <p class="fr-profile-copy">Edit owner diterapkan langsung ke D1, lalu masuk publish queue. Satu listing hanya bisa diedit sekali setiap ${selected.edit_interval_hours || 6} jam.</p>
+      <p class="fr-profile-copy">Perubahan listing akan disimpan dan tampil setelah halaman diperbarui. Untuk menjaga kualitas data, satu listing bisa diedit setiap ${selected.edit_interval_hours || 6} jam.</p>
       <div class="fr-profile-select-row">
         <i class="fas fa-list" aria-hidden="true"></i>
         <select data-franchise-select>${listings.map((item) => `<option value="${attr(item.id)}" ${item.id === selected.id ? "selected" : ""}>${escapeHtml(item.brand_name || item.slug || item.id)}</option>`).join("")}</select>
@@ -286,8 +292,8 @@
   function emptyState(icon, text, href) {
     return `
       <h2 class="fr-profile-section-title"><i class="fas ${icon}" aria-hidden="true"></i> ${escapeHtml(text)}</h2>
-      <p class="fr-profile-copy">Gunakan alur daftar untuk mengisi data awal, lalu kembali ke profil untuk perubahan berikutnya.</p>
-      <p><a class="fr-profile-button" href="${attr(href)}"><i class="fas fa-arrow-right" aria-hidden="true"></i> Lengkapi Data</a></p>
+      <p class="fr-profile-copy">Lengkapi form singkat agar bagian ini siap digunakan.</p>
+      <p><a class="fr-profile-button" href="${attr(href)}"><i class="fas fa-arrow-right" aria-hidden="true"></i> Lengkapi Sekarang</a></p>
     `;
   }
 

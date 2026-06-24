@@ -87,13 +87,13 @@
         publishableKeyHint: keyHint(publishableKey),
       });
       if (!publishableKey) {
-        throw new Error("Clerk publishable key belum dikonfigurasi di Cloudflare Pages.");
+        throw new Error("Layanan login belum siap. Silakan coba lagi nanti.");
       }
 
       await loadScriptWithFallbacks(CLERK_JS_URLS, publishableKey);
       recordDebug("script:loaded", { hasWindowClerk: Boolean(window.Clerk) });
       const ClerkCtor = window.Clerk;
-      if (!ClerkCtor) throw new Error("ClerkJS gagal dimuat.");
+      if (!ClerkCtor) throw new Error("Layanan login gagal dimuat. Silakan muat ulang halaman.");
 
       const clerk = createClerkInstance(ClerkCtor, publishableKey);
       await loadClerkInstance(clerk, publishableKey);
@@ -183,7 +183,7 @@
           ${isLoginOnly ? `
             <div class="fr-auth-context">
               <h2>Login Admin / Staff</h2>
-              <p>Gunakan akun internal yang sudah diberi peran admin atau staff di D1.</p>
+              <p>Gunakan akun internal yang sudah diberi akses admin atau staff.</p>
             </div>
           ` : `
             <div class="fr-auth-tabs" role="tablist" aria-label="Login dan daftar">
@@ -412,7 +412,7 @@
         return;
       }
 
-      throw new Error("Google login belum tersedia di konfigurasi ClerkJS ini.");
+      throw new Error("Login Google belum tersedia saat ini.");
     } catch (error) {
       clearPendingRole();
       clearPendingNext();
@@ -645,7 +645,7 @@
   }
 
   async function loadClerkInstance(clerk, publishableKey) {
-    if (!clerk || typeof clerk.load !== "function") throw new Error("ClerkJS gagal diinisialisasi.");
+    if (!clerk || typeof clerk.load !== "function") throw new Error("Layanan login gagal dimuat. Silakan muat ulang halaman.");
     try {
       await clerk.load({ publishableKey: publishableKey });
       recordDebug("clerk:load_object_ok", summarizeClerk(clerk));
@@ -780,7 +780,7 @@
       }
     }
 
-    throw lastError || new Error("ClerkJS gagal dimuat.");
+    throw lastError || new Error("Layanan login gagal dimuat. Silakan muat ulang halaman.");
   }
 
   function loadScript(src, publishableKey) {
@@ -806,7 +806,7 @@
       script.addEventListener("error", function () {
         script.remove();
         recordDebug("script:error", { src });
-        reject(new Error("ClerkJS gagal dimuat."));
+        reject(new Error("Layanan login gagal dimuat. Silakan muat ulang halaman."));
       }, { once: true });
       recordDebug("script:append", { src });
       document.head.appendChild(script);

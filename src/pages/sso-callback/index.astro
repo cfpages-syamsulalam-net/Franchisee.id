@@ -67,7 +67,7 @@ export const prerender = true;
   <body>
     <main class="sso-card">
       <h1>Menyelesaikan login...</h1>
-      <p data-sso-status>Mohon tunggu. Jika halaman ini tidak berpindah otomatis, login Google belum selesai diproses oleh Clerk.</p>
+      <p data-sso-status>Mohon tunggu. Jika halaman ini tidak berpindah otomatis, login Google belum selesai.</p>
       <button class="sso-copy" type="button" data-sso-copy aria-label="Copy auth debug" title="Copy auth debug">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M8 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2V7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
@@ -94,7 +94,7 @@ export const prerender = true;
             await window.FranchiseAuth.init();
             var snapshot = getSnapshot();
             if (!snapshot || !snapshot.clerk || !snapshot.clerk.hasSession) {
-              throw new Error("Clerk callback selesai, tetapi tidak ada session aktif di browser.");
+              throw new Error("Login Google selesai, tetapi sesi belum aktif. Silakan coba masuk lagi.");
             }
             window.location.replace(getPendingDestination());
           } catch (error) {
