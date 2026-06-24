@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-06-22 15:22 (Asia/Jakarta)
+Last updated: 2026-06-24 22:55 (Asia/Jakarta)
 
 ## Purpose
 
@@ -34,6 +34,7 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 | --- | --- | --- |
 | `/dashboard` route | Implemented | `src/pages/dashboard/index.astro` builds a static protected dashboard shell. Sensitive data loads only from the protected API. |
 | Dashboard auth | Implemented | `functions/dashboard-data.js` requires D1 role `staff`; existing auth helper allows `admin` as elevated access. |
+| Dashboard tab UI | Implemented | `/dashboard` now groups detailed panels into icon-led tabs: Outreach, Data Quality, Review, and Operations. |
 | Overview metrics | Implemented | Total listings, unclaimed, verified/premium, missing image/contact/description, and publish queue counts come from D1. |
 | Unclaimed outreach queue | Implemented | Shows unclaimed published listings with mobile/WhatsApp-capable phone data and generates `wa.me` claim-notification links. |
 | Outreach event logging | Implemented | `listing_outreach_events` records staff, contact, message, outcome, and timestamp only after staff manually confirms the WA message was sent. |
@@ -43,6 +44,7 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 | Staff edit suggestions | Implemented | Dashboard accepts structured JSON diffs for whitelisted listing fields, stores pending suggestions, allows admin approve/reject, and supports active staff auto-approval rules. |
 | Remote D1 migration | Implemented | `0004_dashboard_operations.sql` validates locally and was applied remotely after setting `CLOUDFLARE_ACCOUNT_ID=0ba63b7f0096bc267a93fe5c80b1f571` for Wrangler account context. |
 | Admin approvals | Implemented | `/dashboard-data` supports admin-only approve/reject for claim reviews and edit suggestions. |
+| Dashboard API modularization | Implemented | `/dashboard-data` is now a thin router; schemas, queries, actions, and shared utilities live in dedicated `_dashboard-*` modules. |
 | Listing operations editor | Implemented MVP | Listing selector plus structured JSON diff form covers all whitelisted public listing fields. A richer field-by-field drawer can be added later. |
 | Leads/commercial view | Implemented read-only MVP | Reads `franchise_leads` status counts and recent leads. Payment/subscription revenue metrics remain pending. |
 | System health | Implemented read-only MVP | Shows D1 connectivity/migration probe, Clerk session verification note, and recent publish queue status. R2 and webhook failure telemetry remain pending. |

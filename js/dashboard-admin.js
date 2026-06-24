@@ -7,6 +7,8 @@
   var authDebugOutput = document.querySelector("[data-auth-debug-output]");
   var authDebugRefresh = document.querySelector("[data-auth-debug-refresh]");
   var authDebugCopy = document.querySelector("[data-auth-debug-copy]");
+  var dashboardTabs = Array.from(document.querySelectorAll("[data-dashboard-tab]"));
+  var dashboardPanels = Array.from(document.querySelectorAll("[data-dashboard-panel]"));
   var outreachRows = document.querySelector("[data-outreach-rows]");
   var qualityRows = document.querySelector("[data-quality-rows]");
   var claimRows = document.querySelector("[data-claim-rows]");
@@ -24,6 +26,7 @@
   var currentUserIsAdmin = false;
 
   window.FRANCHISE_AUTH_DEBUG = true;
+  bindDashboardTabs();
   if (authDebugRefresh) {
     authDebugRefresh.addEventListener("click", function () {
       renderAuthDebug("manual_refresh");
@@ -38,7 +41,49 @@
   if (editForm) {
     editForm.addEventListener("submit", submitEditSuggestion);
   }
+  activateDashboardTab(initialDashboardTab(), false);
   boot();
+
+  function bindDashboardTabs() {
+    dashboardTabs.forEach(function (tab, index) {
+      tab.addEventListener("click", function () {
+        activateDashboardTab(tab.getAttribute("data-dashboard-tab"), true);
+      });
+      tab.addEventListener("keydown", function (event) {
+        if (event.key !== "ArrowRight" && event.key !== "ArrowLeft" && event.key !== "Home" && event.key !== "End") return;
+        event.preventDefault();
+        var nextIndex = index;
+        if (event.key === "ArrowRight") nextIndex = (index + 1) % dashboardTabs.length;
+        if (event.key === "ArrowLeft") nextIndex = (index - 1 + dashboardTabs.length) % dashboardTabs.length;
+        if (event.key === "Home") nextIndex = 0;
+        if (event.key === "End") nextIndex = dashboardTabs.length - 1;
+        dashboardTabs[nextIndex].focus();
+        activateDashboardTab(dashboardTabs[nextIndex].getAttribute("data-dashboard-tab"), true);
+      });
+    });
+  }
+
+  function initialDashboardTab() {
+    var hash = (window.location.hash || "").replace(/^#/, "");
+    return dashboardTabs.some(function (tab) {
+      return tab.getAttribute("data-dashboard-tab") === hash;
+    }) ? hash : "outreach";
+  }
+
+  function activateDashboardTab(name, updateHash) {
+    if (!name) name = "outreach";
+    dashboardTabs.forEach(function (tab) {
+      var active = tab.getAttribute("data-dashboard-tab") === name;
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+      tab.tabIndex = active ? 0 : -1;
+    });
+    dashboardPanels.forEach(function (panel) {
+      panel.hidden = panel.getAttribute("data-dashboard-panel") !== name;
+    });
+    if (updateHash && window.history && window.history.replaceState) {
+      window.history.replaceState(window.history.state, document.title, "#" + name);
+    }
+  }
 
   async function boot() {
     try {

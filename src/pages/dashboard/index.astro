@@ -11,364 +11,7 @@ export const prerender = true;
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="/wp-content/plugins/elementor/assets/css/frontend.min.css">
     <link rel="stylesheet" href="/css/auth-clerk.css">
-    <style>
-      :root {
-        --dash-ink: #171717;
-        --dash-muted: #646464;
-        --dash-line: #e5e5e5;
-        --dash-soft: #f7f7f7;
-        --dash-accent: #f0ca00;
-        --dash-accent-dark: #5d4500;
-        --dash-good: #0f6b3d;
-        --dash-warn: #8a5a00;
-        --dash-bad: #a42424;
-      }
-      body {
-        margin: 0;
-        background: #f2f2f2;
-        color: var(--dash-ink);
-        font-family: Outfit, "DM Sans", Arial, sans-serif;
-      }
-      .dash-shell {
-        min-height: 100vh;
-      }
-      .dash-header {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        border-bottom: 1px solid var(--dash-line);
-        background: rgba(255, 255, 255, 0.96);
-      }
-      .dash-header-inner {
-        max-width: 1280px;
-        margin: 0 auto;
-        padding: 16px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-      }
-      .dash-title h1 {
-        margin: 0;
-        font-size: 22px;
-        line-height: 1.2;
-      }
-      .dash-title p {
-        margin: 3px 0 0;
-        color: var(--dash-muted);
-        font-size: 13px;
-      }
-      .dash-user {
-        color: var(--dash-muted);
-        font-size: 13px;
-        text-align: right;
-      }
-      .dash-main {
-        max-width: 1280px;
-        margin: 0 auto;
-        padding: 22px 20px 44px;
-      }
-      .dash-main[data-dashboard-protected="locked"] .dash-grid,
-      .dash-main[data-dashboard-protected="locked"] .dash-layout {
-        display: none !important;
-      }
-      .dash-login-panel {
-        max-width: 560px;
-        margin: 20px auto 0;
-      }
-      .dash-login-panel[hidden] {
-        display: none !important;
-      }
-      .dash-alert {
-        margin-bottom: 16px;
-        border: 1px solid #ead57e;
-        border-left: 4px solid var(--dash-accent);
-        background: #fff9df;
-        padding: 14px 16px;
-        color: #352800;
-        font-size: 14px;
-      }
-      .dash-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 12px;
-      }
-      .dash-card,
-      .dash-panel {
-        border: 1px solid var(--dash-line);
-        background: #ffffff;
-      }
-      .dash-card {
-        padding: 15px;
-      }
-      .dash-card span {
-        display: block;
-        color: var(--dash-muted);
-        font-size: 12px;
-        font-weight: 700;
-      }
-      .dash-card strong {
-        display: block;
-        margin-top: 8px;
-        font-size: 26px;
-        line-height: 1;
-      }
-      .dash-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.9fr);
-        gap: 16px;
-        margin-top: 16px;
-      }
-      .dash-panel {
-        min-width: 0;
-      }
-      .dash-panel-header {
-        padding: 14px 16px;
-        border-bottom: 1px solid var(--dash-line);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-      }
-      .dash-panel-header h2 {
-        margin: 0;
-        font-size: 16px;
-      }
-      .dash-panel-header p {
-        margin: 3px 0 0;
-        color: var(--dash-muted);
-        font-size: 12px;
-      }
-      .dash-table-wrap {
-        overflow-x: auto;
-      }
-      .dash-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-      }
-      .dash-table th,
-      .dash-table td {
-        border-bottom: 1px solid var(--dash-line);
-        padding: 10px 12px;
-        text-align: left;
-        vertical-align: top;
-      }
-      .dash-table th {
-        color: var(--dash-muted);
-        font-size: 11px;
-        text-transform: uppercase;
-      }
-      .dash-table a {
-        color: #111111;
-        font-weight: 700;
-      }
-      .dash-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-      .dash-form {
-        display: grid;
-        grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1fr);
-        gap: 10px;
-        padding: 14px 16px;
-        border-bottom: 1px solid var(--dash-line);
-      }
-      .dash-form label {
-        display: grid;
-        gap: 5px;
-        color: var(--dash-muted);
-        font-size: 12px;
-        font-weight: 800;
-      }
-      .dash-form select,
-      .dash-form input,
-      .dash-form textarea {
-        width: 100%;
-        min-height: 38px;
-        border: 1px solid #d7d7d7;
-        border-radius: 4px;
-        background: #ffffff;
-        color: #111111;
-        padding: 8px 10px;
-        font: inherit;
-        font-size: 13px;
-      }
-      .dash-form textarea {
-        min-height: 92px;
-        resize: vertical;
-        font-family: Consolas, "Courier New", monospace;
-      }
-      .dash-form .dash-form-wide {
-        grid-column: 1 / -1;
-      }
-      .dash-button {
-        min-height: 34px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid #151515;
-        border-radius: 4px;
-        background: #151515;
-        color: #ffffff !important;
-        padding: 7px 10px;
-        font-size: 12px;
-        font-weight: 800;
-        text-decoration: none !important;
-        cursor: pointer;
-      }
-      .dash-button.secondary {
-        border-color: #dedede;
-        background: #f7f7f7;
-        color: #111111 !important;
-      }
-      .dash-badge {
-        display: inline-flex;
-        align-items: center;
-        min-height: 22px;
-        border-radius: 999px;
-        padding: 3px 8px;
-        background: #fff3bf;
-        color: var(--dash-accent-dark);
-        font-size: 11px;
-        font-weight: 800;
-      }
-      .dash-badge.good {
-        background: #dff3e8;
-        color: var(--dash-good);
-      }
-      .dash-badge.bad {
-        background: #fde3e3;
-        color: var(--dash-bad);
-      }
-      .dash-stack {
-        display: grid;
-        gap: 16px;
-      }
-      .dash-list {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-      }
-      .dash-list li {
-        padding: 11px 16px;
-        border-bottom: 1px solid var(--dash-line);
-      }
-      .dash-list strong {
-        display: block;
-        font-size: 13px;
-      }
-      .dash-list span {
-        display: block;
-        margin-top: 3px;
-        color: var(--dash-muted);
-        font-size: 12px;
-      }
-      .dash-empty,
-      .dash-loading {
-        padding: 18px 16px;
-        color: var(--dash-muted);
-        font-size: 13px;
-      }
-      .dash-error {
-        border-color: #f1b1b1;
-        background: #fff1f1;
-        color: var(--dash-bad);
-      }
-      .dash-debug-panel {
-        margin-top: 14px;
-        border: 1px solid #d7d7d7;
-        background: #ffffff;
-      }
-      .dash-debug-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--dash-line);
-      }
-      .dash-debug-head strong {
-        font-size: 13px;
-      }
-      .dash-debug-head span,
-      .dash-debug-summary {
-        color: var(--dash-muted);
-        font-size: 12px;
-      }
-      .dash-debug-actions {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .dash-icon-button {
-        width: 36px;
-        height: 36px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid #dedede;
-        border-radius: 4px;
-        background: #f7f7f7;
-        color: #111111;
-        cursor: pointer;
-      }
-      .dash-icon-button:hover,
-      .dash-icon-button:focus {
-        border-color: #151515;
-        background: #ffffff;
-      }
-      .dash-icon-button svg {
-        width: 17px;
-        height: 17px;
-      }
-      .dash-debug-body {
-        display: grid;
-        gap: 10px;
-        padding: 12px 14px;
-      }
-      .dash-debug-output {
-        max-height: 360px;
-        margin: 0;
-        overflow: auto;
-        white-space: pre-wrap;
-        word-break: break-word;
-        border: 1px solid #ededed;
-        background: #f8f8f8;
-        color: #171717;
-        padding: 10px;
-        font: 12px/1.45 Consolas, "Courier New", monospace;
-      }
-      .dash-muted {
-        color: var(--dash-muted);
-        font-size: 12px;
-      }
-      @media (max-width: 980px) {
-        .dash-grid,
-        .dash-layout {
-          grid-template-columns: 1fr 1fr;
-        }
-      }
-      @media (max-width: 720px) {
-        .dash-header-inner,
-        .dash-layout,
-        .dash-grid {
-          display: block;
-        }
-        .dash-card,
-        .dash-panel {
-          margin-bottom: 12px;
-        }
-        .dash-user {
-          margin-top: 8px;
-          text-align: left;
-        }
-        .dash-form {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="/css/dashboard.css">
   </head>
   <body>
     <div class="dash-shell">
@@ -417,13 +60,35 @@ export const prerender = true;
           <div class="dash-card"><span>Pending publish</span><strong data-metric="pending_publish">-</strong></div>
         </section>
 
-        <section class="dash-layout">
-          <div class="dash-stack">
+        <nav class="dash-tabs" role="tablist" aria-label="Dashboard sections" data-dashboard-tabs>
+          <button class="dash-tab" type="button" role="tab" id="dash-tab-outreach" aria-controls="dash-panel-outreach" aria-selected="true" data-dashboard-tab="outreach">
+            <svg class="dash-tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.4a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.4 8.4 0 0 1 12.5 3H13a8 8 0 0 1 8 8v.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            Outreach
+          </button>
+          <button class="dash-tab" type="button" role="tab" id="dash-tab-quality" aria-controls="dash-panel-quality" aria-selected="false" data-dashboard-tab="quality">
+            <svg class="dash-tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 12l2 2 4-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+            Data Quality
+          </button>
+          <button class="dash-tab" type="button" role="tab" id="dash-tab-review" aria-controls="dash-panel-review" aria-selected="false" data-dashboard-tab="review">
+            <svg class="dash-tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 2v6h6M9 15l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Review
+          </button>
+          <button class="dash-tab" type="button" role="tab" id="dash-tab-operations" aria-controls="dash-panel-operations" aria-selected="false" data-dashboard-tab="operations">
+            <svg class="dash-tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1A1.7 1.7 0 0 0 10 3.1V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6h.1a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1A1.7 1.7 0 0 0 20.9 10H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            Operations
+          </button>
+        </nav>
+
+        <section class="dash-tab-panels">
+          <section class="dash-tab-panel" id="dash-panel-outreach" role="tabpanel" aria-labelledby="dash-tab-outreach" data-dashboard-panel="outreach">
             <section class="dash-panel">
               <div class="dash-panel-header">
-                <div>
-                  <h2>Unclaimed Outreach</h2>
-                  <p>WhatsApp memakai nomor personal staff melalui link wa.me.</p>
+                <div class="dash-panel-title">
+                  <svg class="dash-section-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.4a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.4 8.4 0 0 1 12.5 3H13a8 8 0 0 1 8 8v.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                  <div>
+                    <h2>Unclaimed Outreach</h2>
+                    <p>WhatsApp memakai nomor personal staff melalui link wa.me.</p>
+                  </div>
                 </div>
                 <span class="dash-badge" data-outreach-count>-</span>
               </div>
@@ -443,12 +108,17 @@ export const prerender = true;
                 </table>
               </div>
             </section>
+          </section>
 
+          <section class="dash-tab-panel" id="dash-panel-quality" role="tabpanel" aria-labelledby="dash-tab-quality" data-dashboard-panel="quality" hidden>
             <section class="dash-panel">
               <div class="dash-panel-header">
-                <div>
-                  <h2>Data Quality</h2>
-                  <p>Prioritas listing yang perlu dibersihkan.</p>
+                <div class="dash-panel-title">
+                  <svg class="dash-section-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 12l2 2 4-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                  <div>
+                    <h2>Data Quality</h2>
+                    <p>Prioritas listing yang perlu dibersihkan.</p>
+                  </div>
                 </div>
               </div>
               <div class="dash-table-wrap">
@@ -467,115 +137,139 @@ export const prerender = true;
                 </table>
               </div>
             </section>
+          </section>
 
-            <section class="dash-panel">
-              <div class="dash-panel-header">
-                <div>
-                  <h2>Listing Edit Suggestions</h2>
-                  <p>Staff menyarankan edit lewat JSON diff; admin approve sebelum masuk D1.</p>
+          <section class="dash-tab-panel" id="dash-panel-review" role="tabpanel" aria-labelledby="dash-tab-review" data-dashboard-panel="review" hidden>
+            <div class="dash-panel-grid two">
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <svg class="dash-section-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                    <div>
+                      <h2>Listing Edit Suggestions</h2>
+                      <p>Staff menyarankan edit lewat JSON diff; admin approve sebelum masuk D1.</p>
+                    </div>
+                  </div>
+                  <span class="dash-badge" data-edit-count>-</span>
                 </div>
-                <span class="dash-badge" data-edit-count>-</span>
-              </div>
-              <form class="dash-form" data-edit-form>
-                <label>
-                  Listing
-                  <select data-listing-select required>
-                    <option value="">Memuat listing...</option>
-                  </select>
-                </label>
-                <label>
-                  Reason
-                  <input type="text" data-edit-reason maxlength="1200" placeholder="Contoh: nomor kontak publik salah">
-                </label>
-                <label class="dash-form-wide">
-                  JSON diff
-                  <textarea data-edit-json spellcheck="false" required placeholder="Contoh: phone dan office_address dalam JSON diff"></textarea>
-                </label>
-                <div class="dash-form-wide dash-actions">
-                  <button class="dash-button" type="submit">Submit Suggestion</button>
-                  <span class="dash-muted" data-edit-help>Field yang boleh diedit mengikuti whitelist dashboard di API.</span>
+                <form class="dash-form" data-edit-form>
+                  <label>
+                    Listing
+                    <select data-listing-select required>
+                      <option value="">Memuat listing...</option>
+                    </select>
+                  </label>
+                  <label>
+                    Reason
+                    <input type="text" data-edit-reason maxlength="1200" placeholder="Contoh: nomor kontak publik salah">
+                  </label>
+                  <label class="dash-form-wide">
+                    JSON diff
+                    <textarea data-edit-json spellcheck="false" required placeholder="Contoh: phone dan office_address dalam JSON diff"></textarea>
+                  </label>
+                  <div class="dash-form-wide dash-actions">
+                    <button class="dash-button" type="submit">Submit Suggestion</button>
+                    <span class="dash-muted" data-edit-help>Field yang boleh diedit mengikuti whitelist dashboard di API.</span>
+                  </div>
+                </form>
+                <div class="dash-table-wrap">
+                  <table class="dash-table">
+                    <thead>
+                      <tr>
+                        <th>Brand</th>
+                        <th>Diff</th>
+                        <th>Reason</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody data-edit-rows>
+                      <tr><td colspan="4" class="dash-loading">Memuat edit suggestions...</td></tr>
+                    </tbody>
+                  </table>
                 </div>
-              </form>
-              <div class="dash-table-wrap">
-                <table class="dash-table">
-                  <thead>
-                    <tr>
-                      <th>Brand</th>
-                      <th>Diff</th>
-                      <th>Reason</th>
-                      <th>Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody data-edit-rows>
-                    <tr><td colspan="4" class="dash-loading">Memuat edit suggestions...</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </div>
+              </section>
 
-          <aside class="dash-stack">
-            <section class="dash-panel">
-              <div class="dash-panel-header">
-                <div>
-                  <h2>Publish Queue</h2>
-                  <p>Status static rebuild untuk franchisee.id.</p>
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <svg class="dash-section-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l7 4v5c0 4.4-2.9 7.4-7 9-4.1-1.6-7-4.6-7-9V7l7-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <div>
+                      <h2>Claim Review</h2>
+                      <p>Admin menyetujui claim; staff hanya membantu review.</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <ul class="dash-list" data-publish-state>
-                <li><span>Memuat publish state...</span></li>
-              </ul>
-            </section>
+                <ul class="dash-list" data-claim-rows>
+                  <li><span>Memuat claim pending...</span></li>
+                </ul>
+              </section>
+            </div>
+          </section>
 
-            <section class="dash-panel">
-              <div class="dash-panel-header">
-                <div>
-                  <h2>Claim Review</h2>
-                  <p>Admin menyetujui claim; staff hanya membantu review.</p>
+          <section class="dash-tab-panel" id="dash-panel-operations" role="tabpanel" aria-labelledby="dash-tab-operations" data-dashboard-panel="operations" hidden>
+            <div class="dash-panel-grid two">
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <svg class="dash-section-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 0 1-9 9 9.4 9.4 0 0 1-6.4-2.5L3 21l.8-5.2A9 9 0 1 1 21 12Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <div>
+                      <h2>Publish Queue</h2>
+                      <p>Status static rebuild untuk franchisee.id.</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <ul class="dash-list" data-claim-rows>
-                <li><span>Memuat claim pending...</span></li>
-              </ul>
-            </section>
+                <ul class="dash-list" data-publish-state>
+                  <li><span>Memuat publish state...</span></li>
+                </ul>
+              </section>
 
-            <section class="dash-panel">
-              <div class="dash-panel-header">
-                <div>
-                  <h2>Leads</h2>
-                  <p>Ringkasan inquiry dari Franchisee.id.</p>
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <svg class="dash-section-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <div>
+                      <h2>Leads</h2>
+                      <p>Ringkasan inquiry dari Franchisee.id.</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <ul class="dash-list" data-lead-summary>
-                <li><span>Memuat leads...</span></li>
-              </ul>
-            </section>
+                <ul class="dash-list" data-lead-summary>
+                  <li><span>Memuat leads...</span></li>
+                </ul>
+              </section>
 
-            <section class="dash-panel">
-              <div class="dash-panel-header">
-                <div>
-                  <h2>System Health</h2>
-                  <p>D1, Clerk, dan publish workflow.</p>
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <svg class="dash-section-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 13c0 5-3.5 7-8 9-4.5-2-8-4-8-9V5l8-3 8 3v8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 12l2 2 4-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <div>
+                      <h2>System Health</h2>
+                      <p>D1, Clerk, dan publish workflow.</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <ul class="dash-list" data-system-health>
-                <li><span>Memuat health check...</span></li>
-              </ul>
-            </section>
+                <ul class="dash-list" data-system-health>
+                  <li><span>Memuat health check...</span></li>
+                </ul>
+              </section>
 
-            <section class="dash-panel">
-              <div class="dash-panel-header">
-                <div>
-                  <h2>Staff Edit Policy</h2>
-                  <p>Default: staff menyarankan edit, admin approve.</p>
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <svg class="dash-section-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 21V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 7h8M8 11h8M8 15h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <div>
+                      <h2>Staff Edit Policy</h2>
+                      <p>Default: staff menyarankan edit, admin approve.</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <ul class="dash-list" data-edit-policy>
-                <li><strong>Auto approve</strong><span>Hanya berlaku jika admin membuat rule aktif untuk staff tertentu.</span></li>
-                <li><strong>Site scope</strong><span>Dashboard ini hanya untuk franchisee.id; centralized dashboard dibuat nanti.</span></li>
-              </ul>
-            </section>
-          </aside>
+                <ul class="dash-list" data-edit-policy>
+                  <li><strong>Auto approve</strong><span>Hanya berlaku jika admin membuat rule aktif untuk staff tertentu.</span></li>
+                  <li><strong>Site scope</strong><span>Dashboard ini hanya untuk franchisee.id; centralized dashboard dibuat nanti.</span></li>
+                </ul>
+              </section>
+            </div>
+          </section>
         </section>
       </main>
     </div>

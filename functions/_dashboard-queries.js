@@ -1,0 +1,371 @@
+import { SITE_ID } from "./_dashboard-schemas.js";
+import {
+  buildWhatsAppUrl,
+  isLikelyAllCapsDescription,
+  normalizeGroupedCounts,
+  normalizeNumberObject,
+  parseJson,
+  parseWhatsAppContacts,
+} from "./_dashboard-utils.js";
+
+export async function getOverview(db) {
+  const row = await db
+    .prepare(
+      `SELECT
+        COUNT(*) AS total_listings,
+        SUM(CASE WHEN f.source_sheet = 'UNCLAIMED' OR f.verification_tier = 'unclaimed' OR f.status = 'unclaimed' THEN 1 ELSE 0 END) AS unclaimed_listings,
+        SUM(CASE WHEN f.verification_tier = 'verified' THEN 1 ELSE 0 END) AS verified_listings,
+        SUM(CASE WHEN f.verification_tier = 'premium' THEN 1 ELSE 0 END) AS premium_listings,
+        SUM(CASE WHEN p.publication_status = 'published' THEN 1 ELSE 0 END) AS published_listings,
+        SUM(CASE WHEN COALESCE(f.logo_url, '') = '' AND COALESCE(f.cover_url, '') = '' THEN 1 ELSE 0 END) AS missing_images,
+        SUM(CASE WHEN COALESCE(f.phone, '') = '' AND COALESCE(fp.whatsapp, '') = '' THEN 1 ELSE 0 END) AS missing_contact,
+        SUM(CASE WHEN COALESCE(f.full_desc, f.short_desc, '') = '' THEN 1 ELSE 0 END) AS missing_description
+      FROM franchise_site_publications p
+      JOIN franchises f ON f.id = p.franchise_id
+      LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
+      WHERE p.site_id = ?`,
+    )
+    .bind(SITE_ID)
+    .first();
+
+  return normalizeNumberObject(row);
+}
+
+export async function getDataQuality(db) {
+  const result = await db
+    .prepare(
+      `SELECT
+        f.id,
+        p.slug,
+        f.brand_name,
+        f.category,
+        f.verification_tier,
+        f.updated_at,
+        CASE WHEN COALESCE(f.logo_url, '') = '' AND COALESCE(f.cover_url, '') = '' THEN 1 ELSE 0 END AS missing_image,
+        CASE WHEN COALESCE(f.phone, '') = '' AND COALESCE(fp.whatsapp, '') = '' THEN 1 ELSE 0 END AS missing_contact,
+        CASE WHEN COALESCE(f.full_desc, f.short_desc, '') = '' THEN 1 ELSE 0 END AS missing_description,
+        CASE WHEN COALESCE(f.category, '') = '' THEN 1 ELSE 0 END AS missing_category,
+        f.short_desc,
+        f.full_desc
+      FROM franchise_site_publications p
+      JOIN franchises f ON f.id = p.franchise_id
+      LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
+      WHERE p.site_id = ?
+      ORDER BY
+        (missing_image + missing_contact + missing_description + missing_category) DESC,
+        f.updated_at DESC
+      LIMIT 80`,
+    )
+    .bind(SITE_ID)
+    .all();
+
+  return (result.results || [])
+    .map((row) => {
+      const likelyAllCaps = isLikelyAllCapsDescription(row.full_desc || row.short_desc || "");
+      const warnings = [
+        row.missing_image ? "missing_image" : "",
+        row.missing_contact ? "missing_contact" : "",
+        row.missing_description ? "missing_description" : "",
+        row.missing_category ? "missing_category" : "",
+        likelyAllCaps ? "likely_all_caps" : "",
+      ].filter(Boolean);
+      return {
+        ...row,
+        likely_all_caps: likelyAllCaps ? 1 : 0,
+        full_desc: undefined,
+        short_desc: undefined,
+        public_url: `/peluang-usaha/${row.slug}`,
+        warnings,
+      };
+    })
+    .sort((left, right) => {
+      const warningDiff = right.warnings.length - left.warnings.length;
+      if (warningDiff) return warningDiff;
+      return String(right.updated_at || "").localeCompare(String(left.updated_at || ""));
+    })
+    .slice(0, 20);
+}
+
+export async function getPublishState(db) {
+  const state = await db.prepare("SELECT * FROM site_publish_state WHERE site_id = ? LIMIT 1").bind(SITE_ID).first();
+  const pending = await db
+    .prepare(
+      `SELECT status, COUNT(*) AS count
+       FROM site_rebuild_requests
+       WHERE site_id = ?
+       GROUP BY status`,
+    )
+    .bind(SITE_ID)
+    .all();
+
+  return {
+    ...(state || { site_id: SITE_ID, is_enabled: 0, pending_count: 0, queued_count: 0 }),
+    requests_by_status: normalizeGroupedCounts(pending.results || [], "status"),
+  };
+}
+
+export async function getUnclaimedOutreachQueue(db) {
+  const result = await db
+    .prepare(
+      `SELECT
+        f.id,
+        p.slug,
+        f.brand_name,
+        f.category,
+        f.phone,
+        f.office_address,
+        f.total_investment_idr,
+        f.min_investment_idr,
+        f.updated_at,
+        MAX(loe.created_at) AS last_outreach_at,
+        COUNT(loe.id) AS outreach_count
+      FROM franchise_site_publications p
+      JOIN franchises f ON f.id = p.franchise_id
+      LEFT JOIN listing_outreach_events loe ON loe.franchise_id = f.id AND loe.site_id = p.site_id
+      WHERE p.site_id = ?
+        AND p.publication_status = 'published'
+        AND (f.source_sheet = 'UNCLAIMED' OR f.verification_tier = 'unclaimed' OR f.status = 'unclaimed')
+        AND COALESCE(f.phone, '') != ''
+      GROUP BY f.id, p.slug
+      ORDER BY
+        CASE WHEN last_outreach_at IS NULL THEN 0 ELSE 1 END,
+        f.total_investment_idr DESC,
+        f.updated_at DESC
+      LIMIT 75`,
+    )
+    .bind(SITE_ID)
+    .all();
+
+  return (result.results || []).map((row) => {
+    const contacts = parseWhatsAppContacts(row.phone);
+    return {
+      ...row,
+      public_url: `/peluang-usaha/${row.slug}`,
+      claim_url: `/daftar?claim=${row.slug}`,
+      contacts,
+      primary_whatsapp_url: contacts[0] ? buildWhatsAppUrl(contacts[0].international_digits, row) : "",
+    };
+  });
+}
+
+export async function getPendingClaims(db) {
+  const result = await db
+    .prepare(
+      `SELECT
+        fc.id,
+        fc.status,
+        fc.evidence_text,
+        fc.created_at,
+        f.brand_name,
+        p.slug,
+        u.primary_email AS claimant_email,
+        u.display_name AS claimant_name
+      FROM franchise_claims fc
+      JOIN franchises f ON f.id = fc.franchise_id
+      LEFT JOIN franchise_site_publications p ON p.franchise_id = f.id AND p.site_id = ?
+      LEFT JOIN users u ON u.id = fc.claimant_user_id
+      WHERE fc.source_site_id = ? AND fc.status = 'pending'
+      ORDER BY fc.created_at DESC
+      LIMIT 25`,
+    )
+    .bind(SITE_ID, SITE_ID)
+    .all();
+  return result.results || [];
+}
+
+export async function getEditableListings(db) {
+  const result = await db
+    .prepare(
+      `SELECT
+        f.id,
+        p.slug,
+        f.brand_name,
+        f.category,
+        f.status,
+        f.verification_tier,
+        f.phone,
+        f.office_address,
+        f.updated_at
+      FROM franchise_site_publications p
+      JOIN franchises f ON f.id = p.franchise_id
+      WHERE p.site_id = ?
+      ORDER BY f.updated_at DESC, f.brand_name ASC
+      LIMIT 250`,
+    )
+    .bind(SITE_ID)
+    .all();
+  return (result.results || []).map((row) => ({
+    ...row,
+    public_url: `/peluang-usaha/${row.slug}`,
+  }));
+}
+
+export async function getRecentOutreach(db) {
+  const result = await db
+    .prepare(
+      `SELECT
+        loe.id,
+        loe.outcome,
+        loe.contact_label,
+        loe.contact_value,
+        loe.created_at,
+        f.brand_name,
+        p.slug,
+        u.display_name AS staff_name,
+        u.primary_email AS staff_email
+      FROM listing_outreach_events loe
+      JOIN franchises f ON f.id = loe.franchise_id
+      LEFT JOIN franchise_site_publications p ON p.franchise_id = f.id AND p.site_id = loe.site_id
+      LEFT JOIN users u ON u.id = loe.staff_user_id
+      WHERE loe.site_id = ?
+      ORDER BY loe.created_at DESC
+      LIMIT 20`,
+    )
+    .bind(SITE_ID)
+    .all();
+  return result.results || [];
+}
+
+export async function getEditSuggestions(db) {
+  const [summary, pending] = await Promise.all([
+    db
+      .prepare(
+        `SELECT status, COUNT(*) AS count
+         FROM listing_edit_suggestions
+         WHERE site_id = ?
+         GROUP BY status`,
+      )
+      .bind(SITE_ID)
+      .all(),
+    db
+      .prepare(
+        `SELECT
+          les.id,
+          les.franchise_id,
+          les.status,
+          les.field_name,
+          les.old_value,
+          les.suggested_value,
+          les.reason,
+          les.created_at,
+          f.brand_name,
+          p.slug,
+          u.display_name AS suggested_by_name,
+          u.primary_email AS suggested_by_email
+         FROM listing_edit_suggestions les
+         JOIN franchises f ON f.id = les.franchise_id
+         LEFT JOIN franchise_site_publications p ON p.franchise_id = f.id AND p.site_id = les.site_id
+         LEFT JOIN users u ON u.id = les.suggested_by_user_id
+         WHERE les.site_id = ? AND les.status = 'pending'
+         ORDER BY les.created_at DESC
+         LIMIT 50`,
+      )
+      .bind(SITE_ID)
+      .all(),
+  ]);
+
+  return {
+    summary: normalizeGroupedCounts(summary.results || [], "status"),
+    pending: (pending.results || []).map((row) => ({
+      ...row,
+      old_value: parseJson(row.old_value, {}),
+      suggested_value: parseJson(row.suggested_value, {}),
+      public_url: row.slug ? `/peluang-usaha/${row.slug}` : "",
+    })),
+  };
+}
+
+export async function getLeadSummary(db) {
+  const [statusRows, recentRows] = await Promise.all([
+    db
+      .prepare(
+        `SELECT status, COUNT(*) AS count
+         FROM franchise_leads
+         WHERE source_site_id = ?
+         GROUP BY status`,
+      )
+      .bind(SITE_ID)
+      .all(),
+    db
+      .prepare(
+        `SELECT
+          fl.id,
+          fl.status,
+          fl.name,
+          fl.email,
+          fl.whatsapp,
+          fl.created_at,
+          f.brand_name
+         FROM franchise_leads fl
+         LEFT JOIN franchises f ON f.id = fl.franchise_id
+         WHERE fl.source_site_id = ?
+         ORDER BY fl.created_at DESC
+         LIMIT 10`,
+      )
+      .bind(SITE_ID)
+      .all(),
+  ]);
+
+  return {
+    by_status: normalizeGroupedCounts(statusRows.results || [], "status"),
+    recent: recentRows.results || [],
+  };
+}
+
+export async function getSystemHealth(db) {
+  const [latestMigration, recentRebuild] = await Promise.all([
+    safeFirst(db, "SELECT name, applied_at FROM d1_migrations ORDER BY applied_at DESC LIMIT 1"),
+    safeFirst(
+      db,
+      `SELECT id, status, reason, error_message, created_at, updated_at
+       FROM site_rebuild_requests
+       WHERE site_id = ?
+       ORDER BY updated_at DESC, created_at DESC
+       LIMIT 1`,
+      [SITE_ID],
+    ),
+  ]);
+
+  return {
+    d1: { ok: true, latest_migration: latestMigration || null },
+    clerk: { ok: true, note: "Dashboard session verified through Clerk before D1 queries run." },
+    publish: { recent_rebuild: recentRebuild || null },
+  };
+}
+
+export async function getListingSnapshot(db, franchiseId) {
+  return db
+    .prepare(
+      `SELECT
+        f.*,
+        p.slug AS public_slug
+       FROM franchises f
+       LEFT JOIN franchise_site_publications p ON p.franchise_id = f.id AND p.site_id = ?
+       WHERE f.id = ?
+       LIMIT 1`,
+    )
+    .bind(SITE_ID, franchiseId)
+    .first();
+}
+
+export async function hasAutoApproval(db, userId) {
+  const row = await db
+    .prepare(
+      `SELECT id
+       FROM staff_auto_approval_rules
+       WHERE staff_user_id = ? AND site_id = ? AND scope = 'listing_suggestions' AND is_active = 1
+       LIMIT 1`,
+    )
+    .bind(userId, SITE_ID)
+    .first();
+  return Boolean(row);
+}
+
+async function safeFirst(db, sql, bindings = []) {
+  try {
+    const statement = db.prepare(sql);
+    return await (bindings.length ? statement.bind(...bindings).first() : statement.first());
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}

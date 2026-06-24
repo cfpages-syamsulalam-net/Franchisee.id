@@ -130,6 +130,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
 - `boot()`: Initializes `window.FranchiseAuth`, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
+- `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, and Operations, including arrow/Home/End keyboard navigation.
 - `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics, outreach, quality, claims, publish, editable listings, edit suggestions, leads, and health renderers.
 - `renderOutreach()` / `logOutreach(link)`: Renders staff-personal WhatsApp links and records manually confirmed outreach through `/dashboard-data`.
 - `renderQuality()` / `seedEditSuggestion(button)`: Shows data-quality warnings and seeds structured JSON edit suggestions.
@@ -234,7 +235,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads `js/auth-clerk-debug.js`, `js/auth-clerk.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
-- Renders the static dashboard shell, locked/login state, debug panel shell, and dashboard-only CSS. Runtime data rendering and actions are owned by `js/dashboard-admin.js`.
+- Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, and debug panel shell. Runtime data rendering and actions are owned by `js/dashboard-admin.js`; dashboard styling is owned by `css/dashboard.css`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
 - Security note: the static page is not the authorization boundary; `/dashboard-data` performs the server-side D1 role check.
@@ -294,16 +295,38 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `onRequestPost()`: Requires Clerk auth plus D1 `admin`, syncs one D1 user by `user_id` / `clerk_user_id` or up to 500 users with `all=true`, and rewrites Clerk metadata from D1 roles/status.
 
 ### File: `functions/dashboard-data.js`
-*Protected Franchisee.id dashboard data and operations endpoint.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Returns Franchisee.id overview counts, unclaimed outreach queue, data-quality warnings, pending claims, publish queue state, recent outreach, editable listing options, pending edit suggestions, lead summary, and system health.
-- `onRequestPost()`: Routes dashboard actions for manually confirmed WhatsApp outreach logging, staff/admin listing edit suggestions, admin edit suggestion review, and admin claim review.
-- `getUnclaimedOutreachQueue(db)`: Reads published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
+*Thin protected Franchisee.id dashboard router.*
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach, quality, review, lead, publish, and health data from `_dashboard-queries.js`.
+- `onRequestPost()`: Validates the discriminated action payload from `_dashboard-schemas.js`, then routes to `_dashboard-actions.js`.
+- `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
+
+### File: `functions/_dashboard-schemas.js`
+*Dashboard action validation and editable field contract.*
+- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, and `review_claim`.
+- `sanitizeChanges(changes)`: Enforces dashboard-editable listing field whitelist and normalizes integer/real/enumerated values before D1 writes.
+- `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
+
+### File: `functions/_dashboard-queries.js`
+*Read-only D1 data model for `/dashboard-data`.*
+- `getOverview(db)`: Returns Franchisee.id listing counts and completeness counts.
 - `getDataQuality(db)`: Computes read-time warnings for missing images, contact, description, category, and likely all-caps descriptions; keeps all-caps detection in JavaScript so D1 does not evaluate complex `GLOB`/`LIKE` patterns.
+- `getUnclaimedOutreachQueue(db)`: Reads published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
+- `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab.
+- `getPublishState(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab.
+
+### File: `functions/_dashboard-actions.js`
+*Protected dashboard write workflows.*
+- `handleLogOutreach(db, auth, data)`: Records manually confirmed WhatsApp outreach and an audit event.
 - `handleSuggestEdit(db, auth, data)`: Stores structured JSON diffs in `listing_edit_suggestions`. Admin or active trusted staff suggestions apply immediately; normal staff suggestions stay pending.
 - `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs write field-by-field to whitelisted `franchises` columns, write audit events, and queue a static rebuild through `siteRebuildStatements()`.
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
-- `sanitizeChanges(changes)`: Enforces dashboard-editable listing field whitelist and normalizes integer/real/enumerated values before D1 writes.
-- `getLeadSummary(db)` / `getSystemHealth(db)`: Read-only MVP views for Franchisee.id leads and operational health.
+
+### File: `functions/_dashboard-utils.js`
+*Shared dashboard helpers.*
+- `jsonResponse(payload, init)`: Standard no-store JSON response helper.
+- `auditStatement(db, action, entityType, entityId, metadata, actorUserId)`: Shared audit-event insert statement builder.
+- `parseWhatsAppContacts(value)` / `buildWhatsAppUrl(internationalDigits, row)`: Indonesian phone parsing and claim-notification link generation.
+- `isLikelyAllCapsDescription(value)`: JavaScript-side all-caps heuristic used by data-quality checks.
 
 ### File: `functions/form-submit.js` (v2.5)
 *Clerk-authenticated D1-backed backend processing for all current form submissions.*

@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-24 15:11 (Asia/Jakarta)
+Last updated: 2026-06-24 18:25 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -8,6 +8,8 @@ Last updated: 2026-06-24 15:11 (Asia/Jakarta)
 - Keep high-level migration decisions in `docs/architecture/TECH_STACK_DECISIONS.md`; do not duplicate long strategy notes across model-specific docs.
 - Keep per-session context snapshots in `/.context` using timestamped Markdown files (`session-YYYYMMDD-HHmm.md`) for new-session continuity.
 - Be proactive with engineering judgment: when a request can be improved for maintainability, security, performance, UX, data integrity, or migration safety, surface the recommendation clearly before or during implementation. Prefer actionable suggestions with tradeoffs while respecting explicit user decisions.
+- Code modularly by default. Prefer small, purpose-owned files/modules for new or touched runtime logic instead of growing monolithic scripts, functions, or Astro pages. When refactoring, preserve behavior first, validate, then update `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `CHANGELOG.md`.
+- Prioritize finishing the current pending task over progress narration. Keep user-facing updates minimal and reserve final reporting for work that is actually completed or genuinely blocked.
 - Use pnpm exclusively. Run `pnpm install`, `pnpm run <script>`, and `pnpm exec <tool>`. Keep `pnpm-lock.yaml` committed and do not create alternate lockfiles.
 
 ## Current Stack Direction

@@ -4,6 +4,25 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-24 22:55 (Asia/Jakarta)
+### Added
+- `css/dashboard.css`: Added extracted dashboard-only styles for metrics, tabs, panels, tables, forms, badges, debug UI, and responsive dashboard layout.
+- `functions/_dashboard-schemas.js`: Added dashboard action validation, editable listing field whitelist, field normalization, and whitelisted update statement helper.
+- `functions/_dashboard-queries.js`: Added dashboard D1 read model for overview, outreach, data quality, claims, edit suggestions, leads, publish state, and system health.
+- `functions/_dashboard-actions.js`: Added dashboard write workflows for outreach logging, edit suggestions, edit review, and claim review.
+- `functions/_dashboard-utils.js`: Added shared dashboard response, audit, admin, JSON, phone parsing, WhatsApp link, count, and heuristic helpers.
+
+### Changed
+- `AGENTS.md`: Added project rules to code modularly by default and prioritize finishing pending work over progress narration.
+- `src/pages/dashboard/index.astro`: Replaced the single long dashboard content flow with icon-led tabs for Outreach, Data Quality, Review, and Operations, and moved dashboard styling to `css/dashboard.css`.
+- `js/dashboard-admin.js`: Added dashboard tab initialization, hash-aware tab activation, and keyboard navigation for the dashboard tabs.
+- `functions/dashboard-data.js`: Refactored into a thin protected router that imports dashboard schemas, queries, actions, and utilities from dedicated modules.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `DASHBOARD.md`: Documented the dashboard tab UI, CSS extraction, dashboard API split, new module ownership, and completed audit tracker items.
+
+### Removed
+- `src/pages/dashboard/index.astro`: Removed inline dashboard CSS after moving it to `css/dashboard.css`.
+- `functions/dashboard-data.js`: Removed embedded schemas, queries, actions, and utility helpers after moving them to dedicated `_dashboard-*` modules.
+
 ## 2026-06-24 17:55 (Asia/Jakarta)
 ### Added
 - `js/auth-clerk-debug.js`: Extracted masked Clerk/auth diagnostics, persisted debug events, safe session/key/token hints, storage/cookie key inspection, and `window.FranchiseAuth.getDebugSnapshot()` support from the main auth runtime.
