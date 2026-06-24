@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-25 00:43 (Asia/Jakarta)
+### Added
+- `.context/session-20260625-0043.md`: Added a session snapshot for the `/peluang-usaha` card CTA and tooltip stacking update.
+
+### Changed
+- `src/lib/franchise-static.ts`: Changed `/peluang-usaha` directory card CTAs to always say `Info Franchise`, including unclaimed listings, while keeping claim prompts on individual detail pages.
+- `scripts/build-d1-franchise-pages.ts`: Aligned the D1 bridge directory-card CTA text with the Astro renderer.
+- `js/build-listing.js`: Aligned the legacy directory builder CTA text with the current neutral `Info Franchise` wording.
+- `src/lib/franchise-static-assets.ts`: Added overflow and z-index overrides so listing status badge tooltips can render above card parents and neighboring elements.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the neutral directory CTA and tooltip stacking behavior.
+
 ## 2026-06-24 23:23 (Asia/Jakarta)
 ### Added
 - `functions/_dashboard-queries.js`: Added `getUnclaimedOutreachSummary()` so `/dashboard-data` reports published unclaimed, contact-ready, missing-phone, and outreach queue-limit counts.

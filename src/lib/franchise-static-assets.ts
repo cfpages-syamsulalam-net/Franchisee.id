@@ -181,6 +181,22 @@ export function injectDirectoryAssets(html: string) {
 #uc_post_grid_elementor_d0f4a5f .ue_p_title {
   pointer-events: auto !important;
 }
+#uc_post_grid_elementor_d0f4a5f,
+#uc_post_grid_elementor_d0f4a5f .uc-items-wrapper,
+#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_wrap,
+#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_item,
+#uc_post_grid_elementor_d0f4a5f .uc_content,
+#uc_post_grid_elementor_d0f4a5f .uc_content_inner,
+#uc_post_grid_elementor_d0f4a5f .uc_post_title {
+  overflow: visible !important;
+}
+#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_item {
+  position: relative;
+}
+#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_item:has(.franchise-status-badge:hover),
+#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_item:has(.franchise-status-badge:focus-within) {
+  z-index: 20;
+}
 .franchise-card-title {
   display: flex !important;
   align-items: flex-start;
@@ -194,6 +210,7 @@ export function injectDirectoryAssets(html: string) {
 }
 .franchise-status-badge {
   position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -206,6 +223,10 @@ export function injectDirectoryAssets(html: string) {
   font-weight: 700;
   white-space: nowrap;
   flex: 0 0 auto;
+}
+.franchise-status-badge:hover,
+.franchise-status-badge:focus-within {
+  z-index: 30;
 }
 .franchise-status-verified {
   color: #0f5132;
@@ -225,7 +246,7 @@ export function injectDirectoryAssets(html: string) {
   position: absolute;
   left: 0;
   bottom: calc(100% + 8px);
-  z-index: 50;
+  z-index: 9999;
   width: 220px;
   padding: 8px 10px;
   border-radius: 4px;

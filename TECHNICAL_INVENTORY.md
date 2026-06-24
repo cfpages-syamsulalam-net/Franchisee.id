@@ -143,6 +143,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `loadFromCSV(filePath)`: Fallback logic to read data if API fails, using robust CSV parsing to avoid column-shift corruption.
 - `isLikelyClaimBrandRow(item)`: Heuristic filter to keep canonical brand rows for claim-search dataset generation (rejects URL/phone/address/legal-entity/contact-label rows).
 - `generateCard(item, index)`: HTML generator for franchise cards (Hybrid: Verified/Unclaimed).
+- Directory card CTAs use the neutral `Info Franchise` label for both claimed and unclaimed brands; claim prompts stay on individual detail pages.
 - `async build()`: Orchestrates fetching from Sheet/CSV, writing `/peluang-usaha/index.html`, and generating sanitized `/json/unclaimed-brands.json` for claim search.
 
 ### File: `js/build-details.js`
@@ -163,6 +164,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `renderDetailPage(row, template)`: Inserts D1 franchise data into `templates/detail-franchise-tpl.html` and marks output with `d1-generated:franchisee.id`.
 - `generateContactBlock(row)`: Renders public contact and social links from D1 franchisor profile fields when present.
 - `buildListingIndex(rows, template, previousManifest, nextManifest, options, stats)`: Renders `/peluang-usaha/index.html` from D1 data and skips unchanged output by manifest hash.
+- Directory card CTAs use the neutral `Info Franchise` label for all listing tiers.
 - `buildUnclaimedJson(rows, options, stats)`: Regenerates `json/unclaimed-brands.json` from D1 unclaimed rows for claim search.
 - Snapshot behavior: non-dry runs write `json/d1-franchise-static-data.json`, which Astro consumes for static route generation.
 - Detail output behavior: writes flat `/peluang-usaha/[slug].html` files while generated links remain extensionless `/peluang-usaha/[slug]`.
@@ -194,6 +196,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `FranchiseStaticRowSchema`: Zod schema for rows in `json/d1-franchise-static-data.json`.
 - `loadFranchiseStaticRows()`: Reads and validates the generated D1 snapshot.
 - `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, and category filtering.
+- Directory cards link to franchise information pages with a neutral `Info Franchise` CTA; unclaimed-specific claim CTAs remain on detail pages.
 - `renderCategoryIndexPage(rows)`: Legacy helper that renders category cards, but canonical category browsing is now `/peluang-usaha?view=kategori` or `/peluang-usaha?kategori=[slug]`.
 - `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row.
 - `applyCanonicalLegacyLinks(html)`: Rewrites legacy template/menu hrefs such as `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, and `/category` to canonical `/peluang-usaha` query URLs during Astro rendering.
@@ -213,7 +216,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/lib/franchise-static-assets.ts`
 *Generated CSS/JS and placeholder helper for D1-backed Astro pages.*
-- `injectDirectoryAssets(html)`: Injects the generated directory CSS plus client-side query-param filtering/sorting script.
+- `injectDirectoryAssets(html)`: Injects the generated directory CSS plus client-side query-param filtering/sorting script, including overflow/z-index overrides so card badge tooltips render above card parents and neighboring elements.
 - `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization script.
 - `generateCssPlaceholder(label, className)`: Renders the CSS-only missing-logo placeholder used by directory cards, category cards, and detail pages.
 - Extracted from `src/lib/franchise-static.ts` on 2026-06-22 to keep the main renderer below the highest-risk long-file threshold.

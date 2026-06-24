@@ -543,7 +543,7 @@ function generateCard(row: D1FranchiseRow, index: number) {
                 </div>
                 <div class="uc_post_button">
                     <a class="uc_more_btn" href="${escapeAttr(link)}">
-                        <div class="uc_btn_inner"><div class="uc_btn_txt">${tier === "UNCLAIMED" ? "Klaim Brand" : "Info Franchise"}</div></div>
+                        <div class="uc_btn_inner"><div class="uc_btn_txt">Info Franchise</div></div>
                     </a>
                 </div>
             </div>
