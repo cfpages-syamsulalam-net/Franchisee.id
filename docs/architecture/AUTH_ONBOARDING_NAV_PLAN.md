@@ -1,6 +1,6 @@
 # Auth Onboarding And Navbar Plan
 
-Last updated: 2026-06-25 04:32 (Asia/Jakarta)
+Last updated: 2026-06-25 04:59 (Asia/Jakarta)
 
 ## Objective
 Make public account entry feel like one connected flow:
@@ -28,7 +28,7 @@ Recommended copy split:
 This avoids making users think `/login` registration and `/daftar` are duplicate forms.
 
 ## Current Implementation Notes
-- `js/auth-clerk.js` already owns custom Clerk login/register/verification UI, public Google OAuth, pending role storage, pending next storage, `/auth-sync`, and the `window.FranchiseAuth` helper.
+- `js/auth-clerk.js` already owns custom Clerk login/register/verification UI, public Google OAuth, pending role storage, pending next storage, `/auth-sync`, and the `window.FranchiseAuth` helper. It also shows a login-required message after protected `/daftar` redirects and keeps forms visible for logged-in admin/staff QA.
 - `css/auth-clerk.css` already isolates custom auth styling and protects `[hidden]` state from legacy CSS.
 - `/login/index.html` is still a legacy WordPress shell whose WPForms block is replaced at runtime by `js/auth-clerk.js`.
 - `/register/index.html` now redirects to `/login?mode=register`; the canonical public registration surface is the `/login` register tab.
@@ -71,20 +71,20 @@ Create a small public navbar controller instead of duplicating auth logic in sta
 - It should load after `js/auth-clerk-debug.js` and `js/auth-clerk.js` on public pages with the legacy Elementor/HFE navbar.
 - It should call `window.FranchiseAuth.init()` and then `/auth-sync` when a Clerk session exists.
 - It should find login/register anchors by normalized href/text, not brittle menu item ids.
-- Logged-out state relabels `Login` to `Masuk` and routes `Daftar`/`Daftar Mitra` to `/login?mode=register` because `/daftar` is now a protected completion form.
+- Logged-out state relabels `Login` to `Masuk` and keeps `Daftar`/`Daftar Mitra` pointed at `/daftar/`; `/daftar` is protected and redirects anonymous users to `/login?next=...` with an explanatory message.
 - Logged-in public state replaces the two auth links with one compact account control:
   - Primary text: Clerk/D1 display name or email prefix.
   - Badge: `Franchisee` or `Franchisor` from D1 roles.
   - Direct link: `Lengkapi Profil`.
-  - Logout: immediate red icon-only button in the navbar.
+  - Logout: immediate red Font Awesome icon-only button in the navbar.
 - Staff/admin dashboard behavior should remain separate. Public navbar can show `Dashboard` only for `staff` or `admin`, but server authorization remains D1-enforced.
 
 ## UI Plan
 - Convert `/login` auth fields to an inline label/input grid matching `/daftar` form rows, with stacked layout below mobile breakpoints.
-- Replace current auth tabs with a segmented toggle that has an animated active indicator.
+- Replace current auth tabs with a segmented toggle that has an animated active indicator, Font Awesome icons, and dark active text over the white indicator for readable transitions.
 - Move the public registration role selector above the Google button so SSO users must choose role first.
 - Reuse the same segmented-control pattern for `/daftar` tabs.
-- Add a moving indicator to `.registration-tabs` driven by class or CSS variables set in `openTab()`.
+- Add a moving white indicator to `.registration-tabs` driven by class or CSS variables set in `openTab()`, with active text kept dark and yellow reserved for hover/focus.
 - Respect `prefers-reduced-motion` by disabling the sliding indicator transition.
 
 ## Implementation Tracker
@@ -96,6 +96,9 @@ Create a small public navbar controller instead of duplicating auth logic in sta
 | Done | Add shared public navbar auth controller | `js/auth-navbar.js` replaces legacy nav auth links with name, D1 role badge, and red icon-only logout when a session exists. |
 | Done | Wire navbar script into public page surfaces | Added auth CSS/runtime/navbar hooks to `/login`, `/daftar`, and D1 page templates. |
 | Done | Update `/login` auth template | Role-first register panel, inline fields, animated segmented tabs, and better post-register copy. |
+| Done | Correct logged-out navbar CTA | `Daftar Mitra` now points to protected `/daftar/`; anonymous users receive a login-required message on `/login?next=...`. |
+| Done | Normalize icons and navbar compactness | Auth/navbar/dashboard controls use the existing Font Awesome library; navbar logout is a compact red icon-only button. |
+| Done | Improve admin/staff QA access | Logged-in admin/staff can inspect `/login` forms while public users still see the compact logged-in state. |
 | Done | Reconcile `/register` with `/login` | `/register` redirects to `/login?mode=register` through `_redirects` and static fallback metadata/script. |
 | Done | Redirect completed registration to `/daftar` | Set role-specific pending next for email/password and Google SSO registration. |
 | Done | Add `/daftar` role deep-link and prefill | Extend form init with `role` query handling and safe Clerk email/name prefill. Claim deep links still take priority. |
@@ -106,3 +109,5 @@ Create a small public navbar controller instead of duplicating auth logic in sta
 - Resolved: `/register/` redirects to `/login?mode=register`.
 - Resolved: logout is immediate, icon-only, and red in the navbar.
 - Resolved: `/daftar` requires a Clerk session before profile/listing completion.
+- Resolved: public `Daftar Mitra` stays on `/daftar/`; `/login?mode=register` is only for explicit account creation and `/register` compatibility.
+- Resolved: admin/staff sessions can inspect auth pages while logged in.

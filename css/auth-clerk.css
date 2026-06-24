@@ -74,10 +74,19 @@
   font-weight: 700;
   text-transform: uppercase;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .fr-auth-tab.is-active {
+  color: #111111;
+}
+
+.fr-auth-tab:hover,
+.fr-auth-tab:focus {
   color: #f8b526;
 }
 
@@ -166,6 +175,9 @@
   color: rgba(0, 0, 0, 0.79);
   font-weight: 700;
   font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .fr-auth-field input {
@@ -203,7 +215,10 @@
 }
 
 .fr-auth-role span {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 1px solid rgba(0, 0, 0, 0.16);
   border-radius: 6px;
   padding: 12px;
@@ -222,10 +237,15 @@
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  justify-content: center;
   margin-top: 4px;
 }
 
 .fr-auth-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 0;
   border-radius: 0;
   background: var(--ast-global-color-0, #ffc03d);
@@ -252,6 +272,10 @@
   background: transparent;
   color: rgba(0, 0, 0, 0.72);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   font-weight: 700;
   padding: 0;
   text-transform: none;
@@ -262,6 +286,7 @@
   font-size: 14px;
   line-height: 1.45;
   margin: 2px 0 0;
+  text-align: center;
 }
 
 .fr-auth-inline-link {
@@ -303,9 +328,29 @@
   color: #17692e;
 }
 
+.fr-auth-message.is-info {
+  background: #fff9df;
+  color: #352800;
+}
+
 .fr-auth-status {
   display: grid;
   gap: 14px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.fr-auth-status strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.fr-auth-status.is-inspectable {
+  border: 1px dashed rgba(0, 0, 0, 0.18);
+  border-radius: 6px;
+  padding: 12px;
 }
 
 .fr-auth-muted {
@@ -315,9 +360,12 @@
 
 .fr-auth-nav-account {
   align-items: center;
+  display: inline-flex !important;
   flex-direction: row !important;
   gap: 8px;
   justify-content: center;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .fr-auth-nav-account .fr-auth-nav-link {
@@ -325,8 +373,17 @@
   color: inherit;
   display: inline-flex;
   gap: 8px;
-  min-height: 36px;
+  min-height: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
   text-decoration: none;
+}
+
+.fr-auth-nav-icon {
+  color: #444444;
+  flex: 0 0 auto;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .fr-auth-nav-name {
@@ -357,21 +414,19 @@
   color: #c62828 !important;
   cursor: pointer;
   display: inline-flex;
-  height: 32px;
+  font-size: 16px;
+  height: 24px;
   justify-content: center;
-  min-width: 32px;
+  line-height: 1;
+  min-height: 0 !important;
+  min-width: 24px;
   padding: 0 !important;
+  text-transform: none !important;
 }
 
 .fr-auth-nav-logout:hover,
 .fr-auth-nav-logout:focus {
   color: #8f1111 !important;
-}
-
-.fr-auth-nav-logout svg {
-  display: block;
-  height: 18px;
-  width: 18px;
 }
 
 @media (prefers-reduced-motion: reduce) {

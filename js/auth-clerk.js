@@ -170,6 +170,7 @@
       isLoginOnly,
     });
     bindAuthEvents(root);
+    showInitialAuthMessage(root);
     renderSessionState(root);
   }
 
@@ -186,8 +187,14 @@
             </div>
           ` : `
             <div class="fr-auth-tabs" role="tablist" aria-label="Login dan daftar">
-              <button class="fr-auth-tab ${!isRegister ? "is-active" : ""}" type="button" data-auth-switch="login">Masuk</button>
-              <button class="fr-auth-tab ${isRegister ? "is-active" : ""}" type="button" data-auth-switch="register">Buat Akun</button>
+              <button class="fr-auth-tab ${!isRegister ? "is-active" : ""}" type="button" data-auth-switch="login">
+                <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+                <span>Masuk</span>
+              </button>
+              <button class="fr-auth-tab ${isRegister ? "is-active" : ""}" type="button" data-auth-switch="register">
+                <i class="fas fa-user-plus" aria-hidden="true"></i>
+                <span>Buat Akun</span>
+              </button>
             </div>
           `}
           <div class="fr-auth-message" data-auth-message></div>
@@ -201,15 +208,15 @@
               <div class="fr-auth-divider"><span>atau</span></div>
             </div>
             <div class="fr-auth-field">
-              <label for="fr-auth-login-email">Email</label>
+              <label for="fr-auth-login-email"><i class="fas fa-envelope" aria-hidden="true"></i> Email</label>
               <input id="fr-auth-login-email" name="email" type="email" autocomplete="email" required>
             </div>
             <div class="fr-auth-field">
-              <label for="fr-auth-login-password">Password</label>
+              <label for="fr-auth-login-password"><i class="fas fa-lock" aria-hidden="true"></i> Password</label>
               <input id="fr-auth-login-password" name="password" type="password" autocomplete="current-password" required>
             </div>
             <div class="fr-auth-actions">
-              <button class="fr-auth-button" type="submit">Masuk</button>
+              <button class="fr-auth-button" type="submit"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Masuk</button>
             </div>
             ${isLoginOnly ? "" : `<p class="fr-auth-switch-note">
               Belum daftar?
@@ -218,15 +225,15 @@
           </form>
           ${isLoginOnly ? "" : `<form class="fr-auth-form" data-auth-form="register" ${!isRegister ? "hidden" : ""} aria-hidden="${!isRegister ? "true" : "false"}">
             <div class="fr-auth-role-control" aria-label="Daftar sebagai">
-              <div class="fr-auth-role-title">Daftar sebagai</div>
+              <div class="fr-auth-role-title"><i class="fas fa-users" aria-hidden="true"></i> Daftar sebagai</div>
               <div class="fr-auth-role-grid">
                 <label class="fr-auth-role">
                   <input type="radio" name="role" value="franchisee" checked>
-                  <span>Franchisee</span>
+                  <span><i class="fas fa-user-tie" aria-hidden="true"></i> Franchisee</span>
                 </label>
                 <label class="fr-auth-role">
                   <input type="radio" name="role" value="franchisor">
-                  <span>Franchisor</span>
+                  <span><i class="fas fa-store" aria-hidden="true"></i> Franchisor</span>
                 </label>
               </div>
             </div>
@@ -238,15 +245,15 @@
               <div class="fr-auth-divider"><span>atau</span></div>
             </div>
             <div class="fr-auth-field">
-              <label for="fr-auth-register-email">Email</label>
+              <label for="fr-auth-register-email"><i class="fas fa-envelope" aria-hidden="true"></i> Email</label>
               <input id="fr-auth-register-email" name="email" type="email" autocomplete="email" required>
             </div>
             <div class="fr-auth-field">
-              <label for="fr-auth-register-password">Password</label>
+              <label for="fr-auth-register-password"><i class="fas fa-lock" aria-hidden="true"></i> Password</label>
               <input id="fr-auth-register-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
             </div>
             <div class="fr-auth-actions">
-              <button class="fr-auth-button" type="submit">Buat Akun</button>
+              <button class="fr-auth-button" type="submit"><i class="fas fa-user-plus" aria-hidden="true"></i> Buat Akun</button>
             </div>
             <p class="fr-auth-switch-note">
               Sudah punya akun?
@@ -255,11 +262,11 @@
           </form>
           <form class="fr-auth-form" data-auth-form="verify" hidden aria-hidden="true">
             <div class="fr-auth-field">
-              <label for="fr-auth-code">Kode verifikasi email</label>
+              <label for="fr-auth-code"><i class="fas fa-key" aria-hidden="true"></i> Kode verifikasi email</label>
               <input id="fr-auth-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" required>
             </div>
             <div class="fr-auth-actions">
-              <button class="fr-auth-button" type="submit">Verifikasi</button>
+              <button class="fr-auth-button" type="submit"><i class="fas fa-check-circle" aria-hidden="true"></i> Verifikasi</button>
             </div>
           </form>`}
         </div>
@@ -313,19 +320,20 @@
       if (!holder || !clerk.session) return;
 
       const user = await syncUser();
+      const privileged = isPrivilegedUser(user);
       holder.innerHTML = `
-        <div class="fr-auth-status">
+        <div class="fr-auth-status ${privileged ? "is-inspectable" : ""}">
           <div>
-            <strong>Anda sudah login.</strong>
+            <strong><i class="fas fa-user-check" aria-hidden="true"></i> Anda sudah login.</strong>
             <div class="fr-auth-muted">${escapeHtml(user?.email || clerk.user?.primaryEmailAddress?.emailAddress || "")}</div>
           </div>
           <div class="fr-auth-actions">
-            <a class="fr-auth-button" href="${escapeHtml(nextUrl(root))}">Lanjutkan</a>
-            <button class="fr-auth-link-button" type="button" data-auth-signout>Logout</button>
+            <a class="fr-auth-button" href="${escapeHtml(nextUrl(root))}"><i class="fas fa-arrow-right" aria-hidden="true"></i> Lanjutkan</a>
+            <button class="fr-auth-link-button" type="button" data-auth-signout><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout</button>
           </div>
         </div>
       `;
-      hideForms(root);
+      if (!privileged) hideForms(root);
       holder.querySelector("[data-auth-signout]").addEventListener("click", async function () {
         await clerk.signOut();
         window.location.reload();
@@ -333,6 +341,12 @@
     } catch (error) {
       showMessage(root, error.message, "error");
     }
+  }
+
+  function showInitialAuthMessage(root) {
+    const next = new URLSearchParams(window.location.search).get("next") || "";
+    if (!next.startsWith("/daftar")) return;
+    showMessage(root, "Silakan masuk dulu untuk melanjutkan ke form daftar mitra.", "info");
   }
 
   async function handleLogin(root, form) {
@@ -484,6 +498,14 @@
 
   function getSelectedRegisterRole(root) {
     return root.querySelector('[data-auth-form="register"] input[name="role"]:checked')?.value || "franchisee";
+  }
+
+  function isPrivilegedUser(user) {
+    const roles = Array.isArray(user?.roles) ? user.roles : [];
+    return roles.some(function (role) {
+      const name = typeof role === "string" ? role : role?.role;
+      return name === "admin" || name === "staff";
+    });
   }
 
   function setBusy(form, busy) {

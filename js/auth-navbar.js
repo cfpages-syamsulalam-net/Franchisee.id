@@ -7,11 +7,6 @@
     staff: "Staff",
     admin: "Admin",
   };
-  const LOGOUT_ICON = `
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path fill="currentColor" d="M16 13v-2H7.83l3.58-3.59L10 6l-6 6 6 6 1.41-1.41L7.83 13H16Zm3-10H9a2 2 0 0 0-2 2v3h2V5h10v14H9v-3H7v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/>
-    </svg>
-  `;
 
   if (!Auth || typeof Auth.init !== "function") return;
 
@@ -87,7 +82,7 @@
       if (loginLink) loginLink.textContent = "Masuk";
       if (daftarLink) {
         daftarLink.textContent = "Daftar Mitra";
-        daftarLink.setAttribute("href", "/login/?mode=register");
+        daftarLink.setAttribute("href", "/daftar/");
       }
     });
   }
@@ -99,10 +94,13 @@
     item.className = "menu-item menu-item-type-custom menu-item-object-custom parent hfe-creative-menu fr-auth-nav-account";
     item.innerHTML = `
       <a href="/daftar/" class="hfe-menu-item fr-auth-nav-link">
+        <i class="fas fa-user-circle fr-auth-nav-icon" aria-hidden="true"></i>
         <span class="fr-auth-nav-name">${escapeHtml(name)}</span>
         <span class="fr-auth-nav-role">${escapeHtml(ROLE_LABELS[role] || "Akun")}</span>
       </a>
-      <button class="fr-auth-nav-logout" type="button" data-auth-navbar-logout aria-label="Logout" title="Logout">${LOGOUT_ICON}</button>
+      <button class="fr-auth-nav-logout" type="button" data-auth-navbar-logout aria-label="Logout" title="Logout">
+        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+      </button>
     `;
     return item;
   }

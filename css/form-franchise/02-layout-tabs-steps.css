@@ -46,7 +46,7 @@
     font-weight: 600;
     color: #777;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: color 0.3s ease, background-color 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -56,10 +56,11 @@
     font-size: 1.1rem;
 }
 .tab-btn.active {
-    color: #f8b526; /* Kuning Brand */
+    color: #111; /* Keep readable over the moving white indicator. */
 }
-.tab-btn:hover:not(.active) {
-    color: #333;
+.tab-btn:hover,
+.tab-btn:focus {
+    color: #f8b526;
 }
 
 @media (prefers-reduced-motion: reduce) {

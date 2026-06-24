@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-25 04:59 (Asia/Jakarta)
+### Added
+- `.context/session-20260625-0459.md`: Added a session snapshot for the auth/navbar icon and protected `/daftar` UX follow-up.
+
+### Changed
+- `js/auth-navbar.js`: Replaced the custom logout SVG with Font Awesome icons and kept logged-out `Daftar Mitra` pointed at protected `/daftar/`.
+- `js/auth-clerk.js`: Added Font Awesome icons across auth tabs, labels, role cards, buttons, and logged-in status; added a login-required info message for `/daftar` redirects; kept auth forms visible for logged-in admin/staff inspection.
+- `css/auth-clerk.css`: Centered auth actions/notes, fixed segmented-toggle contrast, compacted the navbar account/logout layout, and styled Font Awesome auth/navbar icons.
+- `css/form-franchise/02-layout-tabs-steps.css`: Changed `/daftar` segmented-tab active text to dark over the white moving indicator and reserved yellow for hover/focus.
+- `src/pages/dashboard/index.astro` and `css/dashboard.css`: Loaded Font Awesome and replaced custom dashboard tab/section/debug-copy SVGs with Font Awesome icons.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/CLERK_SETUP.md`, and `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: Documented the corrected `Daftar Mitra` destination, `/daftar` login-required message, admin/staff auth-page inspection behavior, and Font Awesome icon usage.
+
 ## 2026-06-25 04:32 (Asia/Jakarta)
 ### Added
 - `js/auth-navbar.js`: Added a public navbar auth-state controller that normalizes logged-out auth links and replaces them after Clerk/D1 sync with account name, role badge, `/daftar` link, and red icon-only logout.

@@ -123,6 +123,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign explicit or pending self-selectable `franchisee`/`franchisor` roles.
 - `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
 - `mountAuthPage()`: Replaces `/login` legacy WPForms markup with public `Masuk`/`Buat Akun`/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
+- `showInitialAuthMessage(root)`: Shows an explanatory info message when anonymous `/daftar` visitors are redirected to `/login?next=...`.
+- `renderSessionState(root)`: Shows a logged-in status for public users and hides auth forms, while admin/staff users keep the forms visible for manual auth UI inspection.
 - `switchMode(root, mode)`: Switches login/register/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
 - `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI; public registration redirects to `/daftar/?role=...&continue=1` after account creation.
 - `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration requires selected `franchisee`/`franchisor` role and stores the role-specific `/daftar` completion destination until OAuth completion.
@@ -131,7 +133,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/auth-navbar.js`
 *Public navbar auth-state controller for legacy HFE nav menus.*
 - `initNavbarAuth()`: Finds legacy nav login/register pairs, normalizes logged-out labels to `Masuk` and `Daftar Mitra`, initializes Clerk, syncs D1 user state, and replaces auth links when a session exists.
-- `createAccountItem(clerk, user)`: Builds the logged-in navbar item with display name, D1 role badge, `/daftar/` completion link, and red icon-only logout.
+- Logged-out `Daftar Mitra` points to protected `/daftar/`; anonymous users are then redirected by `js/form-07-init.js` to `/login?next=...` with an auth message.
+- `createAccountItem(clerk, user)`: Builds the logged-in navbar item with Font Awesome account/logout icons, display name, D1 role badge, `/daftar/` completion link, and red icon-only logout.
 - `bindLogout(item, clerk)`: Signs the active Clerk session out and returns to `/`.
 
 ### File: `js/dashboard-admin.js`
@@ -246,6 +249,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads `js/auth-clerk-debug.js`, `js/auth-clerk.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
 - Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, and debug panel shell. Runtime data rendering and actions are owned by `js/dashboard-admin.js`; dashboard styling is owned by `css/dashboard.css`.
+- Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
 - Security note: the static page is not the authorization boundary; `/dashboard-data` performs the server-side D1 role check.

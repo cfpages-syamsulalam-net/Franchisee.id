@@ -132,6 +132,11 @@ body {
 }
 .dash-tab-icon,
 .dash-section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  line-height: 1;
   width: 17px;
   height: 17px;
   flex: 0 0 auto;
@@ -364,9 +369,9 @@ body {
   border-color: #151515;
   background: #ffffff;
 }
-.dash-icon-button svg {
-  width: 17px;
-  height: 17px;
+.dash-icon-button i {
+  font-size: 17px;
+  line-height: 1;
 }
 .dash-debug-body {
   display: grid;
