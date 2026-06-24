@@ -297,6 +297,32 @@ export const prerender = true;
         color: var(--dash-muted);
         font-size: 12px;
       }
+      .dash-debug-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .dash-icon-button {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dedede;
+        border-radius: 4px;
+        background: #f7f7f7;
+        color: #111111;
+        cursor: pointer;
+      }
+      .dash-icon-button:hover,
+      .dash-icon-button:focus {
+        border-color: #151515;
+        background: #ffffff;
+      }
+      .dash-icon-button svg {
+        width: 17px;
+        height: 17px;
+      }
       .dash-debug-body {
         display: grid;
         gap: 10px;
@@ -367,7 +393,15 @@ export const prerender = true;
                 <strong>Auth Debug</strong>
                 <span>Safe to screenshot: token values are masked.</span>
               </div>
-              <button class="dash-button secondary" type="button" data-auth-debug-refresh>Refresh</button>
+              <div class="dash-debug-actions">
+                <button class="dash-icon-button" type="button" data-auth-debug-copy aria-label="Copy auth debug" title="Copy auth debug">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M8 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2V7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <path d="M4 15V4a2 2 0 0 1 2-2h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <button class="dash-button secondary" type="button" data-auth-debug-refresh>Refresh</button>
+              </div>
             </div>
             <div class="dash-debug-body">
               <div class="dash-debug-summary" data-auth-debug-summary>Menunggu auth runtime...</div>
@@ -556,6 +590,7 @@ export const prerender = true;
         var authDebugSummary = document.querySelector("[data-auth-debug-summary]");
         var authDebugOutput = document.querySelector("[data-auth-debug-output]");
         var authDebugRefresh = document.querySelector("[data-auth-debug-refresh]");
+        var authDebugCopy = document.querySelector("[data-auth-debug-copy]");
         var outreachRows = document.querySelector("[data-outreach-rows]");
         var qualityRows = document.querySelector("[data-quality-rows]");
         var claimRows = document.querySelector("[data-claim-rows]");
@@ -577,6 +612,9 @@ export const prerender = true;
           authDebugRefresh.addEventListener("click", function () {
             renderAuthDebug("manual_refresh");
           });
+        }
+        if (authDebugCopy) {
+          authDebugCopy.addEventListener("click", copyAuthDebug);
         }
         if (editJson && !editJson.value) {
           editJson.value = JSON.stringify({ phone: "0812 0000 0000", office_address: "Jakarta" }, null, 2);
@@ -927,6 +965,7 @@ export const prerender = true;
             hasAuthClerk: snapshot.hasAuthClerk,
             clerk: clerk,
             storage: snapshot.storage,
+            browserState: snapshot.browserState,
             redirect: snapshot.redirect,
             syncedUser: snapshot.syncedUser,
             recentEvents: (snapshot.events || []).slice(-18)
@@ -940,6 +979,35 @@ export const prerender = true;
           ].join(" | ");
           authDebugOutput.textContent = JSON.stringify(view, null, 2);
           if (window.console && console.info) console.info("[DashboardAuthDebug]", view);
+        }
+
+        async function copyAuthDebug() {
+          if (!authDebugOutput) return;
+          var text = authDebugOutput.textContent || "";
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(text);
+            } else {
+              copyTextFallback(text);
+            }
+            if (authDebugSummary) authDebugSummary.textContent = "Auth debug copied. Paste it into the chat.";
+          } catch (error) {
+            copyTextFallback(text);
+            if (authDebugSummary) authDebugSummary.textContent = "Auth debug copied with fallback. Paste it into the chat.";
+          }
+        }
+
+        function copyTextFallback(text) {
+          var textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "readonly");
+          textarea.style.position = "fixed";
+          textarea.style.left = "-9999px";
+          textarea.style.top = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          textarea.remove();
         }
 
         function escapeHtml(value) {

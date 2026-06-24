@@ -777,6 +777,11 @@
         pendingRole: getPendingRole(),
         pendingNext: getPendingNext(),
       },
+      browserState: {
+        clerkCookieNames: getClerkCookieNames(),
+        sessionStorageKeys: getStorageKeys(window.sessionStorage),
+        localStorageKeys: getStorageKeys(window.localStorage),
+      },
       redirect: {
         hasParams: hasClerkRedirectParams(),
         createdSessionHint: sessionHint(getClerkRedirectParam("__clerk_created_session")),
@@ -878,6 +883,34 @@
     if (!value) return "";
     const text = String(value);
     return text.length <= 10 ? text : text.slice(0, 6) + "..." + text.slice(-4);
+  }
+
+  function getClerkCookieNames() {
+    try {
+      return document.cookie
+        .split(";")
+        .map(function (part) {
+          return part.trim().split("=")[0];
+        })
+        .filter(function (name) {
+          return /clerk|__client|__session|sess/i.test(name);
+        })
+        .sort();
+    } catch (_error) {
+      return [];
+    }
+  }
+
+  function getStorageKeys(storage) {
+    try {
+      return Object.keys(storage || {})
+        .filter(function (key) {
+          return /clerk|franchise_auth/i.test(key);
+        })
+        .sort();
+    } catch (_error) {
+      return [];
+    }
   }
 
   function escapeHtml(value) {
