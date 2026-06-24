@@ -773,6 +773,9 @@
   function nextUrl(root) {
     const next = new URLSearchParams(window.location.search).get("next");
     const rootNext = root?.getAttribute("data-auth-next");
+    if (root?.getAttribute("data-auth-variant") === "staff" && rootNext && rootNext.startsWith("/")) {
+      return rootNext;
+    }
     if (next && next.startsWith("/")) return next;
     return rootNext && rootNext.startsWith("/") ? rootNext : "/daftar/";
   }

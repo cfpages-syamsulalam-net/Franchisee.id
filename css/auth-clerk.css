@@ -11,6 +11,11 @@
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
 }
 
+.fr-auth-panel,
+.fr-auth-panel * {
+  box-sizing: border-box;
+}
+
 .fr-auth-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -139,6 +144,7 @@
 
 .fr-auth-field input {
   width: 100%;
+  max-width: 100%;
   min-height: 48px;
   border: 1px solid rgba(0, 0, 0, 0.16);
   background: #fff;

@@ -266,7 +266,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Returns Franchisee.id overview counts, unclaimed outreach queue, data-quality warnings, pending claims, publish queue state, recent outreach, editable listing options, pending edit suggestions, lead summary, and system health.
 - `onRequestPost()`: Routes dashboard actions for manually confirmed WhatsApp outreach logging, staff/admin listing edit suggestions, admin edit suggestion review, and admin claim review.
 - `getUnclaimedOutreachQueue(db)`: Reads published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
-- `getDataQuality(db)`: Computes read-time warnings for missing images, contact, description, category, and likely all-caps descriptions.
+- `getDataQuality(db)`: Computes read-time warnings for missing images, contact, description, category, and likely all-caps descriptions; keeps all-caps detection in JavaScript so D1 does not evaluate complex `GLOB`/`LIKE` patterns.
 - `handleSuggestEdit(db, auth, data)`: Stores structured JSON diffs in `listing_edit_suggestions`. Admin or active trusted staff suggestions apply immediately; normal staff suggestions stay pending.
 - `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs write field-by-field to whitelisted `franchises` columns, write audit events, and queue a static rebuild through `siteRebuildStatements()`.
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
@@ -313,7 +313,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `Auth.getDebugSnapshot()` / `Auth.recordDebug()`: Exposes and persists masked Clerk lifecycle diagnostics for `/dashboard` and `/sso-callback/`, including config/script/load/callback/token/header stages without raw bearer tokens or secrets.
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign self-selectable `franchisee`/`franchisor` roles.
 - `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
-- `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with public login/register/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth.
+- `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with public login/register/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
 - `switchMode(root, mode)`: Switches login/register/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
 - `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI.
 - `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration stores the selected `franchisee`/`franchisor` role and the post-login destination until OAuth completion.

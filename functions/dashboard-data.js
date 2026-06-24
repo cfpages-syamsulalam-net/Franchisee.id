@@ -452,30 +452,45 @@ async function getDataQuality(db) {
         CASE WHEN COALESCE(f.phone, '') = '' AND COALESCE(fp.whatsapp, '') = '' THEN 1 ELSE 0 END AS missing_contact,
         CASE WHEN COALESCE(f.full_desc, f.short_desc, '') = '' THEN 1 ELSE 0 END AS missing_description,
         CASE WHEN COALESCE(f.category, '') = '' THEN 1 ELSE 0 END AS missing_category,
-        CASE WHEN f.full_desc GLOB '*[ABCDEFGHIJKLMNOPQRSTUVWXYZ][ABCDEFGHIJKLMNOPQRSTUVWXYZ][ABCDEFGHIJKLMNOPQRSTUVWXYZ][ABCDEFGHIJKLMNOPQRSTUVWXYZ][ABCDEFGHIJKLMNOPQRSTUVWXYZ]*' THEN 1 ELSE 0 END AS likely_all_caps
+        f.short_desc,
+        f.full_desc
       FROM franchise_site_publications p
       JOIN franchises f ON f.id = p.franchise_id
       LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
       WHERE p.site_id = ?
       ORDER BY
-        (missing_image + missing_contact + missing_description + missing_category + likely_all_caps) DESC,
+        (missing_image + missing_contact + missing_description + missing_category) DESC,
         f.updated_at DESC
-      LIMIT 20`,
+      LIMIT 80`,
     )
     .bind(SITE_ID)
     .all();
 
-  return (result.results || []).map((row) => ({
-    ...row,
-    public_url: `/peluang-usaha/${row.slug}`,
-    warnings: [
-      row.missing_image ? "missing_image" : "",
-      row.missing_contact ? "missing_contact" : "",
-      row.missing_description ? "missing_description" : "",
-      row.missing_category ? "missing_category" : "",
-      row.likely_all_caps ? "likely_all_caps" : "",
-    ].filter(Boolean),
-  }));
+  return (result.results || [])
+    .map((row) => {
+      const likelyAllCaps = isLikelyAllCapsDescription(row.full_desc || row.short_desc || "");
+      const warnings = [
+        row.missing_image ? "missing_image" : "",
+        row.missing_contact ? "missing_contact" : "",
+        row.missing_description ? "missing_description" : "",
+        row.missing_category ? "missing_category" : "",
+        likelyAllCaps ? "likely_all_caps" : "",
+      ].filter(Boolean);
+      return {
+        ...row,
+        likely_all_caps: likelyAllCaps ? 1 : 0,
+        full_desc: undefined,
+        short_desc: undefined,
+        public_url: `/peluang-usaha/${row.slug}`,
+        warnings,
+      };
+    })
+    .sort((left, right) => {
+      const warningDiff = right.warnings.length - left.warnings.length;
+      if (warningDiff) return warningDiff;
+      return String(right.updated_at || "").localeCompare(String(left.updated_at || ""));
+    })
+    .slice(0, 20);
 }
 
 async function getPublishState(db) {
@@ -906,6 +921,15 @@ function normalizeGroupedCounts(rows, keyName) {
 
 function normalizeText(value) {
   return (value ?? "").toString().replace(/\s+/g, " ").trim();
+}
+
+function isLikelyAllCapsDescription(value) {
+  const text = normalizeText(value);
+  if (text.length < 24) return false;
+  const letters = text.match(/[A-Za-z]/g) || [];
+  if (letters.length < 16) return false;
+  const uppercase = letters.filter((letter) => letter === letter.toUpperCase() && letter !== letter.toLowerCase()).length;
+  return uppercase / letters.length >= 0.82 && /[A-Z]{5,}/.test(text);
 }
 
 function randomId() {

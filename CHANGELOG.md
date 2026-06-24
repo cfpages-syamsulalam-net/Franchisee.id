@@ -4,6 +4,19 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-24 17:20 (Asia/Jakarta)
+### Added
+- None.
+
+### Changed
+- `functions/dashboard-data.js`: Moved likely all-caps description detection out of a complex D1 `GLOB` expression and into JavaScript so `/dashboard-data` does not fail with `LIKE or GLOB pattern too complex`.
+- `js/auth-clerk.js` and `src/pages/dashboard/index.astro`: Dashboard staff/admin auth now forces post-login navigation back to `/dashboard/` instead of honoring unrelated `?next=` values.
+- `css/auth-clerk.css`: Added auth-panel box sizing and input max-width rules so email/password fields stay inside the dashboard login card under legacy CSS.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented that dashboard data-quality heuristics avoid complex SQLite pattern matching.
+
+### Removed
+- None.
+
 ## 2026-06-24 14:46 (Asia/Jakarta)
 ### Added
 - `js/auth-clerk.js`: Added sanitized Clerk lifecycle debug events and `window.FranchiseAuth.getDebugSnapshot()` for diagnosing Google OAuth/session/token failures without exposing raw bearer tokens.
