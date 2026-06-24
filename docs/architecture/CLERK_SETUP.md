@@ -1,6 +1,6 @@
 # Clerk Setup For Franchisee.id
 
-Last updated: 2026-06-24 15:11 (Asia/Jakarta)
+Last updated: 2026-06-24 15:49 (Asia/Jakarta)
 
 ## Purpose
 Clerk is the identity/session provider. D1 remains the authorization source of truth through `users` and `user_roles`.
@@ -42,7 +42,7 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 - `/sso-callback/` is a hidden technical callback route for Google OAuth. It must be allowed in Clerk but is not a user-facing login page.
 - `/auth-config` returns the publishable Clerk key to the browser and prefers the Astro-style `PUBLIC_CLERK_PUBLISHABLE_KEY` variable.
 - `js/auth-clerk.js` writes the resolved publishable key to `window.__clerk_publishable_key` and the Clerk script tag before loading `clerk.browser.js`; Clerk's browser bundle needs the key available while the script evaluates, not only later during `clerk.load()`.
-- `js/auth-clerk.js` supports Google sign-in/sign-up through ClerkJS. It stores the post-login destination, strips stale Clerk callback params before starting OAuth, and calls Clerk's redirect callback handler before any token/dashboard checks after Google returns.
+- `js/auth-clerk.js` supports Google sign-in/sign-up through ClerkJS. It stores the post-login destination, strips stale Clerk callback params before starting OAuth, and calls Clerk's redirect callback handler before any token/dashboard checks after Google returns. The handler runs on `/sso-callback/` even when Clerk returns without visible `__clerk_*` URL parameters.
 - `/dashboard/` includes a masked Auth Debug panel while locked. Use it to diagnose Google SSO by checking `clerk.hasUser`, `clerk.hasSession`, `clerk.clientSessionCount`, redirect callback state, and recent `FranchiseAuth` events without exposing raw tokens.
 - Public Google registration stores the selected self-assignable role across the OAuth redirect, then syncs that role to D1 after the Clerk session is active.
 - `/auth-sync` verifies the active Clerk session, upserts D1 `users`, and self-assigns only `franchisee` or `franchisor`.
@@ -59,7 +59,7 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 3. Email/password login uses `clerk.client.signIn.create()`.
 4. Email/password register uses `clerk.client.signUp.create()` and email-code verification when Clerk requires it.
 5. Google sign-in/sign-up uses Clerk OAuth redirect methods from the custom UI.
-6. Google redirects back to `/sso-callback/`, where `js/auth-clerk.js` detects Clerk callback params and calls `clerk.handleRedirectCallback()` before reading `clerk.session`.
+6. Google redirects back to `/sso-callback/`, where `js/auth-clerk.js` calls `clerk.handleRedirectCallback()` before reading `clerk.session`; the route itself is treated as the callback signal even if no Clerk query/hash parameters are visible.
 7. After callback completion, Clerk redirects to the saved destination such as `/dashboard` or `/daftar`.
 8. Public Google registration stores the selected `franchisee` or `franchisor` role in `sessionStorage`; after OAuth completes, the next authenticated request syncs that role through `/auth-sync`.
 9. After a session is active, the browser calls `/auth-sync` with the selected role for new public registrations.

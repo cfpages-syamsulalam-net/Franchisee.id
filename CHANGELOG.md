@@ -17,6 +17,7 @@ Format:
 - `js/auth-clerk.js`: Added masked Clerk-related cookie and storage key names to the auth debug snapshot so session persistence can be diagnosed without exposing cookie values.
 - `js/auth-clerk.js`: Persists masked auth debug events in `sessionStorage` across OAuth redirects so `/sso-callback/` events appear in later debug captures.
 - `js/auth-clerk.js`: Changed Google OAuth `redirectUrl` from the current page to `/sso-callback/`, keeping `/dashboard` as the visible admin/staff login URL while giving Clerk a dedicated callback page.
+- `js/auth-clerk.js`: Runs `clerk.handleRedirectCallback()` whenever the browser is on `/sso-callback/`, even when Clerk returns without visible `__clerk_*` URL parameters, so cookie/handshake-based OAuth completion is not skipped.
 - `src/pages/sso-callback/index.astro`: Stops on the callback page instead of redirecting to `/dashboard` when Clerk finishes loading without an active session.
 - `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AGENTS.md`, and `docs/architecture/CLERK_SETUP.md`: Documented the dashboard auth debug behavior.
 

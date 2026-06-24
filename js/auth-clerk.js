@@ -605,9 +605,12 @@
   }
 
   async function handleOAuthRedirectIfNeeded(clerk) {
-    if (!hasClerkRedirectParams() || typeof clerk.handleRedirectCallback !== "function") {
+    const hasRedirectParams = hasClerkRedirectParams();
+    const isCallbackPath = isCurrentSsoCallbackPath();
+    if ((!hasRedirectParams && !isCallbackPath) || typeof clerk.handleRedirectCallback !== "function") {
       recordDebug("oauth_callback:skip", {
-        hasRedirectParams: hasClerkRedirectParams(),
+        hasRedirectParams,
+        isCallbackPath,
         hasHandler: typeof clerk.handleRedirectCallback === "function",
       });
       return;
@@ -618,6 +621,8 @@
     const createdSessionId = getClerkRedirectParam("__clerk_created_session");
     recordDebug("oauth_callback:start", {
       redirectUrlComplete,
+      hasRedirectParams,
+      isCallbackPath,
       hasCreatedSessionId: Boolean(createdSessionId),
       createdSessionHint: sessionHint(createdSessionId),
       before: summarizeClerk(clerk),
@@ -678,6 +683,12 @@
     return CLERK_REDIRECT_PARAMS.some(function (key) {
       return search.has(key) || hash.has(key);
     });
+  }
+
+  function isCurrentSsoCallbackPath() {
+    const expected = new URL(SSO_CALLBACK_PATH, window.location.origin).pathname.replace(/\/+$/, "");
+    const current = window.location.pathname.replace(/\/+$/, "");
+    return current === expected;
   }
 
   function getClerkRedirectParam(key) {
