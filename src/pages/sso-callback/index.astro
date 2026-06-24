@@ -43,12 +43,37 @@ export const prerender = true;
         padding: 10px;
         font: 12px/1.45 Consolas, "Courier New", monospace;
       }
+      .sso-copy {
+        width: 36px;
+        height: 36px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dedede;
+        border-radius: 4px;
+        background: #f7f7f7;
+        color: #111111;
+        cursor: pointer;
+      }
+      .sso-copy.is-visible {
+        display: inline-flex;
+      }
+      .sso-copy svg {
+        width: 17px;
+        height: 17px;
+      }
     </style>
   </head>
   <body>
     <main class="sso-card">
       <h1>Menyelesaikan login...</h1>
       <p data-sso-status>Mohon tunggu. Jika halaman ini tidak berpindah otomatis, login Google belum selesai diproses oleh Clerk.</p>
+      <button class="sso-copy" type="button" data-sso-copy aria-label="Copy auth debug" title="Copy auth debug">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M8 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2V7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M4 15V4a2 2 0 0 1 2-2h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
       <pre class="sso-debug" data-sso-debug hidden>{}</pre>
     </main>
 
@@ -57,13 +82,19 @@ export const prerender = true;
       (function () {
         var statusEl = document.querySelector("[data-sso-status]");
         var debugEl = document.querySelector("[data-sso-debug]");
+        var copyButton = document.querySelector("[data-sso-copy]");
         window.FRANCHISE_AUTH_DEBUG = true;
+        if (copyButton) copyButton.addEventListener("click", copyDebug);
         boot();
 
         async function boot() {
           try {
             if (!window.FranchiseAuth) throw new Error("Auth runtime belum tersedia.");
             await window.FranchiseAuth.init();
+            var snapshot = getSnapshot();
+            if (!snapshot || !snapshot.clerk || !snapshot.clerk.hasSession) {
+              throw new Error("Clerk callback selesai, tetapi tidak ada session aktif di browser.");
+            }
             window.location.replace(getPendingDestination());
           } catch (error) {
             if (statusEl) {
@@ -71,6 +102,7 @@ export const prerender = true;
             }
             if (debugEl) {
               debugEl.hidden = false;
+              if (copyButton) copyButton.classList.add("is-visible");
               debugEl.textContent = JSON.stringify(
                 window.FranchiseAuth && typeof window.FranchiseAuth.getDebugSnapshot === "function"
                   ? window.FranchiseAuth.getDebugSnapshot()
@@ -83,11 +115,34 @@ export const prerender = true;
         }
 
         function getPendingDestination() {
-          var snapshot = window.FranchiseAuth && typeof window.FranchiseAuth.getDebugSnapshot === "function"
-            ? window.FranchiseAuth.getDebugSnapshot()
-            : null;
+          var snapshot = getSnapshot();
           var destination = snapshot && snapshot.storage ? snapshot.storage.pendingNext : "";
           return destination && destination.charAt(0) === "/" ? destination : "/dashboard";
+        }
+
+        function getSnapshot() {
+          return window.FranchiseAuth && typeof window.FranchiseAuth.getDebugSnapshot === "function"
+            ? window.FranchiseAuth.getDebugSnapshot()
+            : null;
+        }
+
+        async function copyDebug() {
+          if (!debugEl) return;
+          var text = debugEl.textContent || "";
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            var textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.setAttribute("readonly", "readonly");
+            textarea.style.position = "fixed";
+            textarea.style.left = "-9999px";
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            textarea.remove();
+          }
+          if (statusEl) statusEl.textContent = "Auth debug copied. Paste it into the chat.";
         }
       }());
     </script>

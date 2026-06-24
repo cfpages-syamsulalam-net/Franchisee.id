@@ -77,6 +77,7 @@ Key readings:
 - `clerk.clientSessionCount>0` but `clerk.hasSession=false`: Clerk sees a session candidate but it is not active.
 - `clerk.hasSession=true` but `hasAuthorization=false` in the `boot:after_headers` stage: token creation failed.
 - `dashboard_data:response` status `401` or `403`: Clerk token exists, but server-side D1 role authorization failed.
+- If `/sso-callback/` stays on screen, copy its debug output directly; the callback route now stops there when Clerk returns without creating an active session.
 
 The panel masks token/session values by design, so screenshots of it are safe for debugging.
 

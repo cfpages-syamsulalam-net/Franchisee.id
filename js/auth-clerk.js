@@ -7,6 +7,7 @@
   const PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsuZnJhbmNoaXNlZS5pZCQ";
   const PENDING_ROLE_KEY = "franchise_auth_pending_role";
   const PENDING_NEXT_KEY = "franchise_auth_pending_next";
+  const DEBUG_EVENTS_KEY = "franchise_auth_debug_events";
   const SSO_CALLBACK_PATH = "/sso-callback/";
   const MAX_DEBUG_EVENTS = 60;
   const GOOGLE_ICON = `
@@ -46,7 +47,7 @@
   Auth.getAuthHeaders = getAuthHeaders;
   Auth.syncUser = syncUser;
   Auth.ensureSignedIn = ensureSignedIn;
-  Auth.debugEvents = Auth.debugEvents || [];
+  Auth.debugEvents = mergeDebugEvents(loadStoredDebugEvents(), Auth.debugEvents || []);
   Auth.getDebugSnapshot = getDebugSnapshot;
   Auth.recordDebug = recordDebug;
 
@@ -775,6 +776,7 @@
     return {
       generatedAt: new Date().toISOString(),
       location: sanitizedLocation(),
+      locationParts: locationParts(),
       hasWindowClerk: Boolean(window.Clerk),
       hasAuthClerk: Boolean(clerk),
       clerk: summarizeClerk(clerk),
@@ -813,6 +815,7 @@
     if (Auth.debugEvents.length > MAX_DEBUG_EVENTS) {
       Auth.debugEvents.splice(0, Auth.debugEvents.length - MAX_DEBUG_EVENTS);
     }
+    storeDebugEvents(Auth.debugEvents);
     if (window.FRANCHISE_AUTH_DEBUG || /(?:\?|&)auth_debug=1(?:&|$)/.test(window.location.search)) {
       console.info("[FranchiseAuth]", event, entry.details);
     }
@@ -872,6 +875,17 @@
     return url.pathname + url.search + url.hash;
   }
 
+  function locationParts() {
+    const search = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams((window.location.hash || "").replace(/^#\/?/, ""));
+    return {
+      pathname: window.location.pathname,
+      searchKeys: Array.from(search.keys()).sort(),
+      hashKeys: Array.from(hash.keys()).sort(),
+      hasHash: Boolean(window.location.hash),
+    };
+  }
+
   function keyHint(value) {
     if (!value) return "";
     const text = String(value);
@@ -916,6 +930,34 @@
     } catch (_error) {
       return [];
     }
+  }
+
+  function loadStoredDebugEvents() {
+    try {
+      const raw = sessionStorage.getItem(DEBUG_EVENTS_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.slice(-MAX_DEBUG_EVENTS) : [];
+    } catch (_error) {
+      return [];
+    }
+  }
+
+  function storeDebugEvents(events) {
+    try {
+      sessionStorage.setItem(DEBUG_EVENTS_KEY, JSON.stringify((events || []).slice(-MAX_DEBUG_EVENTS)));
+    } catch (_error) {
+      // Debug persistence is best-effort only.
+    }
+  }
+
+  function mergeDebugEvents(stored, current) {
+    const seen = new Set();
+    return (stored || []).concat(current || []).filter(function (event) {
+      const key = [event.at, event.event, JSON.stringify(event.details || {})].join("|");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(-MAX_DEBUG_EVENTS);
   }
 
   function escapeHtml(value) {
