@@ -7,6 +7,7 @@
   const PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsuZnJhbmNoaXNlZS5pZCQ";
   const PENDING_ROLE_KEY = "franchise_auth_pending_role";
   const PENDING_NEXT_KEY = "franchise_auth_pending_next";
+  const SSO_CALLBACK_PATH = "/sso-callback/";
   const MAX_DEBUG_EVENTS = 60;
   const GOOGLE_ICON = `
     <svg class="fr-auth-google-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -352,7 +353,7 @@
 
       const params = {
         strategy: "oauth_google",
-        redirectUrl: currentAuthUrl(),
+        redirectUrl: oauthCallbackUrl(),
         redirectUrlComplete: nextUrl(root),
       };
       setPendingNext(params.redirectUrlComplete);
@@ -694,6 +695,10 @@
     const url = new URL(window.location.href);
     removeClerkRedirectParams(url.searchParams);
     return url.href;
+  }
+
+  function oauthCallbackUrl() {
+    return new URL(SSO_CALLBACK_PATH, window.location.origin).href;
   }
 
   async function loadScriptWithFallbacks(srcList, publishableKey) {

@@ -1,0 +1,95 @@
+---
+export const prerender = true;
+---
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Menyelesaikan Login - Franchisee.id</title>
+    <link rel="stylesheet" href="/css/auth-clerk.css">
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f2f2f2;
+        color: #171717;
+        font-family: Outfit, "DM Sans", Arial, sans-serif;
+      }
+      .sso-card {
+        width: min(92vw, 620px);
+        border: 1px solid #e5e5e5;
+        background: #ffffff;
+        padding: 24px;
+      }
+      .sso-card h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+      .sso-card p {
+        color: #646464;
+        line-height: 1.5;
+      }
+      .sso-debug {
+        max-height: 320px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        border: 1px solid #ededed;
+        background: #f8f8f8;
+        padding: 10px;
+        font: 12px/1.45 Consolas, "Courier New", monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="sso-card">
+      <h1>Menyelesaikan login...</h1>
+      <p data-sso-status>Mohon tunggu. Jika halaman ini tidak berpindah otomatis, login Google belum selesai diproses oleh Clerk.</p>
+      <pre class="sso-debug" data-sso-debug hidden>{}</pre>
+    </main>
+
+    <script src="/js/auth-clerk.js" is:inline></script>
+    <script is:inline>
+      (function () {
+        var statusEl = document.querySelector("[data-sso-status]");
+        var debugEl = document.querySelector("[data-sso-debug]");
+        window.FRANCHISE_AUTH_DEBUG = true;
+        boot();
+
+        async function boot() {
+          try {
+            if (!window.FranchiseAuth) throw new Error("Auth runtime belum tersedia.");
+            await window.FranchiseAuth.init();
+            window.location.replace(getPendingDestination());
+          } catch (error) {
+            if (statusEl) {
+              statusEl.textContent = (error && error.message ? error.message : "Login Google gagal diproses.") + " Silakan kembali ke dashboard dan coba lagi.";
+            }
+            if (debugEl) {
+              debugEl.hidden = false;
+              debugEl.textContent = JSON.stringify(
+                window.FranchiseAuth && typeof window.FranchiseAuth.getDebugSnapshot === "function"
+                  ? window.FranchiseAuth.getDebugSnapshot()
+                  : { error: error && error.message ? error.message : String(error) },
+                null,
+                2
+              );
+            }
+          }
+        }
+
+        function getPendingDestination() {
+          var snapshot = window.FranchiseAuth && typeof window.FranchiseAuth.getDebugSnapshot === "function"
+            ? window.FranchiseAuth.getDebugSnapshot()
+            : null;
+          var destination = snapshot && snapshot.storage ? snapshot.storage.pendingNext : "";
+          return destination && destination.charAt(0) === "/" ? destination : "/dashboard";
+        }
+      }());
+    </script>
+  </body>
+</html>

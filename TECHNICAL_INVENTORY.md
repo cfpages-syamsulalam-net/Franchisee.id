@@ -207,6 +207,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
 - Security note: the static page is not the authorization boundary; `/dashboard-data` performs the server-side D1 role check.
 
+### File: `src/pages/sso-callback/index.astro`
+*Hidden Clerk OAuth callback route.*
+- `prerender = true`.
+- Builds `/sso-callback/index.html` with `noindex,nofollow`.
+- Loads `js/auth-clerk.js` and calls `window.FranchiseAuth.init()` so Clerk can run `handleRedirectCallback()` on Google OAuth return.
+- If Clerk returns without navigating, redirects to the saved pending destination from the masked auth snapshot, falling back to `/dashboard`.
+- Shows a minimal masked debug fallback only when callback processing fails.
+
 ### File: `public/_redirects`
 *Cloudflare Pages redirects.*
 - Redirects legacy duplicate directory URLs to canonical `/peluang-usaha` query-param states:
@@ -308,5 +316,5 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `mountAuthPage()`: Replaces `/login` legacy WPForms markup or fills `/register` root with public login/register/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth.
 - `switchMode(root, mode)`: Switches login/register/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
 - `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI.
-- `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with stale Clerk callback params stripped from the redirect URL; public registration stores the selected `franchisee`/`franchisor` role and the post-login destination until OAuth completion.
+- `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration stores the selected `franchisee`/`franchisor` role and the post-login destination until OAuth completion.
 - `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters, calls `clerk.handleRedirectCallback()`, falls back to `clerk.setActive()` with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.

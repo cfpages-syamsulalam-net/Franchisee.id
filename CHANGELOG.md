@@ -9,10 +9,12 @@ Format:
 - `js/auth-clerk.js`: Added sanitized Clerk lifecycle debug events and `window.FranchiseAuth.getDebugSnapshot()` for diagnosing Google OAuth/session/token failures without exposing raw bearer tokens.
 - `src/pages/dashboard/index.astro`: Added a dashboard auth debug panel that shows Clerk loaded/user/session state, client session count, redirect callback state, pending auth storage, and recent auth events while the dashboard is locked.
 - `src/pages/dashboard/index.astro`: Added an icon-only copy button for the dashboard auth debug JSON.
+- `src/pages/sso-callback/index.astro`: Added a hidden Clerk OAuth callback route that completes Google SSO before returning users to their saved destination.
 
 ### Changed
 - `js/auth-clerk.js` and `css/auth-clerk.css`: Replaced the plain `G` text in Google OAuth buttons with an inline Google logo.
 - `js/auth-clerk.js`: Added masked Clerk-related cookie and storage key names to the auth debug snapshot so session persistence can be diagnosed without exposing cookie values.
+- `js/auth-clerk.js`: Changed Google OAuth `redirectUrl` from the current page to `/sso-callback/`, keeping `/dashboard` as the visible admin/staff login URL while giving Clerk a dedicated callback page.
 - `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AGENTS.md`, and `docs/architecture/CLERK_SETUP.md`: Documented the dashboard auth debug behavior.
 
 ### Removed
