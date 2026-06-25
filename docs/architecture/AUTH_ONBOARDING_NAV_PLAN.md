@@ -1,6 +1,6 @@
 # Auth Onboarding And Navbar Plan
 
-Last updated: 2026-06-25 04:59 (Asia/Jakarta)
+Last updated: 2026-06-25 16:12 (Asia/Jakarta)
 
 ## Objective
 Make public account entry feel like one connected flow:
@@ -64,6 +64,40 @@ This avoids making users think `/login` registration and `/daftar` are duplicate
    - Franchisor: `input[name="email_contact"]` from Clerk primary email, and contact/PIC name only if a matching existing field is present and empty.
 4. Submission remains protected by `/form-submit` bearer tokens and D1 role checks.
 
+### Role Correction And Add-On Flow
+Users can misunderstand the initial `Daftar sebagai` choice. A common case: someone signs up as a franchisee because they are browsing opportunities, then realizes they need franchisor access to add or claim a brand listing.
+
+The preferred behavior is additive, not destructive:
+
+- Do not force users to abandon or replace their original public role.
+- Let a logged-in `franchisee` request `franchisor` access from `/profil` when they want to add a brand or claim a listing.
+- Let a logged-in `franchisor` add `franchisee` interests later if they also want recommendations or buyer-side alerts.
+- Keep `admin` and `staff` role changes out of this self-service flow; those remain admin-controlled.
+
+Recommended UX:
+
+1. In `/profil`, show a contextual CTA when the opposite public role is missing:
+   - Franchisee-only user: `Tambahkan brand franchise` / `Saya pemilik brand`.
+   - Franchisor-only user: `Cari peluang franchise juga`.
+2. On click, explain the plain-language effect in a short confirmation modal:
+   - `Anda tetap bisa memakai akun ini. Kami akan menambahkan akses untuk mengisi data brand.`
+3. After confirmation, call a protected role-add action that only permits self-service public roles: `franchisee` and `franchisor`.
+4. Sync D1 roles back to Clerk metadata through the existing auth sync path.
+5. Send the user to `/daftar/?role=franchisor&continue=1` or `/daftar/?role=franchisee&continue=1` to complete the missing first-time form.
+
+Copy guidance:
+
+- Say `tambahkan akses` or `lengkapi data brand`, not `switch role`, `D1 role`, or `metadata`.
+- Avoid making users choose between identities. The account can represent both a person looking for franchises and a brand owner.
+- Only hide role sections in `/profil` when the role is absent; once added, both public sections can appear for that user.
+
+Implementation direction:
+
+- Reuse `/auth-sync` only if it remains safe for already-authenticated public self-assignment; otherwise add a focused `/profile-data` action such as `add_public_role`.
+- Validate the requested role with Zod and allow only `franchisee` or `franchisor`.
+- Write an `audit_events` row for role additions.
+- After the server writes the role, the current implementation sends the user to the matching `/daftar` tab so the newly available profile/listing data can be completed immediately.
+
 ## Navbar Auth State Plan
 Create a small public navbar controller instead of duplicating auth logic in static HTML:
 
@@ -104,6 +138,7 @@ Create a small public navbar controller instead of duplicating auth logic in sta
 | Done | Add `/daftar` role deep-link and prefill | Extend form init with `role` query handling and safe Clerk email/name prefill. Claim deep links still take priority. |
 | Done | Animate `/daftar` role tabs | Add a sliding indicator with reduced-motion fallback in the modular form CSS and `openTab()`. |
 | Done | Update documentation and tests | Synced `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `CLERK_SETUP.md`, `CHANGELOG.md`, and ran syntax, TypeScript, and full build checks. |
+| Done | Add public role add-on flow | Logged-in franchisee/franchisor users can add the opposite public role from `/profil`, confirm the change, then continue to the matching `/daftar` form. |
 
 ## Open Decisions
 - Resolved: `/register/` redirects to `/login?mode=register`.

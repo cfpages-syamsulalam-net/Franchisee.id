@@ -391,11 +391,11 @@ function generateStatusBadge(tier: string) {
   if (tier === "VERIFIED" || tier === "PREMIUM") {
     const label = tier === "PREMIUM" ? "Premium" : "Terverifikasi";
     const tip = tier === "PREMIUM" ? "Listing premium dengan informasi prioritas." : "Brand sudah diverifikasi oleh tim Franchisee.id.";
-    return `<span class="franchise-status-badge franchise-status-verified" aria-label="${escapeAttr(label)}"><i class="fas fa-check-circle" aria-hidden="true"></i><span>${escapeHtml(label)}</span><span class="franchise-tooltip">${escapeHtml(tip)}</span></span>`;
+    return `<span class="franchise-status-badge franchise-status-verified" aria-label="${escapeAttr(label)}" data-fr-tooltip="${escapeAttr(tip)}"><i class="fas fa-check-circle" aria-hidden="true"></i><span>${escapeHtml(label)}</span></span>`;
   }
 
   if (tier === "UNCLAIMED") {
-    return `<span class="franchise-status-badge franchise-status-unclaimed" aria-label="Belum diklaim"><i class="fas fa-exclamation-circle" aria-hidden="true"></i><span>Belum diklaim</span><span class="franchise-tooltip">Data berasal dari sumber publik. Pemilik brand dapat klaim untuk memperbarui profil.</span></span>`;
+    return `<span class="franchise-status-badge franchise-status-unclaimed" aria-label="Belum diklaim" data-fr-tooltip="Data ini belum dikelola langsung oleh pemilik brand. Pemilik brand dapat klaim untuk memperbarui profil."><i class="fas fa-exclamation-circle" aria-hidden="true"></i><span>Belum diklaim</span></span>`;
   }
 
   return "";

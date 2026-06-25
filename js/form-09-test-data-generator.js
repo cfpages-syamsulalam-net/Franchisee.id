@@ -348,7 +348,7 @@
             fabContainer.id = 'dev-test-generator-fab';
             fabContainer.style.cssText = 'display:block !important; position:fixed; bottom:12px; left:12px; z-index:100000;';
             fabContainer.innerHTML = `
-                <button id="dev-generator-toggle" title="Test Data Generator" style="
+                <button id="dev-generator-toggle" aria-label="Test Data Generator" data-fr-tooltip="Test Data Generator" style="
                     display:inline-flex;
                     align-items:center;
                     justify-content:center;

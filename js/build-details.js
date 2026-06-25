@@ -142,7 +142,7 @@ async function build() {
                 '{OG_IMAGE}': item.logo_url || '',
                 '{SEO_TITLE}': `Franchise ${item.brand_name} - Info Modal & Peluang Usaha 2026`,
                 '{SEO_DESCRIPTION}': `Cek modal dan biaya franchise ${item.brand_name}. Dapatkan profil lengkap, syarat jadi mitra, dan kontak resmi franchisor ${item.brand_name} di Franchise.id.`,
-                '{VERIFIED_ICON}': tier === 'VERIFIED' ? '<i class="fas fa-check-circle franchise-verified-badge" title="Verified Brand"></i>' : '',
+                '{VERIFIED_ICON}': tier === 'VERIFIED' ? '<i class="fas fa-check-circle franchise-verified-badge" aria-label="Brand terverifikasi" data-fr-tooltip="Brand terverifikasi"></i>' : '',
                 '{JSON_LD}': generateJSONLD(item, slug),
                 '{BREADCRUMBS}': generateBreadcrumbs(item),
                 '{CLAIM_STICKY_BAR}': generateStickyBar(item, slug, tier)

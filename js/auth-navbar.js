@@ -98,7 +98,7 @@
         <span class="fr-auth-nav-name">${escapeHtml(name)}</span>
         <span class="fr-auth-nav-role">${escapeHtml(ROLE_LABELS[role] || "Akun")}</span>
       </a>
-      <button class="fr-auth-nav-logout" type="button" data-auth-navbar-logout aria-label="Logout" title="Logout">
+      <button class="fr-auth-nav-logout" type="button" data-auth-navbar-logout aria-label="Keluar" data-fr-tooltip="Keluar">
         <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
       </button>
     `;

@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-25 06:23 (Asia/Jakarta)
+Last updated: 2026-06-25 16:43 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -10,6 +10,9 @@ Last updated: 2026-06-25 06:23 (Asia/Jakarta)
 - Be proactive with engineering judgment: when a request can be improved for maintainability, security, performance, UX, data integrity, or migration safety, surface the recommendation clearly before or during implementation. Prefer actionable suggestions with tradeoffs while respecting explicit user decisions.
 - Code modularly by default. Prefer small, purpose-owned files/modules for new or touched runtime logic instead of growing monolithic scripts, functions, or Astro pages. When refactoring, preserve behavior first, validate, then update `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `CHANGELOG.md`.
 - Prioritize finishing the current pending task over progress narration. Keep user-facing updates minimal and reserve final reporting for work that is actually completed or genuinely blocked.
+- When an agreed task has remaining planned steps, continue implementing them before final reporting instead of stopping at the plan. If decisions are genuinely blocking, ask for confirmation using the available user-input tools when present; otherwise make a conservative, documented implementation choice and keep working. For product/UX work that needs structure, brainstorm in the appropriate `.md` tracker first, then implement the plan in the same work session unless the user explicitly asks to pause.
+- Public-facing copy must be clear, plain, and user-centered. Do not expose infrastructure or implementation terms such as D1, Clerk, onboarding flow, webhooks, static rebuilds, or internal sync in UI text; make the site mechanism handle those details and only tell users what they need to do next.
+- Tooltips and hover hints must use the shared custom tooltip component: `data-fr-tooltip` plus `css/shared-tooltip.css` and `js/shared-tooltip.js`. Do not add browser `title` attributes for UI hints. Existing interactive `title` hints should be removed or converted so only the shared instant tooltip appears.
 - Use pnpm exclusively. Run `pnpm install`, `pnpm run <script>`, and `pnpm exec <tool>`. Keep `pnpm-lock.yaml` committed and do not create alternate lockfiles.
 - Do not start local dev or preview servers by default. Manual browser QA happens directly on the production site `https://franchisee.id` after the user pushes code. Use local static/build/type checks for validation, and start a local server only when the user explicitly asks for one.
 

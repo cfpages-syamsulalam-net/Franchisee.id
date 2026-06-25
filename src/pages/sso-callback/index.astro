@@ -9,6 +9,7 @@ export const prerender = true;
     <meta name="robots" content="noindex,nofollow">
     <title>Menyelesaikan Login - Franchisee.id</title>
     <link rel="stylesheet" href="/css/auth-clerk.css">
+    <link rel="stylesheet" href="/css/shared-tooltip.css">
     <style>
       body {
         margin: 0;
@@ -68,7 +69,7 @@ export const prerender = true;
     <main class="sso-card">
       <h1>Menyelesaikan login...</h1>
       <p data-sso-status>Mohon tunggu. Jika halaman ini tidak berpindah otomatis, login Google belum selesai.</p>
-      <button class="sso-copy" type="button" data-sso-copy aria-label="Copy auth debug" title="Copy auth debug">
+      <button class="sso-copy" type="button" data-sso-copy aria-label="Salin debug login" data-fr-tooltip="Salin debug login">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M8 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2V7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
           <path d="M4 15V4a2 2 0 0 1 2-2h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -79,6 +80,7 @@ export const prerender = true;
 
     <script src="/js/auth-clerk-debug.js" is:inline></script>
     <script src="/js/auth-clerk.js" is:inline></script>
+    <script src="/js/shared-tooltip.js" is:inline></script>
     <script is:inline>
       (function () {
         var statusEl = document.querySelector("[data-sso-status]");

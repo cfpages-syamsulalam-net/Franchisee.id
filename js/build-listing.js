@@ -183,7 +183,7 @@ function generateCard(item, index) {
     let badge = '';
     
     if (tier === 'VERIFIED') {
-        badge = `<i class="fas fa-check-circle" style="color:#2980b9; margin-left:4px;" title="Verified"></i>`;
+        badge = `<i class="fas fa-check-circle" style="color:#2980b9; margin-left:4px;" aria-label="Terverifikasi" data-fr-tooltip="Terverifikasi"></i>`;
     } else if (tier === 'UNCLAIMED') {
         badge = `<span style="font-size: 10px; background: #eee; color: #777; padding: 1px 5px; border-radius: 3px; margin-left: 5px; font-weight: normal; vertical-align: middle;">Belum Diklaim</span>`;
     }

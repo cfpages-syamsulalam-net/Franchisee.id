@@ -369,7 +369,7 @@
 .fr-profile-summary {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   margin-bottom: 22px;
 }
 
@@ -388,6 +388,225 @@
   color: #6b7280;
   font-size: 13px;
   font-weight: 800;
+}
+
+.fr-profile-role-add {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.fr-profile-role-card {
+  align-items: center;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.fr-profile-role-card h3 {
+  align-items: center;
+  color: #111827;
+  display: flex;
+  font-size: 17px;
+  gap: 9px;
+  margin: 0 0 5px;
+}
+
+.fr-profile-role-card p {
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.fr-profile-modal {
+  align-items: center;
+  background: rgba(17, 24, 39, 0.58);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 1000;
+}
+
+.fr-profile-modal-card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+  max-width: 520px;
+  padding: 28px;
+  position: relative;
+  text-align: center;
+  width: min(100%, 520px);
+}
+
+.fr-profile-modal-close {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #6b7280;
+  cursor: pointer;
+  display: inline-flex;
+  height: 38px;
+  justify-content: center;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 38px;
+}
+
+.fr-profile-modal-icon {
+  align-items: center;
+  background: rgba(255, 192, 61, 0.18);
+  color: #111827;
+  display: inline-flex;
+  font-size: 22px;
+  height: 54px;
+  justify-content: center;
+  margin-bottom: 16px;
+  width: 54px;
+}
+
+.fr-profile-modal-card h2 {
+  color: #111827;
+  font-size: 24px;
+  margin: 0 0 8px;
+}
+
+.fr-profile-modal-card p {
+  color: #4b5563;
+  line-height: 1.55;
+  margin: 0 0 10px;
+}
+
+.fr-profile-value-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+}
+
+.fr-profile-value-section {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.fr-profile-value-section.is-full {
+  margin-top: 18px;
+}
+
+.fr-profile-section-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.fr-profile-section-head h3 {
+  align-items: center;
+  color: #111827;
+  display: flex;
+  font-size: 18px;
+  gap: 9px;
+  margin: 0;
+}
+
+.fr-profile-text-link {
+  color: #111827;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.fr-profile-opportunity {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.fr-profile-opportunity.is-compact {
+  gap: 10px;
+}
+
+.fr-profile-opportunity-title {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.fr-profile-opportunity-title strong {
+  color: #111827;
+  font-size: 16px;
+}
+
+.fr-profile-fit {
+  background: #eef2f7;
+  color: #374151;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 7px;
+}
+
+.fr-profile-fit.is-fit {
+  background: rgba(19, 115, 51, 0.12);
+  color: #137333;
+}
+
+.fr-profile-fit.is-near {
+  background: rgba(255, 192, 61, 0.2);
+  color: #5c4200;
+}
+
+.fr-profile-fit.is-over {
+  background: rgba(198, 40, 40, 0.1);
+  color: #a61b1b;
+}
+
+.fr-profile-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.fr-profile-chip-row span {
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 7px;
+}
+
+.fr-profile-opportunity-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fr-profile-opportunity-actions .fr-profile-button,
+.fr-profile-opportunity-actions .fr-profile-secondary {
+  font-size: 13px;
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+.fr-profile-empty-inline {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px dashed rgba(15, 23, 42, 0.18);
+  color: #4b5563;
+  display: flex;
+  gap: 9px;
+  line-height: 1.5;
+  padding: 14px;
 }
 
 .fr-profile-list {
@@ -409,6 +628,12 @@
 .fr-profile-muted {
   color: #6b7280;
   font-size: 13px;
+}
+
+.fr-profile-list-copy {
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 8px 0 0;
 }
 
 .fr-profile-select-row {
@@ -445,8 +670,14 @@
 
   .fr-profile-layout,
   .fr-profile-grid,
-  .fr-profile-summary {
+  .fr-profile-summary,
+  .fr-profile-value-grid {
     grid-template-columns: 1fr;
+  }
+
+  .fr-profile-role-card {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .fr-profile-tabs {

@@ -238,35 +238,9 @@ export function injectDirectoryAssets(html: string) {
   background: #fff2bd;
   border: 1px solid rgba(194, 141, 0, 0.28);
 }
-.franchise-status-badge > span:not(.franchise-tooltip) {
+.franchise-status-badge > span {
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.franchise-tooltip {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 8px);
-  z-index: 9999;
-  width: 220px;
-  padding: 8px 10px;
-  border-radius: 4px;
-  background: #111111;
-  color: #ffffff;
-  font-size: 11px;
-  line-height: 1.35;
-  font-weight: 500;
-  white-space: normal;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(4px);
-  transition: opacity 80ms ease, transform 80ms ease;
-}
-.franchise-status-badge:hover .franchise-tooltip,
-.franchise-status-badge:focus-within .franchise-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
 }
 .franchise-card-facts {
   display: flex;

@@ -4,6 +4,59 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-25 16:43 (Asia/Jakarta)
+### Added
+- `css/shared-tooltip.css` and `js/shared-tooltip.js`: Added a shared custom tooltip component for instant, body-level hover/focus hints.
+- `.context/session-20260625-1643.md`: Added a session snapshot for the shared tooltip and copy-rule update.
+
+### Changed
+- `AGENTS.md`: Added permanent rules for plain public-facing copy and shared custom tooltip usage instead of browser `title` hints.
+- `src/pages/profil/index.astro`, `src/pages/dashboard/index.astro`, `src/pages/sso-callback/index.astro`, `login/index.html`, `daftar/index.html`, and franchise templates: Loaded the shared tooltip assets where auth/profile/dashboard/public generated UI can use hints.
+- `js/profile-page.js`, `js/auth-navbar.js`, `js/form-09-test-data-generator.js`, `js/build-listing.js`, `js/build-details.js`, `src/lib/franchise-static.ts`, `src/lib/franchise-static-assets.ts`, `login/index.html`, `daftar/index.html`, and franchise templates: Replaced UI tooltip `title` usage with `data-fr-tooltip` or accessible labels and moved directory status badge hints to the shared tooltip component.
+- `src/pages/dashboard/index.astro`: Reworded visible dashboard helper text to avoid exposing implementation terms in the UI.
+- `peluang-usaha/*.html` and `json/d1-generated-pages-manifest.json`: Regenerated during `pnpm run build` so public pages include the shared tooltip assets and updated status badge markup.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the shared tooltip runtime, styling, and usage convention.
+
+## 2026-06-25 16:29 (Asia/Jakarta)
+### Added
+- `.context/session-20260625-1629.md`: Added a session snapshot for the franchisee value-surface implementation.
+
+### Changed
+- `AGENTS.md`: Added the rule to continue agreed planned work through implementation before final reporting, using confirmation only for genuinely blocking decisions.
+- `docs/architecture/PROFILE_PAGE_PLAN.md`: Expanded and completed the `Peluang Saya` implementation plan.
+- `functions/profile-data.js`: Added franchisee recommendations, inquiry history, and `create_franchise_inquiry` using existing `franchise_leads`.
+- `js/profile-page.js` and `css/profile.css`: Added the `Peluang Saya` tab with recommendations, budget-fit labels, browser-saved opportunities, one-click inquiries, and inquiry history.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the new profile API payload/action and client-side opportunity surfaces.
+
+## 2026-06-25 16:12 (Asia/Jakarta)
+### Added
+- `.context/session-20260625-1612.md`: Added a session snapshot for the public double-role implementation pass.
+
+### Changed
+- `functions/profile-data.js`: Added the protected `add_public_role` action so logged-in public users can add the missing `franchisee` or `franchisor` role, audit the change, and resync Clerk metadata.
+- `js/profile-page.js` and `css/profile.css`: Added role add-on cards and a confirmation modal in `/profil`, then redirect users to the matching `/daftar` completion form after access is added.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification.
+- `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`, `docs/architecture/PROFILE_PAGE_PLAN.md`, `docs/architecture/CLERK_SETUP.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented the implemented additive public role flow.
+
+## 2026-06-25 15:47 (Asia/Jakarta)
+### Added
+- `.context/session-20260625-1547.md`: Added a session snapshot for the public role add-on and franchisee value planning pass.
+
+### Changed
+- `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: Added the additive public role correction flow for users who start as franchisee/franchisor and later need the opposite public role.
+- `docs/architecture/PROFILE_PAGE_PLAN.md`: Added the franchisee value model covering recommendations, saved opportunities, budget-fit cues, inquiry history, and role-aware profile CTAs.
+- `CODEBASE.md`: Updated the documentation map entries for the auth onboarding and profile plans.
+
+## 2026-06-25 15:39 (Asia/Jakarta)
+### Added
+- `.context/session-20260625-1539.md`: Added a session snapshot for the role-aware `/profil` menu update.
+
+### Changed
+- `js/profile-page.js`: Made `/profil` side tabs and summary CTAs role-aware, so franchisee users only see franchisee sections, franchisor users only see franchisor/listing/claim sections, and admin/staff users see both.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the role-aware `/profil` tab behavior.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification.
+
 ## 2026-06-25 06:36 (Asia/Jakarta)
 ### Added
 - `.context/session-20260625-0636.md`: Added a session snapshot for the public-facing copy cleanup pass.

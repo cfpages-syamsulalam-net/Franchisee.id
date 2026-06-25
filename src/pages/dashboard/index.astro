@@ -12,6 +12,7 @@ export const prerender = true;
     <link rel="stylesheet" href="/wp-content/plugins/elementor/assets/css/frontend.min.css">
     <link rel="stylesheet" href="/wp-content/plugins/elementor/assets/lib/font-awesome/css/all.min.css?ver=3.32.3">
     <link rel="stylesheet" href="/css/auth-clerk.css">
+    <link rel="stylesheet" href="/css/shared-tooltip.css">
     <link rel="stylesheet" href="/css/dashboard.css">
   </head>
   <body>
@@ -20,7 +21,7 @@ export const prerender = true;
         <div class="dash-header-inner">
           <div class="dash-title">
             <h1>Dashboard Operasional</h1>
-            <p>Franchisee.id site scope. Data langsung dari D1.</p>
+            <p>Ruang kerja internal Franchisee.id.</p>
           </div>
           <div class="dash-user" data-dashboard-user>Memuat sesi...</div>
         </div>
@@ -38,7 +39,7 @@ export const prerender = true;
                 <span>Safe to screenshot: token values are masked.</span>
               </div>
               <div class="dash-debug-actions">
-                <button class="dash-icon-button" type="button" data-auth-debug-copy aria-label="Copy auth debug" title="Copy auth debug">
+                <button class="dash-icon-button" type="button" data-auth-debug-copy aria-label="Salin debug login" data-fr-tooltip="Salin debug login">
                   <i class="fas fa-copy" aria-hidden="true"></i>
                 </button>
                 <button class="dash-button secondary" type="button" data-auth-debug-refresh>Refresh</button>
@@ -145,7 +146,7 @@ export const prerender = true;
                     <i class="fas fa-edit dash-section-icon" aria-hidden="true"></i>
                     <div>
                       <h2>Listing Edit Suggestions</h2>
-                      <p>Staff menyarankan edit lewat JSON diff; admin approve sebelum masuk D1.</p>
+                      <p>Staff menyiapkan perubahan; admin menyetujui sebelum tampil.</p>
                     </div>
                   </div>
                   <span class="dash-badge" data-edit-count>-</span>
@@ -167,7 +168,7 @@ export const prerender = true;
                   </label>
                   <div class="dash-form-wide dash-actions">
                     <button class="dash-button" type="submit">Submit Suggestion</button>
-                    <span class="dash-muted" data-edit-help>Field yang boleh diedit mengikuti whitelist dashboard di API.</span>
+                    <span class="dash-muted" data-edit-help>Kolom yang bisa diedit mengikuti aturan dashboard.</span>
                   </div>
                 </form>
                 <div class="dash-table-wrap">
@@ -212,7 +213,7 @@ export const prerender = true;
                     <i class="fas fa-sync-alt dash-section-icon" aria-hidden="true"></i>
                     <div>
                       <h2>Publish Queue</h2>
-                      <p>Status static rebuild untuk franchisee.id.</p>
+                      <p>Status pembaruan halaman franchisee.id.</p>
                     </div>
                   </div>
                 </div>
@@ -242,7 +243,7 @@ export const prerender = true;
                     <i class="fas fa-heartbeat dash-section-icon" aria-hidden="true"></i>
                     <div>
                       <h2>System Health</h2>
-                      <p>D1, Clerk, dan publish workflow.</p>
+                      <p>Koneksi akun, data, dan publikasi.</p>
                     </div>
                   </div>
                 </div>
@@ -263,7 +264,7 @@ export const prerender = true;
                 </div>
                 <ul class="dash-list" data-edit-policy>
                   <li><strong>Auto approve</strong><span>Hanya berlaku jika admin membuat rule aktif untuk staff tertentu.</span></li>
-                  <li><strong>Site scope</strong><span>Dashboard ini hanya untuk franchisee.id; centralized dashboard dibuat nanti.</span></li>
+                  <li><strong>Area kerja</strong><span>Dashboard ini hanya untuk franchisee.id.</span></li>
                 </ul>
               </section>
             </div>
@@ -274,6 +275,7 @@ export const prerender = true;
 
     <script src="/js/auth-clerk-debug.js" is:inline></script>
     <script src="/js/auth-clerk.js" is:inline></script>
+    <script src="/js/shared-tooltip.js" is:inline></script>
     <script src="/js/dashboard-admin.js" is:inline></script>
   </body>
 </html>

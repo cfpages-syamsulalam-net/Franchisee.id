@@ -1,6 +1,6 @@
 # Profil Page Plan
 
-Last updated: 2026-06-25 06:09 (Asia/Jakarta)
+Last updated: 2026-06-25 16:30 (Asia/Jakarta)
 
 ## Objective
 Create `/profil` as the logged-in user control center for Franchisee.id:
@@ -84,6 +84,50 @@ Recommended tabs:
    - Status: pending, approved, rejected.
    - Link back to `/daftar?claim=...` for incomplete claim completion where appropriate.
 
+## Franchisee Value Model
+
+The franchisee profile should not stop at storing `minat usaha` and budget. It needs an obvious ongoing benefit so users understand why filling the franchisee form matters.
+
+Near-term value:
+
+- Personalized opportunity shortlist from `/peluang-usaha` based on category interest, city/location plan, and available budget.
+- Saved franchise interests: let users bookmark or mark listings as `tertarik`.
+- Contact readiness: keep their WhatsApp/email/profile ready so future inquiry forms can be one-click instead of retyping personal data.
+- Budget-fit cues: show listings that fit, nearly fit, or exceed their stated budget.
+- Claim-free buyer experience: franchisee users should see opportunity discovery and inquiry tools, not brand-owner claim/listing tools unless they add franchisor access.
+
+Medium-term value:
+
+- New listing alerts when a franchise matching their category/budget appears.
+- Follow-up reminders for brands they viewed, saved, or contacted.
+- Lead handoff for claimed franchisor listings: with user consent, send a structured inquiry that includes budget, city, and interest profile.
+- Recommendation explanations such as `Cocok dengan budget Anda` or `Sesuai kategori yang Anda pilih`.
+
+Profile page implications:
+
+- Franchisee-only users should see `Minat Usaha`, saved opportunities, recommended listings, and inquiry history.
+- They should not see owner listing/claim controls unless they add franchisor access.
+- If a franchisee wants to add a listing, `/profil` should offer an additive CTA such as `Tambahkan brand franchise`, then guide them to complete franchisor data in `/daftar`.
+- The summary panel should frame incomplete franchisee data as improving recommendations, not as a technical requirement.
+
+### Implementation Pass: Peluang Saya
+
+Build the first franchisee value surface as a new `/profil` tab named `Peluang Saya`.
+
+Scope for this pass:
+
+- Recommendations: show a shortlist from published franchise rows using the user's selected category and budget range.
+- Budget-fit cues: each recommendation gets a label such as `Sesuai budget`, `Sedikit di atas budget`, `Di atas budget`, or `Budget belum tersedia`.
+- Saved opportunities: users can save/remove recommended opportunities in the browser so the section feels immediately useful without adding a new database table yet.
+- Inquiry history: read existing `franchise_leads` for the logged-in franchisee and show recent inquiry status.
+- One-click inquiry: let users send `Minta info` from a recommended/saved opportunity. The backend creates a `franchise_leads` row using the existing franchisee profile contact data.
+
+Deferred:
+
+- Cross-device saved opportunities need a dedicated D1 table and migration.
+- Listing-page save buttons can be added after the `/profil` surface is proven useful.
+- Franchisor lead inbox UX can be improved later from the existing dashboard lead summary.
+
 ## Backend Contract
 
 Add a protected profile API instead of overloading `/form-submit`:
@@ -127,6 +171,8 @@ Add a protected profile API instead of overloading `/form-submit`:
 | Done | Add owner profile edit actions | Account, franchisee profile, and franchisor profile edits validate with Zod and write audit events. |
 | Done | Add owner listing edit workflow | Owner listing edits apply to D1, are limited to one edit per listing per 6 hours, and queue static rebuilds. |
 | Done | Documentation and verification | Updated repo docs/changelog/context and ran syntax checks for changed browser scripts; full build verification is pending. |
+| Done | Add public role add-on CTA | Franchisee-only users can add franchisor access from `/profil` before filling brand data; franchisor-only users can add franchisee interests later. |
+| Done | Add franchisee value surfaces | Implemented `Peluang Saya` with recommendations, browser-saved opportunities, budget-fit cues, one-click inquiry, and inquiry history. |
 
 ## Open Decisions Before Coding
 

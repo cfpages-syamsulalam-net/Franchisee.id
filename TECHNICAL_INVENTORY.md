@@ -139,11 +139,23 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `createAccountItem(clerk, user)`: Builds the logged-in navbar item with Font Awesome account/logout icons, display name, D1 role badge, `/profil/` account link, and red icon-only logout.
 - `bindLogout(item, clerk)`: Signs the active Clerk session out and returns to `/`.
 
+### File: `js/shared-tooltip.js`
+*Shared custom tooltip runtime.*
+- `data-fr-tooltip`: Canonical attribute for UI hints; use this instead of browser `title` on interactive UI.
+- `upgradeTitleTooltips(root)`: Converts supported legacy interactive `title` attributes to `data-fr-tooltip`, adds an accessible label when needed, and removes the native browser tooltip.
+- `show(target)` / `hide()`: Renders one shared body-level tooltip instantly on hover/focus and hides it on pointerout, focusout, Escape, scroll, or resize.
+- `positionTooltip(target)`: Uses fixed viewport positioning with top/bottom fallback and edge clamping so parent overflow and stacking contexts do not clip hints.
+- `observeNewTooltips()`: Watches dynamically rendered UI such as `/profil` panels and navbar account controls.
+
 ### File: `js/profile-page.js`
 *Client controller for the protected `/profil` profile center.*
 - `init()`: Requires a Clerk session and redirects anonymous users to `/login/?next=/profil/`.
 - `loadProfile()`: Fetches `/profile-data` with `window.FranchiseAuth.getAuthHeaders()`.
-- `render()` / `renderActivePanel()`: Renders side tabs for summary, account, franchisee, franchisor, owner listing, and claims.
+- `render()` / `renderActivePanel()`: Renders side tabs for summary, account, and role-allowed franchisee/franchisor/owner listing/claims sections.
+- `visibleTabs()` / `canSeeFranchisee()` / `canSeeFranchisor()`: Filters `/profil` navigation from D1 roles so franchisee users only see franchisee areas, franchisor users only see franchisor/listing/claim areas, and admin/staff users see both.
+- `roleAddOnPanel()` / `roleConfirmModal()` / `submitPublicRoleAdd(role)`: Shows missing public role CTAs, confirms the additive access change, posts `add_public_role` to `/profile-data`, and redirects to the matching `/daftar` tab.
+- `opportunitiesPanel()` / `opportunityCard()` / `submitFranchiseInquiry(franchiseId)`: Renders `Peluang Saya` recommendations, budget-fit labels, browser-saved opportunities, and inquiry history; posts `create_franchise_inquiry` to `/profile-data`.
+- `loadSavedOpportunities()` / `toggleSavedOpportunity()` / `persistSavedOpportunities()`: Stores saved opportunity summaries in browser `localStorage` keyed by D1 user id.
 - `accountPanel()`: Keeps name/email read-only until the edit icon unlocks them for Clerk+D1 save.
 - `franchiseePanel()` / `franchisorPanel()`: Shows role-specific D1 profile rows and preserves identity fields as read-only.
 - `listingPanel()`: Shows owned D1 `franchises`, selects a listing, and disables saving when the owner edit rate limit is active.
@@ -290,9 +302,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/profile-data.js`
 *Protected profile read/write API for `/profil`.*
-- `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and returns D1 user, roles, franchisee profile, franchisor profile, owned franchises, claims, and completion flags.
-- `onRequestPost()`: Dispatches Zod-validated mutations for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, and `update_listing`.
+- `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and returns D1 user, roles, franchisee profile, franchisor profile, owned franchises, claims, franchisee recommendations, inquiry history, and completion flags.
+- `onRequestPost()`: Dispatches Zod-validated mutations for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, `update_listing`, `add_public_role`, and `create_franchise_inquiry`.
 - `updateAccount()`: Updates Clerk identity first, then D1 `users` plus profile identity fields, writes audit events, and resyncs Clerk metadata from D1 roles.
+- `addPublicRole()`: Allows logged-in public users to add the missing `franchisee` or `franchisor` role, writes an audit event, and resyncs Clerk metadata; admin/staff role assignment remains outside self-service.
+- `loadFranchiseeRecommendations()` / `budgetFit()` / `matchesInterest()`: Builds a short recommendation list from published franchises using franchisee category and budget preferences.
+- `createFranchiseInquiry()`: Creates a `franchise_leads` row from the current franchisee profile and prevents duplicate inquiries for the same franchise/user.
 - `updateOwnedListing()`: Allows owner-scoped edits to whitelisted public listing fields, limits each listing to one owner edit per 6 hours, writes audit events, and queues static rebuild requests through `siteRebuildStatements()`.
 - Profile edit actions require existing first-time profile rows; missing rows are completed through `/daftar/`.
 

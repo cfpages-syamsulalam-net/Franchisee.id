@@ -3,11 +3,13 @@ import { z } from "zod";
 import {
   authErrorResponse,
   requireD1User,
+  syncClerkMetadataForD1User,
   syncClerkMetadataFromD1,
 } from "./_clerk-auth.js";
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
 
 const OWNER_LISTING_EDIT_INTERVAL_HOURS = 6;
+const RECOMMENDATION_LIMIT = 6;
 
 const AccountSchema = z.object({
   action: z.literal("update_account"),
@@ -75,11 +77,24 @@ const ListingSchema = z.object({
   proposal_url: optionalText(500),
 });
 
+const AddPublicRoleSchema = z.object({
+  action: z.literal("add_public_role"),
+  role: z.enum(["franchisee", "franchisor"]),
+});
+
+const FranchiseInquirySchema = z.object({
+  action: z.literal("create_franchise_inquiry"),
+  franchise_id: z.string().trim().min(3).max(120),
+  message: optionalText(1200),
+});
+
 const MutationSchema = z.discriminatedUnion("action", [
   AccountSchema,
   FranchiseeProfileSchema,
   FranchisorProfileSchema,
   ListingSchema,
+  AddPublicRoleSchema,
+  FranchiseInquirySchema,
 ]);
 
 export async function onRequestGet({ request, env }) {
@@ -114,6 +129,12 @@ export async function onRequestPost({ request, env }) {
     }
     if (parsed.data.action === "update_listing") {
       return await updateOwnedListing(db, actor, parsed.data);
+    }
+    if (parsed.data.action === "add_public_role") {
+      return await addPublicRole(env, db, actor, parsed.data);
+    }
+    if (parsed.data.action === "create_franchise_inquiry") {
+      return await createFranchiseInquiry(db, actor, parsed.data);
     }
 
     return jsonResponse({ success: false, message: "Aksi profil tidak dikenali." }, { status: 400 });
@@ -204,6 +225,11 @@ async function loadProfileData(db, actor) {
     .bind(actor.id)
     .all();
 
+  const inquiryHistory = await loadFranchiseeInquiryHistory(db, actor.id, franchiseeProfile?.id || null);
+  const recommendations = franchiseeProfile
+    ? await loadFranchiseeRecommendations(db, franchiseeProfile, new Set((owned.results || []).map((row) => row.id)))
+    : [];
+
   const roles = (actor.roles || []).map((role) => role.role).filter(Boolean);
   const email = actor.primary_email || getPrimaryEmail(actor.clerk_user) || "";
   const displayName = actor.display_name || actor.clerk_user?.fullName || actor.clerk_user?.firstName || email.split("@")[0] || "";
@@ -229,6 +255,8 @@ async function loadProfileData(db, actor) {
       edit_interval_hours: OWNER_LISTING_EDIT_INTERVAL_HOURS,
     })),
     claims: claims.results || [],
+    franchisee_recommendations: recommendations,
+    inquiry_history: inquiryHistory,
   };
 }
 
@@ -433,6 +461,122 @@ async function updateOwnedListing(db, actor, data) {
   });
 }
 
+async function addPublicRole(env, db, actor, data) {
+  const currentRoles = new Set((actor.roles || []).map((row) => row.role));
+  if (currentRoles.has("admin") || currentRoles.has("staff")) {
+    return jsonResponse({ success: false, message: "Akses ini sudah tersedia untuk akun Anda." }, { status: 400 });
+  }
+  if (currentRoles.has(data.role)) {
+    return jsonResponse({ success: true, already_has_role: true, role: data.role, profile: await loadProfileData(db, actor) });
+  }
+
+  await db.batch([
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO user_roles (id, user_id, role, scope_type, scope_id, site_id, assigned_by_user_id)
+         VALUES (?, ?, ?, 'network', 'network', ?, ?)`
+      )
+      .bind(`role_${randomId()}`, actor.id, data.role, SITE_FRANCHISEE_ID, actor.id),
+    auditStatement(db, "profile.role.add", "users", actor.id, { role: data.role, source: "profile" }, actor.id),
+  ]);
+
+  const synced = await syncClerkMetadataForD1User(env, db, {
+    id: actor.id,
+    clerk_user_id: actor.clerk_user_id,
+    primary_email: actor.primary_email,
+    display_name: actor.display_name,
+    status: actor.status || "active",
+  });
+
+  return jsonResponse({
+    success: true,
+    role: data.role,
+    profile: await loadProfileData(db, { ...actor, roles: synced.roles || [] }),
+  });
+}
+
+async function createFranchiseInquiry(db, actor, data) {
+  const franchiseeProfile = await loadFranchiseeProfile(db, actor.id);
+  if (!franchiseeProfile) {
+    return jsonResponse({ success: false, message: "Lengkapi minat usaha terlebih dahulu agar kami bisa mengirim info dengan data kontak Anda." }, { status: 404 });
+  }
+
+  const franchise = await db
+    .prepare(
+      `SELECT f.id, f.brand_name, f.slug
+       FROM franchises f
+       INNER JOIN franchise_site_publications p
+          ON p.franchise_id = f.id
+         AND p.site_id = ?
+         AND p.publication_status = 'published'
+       WHERE f.id = ?
+       LIMIT 1`
+    )
+    .bind(SITE_FRANCHISEE_ID, data.franchise_id)
+    .first();
+
+  if (!franchise) {
+    return jsonResponse({ success: false, message: "Peluang franchise tidak ditemukan." }, { status: 404 });
+  }
+
+  const existing = await db
+    .prepare(
+      `SELECT id, status, created_at
+       FROM franchise_leads
+       WHERE franchise_id = ?
+         AND franchisee_user_id = ?
+       ORDER BY created_at DESC
+       LIMIT 1`
+    )
+    .bind(franchise.id, actor.id)
+    .first();
+
+  if (existing) {
+    return jsonResponse({
+      success: true,
+      already_sent: true,
+      message: "Anda sudah pernah meminta info untuk brand ini.",
+      lead: existing,
+      inquiry_history: await loadFranchiseeInquiryHistory(db, actor.id, franchiseeProfile.id),
+    });
+  }
+
+  const leadId = `lead_${randomId()}`;
+  const message = textOrNull(data.message) || franchiseeProfile.message || `Saya tertarik dengan ${franchise.brand_name}.`;
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO franchise_leads (
+           id, franchise_id, franchisee_user_id, franchisee_profile_id, source_site_id,
+           name, email, country_code, whatsapp, city_origin, budget_range, message, status, raw_payload
+         )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)`
+      )
+      .bind(
+        leadId,
+        franchise.id,
+        actor.id,
+        franchiseeProfile.id,
+        SITE_FRANCHISEE_ID,
+        franchiseeProfile.name || actor.display_name || null,
+        franchiseeProfile.email || actor.primary_email || null,
+        franchiseeProfile.country_code || null,
+        franchiseeProfile.whatsapp || null,
+        franchiseeProfile.city_origin || null,
+        franchiseeProfile.budget_range || null,
+        message,
+        JSON.stringify({ source: "profile_opportunity", franchise_slug: franchise.slug })
+      ),
+    auditStatement(db, "profile.franchisee.inquiry", "franchise_leads", leadId, { franchise_id: franchise.id, brand_name: franchise.brand_name }, actor.id),
+  ]);
+
+  return jsonResponse({
+    success: true,
+    lead: await loadFranchiseeLead(db, leadId),
+    inquiry_history: await loadFranchiseeInquiryHistory(db, actor.id, franchiseeProfile.id),
+  });
+}
+
 async function loadFranchiseeProfile(db, userId) {
   return await db
     .prepare(
@@ -443,6 +587,95 @@ async function loadFranchiseeProfile(db, userId) {
        LIMIT 1`
     )
     .bind(userId)
+    .first();
+}
+
+async function loadFranchiseeRecommendations(db, profile, ownedIds) {
+  const result = await db
+    .prepare(
+      `SELECT f.id, f.brand_name, f.slug, f.category, f.city_origin, f.status, f.verification_tier,
+              f.min_investment_idr, f.max_investment_idr, f.total_investment_idr,
+              f.estimated_bep_months, f.short_desc, f.logo_url, f.cover_url,
+              p.canonical_url, p.publication_status
+       FROM franchises f
+       INNER JOIN franchise_site_publications p
+          ON p.franchise_id = f.id
+         AND p.site_id = ?
+         AND p.publication_status = 'published'
+       ORDER BY f.updated_at DESC, f.brand_name ASC
+       LIMIT 220`
+    )
+    .bind(SITE_FRANCHISEE_ID)
+    .all();
+
+  const rows = result.results || [];
+  return rows
+    .filter((row) => !ownedIds.has(row.id))
+    .map((row) => {
+      const budget = budgetFit(row, profile.budget_range);
+      const categoryMatch = matchesInterest(row.category, profile.interest_category);
+      const reasons = recommendationReasons(row, profile, budget, categoryMatch);
+      return {
+        id: row.id,
+        brand_name: row.brand_name,
+        slug: row.slug,
+        category: row.category,
+        city_origin: row.city_origin,
+        verification_tier: row.verification_tier,
+        min_investment_idr: row.min_investment_idr,
+        max_investment_idr: row.max_investment_idr,
+        total_investment_idr: row.total_investment_idr,
+        estimated_bep_months: row.estimated_bep_months,
+        short_desc: row.short_desc,
+        logo_url: row.logo_url,
+        cover_url: row.cover_url,
+        canonical_url: row.canonical_url || (row.slug ? `/peluang-usaha/${row.slug}` : ""),
+        budget_fit: budget.fit,
+        budget_label: budget.label,
+        reasons,
+        score: recommendationScore(row, budget, categoryMatch, reasons),
+      };
+    })
+    .sort((a, b) => b.score - a.score || String(a.brand_name || "").localeCompare(String(b.brand_name || "")))
+    .slice(0, RECOMMENDATION_LIMIT);
+}
+
+async function loadFranchiseeInquiryHistory(db, userId, franchiseeProfileId) {
+  const result = await db
+    .prepare(
+      `SELECT fl.id, fl.franchise_id, fl.status, fl.message, fl.created_at, fl.updated_at,
+              f.brand_name, f.slug, f.category,
+              p.canonical_url
+       FROM franchise_leads fl
+       LEFT JOIN franchises f ON f.id = fl.franchise_id
+       LEFT JOIN franchise_site_publications p
+         ON p.franchise_id = fl.franchise_id
+        AND p.site_id = ?
+       WHERE fl.franchisee_user_id = ?
+          OR (? IS NOT NULL AND fl.franchisee_profile_id = ?)
+       ORDER BY fl.created_at DESC
+       LIMIT 20`
+    )
+    .bind(SITE_FRANCHISEE_ID, userId, franchiseeProfileId || null, franchiseeProfileId || null)
+    .all();
+  return result.results || [];
+}
+
+async function loadFranchiseeLead(db, leadId) {
+  return await db
+    .prepare(
+      `SELECT fl.id, fl.franchise_id, fl.status, fl.message, fl.created_at, fl.updated_at,
+              f.brand_name, f.slug, f.category,
+              p.canonical_url
+       FROM franchise_leads fl
+       LEFT JOIN franchises f ON f.id = fl.franchise_id
+       LEFT JOIN franchise_site_publications p
+         ON p.franchise_id = fl.franchise_id
+        AND p.site_id = ?
+       WHERE fl.id = ?
+       LIMIT 1`
+    )
+    .bind(SITE_FRANCHISEE_ID, leadId)
     .first();
 }
 
@@ -529,6 +762,69 @@ function buildUpdate(table, patch, idColumn) {
     sql: `UPDATE ${table} SET ${keys.map((key) => `${key} = ?`).join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE ${idColumn} = ?`,
     values: keys.map((key) => patch[key]),
   };
+}
+
+function recommendationScore(row, budget, categoryMatch, reasons) {
+  let score = 0;
+  if (categoryMatch) score += 50;
+  if (budget.fit === "fit") score += 35;
+  if (budget.fit === "near") score += 18;
+  if (budget.fit === "unknown") score += 6;
+  if (row.verification_tier === "premium") score += 8;
+  if (row.verification_tier === "verified") score += 6;
+  if (Number(row.estimated_bep_months || 0) > 0 && Number(row.estimated_bep_months) <= 24) score += 5;
+  score += Math.min(reasons.length, 3);
+  return score;
+}
+
+function recommendationReasons(row, profile, budget, categoryMatch) {
+  const reasons = [];
+  if (categoryMatch) reasons.push("Sesuai minat kategori");
+  if (budget.fit === "fit") reasons.push("Cocok dengan budget Anda");
+  if (budget.fit === "near") reasons.push("Dekat dengan budget Anda");
+  if (profile.location_plan === "ready") reasons.push("Siap dibandingkan dengan lokasi Anda");
+  if (Number(row.estimated_bep_months || 0) > 0) reasons.push(`Estimasi BEP ${row.estimated_bep_months} bulan`);
+  if (!reasons.length) reasons.push("Peluang aktif di direktori");
+  return reasons.slice(0, 3);
+}
+
+function matchesInterest(category, interest) {
+  const text = normalizeForMatch(category);
+  const aliases = {
+    fb: ["fnb", "food", "makanan", "minuman", "restoran", "restaurant", "cafe", "kopi", "teh"],
+    retail: ["retail", "minimarket", "toko", "mart", "sembako", "produk"],
+    service: ["jasa", "layanan", "service", "laundry", "logistik", "otomotif", "travel"],
+    edu: ["pendidikan", "kursus", "edukasi", "education", "training", "belajar", "sekolah"],
+    beauty: ["kecantikan", "kesehatan", "beauty", "health", "salon", "spa", "aesthetic"],
+  };
+  const keys = aliases[normalizeForMatch(interest)] || [];
+  return keys.some((key) => text.includes(key));
+}
+
+function budgetFit(row, budgetRange) {
+  if (!textOrNull(budgetRange)) return { fit: "unknown", label: "Budget belum diisi" };
+  const range = parseBudgetRange(budgetRange);
+  const amount = Number(row.min_investment_idr || row.total_investment_idr || row.max_investment_idr || 0);
+  if (!amount) return { fit: "unknown", label: "Budget belum tersedia" };
+  if (!range.max && range.min) {
+    return amount >= range.min ? { fit: "fit", label: "Sesuai budget" } : { fit: "fit", label: "Di bawah budget" };
+  }
+  if (range.max && amount <= range.max) return { fit: "fit", label: "Sesuai budget" };
+  if (range.max && amount <= Math.round(range.max * 1.25)) return { fit: "near", label: "Sedikit di atas budget" };
+  return { fit: "over", label: "Di atas budget" };
+}
+
+function parseBudgetRange(value) {
+  const text = normalizeForMatch(value);
+  if (text.includes("<50")) return { min: 0, max: 50000000 };
+  if (text.includes("50-100")) return { min: 50000000, max: 100000000 };
+  if (text.includes("100-500")) return { min: 100000000, max: 500000000 };
+  if (text.includes(">500")) return { min: 500000000, max: null };
+  return { min: 0, max: null };
+}
+
+function normalizeForMatch(value) {
+  return normalizeText(value).toLowerCase().replace(/&/g, "and");
 }
 
 function splitDisplayName(displayName) {

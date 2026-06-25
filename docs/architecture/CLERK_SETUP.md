@@ -1,6 +1,6 @@
 # Clerk Setup For Franchisee.id
 
-Last updated: 2026-06-25 06:09 (Asia/Jakarta)
+Last updated: 2026-06-25 16:12 (Asia/Jakarta)
 
 ## Purpose
 Clerk is the identity/session provider. D1 remains the authorization source of truth through `users` and `user_roles`.
@@ -40,7 +40,7 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 - Public registration requires selecting `Daftar sebagai` (`franchisee` or `franchisor`) before email/password or Google SSO starts.
 - New public accounts redirect to `/daftar/?role=franchisee&continue=1` or `/daftar/?role=franchisor&continue=1` for profile/listing completion after Clerk identity creation.
 - `/daftar/` requires a Clerk session before completion, opens the requested role tab from `?role=`, and locks email/name/PIC fields from Clerk/D1 identity. Anonymous visitors are redirected to `/login?next=<current-daftar-url>`, where the auth UI explains that login is required before continuing. Users whose selected role is already complete are redirected to `/profil/`.
-- `/profil/` is the protected account center. It reads `/profile-data`, keeps account name/email read-only until the edit icon unlocks them, writes account changes to Clerk first and D1 second, and lets owners edit role-specific D1 profile rows plus owned listing fields.
+- `/profil/` is the protected account center. It reads `/profile-data`, keeps account name/email read-only until the edit icon unlocks them, writes account changes to Clerk first and D1 second, lets owners edit role-specific D1 profile rows plus owned listing fields, and lets public users add the missing `franchisee` or `franchisor` role before continuing to the matching `/daftar` form.
 - Owner listing edits from `/profil/` apply directly to D1 but are limited to one edit per listing per 6 hours and enqueue static rebuild requests instead of publishing immediately.
 - `js/auth-navbar.js` normalizes logged-out nav links to `Masuk` and `Daftar Mitra`; `Daftar Mitra` points to protected `/daftar/`, not `/login?mode=register`, so the completion form remains the canonical CTA. Logged-in public users see their name, D1 role badge, `/profil` account link, and immediate red icon-only logout with Font Awesome icons.
 - `/dashboard/` uses the same custom auth runtime but mounts a login-only admin/staff Google/email surface on the same URL. It does not show public registration or franchisee/franchisor role choices.
@@ -51,7 +51,7 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 - `js/auth-clerk.js` supports Google sign-in/sign-up through ClerkJS. It stores the post-login destination, strips stale Clerk callback params before starting OAuth, and calls Clerk's redirect callback handler before any token/dashboard checks after Google returns. The handler runs on `/sso-callback/` even when Clerk returns without visible `__clerk_*` URL parameters.
 - `/dashboard/` includes a masked Auth Debug panel while locked. Use it to diagnose Google SSO by checking `clerk.hasUser`, `clerk.hasSession`, `clerk.clientSessionCount`, redirect callback state, and recent `FranchiseAuth` events without exposing raw tokens.
 - Public Google registration stores the selected self-assignable role across the OAuth redirect, then syncs that role to D1 as soon as `Auth.syncUser()` or a protected token request runs after the Clerk session is active.
-- `/auth-sync` verifies the active Clerk session, upserts D1 `users`, and self-assigns only `franchisee` or `franchisor`.
+- `/auth-sync` verifies the active Clerk session, upserts D1 `users`, and self-assigns only `franchisee` or `franchisor` during account entry. `/profile-data` also allows an already-logged-in public user to add the missing public role from `/profil`.
 - `email_role_grants` lets admins pre-authorize an email for `admin` or `staff` before a real Clerk user id exists. When that email first logs in through Clerk/Google, `_clerk-auth.js` upserts the real D1 user and applies the pending role grant.
 - `/clerk-webhook` verifies Clerk webhooks and syncs Clerk `user.created`, `user.updated`, and `user.deleted` events into D1.
 - `/user-role` lets an authenticated `admin` assign/remove D1 roles and immediately pushes the updated D1 role snapshot to Clerk metadata.
@@ -73,7 +73,7 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 11. `/daftar` initializes Clerk, redirects anonymous users to `/login?next=<current-url>`, opens the requested role tab, locks known identity fields, and redirects completed users to `/profil/`. `/login` shows a login-required message when `/daftar` or `/profil` redirects happen.
 12. `/daftar` submissions attach `Authorization: Bearer <session-token>` to `/form-submit`.
 13. `/form-submit` verifies the token with `@clerk/backend`, maps the Clerk user to D1, checks role authorization, and writes ownership fields.
-14. `/profil` calls `/profile-data` with the same bearer token; the API reads D1 profile/listing ownership and handles audited profile/listing mutations.
+14. `/profil` calls `/profile-data` with the same bearer token; the API reads D1 profile/listing ownership, handles audited profile/listing mutations, and supports adding the missing public role before redirecting the user to the relevant `/daftar` tab.
 
 ## Dashboard SSO Troubleshooting
 When Google says it is returning to `franchisee.id` but `/dashboard/` still shows `Belum login`, inspect the `Auth Debug` panel and browser console entry `[DashboardAuthDebug]`.
