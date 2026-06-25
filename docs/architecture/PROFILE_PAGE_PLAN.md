@@ -1,6 +1,6 @@
 # Profil Page Plan
 
-Last updated: 2026-06-25 16:30 (Asia/Jakarta)
+Last updated: 2026-06-26 00:23 (Asia/Jakarta)
 
 ## Objective
 Create `/profil` as the logged-in user control center for Franchisee.id:
@@ -59,9 +59,10 @@ Recommended tabs:
    - Link to public listing when franchisor listing is published.
 
 2. `Akun`
-   - Clerk/D1 identity summary: name, email, Clerk user id hint, D1 user id hint.
-   - Name/email changes must use Clerk-safe flows. If custom Clerk update APIs are not confirmed yet, show read-only identity and defer editable identity fields.
-   - Logout action.
+   - Account identity summary: name and email.
+   - Name and email are read-only by default and get separate edit buttons so users only unlock one important field at a time.
+   - Password is handled as an account security field. Google-only users see a blocked password row with a `Tambah` action, while password users see a `Ganti` action.
+   - Password add/change stays on the same account, so Google login and email/password login remain linked.
 
 3. `Profil Franchisee`
    - Show `franchisee_profiles` data for the current D1 user.
@@ -173,6 +174,7 @@ Add a protected profile API instead of overloading `/form-submit`:
 | Done | Documentation and verification | Updated repo docs/changelog/context and ran syntax checks for changed browser scripts; full build verification is pending. |
 | Done | Add public role add-on CTA | Franchisee-only users can add franchisor access from `/profil` before filling brand data; franchisor-only users can add franchisee interests later. |
 | Done | Add franchisee value surfaces | Implemented `Peluang Saya` with recommendations, browser-saved opportunities, budget-fit cues, one-click inquiry, and inquiry history. |
+| Done | Add granular account security edits | `/profil` account rows now edit name/email separately and expose password add/change through the current Clerk account session. |
 
 ## Open Decisions Before Coding
 

@@ -297,11 +297,22 @@
   text-align: center;
 }
 
+.fr-auth-help-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
 .fr-auth-inline-link {
   border: 0;
   background: transparent;
   color: rgba(0, 0, 0, 0.86);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font: inherit;
   font-weight: 800;
   padding: 0;

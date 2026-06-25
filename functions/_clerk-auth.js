@@ -230,6 +230,34 @@ export async function upsertD1User(db, clerkUser) {
     return user;
   }
 
+  const existingByEmail = primaryEmail && isPrimaryEmailVerified(clerkUser)
+    ? await db
+        .prepare("SELECT id, clerk_user_id, primary_email, display_name, status FROM users WHERE lower(primary_email) = ? LIMIT 1")
+        .bind(normalizeEmail(primaryEmail))
+        .first()
+    : null;
+
+  if (existingByEmail) {
+    await db
+      .prepare(
+        `UPDATE users
+         SET clerk_user_id = ?, primary_email = ?, display_name = ?, status = 'active', updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`
+      )
+      .bind(clerkUser.id, primaryEmail, displayName, existingByEmail.id)
+      .run();
+
+    const user = {
+      id: existingByEmail.id,
+      clerk_user_id: clerkUser.id,
+      primary_email: primaryEmail,
+      display_name: displayName,
+      status: "active",
+    };
+    await applyEmailRoleGrants(db, user);
+    return user;
+  }
+
   const userId = `user_${randomId()}`;
   await db
     .prepare(
@@ -330,6 +358,14 @@ function getPrimaryEmail(clerkUser) {
   const primaryId = clerkUser.primaryEmailAddressId || clerkUser.primary_email_address_id;
   const primary = addresses.find((item) => item.id === primaryId);
   return primary?.emailAddress || primary?.email_address || addresses[0]?.emailAddress || addresses[0]?.email_address || null;
+}
+
+function isPrimaryEmailVerified(clerkUser) {
+  const addresses = clerkUser.emailAddresses || clerkUser.email_addresses || [];
+  const primaryId = clerkUser.primaryEmailAddressId || clerkUser.primary_email_address_id;
+  const primary = addresses.find((item) => item.id === primaryId) || addresses[0];
+  const status = primary?.verification?.status || primary?.verification_status || primary?.status;
+  return status === "verified";
 }
 
 function getDisplayName(clerkUser, primaryEmail) {

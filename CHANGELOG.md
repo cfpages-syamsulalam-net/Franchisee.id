@@ -4,6 +4,25 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-26 03:50 (Asia/Jakarta)
+### Added
+- `.context/session-20260626-0350.md`: Added a session snapshot for the `/login` recovery and same-email auth sync update.
+
+### Changed
+- `js/auth-clerk.js` and `css/auth-clerk.css`: Added in-page `/login` modes for forgot password and forgot email, including Clerk reset-password code handling and Google sign-in recovery guidance.
+- `functions/_clerk-auth.js`: Reused an existing D1 user when a new Clerk login has the same verified primary email, keeping email/password and Google entry points mapped to one app account.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/CLERK_SETUP.md`: Documented login recovery, verified-email D1 user reuse, and the required Clerk dashboard account-linking setting.
+
+## 2026-06-26 00:23 (Asia/Jakarta)
+### Added
+- `.context/session-20260626-0023.md`: Added a session snapshot for the `/profil` account security update.
+
+### Changed
+- `js/profile-page.js` and `css/profile.css`: Changed the `/profil` account tab to edit name/email one field at a time and added a password row that lets Google-only users add password login or password users change password through the current Clerk account.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/PROFILE_PAGE_PLAN.md`: Documented the granular account rows and password add/change behavior.
+
 ## 2026-06-25 16:43 (Asia/Jakarta)
 ### Added
 - `css/shared-tooltip.css` and `js/shared-tooltip.js`: Added a shared custom tooltip component for instant, body-level hover/focus hints.

@@ -124,11 +124,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `Auth.getDebugSnapshot()` / `Auth.recordDebug()`: Delegates masked Clerk lifecycle diagnostics to `js/auth-clerk-debug.js` for `/dashboard` and `/sso-callback/`.
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign explicit or pending self-selectable `franchisee`/`franchisor` roles.
 - `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
-- `mountAuthPage()`: Replaces `/login` legacy WPForms markup with public `Masuk`/`Buat Akun`/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
+- `mountAuthPage()`: Replaces `/login` legacy WPForms markup with public `Masuk`/`Buat Akun`/forgot-password/forgot-email/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
 - `showInitialAuthMessage(root)`: Shows an explanatory info message when anonymous `/daftar` visitors are redirected to `/login?next=...`.
 - `renderSessionState(root)`: Shows a logged-in status for public users and hides auth forms, while admin/staff users keep the forms visible for manual auth UI inspection.
-- `switchMode(root, mode)`: Switches login/register/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
+- `switchMode(root, mode)` / `normalizeAuthMode()`: Switches login/register/recovery/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
 - `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI; public registration redirects to `/daftar/?role=...&continue=1` after account creation.
+- `handleForgotPassword()` / `handleResetPassword()`: Sends Clerk reset-password email codes, verifies the code, saves the new password, activates the resulting session, and returns to the normal next URL.
 - `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration requires selected `franchisee`/`franchisor` role and stores the role-specific `/daftar` completion destination until OAuth completion.
 - `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to `clerk.setActive()` with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
 
@@ -156,7 +157,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `roleAddOnPanel()` / `roleConfirmModal()` / `submitPublicRoleAdd(role)`: Shows missing public role CTAs, confirms the additive access change, posts `add_public_role` to `/profile-data`, and redirects to the matching `/daftar` tab.
 - `opportunitiesPanel()` / `opportunityCard()` / `submitFranchiseInquiry(franchiseId)`: Renders `Peluang Saya` recommendations, budget-fit labels, browser-saved opportunities, and inquiry history; posts `create_franchise_inquiry` to `/profile-data`.
 - `loadSavedOpportunities()` / `toggleSavedOpportunity()` / `persistSavedOpportunities()`: Stores saved opportunity summaries in browser `localStorage` keyed by D1 user id.
-- `accountPanel()`: Keeps name/email read-only until the edit icon unlocks them for Clerk+D1 save.
+- `accountPanel()` / `accountFieldForm()`: Renders granular account rows so name and email are edited one field at a time while the other value is preserved for the protected account save.
+- `passwordEditForm()` / `submitPasswordForm(form)`: Uses ClerkJS on the current session to let Google-only users add a password login and password users change their password, with custom inline copy and no browser tooltip hints.
 - `franchiseePanel()` / `franchisorPanel()`: Shows role-specific D1 profile rows and preserves identity fields as read-only.
 - `listingPanel()`: Shows owned D1 `franchises`, selects a listing, and disables saving when the owner edit rate limit is active.
 - `submitProfileForm(form)`: Posts account/profile/listing mutations to `/profile-data` with a Clerk bearer token.
@@ -320,6 +322,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `assignD1Role(db, userId, role, actorUserId)` / `removeD1Role(db, userId, role)`: Mutates D1 network roles used by admin role management.
 - `applyEmailRoleGrants(db, user)`: Matches `email_role_grants.email_normalized` to the D1 user's primary email, inserts matching roles into `user_roles`, and marks the grant as applied.
 - `syncClerkMetadataFromD1(env, user, roles)` / `syncClerkMetadataForD1User(env, db, user)`: Writes D1 user id, role list, status, and sync timestamp into Clerk public/private metadata.
+- `upsertD1User(db, clerkUser)` / `isPrimaryEmailVerified(clerkUser)`: Reuses an existing D1 user when a new Clerk login has the same verified primary email, keeping email/password and Google entry points mapped to one app account.
 - `authErrorResponse(error)`: Converts auth/role failures into the standard JSON response shape.
 - Roles: only `franchisee` and `franchisor` are self-assignable; `admin` is the global elevated role, while `staff` is limited to staff-level access.
 

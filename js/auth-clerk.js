@@ -166,7 +166,7 @@
     const variant = root.getAttribute("data-auth-variant") || "public";
     const isLoginOnly = variant === "staff";
     const defaultMode = root.getAttribute("data-auth-mode") || new URLSearchParams(window.location.search).get("mode") || "login";
-    root.innerHTML = authTemplate(defaultMode === "register" && !isLoginOnly ? "register" : "login", {
+    root.innerHTML = authTemplate(normalizeAuthMode(defaultMode, isLoginOnly), {
       isLoginOnly,
     });
     bindAuthEvents(root);
@@ -176,6 +176,8 @@
 
   function authTemplate(mode, options = {}) {
     const isRegister = mode === "register";
+    const isForgotPassword = mode === "forgot-password";
+    const isForgotEmail = mode === "forgot-email";
     const isLoginOnly = Boolean(options.isLoginOnly);
     return `
       <div class="fr-auth-shell" data-current-mode="${mode}">
@@ -199,7 +201,7 @@
           `}
           <div class="fr-auth-message" data-auth-message></div>
           <div data-auth-session></div>
-          <form class="fr-auth-form" data-auth-form="login" ${isRegister ? "hidden" : ""} aria-hidden="${isRegister ? "true" : "false"}">
+          <form class="fr-auth-form" data-auth-form="login" ${mode !== "login" ? "hidden" : ""} aria-hidden="${mode === "login" ? "false" : "true"}">
             <div class="fr-auth-oauth">
               <button class="fr-auth-oauth-button" type="button" data-auth-oauth="google" data-auth-oauth-mode="login">
                 <span class="fr-auth-oauth-icon" aria-hidden="true">${GOOGLE_ICON}</span>
@@ -218,6 +220,10 @@
             <div class="fr-auth-actions">
               <button class="fr-auth-button" type="submit"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Masuk</button>
             </div>
+            ${isLoginOnly ? "" : `<div class="fr-auth-help-row">
+              <button class="fr-auth-inline-link" type="button" data-auth-switch="forgot-password"><i class="fas fa-key" aria-hidden="true"></i> Lupa password?</button>
+              <button class="fr-auth-inline-link" type="button" data-auth-switch="forgot-email"><i class="fas fa-envelope-circle-check" aria-hidden="true"></i> Lupa email?</button>
+            </div>`}
             ${isLoginOnly ? "" : `<p class="fr-auth-switch-note">
               Belum daftar?
               <button class="fr-auth-inline-link" type="button" data-auth-switch="register">Buat akun dulu di sini.</button>
@@ -260,6 +266,66 @@
               <button class="fr-auth-inline-link" type="button" data-auth-switch="login">Masuk di sini.</button>
             </p>
           </form>
+          <form class="fr-auth-form" data-auth-form="forgot-password" ${!isForgotPassword ? "hidden" : ""} aria-hidden="${isForgotPassword ? "false" : "true"}">
+            <div class="fr-auth-context">
+              <h2><i class="fas fa-key" aria-hidden="true"></i> Atur ulang password</h2>
+              <p>Masukkan email akun Anda. Kami akan mengirim kode untuk membuat password baru.</p>
+            </div>
+            <div class="fr-auth-field">
+              <label for="fr-auth-forgot-email"><i class="fas fa-envelope" aria-hidden="true"></i> Email</label>
+              <input id="fr-auth-forgot-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="fr-auth-actions">
+              <button class="fr-auth-button" type="submit"><i class="fas fa-paper-plane" aria-hidden="true"></i> Kirim Kode</button>
+            </div>
+            <p class="fr-auth-switch-note">
+              Sudah ingat?
+              <button class="fr-auth-inline-link" type="button" data-auth-switch="login">Masuk di sini.</button>
+            </p>
+          </form>
+          <form class="fr-auth-form" data-auth-form="reset-password" hidden aria-hidden="true">
+            <div class="fr-auth-context">
+              <h2><i class="fas fa-lock" aria-hidden="true"></i> Password baru</h2>
+              <p>Masukkan kode dari email dan buat password baru.</p>
+            </div>
+            <div class="fr-auth-field">
+              <label for="fr-auth-reset-code"><i class="fas fa-key" aria-hidden="true"></i> Kode</label>
+              <input id="fr-auth-reset-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" required>
+            </div>
+            <div class="fr-auth-field">
+              <label for="fr-auth-reset-password"><i class="fas fa-lock" aria-hidden="true"></i> Password baru</label>
+              <input id="fr-auth-reset-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+            </div>
+            <div class="fr-auth-field">
+              <label for="fr-auth-reset-confirm"><i class="fas fa-check" aria-hidden="true"></i> Ulangi</label>
+              <input id="fr-auth-reset-confirm" name="confirm_password" type="password" autocomplete="new-password" minlength="8" required>
+            </div>
+            <div class="fr-auth-actions">
+              <button class="fr-auth-button" type="submit"><i class="fas fa-check-circle" aria-hidden="true"></i> Simpan Password</button>
+            </div>
+            <p class="fr-auth-switch-note">
+              Belum menerima kode?
+              <button class="fr-auth-inline-link" type="button" data-auth-switch="forgot-password">Kirim ulang.</button>
+            </p>
+          </form>
+          <div class="fr-auth-form" data-auth-form="forgot-email" ${!isForgotEmail ? "hidden" : ""} aria-hidden="${isForgotEmail ? "false" : "true"}">
+            <div class="fr-auth-context">
+              <h2><i class="fas fa-envelope-circle-check" aria-hidden="true"></i> Cari email akun</h2>
+              <p>Jika akun pernah dibuat dengan Google, masuk dengan Google. Jika memakai email dan password, cek inbox yang pernah menerima email dari Franchisee.id.</p>
+            </div>
+            <div class="fr-auth-oauth">
+              <button class="fr-auth-oauth-button" type="button" data-auth-oauth="google" data-auth-oauth-mode="login">
+                <span class="fr-auth-oauth-icon" aria-hidden="true">${GOOGLE_ICON}</span>
+                <span>Masuk dengan Google</span>
+              </button>
+            </div>
+            <p class="fr-auth-switch-note">
+              Sudah menemukan email?
+              <button class="fr-auth-inline-link" type="button" data-auth-switch="forgot-password">Atur ulang password</button>
+              atau
+              <button class="fr-auth-inline-link" type="button" data-auth-switch="login">masuk biasa.</button>
+            </p>
+          </div>
           <form class="fr-auth-form" data-auth-form="verify" hidden aria-hidden="true">
             <div class="fr-auth-field">
               <label for="fr-auth-code"><i class="fas fa-key" aria-hidden="true"></i> Kode verifikasi email</label>
@@ -290,6 +356,8 @@
     const loginForm = root.querySelector('[data-auth-form="login"]');
     const registerForm = root.querySelector('[data-auth-form="register"]');
     const verifyForm = root.querySelector('[data-auth-form="verify"]');
+    const forgotPasswordForm = root.querySelector('[data-auth-form="forgot-password"]');
+    const resetPasswordForm = root.querySelector('[data-auth-form="reset-password"]');
 
     if (loginForm) {
       loginForm.addEventListener("submit", function (event) {
@@ -309,6 +377,20 @@
       verifyForm.addEventListener("submit", function (event) {
         event.preventDefault();
         handleVerification(root, verifyForm);
+      });
+    }
+
+    if (forgotPasswordForm) {
+      forgotPasswordForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        handleForgotPassword(root, forgotPasswordForm);
+      });
+    }
+
+    if (resetPasswordForm) {
+      resetPasswordForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        handleResetPassword(root, resetPasswordForm);
       });
     }
   }
@@ -380,6 +462,73 @@
     }
   }
 
+  async function handleForgotPassword(root, form) {
+    setBusy(form, true);
+    showMessage(root, "", "");
+    try {
+      const clerk = await initClerk();
+      const data = formData(form);
+      const signIn = await clerk.client.signIn.create({
+        strategy: "reset_password_email_code",
+        identifier: data.email,
+      });
+      Auth.resetPasswordSignIn = signIn;
+      Auth.resetPasswordEmail = data.email;
+      switchMode(root, "reset-password");
+      showMessage(root, "Kode atur ulang password sudah dikirim ke email Anda.", "success");
+      root.querySelector('[data-auth-form="reset-password"] input[name="code"]')?.focus();
+    } catch (error) {
+      showMessage(root, clerkErrorMessage(error), "error");
+    } finally {
+      setBusy(form, false);
+    }
+  }
+
+  async function handleResetPassword(root, form) {
+    setBusy(form, true);
+    showMessage(root, "", "");
+    try {
+      const clerk = await initClerk();
+      const data = formData(form);
+      if (!Auth.resetPasswordSignIn) {
+        throw new Error("Silakan kirim kode atur ulang password terlebih dahulu.");
+      }
+      if (String(data.password || "").length < 8) {
+        throw new Error("Password minimal 8 karakter.");
+      }
+      if (data.password !== data.confirm_password) {
+        throw new Error("Ulangi password baru dengan nilai yang sama.");
+      }
+
+      const verified = await Auth.resetPasswordSignIn.attemptFirstFactor({
+        strategy: "reset_password_email_code",
+        code: data.code,
+      });
+      if (verified.status !== "needs_new_password") {
+        throw new Error("Kode belum valid. Periksa email dan coba lagi.");
+      }
+
+      const reset = await verified.resetPassword({
+        password: data.password,
+        signOutOfOtherSessions: true,
+      });
+      if (reset.status !== "complete" || !reset.createdSessionId) {
+        throw new Error("Password belum bisa disimpan. Silakan coba lagi.");
+      }
+
+      await clerk.setActive({ session: reset.createdSessionId });
+      await syncUser();
+      Auth.resetPasswordSignIn = null;
+      Auth.resetPasswordEmail = "";
+      showMessage(root, "Password baru tersimpan.", "success");
+      window.location.href = nextUrl(root);
+    } catch (error) {
+      showMessage(root, clerkErrorMessage(error), "error");
+    } finally {
+      setBusy(form, false);
+    }
+  }
+
   async function handleOAuth(root, button) {
     button.disabled = true;
     showMessage(root, "", "");
@@ -396,6 +545,10 @@
         strategy: "oauth_google",
         redirectUrl: oauthCallbackUrl(),
         redirectUrlComplete,
+        signInFallbackRedirectUrl: redirectUrlComplete,
+        signUpFallbackRedirectUrl: redirectUrlComplete,
+        continueSignIn: true,
+        continueSignUp: true,
       };
       setPendingNext(params.redirectUrlComplete);
 
@@ -479,15 +632,25 @@
   }
 
   function switchMode(root, mode) {
-    root.querySelector(".fr-auth-shell")?.setAttribute("data-current-mode", mode);
+    const nextMode = normalizeAuthMode(mode, root?.getAttribute("data-auth-variant") === "staff", { allowReset: true });
+    root.querySelector(".fr-auth-shell")?.setAttribute("data-current-mode", nextMode);
     root.querySelectorAll("[data-auth-switch]").forEach(function (button) {
-      button.classList.toggle("is-active", button.getAttribute("data-auth-switch") === mode);
+      button.classList.toggle("is-active", button.getAttribute("data-auth-switch") === nextMode);
     });
     root.querySelectorAll("[data-auth-form]").forEach(function (form) {
-      const isActive = form.getAttribute("data-auth-form") === mode;
+      const isActive = form.getAttribute("data-auth-form") === nextMode;
       form.hidden = !isActive;
       form.setAttribute("aria-hidden", isActive ? "false" : "true");
     });
+  }
+
+  function normalizeAuthMode(mode, isLoginOnly, options = {}) {
+    const value = String(mode || "login").toLowerCase();
+    if (isLoginOnly) return "login";
+    const allowed = options.allowReset
+      ? ["login", "register", "forgot-password", "reset-password", "forgot-email"]
+      : ["login", "register", "forgot-password", "forgot-email"];
+    return allowed.includes(value) ? value : "login";
   }
 
   function hideForms(root) {

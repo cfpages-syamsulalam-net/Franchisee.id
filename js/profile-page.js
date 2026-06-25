@@ -7,7 +7,9 @@
     data: null,
     activeTab: "summary",
     selectedFranchiseId: "",
-    accountEditing: false,
+    accountEditingField: "",
+    accountMessage: null,
+    clerk: null,
     confirmRole: "",
     roleBusy: false,
     roleError: "",
@@ -31,6 +33,7 @@
   async function init() {
     try {
       const clerk = await Auth.init();
+      state.clerk = clerk;
       if (!clerk?.session) {
         const next = encodeURIComponent(window.location.pathname + window.location.search);
         window.location.href = "/login/?next=" + next;
@@ -67,14 +70,16 @@
 
       const accountEdit = event.target.closest("[data-account-edit]");
       if (accountEdit) {
-        state.accountEditing = true;
+        state.accountEditingField = accountEdit.getAttribute("data-account-edit") || "";
+        state.accountMessage = null;
         render();
         return;
       }
 
       const accountCancel = event.target.closest("[data-account-cancel]");
       if (accountCancel) {
-        state.accountEditing = false;
+        state.accountEditingField = "";
+        state.accountMessage = null;
         render();
         return;
       }
@@ -122,6 +127,13 @@
     });
 
     root.addEventListener("submit", async function (event) {
+      const passwordForm = event.target.closest("[data-password-form]");
+      if (passwordForm) {
+        event.preventDefault();
+        await submitPasswordForm(passwordForm);
+        return;
+      }
+
       const form = event.target.closest("[data-profile-form]");
       if (!form) return;
       event.preventDefault();
@@ -200,31 +212,100 @@
 
   function accountPanel() {
     const user = state.data.user;
-    const readonly = state.accountEditing ? "" : "readonly";
+    const clerkUser = state.clerk?.user || Auth.clerk?.user || {};
+    const passwordEnabled = Boolean(clerkUser.passwordEnabled);
+    const googleLinked = hasGoogleAccount(clerkUser);
     return `
       <h2 class="fr-profile-section-title"><i class="fas fa-user-gear" aria-hidden="true"></i> Akun</h2>
-      <p class="fr-profile-copy">Nama dan email digunakan sebagai identitas akun Anda.</p>
-      <form data-profile-form="account">
-        <div class="fr-profile-grid">
-          <div class="fr-profile-field">
-            <label for="profile-display-name"><i class="fas fa-id-card" aria-hidden="true"></i> Nama</label>
+      <p class="fr-profile-copy">Kelola nama, email, dan cara masuk akun Anda.</p>
+      ${state.accountMessage ? `<p class="fr-profile-message is-${attr(state.accountMessage.type)}">${escapeHtml(state.accountMessage.text)}</p>` : ""}
+      <div class="fr-profile-account-list">
+        ${accountFieldForm({
+          field: "display_name",
+          icon: "fa-id-card",
+          label: "Nama",
+          value: user.display_name,
+          type: "text",
+          otherName: "email",
+          otherValue: user.email,
+          buttonLabel: "Edit nama",
+        })}
+        ${accountFieldForm({
+          field: "email",
+          icon: "fa-envelope",
+          label: "Email",
+          value: user.email,
+          type: "email",
+          otherName: "display_name",
+          otherValue: user.display_name,
+          buttonLabel: "Edit email",
+        })}
+        <section class="fr-profile-account-row">
+          <div class="fr-profile-account-main">
+            <label for="profile-password-view"><i class="fas fa-lock" aria-hidden="true"></i> Password</label>
             <div class="fr-profile-inline">
-              <input id="profile-display-name" name="display_name" value="${attr(user.display_name)}" ${readonly} required>
-              ${state.accountEditing ? "" : `<button class="fr-profile-icon-button" type="button" data-account-edit aria-label="Edit nama dan email" data-fr-tooltip="Edit nama dan email"><i class="fas fa-pen" aria-hidden="true"></i></button>`}
+              <input id="profile-password-view" type="password" value="${passwordEnabled ? "********" : ""}" readonly placeholder="${passwordEnabled ? "" : "Belum ditambahkan"}">
+              ${state.accountEditingField === "password" ? "" : `<button class="fr-profile-icon-button" type="button" data-account-edit="password" aria-label="${passwordEnabled ? "Edit password" : "Tambah password"}" data-fr-tooltip="${passwordEnabled ? "Edit password" : "Tambah password"}"><i class="fas ${passwordEnabled ? "fa-pen" : "fa-plus"}" aria-hidden="true"></i></button>`}
             </div>
+            <p class="fr-profile-field-note">${escapeHtml(passwordHelperText(passwordEnabled, googleLinked))}</p>
           </div>
-          <div class="fr-profile-field">
-            <label for="profile-email"><i class="fas fa-envelope" aria-hidden="true"></i> Email</label>
-            <input id="profile-email" name="email" type="email" value="${attr(user.email)}" ${readonly} required>
+          ${state.accountEditingField === "password" ? passwordEditForm(passwordEnabled) : ""}
+        </section>
+      </div>
+    `;
+  }
+
+  function accountFieldForm(config) {
+    const editing = state.accountEditingField === config.field;
+    return `
+      <form class="fr-profile-account-row" data-profile-form="account">
+        <input type="hidden" name="${attr(config.otherName)}" value="${attr(config.otherValue)}">
+        <div class="fr-profile-account-main">
+          <label for="profile-${attr(config.field)}"><i class="fas ${attr(config.icon)}" aria-hidden="true"></i> ${escapeHtml(config.label)}</label>
+          <div class="fr-profile-inline">
+            <input id="profile-${attr(config.field)}" name="${attr(config.field)}" type="${attr(config.type)}" value="${attr(config.value)}" ${editing ? "" : "readonly"} required>
+            ${editing ? "" : `<button class="fr-profile-icon-button" type="button" data-account-edit="${attr(config.field)}" aria-label="${attr(config.buttonLabel)}" data-fr-tooltip="${attr(config.buttonLabel)}"><i class="fas fa-pen" aria-hidden="true"></i></button>`}
           </div>
+          <p class="fr-profile-message" data-profile-message></p>
         </div>
-        <p class="fr-profile-message" data-profile-message></p>
-        ${state.accountEditing ? `
-          <div class="fr-profile-actions">
-            <button class="fr-profile-button" type="submit"><i class="fas fa-floppy-disk" aria-hidden="true"></i> Simpan Akun</button>
+        ${editing ? `
+          <div class="fr-profile-account-actions">
+            <button class="fr-profile-button" type="submit"><i class="fas fa-floppy-disk" aria-hidden="true"></i> Simpan</button>
             <button class="fr-profile-secondary" type="button" data-account-cancel><i class="fas fa-xmark" aria-hidden="true"></i> Batal</button>
           </div>
         ` : ""}
+      </form>
+    `;
+  }
+
+  function passwordEditForm(passwordEnabled) {
+    return `
+      <form class="fr-profile-password-form" data-password-form>
+        ${passwordEnabled ? `
+          <div class="fr-profile-field">
+            <label for="profile-current-password"><i class="fas fa-key" aria-hidden="true"></i> Password saat ini</label>
+            <input id="profile-current-password" name="current_password" type="password" autocomplete="current-password" required>
+          </div>
+        ` : ""}
+        <div class="fr-profile-password-grid">
+          <div class="fr-profile-field">
+            <label for="profile-new-password"><i class="fas fa-lock" aria-hidden="true"></i> Password baru</label>
+            <input id="profile-new-password" name="new_password" type="password" autocomplete="new-password" minlength="8" required>
+          </div>
+          <div class="fr-profile-field">
+            <label for="profile-confirm-password"><i class="fas fa-check" aria-hidden="true"></i> Ulangi password baru</label>
+            <input id="profile-confirm-password" name="confirm_password" type="password" autocomplete="new-password" minlength="8" required>
+          </div>
+        </div>
+        <label class="fr-profile-checkbox">
+          <input type="checkbox" name="sign_out_other_sessions">
+          <span>Keluar dari perangkat lain setelah password diganti.</span>
+        </label>
+        <p class="fr-profile-message" data-profile-message></p>
+        <div class="fr-profile-account-actions">
+          <button class="fr-profile-button" type="submit"><i class="fas fa-floppy-disk" aria-hidden="true"></i> ${passwordEnabled ? "Ganti Password" : "Tambah Password"}</button>
+          <button class="fr-profile-secondary" type="button" data-account-cancel><i class="fas fa-xmark" aria-hidden="true"></i> Batal</button>
+        </div>
       </form>
     `;
   }
@@ -408,10 +489,56 @@
       const payload = await response.json();
       if (!payload.success) throw new Error(payload.message || "Data gagal disimpan.");
       setMessage(message, "Tersimpan.", "success");
-      state.accountEditing = false;
+      state.accountEditingField = "";
+      if (type === "account") state.accountMessage = { type: "success", text: "Akun tersimpan." };
       await loadProfile();
     } catch (error) {
       setMessage(message, error.message || "Data gagal disimpan.", "error");
+    } finally {
+      setBusy(form, false);
+    }
+  }
+
+  async function submitPasswordForm(form) {
+    const message = form.querySelector("[data-profile-message]");
+    const formData = new FormData(form);
+    const newPassword = String(formData.get("new_password") || "");
+    const confirmPassword = String(formData.get("confirm_password") || "");
+    const currentPassword = String(formData.get("current_password") || "");
+
+    if (newPassword.length < 8) {
+      setMessage(message, "Password minimal 8 karakter.", "error");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setMessage(message, "Ulangi password baru dengan nilai yang sama.", "error");
+      return;
+    }
+
+    setMessage(message, "Menyimpan password...", "");
+    setBusy(form, true);
+    try {
+      const clerk = await Auth.ensureSignedIn();
+      state.clerk = clerk;
+      const user = clerk.user;
+      if (!user || typeof user.updatePassword !== "function") {
+        throw new Error("Pengaturan password belum tersedia. Silakan coba lagi nanti.");
+      }
+      const hadPassword = Boolean(user.passwordEnabled);
+      const params = {
+        newPassword,
+        signOutOfOtherSessions: formData.get("sign_out_other_sessions") === "on",
+      };
+      if (user.passwordEnabled && currentPassword) {
+        params.currentPassword = currentPassword;
+      }
+      await user.updatePassword(params);
+      if (typeof user.reload === "function") await user.reload();
+      state.accountEditingField = "";
+      state.accountMessage = { type: "success", text: hadPassword ? "Password tersimpan." : "Password ditambahkan." };
+      render();
+    } catch (error) {
+      setMessage(message, readableClerkError(error) || "Password belum bisa disimpan.", "error");
     } finally {
       setBusy(form, false);
     }
@@ -693,6 +820,26 @@
       spam: "Spam",
       archived: "Diarsipkan",
     }[status] || status || "Baru dikirim";
+  }
+
+  function hasGoogleAccount(clerkUser) {
+    const accounts = Array.isArray(clerkUser?.externalAccounts) ? clerkUser.externalAccounts : [];
+    return accounts.some((account) => {
+      const text = [account.provider, account.strategy, account.providerName, account.identificationId].filter(Boolean).join(" ");
+      return /google/i.test(text);
+    });
+  }
+
+  function passwordHelperText(passwordEnabled, googleLinked) {
+    if (passwordEnabled && googleLinked) return "Google sudah terhubung. Anda juga bisa masuk dengan email dan password.";
+    if (passwordEnabled) return "Password sudah aktif. Klik edit untuk mengganti password.";
+    if (googleLinked) return "Anda menggunakan Google untuk masuk. Ingin tambahkan password? Klik tombol tambah di samping.";
+    return "Tambahkan password agar akun bisa masuk dengan email dan password.";
+  }
+
+  function readableClerkError(error) {
+    const clerkMessage = error?.errors?.[0]?.longMessage || error?.errors?.[0]?.message;
+    return clerkMessage || error?.message || "";
   }
 
   function formatRupiah(value) {
