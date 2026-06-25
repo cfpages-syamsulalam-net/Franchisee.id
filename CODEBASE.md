@@ -1,6 +1,6 @@
 # Franchisee.id Codebase Map
 
-Last updated: 2026-06-26 03:50 (Asia/Jakarta)
+Last updated: 2026-06-26 04:17 (Asia/Jakarta)
 
 ## Purpose
 `CODEBASE.md` is the living map of project-owned logic. Keep it current whenever relevant files, functions, data contracts, routes, generated assets, or backend responsibilities change. The large WordPress-exported HTML files are mostly static surface; this document focuses on the runtime, builders, data files, templates, workflows, and integration points that define application behavior.
@@ -119,6 +119,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 | `.github/workflows/head.yaml` | Legacy automation that injects `.head` content into every HTML file. Use cautiously because it touches many static exports. |
 | `.github/workflows/sitemap-readme.yaml` | Manual workflow for sitemap/readme generation from HTML files. |
 | `docs/README.md` | Central documentation index and source-of-truth policy. |
+| `SUGGESTION.md` | Assistant-owned proactive recommendation backlog for product, UX, reliability, performance, security, data quality, operations, migration safety, and developer workflow improvements. |
 | `docs/architecture/TECH_STACK_DECISIONS.md` | Canonical migration stack decisions: TypeScript, Zod, D1 SQL migrations, role model, Clerk/D1 responsibility split, and Drizzle adoption timing. |
 | `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md` | Compares twice-daily D1 static publishing with GitHub Actions polling, Cloudflare Deploy Hook builds, and GitHub direct deploy fallback. Current target is 30-minute polling after a D1 dirty queue exists, without committing generated output from the poller. |
 | `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md` | Progress tracker and implementation plan for public account entry: role-first registration, post-auth `/daftar` completion, public role add-on/correction flow, Clerk-prefilled form fields, animated auth/form toggles, and logged-in navbar account state. |

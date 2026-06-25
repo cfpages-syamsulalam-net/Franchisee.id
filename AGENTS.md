@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-25 16:43 (Asia/Jakarta)
+Last updated: 2026-06-26 04:17 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -8,6 +8,8 @@ Last updated: 2026-06-25 16:43 (Asia/Jakarta)
 - Keep high-level migration decisions in `docs/architecture/TECH_STACK_DECISIONS.md`; do not duplicate long strategy notes across model-specific docs.
 - Keep per-session context snapshots in `/.context` using timestamped Markdown files (`session-YYYYMMDD-HHmm.md`) for new-session continuity.
 - Be proactive with engineering judgment: when a request can be improved for maintainability, security, performance, UX, data integrity, or migration safety, surface the recommendation clearly before or during implementation. Prefer actionable suggestions with tradeoffs while respecting explicit user decisions.
+- Keep `SUGGESTION.md` as the assistant-owned improvement backlog. This file is exclusively for Codex/assistant suggestions, not user instructions. Add or update entries when you see opportunities to improve product value, UX, reliability, performance, security, data quality, operations, migration safety, or developer workflow.
+- Be proactive from now on: do not wait only for user-directed tasks. When project context reveals useful improvements, propose them clearly and, when the task is already agreed or low-risk, implement the next sensible step while keeping scope controlled.
 - Code modularly by default. Prefer small, purpose-owned files/modules for new or touched runtime logic instead of growing monolithic scripts, functions, or Astro pages. When refactoring, preserve behavior first, validate, then update `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `CHANGELOG.md`.
 - Prioritize finishing the current pending task over progress narration. Keep user-facing updates minimal and reserve final reporting for work that is actually completed or genuinely blocked.
 - When an agreed task has remaining planned steps, continue implementing them before final reporting instead of stopping at the plan. If decisions are genuinely blocking, ask for confirmation using the available user-input tools when present; otherwise make a conservative, documented implementation choice and keep working. For product/UX work that needs structure, brainstorm in the appropriate `.md` tracker first, then implement the plan in the same work session unless the user explicitly asks to pause.
@@ -88,6 +90,7 @@ Last updated: 2026-06-25 16:43 (Asia/Jakarta)
 - `docs/forms/*.md`: detailed form behavior, claim flow, validation, autosave, and franchise form UX references.
 - `docs/testing/*.md`: debug/test-data references.
 - `README.md`: currently generated sitemap URL listing; treat as generated artifact.
+- `SUGGESTION.md`: assistant-owned proactive recommendation backlog for product, UX, reliability, performance, security, data quality, operations, migration safety, and developer workflow improvements.
 - `CHANGELOG.md`: mandatory running log of repository modifications.
 - `/.context/*.md`: timestamped session continuity snapshots.
 

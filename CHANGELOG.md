@@ -4,6 +4,15 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-26 04:17 (Asia/Jakarta)
+### Added
+- `SUGGESTION.md`: Added an assistant-owned proactive recommendation backlog with initial suggestions across auth QA, media uploads, profile value surfaces, data quality, publishing, analytics, operations, and multi-site controls.
+- `.context/session-20260626-0417.md`: Added a session snapshot for the suggestion backlog and proactive working-rule update.
+
+### Changed
+- `AGENTS.md`: Added rules for keeping `SUGGESTION.md` current and proactively proposing useful project improvements.
+- `CODEBASE.md`: Documented `SUGGESTION.md` as a supporting project file.
+
 ## 2026-06-26 03:50 (Asia/Jakarta)
 ### Added
 - `.context/session-20260626-0350.md`: Added a session snapshot for the `/login` recovery and same-email auth sync update.
