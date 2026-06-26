@@ -4,6 +4,23 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-26 05:32 (Asia/Jakarta)
+### Added
+- `js/auth-clerk-ui.js`: Added a dedicated custom auth page renderer so `js/auth-clerk.js` can focus on Clerk/session behavior.
+- `functions/profile-upload.js`: Added an owner-checked listing media upload endpoint for logo, cover, and proposal files through R2, D1 asset records, listing media URL updates, audit events, and static rebuild queue writes.
+- `migrations/0006_saved_opportunities.sql`: Added the D1 table and indexes for cross-device saved franchise opportunities.
+- `css/opportunity-save.css` and `js/opportunity-save.js`: Added public save-opportunity buttons for generated directory cards and detail pages.
+- `.context/session-20260626-0532.md`: Added a session snapshot for the auth split, media upload, saved opportunities, and lead inbox implementation.
+
+### Changed
+- `js/auth-clerk.js`, `login/index.html`, `register/index.html`, `daftar/index.html`, `src/pages/dashboard/index.astro`, `src/pages/profil/index.astro`, `src/pages/sso-callback/index.astro`, and franchise templates: Loaded the new auth UI module before the Clerk runtime while preserving the existing auth API.
+- `functions/profile-data.js`: Added D1 saved-opportunity save/remove actions, saved-opportunity reads, franchisor lead inbox reads, and owner-checked lead status updates.
+- `js/profile-page.js` and `css/profile.css`: Added server-backed saved opportunities with local-save migration, owner media upload controls, and a franchisor `Leads` tab with contact shortcuts and status updates.
+- `src/lib/franchise-static.ts` and franchise templates: Added public save-opportunity buttons and assets for generated franchise cards/detail pages.
+- `peluang-usaha/*.html` and `json/d1-generated-pages-manifest.json`: Regenerated during `pnpm run build` so public franchise pages include the new save-opportunity UI.
+- `wrangler.toml`: Added the `FRANCHISE_ASSETS` R2 binding for uploaded franchise media.
+- `SUGGESTION.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `FORM_SCHEMA.md`, `docs/architecture/PROFILE_PAGE_PLAN.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the implemented suggestions, new data contract, media upload path, saved-opportunity table, and lead inbox behavior.
+
 ## 2026-06-26 04:17 (Asia/Jakarta)
 ### Added
 - `SUGGESTION.md`: Added an assistant-owned proactive recommendation backlog with initial suggestions across auth QA, media uploads, profile value surfaces, data quality, publishing, analytics, operations, and multi-site controls.

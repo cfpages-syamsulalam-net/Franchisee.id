@@ -10,3 +10,7 @@ binding = "franchise_db"
 database_name = "franchise_db"
 database_id = "812cd8ac-edd0-45d9-981f-c9a15358317b"
 migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "FRANCHISE_ASSETS"
+bucket_name = "franchise-assets"

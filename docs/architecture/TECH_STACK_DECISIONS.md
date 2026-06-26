@@ -265,6 +265,7 @@ Use these as the first schema target:
 - `franchise_packages`: package and investment variants tied to a franchise.
 - `franchise_assets`: R2 object keys, asset type, ownership, moderation status.
 - `franchise_leads`: franchisee inquiries and franchisor lead state.
+- `franchise_saved_opportunities`: logged-in franchisee saved listings across devices.
 - `locations`: normalized city/province/search location data.
 - `audit_events`: role, claim, publish, import, and admin action log.
 

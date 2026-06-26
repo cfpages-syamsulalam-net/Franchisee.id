@@ -14,8 +14,13 @@
     roleBusy: false,
     roleError: "",
     savedOpportunities: [],
+    savedBusyId: "",
     opportunityBusyId: "",
     opportunityMessage: null,
+    uploadBusyKey: "",
+    uploadMessage: null,
+    leadBusyId: "",
+    leadMessage: null,
   };
 
   const TAB_DEFS = [
@@ -25,6 +30,7 @@
     ["opportunities", "fa-heart", "Peluang Saya"],
     ["franchisor", "fa-store", "Franchisor"],
     ["listing", "fa-pen-to-square", "Listing"],
+    ["leads", "fa-inbox", "Leads"],
     ["claims", "fa-certificate", "Klaim"],
   ];
 
@@ -55,8 +61,10 @@
     if (!state.selectedFranchiseId && payload.owned_franchises?.length) {
       state.selectedFranchiseId = payload.owned_franchises[0].id;
     }
-    state.savedOpportunities = loadSavedOpportunities(payload.user?.id);
+    const localSaved = loadSavedOpportunities(payload.user?.id);
+    state.savedOpportunities = mergeSavedOpportunities(payload.saved_opportunities || [], localSaved);
     render();
+    syncLocalSavedOpportunities(payload.user?.id, localSaved);
   }
 
   function bindRootEvents() {
@@ -108,8 +116,7 @@
 
       const saveOpportunity = event.target.closest("[data-save-opportunity]");
       if (saveOpportunity) {
-        toggleSavedOpportunity(saveOpportunity.getAttribute("data-save-opportunity"));
-        render();
+        await toggleSavedOpportunity(saveOpportunity.getAttribute("data-save-opportunity"));
         return;
       }
 
@@ -120,8 +127,19 @@
     });
 
     root.addEventListener("change", function (event) {
+      if (event.target.matches("[data-media-upload]")) {
+        uploadListingMedia(event.target);
+        return;
+      }
+
+      if (event.target.matches("[data-lead-status]")) {
+        updateLeadStatus(event.target);
+        return;
+      }
+
       if (event.target.matches("[data-franchise-select]")) {
         state.selectedFranchiseId = event.target.value;
+        state.uploadMessage = null;
         render();
       }
     });
@@ -176,6 +194,7 @@
     if (state.activeTab === "opportunities") return opportunitiesPanel();
     if (state.activeTab === "franchisor") return franchisorPanel();
     if (state.activeTab === "listing") return listingPanel();
+    if (state.activeTab === "leads") return leadsPanel();
     if (state.activeTab === "claims") return claimsPanel();
     return summaryPanel();
   }
@@ -192,6 +211,7 @@
         ${showFranchisee ? `<div class="fr-profile-stat"><strong>${state.savedOpportunities.length}</strong><span>Peluang tersimpan</span></div>` : ""}
         ${showFranchisor ? `<div class="fr-profile-stat"><strong>${data.completion.franchisor ? "Lengkap" : "Belum"}</strong><span>Data brand</span></div>` : ""}
         ${showFranchisor ? `<div class="fr-profile-stat"><strong>${data.owned_franchises.length}</strong><span>Listing dimiliki</span></div>` : ""}
+        ${showFranchisor ? `<div class="fr-profile-stat"><strong>${data.franchisor_leads?.length || 0}</strong><span>Lead masuk</span></div>` : ""}
       </div>
       ${data.user.is_staff_access ? `<p><a class="fr-profile-secondary" href="/dashboard/"><i class="fas fa-table-columns" aria-hidden="true"></i> Buka Dashboard</a></p>` : ""}
       ${(showFranchisee && !data.completion.franchisee) || (showFranchisor && !data.completion.franchisor) ? `
@@ -413,9 +433,15 @@
     return `
       <h2 class="fr-profile-section-title"><i class="fas fa-pen-to-square" aria-hidden="true"></i> Listing Brand</h2>
       <p class="fr-profile-copy">Perubahan listing akan disimpan dan tampil setelah halaman diperbarui. Untuk menjaga kualitas data, satu listing bisa diedit setiap ${selected.edit_interval_hours || 6} jam.</p>
+      ${state.uploadMessage ? `<p class="fr-profile-message is-${attr(state.uploadMessage.type)}">${escapeHtml(state.uploadMessage.text)}</p>` : ""}
       <div class="fr-profile-select-row">
         <i class="fas fa-list" aria-hidden="true"></i>
         <select data-franchise-select>${listings.map((item) => `<option value="${attr(item.id)}" ${item.id === selected.id ? "selected" : ""}>${escapeHtml(item.brand_name || item.slug || item.id)}</option>`).join("")}</select>
+      </div>
+      <div class="fr-profile-media-grid">
+        ${mediaUploadControl("Logo", "logo", selected.logo_url, "fa-image")}
+        ${mediaUploadControl("Cover", "cover", selected.cover_url, "fa-panorama")}
+        ${mediaUploadControl("Proposal", "proposal", selected.proposal_url, "fa-file-pdf")}
       </div>
       ${selected.edit_locked ? `<div class="fr-profile-notice"><i class="fas fa-clock" aria-hidden="true"></i><div>Listing ini baru diedit pada ${escapeHtml(selected.last_owner_edit_at || "beberapa waktu lalu")}. Tunggu sebelum menyimpan perubahan berikutnya.</div></div>` : ""}
       <form data-profile-form="listing">
@@ -432,9 +458,9 @@
           ${textarea("Deskripsi Singkat", "short_desc", selected.short_desc, "fa-align-left")}
           ${textarea("Deskripsi Lengkap", "full_desc", selected.full_desc, "fa-file-lines")}
           ${textarea("Support System", "support_system", selected.support_system, "fa-handshake-angle")}
-          ${field("Logo URL", "logo_url", selected.logo_url, "fa-image")}
-          ${field("Cover URL", "cover_url", selected.cover_url, "fa-panorama")}
-          ${field("Proposal URL", "proposal_url", selected.proposal_url, "fa-file-pdf")}
+          <input type="hidden" name="logo_url" value="${attr(selected.logo_url)}">
+          <input type="hidden" name="cover_url" value="${attr(selected.cover_url)}">
+          <input type="hidden" name="proposal_url" value="${attr(selected.proposal_url)}">
         </div>
         <p class="fr-profile-message" data-profile-message></p>
         <div class="fr-profile-actions">
@@ -442,6 +468,64 @@
           ${selected.slug ? `<a class="fr-profile-secondary" href="/peluang-usaha/${encodeURIComponent(selected.slug)}"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i> Lihat Halaman</a>` : ""}
         </div>
       </form>
+    `;
+  }
+
+  function mediaUploadControl(label, assetType, value, icon) {
+    const key = `${state.selectedFranchiseId}:${assetType}`;
+    const isBusy = state.uploadBusyKey === key;
+    const accept = assetType === "proposal" ? "application/pdf" : "image/jpeg,image/png,image/webp";
+    return `
+      <section class="fr-profile-media-item">
+        <div class="fr-profile-media-icon"><i class="fas ${icon}" aria-hidden="true"></i></div>
+        <div class="fr-profile-media-body">
+          <strong>${escapeHtml(label)}</strong>
+          <span>${value ? "Sudah tersedia" : "Belum ada file"}</span>
+          ${value ? `<a class="fr-profile-text-link" href="${attr(value)}" target="_blank" rel="noopener">Lihat file</a>` : ""}
+        </div>
+        <label class="fr-profile-upload-button ${isBusy ? "is-busy" : ""}">
+          <input type="file" data-media-upload="${attr(assetType)}" accept="${attr(accept)}" ${isBusy ? "disabled" : ""}>
+          <i class="fas ${isBusy ? "fa-spinner fa-spin" : "fa-upload"}" aria-hidden="true"></i>
+          <span>${isBusy ? "Mengunggah" : "Unggah"}</span>
+        </label>
+      </section>
+    `;
+  }
+
+  function leadsPanel() {
+    const leads = state.data.franchisor_leads || [];
+    return `
+      <h2 class="fr-profile-section-title"><i class="fas fa-inbox" aria-hidden="true"></i> Lead Masuk</h2>
+      <p class="fr-profile-copy">Pantau calon mitra yang meminta info dari listing Anda.</p>
+      ${state.leadMessage ? `<p class="fr-profile-message is-${attr(state.leadMessage.type)}">${escapeHtml(state.leadMessage.text)}</p>` : ""}
+      ${leads.length ? `<div class="fr-profile-lead-list">${leads.map((lead) => leadCard(lead)).join("")}</div>` : emptyInline("Belum ada lead masuk untuk listing Anda.")}
+    `;
+  }
+
+  function leadCard(lead) {
+    const busy = state.leadBusyId === lead.id;
+    return `
+      <article class="fr-profile-lead-card">
+        <div class="fr-profile-lead-main">
+          <div class="fr-profile-lead-title">
+            <strong>${escapeHtml(lead.name || "Calon mitra")}</strong>
+            <span>${escapeHtml(lead.brand_name || "Listing")}</span>
+          </div>
+          <div class="fr-profile-muted">${escapeHtml(lead.city_origin || "Kota belum diisi")} ${lead.budget_range ? "· " + escapeHtml(lead.budget_range) : ""} · ${escapeHtml(lead.created_at || "")}</div>
+          ${lead.message ? `<p class="fr-profile-list-copy">${escapeHtml(lead.message)}</p>` : ""}
+          <div class="fr-profile-chip-row">
+            ${lead.email ? `<a href="mailto:${attr(lead.email)}"><i class="fas fa-envelope" aria-hidden="true"></i> Email</a>` : ""}
+            ${lead.whatsapp ? `<a href="${attr(whatsappLink(lead.country_code, lead.whatsapp))}" target="_blank" rel="noopener"><i class="fab fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>` : ""}
+            ${lead.canonical_url || lead.slug ? `<a href="${attr(lead.canonical_url || "/peluang-usaha/" + lead.slug)}"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i> Listing</a>` : ""}
+          </div>
+        </div>
+        <label class="fr-profile-lead-status">
+          <span>Status</span>
+          <select data-lead-status="${attr(lead.id)}" ${busy ? "disabled" : ""}>
+            ${leadStatusOptions(lead.status)}
+          </select>
+        </label>
+      </article>
     `;
   }
 
@@ -568,7 +652,7 @@
 
   async function submitFranchiseInquiry(franchiseId) {
     if (!franchiseId || state.opportunityBusyId) return;
-    state.opportunityBusyId = franchiseId;
+    state.savedBusyId = franchiseId;
     state.opportunityMessage = null;
     render();
     try {
@@ -612,8 +696,8 @@
           ${item.reasons?.length && !options.compact ? `<div class="fr-profile-chip-row">${item.reasons.map((reason) => `<span>${escapeHtml(reason)}</span>`).join("")}</div>` : ""}
         </div>
         <div class="fr-profile-opportunity-actions">
-          <button class="fr-profile-secondary" type="button" data-save-opportunity="${attr(item.id)}">
-            <i class="fas fa-bookmark" aria-hidden="true"></i> ${saved ? "Tersimpan" : "Simpan"}
+          <button class="fr-profile-secondary" type="button" data-save-opportunity="${attr(item.id)}" ${state.savedBusyId === item.id ? "disabled" : ""}>
+            <i class="fas ${state.savedBusyId === item.id ? "fa-spinner fa-spin" : "fa-bookmark"}" aria-hidden="true"></i> ${state.savedBusyId === item.id ? "Menyimpan" : saved ? "Tersimpan" : "Simpan"}
           </button>
           <button class="fr-profile-button" type="button" data-create-inquiry="${attr(item.id)}" ${asked || state.opportunityBusyId === item.id ? "disabled" : ""}>
             <i class="fas ${state.opportunityBusyId === item.id ? "fa-spinner fa-spin" : "fa-paper-plane"}" aria-hidden="true"></i> ${asked ? "Info diminta" : "Minta info"}
@@ -738,7 +822,7 @@
   function visibleTabs() {
     return TAB_DEFS.filter(([id]) => {
       if (id === "franchisee" || id === "opportunities") return canSeeFranchisee();
-      if (id === "franchisor" || id === "listing" || id === "claims") return canSeeFranchisor();
+      if (id === "franchisor" || id === "listing" || id === "leads" || id === "claims") return canSeeFranchisor();
       return true;
     });
   }
@@ -786,15 +870,79 @@
     }
   }
 
-  function toggleSavedOpportunity(franchiseId) {
+  function mergeSavedOpportunities(serverItems, localItems) {
+    const seen = new Set();
+    return [...serverItems, ...localItems].filter((item) => {
+      if (!item?.id || seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    }).slice(0, 24);
+  }
+
+  async function syncLocalSavedOpportunities(userId, localItems) {
+    if (!userId || !localItems.length || state.syncingLocalSaved) return;
+    const serverIds = new Set((state.data?.saved_opportunities || []).map((item) => item.id));
+    const missing = localItems.filter((item) => item?.id && !serverIds.has(item.id)).slice(0, 8);
+    if (!missing.length) return;
+    state.syncingLocalSaved = true;
+    try {
+      for (const item of missing) {
+        const headers = await Auth.getAuthHeaders();
+        await fetch("/profile-data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ action: "save_franchise_opportunity", franchise_id: item.id }),
+        });
+      }
+      window.localStorage.removeItem(savedStorageKey(userId));
+    } catch (_error) {
+      // Keep local saves as a fallback when server-side saving is not ready.
+    } finally {
+      state.syncingLocalSaved = false;
+    }
+  }
+
+  async function toggleSavedOpportunity(franchiseId) {
     if (!franchiseId) return;
-    if (isOpportunitySaved(franchiseId)) {
-      state.savedOpportunities = state.savedOpportunities.filter((item) => item.id !== franchiseId);
-    } else {
-      const item = opportunityById(franchiseId);
-      if (item) state.savedOpportunities = [item, ...state.savedOpportunities].slice(0, 24);
+    const wasSaved = isOpportunitySaved(franchiseId);
+    const item = opportunityById(franchiseId);
+    state.opportunityBusyId = franchiseId;
+    state.opportunityMessage = null;
+    if (wasSaved) {
+      state.savedOpportunities = state.savedOpportunities.filter((saved) => saved.id !== franchiseId);
+    } else if (item) {
+      state.savedOpportunities = [item, ...state.savedOpportunities].slice(0, 24);
     }
     persistSavedOpportunities();
+    render();
+
+    try {
+      const headers = await Auth.getAuthHeaders();
+      const response = await fetch("/profile-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          action: wasSaved ? "remove_franchise_opportunity" : "save_franchise_opportunity",
+          franchise_id: franchiseId,
+        }),
+      });
+      const payload = await response.json();
+      if (!payload.success) throw new Error(payload.message || "Peluang belum bisa disimpan.");
+      state.savedOpportunities = payload.saved_opportunities || state.savedOpportunities;
+      state.data.saved_opportunities = state.savedOpportunities;
+      persistSavedOpportunities();
+    } catch (error) {
+      if (wasSaved && item) {
+        state.savedOpportunities = [item, ...state.savedOpportunities].slice(0, 24);
+      } else {
+        state.savedOpportunities = state.savedOpportunities.filter((saved) => saved.id !== franchiseId);
+      }
+      persistSavedOpportunities();
+      state.opportunityMessage = { type: "error", text: error.message || "Peluang belum bisa disimpan." };
+    } finally {
+      state.savedBusyId = "";
+      render();
+    }
   }
 
   function isOpportunitySaved(franchiseId) {
@@ -807,6 +955,89 @@
 
   function hasAskedInfo(franchiseId) {
     return (state.data?.inquiry_history || []).some((lead) => lead.franchise_id === franchiseId);
+  }
+
+  async function uploadListingMedia(input) {
+    const assetType = input.getAttribute("data-media-upload") || "";
+    const file = input.files?.[0];
+    const listing = (state.data?.owned_franchises || []).find((item) => item.id === state.selectedFranchiseId);
+    if (!file || !listing) return;
+    const key = `${listing.id}:${assetType}`;
+    state.uploadBusyKey = key;
+    state.uploadMessage = null;
+    render();
+
+    try {
+      const headers = await Auth.getAuthHeaders();
+      const body = new FormData();
+      body.append("franchise_id", listing.id);
+      body.append("asset_type", assetType);
+      body.append("file", file);
+      const response = await fetch("/profile-upload", {
+        method: "POST",
+        headers,
+        body,
+      });
+      const payload = await response.json();
+      if (!payload.success) throw new Error(payload.message || "File belum bisa diunggah.");
+      const asset = payload.asset || {};
+      if (asset.field && asset.public_url) {
+        listing[asset.field] = asset.public_url;
+      }
+      state.uploadMessage = { type: "success", text: "File berhasil diunggah." };
+    } catch (error) {
+      state.uploadMessage = { type: "error", text: error.message || "File belum bisa diunggah." };
+    } finally {
+      state.uploadBusyKey = "";
+      render();
+    }
+  }
+
+  async function updateLeadStatus(select) {
+    const leadId = select.getAttribute("data-lead-status") || "";
+    const status = select.value;
+    if (!leadId || !status) return;
+    state.leadBusyId = leadId;
+    state.leadMessage = null;
+    render();
+    try {
+      const headers = await Auth.getAuthHeaders();
+      const response = await fetch("/profile-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ action: "update_franchise_lead_status", lead_id: leadId, status }),
+      });
+      const payload = await response.json();
+      if (!payload.success) throw new Error(payload.message || "Status lead belum bisa disimpan.");
+      state.data.franchisor_leads = payload.franchisor_leads || state.data.franchisor_leads || [];
+      state.leadMessage = { type: "success", text: "Status lead tersimpan." };
+    } catch (error) {
+      state.leadMessage = { type: "error", text: error.message || "Status lead belum bisa disimpan." };
+    } finally {
+      state.leadBusyId = "";
+      render();
+    }
+  }
+
+  function leadStatusOptions(current) {
+    const options = [
+      ["new", "Baru"],
+      ["sent", "Terkirim"],
+      ["viewed", "Dilihat"],
+      ["contacted", "Sudah dihubungi"],
+      ["qualified", "Cocok"],
+      ["closed", "Selesai"],
+      ["archived", "Arsip"],
+    ];
+    return options.map(([value, label]) => `<option value="${value}" ${current === value ? "selected" : ""}>${label}</option>`).join("");
+  }
+
+  function whatsappLink(countryCode, number) {
+    const code = String(countryCode || "62").replace(/[^\d]/g, "") || "62";
+    let clean = String(number || "").replace(/[^\d]/g, "");
+    if (clean.startsWith("0")) clean = code + clean.slice(1);
+    if (!clean.startsWith(code)) clean = code + clean;
+    return `https://wa.me/${clean}`;
   }
 
   function statusLabel(status) {

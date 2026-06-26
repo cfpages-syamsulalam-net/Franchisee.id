@@ -64,13 +64,13 @@ The field inventory is storage-provider neutral. The current frontend posts thes
 - `full_desc` (Textarea, Req): Keunggulan & Sejarah.
 - `support_system` (Checkbox): List of facilities (Bahan baku, training, etc.).
 
-### Section 4: Media & Visual (Legacy URL Fields, Target R2)
+### Section 4: Media & Visual (Compatibility URL Fields, R2 Upload Path)
 - `logo_url` (Hidden, Req): Brand Logo.
 - `cover_url` (Hidden, Req): Banner Utama.
 - `gallery_urls` (Hidden, Opt): Up to 5 photos.
 - `video_url` (URL, Opt): YouTube Link.
 - `proposal_url` (Hidden, Opt): PDF E-Proposal.
-Note: these `*_url` field names must be preserved during the R2 migration as compatibility fields or mapped in the D1 schema.
+Note: these `*_url` field names remain compatibility fields for `/daftar` and D1 listing storage. Owner edits in `/profil` now upload logo, cover, and proposal files through the R2-backed media path and update these URL fields after upload.
 
 ### Section 5: Kontak Leads
 - `pic_name` (Text, Req): Nama Contact Person.

@@ -119,15 +119,17 @@ Scope for this pass:
 
 - Recommendations: show a shortlist from published franchise rows using the user's selected category and budget range.
 - Budget-fit cues: each recommendation gets a label such as `Sesuai budget`, `Sedikit di atas budget`, `Di atas budget`, or `Budget belum tersedia`.
-- Saved opportunities: users can save/remove recommended opportunities in the browser so the section feels immediately useful without adding a new database table yet.
+- Saved opportunities: users can save/remove recommended opportunities in D1 so they appear across devices. Existing local saves are synced after login when possible.
 - Inquiry history: read existing `franchise_leads` for the logged-in franchisee and show recent inquiry status.
 - One-click inquiry: let users send `Minta info` from a recommended/saved opportunity. The backend creates a `franchise_leads` row using the existing franchisee profile contact data.
+- Listing-page saves: public listing cards and detail pages expose a logged-in save action that writes to the same profile saved-opportunity list.
+- Franchisor lead inbox: franchisors can view incoming leads for owned listings, open email/WhatsApp contact shortcuts, and update lead status from `/profil`.
+- Media upload: franchisors can upload logo, cover, and proposal files from the owned listing panel once the production asset bucket and public URL base are configured.
 
 Deferred:
 
-- Cross-device saved opportunities need a dedicated D1 table and migration.
-- Listing-page save buttons can be added after the `/profil` surface is proven useful.
-- Franchisor lead inbox UX can be improved later from the existing dashboard lead summary.
+- Gallery image uploads and server-side drafts can follow after the first media upload path is proven.
+- Lead notes/export can be added after the basic lead inbox is used in production.
 
 ## Backend Contract
 
@@ -175,6 +177,9 @@ Add a protected profile API instead of overloading `/form-submit`:
 | Done | Add public role add-on CTA | Franchisee-only users can add franchisor access from `/profil` before filling brand data; franchisor-only users can add franchisee interests later. |
 | Done | Add franchisee value surfaces | Implemented `Peluang Saya` with recommendations, browser-saved opportunities, budget-fit cues, one-click inquiry, and inquiry history. |
 | Done | Add granular account security edits | `/profil` account rows now edit name/email separately and expose password add/change through the current Clerk account session. |
+| Done | Persist saved opportunities | Added D1 saved opportunities, profile API actions, local-save sync, and public listing/detail save buttons. |
+| Done | Add owner media uploads | Added owner-checked logo, cover, and proposal uploads to the listing panel through the profile upload endpoint and R2 binding. |
+| Done | Add franchisor lead inbox | Added a role-aware `Leads` tab with contact shortcuts and owner-checked status updates. |
 
 ## Open Decisions Before Coding
 

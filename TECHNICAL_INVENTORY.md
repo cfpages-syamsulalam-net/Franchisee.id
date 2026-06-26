@@ -133,12 +133,23 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration requires selected `franchisee`/`franchisor` role and stores the role-specific `/daftar` completion destination until OAuth completion.
 - `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to `clerk.setActive()` with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
 
+### File: `js/auth-clerk-ui.js`
+*Custom auth page renderer.*
+- `authTemplate(mode, options)`: Renders the custom login/register/forgot-password/reset-password/forgot-email/verification panels used by `js/auth-clerk.js`.
+- Keeps the public auth HTML and Google icon markup out of the Clerk/session bootstrap file while preserving the existing `window.FranchiseAuth` public API.
+
 ### File: `js/auth-navbar.js`
 *Public navbar auth-state controller for legacy HFE nav menus.*
 - `initNavbarAuth()`: Finds legacy nav login/register pairs, normalizes logged-out labels to `Masuk` and `Daftar Mitra`, initializes Clerk, syncs D1 user state, and replaces auth links when a session exists.
 - Logged-out `Daftar Mitra` points to protected `/daftar/`; anonymous users are then redirected by `js/form-07-init.js` to `/login?next=...` with an auth message.
 - `createAccountItem(clerk, user)`: Builds the logged-in navbar item with Font Awesome account/logout icons, display name, D1 role badge, `/profil/` account link, and red icon-only logout.
 - `bindLogout(item, clerk)`: Signs the active Clerk session out and returns to `/`.
+
+### File: `js/opportunity-save.js`
+*Public save-opportunity controller for generated franchise pages.*
+- Handles `data-save-franchise` buttons on directory cards and detail pages.
+- Requires a Clerk session, redirects anonymous users to `/login/?next=...`, then posts `save_franchise_opportunity` or `remove_franchise_opportunity` to `/profile-data`.
+- Uses `css/opportunity-save.css` for shared public save button and inline status styling.
 
 ### File: `js/shared-tooltip.js`
 *Shared custom tooltip runtime.*
@@ -152,15 +163,16 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Client controller for the protected `/profil` profile center.*
 - `init()`: Requires a Clerk session and redirects anonymous users to `/login/?next=/profil/`.
 - `loadProfile()`: Fetches `/profile-data` with `window.FranchiseAuth.getAuthHeaders()`.
-- `render()` / `renderActivePanel()`: Renders side tabs for summary, account, and role-allowed franchisee/franchisor/owner listing/claims sections.
+- `render()` / `renderActivePanel()`: Renders side tabs for summary, account, and role-allowed franchisee/franchisor/owner listing/leads/claims sections.
 - `visibleTabs()` / `canSeeFranchisee()` / `canSeeFranchisor()`: Filters `/profil` navigation from D1 roles so franchisee users only see franchisee areas, franchisor users only see franchisor/listing/claim areas, and admin/staff users see both.
 - `roleAddOnPanel()` / `roleConfirmModal()` / `submitPublicRoleAdd(role)`: Shows missing public role CTAs, confirms the additive access change, posts `add_public_role` to `/profile-data`, and redirects to the matching `/daftar` tab.
-- `opportunitiesPanel()` / `opportunityCard()` / `submitFranchiseInquiry(franchiseId)`: Renders `Peluang Saya` recommendations, budget-fit labels, browser-saved opportunities, and inquiry history; posts `create_franchise_inquiry` to `/profile-data`.
-- `loadSavedOpportunities()` / `toggleSavedOpportunity()` / `persistSavedOpportunities()`: Stores saved opportunity summaries in browser `localStorage` keyed by D1 user id.
+- `opportunitiesPanel()` / `opportunityCard()` / `submitFranchiseInquiry(franchiseId)`: Renders `Peluang Saya` recommendations, budget-fit labels, D1 saved opportunities, and inquiry history; posts `create_franchise_inquiry` to `/profile-data`.
+- `loadSavedOpportunities()` / `syncLocalSavedOpportunities()` / `toggleSavedOpportunity()`: Migrates old browser-saved opportunities into D1 when possible and posts save/remove actions to `/profile-data`.
 - `accountPanel()` / `accountFieldForm()`: Renders granular account rows so name and email are edited one field at a time while the other value is preserved for the protected account save.
 - `passwordEditForm()` / `submitPasswordForm(form)`: Uses ClerkJS on the current session to let Google-only users add a password login and password users change their password, with custom inline copy and no browser tooltip hints.
 - `franchiseePanel()` / `franchisorPanel()`: Shows role-specific D1 profile rows and preserves identity fields as read-only.
-- `listingPanel()`: Shows owned D1 `franchises`, selects a listing, and disables saving when the owner edit rate limit is active.
+- `listingPanel()` / `uploadListingMedia(input)`: Shows owned D1 `franchises`, selects a listing, uploads logo/cover/proposal media through `/profile-upload`, and disables saving when the owner edit rate limit is active.
+- `leadsPanel()` / `updateLeadStatus(select)`: Shows incoming leads for owned listings with email/WhatsApp shortcuts and owner-checked status updates through `/profile-data`.
 - `submitProfileForm(form)`: Posts account/profile/listing mutations to `/profile-data` with a Clerk bearer token.
 
 ### File: `js/dashboard-admin.js`
@@ -304,14 +316,22 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/profile-data.js`
 *Protected profile read/write API for `/profil`.*
-- `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and returns D1 user, roles, franchisee profile, franchisor profile, owned franchises, claims, franchisee recommendations, inquiry history, and completion flags.
-- `onRequestPost()`: Dispatches Zod-validated mutations for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, `update_listing`, `add_public_role`, and `create_franchise_inquiry`.
+- `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and returns D1 user, roles, franchisee profile, franchisor profile, owned franchises, claims, franchisee recommendations, D1 saved opportunities, franchisee inquiry history, franchisor lead inbox, and completion flags.
+- `onRequestPost()`: Dispatches Zod-validated mutations for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, `update_listing`, `add_public_role`, `create_franchise_inquiry`, `save_franchise_opportunity`, `remove_franchise_opportunity`, and `update_franchise_lead_status`.
 - `updateAccount()`: Updates Clerk identity first, then D1 `users` plus profile identity fields, writes audit events, and resyncs Clerk metadata from D1 roles.
 - `addPublicRole()`: Allows logged-in public users to add the missing `franchisee` or `franchisor` role, writes an audit event, and resyncs Clerk metadata; admin/staff role assignment remains outside self-service.
 - `loadFranchiseeRecommendations()` / `budgetFit()` / `matchesInterest()`: Builds a short recommendation list from published franchises using franchisee category and budget preferences.
+- `saveFranchiseOpportunity()` / `removeFranchiseOpportunity()` / `loadSavedOpportunities()`: Persist franchisee saved listings in `franchise_saved_opportunities` with a graceful empty-state fallback when the migration has not been applied yet.
 - `createFranchiseInquiry()`: Creates a `franchise_leads` row from the current franchisee profile and prevents duplicate inquiries for the same franchise/user.
+- `loadFranchisorLeadInbox()` / `updateFranchiseLeadStatus()`: Returns incoming leads for owned listings and lets franchisors update lead status with ownership checks.
 - `updateOwnedListing()`: Allows owner-scoped edits to whitelisted public listing fields, limits each listing to one owner edit per 6 hours, writes audit events, and queues static rebuild requests through `siteRebuildStatements()`.
 - Profile edit actions require existing first-time profile rows; missing rows are completed through `/daftar/`.
+
+### File: `functions/profile-upload.js`
+*Protected owner media upload API for `/profil`.*
+- `onRequestPost()`: Requires Clerk/D1 auth, validates multipart `franchise_id`, `asset_type`, and `file`, verifies listing ownership, stores logo/cover/proposal files in R2, records `franchise_assets`, updates the matching listing media URL field, writes an audit event, and queues a public-page rebuild.
+- Supported files: logo and cover accept JPG/PNG/WebP; proposal accepts PDF.
+- Requires the `FRANCHISE_ASSETS` R2 binding and a public URL base in production environment configuration.
 
 ### File: `functions/_clerk-auth.js`
 *Shared Clerk session verification, D1 user sync, and role authorization helper.*
@@ -330,7 +350,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Shared D1 static publish queue helper for Pages Functions.*
 - `SITE_FRANCHISEE_ID`: Canonical site id for `franchisee.id` publications.
 - `siteRebuildStatements(db, options)`: Returns D1 prepared statements that insert a `site_rebuild_requests` row and update `site_publish_state` in the same batch as the public-page-affecting mutation.
-- Used by `/form-submit` for franchisor listing submission, claim submission, dev unclaimed creation, and dev test-data clearing.
+- Used by `/form-submit` for franchisor listing submission, claim submission, dev unclaimed creation, and dev test-data clearing; used by `/profile-data` and `/profile-upload` for owner listing/media changes.
 
 ### File: `functions/auth-config.js`
 *Public Clerk config endpoint.*

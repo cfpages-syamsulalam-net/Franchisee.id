@@ -1,0 +1,44 @@
+.fr-save-opportunity-button {
+  align-items: center;
+  background: #111827;
+  border: 0;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 7px;
+  justify-content: center;
+  min-height: 38px;
+  padding: 9px 12px;
+  text-decoration: none;
+}
+
+.fr-save-opportunity-button.is-saved {
+  background: #137333;
+}
+
+.fr-save-opportunity-button[disabled] {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.fr-save-opportunity-message {
+  color: #137333;
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: 8px;
+}
+
+.fr-save-opportunity-message.is-error {
+  color: #b42318;
+}
+
+.franchise-detail-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+}

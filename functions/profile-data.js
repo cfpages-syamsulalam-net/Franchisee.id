@@ -88,6 +88,23 @@ const FranchiseInquirySchema = z.object({
   message: optionalText(1200),
 });
 
+const SaveOpportunitySchema = z.object({
+  action: z.literal("save_franchise_opportunity"),
+  franchise_id: z.string().trim().min(3).max(120),
+  note: optionalText(500),
+});
+
+const RemoveOpportunitySchema = z.object({
+  action: z.literal("remove_franchise_opportunity"),
+  franchise_id: z.string().trim().min(3).max(120),
+});
+
+const LeadStatusSchema = z.object({
+  action: z.literal("update_franchise_lead_status"),
+  lead_id: z.string().trim().min(3).max(120),
+  status: z.enum(["new", "sent", "viewed", "contacted", "qualified", "closed", "archived"]),
+});
+
 const MutationSchema = z.discriminatedUnion("action", [
   AccountSchema,
   FranchiseeProfileSchema,
@@ -95,6 +112,9 @@ const MutationSchema = z.discriminatedUnion("action", [
   ListingSchema,
   AddPublicRoleSchema,
   FranchiseInquirySchema,
+  SaveOpportunitySchema,
+  RemoveOpportunitySchema,
+  LeadStatusSchema,
 ]);
 
 export async function onRequestGet({ request, env }) {
@@ -135,6 +155,15 @@ export async function onRequestPost({ request, env }) {
     }
     if (parsed.data.action === "create_franchise_inquiry") {
       return await createFranchiseInquiry(db, actor, parsed.data);
+    }
+    if (parsed.data.action === "save_franchise_opportunity") {
+      return await saveFranchiseOpportunity(db, actor, parsed.data);
+    }
+    if (parsed.data.action === "remove_franchise_opportunity") {
+      return await removeFranchiseOpportunity(db, actor, parsed.data);
+    }
+    if (parsed.data.action === "update_franchise_lead_status") {
+      return await updateFranchiseLeadStatus(db, actor, parsed.data);
     }
 
     return jsonResponse({ success: false, message: "Aksi profil tidak dikenali." }, { status: 400 });
@@ -226,6 +255,8 @@ async function loadProfileData(db, actor) {
     .all();
 
   const inquiryHistory = await loadFranchiseeInquiryHistory(db, actor.id, franchiseeProfile?.id || null);
+  const savedOpportunities = await loadSavedOpportunities(db, actor.id);
+  const franchisorLeads = await loadFranchisorLeadInbox(db, actor.id, franchisorProfile?.id || null);
   const recommendations = franchiseeProfile
     ? await loadFranchiseeRecommendations(db, franchiseeProfile, new Set((owned.results || []).map((row) => row.id)))
     : [];
@@ -256,7 +287,9 @@ async function loadProfileData(db, actor) {
     })),
     claims: claims.results || [],
     franchisee_recommendations: recommendations,
+    saved_opportunities: savedOpportunities,
     inquiry_history: inquiryHistory,
+    franchisor_leads: franchisorLeads,
   };
 }
 
@@ -577,6 +610,101 @@ async function createFranchiseInquiry(db, actor, data) {
   });
 }
 
+async function saveFranchiseOpportunity(db, actor, data) {
+  const franchiseeProfile = await loadFranchiseeProfile(db, actor.id);
+  if (!franchiseeProfile) {
+    return jsonResponse({ success: false, message: "Lengkapi minat usaha terlebih dahulu agar peluang bisa disimpan." }, { status: 404 });
+  }
+
+  const franchise = await loadPublicOpportunity(db, data.franchise_id);
+  if (!franchise) {
+    return jsonResponse({ success: false, message: "Peluang franchise tidak ditemukan." }, { status: 404 });
+  }
+
+  try {
+    const savedId = `saved_${randomId()}`;
+    await db.batch([
+      db
+        .prepare(
+          `INSERT INTO franchise_saved_opportunities (id, user_id, franchise_id, source_site_id, note)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(user_id, franchise_id, source_site_id)
+           DO UPDATE SET note = excluded.note, updated_at = CURRENT_TIMESTAMP`
+        )
+        .bind(savedId, actor.id, franchise.id, SITE_FRANCHISEE_ID, textOrNull(data.note)),
+      auditStatement(db, "profile.franchisee.save_opportunity", "franchises", franchise.id, { brand_name: franchise.brand_name }, actor.id),
+    ]);
+  } catch (error) {
+    if (isMissingSavedTableError(error)) {
+      return jsonResponse({ success: false, message: "Fitur simpan peluang belum siap. Silakan coba lagi nanti." }, { status: 503 });
+    }
+    throw error;
+  }
+
+  return jsonResponse({
+    success: true,
+    saved_opportunities: await loadSavedOpportunities(db, actor.id),
+  });
+}
+
+async function removeFranchiseOpportunity(db, actor, data) {
+  try {
+    await db.batch([
+      db
+        .prepare(
+          `DELETE FROM franchise_saved_opportunities
+           WHERE user_id = ?
+             AND franchise_id = ?
+             AND source_site_id = ?`
+        )
+        .bind(actor.id, data.franchise_id, SITE_FRANCHISEE_ID),
+      auditStatement(db, "profile.franchisee.remove_opportunity", "franchises", data.franchise_id, {}, actor.id),
+    ]);
+  } catch (error) {
+    if (isMissingSavedTableError(error)) {
+      return jsonResponse({ success: false, message: "Fitur simpan peluang belum siap. Silakan coba lagi nanti." }, { status: 503 });
+    }
+    throw error;
+  }
+
+  return jsonResponse({
+    success: true,
+    saved_opportunities: await loadSavedOpportunities(db, actor.id),
+  });
+}
+
+async function updateFranchiseLeadStatus(db, actor, data) {
+  const lead = await db
+    .prepare(
+      `SELECT fl.id, fl.franchise_id, f.owner_user_id, f.franchisor_profile_id
+       FROM franchise_leads fl
+       INNER JOIN franchises f ON f.id = fl.franchise_id
+       LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
+       WHERE fl.id = ?
+         AND (f.owner_user_id = ? OR fp.user_id = ?)
+       LIMIT 1`
+    )
+    .bind(data.lead_id, actor.id, actor.id)
+    .first();
+
+  if (!lead) {
+    return jsonResponse({ success: false, message: "Lead tidak ditemukan atau bukan milik akun ini." }, { status: 404 });
+  }
+
+  await db.batch([
+    db
+      .prepare("UPDATE franchise_leads SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+      .bind(data.status, lead.id),
+    auditStatement(db, "profile.franchisor.lead_status", "franchise_leads", lead.id, { status: data.status, franchise_id: lead.franchise_id }, actor.id),
+  ]);
+
+  const franchisorProfile = await loadFranchisorProfile(db, actor.id);
+  return jsonResponse({
+    success: true,
+    franchisor_leads: await loadFranchisorLeadInbox(db, actor.id, franchisorProfile?.id || null),
+  });
+}
+
 async function loadFranchiseeProfile(db, userId) {
   return await db
     .prepare(
@@ -587,6 +715,25 @@ async function loadFranchiseeProfile(db, userId) {
        LIMIT 1`
     )
     .bind(userId)
+    .first();
+}
+
+async function loadPublicOpportunity(db, franchiseId) {
+  return await db
+    .prepare(
+      `SELECT f.id, f.brand_name, f.slug, f.category, f.city_origin, f.status, f.verification_tier,
+              f.min_investment_idr, f.max_investment_idr, f.total_investment_idr,
+              f.estimated_bep_months, f.short_desc, f.logo_url, f.cover_url,
+              p.canonical_url, p.publication_status
+       FROM franchises f
+       INNER JOIN franchise_site_publications p
+          ON p.franchise_id = f.id
+         AND p.site_id = ?
+         AND p.publication_status = 'published'
+       WHERE f.id = ?
+       LIMIT 1`
+    )
+    .bind(SITE_FRANCHISEE_ID, franchiseId)
     .first();
 }
 
@@ -640,6 +787,41 @@ async function loadFranchiseeRecommendations(db, profile, ownedIds) {
     .slice(0, RECOMMENDATION_LIMIT);
 }
 
+async function loadSavedOpportunities(db, userId) {
+  try {
+    const result = await db
+      .prepare(
+        `SELECT s.id AS saved_id, s.note, s.created_at AS saved_at,
+                f.id, f.brand_name, f.slug, f.category, f.city_origin, f.status, f.verification_tier,
+                f.min_investment_idr, f.max_investment_idr, f.total_investment_idr,
+                f.estimated_bep_months, f.short_desc, f.logo_url, f.cover_url,
+                p.canonical_url, p.publication_status
+         FROM franchise_saved_opportunities s
+         INNER JOIN franchises f ON f.id = s.franchise_id
+         LEFT JOIN franchise_site_publications p
+           ON p.franchise_id = f.id
+          AND p.site_id = s.source_site_id
+         WHERE s.user_id = ?
+           AND s.source_site_id = ?
+         ORDER BY s.updated_at DESC, s.created_at DESC
+         LIMIT 24`
+      )
+      .bind(userId, SITE_FRANCHISEE_ID)
+      .all();
+
+    return (result.results || []).map((row) => ({
+      ...row,
+      canonical_url: row.canonical_url || (row.slug ? `/peluang-usaha/${row.slug}` : ""),
+      budget_fit: "unknown",
+      budget_label: "Tersimpan",
+      reasons: ["Tersimpan di akun Anda"],
+    }));
+  } catch (error) {
+    if (isMissingSavedTableError(error)) return [];
+    throw error;
+  }
+}
+
 async function loadFranchiseeInquiryHistory(db, userId, franchiseeProfileId) {
   const result = await db
     .prepare(
@@ -658,6 +840,30 @@ async function loadFranchiseeInquiryHistory(db, userId, franchiseeProfileId) {
     )
     .bind(SITE_FRANCHISEE_ID, userId, franchiseeProfileId || null, franchiseeProfileId || null)
     .all();
+  return result.results || [];
+}
+
+async function loadFranchisorLeadInbox(db, userId, franchisorProfileId) {
+  const result = await db
+    .prepare(
+      `SELECT fl.id, fl.franchise_id, fl.franchisee_user_id, fl.name, fl.email, fl.country_code,
+              fl.whatsapp, fl.city_origin, fl.budget_range, fl.message, fl.status,
+              fl.created_at, fl.updated_at,
+              f.brand_name, f.slug,
+              p.canonical_url
+       FROM franchise_leads fl
+       INNER JOIN franchises f ON f.id = fl.franchise_id
+       LEFT JOIN franchise_site_publications p
+         ON p.franchise_id = f.id
+        AND p.site_id = ?
+       WHERE f.owner_user_id = ?
+          OR (? IS NOT NULL AND f.franchisor_profile_id = ?)
+       ORDER BY fl.created_at DESC
+       LIMIT 80`
+    )
+    .bind(SITE_FRANCHISEE_ID, userId, franchisorProfileId || null, franchisorProfileId || null)
+    .all();
+
   return result.results || [];
 }
 
@@ -887,6 +1093,10 @@ function validationError(error) {
     },
     { status: 400 }
   );
+}
+
+function isMissingSavedTableError(error) {
+  return /franchise_saved_opportunities|no such table/i.test(error?.message || "");
 }
 
 function auditStatement(db, action, entityType, entityId, metadata = {}, actorUserId = null) {

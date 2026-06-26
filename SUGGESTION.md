@@ -1,6 +1,6 @@
 # SUGGESTION.md - Assistant Recommendations
 
-Last updated: 2026-06-26 04:17 (Asia/Jakarta)
+Last updated: 2026-06-26 05:32 (Asia/Jakarta)
 
 ## Purpose
 This file is exclusively for Codex/assistant suggestions. It is where I record improvement ideas I notice while working on the project: product value, UX, reliability, performance, security, data quality, operations, migration safety, and developer workflow.
@@ -23,32 +23,34 @@ Recent auth work connects custom Clerk UI, D1 roles, `/login`, `/daftar`, `/prof
 Suggested next step: create and run a checklist covering email/password registration, Google registration, same-email account linking, forgot password, forgot email guidance, role selection, `/daftar` login redirect, `/profil` role tabs, admin/staff access to auth pages, and logout behavior.
 
 ### 2. Split `js/auth-clerk.js` Into Smaller Modules
-Status: Suggested
+Status: Done
 
 `js/auth-clerk.js` now handles bootstrap, login/register UI, Google flows, recovery flows, token headers, role sync, redirects, and debug events. That makes auth changes risky and slows review.
 
-Suggested next step: extract Clerk bootstrap/token helpers, UI rendering, form handlers, recovery flows, and debug helpers into purpose-owned modules while preserving the current public API.
+Implemented: extracted the auth page renderer into `js/auth-clerk-ui.js` and kept `js/auth-clerk.js` focused on Clerk/session behavior while preserving `window.FranchiseAuth`.
 
 ### 3. Build The R2 Media Upload Path
-Status: Suggested
+Status: Done
 
 The stack direction says franchise media and proposal assets should live in R2, while the form still relies heavily on URL fields such as logo, cover, and proposal URLs. That creates friction for franchisors and inconsistent media quality.
 
-Suggested next step: add an authenticated upload-intent endpoint, owner-scoped R2 keys, file validation, and profile/listing UI controls for logo, cover image, gallery, and proposal uploads.
+Implemented: added owner-checked profile media uploads for logo, cover, and proposal files through `functions/profile-upload.js`, R2 binding config, `franchise_assets` writes, listing media field updates, and `/profil` upload controls.
+
+Follow-up: production needs the `FRANCHISE_ASSETS` bucket and `FRANCHISE_ASSETS_PUBLIC_BASE_URL` configured before uploads can return public file URLs.
 
 ### 4. Make Saved Opportunities Cross-Device
-Status: Suggested
+Status: Done
 
 The franchisee value surface includes saved opportunities, but local-only browser storage limits usefulness after login. Logged-in franchisees should see saved listings across devices and sessions.
 
-Suggested next step: add a D1-backed saved-opportunities table, sync local saves after login, and surface saves in `/profil` plus listing cards/detail pages.
+Implemented: added `franchise_saved_opportunities`, profile API save/remove actions, local-save migration after login, profile saved-opportunity rendering, and public listing card/detail save buttons.
 
 ### 5. Add A Franchisor Lead Inbox
-Status: Suggested
+Status: Done
 
 Franchisees can express interest, but franchisors need a clear place to see and respond to leads for their owned listings. This would make the franchisor role feel more valuable immediately.
 
-Suggested next step: create a `/profil` franchisor tab for inquiries, grouped by listing, with contact status, notes, and basic export.
+Implemented: added a `/profil` `Leads` tab for franchisors with incoming lead cards, contact shortcuts, listing links, and owner-checked lead status updates.
 
 ### 6. Finish Static Publish Automation Verification
 Status: Suggested

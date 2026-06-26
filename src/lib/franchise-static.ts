@@ -260,7 +260,7 @@ function generateCard(row: FranchiseStaticRow, index: number) {
   const modalSort = row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr || 0;
 
   return `
-    <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${escapeAttr(statusKey)}-tier" data-franchise-card data-brand="${escapeAttr(brandName.toLowerCase())}" data-category="${escapeAttr(category.toLowerCase())}" data-category-slug="${escapeAttr(categorySlugValue)}" data-status="${escapeAttr(statusKey)}" data-modal="${escapeAttr(modalSort)}" data-recommendation-score="${escapeAttr(scoreRecommendation(row))}" data-popularity-score="${escapeAttr(scorePopularity(row))}" data-index="${escapeAttr(index)}">
+    <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${escapeAttr(statusKey)}-tier" data-franchise-card data-franchise-id="${escapeAttr(row.id)}" data-brand="${escapeAttr(brandName.toLowerCase())}" data-category="${escapeAttr(category.toLowerCase())}" data-category-slug="${escapeAttr(categorySlugValue)}" data-status="${escapeAttr(statusKey)}" data-modal="${escapeAttr(modalSort)}" data-recommendation-score="${escapeAttr(scoreRecommendation(row))}" data-popularity-score="${escapeAttr(scorePopularity(row))}" data-index="${escapeAttr(index)}">
         <a class="uc_post_grid_style_one_image" href="${escapeAttr(link)}">
             <div class="uc_post_image">
                 ${imageBlock}
@@ -287,6 +287,7 @@ function generateCard(row: FranchiseStaticRow, index: number) {
                     <a class="uc_more_btn" href="${escapeAttr(link)}">
                         <div class="uc_btn_inner"><div class="uc_btn_txt">Info Franchise</div></div>
                     </a>
+                    ${generateSaveOpportunityButton(row)}
                 </div>
             </div>
         </div>
@@ -324,6 +325,15 @@ function generateCategoryCard(summary: { label: string; slug: string; count: num
             </div>
         </div>
     </div>`;
+}
+
+function generateSaveOpportunityButton(row: FranchiseStaticRow) {
+  return `
+    <span data-save-franchise-wrap>
+      <button class="fr-save-opportunity-button" type="button" data-save-franchise="${escapeAttr(row.id)}" data-saved="false">
+        <i class="fas fa-bookmark" aria-hidden="true"></i><span>Simpan</span>
+      </button>
+    </span>`;
 }
 
 function generateDirectoryControls(rows: FranchiseStaticRow[]) {
@@ -483,6 +493,9 @@ function generateTabs(row: FranchiseStaticRow, description: string, isUnclaimed:
   const support = normalizeText(row.support_system);
 
   return `
+            <div class="franchise-detail-actions">
+                ${generateSaveOpportunityButton(row)}
+            </div>
             <div class="e-n-tabs" data-widget-number="26009074">
                 <div class="e-n-tabs-heading" role="tablist">
                     <button class="e-n-tab-title" aria-selected="true" data-tab-index="1" role="tab">Profil</button>
