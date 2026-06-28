@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-26 04:17 (Asia/Jakarta)
+Last updated: 2026-06-28 16:25 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -14,6 +14,7 @@ Last updated: 2026-06-26 04:17 (Asia/Jakarta)
 - Prioritize finishing the current pending task over progress narration. Keep user-facing updates minimal and reserve final reporting for work that is actually completed or genuinely blocked.
 - When an agreed task has remaining planned steps, continue implementing them before final reporting instead of stopping at the plan. If decisions are genuinely blocking, ask for confirmation using the available user-input tools when present; otherwise make a conservative, documented implementation choice and keep working. For product/UX work that needs structure, brainstorm in the appropriate `.md` tracker first, then implement the plan in the same work session unless the user explicitly asks to pause.
 - Public-facing copy must be clear, plain, and user-centered. Do not expose infrastructure or implementation terms such as D1, Clerk, onboarding flow, webhooks, static rebuilds, or internal sync in UI text; make the site mechanism handle those details and only tell users what they need to do next.
+- Warning, error, empty-state, and blocked-action messages must be actionable. If the user cannot continue from the current state, the UI should explain what to do next and provide an obvious CTA/link/button to do it, preferably prefilled with `next` or the relevant role/context so the user does not have to figure out the path manually.
 - Tooltips and hover hints must use the shared custom tooltip component: `data-fr-tooltip` plus `css/shared-tooltip.css` and `js/shared-tooltip.js`. Do not add browser `title` attributes for UI hints. Existing interactive `title` hints should be removed or converted so only the shared instant tooltip appears.
 - Use pnpm exclusively. Run `pnpm install`, `pnpm run <script>`, and `pnpm exec <tool>`. Keep `pnpm-lock.yaml` committed and do not create alternate lockfiles.
 - Do not start local dev or preview servers by default. Manual browser QA happens directly on the production site `https://franchisee.id` after the user pushes code. Use local static/build/type checks for validation, and start a local server only when the user explicitly asks for one.

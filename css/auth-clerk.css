@@ -328,13 +328,14 @@
 .fr-auth-message {
   border-radius: 6px;
   display: none;
+  gap: 7px;
   font-weight: 600;
   line-height: 1.45;
   padding: 12px 14px;
 }
 
 .fr-auth-message.is-visible {
-  display: block;
+  display: grid;
 }
 
 .fr-auth-message.is-error {
@@ -350,6 +351,35 @@
 .fr-auth-message.is-info {
   background: #fff9df;
   color: #352800;
+}
+
+.fr-auth-message small {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.86;
+}
+
+.fr-auth-message-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.fr-auth-message-cta {
+  align-items: center;
+  background: #111111;
+  border: 0;
+  color: #ffffff !important;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 32px;
+  padding: 7px 10px;
+  text-decoration: none !important;
 }
 
 .fr-auth-status {

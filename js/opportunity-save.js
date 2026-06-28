@@ -32,32 +32,45 @@
         }),
       });
       const payload = await response.json();
-      if (!payload.success) throw new Error(payload.message || "Peluang belum bisa disimpan.");
+      if (!payload.success) {
+        setActionMessage(button, payload, "Peluang belum bisa disimpan.", "error");
+        return;
+      }
       applySavedState(button, !wasSaved);
-      setMessage(button, wasSaved ? "Dihapus dari tersimpan." : "Disimpan ke profil Anda.", "success");
+      setActionMessage(button, { message: wasSaved ? "Dihapus dari tersimpan." : "Disimpan ke profil Anda." }, "", "success");
     } catch (error) {
-      setMessage(button, error.message || "Peluang belum bisa disimpan.", "error");
+      setActionMessage(button, { message: error.message || "Peluang belum bisa disimpan." }, "", "error");
     } finally {
       setButtonBusy(button, false);
     }
   }
 
   function applySavedState(button, saved) {
+    const label = saved ? "Tersimpan" : "Simpan";
+    const tooltip = saved ? "Hapus dari tersimpan" : "Simpan peluang";
     button.setAttribute("data-saved", saved ? "true" : "false");
+    button.setAttribute("aria-label", tooltip);
+    button.setAttribute("data-fr-tooltip", tooltip);
     button.classList.toggle("is-saved", saved);
-    button.innerHTML = `<i class="fas fa-bookmark" aria-hidden="true"></i><span>${saved ? "Tersimpan" : "Simpan"}</span>`;
+    const labelClass = button.classList.contains("fr-save-opportunity-button--card")
+      ? "fr-save-opportunity-label fr-save-opportunity-label--hidden"
+      : "fr-save-opportunity-label";
+    button.innerHTML = `<i class="fas fa-bookmark" aria-hidden="true"></i><span class="${labelClass}">${label}</span>`;
   }
 
   function setButtonBusy(button, busy) {
     button.disabled = busy;
     if (busy) {
-      button.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Menyimpan</span>';
+      const labelClass = button.classList.contains("fr-save-opportunity-button--card")
+        ? "fr-save-opportunity-label fr-save-opportunity-label--hidden"
+        : "fr-save-opportunity-label";
+      button.innerHTML = `<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span class="${labelClass}">Menyimpan</span>`;
     } else {
       applySavedState(button, button.getAttribute("data-saved") === "true");
     }
   }
 
-  function setMessage(button, text, type) {
+  function setActionMessage(button, payload, fallback, type) {
     const container = button.closest("[data-save-franchise-wrap]") || button.parentElement;
     if (!container) return;
     let message = container.querySelector("[data-save-franchise-message]");
@@ -67,6 +80,46 @@
       container.appendChild(message);
     }
     message.className = "fr-save-opportunity-message" + (type === "error" ? " is-error" : "");
-    message.textContent = text || "";
+    const text = payload?.message || fallback || "";
+    const actionUrl = withReturnUrl(payload?.action_url || "");
+    const actionLabel = payload?.action_label || "";
+    const actionHint = payload?.action_hint || "";
+    message.textContent = "";
+    if (!text && !actionUrl) return;
+
+    const textEl = document.createElement("span");
+    textEl.textContent = text;
+    message.appendChild(textEl);
+
+    if (actionHint) {
+      const hintEl = document.createElement("small");
+      hintEl.textContent = actionHint;
+      message.appendChild(hintEl);
+    }
+
+    if (actionUrl && actionLabel) {
+      const link = document.createElement("a");
+      link.className = "fr-save-opportunity-cta";
+      link.href = actionUrl;
+      link.textContent = actionLabel;
+      message.appendChild(link);
+    }
+  }
+
+  function setMessage(button, text, type) {
+    setActionMessage(button, { message: text || "" }, "", type);
+  }
+
+  function withReturnUrl(url) {
+    if (!url) return "";
+    try {
+      const parsed = new URL(url, window.location.origin);
+      if (!parsed.searchParams.has("next")) {
+        parsed.searchParams.set("next", window.location.pathname + window.location.search);
+      }
+      return parsed.pathname + parsed.search + parsed.hash;
+    } catch (_) {
+      return url;
+    }
   }
 })(window, document);

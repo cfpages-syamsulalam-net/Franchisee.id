@@ -130,7 +130,8 @@ document.addEventListener('DOMContentLoaded', function () {
         field.readOnly = true;
         field.setAttribute('aria-readonly', 'true');
         field.classList.add('identity-locked-field');
-        field.title = 'Data ini mengikuti akun Anda. Ubah lewat halaman Profil.';
+        field.removeAttribute('title');
+        field.setAttribute('data-fr-tooltip', 'Data ini mengikuti akun Anda. Ubah lewat halaman Profil.');
         field.dispatchEvent(new Event('input', { bubbles: true }));
         field.dispatchEvent(new Event('change', { bubbles: true }));
         addIdentityLockNote(field);

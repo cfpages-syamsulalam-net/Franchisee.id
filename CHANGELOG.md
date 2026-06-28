@@ -4,6 +4,31 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-28 16:43 (Asia/Jakarta)
+### Added
+- `.context/session-20260628-1643.md`: Added a session snapshot for the public form feedback and auth recovery CTA pass.
+
+### Changed
+- `js/form-06-submit-validation.js` and `css/form-franchise/04-alerts-status.css`: Replaced public form browser `alert()` failures with inline feedback plus SweetAlert CTAs, added login recovery links, and made successful submits follow a safe `next` URL before falling back to `/profil/`.
+- `js/auth-clerk.js` and `css/auth-clerk.css`: Added structured auth messages with hint text and CTA buttons/links for login-required, register, and password-reset recovery states.
+- `js/form-07-init.js` and `daftar/index.html`: Replaced remaining interactive browser tooltip usage with shared `data-fr-tooltip` hints.
+- `AUDIT.md`: Marked the public form alert replacement and `/login`/`/daftar` recovery-state review as complete in the UX actionability tracker.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the new CTA-backed auth/form feedback behavior and safe post-submit `next` handling.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification.
+
+## 2026-06-28 16:25 (Asia/Jakarta)
+### Added
+- `.context/session-20260628-1625.md`: Added a session snapshot for the `/peluang-usaha` save-button UX and actionability audit.
+
+### Changed
+- `AGENTS.md`: Added the permanent rule that warning, error, empty-state, and blocked-action messages should include clear next steps plus direct CTA/link/button when the path is known.
+- `AUDIT.md`: Added a UX actionability audit and tracker for blocked-action messages, starting with the public save-opportunity flow.
+- `src/lib/franchise-static.ts` and `css/opportunity-save.css`: Changed directory card save controls into icon-only bookmark controls positioned on the top-left of each image with shared custom tooltips.
+- `functions/profile-data.js`: Added CTA metadata to missing-franchisee-profile responses for save and inquiry actions.
+- `js/opportunity-save.js`: Rendered save feedback with optional CTA links, preserves return URL in CTA destinations, and keeps save tooltip/aria labels synced with saved state.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the save-opportunity UX and next-action API behavior.
+
 ## 2026-06-28 15:43 (Asia/Jakarta)
 ### Changed
 - Remote Cloudflare: Applied `migrations/0006_saved_opportunities.sql` to `franchise_db`, verified the `franchise_saved_opportunities` table, confirmed `assets.franchisee.id` is active on the `franchise-assets` R2 bucket, raised its minimum TLS to `1.2`, and set the Pages production secret `FRANCHISE_ASSETS_PUBLIC_BASE_URL=https://assets.franchisee.id`.

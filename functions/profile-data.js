@@ -531,7 +531,7 @@ async function addPublicRole(env, db, actor, data) {
 async function createFranchiseInquiry(db, actor, data) {
   const franchiseeProfile = await loadFranchiseeProfile(db, actor.id);
   if (!franchiseeProfile) {
-    return jsonResponse({ success: false, message: "Lengkapi minat usaha terlebih dahulu agar kami bisa mengirim info dengan data kontak Anda." }, { status: 404 });
+    return incompleteFranchiseeProfileResponse("Lengkapi minat usaha terlebih dahulu agar kami bisa mengirim info dengan data kontak Anda.");
   }
 
   const franchise = await db
@@ -613,7 +613,7 @@ async function createFranchiseInquiry(db, actor, data) {
 async function saveFranchiseOpportunity(db, actor, data) {
   const franchiseeProfile = await loadFranchiseeProfile(db, actor.id);
   if (!franchiseeProfile) {
-    return jsonResponse({ success: false, message: "Lengkapi minat usaha terlebih dahulu agar peluang bisa disimpan." }, { status: 404 });
+    return incompleteFranchiseeProfileResponse("Lengkapi minat usaha terlebih dahulu agar peluang bisa disimpan.");
   }
 
   const franchise = await loadPublicOpportunity(db, data.franchise_id);
@@ -645,6 +645,20 @@ async function saveFranchiseOpportunity(db, actor, data) {
     success: true,
     saved_opportunities: await loadSavedOpportunities(db, actor.id),
   });
+}
+
+function incompleteFranchiseeProfileResponse(message) {
+  return jsonResponse(
+    {
+      success: false,
+      code: "FRANCHISEE_PROFILE_REQUIRED",
+      message,
+      action_label: "Lengkapi minat usaha",
+      action_url: "/daftar/?role=franchisee&continue=1",
+      action_hint: "Isi form minat usaha sekali saja, lalu kembali untuk menyimpan peluang.",
+    },
+    { status: 404 }
+  );
 }
 
 async function removeFranchiseOpportunity(db, actor, data) {

@@ -267,6 +267,7 @@ function generateCard(row: FranchiseStaticRow, index: number) {
                 <div class="uc_post_image_overlay"></div>
             </div>
         </a>
+        ${generateSaveOpportunityButton(row, "card")}
         <div class="uc_content">
             <div class="uc_content_inner">
                 <div class="uc_content-info-wrapper">
@@ -287,7 +288,6 @@ function generateCard(row: FranchiseStaticRow, index: number) {
                     <a class="uc_more_btn" href="${escapeAttr(link)}">
                         <div class="uc_btn_inner"><div class="uc_btn_txt">Info Franchise</div></div>
                     </a>
-                    ${generateSaveOpportunityButton(row)}
                 </div>
             </div>
         </div>
@@ -327,11 +327,17 @@ function generateCategoryCard(summary: { label: string; slug: string; count: num
     </div>`;
 }
 
-function generateSaveOpportunityButton(row: FranchiseStaticRow) {
+function generateSaveOpportunityButton(row: FranchiseStaticRow, variant: "card" | "detail" = "detail") {
+  const wrapClass = variant === "card" ? "fr-save-opportunity-wrap fr-save-opportunity-wrap--card" : "fr-save-opportunity-wrap fr-save-opportunity-wrap--detail";
+  const buttonClass =
+    variant === "card"
+      ? "fr-save-opportunity-button fr-save-opportunity-button--card"
+      : "fr-save-opportunity-button fr-save-opportunity-button--detail";
+  const labelClass = variant === "card" ? "fr-save-opportunity-label fr-save-opportunity-label--hidden" : "fr-save-opportunity-label";
   return `
-    <span data-save-franchise-wrap>
-      <button class="fr-save-opportunity-button" type="button" data-save-franchise="${escapeAttr(row.id)}" data-saved="false">
-        <i class="fas fa-bookmark" aria-hidden="true"></i><span>Simpan</span>
+    <span class="${wrapClass}" data-save-franchise-wrap>
+      <button class="${buttonClass}" type="button" data-save-franchise="${escapeAttr(row.id)}" data-saved="false" aria-label="Simpan peluang" data-fr-tooltip="Simpan peluang">
+        <i class="fas fa-bookmark" aria-hidden="true"></i><span class="${labelClass}">Simpan</span>
       </button>
     </span>`;
 }

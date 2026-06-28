@@ -1277,10 +1277,12 @@ var elementorFrontendConfig = {"environmentMode":{"edit":false,"wpPreview":false
         link.style.opacity = '1';
         link.style.background = '#f8b526';
         link.style.color = '#111';
-        link.title = 'Debug mode ON (click to disable)';
+        link.removeAttribute('title');
+        link.setAttribute('data-fr-tooltip', 'Debug mode ON (click to disable)');
         link.setAttribute('aria-label', 'Disable debug mode');
     } else {
-        link.title = 'Enable debug mode';
+        link.removeAttribute('title');
+        link.setAttribute('data-fr-tooltip', 'Enable debug mode');
         link.setAttribute('aria-label', 'Enable debug mode');
     }
 

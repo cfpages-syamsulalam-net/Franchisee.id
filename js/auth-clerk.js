@@ -269,11 +269,17 @@
   function showInitialAuthMessage(root) {
     const next = new URLSearchParams(window.location.search).get("next") || "";
     if (next.startsWith("/daftar")) {
-      showMessage(root, "Silakan masuk dulu untuk melanjutkan ke form daftar mitra.", "info");
+      showMessage(root, {
+        text: "Masuk atau buat akun dulu untuk melanjutkan ke form daftar mitra.",
+        actions: [{ label: "Buat akun baru", switchMode: "register" }],
+      }, "info");
       return;
     }
     if (next.startsWith("/profil")) {
-      showMessage(root, "Silakan masuk dulu untuk membuka profil akun.", "info");
+      showMessage(root, {
+        text: "Masuk dulu untuk membuka profil akun.",
+        actions: [{ label: "Buat akun baru", switchMode: "register" }],
+      }, "info");
     }
   }
 
@@ -316,7 +322,11 @@
       Auth.resetPasswordSignIn = signIn;
       Auth.resetPasswordEmail = data.email;
       switchMode(root, "reset-password");
-      showMessage(root, "Kode atur ulang password sudah dikirim ke email Anda.", "success");
+      showMessage(root, {
+        text: "Kode atur ulang password sudah dikirim ke email Anda.",
+        hint: "Buka email Anda, masukkan kode di form ini, lalu buat password baru.",
+        actions: [{ label: "Masukkan kode", switchMode: "reset-password" }],
+      }, "success");
       root.querySelector('[data-auth-form="reset-password"] input[name="code"]')?.focus();
     } catch (error) {
       showMessage(root, clerkErrorMessage(error), "error");
@@ -361,7 +371,10 @@
       await syncUser();
       Auth.resetPasswordSignIn = null;
       Auth.resetPasswordEmail = "";
-      showMessage(root, "Password baru tersimpan.", "success");
+      showMessage(root, {
+        text: "Password baru tersimpan.",
+        actions: [{ label: "Lanjutkan", href: nextUrl(root) }],
+      }, "success");
       window.location.href = nextUrl(root);
     } catch (error) {
       showMessage(root, clerkErrorMessage(error), "error");
@@ -437,7 +450,10 @@
 
       await clerk.client.signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       switchMode(root, "verify");
-      showMessage(root, "Kode verifikasi sudah dikirim ke email Anda.", "success");
+      showMessage(root, {
+        text: "Kode verifikasi sudah dikirim ke email Anda.",
+        hint: "Masukkan kode dari email di form verifikasi ini untuk menyelesaikan pembuatan akun.",
+      }, "success");
     } catch (error) {
       showMessage(root, clerkErrorMessage(error), "error");
     } finally {
@@ -616,10 +632,43 @@
   function showMessage(root, message, type) {
     const target = root.querySelector("[data-auth-message]");
     if (!target) return;
-    target.textContent = message || "";
+    const payload = typeof message === "object" && message !== null ? message : { text: message || "" };
+    target.textContent = "";
     target.className = "fr-auth-message";
-    if (message) {
-      target.classList.add("is-visible", type === "success" ? "is-success" : "is-error");
+    if (payload.text || payload.hint || payload.actions?.length) {
+      target.classList.add("is-visible", type === "success" ? "is-success" : type === "info" ? "is-info" : "is-error");
+      if (payload.text) {
+        const text = document.createElement("span");
+        text.textContent = payload.text;
+        target.appendChild(text);
+      }
+      if (payload.hint) {
+        const hint = document.createElement("small");
+        hint.textContent = payload.hint;
+        target.appendChild(hint);
+      }
+      if (Array.isArray(payload.actions) && payload.actions.length) {
+        const actions = document.createElement("div");
+        actions.className = "fr-auth-message-actions";
+        payload.actions.forEach(function (action) {
+          const item = document.createElement(action.href ? "a" : "button");
+          item.className = "fr-auth-message-cta";
+          item.textContent = action.label || "Lanjutkan";
+          if (action.href) {
+            item.href = action.href;
+          } else {
+            item.type = "button";
+            if (action.switchMode) {
+              item.addEventListener("click", function () {
+                switchMode(root, action.switchMode);
+                showMessage(root, "", "");
+              });
+            }
+          }
+          actions.appendChild(item);
+        });
+        target.appendChild(actions);
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-24 22:55 (Asia/Jakarta)
+Last updated: 2026-06-28 16:25 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
@@ -28,6 +28,31 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 - Asset storage is not unified; future franchisor uploads need private/direct upload policies, ownership checks, and stable object keys.
 - Login/register is not implemented as an authenticated app surface.
 - The current `package.json` does not declare builder dependencies despite workflows installing `googleapis` and `dotenv`.
+- Several warning/error states still explain the problem without giving a direct next action. User-facing blocked states should include a clear CTA whenever the next step is known.
+
+## UX Actionability Audit - 2026-06-28
+
+Principle: every blocked action should answer three questions in the UI: what happened, what the user should do next, and where to click to continue.
+
+| Area | Finding | Required UX | Status |
+| --- | --- | --- | --- |
+| Public `/peluang-usaha` cards | Save action was rendered as a full text button beside `Info Franchise`, which competes with the primary detail CTA. | Use an icon-only save control on the image, with shared custom tooltip and no browser `title`. | Done |
+| Public franchise detail save | If a logged-in user has not completed franchisee interest data, the save action only returned text: "Lengkapi minat usaha terlebih dahulu agar peluang bisa disimpan." | Show the message plus a direct CTA to `/daftar/?role=franchisee&continue=1&next=...` so the user can complete the needed form immediately. | Done |
+| Profile opportunity inquiry/save API | Missing franchisee profile errors did not expose machine-readable next-action metadata to clients. | Return `action_url`, `action_label`, and `action_hint` for known recoverable states. | Done |
+| Public save feedback renderer | Public save script rendered all errors as plain text. | Render safe inline CTA links when the API returns a next action. | Done |
+| Project rule | No permanent rule forced warning/empty states to include next steps. | Add an `AGENTS.md` rule that blocked-action copy must be actionable and provide the easiest path forward. | Done |
+| Public `/daftar` form submit | Submit failure still used a browser `alert()` with no inline recovery path. | Replace with inline feedback plus SweetAlert CTA; login-required errors link back to `/login/?next=...`. | Done |
+| Public `/daftar` form success | Completing a profile from a save-opportunity CTA did not return users to the original franchise page. | Respect safe `next` query param after successful submit, otherwise go to `/profil/`. | Done |
+| `/login` auth recovery states | Login-required messages and password reset states were mostly plain text. | Use CTA-backed auth messages for register, reset-code entry, and continuation links while preserving `next`. | Done |
+| Wider codebase | Dashboard/admin/internal errors include technical or terse states, while public profile/auth/form flows have mixed quality. | Continue replacing public-facing blocked states with CTA-backed messages as those surfaces are touched. | Open |
+
+Actionability checklist for future edits:
+- [x] Public save card uses icon-only UI with shared tooltip.
+- [x] Public save detail/card errors can render a direct CTA.
+- [x] Missing franchisee profile API errors include next-action fields.
+- [x] Permanent working rule added to `AGENTS.md`.
+- [x] Replace remaining public form `alert()` feedback with inline/SweetAlert action CTAs.
+- [x] Review `/login` and `/daftar` recovery states for direct `next` links after the next auth UI pass.
 
 ## Target Architecture
 

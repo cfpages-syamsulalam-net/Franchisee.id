@@ -56,7 +56,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `FF.startPeriodicAutoSave(form)`: Periodic safety-net save every 5 seconds.
 - `FF.stopPeriodicAutoSave()`: Clears all auto-save timers.
 - `FF.bindLiveValidation(form)`: Live input/select validation hooks (`blur`/`input`/`change`).
-- `FF.submitToCloudflare(formElement, type)`: Unified submit pipeline (handles claim routing + WA normalization), requires `window.FranchiseAuth` to attach a Clerk bearer token before posting to `/form-submit`.
+- `FF.submitToCloudflare(formElement, type)`: Unified submit pipeline (handles claim routing + WA normalization), requires `window.FranchiseAuth` to attach a Clerk bearer token before posting to `/form-submit`, shows inline/SweetAlert CTA feedback instead of browser alerts, and redirects to a safe `next` URL after successful completion when present.
+- `FF.ensureSubmitFeedback()` / `FF.setSubmitFeedback()` / `FF.showSubmitModal()`: Render public form submission feedback with clear recovery CTAs.
+- `FF.submissionActionFromError()` / `FF.formSuccessNextUrl()` / `FF.withCurrentNext()`: Convert known blocked states into direct action links and preserve the user's return destination.
 - `FF.initFormSubmission()`: Attaches submit listeners, draft persistence hooks, and aggressive auto-save triggers (input, change, step navigation, visibility change, beforeunload, tab switch).
 
 ### File: `js/form-07-init.js`
@@ -64,7 +66,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - DOMContentLoaded orchestrator for claim bindings, calculations/city loader, country-code loader, submit wiring, state restoration, role query tab selection, and `/daftar` Clerk login enforcement.
 - `enforceDaftarAuthAndPrefill()`: Initializes `window.FranchiseAuth`, redirects anonymous users to `/login?next=<current-daftar-url>`, syncs D1 user state, locks franchisee/franchisor email/name/PIC fields from Clerk/D1 identity, and redirects completed profiles to `/profil/`.
 - `redirectCompletedProfileIfNeeded()`: Reads `/profile-data` after auth and sends users whose selected role is already complete away from first-time `/daftar` to `/profil/`.
-- `lockIdentityValue()`: Writes Clerk/D1 identity into preserved form fields, keeps them read-only instead of disabled so existing submit contracts remain intact, and appends the identity lock note.
+- `lockIdentityValue()`: Writes Clerk/D1 identity into preserved form fields, keeps them read-only instead of disabled so existing submit contracts remain intact, uses `data-fr-tooltip` for the lock hint, and appends the identity lock note.
 - Re-exposes compatibility globals (`window.fetchUnclaimedBrands`, `window.fillMainFranchisorForm`).
 
 ### File: `js/form-08-franchisee-steps.js`
@@ -125,11 +127,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign explicit or pending self-selectable `franchisee`/`franchisor` roles.
 - `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
 - `mountAuthPage()`: Replaces `/login` legacy WPForms markup with public `Masuk`/`Buat Akun`/forgot-password/forgot-email/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
-- `showInitialAuthMessage(root)`: Shows an explanatory info message when anonymous `/daftar` visitors are redirected to `/login?next=...`.
+- `showInitialAuthMessage(root)`: Shows CTA-backed info messages when anonymous `/daftar` or `/profil` visitors are redirected to `/login?next=...`.
+- `showMessage(root, message, type)`: Renders plain or structured auth messages with optional hint text and CTA buttons/links, including panel switches for register/reset recovery.
 - `renderSessionState(root)`: Shows a logged-in status for public users and hides auth forms, while admin/staff users keep the forms visible for manual auth UI inspection.
 - `switchMode(root, mode)` / `normalizeAuthMode()`: Switches login/register/recovery/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
 - `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI; public registration redirects to `/daftar/?role=...&continue=1` after account creation.
-- `handleForgotPassword()` / `handleResetPassword()`: Sends Clerk reset-password email codes, verifies the code, saves the new password, activates the resulting session, and returns to the normal next URL.
+- `handleForgotPassword()` / `handleResetPassword()`: Sends Clerk reset-password email codes, shows a direct "Masukkan kode" recovery CTA, verifies the code, saves the new password, activates the resulting session, and returns to the normal next URL.
 - `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration requires selected `franchisee`/`franchisor` role and stores the role-specific `/daftar` completion destination until OAuth completion.
 - `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to `clerk.setActive()` with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
 
@@ -149,7 +152,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Public save-opportunity controller for generated franchise pages.*
 - Handles `data-save-franchise` buttons on directory cards and detail pages.
 - Requires a Clerk session, redirects anonymous users to `/login/?next=...`, then posts `save_franchise_opportunity` or `remove_franchise_opportunity` to `/profile-data`.
-- Uses `css/opportunity-save.css` for shared public save button and inline status styling.
+- Uses `css/opportunity-save.css` for icon-only directory save buttons, detail save buttons, and CTA-backed inline status styling.
 
 ### File: `js/shared-tooltip.js`
 *Shared custom tooltip runtime.*
@@ -323,6 +326,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `loadFranchiseeRecommendations()` / `budgetFit()` / `matchesInterest()`: Builds a short recommendation list from published franchises using franchisee category and budget preferences.
 - `saveFranchiseOpportunity()` / `removeFranchiseOpportunity()` / `loadSavedOpportunities()`: Persist franchisee saved listings in `franchise_saved_opportunities` with a graceful empty-state fallback when the migration has not been applied yet.
 - `createFranchiseInquiry()`: Creates a `franchise_leads` row from the current franchisee profile and prevents duplicate inquiries for the same franchise/user.
+- `incompleteFranchiseeProfileResponse()`: Returns a public-safe blocked-action response with `action_url`, `action_label`, and `action_hint` so clients can show a direct CTA to complete the missing interest form.
 - `loadFranchisorLeadInbox()` / `updateFranchiseLeadStatus()`: Returns incoming leads for owned listings and lets franchisors update lead status with ownership checks.
 - `updateOwnedListing()`: Allows owner-scoped edits to whitelisted public listing fields, limits each listing to one owner edit per 6 hours, writes audit events, and queues static rebuild requests through `siteRebuildStatements()`.
 - Profile edit actions require existing first-time profile rows; missing rows are completed through `/daftar/`.
