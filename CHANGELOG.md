@@ -4,6 +4,12 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-28 15:43 (Asia/Jakarta)
+### Changed
+- Remote Cloudflare: Applied `migrations/0006_saved_opportunities.sql` to `franchise_db`, verified the `franchise_saved_opportunities` table, confirmed `assets.franchisee.id` is active on the `franchise-assets` R2 bucket, raised its minimum TLS to `1.2`, and set the Pages production secret `FRANCHISE_ASSETS_PUBLIC_BASE_URL=https://assets.franchisee.id`.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the production R2 public asset domain and the remote status of the saved-opportunities migration.
+- `.context/session-20260628-1543.md`: Added a session snapshot for the D1 migration and R2 domain setup.
+
 ## 2026-06-26 05:32 (Asia/Jakarta)
 ### Added
 - `js/auth-clerk-ui.js`: Added a dedicated custom auth page renderer so `js/auth-clerk.js` can focus on Clerk/session behavior.

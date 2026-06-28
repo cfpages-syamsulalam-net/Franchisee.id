@@ -331,7 +331,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Protected owner media upload API for `/profil`.*
 - `onRequestPost()`: Requires Clerk/D1 auth, validates multipart `franchise_id`, `asset_type`, and `file`, verifies listing ownership, stores logo/cover/proposal files in R2, records `franchise_assets`, updates the matching listing media URL field, writes an audit event, and queues a public-page rebuild.
 - Supported files: logo and cover accept JPG/PNG/WebP; proposal accepts PDF.
-- Requires the `FRANCHISE_ASSETS` R2 binding and a public URL base in production environment configuration.
+- Requires the `FRANCHISE_ASSETS` R2 binding and `FRANCHISE_ASSETS_PUBLIC_BASE_URL`; production uses the R2 custom domain `https://assets.franchisee.id`.
 
 ### File: `functions/_clerk-auth.js`
 *Shared Clerk session verification, D1 user sync, and role authorization helper.*
