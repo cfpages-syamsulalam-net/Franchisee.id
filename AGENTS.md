@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-06-28 17:10 (Asia/Jakarta)
+Last updated: 2026-06-28 23:43 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -9,6 +9,7 @@ Last updated: 2026-06-28 17:10 (Asia/Jakarta)
 - Keep per-session context snapshots in `/.context` using timestamped Markdown files (`session-YYYYMMDD-HHmm.md`) for new-session continuity.
 - Be proactive with engineering judgment: when a request can be improved for maintainability, security, performance, UX, data integrity, or migration safety, surface the recommendation clearly before or during implementation. Prefer actionable suggestions with tradeoffs while respecting explicit user decisions.
 - Keep `SUGGESTION.md` as the assistant-owned improvement backlog. This file is exclusively for Codex/assistant suggestions, not user instructions. You are free to add or update entries whenever you see opportunities to improve product value, UX, reliability, performance, security, data quality, operations, migration safety, or developer workflow; keep the table current and actionable.
+- During any implementation session that touches product, UX, operations, payments, auth, data quality, or growth, do a short suggestion pass before final reporting: add a new `SUGGESTION.md` row for any concrete improvement discovered, update existing rows when work changes their priority/status, or explicitly leave it unchanged only when no useful new recommendation emerged.
 - Be proactive from now on: do not wait only for user-directed tasks. When project context reveals useful improvements, propose them clearly and, when the task is already agreed or low-risk, implement the next sensible step while keeping scope controlled.
 - Code modularly by default. Prefer small, purpose-owned files/modules for new or touched runtime logic instead of growing monolithic scripts, functions, or Astro pages. When refactoring, preserve behavior first, validate, then update `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `CHANGELOG.md`.
 - Prioritize finishing the current pending task over progress narration. Keep user-facing updates minimal and reserve final reporting for work that is actually completed or genuinely blocked.

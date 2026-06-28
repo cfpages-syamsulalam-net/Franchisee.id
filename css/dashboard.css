@@ -264,6 +264,44 @@ body {
 .dash-form .dash-form-wide {
   grid-column: 1 / -1;
 }
+
+.dash-premium-ops {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1.2fr) minmax(220px, 0.75fr);
+  padding: 14px 16px;
+}
+
+.dash-payment-form {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dash-payment-form label {
+  color: var(--dash-muted);
+  display: grid;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 5px;
+}
+
+.dash-payment-form label.is-wide,
+.dash-payment-form button {
+  grid-column: 1 / -1;
+}
+
+.dash-payment-form input,
+.dash-payment-form textarea {
+  border: 1px solid #d7d7d7;
+  border-radius: 4px;
+  color: #111111;
+  font: inherit;
+  font-size: 13px;
+  min-height: 38px;
+  padding: 8px 10px;
+  width: 100%;
+}
 .dash-field-editor {
   display: grid;
   gap: 10px;
@@ -544,6 +582,9 @@ body {
   .dash-panel-grid.two {
     grid-template-columns: 1fr 1fr;
   }
+  .dash-premium-ops {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 720px) {
   .dash-header-inner,
@@ -568,6 +609,9 @@ body {
     text-align: left;
   }
   .dash-form {
+    grid-template-columns: 1fr;
+  }
+  .dash-payment-form {
     grid-template-columns: 1fr;
   }
   .dash-field-editor-head,

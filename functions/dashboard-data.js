@@ -2,9 +2,11 @@ import { authErrorResponse, requireD1User } from "./_clerk-auth.js";
 import {
   handleLogOutreach,
   handleRefreshQualityChecks,
+  handleReviewPremiumPayment,
   handleReviewClaim,
   handleReviewEditSuggestion,
   handleSuggestEdit,
+  handleUpdatePaymentMethod,
   handleUpdatePublication,
 } from "./_dashboard-actions.js";
 import {
@@ -14,6 +16,8 @@ import {
   getLeadSummary,
   getOverview,
   getPendingClaims,
+  getPendingPremiumPayments,
+  getPremiumOperations,
   getPublishState,
   getPublicationControls,
   getRecentOutreach,
@@ -30,7 +34,7 @@ export async function onRequestGet({ request, env }) {
     const auth = await requireDashboardAccess(request, env);
     const db = env.franchise_db;
 
-    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth] = await Promise.all([
+    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, pendingPremiumPayments, premiumOperations, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth] = await Promise.all([
       getOverview(db),
       getDataQuality(db),
       getPublishState(db),
@@ -38,6 +42,8 @@ export async function onRequestGet({ request, env }) {
       getUnclaimedOutreachQueue(db),
       getUnclaimedOutreachSummary(db),
       getPendingClaims(db),
+      getPendingPremiumPayments(db),
+      getPremiumOperations(db),
       getRecentOutreach(db),
       getEditSuggestions(db),
       getEditableListings(db),
@@ -65,6 +71,8 @@ export async function onRequestGet({ request, env }) {
       outreach_queue: outreachQueue,
       outreach_summary: outreachSummary,
       pending_claims: pendingClaims,
+      pending_premium_payments: pendingPremiumPayments,
+      premium_operations: premiumOperations,
       recent_outreach: recentOutreach,
       edit_suggestions: editSuggestions,
       editable_listings: editableListings,
@@ -102,6 +110,8 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "suggest_edit") return handleSuggestEdit(env.franchise_db, auth, data);
     if (data.action === "review_edit_suggestion") return handleReviewEditSuggestion(env.franchise_db, auth, data);
     if (data.action === "review_claim") return handleReviewClaim(env.franchise_db, auth, data);
+    if (data.action === "review_premium_payment") return handleReviewPremiumPayment(env.franchise_db, auth, data);
+    if (data.action === "update_payment_method") return handleUpdatePaymentMethod(env.franchise_db, auth, data);
     if (data.action === "refresh_quality_checks") return handleRefreshQualityChecks(env.franchise_db, auth);
     if (data.action === "update_publication") return handleUpdatePublication(env.franchise_db, auth, data);
 

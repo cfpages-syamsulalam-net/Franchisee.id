@@ -4,6 +4,46 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-29 00:28 (Asia/Jakarta)
+### Added
+- `migrations/0010_premium_operations.sql`: Added admin-managed `payment_methods`, `premium_funnel_events`, and `premium_notifications` for premium operations.
+- `functions/_premium-ops.js`: Added shared premium payment-method loading, fallback BCA method, funnel event recording/summary, owner/admin notifications, premium notification reads, and listing readiness checks.
+- `functions/_profile-premium.js`: Extracted premium order, payment confirmation, membership reads, payment instructions, readiness, and notification handling out of `functions/profile-data.js`.
+- `functions/premium-event.js` and `js/premium-page.js`: Added public `/premium` page view/CTA click tracking for the dashboard Premium funnel.
+- `functions/premium-receipt-upload.js`: Added protected proof-of-payment upload to R2 with image/PDF type checks, 6 MB max size, D1 asset metadata, and audit logging.
+
+### Changed
+- Remote Cloudflare: Applied `migrations/0010_premium_operations.sql` to `franchise_db` and verified the three new premium operations tables plus the default BCA payment method row.
+- `functions/profile-data.js`, `js/profile-page.js`, and `css/profile.css`: Added Premium readiness checklist, owner Premium notifications, proof-of-payment upload during confirmation, and dynamic payment instructions from the managed payment method.
+- `functions/_dashboard-schemas.js`, `functions/_dashboard-queries.js`, `functions/_dashboard-actions.js`, `functions/dashboard-data.js`, `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, and `css/dashboard.css`: Added Premium Operations dashboard with funnel metrics, payment-method editor, recent Premium notifications, proof links, readiness status, and notification/event writes during admin review.
+- `src/pages/premium/index.astro`: Added CTA tracking attributes and loaded the premium page tracking client.
+- `SUGGESTION.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`, and `.context/session-20260628-2118.md`: Documented suggestions 16-21 as implemented and recorded the new premium operations workflow.
+
+## 2026-06-28 23:43 (Asia/Jakarta)
+### Added
+- `migrations/0009_premium_membership.sql`: Added D1 tables and indexes for premium orders, payment confirmations, and active franchise subscriptions.
+- `functions/_premium.js`: Added shared premium plan constants, included network site ids/domains, transfer payment instructions, unique code generation, id helpers, canonical URL generation, payable amount calculation, and amount normalization.
+- `src/pages/premium/index.astro` and `css/premium.css`: Added the public `/premium/` membership page with yearly pricing, benefits, network distribution explanation, payment instructions, and CTAs.
+
+### Changed
+- Remote Cloudflare: Applied `migrations/0009_premium_membership.sql` to `franchise_db` and verified `premium_orders`, `premium_payment_confirmations`, and `franchise_subscriptions` exist.
+- `functions/profile-data.js`: Added premium membership reads, premium order creation, premium payment confirmation submission, Zod validation for premium actions, and audit events for profile-side premium actions.
+- `js/profile-page.js` and `css/profile.css`: Added the `/profil` Membership tab, owned-listing premium state, unique-code transfer instructions, confirmation form, and fixed profile form submit handling so hidden ids remain available while fields are disabled during save.
+- `functions/_dashboard-schemas.js`, `functions/_dashboard-queries.js`, `functions/_dashboard-actions.js`, and `functions/dashboard-data.js`: Added pending premium payment reads and admin-only premium payment approve/reject workflow that activates a one-year subscription, marks the listing premium, creates missing included network publication rows, publishes those rows, writes audit events, and queues rebuild requests.
+- `src/pages/dashboard/index.astro` and `js/dashboard-admin.js`: Added the dashboard Premium Payments operations panel and icon-only approve/reject review controls.
+- `AGENTS.md`: Added a stricter proactive suggestion-pass rule for implementation sessions that touch product, UX, operations, payments, auth, data quality, or growth.
+- `SUGGESTION.md`: Added new recommendations for premium analytics, admin-managed payment methods, premium readiness checks, payment notifications, profile modularization, and proof-of-payment attachments.
+- `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, `docs/README.md`, `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented the implemented premium membership flow, remote migration status, new route/API responsibilities, dashboard review workflow, and remaining payment automation gaps.
+- `.context/session-20260628-2118.md`: Expanded the session snapshot from the monetization plan into the completed premium implementation summary.
+
+## 2026-06-28 21:18 (Asia/Jakarta)
+### Added
+- `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: Added the premium network monetization plan, `/premium` page plan, payment confirmation roadmap, traffic growth plan, premium feature package, data model plan, and implementation tracker.
+- `.context/session-20260628-2118.md`: Added a session snapshot for the premium monetization planning pass.
+
+### Changed
+- `docs/README.md`: Linked the premium monetization plan from the architecture documentation index.
+
 ## 2026-06-28 20:51 (Asia/Jakarta)
 ### Changed
 - `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, and `css/dashboard.css`: Converted dashboard action controls to icon-only toolbar buttons/links with shared custom tooltips, fixed-size button styling, and icon-only loading/done states.

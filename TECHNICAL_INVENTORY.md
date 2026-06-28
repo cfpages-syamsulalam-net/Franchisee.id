@@ -166,7 +166,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Client controller for the protected `/profil` profile center.*
 - `init()`: Requires a Clerk session and redirects anonymous users to `/login/?next=/profil/`.
 - `loadProfile()`: Fetches `/profile-data` with `window.FranchiseAuth.getAuthHeaders()`.
-- `render()` / `renderActivePanel()`: Renders side tabs for summary, account, and role-allowed franchisee/franchisor/owner listing/leads/claims sections.
+- `render()` / `renderActivePanel()`: Renders side tabs for summary, account, and role-allowed franchisee/franchisor/owner listing/membership/leads/claims sections.
 - `visibleTabs()` / `canSeeFranchisee()` / `canSeeFranchisor()`: Filters `/profil` navigation from D1 roles so franchisee users only see franchisee areas, franchisor users only see franchisor/listing/claim areas, and admin/staff users see both.
 - `roleAddOnPanel()` / `roleConfirmModal()` / `submitPublicRoleAdd(role)`: Shows missing public role CTAs, confirms the additive access change, posts `add_public_role` to `/profile-data`, and redirects to the matching `/daftar` tab.
 - `opportunitiesPanel()` / `opportunityCard()` / `submitFranchiseInquiry(franchiseId)`: Renders `Peluang Saya` recommendations, budget-fit labels, D1 saved opportunities, and inquiry history; posts `create_franchise_inquiry` to `/profile-data`.
@@ -175,6 +175,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `passwordEditForm()` / `submitPasswordForm(form)`: Uses ClerkJS on the current session to let Google-only users add a password login and password users change their password, with custom inline copy and no browser tooltip hints.
 - `franchiseePanel()` / `franchisorPanel()`: Shows role-specific D1 profile rows and preserves identity fields as read-only.
 - `listingPanel()` / `uploadListingMedia(input)`: Shows owned D1 `franchises`, selects a listing, uploads logo/cover/proposal media through `/profile-upload`, and disables saving when the owner edit rate limit is active.
+- `membershipPanel()` / `premiumReadinessBlock()` / `premiumNotificationsBlock()`: Shows franchisor Premium membership state, listing readiness checks, managed payment instructions, and recent owner Premium status messages.
+- `createPremiumOrder(franchiseId)` / `submitPremiumConfirmation(form)`: Creates unique-code bank transfer orders through `/profile-data`, uploads optional proof files through `/premium-receipt-upload`, and submits payment confirmation for admin review.
 - `leadsPanel()` / `updateLeadStatus(select)`: Shows incoming leads for owned listings with email/WhatsApp shortcuts and owner-checked status updates through `/profile-data`.
 - `submitProfileForm(form)`: Posts account/profile/listing mutations to `/profile-data` with a Clerk bearer token.
 
@@ -182,13 +184,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Client controller for the protected `/dashboard` shell.*
 - `boot()`: Initializes `window.FranchiseAuth`, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
 - `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, and Operations, including arrow/Home/End keyboard navigation.
-- `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics, outreach, quality, claims, publish, editable listings, shared editable field definitions, edit suggestions, leads, and health renderers.
+- `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics, outreach, quality, claims, Premium Operations, premium payments, publish, editable listings, shared editable field definitions, edit suggestions, leads, and health renderers.
 - `renderOutreach(rows, summary)` / `logOutreach(link)`: Renders staff-personal WhatsApp links, shows contact-ready/published-unclaimed subset counts from `outreach_summary`, and records manually confirmed outreach through `/dashboard-data`.
 - `renderActionToolbar()` / `renderActionButton()` / `renderActionLink()`: Shared dashboard action renderer for icon-only toolbar controls with `aria-label` and `data-fr-tooltip` instead of visible button text.
 - `renderQuality()` / `seedEditSuggestion(button)`: Shows data-quality warnings and seeds guided field edit suggestions.
 - `addEditFieldRow(fieldName, value)` / `collectEditChanges()`: Renders and collects guided listing edit rows from server-provided editable field definitions instead of exposing a JSON textarea.
 - `refreshQualityChecks()`: Calls the protected dashboard refresh action to persist current quality checks and normalized contacts.
-- `submitEditSuggestion()` / `reviewEditSuggestion()` / `reviewClaim()`: Posts dashboard actions for staff/admin workflows.
+- `renderPremiumOperations(data)` / `submitPaymentMethod(event)`: Renders Premium funnel counts, managed payment method fields, recent Premium notifications, and posts admin payment-method updates.
+- `submitEditSuggestion()` / `reviewEditSuggestion()` / `reviewClaim()` / `reviewPremiumPayment()`: Posts dashboard actions for staff/admin workflows, including admin premium payment approval/rejection.
 - `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
 
 ### File: `js/build-listing.js`
@@ -258,6 +261,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, `css/profile.css`, and `js/profile-page.js`.
 - Anonymous protection is client-side; all profile data and writes are protected again by `/profile-data`.
 
+### File: `src/pages/premium/index.astro`
+*Public premium membership sales page.*
+- Static Astro route at `/premium/` with public SEO copy for the Rp 3.000.000/year premium offer.
+- Loads Font Awesome, `css/premium.css`, and `js/premium-page.js`.
+- CTAs point to `/login/?mode=register` and `/profil/?tab=membership` without exposing internal infrastructure terms, and include `data-premium-cta` attributes for coarse funnel tracking.
+
 ### File: `scripts/shared-csv.cjs`
 *Shared quote-aware CSV parser for legacy Node builders.*
 - `parseCsvRows(content)` / `parseCsvObjects(content)`: Handles quoted commas, escaped quotes, BOMs, and newlines inside quoted fields.
@@ -320,7 +329,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads `js/auth-clerk-debug.js`, `js/auth-clerk.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
-- Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by `js/dashboard-admin.js`; dashboard styling is owned by `css/dashboard.css`.
+- Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by `js/dashboard-admin.js`; dashboard styling is owned by `css/dashboard.css`.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
@@ -344,17 +353,44 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/profile-data.js`
 *Protected profile read/write API for `/profil`.*
-- `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and returns D1 user, roles, franchisee profile, franchisor profile, owned franchises, claims, franchisee recommendations, D1 saved opportunities, franchisee inquiry history, franchisor lead inbox, and completion flags.
-- `onRequestPost()`: Dispatches Zod-validated mutations for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, `update_listing`, `add_public_role`, `create_franchise_inquiry`, `save_franchise_opportunity`, `remove_franchise_opportunity`, and `update_franchise_lead_status`.
+- `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and returns D1 user, roles, franchisee profile, franchisor profile, owned franchises, claims, franchisee recommendations, D1 saved opportunities, franchisee inquiry history, franchisor lead inbox, premium membership/order state, and completion flags.
+- `onRequestPost()`: Dispatches Zod-validated mutations for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, `update_listing`, `add_public_role`, `create_franchise_inquiry`, `save_franchise_opportunity`, `remove_franchise_opportunity`, `update_franchise_lead_status`, `create_premium_order`, and `confirm_premium_payment`.
 - `updateAccount()`: Updates Clerk identity first, then D1 `users` plus profile identity fields, writes audit events, and resyncs Clerk metadata from D1 roles.
 - `addPublicRole()`: Allows logged-in public users to add the missing `franchisee` or `franchisor` role, writes an audit event, and resyncs Clerk metadata; admin/staff role assignment remains outside self-service.
-- `loadFranchiseeRecommendations()` / `budgetFit()` / `matchesInterest()`: Builds a short recommendation list from published franchises using franchisee category and budget preferences.
-- `saveFranchiseOpportunity()` / `removeFranchiseOpportunity()` / `loadSavedOpportunities()`: Persist franchisee saved listings in `franchise_saved_opportunities` with a graceful empty-state fallback when the migration has not been applied yet.
-- `createFranchiseInquiry()`: Creates a `franchise_leads` row from the current franchisee profile and prevents duplicate inquiries for the same franchise/user.
-- `incompleteFranchiseeProfileResponse()`: Returns a public-safe blocked-action response with `action_url`, `action_label`, and `action_hint` so clients can show a direct CTA to complete the missing interest form.
-- `loadFranchisorLeadInbox()` / `updateFranchiseLeadStatus()`: Returns incoming leads for owned listings and lets franchisors update lead status with ownership checks.
-- `updateOwnedListing()`: Allows owner-scoped edits to whitelisted public listing fields, limits each listing to one owner edit per 6 hours, writes audit events, and queues static rebuild requests through `siteRebuildStatements()`.
-- Profile edit actions require existing first-time profile rows; missing rows are completed through `/daftar/`.
+- Premium actions are validated by `functions/profile-data.js` but delegated to `functions/_profile-premium.js` so profile account/listing logic stays separate from paid membership workflow.
+
+### File: `functions/_premium.js`
+*Shared premium membership constants and helpers.*
+- `PREMIUM_PLAN_CODE` / `PREMIUM_BASE_AMOUNT` / `PREMIUM_PAYMENT`: Centralize the plan code, yearly price, payment window, and fallback public payment instructions.
+- `PREMIUM_NETWORK_SITE_IDS` / `PREMIUM_NETWORK_SITE_DOMAINS`: Centralize the included Premium Network publication sites.
+- `nextPremiumUniqueCode(db)`: Generates a three-digit unique transfer code that avoids active pending orders.
+- `payableAmount(uniqueCode)` / `formatUniqueCode(code)`: Derive the user-facing amount and code label.
+- `premiumOrderId()` / `premiumConfirmationId()` / `premiumSubscriptionId()` / `premiumPublicationId()`: Generate prefixed ids for D1 premium tables and premium-created publication rows.
+- `premiumCanonicalUrl(siteId, slug)`: Builds network-site canonical URLs for premium publication rows.
+- `normalizeSubmittedAmount(raw)`: Converts Indonesian currency text into integer rupiah before validation/storage.
+
+### File: `functions/_premium-ops.js`
+*Shared premium operations helpers.*
+- `loadActivePaymentMethod(db)` / `loadPaymentMethods(db)`: Read admin-managed payment instructions with a safe BCA fallback.
+- `recordPremiumEvent(db, event)` / `loadPremiumFunnelSummary(db)`: Store and summarize Premium funnel events for `/premium`, profile membership, and dashboard review actions.
+- `createPremiumNotification(db, notification)` / `notifyAdmins(db, notification)`: Persist owner/admin Premium status messages without blocking the main action if notification storage is unavailable.
+- `loadPremiumNotifications(db, userId)` / `loadAdminPremiumNotifications(db)`: Feed `/profil` owner messages and dashboard Premium Operations messages.
+- `premiumReadinessForListing(listing)`: Scores logo, cover, description, contact, investment info, and proposal readiness for Premium review.
+
+### File: `functions/_profile-premium.js`
+*Profile-owned premium workflow module.*
+- `CreatePremiumOrderSchema` / `ConfirmPremiumPaymentSchema`: Zod schemas for profile-side Premium actions, including optional `proof_asset_id`.
+- `createPremiumOrder(db, actor, data)`: Verifies owned listing access, prevents duplicate active orders/subscriptions, creates a unique-code transfer order, writes audit data, and records a Premium funnel event.
+- `confirmPremiumPayment(db, actor, data)`: Validates submitted amount and optional proof asset ownership, creates a pending payment confirmation, updates order status, writes audit data, records funnel events, and creates owner/admin notifications.
+- `loadPremiumMembershipData(db, userId, franchiseIds)`: Returns plan/payment method data, active/pending orders, subscriptions, readiness checks, and recent owner notifications for `/profil`.
+
+### File: `functions/premium-event.js`
+*Public Premium funnel endpoint.*
+- `onRequestPost()`: Accepts only `premium_page_view` and `premium_cta_click`, trims metadata, writes through `_premium-ops.js`, and returns a no-store JSON response.
+
+### File: `functions/premium-receipt-upload.js`
+*Protected Premium proof-of-payment upload endpoint.*
+- `onRequestPost()`: Requires Clerk/D1 auth, verifies the selected Premium order belongs to the actor, validates JPG/PNG/WebP/PDF files up to 6 MB, stores the receipt in R2, creates a `franchise_assets` row, and writes an audit event.
 
 ### File: `functions/profile-upload.js`
 *Protected owner media upload API for `/profil`.*
@@ -403,13 +439,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach queue, outreach summary, quality, review, editable field definitions, lead, publish, publication controls, and health/telemetry data from `_dashboard-queries.js`.
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach queue, outreach summary, quality, review, pending premium confirmations, Premium operations, editable field definitions, lead, publish, publication controls, and health/telemetry data from `_dashboard-queries.js`.
 - `onRequestPost()`: Validates the discriminated action payload from `_dashboard-schemas.js`, then routes to `_dashboard-actions.js`; failures are logged to operation telemetry when possible.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, `review_claim`, `refresh_quality_checks`, and `update_publication`.
+- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, `review_claim`, `review_premium_payment`, `update_payment_method`, `refresh_quality_checks`, and `update_publication`.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
@@ -421,6 +457,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getUnclaimedOutreachQueue(db)`: Reads up to 250 published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
 - `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
 - `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display.
+- `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Operations tab.
+- `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, and recent Premium notifications for the Operations tab.
 - `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, and product-event counts.
 
 ### File: `functions/_dashboard-actions.js`
@@ -429,6 +467,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleSuggestEdit(db, auth, data)`: Stores guided field changes as structured diffs in `listing_edit_suggestions`. Admin or active trusted staff suggestions apply immediately; normal staff suggestions stay pending.
 - `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs write field-by-field to whitelisted `franchises` columns, write audit events, and queue a static rebuild through `siteRebuildStatements()`.
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
+- `handleReviewPremiumPayment(db, auth, data)`: Admin-only approve/reject. Approval marks the order paid, activates a one-year `franchise_subscriptions` row, sets the listing premium, creates missing publication rows for included network sites, publishes those rows, writes audit/events/notifications, and queues rebuilds for each affected site.
+- `handleUpdatePaymentMethod(db, auth, data)`: Admin-only upsert for the manual BCA payment method shown to franchisors during Premium payment.
 - `handleRefreshQualityChecks(db, auth)`: Refreshes normalized contacts and persistent quality checks, then returns scanned/contact/open-check counts.
 - `handleUpdatePublication(db, auth, data)`: Admin-only publication status update for one listing/site pair; writes audit events and queues a static rebuild for the affected site.
 

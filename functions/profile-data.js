@@ -7,6 +7,13 @@ import {
   syncClerkMetadataFromD1,
 } from "./_clerk-auth.js";
 import { analyticsScore, loadProductEventCounts, recordProductEvent } from "./_analytics.js";
+import {
+  ConfirmPremiumPaymentSchema,
+  CreatePremiumOrderSchema,
+  confirmPremiumPayment,
+  createPremiumOrder,
+  loadPremiumMembershipData,
+} from "./_profile-premium.js";
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
 import { logOperationEvent } from "./_telemetry.js";
 
@@ -117,6 +124,8 @@ const MutationSchema = z.discriminatedUnion("action", [
   SaveOpportunitySchema,
   RemoveOpportunitySchema,
   LeadStatusSchema,
+  CreatePremiumOrderSchema,
+  ConfirmPremiumPaymentSchema,
 ]);
 
 export async function onRequestGet({ request, env }) {
@@ -172,6 +181,12 @@ export async function onRequestPost({ request, env }) {
     }
     if (parsed.data.action === "update_franchise_lead_status") {
       return await updateFranchiseLeadStatus(db, actor, parsed.data);
+    }
+    if (parsed.data.action === "create_premium_order") {
+      return await createPremiumOrder(db, actor, parsed.data);
+    }
+    if (parsed.data.action === "confirm_premium_payment") {
+      return await confirmPremiumPayment(db, actor, parsed.data);
     }
 
     return jsonResponse({ success: false, message: "Aksi profil tidak dikenali." }, { status: 400 });
@@ -273,6 +288,7 @@ async function loadProfileData(db, actor) {
   const inquiryHistory = await loadFranchiseeInquiryHistory(db, actor.id, franchiseeProfile?.id || null);
   const savedOpportunities = await loadSavedOpportunities(db, actor.id);
   const franchisorLeads = await loadFranchisorLeadInbox(db, actor.id, franchisorProfile?.id || null);
+  const premiumMembership = await loadPremiumMembershipData(db, actor.id, ownedRows.map((row) => row.id));
   const recommendations = franchiseeProfile
     ? await loadFranchiseeRecommendations(db, franchiseeProfile, new Set(ownedRows.map((row) => row.id)))
     : [];
@@ -307,6 +323,7 @@ async function loadProfileData(db, actor) {
     saved_opportunities: savedOpportunities,
     inquiry_history: inquiryHistory,
     franchisor_leads: franchisorLeads,
+    premium_membership: premiumMembership,
   };
 }
 

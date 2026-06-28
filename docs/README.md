@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-06-25 05:18 (Asia/Jakarta)
+Last updated: 2026-06-29 00:28 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -16,6 +16,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `FORM_PRESERVATION_MANDATE.md`: binding rule set for preserving existing form fields and payloads.
 - `TECHNICAL_INVENTORY.md`: function/module inventory for runtime and migration code.
 - `DASHBOARD.md`: admin/staff dashboard progress tracker and planning document.
+- `SUGGESTION.md`: assistant-owned proactive recommendation backlog for product, UX, reliability, performance, security, data quality, operations, migration safety, and developer workflow improvements.
 - `CHANGELOG.md`: chronological record of every repository file change.
 
 ## Architecture
@@ -24,6 +25,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/CLERK_SETUP.md`: Clerk dashboard/env setup, custom auth flow, D1 user mapping, bidirectional sync endpoints, and role authorization rules.
 - `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: staged plan for reconciling lightweight account creation with `/daftar` profile/listing completion and public navbar account state.
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: staged plan for the protected `/profil` account center, side-tab sections, D1 profile/listing reads, and owner edit workflows.
+- `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: premium network membership, `/premium` page, manual payment operations, conversion tracking, payment confirmation, traffic growth, and renewal roadmap.
 
 ## Forms
 - `docs/forms/AUTO_SAVE.md`: franchisor draft autosave behavior.

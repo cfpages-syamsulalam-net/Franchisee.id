@@ -219,6 +219,187 @@
   grid-column: 1 / -1;
 }
 
+.fr-profile-field-compact {
+  max-width: 420px;
+  margin-bottom: 18px;
+}
+
+.fr-profile-membership-card,
+.fr-profile-payment-box,
+.fr-profile-premium-benefits,
+.fr-profile-premium-price,
+.fr-profile-readiness {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.fr-profile-membership-card {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 18px;
+}
+
+.fr-profile-membership-card h3,
+.fr-profile-premium-benefits h3,
+.fr-profile-payment-box h3 {
+  color: #111827;
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.fr-profile-membership-card p {
+  color: #4b5563;
+  margin: 0;
+}
+
+.fr-profile-membership-card > strong {
+  background: rgba(255, 192, 61, 0.2);
+  color: #111827;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 8px 10px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.fr-profile-premium-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+}
+
+.fr-profile-premium-benefits,
+.fr-profile-premium-price,
+.fr-profile-payment-box,
+.fr-profile-readiness {
+  padding: 18px;
+}
+
+.fr-profile-premium-notifications {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.fr-profile-readiness {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.fr-profile-readiness-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.fr-profile-readiness-head strong {
+  color: #111827;
+  display: block;
+  font-size: 18px;
+}
+
+.fr-profile-check-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fr-profile-check-grid span {
+  align-items: center;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: #4b5563;
+  display: flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 8px;
+  padding: 9px 10px;
+}
+
+.fr-profile-check-grid .is-ready {
+  background: #ecfdf3;
+  color: #11603a;
+}
+
+.fr-profile-check-grid .is-missing {
+  background: #fff9df;
+  color: #725000;
+}
+
+.fr-profile-premium-benefits ul {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fr-profile-premium-benefits li {
+  align-items: center;
+  color: #374151;
+  display: flex;
+  gap: 10px;
+}
+
+.fr-profile-premium-benefits i {
+  color: #8a6500;
+  width: 18px;
+}
+
+.fr-profile-premium-price {
+  align-content: start;
+  display: grid;
+  gap: 12px;
+}
+
+.fr-profile-premium-price span {
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fr-profile-premium-price strong {
+  color: #111827;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.fr-profile-payment-box {
+  margin-bottom: 16px;
+}
+
+.fr-profile-payment-box dl {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 0 12px;
+}
+
+.fr-profile-payment-box dl div {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 10px;
+}
+
+.fr-profile-payment-box dt {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.fr-profile-payment-box dd {
+  color: #111827;
+  font-weight: 800;
+  margin: 0;
+}
+
 .fr-profile-field label {
   align-items: center;
   color: #374151;
@@ -416,6 +597,12 @@
   line-height: 1.5;
   margin: 0 0 18px;
   padding: 12px 14px;
+}
+
+.fr-profile-notice.is-success {
+  background: #e8f6ee;
+  border-color: #b9e2c8;
+  color: #0f5132;
 }
 
 .fr-profile-notice-actions {
@@ -915,8 +1102,16 @@
   .fr-profile-password-grid,
   .fr-profile-value-grid,
   .fr-profile-media-grid,
+  .fr-profile-premium-grid,
+  .fr-profile-check-grid,
+  .fr-profile-payment-box dl,
   .fr-profile-lead-card {
     grid-template-columns: 1fr;
+  }
+
+  .fr-profile-membership-card {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .fr-profile-role-card {

@@ -55,6 +55,24 @@ const UpdatePublicationSchema = z.object({
   publication_status: z.enum(["draft", "published", "hidden", "archived"]),
 });
 
+const ReviewPremiumPaymentSchema = z.object({
+  action: z.literal("review_premium_payment"),
+  confirmation_id: z.string().trim().min(1),
+  decision: DashboardDecisionSchema,
+  notes: z.string().trim().max(1200).optional().default(""),
+});
+
+const UpdatePaymentMethodSchema = z.object({
+  action: z.literal("update_payment_method"),
+  code: z.string().trim().min(2).max(80).default("manual_bca"),
+  label: z.string().trim().min(2).max(120),
+  provider: z.string().trim().min(2).max(80),
+  account_name: z.string().trim().min(2).max(160),
+  account_number: z.string().trim().min(2).max(80),
+  instructions: z.string().trim().max(600).optional().default(""),
+  is_active: z.boolean().optional().default(true),
+});
+
 export const DashboardActionSchema = z.discriminatedUnion("action", [
   OutreachEventSchema,
   SuggestEditSchema,
@@ -62,6 +80,8 @@ export const DashboardActionSchema = z.discriminatedUnion("action", [
   ReviewClaimSchema,
   RefreshQualityChecksSchema,
   UpdatePublicationSchema,
+  ReviewPremiumPaymentSchema,
+  UpdatePaymentMethodSchema,
 ]);
 
 export function sanitizeChanges(changes) {

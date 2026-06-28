@@ -7,6 +7,12 @@ import {
   parseJson,
   parseWhatsAppContacts,
 } from "./_dashboard-utils.js";
+import {
+  loadAdminPremiumNotifications,
+  loadPaymentMethods,
+  loadPremiumFunnelSummary,
+  premiumReadinessForListing,
+} from "./_premium-ops.js";
 
 const OUTREACH_QUEUE_LIMIT = 250;
 
@@ -205,6 +211,73 @@ export async function getPublicationControls(db) {
   return {
     sites: sites || [],
     listings: Array.from(grouped.values()).slice(0, 80),
+  };
+}
+
+export async function getPendingPremiumPayments(db) {
+  try {
+    const result = await db
+      .prepare(
+        `SELECT
+          c.id,
+          c.order_id,
+          c.franchise_id,
+          c.user_id,
+          c.payer_name,
+          c.payer_bank,
+          c.submitted_amount,
+          c.submitted_paid_at,
+          c.proof_asset_id,
+          c.notes,
+          c.created_at,
+          o.payable_amount,
+          o.unique_code,
+          o.expires_at,
+          f.brand_name,
+          f.logo_url,
+          f.cover_url,
+          f.short_desc,
+          f.full_desc,
+          f.phone,
+          f.total_investment_idr,
+          f.min_investment_idr,
+          f.proposal_url,
+          fp.whatsapp,
+          fp.email_contact,
+          a.public_url AS proof_url,
+          a.mime_type AS proof_mime_type,
+          u.primary_email,
+          u.display_name
+         FROM premium_payment_confirmations c
+         JOIN premium_orders o ON o.id = c.order_id
+         JOIN franchises f ON f.id = c.franchise_id
+         LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
+         LEFT JOIN franchise_assets a ON a.id = c.proof_asset_id
+         LEFT JOIN users u ON u.id = c.user_id
+         WHERE c.review_status = 'pending'
+         ORDER BY c.created_at ASC
+         LIMIT 50`,
+      )
+      .all();
+    return (result.results || []).map((row) => ({
+      ...row,
+      readiness: premiumReadinessForListing(row),
+    }));
+  } catch (_error) {
+    return [];
+  }
+}
+
+export async function getPremiumOperations(db) {
+  const [funnel, paymentMethods, notifications] = await Promise.all([
+    loadPremiumFunnelSummary(db),
+    loadPaymentMethods(db),
+    loadAdminPremiumNotifications(db),
+  ]);
+  return {
+    funnel,
+    payment_methods: paymentMethods,
+    notifications,
   };
 }
 

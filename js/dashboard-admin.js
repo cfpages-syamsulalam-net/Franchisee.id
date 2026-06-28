@@ -15,6 +15,10 @@
   var claimRows = document.querySelector("[data-claim-rows]");
   var publishState = document.querySelector("[data-publish-state]");
   var publicationRows = document.querySelector("[data-publication-rows]");
+  var premiumPaymentRows = document.querySelector("[data-premium-payment-rows]");
+  var premiumFunnel = document.querySelector("[data-premium-funnel]");
+  var premiumNotifications = document.querySelector("[data-premium-notifications]");
+  var paymentMethodForm = document.querySelector("[data-payment-method-form]");
   var outreachCount = document.querySelector("[data-outreach-count]");
   var editRows = document.querySelector("[data-edit-rows]");
   var editCount = document.querySelector("[data-edit-count]");
@@ -51,6 +55,9 @@
   }
   if (refreshQualityButton) {
     refreshQualityButton.addEventListener("click", refreshQualityChecks);
+  }
+  if (paymentMethodForm) {
+    paymentMethodForm.addEventListener("submit", submitPaymentMethod);
   }
   activateDashboardTab(initialDashboardTab(), false);
   boot();
@@ -141,6 +148,8 @@
     renderOutreach(data.outreach_queue || [], data.outreach_summary || {});
     renderQuality(data.data_quality || []);
     renderClaims(data.pending_claims || []);
+    renderPremiumOperations(data.premium_operations || {});
+    renderPremiumPayments(data.pending_premium_payments || []);
     renderPublish(data.publish_state || {});
     renderPublicationControls(data.publication_controls || { sites: [], listings: [] });
     renderListingOptions(data.editable_listings || []);
@@ -290,6 +299,89 @@
     ].map(function (item) {
       return '<li><strong>' + escapeHtml(item[0]) + '</strong><span>' + escapeHtml(item[1]) + '</span></li>';
     }).join("");
+  }
+
+  function renderPremiumPayments(rows) {
+    if (!premiumPaymentRows) return;
+    if (!rows.length) {
+      premiumPaymentRows.innerHTML = '<tr><td colspan="5" class="dash-empty">Tidak ada konfirmasi Premium pending.</td></tr>';
+      return;
+    }
+    premiumPaymentRows.innerHTML = rows.map(function (row) {
+      var readiness = row.readiness || {};
+      var proof = row.proof_url
+        ? '<br><a class="dash-link" href="' + escapeAttr(row.proof_url) + '" target="_blank" rel="noopener"><i class="fas fa-receipt" aria-hidden="true"></i> Bukti transfer</a>'
+        : '<br><span class="dash-badge bad">Tanpa bukti</span>';
+      var actions = currentUserIsAdmin
+        ? renderActionToolbar([
+          renderActionButton({
+            label: "Aktifkan Premium",
+            icon: "fas fa-check",
+            tone: "success",
+            attrs: {
+              "data-review-premium": "",
+              "data-confirmation-id": row.id,
+              "data-decision": "approve"
+            }
+          }),
+          renderActionButton({
+            label: "Tolak konfirmasi",
+            icon: "fas fa-times",
+            tone: "danger",
+            attrs: {
+              "data-review-premium": "",
+              "data-confirmation-id": row.id,
+              "data-decision": "reject"
+            }
+          })
+        ], "Review pembayaran Premium")
+        : '<span class="dash-muted">Menunggu admin.</span>';
+      return '<tr>' +
+        '<td><strong>' + escapeHtml(row.brand_name || row.franchise_id) + '</strong><br><span class="dash-muted">' + escapeHtml(row.order_id || "") + '</span></td>' +
+        '<td><strong>' + escapeHtml(formatCurrency(row.submitted_amount)) + '</strong><br><span class="dash-muted">Tagihan ' + escapeHtml(formatCurrency(row.payable_amount)) + ' / kode ' + escapeHtml(row.unique_code || "-") + '</span></td>' +
+        '<td>' + escapeHtml(row.payer_name || row.display_name || row.primary_email || "-") + '<br><span class="dash-muted">' + escapeHtml(row.payer_bank || "Bank belum diisi") + ' · ' + escapeHtml(row.submitted_paid_at || row.created_at || "") + '</span>' + proof + '</td>' +
+        '<td><span class="dash-badge ' + (readiness.is_ready ? "good" : "warn") + '">' + escapeHtml((readiness.score || 0) + "/" + (readiness.total || 0)) + '</span><br><span class="dash-muted">' + escapeHtml((readiness.missing || []).slice(0, 3).join(", ") || "Siap tampil") + '</span></td>' +
+        '<td>' + actions + '</td>' +
+      '</tr>';
+    }).join("");
+
+    premiumPaymentRows.querySelectorAll("[data-review-premium]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        reviewPremiumPayment(button);
+      });
+    });
+  }
+
+  function renderPremiumOperations(data) {
+    var funnel = data.funnel || {};
+    if (premiumFunnel) {
+      var rows = [
+        ["Halaman dilihat", funnel.premium_page_view || 0],
+        ["CTA diklik", funnel.premium_cta_click || 0],
+        ["Tagihan dibuat", funnel.premium_order_created || 0],
+        ["Konfirmasi masuk", funnel.premium_confirmation_submitted || 0],
+        ["Premium aktif", funnel.premium_activated || 0]
+      ];
+      premiumFunnel.innerHTML = rows.map(function (row) {
+        return '<li><strong>' + escapeHtml(row[0]) + '</strong><span>' + escapeHtml(row[1]) + '</span></li>';
+      }).join("");
+    }
+
+    var method = (data.payment_methods || []).find(function (item) { return item.code === "manual_bca"; }) || (data.payment_methods || [])[0];
+    if (paymentMethodForm && method) {
+      setFormValue(paymentMethodForm, "label", method.label || "");
+      setFormValue(paymentMethodForm, "provider", method.provider || "");
+      setFormValue(paymentMethodForm, "account_name", method.account_name || "");
+      setFormValue(paymentMethodForm, "account_number", method.account_number || "");
+      setFormValue(paymentMethodForm, "instructions", method.instructions || "");
+    }
+
+    if (premiumNotifications) {
+      var notifications = data.notifications || [];
+      premiumNotifications.innerHTML = notifications.length ? notifications.slice(0, 6).map(function (item) {
+        return '<li><strong>' + escapeHtml(item.title || "Info Premium") + '</strong><span>' + escapeHtml((item.brand_name ? item.brand_name + " - " : "") + (item.message || "")) + '</span></li>';
+      }).join("") : '<li><span>Belum ada info Premium terbaru.</span></li>';
+    }
   }
 
   function renderPublicationControls(data) {
@@ -681,6 +773,56 @@
     }
   }
 
+  async function reviewPremiumPayment(button) {
+    try {
+      button.disabled = true;
+      await postDashboardAction({
+        action: "review_premium_payment",
+        confirmation_id: button.getAttribute("data-confirmation-id"),
+        decision: button.getAttribute("data-decision"),
+        notes: ""
+      });
+      await reloadDashboard();
+    } catch (error) {
+      button.disabled = false;
+      setStatus(error.message, true);
+    }
+  }
+
+  async function submitPaymentMethod(event) {
+    event.preventDefault();
+    if (!paymentMethodForm || !currentUserIsAdmin) {
+      setStatus("Hanya admin yang bisa mengubah metode pembayaran.", true);
+      return;
+    }
+    var button = paymentMethodForm.querySelector("button[type='submit']");
+    if (button) button.disabled = true;
+    try {
+      var form = new FormData(paymentMethodForm);
+      await postDashboardAction({
+        action: "update_payment_method",
+        code: String(form.get("code") || "manual_bca"),
+        label: String(form.get("label") || ""),
+        provider: String(form.get("provider") || ""),
+        account_name: String(form.get("account_name") || ""),
+        account_number: String(form.get("account_number") || ""),
+        instructions: String(form.get("instructions") || ""),
+        is_active: true
+      });
+      setStatus("Metode pembayaran tersimpan.", false);
+      await reloadDashboard();
+    } catch (error) {
+      setStatus(error.message || "Metode pembayaran belum bisa disimpan.", true);
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  function setFormValue(form, name, value) {
+    var input = form.querySelector('[name="' + name + '"]');
+    if (input) input.value = value == null ? "" : value;
+  }
+
   async function updatePublicationStatus(select) {
     var previous = select.getAttribute("data-last-value") || "";
     var value = select.value;
@@ -798,6 +940,12 @@
     textarea.select();
     document.execCommand("copy");
     textarea.remove();
+  }
+
+  function formatCurrency(value) {
+    var amount = Number(value || 0);
+    if (!amount) return "-";
+    return "Rp " + amount.toLocaleString("id-ID");
   }
 
   function renderActionToolbar(items, label) {

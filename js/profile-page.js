@@ -5,7 +5,7 @@
 
   const state = {
     data: null,
-    activeTab: "summary",
+    activeTab: initialProfileTab(),
     selectedFranchiseId: "",
     accountEditingField: "",
     accountMessage: null,
@@ -21,6 +21,8 @@
     uploadMessage: null,
     leadBusyId: "",
     leadMessage: null,
+    premiumBusyId: "",
+    premiumMessage: null,
   };
 
   const TAB_DEFS = [
@@ -31,10 +33,16 @@
     ["franchisor", "fa-store", "Franchisor"],
     ["listing", "fa-pen-to-square", "Listing"],
     ["leads", "fa-inbox", "Leads"],
+    ["membership", "fa-crown", "Membership"],
     ["claims", "fa-certificate", "Klaim"],
   ];
 
   init();
+
+  function initialProfileTab() {
+    const params = new URLSearchParams(window.location.search || "");
+    return params.get("tab") || "summary";
+  }
 
   async function init() {
     try {
@@ -123,6 +131,12 @@
       const createInquiry = event.target.closest("[data-create-inquiry]");
       if (createInquiry) {
         await submitFranchiseInquiry(createInquiry.getAttribute("data-create-inquiry"));
+        return;
+      }
+
+      const createPremium = event.target.closest("[data-create-premium-order]");
+      if (createPremium) {
+        await createPremiumOrder(createPremium.getAttribute("data-create-premium-order"));
       }
     });
 
@@ -149,6 +163,13 @@
       if (passwordForm) {
         event.preventDefault();
         await submitPasswordForm(passwordForm);
+        return;
+      }
+
+      const premiumForm = event.target.closest("[data-premium-confirm-form]");
+      if (premiumForm) {
+        event.preventDefault();
+        await submitPremiumConfirmation(premiumForm);
         return;
       }
 
@@ -195,6 +216,7 @@
     if (state.activeTab === "franchisor") return franchisorPanel();
     if (state.activeTab === "listing") return listingPanel();
     if (state.activeTab === "leads") return leadsPanel();
+    if (state.activeTab === "membership") return membershipPanel();
     if (state.activeTab === "claims") return claimsPanel();
     return summaryPanel();
   }
@@ -522,6 +544,175 @@
     `;
   }
 
+  function membershipPanel() {
+    const listings = state.data.owned_franchises || [];
+    const selected = selectedListing();
+    const membership = state.data.premium_membership || { plan: {}, orders: [], subscriptions: [] };
+    const activeSub = selected ? premiumSubscriptionFor(selected.id) : null;
+    const order = selected ? premiumOrderFor(selected.id) : null;
+    return `
+      <h2 class="fr-profile-section-title"><i class="fas fa-crown" aria-hidden="true"></i> Membership Premium</h2>
+      <p class="fr-profile-copy">Aktifkan Premium Network agar listing brand tampil lebih lengkap di jaringan Franchisee.id.</p>
+      ${state.premiumMessage ? `<p class="fr-profile-message is-${attr(state.premiumMessage.type)}">${escapeHtml(state.premiumMessage.text)}</p>` : ""}
+      ${membership.unavailable ? `<div class="fr-profile-notice"><i class="fas fa-circle-info" aria-hidden="true"></i><div>Data membership belum tersedia. Coba lagi setelah pembaruan sistem selesai.</div></div>` : ""}
+      ${listings.length ? `
+        <label class="fr-profile-field fr-profile-field-compact">
+          <span>Pilih listing</span>
+          <select data-franchise-select>
+            ${listings.map((item) => `<option value="${attr(item.id)}" ${item.id === state.selectedFranchiseId ? "selected" : ""}>${escapeHtml(item.brand_name || item.id)}</option>`).join("")}
+          </select>
+        </label>
+        <div class="fr-profile-membership-card">
+          <div>
+            <span class="fr-profile-kicker">Premium Network</span>
+            <h3>${escapeHtml(selected?.brand_name || "Listing")}</h3>
+            <p>${escapeHtml((membership.plan?.network_sites || []).join(", "))}</p>
+          </div>
+          <strong>${activeSub ? "Aktif" : order ? premiumOrderStatus(order.status) : "Free"}</strong>
+        </div>
+        ${premiumNotificationsBlock(membership.notifications || [])}
+        ${premiumReadinessBlock(selected, membership.readiness || {})}
+        ${activeSub ? activePremiumBlock(activeSub) : order ? premiumPaymentBlock(order) : premiumUpgradeBlock(selected, membership.plan)}
+      ` : emptyInline("Belum ada listing yang bisa di-upgrade. Lengkapi data brand atau klaim listing terlebih dahulu.")}
+    `;
+  }
+
+  function premiumNotificationsBlock(notifications) {
+    if (!notifications.length) return "";
+    return `
+      <div class="fr-profile-premium-notifications">
+        ${notifications.slice(0, 3).map((item) => `
+          <div class="fr-profile-notice ${item.notification_type === "payment_approved" || item.notification_type === "premium_activated" ? "is-success" : ""}">
+            <i class="fas ${item.notification_type === "payment_rejected" ? "fa-triangle-exclamation" : "fa-bell"}" aria-hidden="true"></i>
+            <div>
+              <strong>${escapeHtml(item.title || "Info Premium")}</strong>
+              <span>${escapeHtml(item.message || "")}</span>
+              ${item.action_url ? `<a class="fr-profile-text-link" href="${attr(item.action_url)}">Lihat detail</a>` : ""}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function premiumReadinessBlock(listing, readinessMap) {
+    if (!listing) return "";
+    const readiness = readinessMap[listing.id];
+    if (!readiness) return "";
+    return `
+      <div class="fr-profile-readiness">
+        <div class="fr-profile-readiness-head">
+          <div>
+            <span class="fr-profile-kicker">Kesiapan listing</span>
+            <strong>${readiness.score || 0}/${readiness.total || 0} lengkap</strong>
+          </div>
+          <a class="fr-profile-text-link" href="/profil/?tab=listing">Lengkapi listing</a>
+        </div>
+        <div class="fr-profile-check-grid">
+          ${(readiness.checks || []).map((check) => `
+            <span class="${check.ready ? "is-ready" : "is-missing"}"><i class="fas ${check.ready ? "fa-check" : "fa-circle-exclamation"}" aria-hidden="true"></i>${escapeHtml(check.label)}</span>
+          `).join("")}
+        </div>
+        ${readiness.is_ready ? "" : `<p class="fr-profile-muted">Premium bisa dibayar sekarang, tetapi tampilan terbaik membutuhkan data yang lengkap.</p>`}
+      </div>
+    `;
+  }
+
+  function premiumUpgradeBlock(listing, plan) {
+    return `
+      <div class="fr-profile-premium-grid">
+        <div class="fr-profile-premium-benefits">
+          <h3>Yang didapat</h3>
+          <ul>
+            <li><i class="fas fa-network-wired" aria-hidden="true"></i> Distribusi ke jaringan Franchisee.id</li>
+            <li><i class="fas fa-certificate" aria-hidden="true"></i> Badge Premium dan prioritas tampilan</li>
+            <li><i class="fas fa-inbox" aria-hidden="true"></i> Lead masuk dan analytics dasar</li>
+            <li><i class="fas fa-file-arrow-up" aria-hidden="true"></i> Media dan proposal brand lebih rapi</li>
+          </ul>
+        </div>
+        <div class="fr-profile-premium-price">
+          <span>Per tahun</span>
+          <strong>${formatFullRupiah(plan?.yearly_price || 3000000)}</strong>
+          <button class="fr-profile-button" type="button" data-create-premium-order="${attr(listing?.id || "")}" ${state.premiumBusyId ? "disabled" : ""}>
+            <i class="fas ${state.premiumBusyId ? "fa-spinner fa-spin" : "fa-arrow-right"}" aria-hidden="true"></i>
+            Buat tagihan
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function premiumPaymentBlock(order) {
+    const payment = order.payment || {};
+    const pendingConfirmation = order.confirmation_status === "pending" || order.status === "confirmation_submitted";
+    return `
+      <div class="fr-profile-payment-box">
+        <h3>Instruksi pembayaran</h3>
+        <dl>
+          <div><dt>Bank</dt><dd>${escapeHtml(payment.bank_name || "BCA")}</dd></div>
+          <div><dt>Atas nama</dt><dd>${escapeHtml(payment.account_name || "Syamsul Alam")}</dd></div>
+          <div><dt>No. rekening</dt><dd>${escapeHtml(payment.account_number || "0183579751")}</dd></div>
+          <div><dt>Nominal</dt><dd>${formatFullRupiah(payment.payable_amount || order.payable_amount)}</dd></div>
+          <div><dt>Kode unik</dt><dd>${escapeHtml(payment.unique_code || order.unique_code || "-")}</dd></div>
+        </dl>
+        <p class="fr-profile-muted">Transfer sesuai nominal agar pembayaran lebih mudah dicocokkan.</p>
+        ${order.proof_url ? `<p class="fr-profile-muted"><a class="fr-profile-text-link" href="${attr(order.proof_url)}" target="_blank" rel="noopener">Bukti transfer sudah diunggah</a></p>` : ""}
+      </div>
+      ${pendingConfirmation ? `<div class="fr-profile-notice"><i class="fas fa-clock" aria-hidden="true"></i><div>Konfirmasi sudah masuk dan sedang dicek.</div></div>` : premiumConfirmationForm(order)}
+    `;
+  }
+
+  function premiumConfirmationForm(order) {
+    return `
+      <form class="fr-profile-form" data-premium-confirm-form>
+        <input type="hidden" name="order_id" value="${attr(order.id)}">
+        <div class="fr-profile-grid">
+          <label class="fr-profile-field">
+            <span>Nama pengirim</span>
+            <input name="payer_name" type="text" placeholder="Nama di rekening pengirim">
+          </label>
+          <label class="fr-profile-field">
+            <span>Bank pengirim</span>
+            <input name="payer_bank" type="text" placeholder="Contoh: BCA">
+          </label>
+          <label class="fr-profile-field">
+            <span>Nominal transfer</span>
+            <input name="submitted_amount" type="text" inputmode="numeric" value="${attr(order.payable_amount || "")}" required>
+          </label>
+          <label class="fr-profile-field">
+            <span>Waktu transfer</span>
+            <input name="submitted_paid_at" type="text" placeholder="Contoh: 28 Juni 2026, 20:15">
+          </label>
+          <label class="fr-profile-field is-wide">
+            <span>Catatan</span>
+            <textarea name="notes" rows="3" placeholder="Tambahkan catatan bila perlu"></textarea>
+          </label>
+          <label class="fr-profile-field is-wide">
+            <span>Bukti transfer</span>
+            <input name="receipt" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+          </label>
+        </div>
+        <p data-profile-message></p>
+        <button class="fr-profile-button" type="submit" ${state.premiumBusyId ? "disabled" : ""}>
+          <i class="fas ${state.premiumBusyId ? "fa-spinner fa-spin" : "fa-paper-plane"}" aria-hidden="true"></i>
+          Saya sudah transfer
+        </button>
+      </form>
+    `;
+  }
+
+  function activePremiumBlock(subscription) {
+    return `
+      <div class="fr-profile-notice is-success">
+        <i class="fas fa-circle-check" aria-hidden="true"></i>
+        <div>
+          <strong>Premium aktif.</strong>
+          <span>Berlaku sampai ${escapeHtml(subscription.ends_at || "-")}.</span>
+        </div>
+      </div>
+    `;
+  }
+
   function leadCard(lead) {
     const busy = state.leadBusyId === lead.id;
     return `
@@ -574,10 +765,10 @@
   async function submitProfileForm(form) {
     const type = form.getAttribute("data-profile-form");
     const message = form.querySelector("[data-profile-message]");
+    const body = Object.fromEntries(new FormData(form).entries());
     setMessage(message, "Menyimpan...", "");
     setBusy(form, true);
     try {
-      const body = Object.fromEntries(new FormData(form).entries());
       body.action = {
         account: "update_account",
         franchisee: "update_franchisee_profile",
@@ -842,7 +1033,7 @@
   function visibleTabs() {
     return TAB_DEFS.filter(([id]) => {
       if (id === "franchisee" || id === "opportunities") return canSeeFranchisee();
-      if (id === "franchisor" || id === "listing" || id === "leads" || id === "claims") return canSeeFranchisor();
+      if (id === "franchisor" || id === "listing" || id === "leads" || id === "membership" || id === "claims") return canSeeFranchisor();
       return true;
     });
   }
@@ -977,6 +1168,11 @@
     return (state.data?.inquiry_history || []).some((lead) => lead.franchise_id === franchiseId);
   }
 
+  function selectedListing() {
+    const listings = state.data?.owned_franchises || [];
+    return listings.find((item) => item.id === state.selectedFranchiseId) || listings[0] || null;
+  }
+
   async function uploadListingMedia(input) {
     const assetType = input.getAttribute("data-media-upload") || "";
     const file = input.files?.[0];
@@ -1039,6 +1235,78 @@
     }
   }
 
+  async function createPremiumOrder(franchiseId) {
+    if (!franchiseId || state.premiumBusyId) return;
+    state.premiumBusyId = franchiseId;
+    state.premiumMessage = null;
+    render();
+    try {
+      const headers = await Auth.getAuthHeaders();
+      const response = await fetch("/profile-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ action: "create_premium_order", franchise_id: franchiseId }),
+      });
+      const payload = await response.json();
+      if (!payload.success) throw new Error(payload.message || "Tagihan Premium belum bisa dibuat.");
+      const membership = state.data.premium_membership || { orders: [], subscriptions: [] };
+      membership.orders = [payload.order].concat((membership.orders || []).filter((order) => order.id !== payload.order.id));
+      state.data.premium_membership = membership;
+      state.premiumMessage = { type: "success", text: payload.reused ? "Tagihan Premium aktif sudah tersedia." : "Tagihan Premium dibuat." };
+    } catch (error) {
+      state.premiumMessage = { type: "error", text: error.message || "Tagihan Premium belum bisa dibuat." };
+    } finally {
+      state.premiumBusyId = "";
+      render();
+    }
+  }
+
+  async function submitPremiumConfirmation(form) {
+    const message = form.querySelector("[data-profile-message]");
+    const formData = new FormData(form);
+    const receipt = formData.get("receipt");
+    const body = Object.fromEntries(formData.entries());
+    delete body.receipt;
+    setMessage(message, "Mengirim konfirmasi...", "");
+    setBusy(form, true);
+    state.premiumBusyId = String(body.order_id || "");
+    try {
+      body.action = "confirm_premium_payment";
+      const headers = await Auth.getAuthHeaders();
+      if (receipt && receipt.name) {
+        setMessage(message, "Mengunggah bukti transfer...", "");
+        const upload = new FormData();
+        upload.append("order_id", body.order_id || "");
+        upload.append("receipt", receipt);
+        const uploadResponse = await fetch("/premium-receipt-upload", {
+          method: "POST",
+          headers,
+          body: upload,
+        });
+        const uploadPayload = await uploadResponse.json();
+        if (!uploadPayload.success) throw new Error(uploadPayload.message || "Bukti transfer belum bisa diunggah.");
+        body.proof_asset_id = uploadPayload.asset && uploadPayload.asset.id;
+      }
+      setMessage(message, "Mengirim konfirmasi...", "");
+      const response = await fetch("/profile-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify(body),
+      });
+      const payload = await response.json();
+      if (!payload.success) throw new Error(payload.message || "Konfirmasi belum bisa dikirim.");
+      if (payload.premium_membership) state.data.premium_membership = payload.premium_membership;
+      state.premiumMessage = { type: "success", text: payload.message || "Konfirmasi pembayaran sudah dikirim." };
+      await loadProfile();
+    } catch (error) {
+      setMessage(message, error.message || "Konfirmasi belum bisa dikirim.", "error");
+    } finally {
+      state.premiumBusyId = "";
+      setBusy(form, false);
+      render();
+    }
+  }
+
   function leadStatusOptions(current) {
     const options = [
       ["new", "Baru"],
@@ -1073,6 +1341,25 @@
     }[status] || status || "Baru dikirim";
   }
 
+  function premiumSubscriptionFor(franchiseId) {
+    return (state.data?.premium_membership?.subscriptions || []).find((item) => item.franchise_id === franchiseId && item.status === "active");
+  }
+
+  function premiumOrderFor(franchiseId) {
+    return (state.data?.premium_membership?.orders || []).find((item) => item.franchise_id === franchiseId && item.status !== "paid");
+  }
+
+  function premiumOrderStatus(status) {
+    return {
+      pending_payment: "Menunggu transfer",
+      confirmation_submitted: "Sedang dicek",
+      paid: "Dibayar",
+      rejected: "Ditolak",
+      expired: "Kadaluarsa",
+      cancelled: "Dibatalkan",
+    }[status] || status || "Pending";
+  }
+
   function hasGoogleAccount(clerkUser) {
     const accounts = Array.isArray(clerkUser?.externalAccounts) ? clerkUser.externalAccounts : [];
     return accounts.some((account) => {
@@ -1101,8 +1388,15 @@
     return "Rp " + amount.toLocaleString("id-ID");
   }
 
+  function formatFullRupiah(value) {
+    const amount = Number(value || 0);
+    if (!amount) return "Rp 0";
+    return "Rp " + amount.toLocaleString("id-ID");
+  }
+
   function setBusy(form, busy) {
     form.querySelectorAll("button, input, textarea, select").forEach((field) => {
+      if (field.type === "hidden") return;
       if (field.hasAttribute("readonly")) return;
       field.disabled = busy;
     });

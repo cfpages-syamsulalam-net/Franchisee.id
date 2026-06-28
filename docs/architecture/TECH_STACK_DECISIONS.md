@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-06-28 18:55 (Asia/Jakarta)
+Last updated: 2026-06-28 23:43 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -40,11 +40,13 @@ The initial schema supports this with:
 - `franchises`: one canonical franchise/listing record.
 - `franchise_site_publications`: where a franchise is visible and which slug/canonical URL each site uses.
 - `subscriptions` and `subscription_site_entitlements`: payment/plan state that can grant publication across one or all network sites.
+- `premium_orders`, `premium_payment_confirmations`, and `franchise_subscriptions`: current manual premium membership workflow for transfer orders, owner confirmations, admin review, and active listing membership state.
+- `payment_methods`, `premium_funnel_events`, and `premium_notifications`: current premium operations workflow for admin-managed payment instructions, conversion tracking, and owner/admin status messages.
 - `audit_events`: who changed what, from which site.
 - `franchise_product_events`: privacy-safe interaction signals for ranking/recommendations without storing IP or user-agent data.
 - `operation_events`: operational telemetry for dashboard health, webhook/API failure visibility, and support diagnostics.
 
-For example, one franchisor payment can activate a subscription for one `franchise_id`, and `subscription_site_entitlements` can grant publication to `franchisee.id`, `franchise.id`, `waralaba.id`, and the other network domains without duplicating the listing.
+For example, one franchisor payment can activate a premium membership for one `franchise_id`, and the approval flow can grant publication to `franchisee.id`, `franchise.id`, `franchisor.id`, `waralaba.id`, and the other network domains without duplicating the listing.
 
 ## Why Zod
 Zod is a TypeScript-first schema validation library. In this project, it fills the gap TypeScript cannot cover:
@@ -108,6 +110,8 @@ Remote migration status:
 - If Wrangler fails on `/memberships` with authentication error `10000`, the token may still be valid but unable to perform account discovery. Set `CLOUDFLARE_ACCOUNT_ID=0ba63b7f0096bc267a93fe5c80b1f571` before `cfman wrangler` D1 commands.
 - `0001_initial_network_schema.sql` was applied remotely to `franchise_db` on 2026-06-16.
 - `0007_contacts_quality_dashboard.sql` was applied remotely to `franchise_db` on 2026-06-28 and verified to create `franchise_contacts` and `franchise_quality_checks`.
+- `0009_premium_membership.sql` was applied remotely to `franchise_db` on 2026-06-28 and verified to create `premium_orders`, `premium_payment_confirmations`, and `franchise_subscriptions`.
+- `0010_premium_operations.sql` was applied remotely to `franchise_db` on 2026-06-29 and verified to create `payment_methods`, `premium_funnel_events`, and `premium_notifications`, including default `manual_bca` payment details.
 - Remote verification confirmed `d1_migrations` contains `0001_initial_network_schema.sql`.
 
 ## Cloudflare Account Switching

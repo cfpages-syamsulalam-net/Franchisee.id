@@ -279,6 +279,78 @@ export const prerender = true;
                 </ul>
               </section>
 
+              <section class="dash-panel dash-panel-wide">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <i class="fas fa-chart-line dash-section-icon" aria-hidden="true"></i>
+                    <div>
+                      <h2>Premium Operations</h2>
+                      <p>Funnel, metode pembayaran, dan info Premium terbaru.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="dash-premium-ops">
+                  <ul class="dash-list dash-premium-funnel" data-premium-funnel>
+                    <li><span>Memuat funnel Premium...</span></li>
+                  </ul>
+                  <form class="dash-payment-form" data-payment-method-form>
+                    <input type="hidden" name="code" value="manual_bca" />
+                    <label>
+                      <span>Label</span>
+                      <input name="label" type="text" placeholder="Transfer BCA" />
+                    </label>
+                    <label>
+                      <span>Bank/provider</span>
+                      <input name="provider" type="text" placeholder="BCA" />
+                    </label>
+                    <label>
+                      <span>Atas nama</span>
+                      <input name="account_name" type="text" placeholder="Nama rekening" />
+                    </label>
+                    <label>
+                      <span>Nomor</span>
+                      <input name="account_number" type="text" placeholder="Nomor rekening" />
+                    </label>
+                    <label class="is-wide">
+                      <span>Instruksi</span>
+                      <textarea name="instructions" rows="2" placeholder="Instruksi singkat untuk pembayar"></textarea>
+                    </label>
+                    <button class="dash-button" type="submit"><i class="fas fa-save" aria-hidden="true"></i> Simpan metode</button>
+                  </form>
+                  <ul class="dash-list" data-premium-notifications>
+                    <li><span>Memuat info Premium...</span></li>
+                  </ul>
+                </div>
+              </section>
+
+              <section class="dash-panel dash-panel-wide">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <i class="fas fa-crown dash-section-icon" aria-hidden="true"></i>
+                    <div>
+                      <h2>Premium Payments</h2>
+                      <p>Konfirmasi transfer Premium yang perlu dicek.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="dash-table-wrap">
+                  <table class="dash-table">
+                    <thead>
+                      <tr>
+                        <th>Brand</th>
+                        <th>Transfer</th>
+                        <th>Pendaftar</th>
+                        <th>Kesiapan</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody data-premium-payment-rows>
+                      <tr><td colspan="5" class="dash-empty">Memuat konfirmasi Premium...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
               <section class="dash-panel">
                 <div class="dash-panel-header">
                   <div class="dash-panel-title">

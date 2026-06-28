@@ -1,9 +1,17 @@
 import { AuthError } from "./_clerk-auth.js";
+import {
+  PREMIUM_NETWORK_SITE_IDS,
+  PREMIUM_PLAN_CODE,
+  premiumCanonicalUrl,
+  premiumPublicationId,
+  premiumSubscriptionId,
+} from "./_premium.js";
 import { SITE_ID, EDIT_FIELD_NAME, sanitizeChanges, updateListingStatement } from "./_dashboard-schemas.js";
 import { getListingSnapshot, hasAutoApproval } from "./_dashboard-queries.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, parseJson, randomId } from "./_dashboard-utils.js";
 import { refreshDashboardQualityChecks } from "./_quality-checks.js";
 import { siteRebuildStatements } from "./_site-publish-queue.js";
+import { createPremiumNotification, recordPremiumEvent } from "./_premium-ops.js";
 
 export async function handleLogOutreach(db, auth, data) {
   const eventId = `outreach_${randomId()}`;
@@ -288,6 +296,198 @@ export async function handleUpdatePublication(db, auth, data) {
 
   await db.batch(statements);
   return jsonResponse({ success: true, publication_status: data.publication_status });
+}
+
+export async function handleUpdatePaymentMethod(db, auth, data) {
+  assertAdmin(auth);
+  const code = data.code || "manual_bca";
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO payment_methods (
+          id, code, method_type, label, account_name, account_number, provider, instructions, sort_order, is_active
+        ) VALUES (?, ?, 'bank_transfer', ?, ?, ?, ?, ?, 10, ?)
+        ON CONFLICT(code) DO UPDATE SET
+          label = excluded.label,
+          account_name = excluded.account_name,
+          account_number = excluded.account_number,
+          provider = excluded.provider,
+          instructions = excluded.instructions,
+          is_active = excluded.is_active,
+          updated_at = CURRENT_TIMESTAMP`,
+      )
+      .bind(
+        `payment_method_${code.replace(/[^a-zA-Z0-9_-]/g, "") || "manual_bca"}`,
+        code,
+        data.label,
+        data.account_name,
+        data.account_number,
+        data.provider,
+        data.instructions || "",
+        data.is_active ? 1 : 0,
+      ),
+    auditStatement(db, "dashboard.payment_method.update", "payment_methods", code, {
+      label: data.label,
+      provider: data.provider,
+      is_active: data.is_active,
+    }, auth.id),
+  ]);
+  return jsonResponse({ success: true, payment_method_code: code });
+}
+
+export async function handleReviewPremiumPayment(db, auth, data) {
+  assertAdmin(auth);
+  const confirmation = await db
+    .prepare(
+      `SELECT c.*, o.payable_amount, o.status AS order_status, o.plan_code, f.brand_name, f.slug
+       FROM premium_payment_confirmations c
+       JOIN premium_orders o ON o.id = c.order_id
+       JOIN franchises f ON f.id = c.franchise_id
+       WHERE c.id = ?
+       LIMIT 1`,
+    )
+    .bind(data.confirmation_id)
+    .first();
+
+  if (!confirmation) return jsonResponse({ success: false, error: "PREMIUM_CONFIRMATION_NOT_FOUND" }, { status: 404 });
+  if (confirmation.review_status !== "pending") {
+    return jsonResponse({ success: false, error: "PREMIUM_CONFIRMATION_ALREADY_REVIEWED", status: confirmation.review_status }, { status: 409 });
+  }
+
+  const approved = data.decision === "approve";
+  const status = approved ? "approved" : "rejected";
+  const orderStatus = approved ? "paid" : "rejected";
+  const statements = [
+    db
+      .prepare(
+        `UPDATE premium_payment_confirmations
+         SET review_status = ?, reviewed_by_user_id = ?, reviewed_at = CURRENT_TIMESTAMP,
+             review_notes = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+      )
+      .bind(status, auth.id, data.notes, data.confirmation_id),
+    db
+      .prepare(
+        `UPDATE premium_orders
+         SET status = ?, paid_at = CASE WHEN ? = 'paid' THEN CURRENT_TIMESTAMP ELSE paid_at END,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+      )
+      .bind(orderStatus, orderStatus, confirmation.order_id),
+    auditStatement(db, approved ? "premium.payment.approve" : "premium.payment.reject", "premium_payment_confirmations", data.confirmation_id, {
+      order_id: confirmation.order_id,
+      franchise_id: confirmation.franchise_id,
+      submitted_amount: confirmation.submitted_amount,
+      expected_amount: confirmation.payable_amount,
+      notes: data.notes,
+    }, auth.id),
+  ];
+
+  if (approved) {
+    const subscriptionId = premiumSubscriptionId(randomId);
+    const premiumSitePlaceholders = PREMIUM_NETWORK_SITE_IDS.map(() => "?").join(", ");
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO franchise_subscriptions (
+            id, franchise_id, user_id, plan_code, status, starts_at, ends_at, renewal_status, source_order_id
+          ) VALUES (?, ?, ?, ?, 'active', CURRENT_TIMESTAMP, datetime('now', '+1 year'), 'none', ?)`,
+        )
+        .bind(subscriptionId, confirmation.franchise_id, confirmation.user_id, confirmation.plan_code || PREMIUM_PLAN_CODE, confirmation.order_id),
+      ...PREMIUM_NETWORK_SITE_IDS.map((siteId) =>
+        db
+          .prepare(
+            `INSERT OR IGNORE INTO franchise_site_publications (
+              id, franchise_id, site_id, slug, canonical_url, publication_status,
+              is_primary, first_published_at, last_synced_at
+            ) VALUES (?, ?, ?, ?, ?, 'published', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          )
+          .bind(
+            premiumPublicationId(confirmation.franchise_id, siteId),
+            confirmation.franchise_id,
+            siteId,
+            confirmation.slug,
+            premiumCanonicalUrl(siteId, confirmation.slug),
+            siteId === SITE_ID ? 1 : 0,
+          ),
+      ),
+      db
+        .prepare(
+          `UPDATE franchises
+           SET verification_tier = 'premium',
+               status = CASE WHEN status = 'unclaimed' THEN 'free' ELSE status END,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+        )
+        .bind(confirmation.franchise_id),
+      db
+        .prepare(
+          `UPDATE franchise_site_publications
+           SET publication_status = 'published',
+               first_published_at = CASE WHEN first_published_at IS NULL THEN CURRENT_TIMESTAMP ELSE first_published_at END,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE franchise_id = ? AND site_id IN (${premiumSitePlaceholders})`,
+        )
+        .bind(confirmation.franchise_id, ...PREMIUM_NETWORK_SITE_IDS),
+      auditStatement(db, "premium.subscription.activate", "franchise_subscriptions", subscriptionId, {
+        order_id: confirmation.order_id,
+        franchise_id: confirmation.franchise_id,
+        brand_name: confirmation.brand_name,
+        network_sites: PREMIUM_NETWORK_SITE_IDS,
+      }, auth.id),
+      ...PREMIUM_NETWORK_SITE_IDS.flatMap((siteId) => siteRebuildStatements(db, {
+        siteId,
+        franchiseId: confirmation.franchise_id,
+        reason: "premium_payment_approved",
+        entityType: "premium_payment_confirmations",
+        entityId: data.confirmation_id,
+        actorUserId: auth.id,
+        source: "dashboard",
+        metadata: { order_id: confirmation.order_id, brand_name: confirmation.brand_name },
+      })),
+    );
+  }
+
+  await db.batch(statements);
+  await Promise.all([
+    recordPremiumEvent(db, {
+      event_type: approved ? "premium_payment_approved" : "premium_payment_rejected",
+      user_id: confirmation.user_id,
+      franchise_id: confirmation.franchise_id,
+      order_id: confirmation.order_id,
+      surface: "dashboard",
+      metadata: { brand_name: confirmation.brand_name },
+    }),
+    approved ? recordPremiumEvent(db, {
+      event_type: "premium_activated",
+      user_id: confirmation.user_id,
+      franchise_id: confirmation.franchise_id,
+      order_id: confirmation.order_id,
+      surface: "dashboard",
+      metadata: { brand_name: confirmation.brand_name },
+    }) : null,
+    createPremiumNotification(db, {
+      user_id: confirmation.user_id,
+      franchise_id: confirmation.franchise_id,
+      order_id: confirmation.order_id,
+      notification_type: approved ? "payment_approved" : "payment_rejected",
+      title: approved ? "Pembayaran Premium disetujui" : "Pembayaran Premium perlu diperiksa",
+      message: approved
+        ? "Premium sudah aktif untuk listing Anda."
+        : "Konfirmasi pembayaran belum bisa disetujui. Periksa catatan dan kirim ulang bila perlu.",
+      action_url: "/profil/?tab=membership",
+    }),
+    approved ? createPremiumNotification(db, {
+      user_id: confirmation.user_id,
+      franchise_id: confirmation.franchise_id,
+      order_id: confirmation.order_id,
+      notification_type: "premium_activated",
+      title: "Premium aktif",
+      message: "Listing Anda sudah mendapat status Premium.",
+      action_url: "/profil/?tab=membership",
+    }) : null,
+  ]);
+  return jsonResponse({ success: true, status });
 }
 
 export { AuthError };
