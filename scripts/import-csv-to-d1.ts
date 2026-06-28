@@ -2,7 +2,15 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { z } from "zod";
+import {
+  ImportFranchiseeRowSchema,
+  ImportFranchisorRowSchema,
+  ImportUnclaimedRowSchema,
+  normalizeHakiStatusValue,
+  normalizeListingStatusValue,
+  normalizeRoyaltyBasisValue,
+  normalizeVerificationTierValue,
+} from "../src/lib/shared-schemas";
 
 type CsvRow = Record<string, string>;
 type ImportSource = "FRANCHISOR" | "FRANCHISEE" | "UNCLAIMED";
@@ -12,18 +20,6 @@ const CSV_DIR = join(ROOT_DIR, "csv");
 const DEFAULT_OUTPUT = join(ROOT_DIR, ".context", "d1-import-franchise-data.sql");
 const SITE_ID = "site_franchisee_id";
 const IMPORT_BATCH_ID = `import_csv_${csvSnapshotHash()}`;
-
-const FranchisorRowSchema = z.object({
-  brand_name: z.string().trim().min(1),
-}).catchall(z.string());
-
-const FranchiseeRowSchema = z.object({
-  name: z.string().trim().min(1),
-}).catchall(z.string());
-
-const UnclaimedRowSchema = z.object({
-  brand_name: z.string().trim().min(1),
-}).catchall(z.string());
 
 interface ImportStats {
   seen: number;
@@ -161,7 +157,7 @@ function importFranchisors(
   stats.seen = rows.length;
 
   rows.forEach((raw, index) => {
-    const parsed = FranchisorRowSchema.safeParse(raw);
+    const parsed = ImportFranchisorRowSchema.safeParse(raw);
     if (!parsed.success) {
       stats.invalid++;
       warnings.push(`FRANCHISOR row ${index + 2}: missing brand_name`);
@@ -265,7 +261,7 @@ function importUnclaimed(
   stats.seen = rows.length;
 
   rows.forEach((raw, index) => {
-    const parsed = UnclaimedRowSchema.safeParse(raw);
+    const parsed = ImportUnclaimedRowSchema.safeParse(raw);
     if (!parsed.success) {
       stats.invalid++;
       warnings.push(`UNCLAIMED row ${index + 2}: missing brand_name`);
@@ -326,7 +322,7 @@ function importFranchisees(statements: string[], stats: ImportStats, warnings: s
   stats.seen = rows.length;
 
   rows.forEach((raw, index) => {
-    const parsed = FranchiseeRowSchema.safeParse(raw);
+    const parsed = ImportFranchiseeRowSchema.safeParse(raw);
     if (!parsed.success) {
       stats.invalid++;
       warnings.push(`FRANCHISEE row ${index + 2}: missing name`);
@@ -668,34 +664,19 @@ function moneyOrNull(value?: string | null) {
 }
 
 function normalizeListingStatus(value?: string | null) {
-  const normalized = normalizeText(value).toLowerCase();
-  if (normalized === "verified") return "verified";
-  if (normalized === "premium") return "premium";
-  if (normalized === "suspended") return "suspended";
-  if (normalized === "archived") return "archived";
-  if (normalized === "unclaimed") return "unclaimed";
-  return "free";
+  return normalizeListingStatusValue(value);
 }
 
 function normalizeVerificationTier(status?: string | null, isVerified?: string | null) {
-  const normalizedStatus = normalizeText(status).toLowerCase();
-  const verified = normalizeText(isVerified).toLowerCase();
-  if (normalizedStatus === "premium") return "premium";
-  if (normalizedStatus === "verified" || verified === "true") return "verified";
-  if (normalizedStatus === "unclaimed") return "unclaimed";
-  return "free";
+  return normalizeVerificationTierValue(status, isVerified);
 }
 
 function normalizeRoyaltyBasis(value?: string | null) {
-  const normalized = normalizeText(value).toLowerCase();
-  if (["omzet", "profit", "fixed", "none"].includes(normalized)) return normalized;
-  return null;
+  return normalizeRoyaltyBasisValue(value);
 }
 
 function normalizeHakiStatus(value?: string | null) {
-  const normalized = normalizeText(value).toLowerCase();
-  if (["registered", "process", "none"].includes(normalized)) return normalized;
-  return null;
+  return normalizeHakiStatusValue(value);
 }
 
 function shortDescFrom(value?: string | null) {

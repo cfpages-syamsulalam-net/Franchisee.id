@@ -56,7 +56,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/kopi-coba/",
     "publication_status": "published",
-    "is_primary": 1
+    "is_primary": 1,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_eafcb87db9acc9e9",
@@ -115,7 +117,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/abo-meatshop/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_139bfb231fab1bad",
@@ -174,7 +178,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/aha-right-brain/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_4aaca3204ddfbc9c",
@@ -233,7 +239,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/al-arashy-tour-travel/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_99dfd191461002bf",
@@ -292,7 +300,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/al-jabr-easy-math/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_cdd20ab5835b3f90",
@@ -351,7 +361,9 @@
     "package_max_capital_idr": 45000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/aloe-fresh/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_b8f46111f4bcbc7a",
@@ -410,7 +422,9 @@
     "package_max_capital_idr": 30000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/ameno-ramen/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_fe949d65b6a2e05b",
@@ -469,7 +483,9 @@
     "package_max_capital_idr": 16900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/aontea/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_a7d6188eedc15181",
@@ -528,7 +544,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/apple-tree-pre-school/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_0a5470d49684e4ec",
@@ -587,7 +605,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/arhamart/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_97958bcf59861829",
@@ -646,7 +666,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/atv-adventure-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_7519f695d991fc2e",
@@ -705,7 +727,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/authentic-coffee/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_25919494dce5d381",
@@ -764,7 +788,9 @@
     "package_max_capital_idr": 630000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/autoclean-waterless/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_9b1b422f75142561",
@@ -823,7 +849,9 @@
     "package_max_capital_idr": 300000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/ayam-dadar-bandung/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_d9641750c674fe47",
@@ -882,7 +910,9 @@
     "package_max_capital_idr": 58990000,
     "canonical_url": "https://franchisee.id/peluang-usaha/ayam-gebuk-bang-zoela/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_8b0975d7148ef88f",
@@ -941,7 +971,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/ayam-geprek-juara/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_54f82cfa3e9fa927",
@@ -1000,7 +1032,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/ayam-geprek-juara-c7f572/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_820e024a85420520",
@@ -1059,7 +1093,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/ayotumbuh-by-happy-bear/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_a80275669f9980fe",
@@ -1118,7 +1154,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/baker-fresh/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_69393ffe59d4227f",
@@ -1177,7 +1215,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/bakmie-cha-cha/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f9ab0ad37df51d8e",
@@ -1236,7 +1276,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/bakso-bakar-jarjozz/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_6feac7fbc1c5ad7f",
@@ -1295,7 +1337,9 @@
     "package_max_capital_idr": 26900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/bakso-bakar-maknyoosee/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_de3e028e9305ac97",
@@ -1354,7 +1398,9 @@
     "package_max_capital_idr": 85000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/bakso-batok-bang-toyib/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_19d90d56caba48d4",
@@ -1413,7 +1459,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/bakso-benhil/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_def5fa95fdfc494e",
@@ -1472,7 +1520,9 @@
     "package_max_capital_idr": 60000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/bakso-koko-gepeng/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_78ff31a2c34873b4",
@@ -1531,7 +1581,9 @@
     "package_max_capital_idr": 118500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/bamboo-laundry/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_6ce4cab41edb7374",
@@ -1590,7 +1642,9 @@
     "package_max_capital_idr": 29000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/bapauthing-by-baimwong/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_fbd923360944ffe4",
@@ -1649,7 +1703,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/barokah-mulia-abdi/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_4d7fcd8b3d0e55bc",
@@ -1708,7 +1764,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/baso-aci-akang/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_2349e79a3c0ee319",
@@ -1767,7 +1825,9 @@
     "package_max_capital_idr": 350000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/bebek-terminal/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f6d40f306145166f",
@@ -1826,7 +1886,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/bekel-by-kampung-burger/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_59f3d8524ecb068c",
@@ -1885,7 +1947,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/best-meat-point/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f272601336990b4f",
@@ -1944,7 +2008,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/bimba-gembira/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f24183c67474bcc7",
@@ -2003,7 +2069,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/bintang-baca/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_bb1c0ce2bb027a2f",
@@ -2062,7 +2130,9 @@
     "package_max_capital_idr": 7500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/black-kebab/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_7f66ed09a9d0ca9f",
@@ -2121,7 +2191,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/black-white-cleaner/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_5e5d12b7077e65e4",
@@ -2180,7 +2252,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/bola-obi-raos/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f6ecbc797876f640",
@@ -2239,7 +2313,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/bongobong/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_89418cda22a9ffc5",
@@ -2298,7 +2374,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/bubur-organik-aiko/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_c4d4e7c6cd62a350",
@@ -2357,7 +2435,9 @@
     "package_max_capital_idr": 500000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/california-fried-chicken-cfc/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_92540952abd6f92b",
@@ -2416,7 +2496,9 @@
     "package_max_capital_idr": 4299000,
     "canonical_url": "https://franchisee.id/peluang-usaha/caotea-es-pedas/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_12c11ea0e481c317",
@@ -2475,7 +2557,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/cheese-cake-pop/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_5354547a5c34d5bc",
@@ -2534,7 +2618,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/cheese-tea-inc/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_884f69861b0c17b2",
@@ -2593,7 +2679,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/chicken-all/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_0daf92c5876697f0",
@@ -2652,7 +2740,9 @@
     "package_max_capital_idr": 7800000,
     "canonical_url": "https://franchisee.id/peluang-usaha/chicken-lemon/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_bf371ad774d4f76b",
@@ -2711,7 +2801,9 @@
     "package_max_capital_idr": 15000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/chickenin-little-shihlin/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_cf8a0c43aec9663d",
@@ -2770,7 +2862,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/clothes-laundry/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_669b4317403b4a04",
@@ -2829,7 +2923,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/codero/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_5bd4286dc4e3d250",
@@ -2888,7 +2984,9 @@
     "package_max_capital_idr": 121500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/coffeeland-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_67efb974b7e6b538",
@@ -2947,7 +3045,9 @@
     "package_max_capital_idr": 2590000,
     "canonical_url": "https://franchisee.id/peluang-usaha/cokelat-kocok-kuwentel/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_b1bccf5392daa3c9",
@@ -3006,7 +3106,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/coolio-barbershop/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_3190b58ae557d89d",
@@ -3065,7 +3167,9 @@
     "package_max_capital_idr": 250000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/crispyku-fried-chicken/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_0d6a32399e596119",
@@ -3124,7 +3228,9 @@
     "package_max_capital_idr": 6000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/delapan-ice-blend-dan-squash/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_35b625218f02d788",
@@ -3183,7 +3289,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/dfsk-seres/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f84e116a7ad48664",
@@ -3242,7 +3350,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/diente-de-leon-laundry/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_aa5e25088cf807fb",
@@ -3301,7 +3411,9 @@
     "package_max_capital_idr": 30000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/dokar-donat-bakar/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_65e28ec1c1fa5671",
@@ -3360,7 +3472,9 @@
     "package_max_capital_idr": 201000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/donat-missu/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_b06bdda9c56b0d12",
@@ -3419,7 +3533,9 @@
     "package_max_capital_idr": 155900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/dons-burger/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_69296f00911a7892",
@@ -3478,7 +3594,9 @@
     "package_max_capital_idr": 99000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/doyan-ayam/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_4ecf2e0cebf69e44",
@@ -3537,7 +3655,9 @@
     "package_max_capital_idr": 25000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/dr-laundry/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_59664b7af86c1e02",
@@ -3596,7 +3716,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/dr-shoes/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_94c2cf1ea4e19a0d",
@@ -3655,7 +3777,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/dressed-laundry/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_2750c4cb9d14980b",
@@ -3714,7 +3838,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/eastons-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_33a73983110c8523",
@@ -3773,7 +3899,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/eden-everyday-english/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_8751ec99b692569b",
@@ -3832,7 +3960,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/english-study-centre-esc/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_acd4ed0c4ff496ba",
@@ -3891,7 +4021,9 @@
     "package_max_capital_idr": 9900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/es-teh-cendana/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_324aeb6f7c904cb6",
@@ -3950,7 +4082,9 @@
     "package_max_capital_idr": 9900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/es-teh-legenda/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f0ed881600b1f6b2",
@@ -4009,7 +4143,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/es-teh-saudagar/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_a6957d0880970a87",
@@ -4068,7 +4204,9 @@
     "package_max_capital_idr": 25000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/es-teh-sulthan/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_d9d7198b42172f98",
@@ -4127,7 +4265,9 @@
     "package_max_capital_idr": 8800000,
     "canonical_url": "https://franchisee.id/peluang-usaha/es-teler-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_618c32eb2c448ac7",
@@ -4186,7 +4326,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/eye-level/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_91cacd02472bdd23",
@@ -4245,7 +4387,9 @@
     "package_max_capital_idr": 2900000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/foodpedia-by-pasta-kangen/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f6e5ac5eb01d8ff3",
@@ -4304,7 +4448,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/fortunaclean/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_4b5e485be42a68aa",
@@ -4363,7 +4509,9 @@
     "package_max_capital_idr": 6500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/funstory/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_aec6d6441e6a9558",
@@ -4422,7 +4570,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/geprek-bensu/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_14736d8790daf79b",
@@ -4481,7 +4631,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/gerobak-cokelat/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_d6df92dacae6ee4b",
@@ -4540,7 +4692,9 @@
     "package_max_capital_idr": 850000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/ghanisa-aesthetic-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_7b3b2f37c4470801",
@@ -4599,7 +4753,9 @@
     "package_max_capital_idr": 7500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/gilacoklatz/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_cccc6426c01d09e1",
@@ -4658,7 +4814,9 @@
     "package_max_capital_idr": 329000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/gorillaz/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_4039b0c474867f21",
@@ -4717,7 +4875,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/grobbak-korea/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_6e76e3350c938c51",
@@ -4776,7 +4936,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/hello-cafe/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_369d51272cfa70bc",
@@ -4835,7 +4997,9 @@
     "package_max_capital_idr": 49000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/hydrophobic-lab/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_e8e2c7eb0247140a",
@@ -4894,7 +5058,9 @@
     "package_max_capital_idr": 12000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/i-cocoa-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_ae517a7d45349c51",
@@ -4953,7 +5119,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/i-need-eat/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f486308f9f5c46c1",
@@ -5012,7 +5180,9 @@
     "package_max_capital_idr": 2200000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/iga-bakar-gondrong-the-one-only/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_6f86c8c3d0ee7738",
@@ -5071,7 +5241,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/jarimatik-magic/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_15e57cd5da93722a",
@@ -5130,7 +5302,9 @@
     "package_max_capital_idr": 845000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/jjanchi-korean-food/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_7109ac5e04e5c6e6",
@@ -5189,7 +5363,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/jne-express/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f48ad06b06a327a4",
@@ -5248,7 +5424,9 @@
     "package_max_capital_idr": 150000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/jus-ookii/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_99664b4d066818c4",
@@ -5307,7 +5485,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/kako-thai-tea-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_b166fbf5f72d6beb",
@@ -5366,7 +5546,9 @@
     "package_max_capital_idr": 45000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/kala-coffee/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_cec2d439176ad1ea",
@@ -5425,7 +5607,9 @@
     "package_max_capital_idr": 45000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/karagengenin/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_da2d8a67df2240bf",
@@ -5484,7 +5668,9 @@
     "package_max_capital_idr": 9999000,
     "canonical_url": "https://franchisee.id/peluang-usaha/kawai-cheese-tea/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_bec7d160f4d6ef7d",
@@ -5543,7 +5729,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/keding/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_72ea9fed985a49d3",
@@ -5602,7 +5790,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/kepiting-kompromi/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_9f7100da63030c19",
@@ -5661,7 +5851,9 @@
     "package_max_capital_idr": 601300000,
     "canonical_url": "https://franchisee.id/peluang-usaha/kharisma-bahari/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_e59024dc62e53b29",
@@ -5720,7 +5912,9 @@
     "package_max_capital_idr": 8000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/ko-kei-chic/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_d6b4184b78b9c0c2",
@@ -5779,7 +5973,9 @@
     "package_max_capital_idr": 400000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/kopies-sudirman-by-helmy-yahya/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_a5874d0693173078",
@@ -5838,7 +6034,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/kreditmart/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_001b582a1baf6caa",
@@ -5897,7 +6095,9 @@
     "package_max_capital_idr": 15000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/kuch2hotahu/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_85b97ec6c6d969d6",
@@ -5956,7 +6156,9 @@
     "package_max_capital_idr": 17000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/kue-balok-lava-merapi/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_84e19bcad82246b9",
@@ -6015,7 +6217,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/laundry-hari-ini/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_6b7b29bc74642d56",
@@ -6074,7 +6278,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/laundryklin/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_6ea3c799bf75922b",
@@ -6133,7 +6339,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/layar-belajar/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_eaaeddc04578b723",
@@ -6192,7 +6400,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/lion-parcel/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_df392739bf1b75ed",
@@ -6251,7 +6461,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/lp3t-nf-lp3t-nurul-fikri/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_1238e8b57ff0dd27",
@@ -6310,7 +6522,9 @@
     "package_max_capital_idr": 42000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/magic-bean-coffee/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_4e57ec52ccafa052",
@@ -6369,7 +6583,9 @@
     "package_max_capital_idr": 13500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/magic-water-cless/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_a56812531678041c",
@@ -6428,7 +6644,9 @@
     "package_max_capital_idr": 19500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/mangojack/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_03f65c9423f06d0b",
@@ -6487,7 +6705,9 @@
     "package_max_capital_idr": 130000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/masakan-mas-gawa/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_dcfce7a63474a708",
@@ -6546,7 +6766,9 @@
     "package_max_capital_idr": 550000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/mastercheese-pizza/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_239a35b767573a48",
@@ -6605,7 +6827,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/maxim/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_068021d9ca95f1df",
@@ -6664,7 +6888,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mayur-fresh-mart/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_da334055413d4e49",
@@ -6723,7 +6949,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mbok-galak/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_c30dc5c9fb34b2b4",
@@ -6782,7 +7010,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mega-cemerlang-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_800a2fa5d17afe92",
@@ -6841,7 +7071,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mi-num-dong/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_1acea41121c3d51d",
@@ -6900,7 +7132,9 @@
     "package_max_capital_idr": 25000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/mie-ayam-bakso-hakiki/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_1dcee899d4cb5d5f",
@@ -6959,7 +7193,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mie-ayam-bang-mawar/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_a1f357af40b0eb0a",
@@ -7018,7 +7254,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mie-ayam-bangka-tjapbawang/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_1ab05024213975b0",
@@ -7077,7 +7315,9 @@
     "package_max_capital_idr": 48500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/mie-ayam-cabe-uleg-rawamangun/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_390fc5a5980c8df3",
@@ -7136,7 +7376,9 @@
     "package_max_capital_idr": 12500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/mie-ayam-grobakan/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_1f2a35f8a5b5c6be",
@@ -7195,7 +7437,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mie-ayam-tuman/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_91057fcb96cf6061",
@@ -7254,7 +7498,9 @@
     "package_max_capital_idr": 75000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/mie-njerit/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_e3a947c3b4e4eb51",
@@ -7313,7 +7559,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mienian/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_8369295930112fcd",
@@ -7372,7 +7620,9 @@
     "package_max_capital_idr": 245000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/misnow/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_ac4fd6dc248d7a83",
@@ -7431,7 +7681,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mitloin/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_1d82c2aa20a6e574",
@@ -7490,7 +7742,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mitra-indonesia-cerdas/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_2d152b4109d57777",
@@ -7549,7 +7803,9 @@
     "package_max_capital_idr": 1500000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/mobilmint/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_a53dfc21d1c4e1e7",
@@ -7608,7 +7864,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/mogami-drawing/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_8b81e5d4fda31a46",
@@ -7667,7 +7925,9 @@
     "package_max_capital_idr": 45000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/momochi-premium-mochi-ice-cream/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_a5cb0ae996b99eb8",
@@ -7726,7 +7986,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/multilink-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_7cbca058a736b586",
@@ -7785,7 +8047,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/navia-kebab/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_6cd4226b47220390",
@@ -7844,7 +8108,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/nayz-spot/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_a593525a06522674",
@@ -7903,7 +8169,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/nec/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_b54527af09d550a8",
@@ -7962,7 +8230,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/negiya-bowl/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_881867b9bcc4da03",
@@ -8021,7 +8291,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/netto-laundromat/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_cd52ed6e4a0b50fc",
@@ -8080,7 +8352,9 @@
     "package_max_capital_idr": 5000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/ngecheese-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_fa07204903f63d8e",
@@ -8139,7 +8413,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/nyam-yam-fwb/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_750d31f42a6bf6a4",
@@ -8198,7 +8474,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/nyc-pizza/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_b1877d2e928504a3",
@@ -8257,7 +8535,9 @@
     "package_max_capital_idr": 250000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/nyoklat-klasik/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_1c325375efac535f",
@@ -8316,7 +8596,9 @@
     "package_max_capital_idr": 75000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/ok-bento/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_3ba0370f71fe4b35",
@@ -8375,7 +8657,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/oma-opa-cakery/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_b29be954031a9701",
@@ -8434,7 +8718,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/oneprojasa/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_40c3d5de9e7eac03",
@@ -8493,7 +8779,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/osaka-ramen-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_80f31bac6f3e4d0c",
@@ -8552,7 +8840,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/panda-art-studio/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_30270615eb8b2b3e",
@@ -8611,7 +8901,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/pecel-lele-nusantara/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_1636c6c40af34eb9",
@@ -8670,7 +8962,9 @@
     "package_max_capital_idr": 598000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/pempek-farina/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_6e5afaef167a3140",
@@ -8729,7 +9023,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/pentol-jawara/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f52cb204ae0e5e35",
@@ -8788,7 +9084,9 @@
     "package_max_capital_idr": 10500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/pentol-ngosos/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_5dcf0310f1b4c2a2",
@@ -8847,7 +9145,9 @@
     "package_max_capital_idr": 6900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/pentol-petirr/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_06b2e4ce2f8028dc",
@@ -8906,7 +9206,9 @@
     "package_max_capital_idr": 75000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/pineleaf/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_e0e0d7158556b97b",
@@ -8965,7 +9267,9 @@
     "package_max_capital_idr": 15000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/pisang-molen-ma/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_5427c7d910be293c",
@@ -9024,7 +9328,9 @@
     "package_max_capital_idr": 7000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/pisang-nana/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_73b76651d3159741",
@@ -9083,7 +9389,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/proban/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_46df00821dd1b368",
@@ -9142,7 +9450,9 @@
     "package_max_capital_idr": 9900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/qais-chicken/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_cba85dcf33ab1ea0",
@@ -9201,7 +9511,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/quipper-school-premium/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_7da7857c8e6e48fa",
@@ -9260,7 +9572,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/rene-baby-shop/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_81c0d20df8e1f311",
@@ -9319,7 +9633,9 @@
     "package_max_capital_idr": 13000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/rice-boyz/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_3524ab2b3ae7ec72",
@@ -9378,7 +9694,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/robota-robotics-school/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_6f8d6ccf7b3e8d9c",
@@ -9437,7 +9755,9 @@
     "package_max_capital_idr": 229000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/roti-bakar-ametres/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_fb2cb2ab5bd58102",
@@ -9496,7 +9816,9 @@
     "package_max_capital_idr": 24900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/roti-joka/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f6b42a0d1d23749a",
@@ -9555,7 +9877,9 @@
     "package_max_capital_idr": 1500000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/roti-kapiten/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_d10272fecb534d85",
@@ -9614,7 +9938,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/rpx-outlet/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_d4e703906c85d79f",
@@ -9673,7 +9999,9 @@
     "package_max_capital_idr": 80000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/sate-taichan-nyot-nyot/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_9bbd2cd6b8bb0f69",
@@ -9732,7 +10060,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/say-hello-signature-drink/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_2193200dfda471ae",
@@ -9791,7 +10121,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/sekolah-penerbangan-iefa-semarang/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_43f8c02409f496c7",
@@ -9850,7 +10182,9 @@
     "package_max_capital_idr": 30000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/serem/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_92869ee7b7a063e1",
@@ -9909,7 +10243,9 @@
     "package_max_capital_idr": 17900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/si-tahu-giri/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f9f08334d0b5bc68",
@@ -9968,7 +10304,9 @@
     "package_max_capital_idr": 9849000,
     "canonical_url": "https://franchisee.id/peluang-usaha/siomay-hore/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_a5dcf0ad303c5297",
@@ -10027,7 +10365,9 @@
     "package_max_capital_idr": 58000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/smokey-kebab/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_bcdbc3b85dd6a5fb",
@@ -10086,7 +10426,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/socclean/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_881c18783c45f4cf",
@@ -10145,7 +10487,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/solophoto/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_9b618288cb068db9",
@@ -10204,7 +10548,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/sorcha-laundry/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_fd440f679e11bf12",
@@ -10263,7 +10609,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/soto-kudus-pak-minto/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_99dcc26db51500be",
@@ -10322,7 +10670,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/sour-sally-yogulato/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_eef7dc2a995a2159",
@@ -10381,7 +10731,9 @@
     "package_max_capital_idr": 149000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/steak-and-cheese/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f26899a73e13c072",
@@ -10440,7 +10792,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/stella-maris/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_b76e77b9f1e37e34",
@@ -10499,7 +10853,9 @@
     "package_max_capital_idr": 19900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/suga-boba-indonesia/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_684f97af5a3d0ccc",
@@ -10558,7 +10914,9 @@
     "package_max_capital_idr": 9500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/sumoden/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_05f9c81c2df1e35d",
@@ -10617,7 +10975,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/sunday-morning-express/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_6ff09719809eeade",
@@ -10676,7 +11036,9 @@
     "package_max_capital_idr": 12500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/tahu-go/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_8926e0174f0948c9",
@@ -10735,7 +11097,9 @@
     "package_max_capital_idr": 55000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/tahu-jeletot-taisi/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_3d3d029e3248b72d",
@@ -10794,7 +11158,9 @@
     "package_max_capital_idr": 9000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/tahu-josjos/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_eb8d020ab74ae4aa",
@@ -10853,7 +11219,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/tahu-kriuk-boss/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_2c7520066b2cbb29",
@@ -10912,7 +11280,9 @@
     "package_max_capital_idr": 24900000,
     "canonical_url": "https://franchisee.id/peluang-usaha/teh-farah-steak/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_26920dcbe309e371",
@@ -10971,7 +11341,9 @@
     "package_max_capital_idr": 5100000,
     "canonical_url": "https://franchisee.id/peluang-usaha/teh-kenanga/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_c61488b476c37e69",
@@ -11030,7 +11402,9 @@
     "package_max_capital_idr": 3800000,
     "canonical_url": "https://franchisee.id/peluang-usaha/tekokabe-nyoklat/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_468eb30dfb88a10e",
@@ -11089,7 +11463,9 @@
     "package_max_capital_idr": 62800000,
     "canonical_url": "https://franchisee.id/peluang-usaha/the-bananas/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_9fd0e394d931a9af",
@@ -11148,7 +11524,9 @@
     "package_max_capital_idr": 85000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/the-kings-chicken/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_5ccb895a86d99950",
@@ -11207,7 +11585,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/topcoat/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_db0eb7bb75781012",
@@ -11266,7 +11646,9 @@
     "package_max_capital_idr": 44500000,
     "canonical_url": "https://franchisee.id/peluang-usaha/tunisia-kebab/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_fc1354f85a198b0c",
@@ -11325,7 +11707,9 @@
     "package_max_capital_idr": 100000000,
     "canonical_url": "https://franchisee.id/peluang-usaha/v-tee-waffle/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f52e6907f5802c00",
@@ -11384,7 +11768,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/voss-air-minum/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_cde546057216efbf",
@@ -11443,7 +11829,9 @@
     "package_max_capital_idr": 15799000,
     "canonical_url": "https://franchisee.id/peluang-usaha/warminspi-rodjo/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_f317e8c478b2b578",
@@ -11502,7 +11890,9 @@
     "package_max_capital_idr": 8899000,
     "canonical_url": "https://franchisee.id/peluang-usaha/wisco/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_41a96fea436e7d0b",
@@ -11561,7 +11951,9 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/xoxo/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   },
   {
     "id": "franchise_303670d0919ccfdf",
@@ -11620,6 +12012,8 @@
     "package_max_capital_idr": null,
     "canonical_url": "https://franchisee.id/peluang-usaha/xto-car-care/",
     "publication_status": "published",
-    "is_primary": 0
+    "is_primary": 0,
+    "first_published_at": null,
+    "updated_at": null
   }
 ]

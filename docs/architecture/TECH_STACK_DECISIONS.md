@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-06-25 03:56 (Asia/Jakarta)
+Last updated: 2026-06-28 17:58 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -51,6 +51,7 @@ Zod is a TypeScript-first schema validation library. In this project, it fills t
 - Zod parses unknown input into validated data before it reaches D1 or application services.
 - Zod schemas can infer TypeScript types, reducing duplicate interfaces between forms, APIs, importers, and database code.
 - Zod should sit at all trust boundaries: HTTP request bodies, query parameters, imports from `/csv`, legacy Google Sheets rows, Clerk webhook payloads, and admin actions.
+- Shared schema modules now exist for active validation paths: `functions/_shared-schemas.js` covers Pages Function payload/query/action schemas, while `src/lib/shared-schemas.ts` covers CSV import rows and D1 static snapshot rows used by import/build/Astro code.
 
 Practical example for later implementation:
 
@@ -104,6 +105,7 @@ Remote migration status:
 - `cfman` account alias `franchise-network` now reaches account `0ba63b7f0096bc267a93fe5c80b1f571`.
 - If Wrangler fails on `/memberships` with authentication error `10000`, the token may still be valid but unable to perform account discovery. Set `CLOUDFLARE_ACCOUNT_ID=0ba63b7f0096bc267a93fe5c80b1f571` before `cfman wrangler` D1 commands.
 - `0001_initial_network_schema.sql` was applied remotely to `franchise_db` on 2026-06-16.
+- `0007_contacts_quality_dashboard.sql` was applied remotely to `franchise_db` on 2026-06-28 and verified to create `franchise_contacts` and `franchise_quality_checks`.
 - Remote verification confirmed `d1_migrations` contains `0001_initial_network_schema.sql`.
 
 ## Cloudflare Account Switching
@@ -157,7 +159,7 @@ Astro scaffold:
 - Unclaimed detail pages are not contactless by default. If D1 has imported public phone, office address, or social/contact data, the page may show it with clear public/unclaimed wording and a claim CTA for corrections.
 - Raw legacy phone text is presentation-normalized in `src/lib/franchise-static.ts` during Astro rendering. The renderer splits common Indonesian multi-number strings, preserves labels such as Marketing, WA/WhatsApp, Kantor, Office, and Owner, outputs `tel:` links for numbers, and adds WhatsApp claim-notification links for unclaimed mobile/WhatsApp-capable numbers.
 - Mostly all-uppercase imported descriptions are presentation-normalized in `src/lib/franchise-static.ts` during Astro rendering while preserving legal prefixes/acronyms such as PT, CV, UD, BPOM, NIB, and F&B. Raw D1 text is not mutated by the renderer.
-- Future dashboard/edit work should add a normalized contact model, such as a `franchise_contacts` table or structured JSON field, but current public rendering should continue to preserve raw imported D1 fields until that migration exists.
+- `migrations/0007_contacts_quality_dashboard.sql` adds `franchise_contacts` for high-confidence normalized contact data and `franchise_quality_checks` for persistent dashboard quality checks. Current public rendering still reads the existing snapshot fields until the static generator is intentionally moved to the normalized table.
 - `astro.config.mjs` uses `build.format: "preserve"` so index routes remain index files while detail pages can be stored as flat `.html` files.
 - `pnpm run build:astro` refreshes the D1 snapshot first, then builds the D1-backed public directory pages into `dist/` from the current D1 data.
 - `pnpm run build` is the conventional Cloudflare Pages entrypoint and delegates to `pnpm run build:astro`; `wrangler.toml` declares `pages_build_output_dir = "dist"`.
@@ -172,8 +174,10 @@ Dashboard scaffold:
 - `/dashboard-data` is the protected Pages Function and authorization boundary. It requires D1 role `staff`; `admin` is allowed through the existing elevated-role rule.
 - Dashboard MVP scope is Franchisee.id only (`site_franchisee_id`). Multi-site centralized dashboard work is deferred.
 - `migrations/0004_dashboard_operations.sql` adds `listing_outreach_events`, `staff_auto_approval_rules`, and `listing_edit_suggestions`.
+- `migrations/0007_contacts_quality_dashboard.sql` adds normalized contact and persistent quality-check tables for dashboard operations.
 - Staff WhatsApp outreach uses generated `wa.me` links with prefilled text; no WhatsApp API is used. Outreach is logged only after staff manually confirms the message was sent.
-- Staff edit policy is implemented in the dashboard MVP: staff submit structured JSON diffs for whitelisted listing fields; admin approve/reject applies approved values field-by-field to D1, writes audit events, and queues static rebuilds. Active `staff_auto_approval_rules` allow trusted staff edits to apply immediately while preserving the same audit/suggestion trail.
+- Staff edit policy is implemented in the dashboard MVP: staff submit guided field changes backed by shared editable-field definitions; admin approve/reject applies approved values field-by-field to D1, writes audit events, and queues static rebuilds. Active `staff_auto_approval_rules` allow trusted staff edits to apply immediately while preserving the same audit/suggestion trail.
+- Data Quality can refresh persistent checks and normalized contacts from current listing/profile fields. The read path falls back to computed warnings before migration/refresh data exists.
 - Claim review is implemented for pending `franchise_claims`: admin approval attaches owner/profile data where present, moves unclaimed listings to free claimed state, writes audit events, and queues static rebuilds. Rejection records the review without changing the public listing.
 - Leads and system health are read-only MVP panels. Payment metrics, Clerk webhook failure telemetry, R2 asset health, and API error tracking still need dedicated data models.
 

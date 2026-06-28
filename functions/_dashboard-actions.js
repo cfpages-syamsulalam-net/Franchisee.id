@@ -2,6 +2,7 @@ import { AuthError } from "./_clerk-auth.js";
 import { SITE_ID, EDIT_FIELD_NAME, sanitizeChanges, updateListingStatement } from "./_dashboard-schemas.js";
 import { getListingSnapshot, hasAutoApproval } from "./_dashboard-queries.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, parseJson, randomId } from "./_dashboard-utils.js";
+import { refreshDashboardQualityChecks } from "./_quality-checks.js";
 import { siteRebuildStatements } from "./_site-publish-queue.js";
 
 export async function handleLogOutreach(db, auth, data) {
@@ -232,6 +233,11 @@ export async function handleReviewClaim(db, auth, data) {
 
   await db.batch(statements);
   return jsonResponse({ success: true, status });
+}
+
+export async function handleRefreshQualityChecks(db, auth) {
+  const result = await refreshDashboardQualityChecks(db, auth);
+  return jsonResponse({ success: true, result });
 }
 
 export { AuthError };

@@ -253,11 +253,83 @@ body {
 .dash-form .dash-form-wide {
   grid-column: 1 / -1;
 }
+.dash-field-editor {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #ececec;
+  background: #fafafa;
+  padding: 12px;
+}
+.dash-field-editor-head,
+.dash-field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dash-field-editor-head {
+  justify-content: space-between;
+}
+.dash-field-editor-head strong {
+  display: block;
+  color: #171717;
+  font-size: 13px;
+}
+.dash-field-editor-head span,
+.dash-field-old {
+  display: block;
+  color: var(--dash-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.dash-field-list {
+  display: grid;
+  gap: 10px;
+}
+.dash-field-row {
+  align-items: flex-start;
+  border: 1px solid #e4e4e4;
+  background: #ffffff;
+  padding: 10px;
+}
+.dash-field-main {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.42fr) minmax(0, 1fr);
+  gap: 8px;
+  flex: 1 1 auto;
+}
+.dash-field-main textarea {
+  min-height: 72px;
+  font-family: inherit;
+}
+.dash-field-remove {
+  flex: 0 0 auto;
+}
+.dash-field-diff {
+  display: grid;
+  gap: 6px;
+}
+.dash-field-diff-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.35fr) minmax(0, 1fr);
+  gap: 8px;
+  border: 1px solid #eeeeee;
+  background: #fafafa;
+  padding: 8px;
+}
+.dash-field-diff-row strong {
+  font-size: 12px;
+}
+.dash-field-diff-row span {
+  color: var(--dash-muted);
+  font-size: 12px;
+  word-break: break-word;
+}
 .dash-button {
   min-height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 7px;
   border: 1px solid #151515;
   border-radius: 4px;
   background: #151515;
@@ -424,6 +496,13 @@ body {
     text-align: left;
   }
   .dash-form {
+    grid-template-columns: 1fr;
+  }
+  .dash-field-editor-head,
+  .dash-field-row,
+  .dash-field-main,
+  .dash-field-diff-row {
+    display: grid;
     grid-template-columns: 1fr;
   }
 }

@@ -1,25 +1,10 @@
 // /functions/get-franchises.js
-import { z } from "zod";
-
-const QuerySchema = z.object({
-  tab: z
-    .preprocess(
-      (value) => (value ? String(value).toUpperCase() : "FRANCHISOR"),
-      z.enum(["FRANCHISOR", "UNCLAIMED", "FRANCHISEE"])
-    )
-    .default("FRANCHISOR"),
-  purpose: z.string().trim().max(50).optional().default(""),
-  q: z.string().trim().max(120).optional().default(""),
-  category: z.string().trim().max(120).optional().default(""),
-  limit: z.coerce.number().int().min(1).max(500).optional().default(500),
-  offset: z.coerce.number().int().min(0).optional().default(0),
-  source: z.enum(["d1", "sheets"]).optional(),
-});
+import { GetFranchisesQuerySchema } from "./_shared-schemas.js";
 
 export async function onRequestGet({ request, env }) {
   try {
     const { searchParams } = new URL(request.url);
-    const parsedQuery = QuerySchema.safeParse({
+    const parsedQuery = GetFranchisesQuerySchema.safeParse({
       tab: searchParams.get("tab") || undefined,
       purpose: searchParams.get("purpose") || undefined,
       q: searchParams.get("q") || undefined,

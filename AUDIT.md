@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-28 16:25 (Asia/Jakarta)
+Last updated: 2026-06-28 17:58 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
@@ -45,6 +45,16 @@ Principle: every blocked action should answer three questions in the UI: what ha
 | Public `/daftar` form success | Completing a profile from a save-opportunity CTA did not return users to the original franchise page. | Respect safe `next` query param after successful submit, otherwise go to `/profil/`. | Done |
 | `/login` auth recovery states | Login-required messages and password reset states were mostly plain text. | Use CTA-backed auth messages for register, reset-code entry, and continuation links while preserving `next`. | Done |
 | Wider codebase | Dashboard/admin/internal errors include technical or terse states, while public profile/auth/form flows have mixed quality. | Continue replacing public-facing blocked states with CTA-backed messages as those surfaces are touched. | Open |
+
+## Dashboard Data Quality Upgrade - 2026-06-28
+
+| Area | Upgrade | Status |
+| --- | --- | --- |
+| Normalized contacts | Added `franchise_contacts` migration plus contact normalization helpers for phone, WhatsApp, email, website, address, and social links. | Done |
+| Persistent quality checks | Added `franchise_quality_checks`, dashboard refresh logic, persisted read path, and computed fallback before migration/refresh. | Done |
+| Guided review edits | Replaced staff JSON diff input with guided field rows and changed pending admin review display to old/new values per field. | Done |
+| Shared schemas | Added shared Function schemas for dashboard decisions, editable listing fields, contact types, quality-check types, form submissions, `/get-franchises` query params, and listing field normalization. Added shared TypeScript schemas for CSV import rows and D1 static snapshot rows used by import/build/Astro paths. | Done |
+| Remaining schema adoption | Active form payload, query, CSV import, build, and Astro static snapshot validation paths now use shared schema modules. Future new trust-boundary schemas should be added to the shared modules instead of redefined locally. | Closed |
 
 Actionability checklist for future edits:
 - [x] Public save card uses icon-only UI with shared tooltip.

@@ -1,6 +1,6 @@
 # SUGGESTION.md - Assistant Recommendations
 
-Last updated: 2026-06-26 05:32 (Asia/Jakarta)
+Last updated: 2026-06-28 17:58 (Asia/Jakarta)
 
 ## Purpose
 This file is exclusively for Codex/assistant suggestions. It is where I record improvement ideas I notice while working on the project: product value, UX, reliability, performance, security, data quality, operations, migration safety, and developer workflow.
@@ -11,113 +11,25 @@ User decisions remain authoritative. This file is not a replacement for `AGENTS.
 - Status values: `Suggested`, `Accepted`, `In Progress`, `Done`, `Deferred`.
 - Keep each suggestion actionable: include why it matters and the next concrete step.
 - Promote accepted suggestions into the relevant plan or implementation document before large work begins.
+- Add or update entries whenever a project improvement becomes clear during implementation.
 - Remove or mark stale suggestions when project direction changes.
 
-## Priority Suggestions
+## Recommendation Backlog
 
-### 1. Production Auth And Account Linking QA
-Status: Suggested
-
-Recent auth work connects custom Clerk UI, D1 roles, `/login`, `/daftar`, `/profil`, Google SSO, password recovery, and profile edits. Because identity bugs are high-impact, this needs a production QA checklist rather than ad hoc browser checks.
-
-Suggested next step: create and run a checklist covering email/password registration, Google registration, same-email account linking, forgot password, forgot email guidance, role selection, `/daftar` login redirect, `/profil` role tabs, admin/staff access to auth pages, and logout behavior.
-
-### 2. Split `js/auth-clerk.js` Into Smaller Modules
-Status: Done
-
-`js/auth-clerk.js` now handles bootstrap, login/register UI, Google flows, recovery flows, token headers, role sync, redirects, and debug events. That makes auth changes risky and slows review.
-
-Implemented: extracted the auth page renderer into `js/auth-clerk-ui.js` and kept `js/auth-clerk.js` focused on Clerk/session behavior while preserving `window.FranchiseAuth`.
-
-### 3. Build The R2 Media Upload Path
-Status: Done
-
-The stack direction says franchise media and proposal assets should live in R2, while the form still relies heavily on URL fields such as logo, cover, and proposal URLs. That creates friction for franchisors and inconsistent media quality.
-
-Implemented: added owner-checked profile media uploads for logo, cover, and proposal files through `functions/profile-upload.js`, R2 binding config, `franchise_assets` writes, listing media field updates, and `/profil` upload controls.
-
-Follow-up: production needs the `FRANCHISE_ASSETS` bucket and `FRANCHISE_ASSETS_PUBLIC_BASE_URL` configured before uploads can return public file URLs.
-
-### 4. Make Saved Opportunities Cross-Device
-Status: Done
-
-The franchisee value surface includes saved opportunities, but local-only browser storage limits usefulness after login. Logged-in franchisees should see saved listings across devices and sessions.
-
-Implemented: added `franchise_saved_opportunities`, profile API save/remove actions, local-save migration after login, profile saved-opportunity rendering, and public listing card/detail save buttons.
-
-### 5. Add A Franchisor Lead Inbox
-Status: Done
-
-Franchisees can express interest, but franchisors need a clear place to see and respond to leads for their owned listings. This would make the franchisor role feel more valuable immediately.
-
-Implemented: added a `/profil` `Leads` tab for franchisors with incoming lead cards, contact shortcuts, listing links, and owner-checked lead status updates.
-
-### 6. Finish Static Publish Automation Verification
-Status: Suggested
-
-The D1-to-static publish queue is designed, but production confidence depends on verifying the whole dirty-record-to-rebuild cycle. If this is only partially configured, approved listing edits may not appear publicly when expected.
-
-Suggested next step: verify Cloudflare Pages build command, required secrets, deploy hook, GitHub scheduler, D1 queue records, and one end-to-end rebuild from a controlled listing edit.
-
-### 7. Normalize Franchise Contact Data
-Status: Suggested
-
-Imported phone and contact fields can be messy. Current parsing improves public display, but structured contact data would make editing, validation, WhatsApp links, outreach, and data quality checks more reliable.
-
-Suggested next step: introduce a normalized contact model for phone, WhatsApp, email, website, address, and social links, then migrate high-confidence values from existing fields.
-
-### 8. Persist Data Quality Checks
-Status: Suggested
-
-Dashboard data-quality panels are useful, but checks computed only at read time are harder to audit, trend, assign, and resolve. Persistent checks would support operations work better.
-
-Suggested next step: add a quality-check table for missing media, broken URLs, duplicate brands, suspicious contact data, thin descriptions, and stale listings, with resolution status and reviewer notes.
-
-### 9. Convert Staff Listing Review From JSON To Guided Fields
-Status: Suggested
-
-Structured JSON diffs are powerful for internal review, but guided field-level editors reduce review mistakes and make staff/admin workflows faster.
-
-Suggested next step: build a dashboard review drawer that shows each proposed field change with old value, new value, validation status, approve/reject controls, and a short audit note.
-
-### 10. Share Zod Schemas Across Forms, Functions, And Imports
-Status: Suggested
-
-The project already standardizes on Zod for untrusted data, but schemas can drift if each endpoint, form, and importer defines validation separately.
-
-Suggested next step: create shared schema modules for roles, profiles, franchise listings, claims, contacts, and dashboard actions, then use them in Forms, Functions, and import/build scripts.
-
-### 11. Replace Remaining Naive CSV Parsing
-Status: Suggested
-
-The form and importer rules warn against naive CSV parsing, and the audit notes that sitemap-related CSV handling still needs cleanup. CSV parsing bugs can silently shift franchise fields.
-
-Suggested next step: reuse the existing quote-aware parser or a single shared parser module anywhere CSV data is still parsed manually.
-
-### 12. Add Product Analytics For Ranking Signals
-Status: Suggested
-
-Popularity and recommendations are more valuable if they use real behavior instead of mostly static listing quality. Views, saves, inquiries, and admin boosts can improve discovery and franchisor feedback.
-
-Suggested next step: define privacy-conscious events for listing view, save, inquiry, claim, and contact click, then feed aggregated counts into popularity and recommendation scoring.
-
-### 13. Strengthen Operations Telemetry
-Status: Suggested
-
-The dashboard has useful operational surfaces, but auth failures, webhook failures, publish queue failures, broken media, and API errors need visible monitoring so production issues do not hide.
-
-Suggested next step: add a dashboard health panel backed by recent audit events, webhook delivery status, rebuild queue state, API error counts, and stale data warnings.
-
-### 14. Design Multi-Site Publishing Controls
-Status: Suggested
-
-The architecture supports a shared franchise network across several domains, but operators and franchisors will eventually need clear controls for where listings appear.
-
-Suggested next step: design admin publication controls and franchisor-facing distribution status using `network_sites`, `franchise_site_publications`, subscriptions, and entitlements.
-
-### 15. Improve Public Copy Consistency
-Status: Suggested
-
-The project has already agreed that public-facing copy should avoid internal terms. As more auth, profile, claim, and dashboard-adjacent pages become public, copy consistency needs deliberate review.
-
-Suggested next step: add a copy QA pass for `/login`, `/daftar`, `/profil`, franchise detail pages, and claim flows, checking for technical terms, unclear next actions, and inconsistent role labels.
+| ID | Area | Status | Suggestion | Why It Matters | Next Step / Result |
+| ---: | --- | --- | --- | --- | --- |
+| 1 | Auth QA | Suggested | Create a production auth/account-linking QA checklist. | Recent auth work connects custom Clerk UI, D1 roles, `/login`, `/daftar`, `/profil`, Google SSO, password recovery, and profile edits; identity bugs are high-impact. | Cover email/password registration, Google registration, same-email account linking, forgot password/email, role selection, protected `/daftar`, `/profil` role tabs, admin/staff auth inspection, and logout. |
+| 2 | Auth architecture | Done | Split `js/auth-clerk.js` into smaller modules. | The auth runtime had too many responsibilities, making changes risky. | Implemented `js/auth-clerk-ui.js`; `js/auth-clerk.js` now focuses on Clerk/session behavior while preserving `window.FranchiseAuth`. |
+| 3 | Media uploads | Done | Build the R2 media upload path. | Franchisors need first-party logo, cover, and proposal uploads instead of fragile URL fields. | Implemented `/profile-upload`, R2 binding config, `franchise_assets` writes, listing media updates, and `/profil` upload controls. Production R2 domain is now configured as `https://assets.franchisee.id`. |
+| 4 | Franchisee value | Done | Make saved opportunities cross-device. | Local-only saves are weak after login and across devices. | Implemented `franchise_saved_opportunities`, profile API save/remove, local-save migration, profile rendering, and public save buttons. |
+| 5 | Franchisor value | Done | Add a franchisor lead inbox. | Franchisors need a clear place to see and respond to leads for owned listings. | Implemented `/profil` Leads tab with incoming lead cards, contact shortcuts, listing links, and owner-checked lead status updates. |
+| 6 | Publish operations | Suggested | Finish static publish automation verification. | Approved listing edits may not appear publicly if the dirty-record-to-rebuild cycle is not fully verified. | Verify Cloudflare Pages build command, required secrets, deploy hook, GitHub scheduler, D1 queue records, and one controlled edit-to-rebuild cycle. |
+| 7 | Contact data | Done | Normalize franchise contact data. | Imported phone/contact fields are messy; structured contacts improve editing, validation, WhatsApp links, outreach, and quality checks. | Added `franchise_contacts`, contact normalization helpers, and a dashboard refresh action that migrates high-confidence values from existing listing/profile fields. |
+| 8 | Data quality | Done | Persist dashboard data-quality checks. | Read-time-only checks are hard to audit, trend, assign, and resolve. | Added `franchise_quality_checks`, refresh logic for missing media/contact/description/category, all-caps, suspicious contacts, stale listings, and invalid URLs; dashboard reads persisted checks with a live fallback. |
+| 9 | Dashboard review UX | Done | Convert staff listing review from JSON to guided fields. | Guided field-level inputs reduce mistakes and make staff/admin review faster. | Replaced the JSON textarea with field rows from shared editable-field definitions and changed pending reviews to show old/new values by field. |
+| 10 | Shared validation | Done | Share Zod schemas across forms, functions, and imports. | Validation can drift when each endpoint, form, and importer defines payload rules separately. | Added `functions/_shared-schemas.js` for dashboard actions, form submissions, `/get-franchises` query params, and shared normalizers. Added `src/lib/shared-schemas.ts` for CSV import rows and D1 static snapshot rows used by import/build/Astro paths. |
+| 11 | CSV reliability | Suggested | Replace remaining naive CSV parsing. | CSV parsing bugs can silently shift franchise fields. | Reuse the existing quote-aware parser or a single shared parser anywhere CSV data is still parsed manually. |
+| 12 | Ranking signals | Suggested | Add product analytics for ranking signals. | Popularity and recommendations should eventually use real behavior instead of mostly static listing quality. | Define privacy-conscious events for listing view, save, inquiry, claim, and contact click, then feed aggregate counts into popularity/recommendation scoring. |
+| 13 | Operations telemetry | Suggested | Strengthen operations telemetry. | Auth failures, webhook failures, publish queue failures, broken media, and API errors should not hide. | Add a dashboard health panel backed by recent audit events, webhook delivery status, rebuild queue state, API error counts, and stale data warnings. |
+| 14 | Multi-site controls | Suggested | Design multi-site publishing controls. | The shared franchise network will need clear controls for where listings appear. | Design admin publication controls and franchisor-facing distribution status using `network_sites`, `franchise_site_publications`, subscriptions, and entitlements. |
+| 15 | Copy quality | Suggested | Improve public copy consistency. | Public-facing copy should avoid internal terms and give clear next actions. | Add a copy QA pass for `/login`, `/daftar`, `/profil`, franchise detail pages, and claim flows. |

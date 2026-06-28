@@ -4,6 +4,37 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-28 17:58 (Asia/Jakarta)
+### Added
+- `src/lib/shared-schemas.ts`: Added shared TypeScript Zod schemas and normalizers for CSV import rows, D1 static franchise rows, listing status/tier values, royalty basis, and HAKI status.
+- `.context/session-20260628-1758.md`: Added a session snapshot for the shared validation adoption pass.
+
+### Changed
+- `functions/_shared-schemas.js`: Extended the shared Function schema module with form submission schemas, dev unclaimed creation schema, `/get-franchises` query schema, source/form/test enums, and listing/package/status normalizers.
+- `functions/form-submit.js`: Reused shared form payload schemas and shared HAKI/royalty normalizers for franchisee, franchisor, claim, and dev unclaimed writes.
+- `functions/get-franchises.js`: Reused the shared query schema for directory and claim-search reads.
+- `scripts/import-csv-to-d1.ts`: Reused shared TypeScript CSV row schemas and enum normalizers for D1 import generation.
+- `scripts/build-d1-franchise-pages.ts` and `src/lib/franchise-static.ts`: Reused the shared D1 franchise row schema so build-time snapshots and Astro rendering validate the same row contract.
+- `json/d1-franchise-static-data.json` and `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification.
+- `SUGGESTION.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Marked shared validation item 10 done and documented the shared Function and TypeScript schema modules.
+
+## 2026-06-28 17:10 (Asia/Jakarta)
+### Added
+- `migrations/0007_contacts_quality_dashboard.sql`: Added D1 tables and indexes for normalized franchise contacts and persistent dashboard quality checks.
+- `functions/_shared-schemas.js`: Added shared Zod/schema constants for dashboard decisions, editable listing fields, contact types, quality-check types, roles, and listing field normalization.
+- `functions/_contact-normalization.js`: Added contact normalization helpers for phone, WhatsApp, email, website, address, and social links.
+- `functions/_quality-checks.js`: Added dashboard quality-check computation and refresh logic that upserts normalized contacts, persists open checks, resolves stale checks, and writes audit events.
+- `.context/session-20260628-1710.md`: Added this session snapshot.
+
+### Changed
+- Remote Cloudflare: Applied `migrations/0007_contacts_quality_dashboard.sql` to `franchise_db` and verified `franchise_contacts` plus `franchise_quality_checks` exist.
+- `SUGGESTION.md`: Converted the assistant-owned suggestion backlog to table form and updated items 7-10 with implementation status.
+- `AGENTS.md`: Clarified that the assistant is free to update `SUGGESTION.md` whenever useful improvements are found, and updated dashboard policy language for guided field edits.
+- `functions/_dashboard-schemas.js`, `functions/_dashboard-queries.js`, `functions/_dashboard-actions.js`, and `functions/dashboard-data.js`: Added shared editable-field definitions to dashboard responses, persisted data-quality read fallback behavior, and the protected quality-check refresh action.
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, and `css/dashboard.css`: Replaced the dashboard review JSON textarea with guided field rows, added a Data Quality refresh action, and changed pending reviews to show old/new values per field.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build` verification.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented normalized contacts, persisted quality checks, guided dashboard review fields, and the shared-schema foundation.
+
 ## 2026-06-28 16:43 (Asia/Jakarta)
 ### Added
 - `.context/session-20260628-1643.md`: Added a session snapshot for the public form feedback and auth recovery CTA pass.

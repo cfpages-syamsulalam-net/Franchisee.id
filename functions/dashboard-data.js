@@ -1,6 +1,7 @@
 import { authErrorResponse, requireD1User } from "./_clerk-auth.js";
 import {
   handleLogOutreach,
+  handleRefreshQualityChecks,
   handleReviewClaim,
   handleReviewEditSuggestion,
   handleSuggestEdit,
@@ -18,7 +19,7 @@ import {
   getUnclaimedOutreachQueue,
   getUnclaimedOutreachSummary,
 } from "./_dashboard-queries.js";
-import { DashboardActionSchema, SITE_ID } from "./_dashboard-schemas.js";
+import { DashboardActionSchema, EDITABLE_LISTING_FIELD_DEFS, SITE_ID } from "./_dashboard-schemas.js";
 import { jsonResponse } from "./_dashboard-utils.js";
 
 export async function onRequestGet({ request, env }) {
@@ -62,6 +63,7 @@ export async function onRequestGet({ request, env }) {
       recent_outreach: recentOutreach,
       edit_suggestions: editSuggestions,
       editable_listings: editableListings,
+      editable_fields: EDITABLE_LISTING_FIELD_DEFS,
       lead_summary: leadSummary,
       system_health: systemHealth,
       generated_at: new Date().toISOString(),
@@ -89,6 +91,7 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "suggest_edit") return handleSuggestEdit(env.franchise_db, auth, data);
     if (data.action === "review_edit_suggestion") return handleReviewEditSuggestion(env.franchise_db, auth, data);
     if (data.action === "review_claim") return handleReviewClaim(env.franchise_db, auth, data);
+    if (data.action === "refresh_quality_checks") return handleRefreshQualityChecks(env.franchise_db, auth);
 
     return jsonResponse({ success: false, error: "UNKNOWN_DASHBOARD_ACTION" }, { status: 400 });
   } catch (error) {

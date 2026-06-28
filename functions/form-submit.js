@@ -1,44 +1,14 @@
 // /functions/form-submit.js
-import { z } from "zod";
 import { authErrorResponse, requireD1User } from "./_clerk-auth.js";
+import {
+  BaseSubmissionSchema,
+  CreateUnclaimedSubmissionSchema,
+  FranchiseeSubmissionSchema,
+  FranchisorSubmissionSchema,
+  normalizeHakiStatusValue,
+  normalizeRoyaltyBasisValue,
+} from "./_shared-schemas.js";
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
-
-const BaseSubmissionSchema = z
-  .object({
-    form_type: z.enum(["FRANCHISEE", "FRANCHISOR", "claim"]).optional(),
-    test_action: z.enum(["create_unclaimed", "clear_test_data"]).optional(),
-    is_test_data: z.string().optional(),
-  })
-  .passthrough();
-
-const FranchiseeSchema = BaseSubmissionSchema.extend({
-  name: z.string().trim().min(2),
-  email: z.string().trim().email(),
-  country_code: z.string().trim().optional(),
-  whatsapp: z.string().trim().min(8),
-  city_origin: z.string().trim().optional(),
-  interest_category: z.string().trim().optional(),
-  budget_range: z.string().trim().optional(),
-  location_plan: z.string().trim().optional(),
-  message: z.string().trim().optional(),
-});
-
-const FranchisorSchema = BaseSubmissionSchema.extend({
-  brand_name: z.string().trim().min(2),
-  company_name: z.string().trim().optional(),
-  category: z.string().trim().optional(),
-  pic_name: z.string().trim().optional(),
-  email_contact: z.string().trim().email(),
-  country_code: z.string().trim().optional(),
-  whatsapp: z.string().trim().min(8),
-  website_url: z.string().trim().optional(),
-  instagram_url: z.string().trim().optional(),
-  facebook_url: z.string().trim().optional(),
-  tiktok_url: z.string().trim().optional(),
-  youtube_url: z.string().trim().optional(),
-  linkedin_url: z.string().trim().optional(),
-  unclaimed_id: z.string().trim().optional(),
-}).passthrough();
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -69,14 +39,14 @@ export async function onRequestPost({ request, env }) {
 
     const formType = rawData.form_type || "FRANCHISEE";
     if (formType === "FRANCHISEE") {
-      const parsed = FranchiseeSchema.safeParse(rawData);
+      const parsed = FranchiseeSubmissionSchema.safeParse(rawData);
       if (!parsed.success) return validationError(parsed.error);
       const actor = await requireD1User(request, env, env.franchise_db, { requiredRole: "franchisee" });
       return await handleFranchiseeSubmit(env.franchise_db, parsed.data, actor);
     }
 
     if (formType === "FRANCHISOR" || formType === "claim") {
-      const parsed = FranchisorSchema.safeParse(rawData);
+      const parsed = FranchisorSubmissionSchema.safeParse(rawData);
       if (!parsed.success) return validationError(parsed.error);
       const actor = await requireD1User(request, env, env.franchise_db, { requiredRole: "franchisor" });
       return await handleFranchisorSubmit(env.franchise_db, parsed.data, formType === "claim", actor);
@@ -365,7 +335,7 @@ function franchiseBindValues(data, profileId, publicId, now, investment) {
     intOrNull(data.estimated_bep_months),
     numberOrNull(data.net_profit_percent),
     numberOrNull(data.royalty_percent),
-    textOrNull(data.royalty_basis),
+    normalizeRoyaltyBasis(data.royalty_basis),
     textOrNull(data.short_desc),
     textOrNull(data.full_desc),
     textOrNull(data.support_system),
@@ -469,12 +439,7 @@ function auditStatement(db, action, entityType, entityId, metadata, actorUserId 
 }
 
 async function handleCreateUnclaimed(db, data, actor) {
-  const parsed = BaseSubmissionSchema.extend({
-    brand_name: z.string().trim().min(2),
-    category: z.string().trim().optional(),
-    min_capital: z.string().trim().optional(),
-    city: z.string().trim().optional(),
-  }).safeParse(data);
+  const parsed = CreateUnclaimedSubmissionSchema.safeParse(data);
   if (!parsed.success) return validationError(parsed.error);
 
   const publicId = `TEST_${shortPublicId()}`;
@@ -650,9 +615,11 @@ function numberOrNull(value) {
 }
 
 function normalizeHakiStatus(value) {
-  const normalized = normalizeText(value).toLowerCase();
-  if (["registered", "process", "none"].includes(normalized)) return normalized;
-  return null;
+  return normalizeHakiStatusValue(value);
+}
+
+function normalizeRoyaltyBasis(value) {
+  return normalizeRoyaltyBasisValue(value);
 }
 
 function slugify(value) {

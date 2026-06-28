@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { z } from "zod";
 import { generateCssPlaceholder, injectDetailAssets, injectDirectoryAssets } from "./franchise-static-assets";
+import { D1FranchiseRowSchema } from "./shared-schemas";
 
 const ROOT_DIR = resolve(process.cwd());
 const DETAIL_TEMPLATE_PATH = join(ROOT_DIR, "templates", "detail-franchise-tpl.html");
@@ -37,70 +38,7 @@ const KNOWN_UPPERCASE_TERMS = new Map(
   ].map((term) => [term, term.toUpperCase()]),
 );
 
-const nullableString = z.string().nullish().transform((value) => value ?? null);
-const nullableNumber = z.number().nullish().transform((value) => value ?? null);
-
-export const FranchiseStaticRowSchema = z.object({
-  id: z.string().min(1),
-  brand_name: z.string().min(1),
-  slug: z.string().min(1),
-  category: nullableString,
-  subcategory: nullableString,
-  label: nullableString,
-  status: nullableString,
-  verification_tier: nullableString,
-  source_sheet: nullableString,
-  year_established: nullableNumber,
-  city_origin: nullableString,
-  outlet_type: nullableString,
-  location_requirement: nullableString,
-  rent_cost_text: nullableString,
-  contract_duration_months: nullableNumber,
-  fee_license_idr: nullableNumber,
-  fee_capex_idr: nullableNumber,
-  fee_construction_idr: nullableNumber,
-  total_investment_idr: nullableNumber,
-  min_investment_idr: nullableNumber,
-  max_investment_idr: nullableNumber,
-  estimated_bep_months: nullableNumber,
-  omzet_monthly_idr: nullableNumber,
-  hpp_percent: nullableNumber,
-  net_profit_percent: nullableNumber,
-  royalty_percent: nullableNumber,
-  royalty_basis: nullableString,
-  royalty_period: nullableString,
-  short_desc: nullableString,
-  full_desc: nullableString,
-  support_system: nullableString,
-  phone: nullableString,
-  office_address: nullableString,
-  outlets_location: nullableString,
-  logo_url: nullableString,
-  cover_url: nullableString,
-  gallery_urls: nullableString,
-  video_url: nullableString,
-  proposal_url: nullableString,
-  raw_payload: nullableString,
-  company_name: nullableString,
-  pic_name: nullableString,
-  email_contact: nullableString,
-  whatsapp: nullableString,
-  website_url: nullableString,
-  instagram_url: nullableString,
-  facebook_url: nullableString,
-  tiktok_url: nullableString,
-  youtube_url: nullableString,
-  linkedin_url: nullableString,
-  package_name: nullableString,
-  package_price_idr: nullableNumber,
-  package_min_capital_idr: nullableNumber,
-  package_max_capital_idr: nullableNumber,
-  canonical_url: nullableString,
-  publication_status: nullableString,
-  is_primary: nullableNumber,
-  first_published_at: nullableString,
-  updated_at: nullableString,
-});
+export const FranchiseStaticRowSchema = D1FranchiseRowSchema;
 
 export type FranchiseStaticRow = z.infer<typeof FranchiseStaticRowSchema>;
 

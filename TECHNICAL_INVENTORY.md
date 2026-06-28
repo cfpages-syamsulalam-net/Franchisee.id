@@ -182,9 +182,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Client controller for the protected `/dashboard` shell.*
 - `boot()`: Initializes `window.FranchiseAuth`, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
 - `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, and Operations, including arrow/Home/End keyboard navigation.
-- `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics, outreach, quality, claims, publish, editable listings, edit suggestions, leads, and health renderers.
+- `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics, outreach, quality, claims, publish, editable listings, shared editable field definitions, edit suggestions, leads, and health renderers.
 - `renderOutreach(rows, summary)` / `logOutreach(link)`: Renders staff-personal WhatsApp links, shows contact-ready/published-unclaimed subset counts from `outreach_summary`, and records manually confirmed outreach through `/dashboard-data`.
-- `renderQuality()` / `seedEditSuggestion(button)`: Shows data-quality warnings and seeds structured JSON edit suggestions.
+- `renderQuality()` / `seedEditSuggestion(button)`: Shows data-quality warnings and seeds guided field edit suggestions.
+- `addEditFieldRow(fieldName, value)` / `collectEditChanges()`: Renders and collects guided listing edit rows from server-provided editable field definitions instead of exposing a JSON textarea.
+- `refreshQualityChecks()`: Calls the protected dashboard refresh action to persist current quality checks and normalized contacts.
 - `submitEditSuggestion()` / `reviewEditSuggestion()` / `reviewClaim()`: Posts dashboard actions for staff/admin workflows.
 - `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
 
@@ -210,6 +212,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `scripts/build-d1-franchise-pages.ts`
 *TypeScript D1-backed public page generation bridge.*
 - `fetchRowsFromD1(options)`: Loads published `site_franchisee_id` franchise rows from `franchise_db`, including public `phone` and `office_address` fields for Astro detail contact rendering, preferring the Cloudflare D1 HTTP API with `CLOUDFLARE_API_TOKEN` or a cfman token and falling back to Wrangler/cfman only when needed.
+- D1 row validation uses `D1FranchiseRowSchema` from `src/lib/shared-schemas.ts` so build-time and Astro snapshot rendering share the same row contract.
 - `fetchRowsFromD1Http(sql, token)`: Build-safe D1 query path for Cloudflare Pages and CI. Uses `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` when set, with current project defaults.
 - `fetchRowsFromD1Wrangler(sql, options)`: Local fallback path that runs `pnpm exec wrangler d1 execute` with a cfman token.
 - `renderDetailPage(row, template)`: Inserts D1 franchise data into `templates/detail-franchise-tpl.html` and marks output with `d1-generated:franchisee.id`.
@@ -242,6 +245,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ## 2. Directory: `/src` (Astro Static Generation)
 
+### File: `src/lib/shared-schemas.ts`
+*Shared TypeScript schemas for import/build/Astro validation.*
+- `ImportFranchisorRowSchema` / `ImportUnclaimedRowSchema` / `ImportFranchiseeRowSchema`: CSV row validators used by the D1 importer.
+- `D1FranchiseRowSchema`: Shared D1 static snapshot row validator used by the D1 page builder and Astro renderer.
+- `normalizeListingStatusValue()` / `normalizeVerificationTierValue()` / `normalizeRoyaltyBasisValue()` / `normalizeHakiStatusValue()`: Shared enum/value normalizers for import and build paths.
+
 ### File: `src/pages/profil/index.astro`
 *Protected profile page shell.*
 - Static Astro route at `/profil/` with `noindex,nofollow`.
@@ -250,7 +259,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/lib/franchise-static.ts`
 *Astro D1 snapshot validator and template renderer.*
-- `FranchiseStaticRowSchema`: Zod schema for rows in `json/d1-franchise-static-data.json`.
+- `FranchiseStaticRowSchema`: Re-export of the shared D1 row schema for rows in `json/d1-franchise-static-data.json`.
 - `loadFranchiseStaticRows()`: Reads and validates the generated D1 snapshot.
 - `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, and category filtering.
 - Directory cards link to franchise information pages with a neutral `Info Franchise` CTA; unclaimed-specific claim CTAs remain on detail pages.
@@ -378,31 +387,52 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach queue, outreach summary, quality, review, lead, publish, and health data from `_dashboard-queries.js`.
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach queue, outreach summary, quality, review, editable field definitions, lead, publish, and health data from `_dashboard-queries.js`.
 - `onRequestPost()`: Validates the discriminated action payload from `_dashboard-schemas.js`, then routes to `_dashboard-actions.js`.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, and `review_claim`.
-- `sanitizeChanges(changes)`: Enforces dashboard-editable listing field whitelist and normalizes integer/real/enumerated values before D1 writes.
+- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, `review_claim`, and `refresh_quality_checks`.
+- `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
+- `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
 
 ### File: `functions/_dashboard-queries.js`
 *Read-only D1 data model for `/dashboard-data`.*
 - `getOverview(db)`: Returns Franchisee.id listing counts and completeness counts.
-- `getDataQuality(db)`: Computes read-time warnings for missing images, contact, description, category, and likely all-caps descriptions; keeps all-caps detection in JavaScript so D1 does not evaluate complex `GLOB`/`LIKE` patterns.
+- `getDataQuality(db)`: Reads persisted open `franchise_quality_checks` when available, falling back to computed warnings for missing images, contact, description, category, all-caps descriptions, suspicious contacts, stale listings, and invalid URLs.
 - `getUnclaimedOutreachQueue(db)`: Reads up to 250 published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
 - `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
-- `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab.
+- `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display.
 - `getPublishState(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab.
 
 ### File: `functions/_dashboard-actions.js`
 *Protected dashboard write workflows.*
 - `handleLogOutreach(db, auth, data)`: Records manually confirmed WhatsApp outreach and an audit event.
-- `handleSuggestEdit(db, auth, data)`: Stores structured JSON diffs in `listing_edit_suggestions`. Admin or active trusted staff suggestions apply immediately; normal staff suggestions stay pending.
+- `handleSuggestEdit(db, auth, data)`: Stores guided field changes as structured diffs in `listing_edit_suggestions`. Admin or active trusted staff suggestions apply immediately; normal staff suggestions stay pending.
 - `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs write field-by-field to whitelisted `franchises` columns, write audit events, and queue a static rebuild through `siteRebuildStatements()`.
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
+- `handleRefreshQualityChecks(db, auth)`: Refreshes normalized contacts and persistent quality checks, then returns scanned/contact/open-check counts.
+
+### File: `functions/_shared-schemas.js`
+*Shared validation/schema constants for Pages Functions.*
+- `EDITABLE_LISTING_FIELD_DEFS`: Canonical dashboard-editable listing fields with labels, types, and select options.
+- `sanitizeListingChanges(changes)` / `normalizeListingFieldValue(field, value)`: Shared dashboard listing change validation and normalization.
+- `BaseSubmissionSchema` / `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Shared form payload validators used by `/form-submit`.
+- `GetFranchisesQuerySchema`: Shared `/get-franchises` query validator.
+- Role/source/form/contact/quality-check enum schemas: Shared Zod enums for public/internal roles, source sheets, form types, test actions, contact types, quality-check statuses, and dashboard review decisions.
+- `normalizeListingStatusValue()` / `normalizeVerificationTierValue()` / `normalizeRoyaltyBasisValue()` / `normalizeHakiStatusValue()`: Shared value normalizers for Function write paths.
+
+### File: `functions/_contact-normalization.js`
+*Normalized contact extraction for dashboard operations.*
+- `buildNormalizedContacts(row)`: Converts existing listing/profile fields into high-confidence contact rows for phone, WhatsApp, email, website, address, and social links.
+- `hasInvalidContactUrl(row)` / `normalizeExternalUrl(value, field)`: URL validation/normalization used by quality checks.
+
+### File: `functions/_quality-checks.js`
+*Persistent dashboard quality-check refresh logic.*
+- `refreshDashboardQualityChecks(db, auth)`: Scans published Franchisee.id listings, upserts `franchise_contacts`, upserts current `franchise_quality_checks`, resolves no-longer-active checks, and writes a refresh audit event.
+- `computeQualityChecks(row, contacts)`: Shared JavaScript heuristic for missing media/contact/description/category, likely all-caps, suspicious contact, stale listing, and invalid URL checks.
 
 ### File: `functions/_dashboard-utils.js`
 *Shared dashboard helpers.*
@@ -414,7 +444,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/form-submit.js` (v2.5)
 *Clerk-authenticated D1-backed backend processing for all current form submissions.*
 - `onRequestPost()`: Main entry point; requires `env.franchise_db`, validates base payload with Zod, requires Clerk/D1 role authorization, routes franchisee/franchisor/claim/test actions, and returns the legacy success/error JSON envelope.
-- `FranchiseeSchema` / `FranchisorSchema`: Zod runtime validation for form payloads before D1 writes.
+- `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Imported shared Zod runtime validation for form payloads before D1 writes.
 - `handleFranchiseeSubmit(db, data, actor)`: Checks duplicates and writes `franchisee_profiles.user_id`, `legacy_source_rows`, and actor-aware `audit_events`.
 - `handleFranchisorSubmit(db, data, isClaim, actor)`: Checks duplicates and writes or updates franchisor/listing/package/publication/claim/audit D1 records with `user_id`, `owner_user_id`, `claimant_user_id`, franchisor profile contact/social URLs, and static rebuild queue requests for `site_franchisee_id`.
 - `findClaimSource(db, data)`: Finds D1 `UNCLAIMED` franchise rows by `unclaimed_id` or normalized brand name for claim migration.
@@ -433,7 +463,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Does not commit generated output back to `main`.
 
 ### File: `functions/get-franchises.js`
-- `onRequestGet()`: API to fetch franchise data with Zod query validation, D1-first reads, legacy Cloudinary URL optimization, and a Sheets read fallback only when D1 is unavailable or explicitly requested.
+- `onRequestGet()`: API to fetch franchise data with shared Zod query validation, D1-first reads, legacy Cloudinary URL optimization, and a Sheets read fallback only when D1 is unavailable or explicitly requested.
 - `getFranchiseRowsFromD1()`: Reads published `site_franchisee_id` franchise rows from D1 with optional `q`, `category`, `limit`, and `offset` filters.
 - `getFranchiseeProfilesFromD1()`: Reads franchisee profile rows from D1 for operational/admin query compatibility.
 - `filterClaimSearchRows()`: Preserves strict `UNCLAIMED` claim-search sanitization and deduplication.

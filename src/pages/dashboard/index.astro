@@ -119,6 +119,12 @@ export const prerender = true;
                     <p>Prioritas listing yang perlu dibersihkan.</p>
                   </div>
                 </div>
+                <div class="dash-actions">
+                  <button class="dash-button secondary" type="button" data-refresh-quality>
+                    <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                    Refresh checks
+                  </button>
+                </div>
               </div>
               <div class="dash-table-wrap">
                 <table class="dash-table">
@@ -162,13 +168,25 @@ export const prerender = true;
                     Reason
                     <input type="text" data-edit-reason maxlength="1200" placeholder="Contoh: nomor kontak publik salah">
                   </label>
-                  <label class="dash-form-wide">
-                    JSON diff
-                    <textarea data-edit-json spellcheck="false" required placeholder="Contoh: phone dan office_address dalam JSON diff"></textarea>
-                  </label>
+                  <div class="dash-form-wide dash-field-editor">
+                    <div class="dash-field-editor-head">
+                      <div>
+                        <strong>Perubahan field</strong>
+                        <span>Pilih field, isi nilai baru, lalu kirim untuk review.</span>
+                      </div>
+                      <button class="dash-button secondary" type="button" data-add-edit-field>
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        Tambah field
+                      </button>
+                    </div>
+                    <div class="dash-field-list" data-edit-field-list></div>
+                  </div>
                   <div class="dash-form-wide dash-actions">
-                    <button class="dash-button" type="submit">Submit Suggestion</button>
-                    <span class="dash-muted" data-edit-help>Kolom yang bisa diedit mengikuti aturan dashboard.</span>
+                    <button class="dash-button" type="submit">
+                      <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                      Submit Suggestion
+                    </button>
+                    <span class="dash-muted" data-edit-help>Perubahan akan masuk review admin kecuali akun ini punya izin approve langsung.</span>
                   </div>
                 </form>
                 <div class="dash-table-wrap">

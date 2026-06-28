@@ -11,6 +11,7 @@
   var dashboardPanels = Array.from(document.querySelectorAll("[data-dashboard-panel]"));
   var outreachRows = document.querySelector("[data-outreach-rows]");
   var qualityRows = document.querySelector("[data-quality-rows]");
+  var refreshQualityButton = document.querySelector("[data-refresh-quality]");
   var claimRows = document.querySelector("[data-claim-rows]");
   var publishState = document.querySelector("[data-publish-state]");
   var outreachCount = document.querySelector("[data-outreach-count]");
@@ -19,7 +20,8 @@
   var editForm = document.querySelector("[data-edit-form]");
   var listingSelect = document.querySelector("[data-listing-select]");
   var editReason = document.querySelector("[data-edit-reason]");
-  var editJson = document.querySelector("[data-edit-json]");
+  var editFieldList = document.querySelector("[data-edit-field-list]");
+  var addEditFieldButton = document.querySelector("[data-add-edit-field]");
   var leadSummary = document.querySelector("[data-lead-summary]");
   var systemHealth = document.querySelector("[data-system-health]");
   var dashboardState = null;
@@ -35,11 +37,19 @@
   if (authDebugCopy) {
     authDebugCopy.addEventListener("click", copyAuthDebug);
   }
-  if (editJson && !editJson.value) {
-    editJson.value = JSON.stringify({ phone: "0812 0000 0000", office_address: "Jakarta" }, null, 2);
-  }
   if (editForm) {
     editForm.addEventListener("submit", submitEditSuggestion);
+  }
+  if (addEditFieldButton) {
+    addEditFieldButton.addEventListener("click", function () {
+      addEditFieldRow("phone", "");
+    });
+  }
+  if (listingSelect) {
+    listingSelect.addEventListener("change", refreshFieldOldValues);
+  }
+  if (refreshQualityButton) {
+    refreshQualityButton.addEventListener("click", refreshQualityChecks);
   }
   activateDashboardTab(initialDashboardTab(), false);
   boot();
@@ -132,6 +142,7 @@
     renderClaims(data.pending_claims || []);
     renderPublish(data.publish_state || {});
     renderListingOptions(data.editable_listings || []);
+    ensureEditFieldRows();
     renderEditSuggestions(data.edit_suggestions || { summary: {}, pending: [] });
     renderLeads(data.lead_summary || { by_status: {}, recent: [] });
     renderHealth(data.system_health || {});
@@ -246,15 +257,12 @@
     }
 
     editRows.innerHTML = pending.map(function (row) {
-      var diff = Object.keys(row.suggested_value || {}).map(function (field) {
-        return '<span class="dash-badge">' + escapeHtml(field) + '</span>';
-      }).join(" ");
       var actions = currentUserIsAdmin
         ? '<div class="dash-actions"><button class="dash-button" type="button" data-review-edit data-suggestion-id="' + escapeAttr(row.id) + '" data-decision="approve">Approve</button><button class="dash-button secondary" type="button" data-review-edit data-suggestion-id="' + escapeAttr(row.id) + '" data-decision="reject">Reject</button></div>'
         : '<span class="dash-muted">Menunggu admin.</span>';
       return '<tr>' +
         '<td><a href="' + escapeAttr(row.public_url || "#") + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a><br><span class="dash-muted">' + escapeHtml(row.suggested_by_email || row.suggested_by_name || "staff") + '</span></td>' +
-        '<td>' + diff + '<pre class="dash-muted">' + escapeHtml(JSON.stringify(row.suggested_value || {}, null, 2)) + '</pre></td>' +
+        '<td>' + renderFieldDiff(row.old_value || {}, row.suggested_value || {}) + '</td>' +
         '<td>' + escapeHtml(row.reason || "-") + '</td>' +
         '<td>' + actions + '</td>' +
       '</tr>';
@@ -295,17 +303,182 @@
     var warnings = (button.getAttribute("data-warnings") || "").split(",");
     listingSelect.value = franchiseId;
     editReason.value = "Data quality: " + warnings.filter(Boolean).join(", ");
-    editJson.value = JSON.stringify(suggestedEmptyDiff(warnings), null, 2);
-    editJson.focus();
+    renderSeededEditFields(warnings);
+    if (editFieldList) {
+      var firstInput = editFieldList.querySelector("[data-edit-value]");
+      if (firstInput) firstInput.focus();
+    }
   }
 
-  function suggestedEmptyDiff(warnings) {
-    var diff = {};
-    if (warnings.indexOf("missing_contact") >= 0) diff.phone = "";
-    if (warnings.indexOf("missing_category") >= 0) diff.category = "";
-    if (warnings.indexOf("missing_description") >= 0 || warnings.indexOf("likely_all_caps") >= 0) diff.short_desc = "";
-    if (warnings.indexOf("missing_image") >= 0) diff.logo_url = "";
-    return Object.keys(diff).length ? diff : { short_desc: "" };
+  function renderSeededEditFields(warnings) {
+    var fields = [];
+    if (warnings.indexOf("missing_contact") >= 0 || warnings.indexOf("suspicious_contact") >= 0) fields.push("phone");
+    if (warnings.indexOf("missing_category") >= 0) fields.push("category");
+    if (warnings.indexOf("missing_description") >= 0 || warnings.indexOf("likely_all_caps") >= 0) fields.push("short_desc");
+    if (warnings.indexOf("missing_image") >= 0) fields.push("logo_url");
+    if (warnings.indexOf("invalid_url") >= 0) fields.push("logo_url");
+    if (!fields.length) fields.push("short_desc");
+    clearEditFieldRows();
+    fields.forEach(function (field) {
+      addEditFieldRow(field, "");
+    });
+  }
+
+  function ensureEditFieldRows() {
+    if (!editFieldList) return;
+    if (!editFieldList.children.length) addEditFieldRow("phone", "");
+  }
+
+  function clearEditFieldRows() {
+    if (editFieldList) editFieldList.innerHTML = "";
+  }
+
+  function addEditFieldRow(fieldName, value) {
+    if (!editFieldList) return;
+    var fields = getEditableFields();
+    var selected = fields.some(function (field) { return field.name === fieldName; }) ? fieldName : fields[0].name;
+    var row = document.createElement("div");
+    row.className = "dash-field-row";
+    row.innerHTML = '<div class="dash-field-main">' +
+      '<label>Field<select data-edit-field>' + renderFieldOptions(selected) + '</select></label>' +
+      '<label>Nilai baru<span data-edit-value-wrap></span><span class="dash-field-old" data-edit-old></span></label>' +
+      '</div>' +
+      '<button class="dash-icon-button dash-field-remove" type="button" data-remove-edit-field aria-label="Hapus field" data-fr-tooltip="Hapus field"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>';
+    editFieldList.appendChild(row);
+    bindEditFieldRow(row, value);
+  }
+
+  function bindEditFieldRow(row, value) {
+    var fieldSelect = row.querySelector("[data-edit-field]");
+    var removeButton = row.querySelector("[data-remove-edit-field]");
+    fieldSelect.addEventListener("change", function () {
+      renderValueInput(row, "");
+      refreshFieldOldValue(row);
+    });
+    removeButton.addEventListener("click", function () {
+      if (editFieldList.children.length <= 1) {
+        renderValueInput(row, "");
+        return;
+      }
+      row.remove();
+    });
+    renderValueInput(row, value);
+    refreshFieldOldValue(row);
+    if (window.FranchiseTooltip && typeof window.FranchiseTooltip.refresh === "function") {
+      window.FranchiseTooltip.refresh();
+    }
+  }
+
+  function renderValueInput(row, value) {
+    var fieldName = row.querySelector("[data-edit-field]").value;
+    var field = getFieldDef(fieldName);
+    var wrap = row.querySelector("[data-edit-value-wrap]");
+    if (!wrap) return;
+
+    if (field.type === "select") {
+      wrap.innerHTML = '<select data-edit-value>' + (field.options || []).map(function (option) {
+        return '<option value="' + escapeAttr(option) + '">' + escapeHtml(option) + '</option>';
+      }).join("") + '</select>';
+    } else if (field.type === "textarea") {
+      wrap.innerHTML = '<textarea data-edit-value></textarea>';
+    } else {
+      var inputType = field.type === "integer" || field.type === "number" ? "number" : field.type === "url" ? "url" : "text";
+      var step = field.type === "number" ? ' step="0.01"' : "";
+      wrap.innerHTML = '<input data-edit-value type="' + inputType + '"' + step + '>';
+    }
+
+    var input = wrap.querySelector("[data-edit-value]");
+    if (input) input.value = value == null ? "" : value;
+  }
+
+  function refreshFieldOldValues() {
+    if (!editFieldList) return;
+    Array.from(editFieldList.querySelectorAll(".dash-field-row")).forEach(refreshFieldOldValue);
+  }
+
+  function refreshFieldOldValue(row) {
+    var fieldName = row.querySelector("[data-edit-field]").value;
+    var oldEl = row.querySelector("[data-edit-old]");
+    var listing = selectedListing();
+    if (!oldEl) return;
+    oldEl.textContent = "Saat ini: " + formatFieldValue(listing ? listing[fieldName] : "");
+  }
+
+  function collectEditChanges() {
+    if (!listingSelect || !listingSelect.value) throw new Error("Pilih listing terlebih dahulu.");
+    if (!editFieldList) throw new Error("Tambahkan minimal satu field.");
+    var changes = {};
+    Array.from(editFieldList.querySelectorAll(".dash-field-row")).forEach(function (row) {
+      var fieldName = row.querySelector("[data-edit-field]").value;
+      var input = row.querySelector("[data-edit-value]");
+      var value = input ? input.value : "";
+      if (!String(value).trim()) return;
+      changes[fieldName] = value;
+    });
+    if (!Object.keys(changes).length) throw new Error("Isi nilai baru minimal pada satu field.");
+    return changes;
+  }
+
+  function renderFieldOptions(selected) {
+    return getEditableFields().map(function (field) {
+      return '<option value="' + escapeAttr(field.name) + '"' + (field.name === selected ? " selected" : "") + '>' + escapeHtml(field.label || field.name) + '</option>';
+    }).join("");
+  }
+
+  function getEditableFields() {
+    return dashboardState && dashboardState.editable_fields && dashboardState.editable_fields.length
+      ? dashboardState.editable_fields
+      : [
+        { name: "phone", label: "Telepon/WhatsApp", type: "text" },
+        { name: "office_address", label: "Alamat kantor", type: "textarea" },
+        { name: "category", label: "Kategori", type: "text" },
+        { name: "short_desc", label: "Deskripsi singkat", type: "textarea" },
+        { name: "logo_url", label: "URL logo", type: "url" }
+      ];
+  }
+
+  function getFieldDef(fieldName) {
+    return getEditableFields().filter(function (field) { return field.name === fieldName; })[0] || getEditableFields()[0];
+  }
+
+  function selectedListing() {
+    if (!dashboardState || !listingSelect) return null;
+    return (dashboardState.editable_listings || []).filter(function (listing) {
+      return listing.id === listingSelect.value;
+    })[0] || null;
+  }
+
+  function renderFieldDiff(oldValue, suggestedValue) {
+    var fields = Object.keys(suggestedValue || {});
+    if (!fields.length) return '<span class="dash-muted">Tidak ada field.</span>';
+    return '<div class="dash-field-diff">' + fields.map(function (fieldName) {
+      var field = getFieldDef(fieldName);
+      return '<div class="dash-field-diff-row">' +
+        '<strong>' + escapeHtml(field.label || fieldName) + '</strong>' +
+        '<span><b>Semula:</b> ' + escapeHtml(formatFieldValue(oldValue[fieldName])) + '<br><b>Usulan:</b> ' + escapeHtml(formatFieldValue(suggestedValue[fieldName])) + '</span>' +
+      '</div>';
+    }).join("") + '</div>';
+  }
+
+  function formatFieldValue(value) {
+    if (value === null || value === undefined || value === "") return "-";
+    if (typeof value === "object") return JSON.stringify(value);
+    return String(value);
+  }
+
+  async function refreshQualityChecks() {
+    try {
+      refreshQualityButton.disabled = true;
+      refreshQualityButton.innerHTML = '<i class="fas fa-sync-alt" aria-hidden="true"></i> Refreshing...';
+      var result = await postDashboardAction({ action: "refresh_quality_checks" });
+      setStatus("Quality checks diperbarui: " + Number(result.result && result.result.scanned || 0).toLocaleString("id-ID") + " listing dicek.", false);
+      await reloadDashboard();
+    } catch (error) {
+      setStatus(error.message, true);
+    } finally {
+      refreshQualityButton.disabled = false;
+      refreshQualityButton.innerHTML = '<i class="fas fa-sync-alt" aria-hidden="true"></i> Refresh checks';
+    }
   }
 
   async function logOutreach(link) {
@@ -337,7 +510,7 @@
   async function submitEditSuggestion(event) {
     event.preventDefault();
     try {
-      var changes = JSON.parse(editJson.value || "{}");
+      var changes = collectEditChanges();
       var result = await postDashboardAction({
         action: "suggest_edit",
         franchise_id: listingSelect.value,
@@ -345,6 +518,8 @@
         reason: editReason.value || ""
       });
       setStatus(result.applied ? "Edit langsung diterapkan dan publish queue sudah ditandai dirty." : "Edit suggestion dikirim untuk admin review.", false);
+      clearEditFieldRows();
+      ensureEditFieldRows();
       await reloadDashboard();
     } catch (error) {
       setStatus(error.message, true);

@@ -1,7 +1,7 @@
 import { SITE_ID } from "./_dashboard-schemas.js";
+import { computeQualityChecks } from "./_quality-checks.js";
 import {
   buildWhatsAppUrl,
-  isLikelyAllCapsDescription,
   normalizeGroupedCounts,
   normalizeNumberObject,
   parseJson,
@@ -34,6 +34,53 @@ export async function getOverview(db) {
 }
 
 export async function getDataQuality(db) {
+  const persisted = await getPersistedDataQuality(db);
+  if (persisted) return persisted;
+  return getComputedDataQuality(db);
+}
+
+async function getPersistedDataQuality(db) {
+  try {
+    const result = await db
+      .prepare(
+        `SELECT
+          f.id,
+          p.slug,
+          f.brand_name,
+          f.category,
+          f.verification_tier,
+          f.updated_at,
+          GROUP_CONCAT(q.check_type) AS warning_list,
+          GROUP_CONCAT(q.message, '||') AS message_list,
+          SUM(CASE WHEN q.severity = 'critical' THEN 1 ELSE 0 END) AS critical_count,
+          COUNT(q.id) AS warning_count,
+          MAX(q.last_seen_at) AS last_seen_at
+         FROM franchise_quality_checks q
+         JOIN franchises f ON f.id = q.franchise_id
+         LEFT JOIN franchise_site_publications p ON p.franchise_id = f.id AND p.site_id = q.site_id
+         WHERE q.site_id = ? AND q.status = 'open'
+         GROUP BY f.id, p.slug
+         ORDER BY critical_count DESC, warning_count DESC, last_seen_at DESC
+         LIMIT 20`,
+      )
+      .bind(SITE_ID)
+      .all();
+
+    const rows = result.results || [];
+    if (!rows.length) return null;
+
+    return rows.map((row) => ({
+      ...row,
+      public_url: row.slug ? `/peluang-usaha/${row.slug}` : "",
+      warnings: String(row.warning_list || "").split(",").filter(Boolean),
+      messages: String(row.message_list || "").split("||").filter(Boolean),
+    }));
+  } catch (_error) {
+    return null;
+  }
+}
+
+async function getComputedDataQuality(db) {
   const result = await db
     .prepare(
       `SELECT
@@ -43,18 +90,25 @@ export async function getDataQuality(db) {
         f.category,
         f.verification_tier,
         f.updated_at,
-        CASE WHEN COALESCE(f.logo_url, '') = '' AND COALESCE(f.cover_url, '') = '' THEN 1 ELSE 0 END AS missing_image,
-        CASE WHEN COALESCE(f.phone, '') = '' AND COALESCE(fp.whatsapp, '') = '' THEN 1 ELSE 0 END AS missing_contact,
-        CASE WHEN COALESCE(f.full_desc, f.short_desc, '') = '' THEN 1 ELSE 0 END AS missing_description,
-        CASE WHEN COALESCE(f.category, '') = '' THEN 1 ELSE 0 END AS missing_category,
+        f.phone,
+        f.office_address,
+        f.logo_url,
+        f.cover_url,
         f.short_desc,
-        f.full_desc
+        f.full_desc,
+        fp.email_contact,
+        fp.whatsapp,
+        fp.website_url,
+        fp.instagram_url,
+        fp.facebook_url,
+        fp.tiktok_url,
+        fp.youtube_url,
+        fp.linkedin_url
       FROM franchise_site_publications p
       JOIN franchises f ON f.id = p.franchise_id
       LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
       WHERE p.site_id = ?
       ORDER BY
-        (missing_image + missing_contact + missing_description + missing_category) DESC,
         f.updated_at DESC
       LIMIT 80`,
     )
@@ -63,21 +117,16 @@ export async function getDataQuality(db) {
 
   return (result.results || [])
     .map((row) => {
-      const likelyAllCaps = isLikelyAllCapsDescription(row.full_desc || row.short_desc || "");
-      const warnings = [
-        row.missing_image ? "missing_image" : "",
-        row.missing_contact ? "missing_contact" : "",
-        row.missing_description ? "missing_description" : "",
-        row.missing_category ? "missing_category" : "",
-        likelyAllCaps ? "likely_all_caps" : "",
-      ].filter(Boolean);
+      const checks = computeQualityChecks(row);
+      const warnings = checks.map((check) => check.check_type);
       return {
         ...row,
-        likely_all_caps: likelyAllCaps ? 1 : 0,
+        likely_all_caps: warnings.includes("likely_all_caps") ? 1 : 0,
         full_desc: undefined,
         short_desc: undefined,
         public_url: `/peluang-usaha/${row.slug}`,
         warnings,
+        messages: checks.map((check) => check.message),
       };
     })
     .sort((left, right) => {
@@ -201,15 +250,9 @@ export async function getEditableListings(db) {
   const result = await db
     .prepare(
       `SELECT
-        f.id,
+        f.*,
         p.slug,
-        f.brand_name,
-        f.category,
-        f.status,
-        f.verification_tier,
-        f.phone,
-        f.office_address,
-        f.updated_at
+        p.publication_status
       FROM franchise_site_publications p
       JOIN franchises f ON f.id = p.franchise_id
       WHERE p.site_id = ?
@@ -337,7 +380,7 @@ export async function getLeadSummary(db) {
 }
 
 export async function getSystemHealth(db) {
-  const [latestMigration, recentRebuild] = await Promise.all([
+  const [latestMigration, recentRebuild, qualityOpen] = await Promise.all([
     safeFirst(db, "SELECT name, applied_at FROM d1_migrations ORDER BY applied_at DESC LIMIT 1"),
     safeFirst(
       db,
@@ -348,12 +391,22 @@ export async function getSystemHealth(db) {
        LIMIT 1`,
       [SITE_ID],
     ),
+    safeFirst(
+      db,
+      `SELECT
+        COUNT(*) AS open_checks,
+        MAX(last_seen_at) AS last_seen_at
+       FROM franchise_quality_checks
+       WHERE site_id = ? AND status = 'open'`,
+      [SITE_ID],
+    ),
   ]);
 
   return {
     d1: { ok: true, latest_migration: latestMigration || null },
     clerk: { ok: true, note: "Dashboard session verified through Clerk before D1 queries run." },
     publish: { recent_rebuild: recentRebuild || null },
+    quality: qualityOpen || null,
   };
 }
 
