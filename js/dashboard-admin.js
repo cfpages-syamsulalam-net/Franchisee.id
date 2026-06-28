@@ -173,11 +173,29 @@
         '<td><a href="' + escapeAttr(row.public_url) + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a><br><span class="dash-badge">' + escapeHtml(row.category || "Tanpa kategori") + '</span></td>' +
         '<td>' + (contact ? escapeHtml(contact.label + ": " + contact.display) : '<span class="dash-badge bad">Tidak ada WA</span>') + '</td>' +
         '<td>' + (row.last_outreach_at ? 'Terakhir: ' + escapeHtml(row.last_outreach_at) : '<span class="dash-badge good">Belum pernah</span>') + '</td>' +
-        '<td><div class="dash-actions">' +
-          (waUrl ? '<a class="dash-button" href="' + escapeAttr(waUrl) + '" target="_blank" rel="noopener">Buka WA</a>' : '') +
-          (waUrl ? '<button class="dash-button secondary" type="button" data-log-outreach data-franchise-id="' + escapeAttr(row.id) + '" data-contact="' + escapeAttr(contact.display) + '" data-message="' + escapeAttr(message) + '">Catat terkirim</button>' : '') +
-          '<a class="dash-button secondary" href="' + escapeAttr(row.claim_url) + '" target="_blank" rel="noopener">Claim</a>' +
-        '</div></td>' +
+        '<td>' + renderActionToolbar([
+          waUrl ? renderActionLink({
+            href: waUrl,
+            label: "Buka WhatsApp",
+            icon: "fab fa-whatsapp",
+            tone: "success"
+          }) : "",
+          waUrl ? renderActionButton({
+            label: "Catat outreach terkirim",
+            icon: "fas fa-check",
+            attrs: {
+              "data-log-outreach": "",
+              "data-franchise-id": row.id,
+              "data-contact": contact.display,
+              "data-message": message
+            }
+          }) : "",
+          renderActionLink({
+            href: row.claim_url,
+            label: "Buka halaman claim",
+            icon: "fas fa-link"
+          })
+        ], "Aksi outreach") + '</td>' +
       '</tr>';
     }).join("");
 
@@ -198,7 +216,18 @@
         '<td><a href="' + escapeAttr(row.public_url) + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a></td>' +
         '<td>' + escapeHtml(row.category || "-") + '</td>' +
         '<td>' + row.warnings.map(function (warning) { return '<span class="dash-badge">' + escapeHtml(warning) + '</span>'; }).join(" ") + '</td>' +
-        '<td><button class="dash-button secondary" type="button" data-quick-edit data-franchise-id="' + escapeAttr(row.id) + '" data-brand="' + escapeAttr(row.brand_name) + '" data-warnings="' + escapeAttr(row.warnings.join(",")) + '">Suggest</button></td>' +
+        '<td>' + renderActionToolbar([
+          renderActionButton({
+            label: "Buat saran edit",
+            icon: "fas fa-pen",
+            attrs: {
+              "data-quick-edit": "",
+              "data-franchise-id": row.id,
+              "data-brand": row.brand_name,
+              "data-warnings": row.warnings.join(",")
+            }
+          })
+        ], "Aksi data quality") + '</td>' +
       '</tr>';
     }).join("");
 
@@ -216,7 +245,28 @@
     }
     claimRows.innerHTML = rows.map(function (row) {
       var actions = currentUserIsAdmin
-        ? '<div class="dash-actions"><button class="dash-button" type="button" data-review-claim data-claim-id="' + escapeAttr(row.id) + '" data-decision="approve">Approve</button><button class="dash-button secondary" type="button" data-review-claim data-claim-id="' + escapeAttr(row.id) + '" data-decision="reject">Reject</button></div>'
+        ? renderActionToolbar([
+          renderActionButton({
+            label: "Setujui claim",
+            icon: "fas fa-check",
+            tone: "success",
+            attrs: {
+              "data-review-claim": "",
+              "data-claim-id": row.id,
+              "data-decision": "approve"
+            }
+          }),
+          renderActionButton({
+            label: "Tolak claim",
+            icon: "fas fa-times",
+            tone: "danger",
+            attrs: {
+              "data-review-claim": "",
+              "data-claim-id": row.id,
+              "data-decision": "reject"
+            }
+          })
+        ], "Review claim")
         : '<span>Login admin dibutuhkan untuk approve/reject.</span>';
       return '<li><strong>' + escapeHtml(row.brand_name) + '</strong><span>' + escapeHtml(row.claimant_email || row.claimant_name || "Tanpa claimant") + ' - ' + escapeHtml(row.created_at) + '</span>' + actions + '</li>';
     }).join("");
@@ -293,7 +343,28 @@
 
     editRows.innerHTML = pending.map(function (row) {
       var actions = currentUserIsAdmin
-        ? '<div class="dash-actions"><button class="dash-button" type="button" data-review-edit data-suggestion-id="' + escapeAttr(row.id) + '" data-decision="approve">Approve</button><button class="dash-button secondary" type="button" data-review-edit data-suggestion-id="' + escapeAttr(row.id) + '" data-decision="reject">Reject</button></div>'
+        ? renderActionToolbar([
+          renderActionButton({
+            label: "Setujui edit",
+            icon: "fas fa-check",
+            tone: "success",
+            attrs: {
+              "data-review-edit": "",
+              "data-suggestion-id": row.id,
+              "data-decision": "approve"
+            }
+          }),
+          renderActionButton({
+            label: "Tolak edit",
+            icon: "fas fa-times",
+            tone: "danger",
+            attrs: {
+              "data-review-edit": "",
+              "data-suggestion-id": row.id,
+              "data-decision": "reject"
+            }
+          })
+        ], "Review edit")
         : '<span class="dash-muted">Menunggu admin.</span>';
       return '<tr>' +
         '<td><a href="' + escapeAttr(row.public_url || "#") + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a><br><span class="dash-muted">' + escapeHtml(row.suggested_by_email || row.suggested_by_name || "staff") + '</span></td>' +
@@ -520,7 +591,7 @@
   async function refreshQualityChecks() {
     try {
       refreshQualityButton.disabled = true;
-      refreshQualityButton.innerHTML = '<i class="fas fa-sync-alt" aria-hidden="true"></i> Refreshing...';
+      refreshQualityButton.classList.add("is-busy");
       var result = await postDashboardAction({ action: "refresh_quality_checks" });
       setStatus("Quality checks diperbarui: " + Number(result.result && result.result.scanned || 0).toLocaleString("id-ID") + " listing dicek.", false);
       await reloadDashboard();
@@ -528,14 +599,14 @@
       setStatus(error.message, true);
     } finally {
       refreshQualityButton.disabled = false;
-      refreshQualityButton.innerHTML = '<i class="fas fa-sync-alt" aria-hidden="true"></i> Refresh checks';
+      refreshQualityButton.classList.remove("is-busy");
     }
   }
 
   async function logOutreach(link) {
     try {
       link.disabled = true;
-      link.textContent = "Mencatat...";
+      link.classList.add("is-busy");
       var headers = await window.FranchiseAuth.getAuthHeaders();
       var response = await fetch("/dashboard-data", {
         method: "POST",
@@ -550,10 +621,11 @@
       });
       var result = await response.json().catch(function () { return {}; });
       if (!response.ok || !result.success) throw new Error(result.message || result.error || "Gagal mencatat outreach.");
-      link.textContent = "Tercatat";
+      link.classList.remove("is-busy");
+      link.classList.add("is-done");
     } catch (error) {
       link.disabled = false;
-      link.textContent = "Catat terkirim";
+      link.classList.remove("is-busy");
       console.warn("Outreach log failed", error);
     }
   }
@@ -726,6 +798,47 @@
     textarea.select();
     document.execCommand("copy");
     textarea.remove();
+  }
+
+  function renderActionToolbar(items, label) {
+    var html = (items || []).filter(Boolean).join("");
+    if (!html) return "";
+    return '<div class="dash-actions dash-toolbar" role="toolbar" aria-label="' + escapeAttr(label || "Aksi") + '">' + html + '</div>';
+  }
+
+  function renderActionButton(config) {
+    config = config || {};
+    var attrs = Object.assign({}, config.attrs || {}, {
+      type: "button",
+      "aria-label": config.label || "Aksi",
+      "data-fr-tooltip": config.label || "Aksi"
+    });
+    return '<button class="' + escapeAttr(actionClass(config.tone)) + '"' + renderAttrs(attrs) + '><i class="' + escapeAttr(config.icon || "fas fa-circle") + '" aria-hidden="true"></i></button>';
+  }
+
+  function renderActionLink(config) {
+    config = config || {};
+    var attrs = Object.assign({}, config.attrs || {}, {
+      href: config.href || "#",
+      target: "_blank",
+      rel: "noopener",
+      "aria-label": config.label || "Buka",
+      "data-fr-tooltip": config.label || "Buka"
+    });
+    return '<a class="' + escapeAttr(actionClass(config.tone)) + '"' + renderAttrs(attrs) + '><i class="' + escapeAttr(config.icon || "fas fa-external-link-alt") + '" aria-hidden="true"></i></a>';
+  }
+
+  function actionClass(tone) {
+    return ["dash-icon-button", "dash-action-button", tone ? "is-" + tone : ""].filter(Boolean).join(" ");
+  }
+
+  function renderAttrs(attrs) {
+    return Object.keys(attrs || {}).map(function (name) {
+      var value = attrs[name];
+      if (value === false || value === null || value === undefined) return "";
+      if (value === true || value === "") return " " + name;
+      return " " + name + '="' + escapeAttr(value) + '"';
+    }).join("");
   }
 
   function escapeHtml(value) {

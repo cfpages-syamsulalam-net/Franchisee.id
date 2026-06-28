@@ -42,7 +42,9 @@ export const prerender = true;
                 <button class="dash-icon-button" type="button" data-auth-debug-copy aria-label="Salin debug login" data-fr-tooltip="Salin debug login">
                   <i class="fas fa-copy" aria-hidden="true"></i>
                 </button>
-                <button class="dash-button secondary" type="button" data-auth-debug-refresh>Refresh</button>
+                <button class="dash-icon-button dash-action-button" type="button" data-auth-debug-refresh aria-label="Refresh debug login" data-fr-tooltip="Refresh debug login">
+                  <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                </button>
               </div>
             </div>
             <div class="dash-debug-body">
@@ -119,10 +121,9 @@ export const prerender = true;
                     <p>Prioritas listing yang perlu dibersihkan.</p>
                   </div>
                 </div>
-                <div class="dash-actions">
-                  <button class="dash-button secondary" type="button" data-refresh-quality>
+                <div class="dash-actions dash-toolbar" role="toolbar" aria-label="Aksi data quality">
+                  <button class="dash-icon-button dash-action-button" type="button" data-refresh-quality aria-label="Refresh quality checks" data-fr-tooltip="Refresh quality checks">
                     <i class="fas fa-sync-alt" aria-hidden="true"></i>
-                    Refresh checks
                   </button>
                 </div>
               </div>
@@ -174,17 +175,15 @@ export const prerender = true;
                         <strong>Perubahan field</strong>
                         <span>Pilih field, isi nilai baru, lalu kirim untuk review.</span>
                       </div>
-                      <button class="dash-button secondary" type="button" data-add-edit-field>
+                      <button class="dash-icon-button dash-action-button" type="button" data-add-edit-field aria-label="Tambah field" data-fr-tooltip="Tambah field">
                         <i class="fas fa-plus" aria-hidden="true"></i>
-                        Tambah field
                       </button>
                     </div>
                     <div class="dash-field-list" data-edit-field-list></div>
                   </div>
-                  <div class="dash-form-wide dash-actions">
-                    <button class="dash-button" type="submit">
+                  <div class="dash-form-wide dash-actions dash-toolbar" role="toolbar" aria-label="Aksi edit suggestion">
+                    <button class="dash-icon-button dash-action-button is-primary" type="submit" aria-label="Kirim saran edit" data-fr-tooltip="Kirim saran edit">
                       <i class="fas fa-paper-plane" aria-hidden="true"></i>
-                      Submit Suggestion
                     </button>
                     <span class="dash-muted" data-edit-help>Perubahan akan masuk review admin kecuali akun ini punya izin approve langsung.</span>
                   </div>

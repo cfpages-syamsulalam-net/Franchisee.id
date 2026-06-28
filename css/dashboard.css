@@ -2,6 +2,7 @@
   --dash-ink: #171717;
   --dash-muted: #646464;
   --dash-line: #e5e5e5;
+  --dash-border: #e5e5e5;
   --dash-soft: #f7f7f7;
   --dash-accent: #f0ca00;
   --dash-accent-dark: #5d4500;
@@ -217,6 +218,16 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+.dash-toolbar {
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+.dash-table th:last-child,
+.dash-table td:last-child {
+  width: 1%;
+  white-space: nowrap;
 }
 .dash-form {
   display: grid;
@@ -459,15 +470,52 @@ body {
   background: #f7f7f7;
   color: #111111;
   cursor: pointer;
+  padding: 0;
+  text-decoration: none !important;
+  flex: 0 0 auto;
 }
 .dash-icon-button:hover,
 .dash-icon-button:focus {
   border-color: #151515;
   background: #ffffff;
 }
+.dash-icon-button:disabled,
+.dash-icon-button[aria-disabled="true"] {
+  cursor: wait;
+  opacity: 0.68;
+}
 .dash-icon-button i {
   font-size: 17px;
   line-height: 1;
+}
+.dash-action-button.is-primary {
+  border-color: #151515;
+  background: #151515;
+  color: #ffffff;
+}
+.dash-action-button.is-success {
+  border-color: #cde8da;
+  background: #effaf4;
+  color: var(--dash-good);
+}
+.dash-action-button.is-danger {
+  border-color: #f0c6c6;
+  background: #fff4f4;
+  color: var(--dash-bad);
+}
+.dash-action-button.is-done {
+  border-color: #0f6b3d;
+  background: #0f6b3d;
+  color: #ffffff;
+  cursor: default;
+}
+.dash-action-button.is-busy i {
+  animation: dash-spin 0.85s linear infinite;
+}
+@keyframes dash-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .dash-debug-body {
   display: grid;

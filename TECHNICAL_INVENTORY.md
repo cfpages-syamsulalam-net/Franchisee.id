@@ -184,6 +184,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, and Operations, including arrow/Home/End keyboard navigation.
 - `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics, outreach, quality, claims, publish, editable listings, shared editable field definitions, edit suggestions, leads, and health renderers.
 - `renderOutreach(rows, summary)` / `logOutreach(link)`: Renders staff-personal WhatsApp links, shows contact-ready/published-unclaimed subset counts from `outreach_summary`, and records manually confirmed outreach through `/dashboard-data`.
+- `renderActionToolbar()` / `renderActionButton()` / `renderActionLink()`: Shared dashboard action renderer for icon-only toolbar controls with `aria-label` and `data-fr-tooltip` instead of visible button text.
 - `renderQuality()` / `seedEditSuggestion(button)`: Shows data-quality warnings and seeds guided field edit suggestions.
 - `addEditFieldRow(fieldName, value)` / `collectEditChanges()`: Renders and collects guided listing edit rows from server-provided editable field definitions instead of exposing a JSON textarea.
 - `refreshQualityChecks()`: Calls the protected dashboard refresh action to persist current quality checks and normalized contacts.
@@ -319,7 +320,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads `js/auth-clerk-debug.js`, `js/auth-clerk.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
-- Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, and debug panel shell. Runtime data rendering and actions are owned by `js/dashboard-admin.js`; dashboard styling is owned by `css/dashboard.css`.
+- Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by `js/dashboard-admin.js`; dashboard styling is owned by `css/dashboard.css`.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.

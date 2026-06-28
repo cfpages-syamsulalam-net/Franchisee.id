@@ -4,6 +4,11 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-28 20:51 (Asia/Jakarta)
+### Changed
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, and `css/dashboard.css`: Converted dashboard action controls to icon-only toolbar buttons/links with shared custom tooltips, fixed-size button styling, and icon-only loading/done states.
+- `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented the dashboard action toolbar behavior.
+
 ## 2026-06-28 18:55 (Asia/Jakarta)
 ### Added
 - `migrations/0008_analytics_telemetry_multisite.sql`: Added `franchise_product_events` for privacy-safe listing analytics and `operation_events` for operations telemetry.
