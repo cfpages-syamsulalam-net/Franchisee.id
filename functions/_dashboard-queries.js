@@ -155,6 +155,59 @@ export async function getPublishState(db) {
   };
 }
 
+export async function getPublicationControls(db) {
+  const [sites, rows] = await Promise.all([
+    safeAll(
+      db,
+      `SELECT id, domain, name, site_type, is_active
+       FROM network_sites
+       ORDER BY is_active DESC, domain ASC`,
+    ),
+    safeAll(
+      db,
+      `SELECT
+        f.id AS franchise_id,
+        f.brand_name,
+        f.owner_user_id,
+        p.id AS publication_id,
+        p.site_id,
+        p.slug,
+        p.canonical_url,
+        p.publication_status,
+        p.is_primary,
+        p.updated_at
+       FROM franchise_site_publications p
+       JOIN franchises f ON f.id = p.franchise_id
+       ORDER BY f.updated_at DESC, f.brand_name ASC, p.site_id ASC
+       LIMIT 300`,
+    ),
+  ]);
+
+  const grouped = new Map();
+  for (const row of rows || []) {
+    const item = grouped.get(row.franchise_id) || {
+      franchise_id: row.franchise_id,
+      brand_name: row.brand_name,
+      publications: [],
+    };
+    item.publications.push({
+      publication_id: row.publication_id,
+      site_id: row.site_id,
+      slug: row.slug,
+      canonical_url: row.canonical_url,
+      publication_status: row.publication_status,
+      is_primary: row.is_primary,
+      updated_at: row.updated_at,
+    });
+    grouped.set(row.franchise_id, item);
+  }
+
+  return {
+    sites: sites || [],
+    listings: Array.from(grouped.values()).slice(0, 80),
+  };
+}
+
 export async function getUnclaimedOutreachQueue(db) {
   const result = await db
     .prepare(
@@ -380,7 +433,7 @@ export async function getLeadSummary(db) {
 }
 
 export async function getSystemHealth(db) {
-  const [latestMigration, recentRebuild, qualityOpen] = await Promise.all([
+  const [latestMigration, recentRebuild, qualityOpen, operationSummary, recentOperations, recentAudit, webhookSummary, analyticsSummary] = await Promise.all([
     safeFirst(db, "SELECT name, applied_at FROM d1_migrations ORDER BY applied_at DESC LIMIT 1"),
     safeFirst(
       db,
@@ -400,6 +453,50 @@ export async function getSystemHealth(db) {
        WHERE site_id = ? AND status = 'open'`,
       [SITE_ID],
     ),
+    safeAll(
+      db,
+      `SELECT severity, COUNT(*) AS count
+       FROM operation_events
+       WHERE source_site_id = ? AND created_at >= datetime('now', '-24 hours')
+       GROUP BY severity`,
+      [SITE_ID],
+    ),
+    safeAll(
+      db,
+      `SELECT event_type, severity, route, message, created_at
+       FROM operation_events
+       WHERE source_site_id = ?
+       ORDER BY created_at DESC
+       LIMIT 8`,
+      [SITE_ID],
+    ),
+    safeAll(
+      db,
+      `SELECT action, entity_type, entity_id, created_at
+       FROM audit_events
+       WHERE source_site_id = ?
+       ORDER BY created_at DESC
+       LIMIT 8`,
+      [SITE_ID],
+    ),
+    safeAll(
+      db,
+      `SELECT event_type, severity, COUNT(*) AS count, MAX(created_at) AS latest_at
+       FROM operation_events
+       WHERE source_site_id = ?
+         AND event_type LIKE 'clerk.webhook.%'
+       GROUP BY event_type, severity
+       ORDER BY latest_at DESC`,
+      [SITE_ID],
+    ),
+    safeAll(
+      db,
+      `SELECT event_type, COUNT(*) AS count
+       FROM franchise_product_events
+       WHERE site_id = ? AND created_at >= datetime('now', '-30 days')
+       GROUP BY event_type`,
+      [SITE_ID],
+    ),
   ]);
 
   return {
@@ -407,6 +504,15 @@ export async function getSystemHealth(db) {
     clerk: { ok: true, note: "Dashboard session verified through Clerk before D1 queries run." },
     publish: { recent_rebuild: recentRebuild || null },
     quality: qualityOpen || null,
+    operations: {
+      last_24h_by_severity: normalizeGroupedCounts(Array.isArray(operationSummary) ? operationSummary : [], "severity"),
+      recent: Array.isArray(recentOperations) ? recentOperations : [],
+      recent_audit: Array.isArray(recentAudit) ? recentAudit : [],
+    },
+    webhooks: Array.isArray(webhookSummary) ? webhookSummary : [],
+    analytics: {
+      last_30d_by_type: normalizeGroupedCounts(Array.isArray(analyticsSummary) ? analyticsSummary : [], "event_type"),
+    },
   };
 }
 
@@ -444,5 +550,15 @@ async function safeFirst(db, sql, bindings = []) {
     return await (bindings.length ? statement.bind(...bindings).first() : statement.first());
   } catch (error) {
     return { ok: false, error: error.message };
+  }
+}
+
+async function safeAll(db, sql, bindings = []) {
+  try {
+    const statement = db.prepare(sql);
+    const result = await (bindings.length ? statement.bind(...bindings).all() : statement.all());
+    return result.results || [];
+  } catch (_error) {
+    return [];
   }
 }

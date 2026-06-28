@@ -257,6 +257,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, `css/profile.css`, and `js/profile-page.js`.
 - Anonymous protection is client-side; all profile data and writes are protected again by `/profile-data`.
 
+### File: `scripts/shared-csv.cjs`
+*Shared quote-aware CSV parser for legacy Node builders.*
+- `parseCsvRows(content)` / `parseCsvObjects(content)`: Handles quoted commas, escaped quotes, BOMs, and newlines inside quoted fields.
+- `loadCsvObjects(filePath, options)`: Shared CSV fallback loader now used by `js/build-listing.js` and `js/build-sitemap.js`.
+
 ### File: `src/lib/franchise-static.ts`
 *Astro D1 snapshot validator and template renderer.*
 - `FranchiseStaticRowSchema`: Re-export of the shared D1 row schema for rows in `json/d1-franchise-static-data.json`.
@@ -275,7 +280,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `formatIndonesianPhone(normalized, type)`: Formats mobile numbers in 4-digit groups and landlines with area-code grouping.
 - `generatePhoneContactRow(contact, row, isUnclaimed)`: Renders parsed phone contacts as styled `tel:` rows and adds a WhatsApp claim-notification link for unclaimed mobile/WhatsApp-capable numbers.
 - `getRecommendedRows(rows)`: Sorts directory rows by verification/status and listing completeness; public access is now `/peluang-usaha?sort=rekomendasi`.
-- `getPopularRows(rows)`: Sorts directory rows by a deterministic popularity proxy until real D1 analytics/lead/payment metrics exist.
+- `getPopularRows(rows)`: Sorts directory rows by the current deterministic popularity proxy; dynamic product-event signals are currently used in profile recommendations and dashboard analytics.
 - `getAlphabeticalRows(rows)`: Sorts directory rows alphabetically by brand name; public access is now `/peluang-usaha?sort=abjad`.
 - `getCategoryRouteEntries(rows)`: Legacy helper for category aliases; do not add new indexable category archive routes without changing the canonical route policy.
 - Helper functions mirror the D1 bridge mapping: HTML escaping, JSON-LD serialization, rupiah formatting, URL normalization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, social/contact links, Indonesian phone parsing/display normalization, all-caps description presentation normalization, sticky claim CTA, category summaries, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
@@ -286,6 +291,16 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization script.
 - `generateCssPlaceholder(label, className)`: Renders the CSS-only missing-logo placeholder used by directory cards, category cards, and detail pages.
 - Extracted from `src/lib/franchise-static.ts` on 2026-06-22 to keep the main renderer below the highest-risk long-file threshold.
+
+### File: `js/product-events.js`
+*Public privacy-safe listing interaction tracker.*
+- Records detail page views and contact clicks through `/product-event`.
+- Exposes `window.FranchiseProductEvents.record()` so `js/opportunity-save.js` can record successful save/remove actions.
+
+### File: `js/profile-page.js`
+*Protected profile page client.*
+- Renders owner-facing listing distribution chips from `owned_franchises[].publication_distribution`.
+- Franchisee opportunity cards can show recommendations whose server-side score includes recent product-event counts when the analytics table exists.
 
 ### File: `src/pages/peluang-usaha/index.astro`
 *Astro static listing page.*
@@ -375,7 +390,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/clerk-webhook.js`
 *Verified Clerk lifecycle webhook for Clerk-to-D1 sync.*
-- `onRequestPost()`: Requires `CLERK_WEBHOOK_SIGNING_SECRET`, verifies the Svix-signed Clerk webhook, upserts D1 users for `user.created` / `user.updated`, marks users deleted for `user.deleted`, and ignores unrelated event types.
+- `onRequestPost()`: Requires `CLERK_WEBHOOK_SIGNING_SECRET`, verifies the Svix-signed Clerk webhook, upserts D1 users for `user.created` / `user.updated`, marks users deleted for `user.deleted`, records operation telemetry for webhook success/failure, and ignores unrelated event types.
 
 ### File: `functions/user-role.js`
 *Admin-only D1 role mutation endpoint with D1-to-Clerk metadata sync.*
@@ -387,13 +402,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach queue, outreach summary, quality, review, editable field definitions, lead, publish, and health data from `_dashboard-queries.js`.
-- `onRequestPost()`: Validates the discriminated action payload from `_dashboard-schemas.js`, then routes to `_dashboard-actions.js`.
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach queue, outreach summary, quality, review, editable field definitions, lead, publish, publication controls, and health/telemetry data from `_dashboard-queries.js`.
+- `onRequestPost()`: Validates the discriminated action payload from `_dashboard-schemas.js`, then routes to `_dashboard-actions.js`; failures are logged to operation telemetry when possible.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, `review_claim`, and `refresh_quality_checks`.
+- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, `review_claim`, `refresh_quality_checks`, and `update_publication`.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
@@ -405,7 +420,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getUnclaimedOutreachQueue(db)`: Reads up to 250 published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
 - `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
 - `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display.
-- `getPublishState(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab.
+- `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, and product-event counts.
 
 ### File: `functions/_dashboard-actions.js`
 *Protected dashboard write workflows.*
@@ -414,6 +429,21 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs write field-by-field to whitelisted `franchises` columns, write audit events, and queue a static rebuild through `siteRebuildStatements()`.
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
 - `handleRefreshQualityChecks(db, auth)`: Refreshes normalized contacts and persistent quality checks, then returns scanned/contact/open-check counts.
+- `handleUpdatePublication(db, auth, data)`: Admin-only publication status update for one listing/site pair; writes audit events and queues a static rebuild for the affected site.
+
+### File: `functions/_analytics.js`
+*Privacy-safe product-event helper.*
+- `ProductEventSchema`: Validates coarse product events: listing view, save, unsave, inquiry, claim, and contact click.
+- `recordProductEvent(db, input, options)`: Inserts a product event without IP/user-agent data and silently returns `table_missing` when the migration is not applied yet.
+- `loadProductEventCounts(db, franchiseIds, options)` / `analyticsScore(counts)`: Reads recent aggregate counts for recommendation scoring.
+
+### File: `functions/_telemetry.js`
+*Operations telemetry helper.*
+- `logOperationEvent(db, input)`: Writes API/webhook/upload failures to `operation_events` and safely no-ops before the telemetry migration exists.
+
+### File: `functions/product-event.js`
+*Public product-event endpoint.*
+- `onRequestPost()`: Accepts coarse listing interaction events from public pages and returns success even when analytics storage is unavailable.
 
 ### File: `functions/_shared-schemas.js`
 *Shared validation/schema constants for Pages Functions.*
@@ -443,7 +473,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/form-submit.js` (v2.5)
 *Clerk-authenticated D1-backed backend processing for all current form submissions.*
-- `onRequestPost()`: Main entry point; requires `env.franchise_db`, validates base payload with Zod, requires Clerk/D1 role authorization, routes franchisee/franchisor/claim/test actions, and returns the legacy success/error JSON envelope.
+- `onRequestPost()`: Main entry point; requires `env.franchise_db`, validates base payload with Zod, requires Clerk/D1 role authorization, routes franchisee/franchisor/claim/test actions, records operation telemetry for server failures, and returns the legacy success/error JSON envelope.
 - `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Imported shared Zod runtime validation for form payloads before D1 writes.
 - `handleFranchiseeSubmit(db, data, actor)`: Checks duplicates and writes `franchisee_profiles.user_id`, `legacy_source_rows`, and actor-aware `audit_events`.
 - `handleFranchisorSubmit(db, data, isClaim, actor)`: Checks duplicates and writes or updates franchisor/listing/package/publication/claim/audit D1 records with `user_id`, `owner_user_id`, `claimant_user_id`, franchisor profile contact/social URLs, and static rebuild queue requests for `site_franchisee_id`.

@@ -6,7 +6,9 @@ import {
   syncClerkMetadataForD1User,
   syncClerkMetadataFromD1,
 } from "./_clerk-auth.js";
+import { analyticsScore, loadProductEventCounts, recordProductEvent } from "./_analytics.js";
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
+import { logOperationEvent } from "./_telemetry.js";
 
 const OWNER_LISTING_EDIT_INTERVAL_HOURS = 6;
 const RECOMMENDATION_LIMIT = 6;
@@ -126,6 +128,12 @@ export async function onRequestGet({ request, env }) {
   } catch (error) {
     const authResponse = authErrorResponse(error);
     if (authResponse) return authResponse;
+    await logOperationEvent(env.franchise_db, {
+      eventType: "api.profile.get.failed",
+      severity: "error",
+      route: "/profile-data",
+      message: error.message,
+    });
     return jsonResponse({ success: false, message: error.message || "Profil gagal dimuat." }, { status: 500 });
   }
 }
@@ -170,6 +178,12 @@ export async function onRequestPost({ request, env }) {
   } catch (error) {
     const authResponse = authErrorResponse(error);
     if (authResponse) return authResponse;
+    await logOperationEvent(env.franchise_db, {
+      eventType: "api.profile.post.failed",
+      severity: "error",
+      route: "/profile-data",
+      message: error.message,
+    });
     return jsonResponse({ success: false, message: error.message || "Perubahan profil gagal disimpan." }, { status: 500 });
   }
 }
@@ -254,11 +268,13 @@ async function loadProfileData(db, actor) {
     .bind(actor.id)
     .all();
 
+  const ownedRows = owned.results || [];
+  const publicationDistribution = await loadOwnedPublicationDistribution(db, ownedRows.map((row) => row.id));
   const inquiryHistory = await loadFranchiseeInquiryHistory(db, actor.id, franchiseeProfile?.id || null);
   const savedOpportunities = await loadSavedOpportunities(db, actor.id);
   const franchisorLeads = await loadFranchisorLeadInbox(db, actor.id, franchisorProfile?.id || null);
   const recommendations = franchiseeProfile
-    ? await loadFranchiseeRecommendations(db, franchiseeProfile, new Set((owned.results || []).map((row) => row.id)))
+    ? await loadFranchiseeRecommendations(db, franchiseeProfile, new Set(ownedRows.map((row) => row.id)))
     : [];
 
   const roles = (actor.roles || []).map((role) => role.role).filter(Boolean);
@@ -280,8 +296,9 @@ async function loadProfileData(db, actor) {
     },
     franchisee_profile: franchiseeProfile || null,
     franchisor_profile: franchisorProfile || null,
-    owned_franchises: (owned.results || []).map((row) => ({
+    owned_franchises: ownedRows.map((row) => ({
       ...row,
+      publication_distribution: publicationDistribution.get(row.id) || [],
       edit_locked: Number(row.owner_edits_window || 0) > 0,
       edit_interval_hours: OWNER_LISTING_EDIT_INTERVAL_HOURS,
     })),
@@ -602,6 +619,12 @@ async function createFranchiseInquiry(db, actor, data) {
       ),
     auditStatement(db, "profile.franchisee.inquiry", "franchise_leads", leadId, { franchise_id: franchise.id, brand_name: franchise.brand_name }, actor.id),
   ]);
+  await recordProductEvent(db, {
+    franchise_id: franchise.id,
+    event_type: "inquiry",
+    surface: "profile",
+    metadata: { brand_name: franchise.brand_name },
+  }, { userId: actor.id });
 
   return jsonResponse({
     success: true,
@@ -634,6 +657,12 @@ async function saveFranchiseOpportunity(db, actor, data) {
         .bind(savedId, actor.id, franchise.id, SITE_FRANCHISEE_ID, textOrNull(data.note)),
       auditStatement(db, "profile.franchisee.save_opportunity", "franchises", franchise.id, { brand_name: franchise.brand_name }, actor.id),
     ]);
+    await recordProductEvent(db, {
+      franchise_id: franchise.id,
+      event_type: "save",
+      surface: "profile",
+      metadata: { brand_name: franchise.brand_name },
+    }, { userId: actor.id });
   } catch (error) {
     if (isMissingSavedTableError(error)) {
       return jsonResponse({ success: false, message: "Fitur simpan peluang belum siap. Silakan coba lagi nanti." }, { status: 503 });
@@ -674,6 +703,11 @@ async function removeFranchiseOpportunity(db, actor, data) {
         .bind(actor.id, data.franchise_id, SITE_FRANCHISEE_ID),
       auditStatement(db, "profile.franchisee.remove_opportunity", "franchises", data.franchise_id, {}, actor.id),
     ]);
+    await recordProductEvent(db, {
+      franchise_id: data.franchise_id,
+      event_type: "unsave",
+      surface: "profile",
+    }, { userId: actor.id });
   } catch (error) {
     if (isMissingSavedTableError(error)) {
       return jsonResponse({ success: false, message: "Fitur simpan peluang belum siap. Silakan coba lagi nanti." }, { status: 503 });
@@ -770,6 +804,7 @@ async function loadFranchiseeRecommendations(db, profile, ownedIds) {
     .all();
 
   const rows = result.results || [];
+  const eventCounts = await loadProductEventCounts(db, rows.map((row) => row.id));
   return rows
     .filter((row) => !ownedIds.has(row.id))
     .map((row) => {
@@ -794,11 +829,49 @@ async function loadFranchiseeRecommendations(db, profile, ownedIds) {
         budget_fit: budget.fit,
         budget_label: budget.label,
         reasons,
-        score: recommendationScore(row, budget, categoryMatch, reasons),
+        event_counts: eventCounts.get(row.id) || {},
+        score: recommendationScore(row, budget, categoryMatch, reasons, eventCounts.get(row.id) || {}),
       };
     })
     .sort((a, b) => b.score - a.score || String(a.brand_name || "").localeCompare(String(b.brand_name || "")))
     .slice(0, RECOMMENDATION_LIMIT);
+}
+
+async function loadOwnedPublicationDistribution(db, franchiseIds) {
+  const ids = Array.from(new Set((franchiseIds || []).filter(Boolean)));
+  if (!ids.length) return new Map();
+  const placeholders = ids.map(() => "?").join(",");
+  try {
+    const result = await db
+      .prepare(
+        `SELECT
+          p.franchise_id,
+          p.site_id,
+          p.slug,
+          p.canonical_url,
+          p.publication_status,
+          p.is_primary,
+          p.updated_at,
+          ns.domain,
+          ns.name,
+          ns.site_type
+         FROM franchise_site_publications p
+         LEFT JOIN network_sites ns ON ns.id = p.site_id
+         WHERE p.franchise_id IN (${placeholders})
+         ORDER BY p.is_primary DESC, ns.domain ASC`
+      )
+      .bind(...ids)
+      .all();
+    const byFranchise = new Map();
+    for (const row of result.results || []) {
+      const rows = byFranchise.get(row.franchise_id) || [];
+      rows.push(row);
+      byFranchise.set(row.franchise_id, rows);
+    }
+    return byFranchise;
+  } catch (_error) {
+    return new Map();
+  }
 }
 
 async function loadSavedOpportunities(db, userId) {
@@ -984,7 +1057,7 @@ function buildUpdate(table, patch, idColumn) {
   };
 }
 
-function recommendationScore(row, budget, categoryMatch, reasons) {
+function recommendationScore(row, budget, categoryMatch, reasons, eventCounts = {}) {
   let score = 0;
   if (categoryMatch) score += 50;
   if (budget.fit === "fit") score += 35;
@@ -994,6 +1067,7 @@ function recommendationScore(row, budget, categoryMatch, reasons) {
   if (row.verification_tier === "verified") score += 6;
   if (Number(row.estimated_bep_months || 0) > 0 && Number(row.estimated_bep_months) <= 24) score += 5;
   score += Math.min(reasons.length, 3);
+  score += Math.min(analyticsScore(eventCounts), 60);
   return score;
 }
 

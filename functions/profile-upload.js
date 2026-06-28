@@ -1,5 +1,6 @@
 import { authErrorResponse, requireD1User } from "./_clerk-auth.js";
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
+import { logOperationEvent } from "./_telemetry.js";
 
 const ASSET_TYPES = {
   logo: {
@@ -115,6 +116,12 @@ export async function onRequestPost({ request, env }) {
   } catch (error) {
     const authResponse = authErrorResponse(error);
     if (authResponse) return authResponse;
+    await logOperationEvent(env.franchise_db, {
+      eventType: "api.profile_upload.failed",
+      severity: "error",
+      route: "/profile-upload",
+      message: error.message,
+    });
     return jsonResponse({ success: false, message: error.message || "File belum bisa diunggah." }, { status: 500 });
   }
 }

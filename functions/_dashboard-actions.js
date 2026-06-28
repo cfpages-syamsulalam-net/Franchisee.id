@@ -240,4 +240,54 @@ export async function handleRefreshQualityChecks(db, auth) {
   return jsonResponse({ success: true, result });
 }
 
+export async function handleUpdatePublication(db, auth, data) {
+  assertAdmin(auth);
+  const publication = await db
+    .prepare(
+      `SELECT p.*, f.brand_name
+       FROM franchise_site_publications p
+       JOIN franchises f ON f.id = p.franchise_id
+       WHERE p.franchise_id = ? AND p.site_id = ?
+       LIMIT 1`
+    )
+    .bind(data.franchise_id, data.site_id)
+    .first();
+
+  if (!publication) return jsonResponse({ success: false, error: "PUBLICATION_NOT_FOUND" }, { status: 404 });
+
+  const statements = [
+    db
+      .prepare(
+        `UPDATE franchise_site_publications
+         SET publication_status = ?,
+             first_published_at = CASE WHEN ? = 'published' AND first_published_at IS NULL THEN CURRENT_TIMESTAMP ELSE first_published_at END,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE franchise_id = ? AND site_id = ?`
+      )
+      .bind(data.publication_status, data.publication_status, data.franchise_id, data.site_id),
+    auditStatement(db, "dashboard.publication.update", "franchise_site_publications", publication.id, {
+      franchise_id: data.franchise_id,
+      site_id: data.site_id,
+      from: publication.publication_status,
+      to: data.publication_status,
+    }, auth.id),
+  ];
+
+  statements.push(
+    ...siteRebuildStatements(db, {
+      siteId: data.site_id,
+      franchiseId: data.franchise_id,
+      reason: "dashboard_publication_update",
+      entityType: "franchise_site_publications",
+      entityId: publication.id,
+      actorUserId: auth.id,
+      source: "dashboard",
+      metadata: { from: publication.publication_status, to: data.publication_status, brand_name: publication.brand_name },
+    }),
+  );
+
+  await db.batch(statements);
+  return jsonResponse({ success: true, publication_status: data.publication_status });
+}
+
 export { AuthError };

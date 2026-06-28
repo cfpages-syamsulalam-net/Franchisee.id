@@ -438,6 +438,7 @@
         <i class="fas fa-list" aria-hidden="true"></i>
         <select data-franchise-select>${listings.map((item) => `<option value="${attr(item.id)}" ${item.id === selected.id ? "selected" : ""}>${escapeHtml(item.brand_name || item.slug || item.id)}</option>`).join("")}</select>
       </div>
+      ${publicationDistribution(selected)}
       <div class="fr-profile-media-grid">
         ${mediaUploadControl("Logo", "logo", selected.logo_url, "fa-image")}
         ${mediaUploadControl("Cover", "cover", selected.cover_url, "fa-panorama")}
@@ -468,6 +469,25 @@
           ${selected.slug ? `<a class="fr-profile-secondary" href="/peluang-usaha/${encodeURIComponent(selected.slug)}"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i> Lihat Halaman</a>` : ""}
         </div>
       </form>
+    `;
+  }
+
+  function publicationDistribution(listing) {
+    const rows = listing.publication_distribution || [];
+    if (!rows.length) return "";
+    return `
+      <section class="fr-profile-distribution">
+        <div class="fr-profile-section-head">
+          <h3><i class="fas fa-network-wired" aria-hidden="true"></i> Distribusi Listing</h3>
+        </div>
+        <div class="fr-profile-chip-row">
+          ${rows.map((row) => {
+            const status = row.publication_status || "draft";
+            const url = row.canonical_url || (row.slug ? `https://${row.domain || "franchisee.id"}/peluang-usaha/${row.slug}` : "");
+            return `<span class="fr-profile-distribution-chip is-${attr(status)}"><i class="fas ${status === "published" ? "fa-eye" : "fa-eye-slash"}" aria-hidden="true"></i> ${escapeHtml(row.domain || row.name || row.site_id)} · ${escapeHtml(status)}${url ? ` <a href="${attr(url)}" target="_blank" rel="noopener">Lihat</a>` : ""}</span>`;
+          }).join("")}
+        </div>
+      </section>
     `;
   }
 

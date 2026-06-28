@@ -48,12 +48,20 @@ const RefreshQualityChecksSchema = z.object({
   action: z.literal("refresh_quality_checks"),
 });
 
+const UpdatePublicationSchema = z.object({
+  action: z.literal("update_publication"),
+  franchise_id: z.string().trim().min(1),
+  site_id: z.string().trim().min(1),
+  publication_status: z.enum(["draft", "published", "hidden", "archived"]),
+});
+
 export const DashboardActionSchema = z.discriminatedUnion("action", [
   OutreachEventSchema,
   SuggestEditSchema,
   ReviewEditSuggestionSchema,
   ReviewClaimSchema,
   RefreshQualityChecksSchema,
+  UpdatePublicationSchema,
 ]);
 
 export function sanitizeChanges(changes) {

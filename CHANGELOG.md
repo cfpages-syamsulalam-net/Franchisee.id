@@ -4,6 +4,24 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-28 18:55 (Asia/Jakarta)
+### Added
+- `migrations/0008_analytics_telemetry_multisite.sql`: Added `franchise_product_events` for privacy-safe listing analytics and `operation_events` for operations telemetry.
+- `scripts/shared-csv.cjs`: Added a shared quote-aware CSV parser for legacy Node builders.
+- `functions/_analytics.js` and `functions/product-event.js`: Added product-event validation, recording, aggregate loading, scoring helpers, and a public coarse-event endpoint.
+- `functions/_telemetry.js`: Added operation telemetry logging helper.
+- `js/product-events.js`: Added public listing view/contact-click tracking and a shared client recording hook for successful save/remove events.
+
+### Changed
+- Remote Cloudflare: Applied `migrations/0008_analytics_telemetry_multisite.sql` to `franchise_db` and verified `franchise_product_events` plus `operation_events` exist.
+- `js/build-listing.js` and `js/build-sitemap.js`: Reused the shared CSV parser for local CSV fallbacks.
+- `functions/profile-data.js` and `js/profile-page.js`: Added owner-facing publication distribution status, successful save/inquiry product-event recording, and product-event-aware recommendation scoring.
+- `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, and `js/opportunity-save.js`: Loaded public product-event tracking and recorded successful save/remove interactions.
+- `peluang-usaha/*.html`, `peluang-usaha/index.html`, and `json/d1-generated-pages-manifest.json`: Regenerated during `pnpm run build` so public pages load the product-event client.
+- `functions/dashboard-data.js`, `functions/_dashboard-schemas.js`, `functions/_dashboard-queries.js`, `functions/_dashboard-actions.js`, `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, and `css/dashboard.css`: Added admin publication status controls, expanded health telemetry, product-event counts, webhook summaries, recent operation/audit visibility, and publication-status rebuild queueing.
+- `functions/clerk-webhook.js`, `functions/form-submit.js`, `functions/profile-upload.js`, and `functions/profile-data.js`: Added operation telemetry logging for key backend failure paths.
+- `SUGGESTION.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented suggestions 11-14 as implemented.
+
 ## 2026-06-28 17:58 (Asia/Jakarta)
 ### Added
 - `src/lib/shared-schemas.ts`: Added shared TypeScript Zod schemas and normalizers for CSV import rows, D1 static franchise rows, listing status/tier values, royalty basis, and HAKI status.

@@ -37,6 +37,9 @@
         return;
       }
       applySavedState(button, !wasSaved);
+      if (window.FranchiseProductEvents && typeof window.FranchiseProductEvents.record === "function") {
+        window.FranchiseProductEvents.record(franchiseId, wasSaved ? "unsave" : "save", "public_save");
+      }
       setActionMessage(button, { message: wasSaved ? "Dihapus dari tersimpan." : "Disimpan ke profil Anda." }, "", "success");
     } catch (error) {
       setActionMessage(button, { message: error.message || "Peluang belum bisa disimpan." }, "", "error");

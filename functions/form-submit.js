@@ -9,6 +9,7 @@ import {
   normalizeRoyaltyBasisValue,
 } from "./_shared-schemas.js";
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
+import { logOperationEvent } from "./_telemetry.js";
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -63,6 +64,12 @@ export async function onRequestPost({ request, env }) {
   } catch (err) {
     const authResponse = authErrorResponse(err);
     if (authResponse) return authResponse;
+    await logOperationEvent(env.franchise_db, {
+      eventType: "api.form_submit.failed",
+      severity: "error",
+      route: "/form-submit",
+      message: err.message,
+    });
 
     return jsonResponse(
       {

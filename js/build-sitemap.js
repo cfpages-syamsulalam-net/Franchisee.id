@@ -3,6 +3,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
+const { loadCsvObjects } = require('../scripts/shared-csv.cjs');
 
 const SITEMAP_PATH = path.join(__dirname, '../sitemap-complete.xml');
 const BASE_URL = 'https://franchisee.id';
@@ -20,17 +21,7 @@ function slugify(text) {
 }
 
 function loadFromCSV(filePath) {
-    if (!fs.existsSync(filePath)) return [];
-    const content = fs.readFileSync(filePath, 'utf8');
-    const lines = content.split('\n').filter(l => l.trim());
-    if (lines.length < 2) return [];
-    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
-    return lines.slice(1).map(line => {
-        const values = line.split(',').map(v => v.replace(/"/g, '').trim());
-        let obj = {};
-        headers.forEach((h, i) => { obj[h] = values[i] || ''; });
-        return obj;
-    }).filter(i => i.brand_name);
+    return loadCsvObjects(filePath, { requiredField: 'brand_name' });
 }
 
 async function build() {

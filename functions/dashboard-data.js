@@ -5,6 +5,7 @@ import {
   handleReviewClaim,
   handleReviewEditSuggestion,
   handleSuggestEdit,
+  handleUpdatePublication,
 } from "./_dashboard-actions.js";
 import {
   getDataQuality,
@@ -14,6 +15,7 @@ import {
   getOverview,
   getPendingClaims,
   getPublishState,
+  getPublicationControls,
   getRecentOutreach,
   getSystemHealth,
   getUnclaimedOutreachQueue,
@@ -21,16 +23,18 @@ import {
 } from "./_dashboard-queries.js";
 import { DashboardActionSchema, EDITABLE_LISTING_FIELD_DEFS, SITE_ID } from "./_dashboard-schemas.js";
 import { jsonResponse } from "./_dashboard-utils.js";
+import { logOperationEvent } from "./_telemetry.js";
 
 export async function onRequestGet({ request, env }) {
   try {
     const auth = await requireDashboardAccess(request, env);
     const db = env.franchise_db;
 
-    const [overview, dataQuality, publishState, outreachQueue, outreachSummary, pendingClaims, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth] = await Promise.all([
+    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth] = await Promise.all([
       getOverview(db),
       getDataQuality(db),
       getPublishState(db),
+      getPublicationControls(db),
       getUnclaimedOutreachQueue(db),
       getUnclaimedOutreachSummary(db),
       getPendingClaims(db),
@@ -57,6 +61,7 @@ export async function onRequestGet({ request, env }) {
       overview,
       data_quality: dataQuality,
       publish_state: publishState,
+      publication_controls: publicationControls,
       outreach_queue: outreachQueue,
       outreach_summary: outreachSummary,
       pending_claims: pendingClaims,
@@ -71,6 +76,12 @@ export async function onRequestGet({ request, env }) {
   } catch (error) {
     const authResponse = authErrorResponse(error);
     if (authResponse) return authResponse;
+    await logOperationEvent(env.franchise_db, {
+      eventType: "api.dashboard.get.failed",
+      severity: "error",
+      route: "/dashboard-data",
+      message: error.message,
+    });
     return jsonResponse({ success: false, error: "DASHBOARD_ERROR", message: error.message }, { status: 500 });
   }
 }
@@ -92,11 +103,18 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "review_edit_suggestion") return handleReviewEditSuggestion(env.franchise_db, auth, data);
     if (data.action === "review_claim") return handleReviewClaim(env.franchise_db, auth, data);
     if (data.action === "refresh_quality_checks") return handleRefreshQualityChecks(env.franchise_db, auth);
+    if (data.action === "update_publication") return handleUpdatePublication(env.franchise_db, auth, data);
 
     return jsonResponse({ success: false, error: "UNKNOWN_DASHBOARD_ACTION" }, { status: 400 });
   } catch (error) {
     const authResponse = authErrorResponse(error);
     if (authResponse) return authResponse;
+    await logOperationEvent(env.franchise_db, {
+      eventType: "api.dashboard.post.failed",
+      severity: "error",
+      route: "/dashboard-data",
+      message: error.message,
+    });
     return jsonResponse({ success: false, error: "DASHBOARD_ACTION_FAILED", message: error.message }, { status: 500 });
   }
 }

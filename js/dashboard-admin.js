@@ -14,6 +14,7 @@
   var refreshQualityButton = document.querySelector("[data-refresh-quality]");
   var claimRows = document.querySelector("[data-claim-rows]");
   var publishState = document.querySelector("[data-publish-state]");
+  var publicationRows = document.querySelector("[data-publication-rows]");
   var outreachCount = document.querySelector("[data-outreach-count]");
   var editRows = document.querySelector("[data-edit-rows]");
   var editCount = document.querySelector("[data-edit-count]");
@@ -141,6 +142,7 @@
     renderQuality(data.data_quality || []);
     renderClaims(data.pending_claims || []);
     renderPublish(data.publish_state || {});
+    renderPublicationControls(data.publication_controls || { sites: [], listings: [] });
     renderListingOptions(data.editable_listings || []);
     ensureEditFieldRows();
     renderEditSuggestions(data.edit_suggestions || { summary: {}, pending: [] });
@@ -240,6 +242,39 @@
     }).join("");
   }
 
+  function renderPublicationControls(data) {
+    if (!publicationRows) return;
+    var sites = data.sites || [];
+    var listings = data.listings || [];
+    if (!listings.length) {
+      publicationRows.innerHTML = '<tr><td colspan="2" class="dash-empty">Belum ada data publikasi.</td></tr>';
+      return;
+    }
+    publicationRows.innerHTML = listings.slice(0, 40).map(function (row) {
+      var publications = row.publications || [];
+      return '<tr>' +
+        '<td><strong>' + escapeHtml(row.brand_name || row.franchise_id) + '</strong><br><span class="dash-muted">' + escapeHtml(row.franchise_id) + '</span></td>' +
+        '<td><div class="dash-publication-grid">' + sites.map(function (site) {
+          var publication = publications.find(function (item) { return item.site_id === site.id; });
+          var status = publication ? publication.publication_status : "draft";
+          var disabled = !currentUserIsAdmin || !publication;
+          return '<label class="dash-publication-cell">' +
+            '<span>' + escapeHtml(site.domain || site.name || site.id) + '</span>' +
+            '<select data-publication-status data-last-value="' + escapeAttr(status) + '" data-franchise-id="' + escapeAttr(row.franchise_id) + '" data-site-id="' + escapeAttr(site.id) + '" ' + (disabled ? "disabled" : "") + '>' +
+              publicationStatusOptions(status) +
+            '</select>' +
+          '</label>';
+        }).join("") + '</div></td>' +
+      '</tr>';
+    }).join("");
+
+    publicationRows.querySelectorAll("[data-publication-status]").forEach(function (select) {
+      select.addEventListener("change", function () {
+        updatePublicationStatus(select);
+      });
+    });
+  }
+
   function renderListingOptions(rows) {
     if (!listingSelect) return;
     listingSelect.innerHTML = '<option value="">Pilih listing...</option>' + rows.map(function (row) {
@@ -291,11 +326,21 @@
   function renderHealth(data) {
     var migration = data.d1 && data.d1.latest_migration;
     var rebuild = data.publish && data.publish.recent_rebuild;
+    var operations = data.operations || {};
+    var opCounts = operations.last_24h_by_severity || {};
+    var analytics = data.analytics && data.analytics.last_30d_by_type ? data.analytics.last_30d_by_type : {};
+    var webhookCount = (data.webhooks || []).reduce(function (sum, row) { return sum + Number(row.count || 0); }, 0);
+    var recentOps = operations.recent || [];
     systemHealth.innerHTML = [
       '<li><strong>D1</strong><span>' + escapeHtml(migration && migration.name ? migration.name : "Connected") + '</span></li>',
       '<li><strong>Clerk</strong><span>' + escapeHtml(data.clerk && data.clerk.note ? data.clerk.note : "Session verified") + '</span></li>',
-      '<li><strong>Recent rebuild</strong><span>' + escapeHtml(rebuild && rebuild.status ? rebuild.status + " - " + (rebuild.reason || "") : "-") + '</span></li>'
-    ].join("");
+      '<li><strong>Recent rebuild</strong><span>' + escapeHtml(rebuild && rebuild.status ? rebuild.status + " - " + (rebuild.reason || "") : "-") + '</span></li>',
+      '<li><strong>API 24 jam</strong><span>' + escapeHtml("error " + (opCounts.error || 0) + " / warning " + (opCounts.warning || 0)) + '</span></li>',
+      '<li><strong>Webhook</strong><span>' + escapeHtml(webhookCount ? webhookCount + " event tercatat" : "Belum ada event tercatat") + '</span></li>',
+      '<li><strong>Aktivitas 30 hari</strong><span>' + escapeHtml("view " + (analytics.listing_view || 0) + " / save " + (analytics.save || 0) + " / inquiry " + (analytics.inquiry || 0)) + '</span></li>'
+    ].concat(recentOps.slice(0, 3).map(function (row) {
+      return '<li><strong>' + escapeHtml(row.event_type || "Event") + '</strong><span>' + escapeHtml((row.severity || "") + " - " + (row.message || row.route || "")) + '</span></li>';
+    })).join("");
   }
 
   function seedEditSuggestion(button) {
@@ -422,6 +467,12 @@
   function renderFieldOptions(selected) {
     return getEditableFields().map(function (field) {
       return '<option value="' + escapeAttr(field.name) + '"' + (field.name === selected ? " selected" : "") + '>' + escapeHtml(field.label || field.name) + '</option>';
+    }).join("");
+  }
+
+  function publicationStatusOptions(selected) {
+    return ["draft", "published", "hidden", "archived"].map(function (status) {
+      return '<option value="' + escapeAttr(status) + '"' + (status === selected ? " selected" : "") + '>' + escapeHtml(status) + '</option>';
     }).join("");
   }
 
@@ -555,6 +606,28 @@
     } catch (error) {
       button.disabled = false;
       setStatus(error.message, true);
+    }
+  }
+
+  async function updatePublicationStatus(select) {
+    var previous = select.getAttribute("data-last-value") || "";
+    var value = select.value;
+    select.disabled = true;
+    try {
+      await postDashboardAction({
+        action: "update_publication",
+        franchise_id: select.getAttribute("data-franchise-id"),
+        site_id: select.getAttribute("data-site-id"),
+        publication_status: value
+      });
+      select.setAttribute("data-last-value", value);
+      setStatus("Status publikasi diperbarui.", false);
+      await reloadDashboard();
+    } catch (error) {
+      if (previous) select.value = previous;
+      setStatus(error.message || "Status publikasi gagal diperbarui.", true);
+    } finally {
+      select.disabled = !currentUserIsAdmin;
     }
   }
 

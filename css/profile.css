@@ -671,6 +671,32 @@
   padding: 5px 7px;
 }
 
+.fr-profile-distribution {
+  border: 1px solid #e5e7eb;
+  background: #fafafa;
+  padding: 12px;
+}
+
+.fr-profile-distribution .fr-profile-section-head {
+  margin-bottom: 6px;
+}
+
+.fr-profile-distribution-chip.is-published {
+  background: rgba(19, 115, 51, 0.12);
+  color: #137333;
+}
+
+.fr-profile-distribution-chip.is-hidden,
+.fr-profile-distribution-chip.is-archived {
+  background: rgba(198, 40, 40, 0.1);
+  color: #a61b1b;
+}
+
+.fr-profile-distribution-chip a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .fr-profile-opportunity-actions {
   align-items: center;
   display: flex;

@@ -324,6 +324,30 @@ body {
   font-size: 12px;
   word-break: break-word;
 }
+.dash-panel-wide {
+  grid-column: 1 / -1;
+}
+.dash-publication-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+.dash-publication-cell {
+  display: grid;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid var(--dash-border);
+  border-radius: 8px;
+  background: #fafafa;
+}
+.dash-publication-cell span {
+  font-size: 12px;
+  color: var(--dash-muted);
+  font-weight: 700;
+}
+.dash-publication-cell select {
+  width: 100%;
+}
 .dash-button {
   min-height: 34px;
   display: inline-flex;

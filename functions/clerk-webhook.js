@@ -1,5 +1,6 @@
 import { verifyWebhook } from "@clerk/backend/webhooks";
 import { markD1UserDeleted, syncWebhookUserToD1 } from "./_clerk-auth.js";
+import { logOperationEvent } from "./_telemetry.js";
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -17,6 +18,14 @@ export async function onRequestPost({ request, env }) {
 
     if (event.type === "user.created" || event.type === "user.updated") {
       const user = await syncWebhookUserToD1(env, env.franchise_db, event.data);
+      await logOperationEvent(env.franchise_db, {
+        eventType: "clerk.webhook.success",
+        severity: "info",
+        route: "/clerk-webhook",
+        entityType: "users",
+        entityId: user.id,
+        metadata: { type: event.type },
+      });
       return jsonResponse({
         success: true,
         type: event.type,
@@ -29,11 +38,25 @@ export async function onRequestPost({ request, env }) {
       if (event.data?.id) {
         await markD1UserDeleted(env.franchise_db, event.data.id);
       }
+      await logOperationEvent(env.franchise_db, {
+        eventType: "clerk.webhook.success",
+        severity: "info",
+        route: "/clerk-webhook",
+        entityType: "clerk_user",
+        entityId: event.data?.id || "",
+        metadata: { type: event.type },
+      });
       return jsonResponse({ success: true, type: event.type });
     }
 
     return jsonResponse({ success: true, ignored: true, type: event.type });
   } catch (error) {
+    await logOperationEvent(env.franchise_db, {
+      eventType: "clerk.webhook.failed",
+      severity: "error",
+      route: "/clerk-webhook",
+      message: error.message,
+    });
     return jsonResponse(
       {
         success: false,

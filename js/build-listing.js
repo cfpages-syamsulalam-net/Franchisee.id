@@ -3,6 +3,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
+const { loadCsvObjects } = require('../scripts/shared-csv.cjs');
 
 // CONFIG
 const TEMPLATE_PATH = path.join(__dirname, '../templates/peluang-usaha-tpl.html');
@@ -98,70 +99,8 @@ function initials(label) {
     return `${first}${second}`.toUpperCase();
 }
 
-// HELPER: Load from CSV (Simple Parser)
-function parseCSVRows(content) {
-    const rows = [];
-    let row = [];
-    let field = '';
-    let inQuotes = false;
-
-    const input = (content || '').replace(/^\uFEFF/, '');
-
-    for (let i = 0; i < input.length; i++) {
-        const ch = input[i];
-        const next = input[i + 1];
-
-        if (ch === '"') {
-            if (inQuotes && next === '"') {
-                field += '"';
-                i++;
-            } else {
-                inQuotes = !inQuotes;
-            }
-            continue;
-        }
-
-        if (ch === ',' && !inQuotes) {
-            row.push(field);
-            field = '';
-            continue;
-        }
-
-        if ((ch === '\n' || ch === '\r') && !inQuotes) {
-            if (ch === '\r' && next === '\n') i++;
-            row.push(field);
-            field = '';
-            if (row.some(cell => normalizeText(cell))) rows.push(row);
-            row = [];
-            continue;
-        }
-
-        field += ch;
-    }
-
-    if (field.length > 0 || row.length > 0) {
-        row.push(field);
-        if (row.some(cell => normalizeText(cell))) rows.push(row);
-    }
-
-    return rows;
-}
-
 function loadFromCSV(filePath) {
-    if (!fs.existsSync(filePath)) return [];
-    const content = fs.readFileSync(filePath, 'utf8');
-    const rows = parseCSVRows(content);
-    if (rows.length < 2) return [];
-
-    const headers = rows[0].map(h => normalizeText(h));
-
-    return rows.slice(1).map(values => {
-        let obj = {};
-        headers.forEach((h, i) => {
-            obj[h] = normalizeText(values[i] || '');
-        });
-        return obj;
-    }).filter(i => i.brand_name);
+    return loadCsvObjects(filePath, { requiredField: 'brand_name' });
 }
 
 // GENERATOR: HTML Card
