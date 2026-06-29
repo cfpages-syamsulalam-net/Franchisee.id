@@ -1,5 +1,6 @@
 (function (window, document) {
   const Auth = window.FranchiseAuth;
+  const PremiumClient = window.FranchiseProfilePremium || {};
   const root = document.querySelector("[data-profile-root]");
   if (!root || !Auth) return;
 
@@ -554,7 +555,7 @@
       <h2 class="fr-profile-section-title"><i class="fas fa-crown" aria-hidden="true"></i> Membership Premium</h2>
       <p class="fr-profile-copy">Aktifkan Premium Network agar listing brand tampil lebih lengkap di jaringan Franchisee.id.</p>
       ${state.premiumMessage ? `<p class="fr-profile-message is-${attr(state.premiumMessage.type)}">${escapeHtml(state.premiumMessage.text)}</p>` : ""}
-      ${membership.unavailable ? `<div class="fr-profile-notice"><i class="fas fa-circle-info" aria-hidden="true"></i><div>Data membership belum tersedia. Coba lagi setelah pembaruan sistem selesai.</div></div>` : ""}
+      ${membership.unavailable ? `<div class="fr-profile-notice"><i class="fas fa-circle-info" aria-hidden="true"></i><div>Data membership belum tersedia. Muat ulang halaman atau coba lagi beberapa saat.</div></div>` : ""}
       ${listings.length ? `
         <label class="fr-profile-field fr-profile-field-compact">
           <span>Pilih listing</span>
@@ -572,7 +573,7 @@
         </div>
         ${premiumNotificationsBlock(membership.notifications || [])}
         ${premiumReadinessBlock(selected, membership.readiness || {})}
-        ${activeSub ? activePremiumBlock(activeSub) : order ? premiumPaymentBlock(order) : premiumUpgradeBlock(selected, membership.plan)}
+        ${activeSub ? activePremiumBlock(activeSub, order, selected) + (order ? premiumPaymentBlock(order) : "") : order ? premiumPaymentBlock(order) : premiumUpgradeBlock(selected, membership.plan)}
       ` : emptyInline("Belum ada listing yang bisa di-upgrade. Lengkapi data brand atau klaim listing terlebih dahulu.")}
     `;
   }
@@ -701,13 +702,21 @@
     `;
   }
 
-  function activePremiumBlock(subscription) {
+  function activePremiumBlock(subscription, order, listing) {
+    const formattedEnd = PremiumClient.formatDate ? PremiumClient.formatDate(subscription.ends_at) : subscription.ends_at || "-";
+    const daysLeft = PremiumClient.daysUntil ? PremiumClient.daysUntil(subscription.ends_at) : null;
+    const canRenew = !order && PremiumClient.canRenew && PremiumClient.canRenew(subscription);
+    const expiryText = daysLeft !== null && daysLeft <= 30
+      ? `Berlaku sampai ${formattedEnd}. Renewal sudah bisa dibuat.`
+      : `Berlaku sampai ${formattedEnd}.`;
     return `
       <div class="fr-profile-notice is-success">
         <i class="fas fa-circle-check" aria-hidden="true"></i>
         <div>
           <strong>Premium aktif.</strong>
-          <span>Berlaku sampai ${escapeHtml(subscription.ends_at || "-")}.</span>
+          <span>${escapeHtml(expiryText)}</span>
+          ${order ? `<span>Tagihan renewal sudah dibuat. Selesaikan pembayaran di bawah ini agar masa aktif berlanjut.</span>` : ""}
+          ${canRenew ? `<div class="fr-profile-notice-actions"><button class="fr-profile-inline-cta" type="button" data-create-premium-order="${attr(listing?.id || subscription.franchise_id || "")}" ${state.premiumBusyId ? "disabled" : ""}><i class="fas ${state.premiumBusyId ? "fa-spinner fa-spin" : "fa-rotate-right"}" aria-hidden="true"></i> Buat tagihan renewal</button></div>` : ""}
         </div>
       </div>
     `;
@@ -1342,7 +1351,9 @@
   }
 
   function premiumSubscriptionFor(franchiseId) {
-    return (state.data?.premium_membership?.subscriptions || []).find((item) => item.franchise_id === franchiseId && item.status === "active");
+    const subscriptions = state.data?.premium_membership?.subscriptions || [];
+    if (PremiumClient.currentSubscription) return PremiumClient.currentSubscription(subscriptions, franchiseId);
+    return subscriptions.find((item) => item.franchise_id === franchiseId && item.status === "active");
   }
 
   function premiumOrderFor(franchiseId) {
@@ -1350,12 +1361,13 @@
   }
 
   function premiumOrderStatus(status) {
+    if (PremiumClient.orderStatus) return PremiumClient.orderStatus(status);
     return {
       pending_payment: "Menunggu transfer",
       confirmation_submitted: "Sedang dicek",
       paid: "Dibayar",
       rejected: "Ditolak",
-      expired: "Kadaluarsa",
+      expired: "Kedaluwarsa",
       cancelled: "Dibatalkan",
     }[status] || status || "Pending";
   }

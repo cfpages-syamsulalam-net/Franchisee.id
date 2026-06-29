@@ -175,10 +175,16 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `passwordEditForm()` / `submitPasswordForm(form)`: Uses ClerkJS on the current session to let Google-only users add a password login and password users change their password, with custom inline copy and no browser tooltip hints.
 - `franchiseePanel()` / `franchisorPanel()`: Shows role-specific D1 profile rows and preserves identity fields as read-only.
 - `listingPanel()` / `uploadListingMedia(input)`: Shows owned D1 `franchises`, selects a listing, uploads logo/cover/proposal media through `/profile-upload`, and disables saving when the owner edit rate limit is active.
-- `membershipPanel()` / `premiumReadinessBlock()` / `premiumNotificationsBlock()`: Shows franchisor Premium membership state, listing readiness checks, managed payment instructions, and recent owner Premium status messages.
-- `createPremiumOrder(franchiseId)` / `submitPremiumConfirmation(form)`: Creates unique-code bank transfer orders through `/profile-data`, uploads optional proof files through `/premium-receipt-upload`, and submits payment confirmation for admin review.
+- `membershipPanel()` / `premiumReadinessBlock()` / `premiumNotificationsBlock()`: Shows franchisor Premium membership state, listing readiness checks, managed payment instructions, renewal CTA when the current subscription is close to expiry, and recent owner Premium status messages.
+- `createPremiumOrder(franchiseId)` / `submitPremiumConfirmation(form)`: Creates unique-code bank transfer orders or renewal orders through `/profile-data`, uploads optional proof files through `/premium-receipt-upload`, and submits payment confirmation for admin review.
 - `leadsPanel()` / `updateLeadStatus(select)`: Shows incoming leads for owned listings with email/WhatsApp shortcuts and owner-checked status updates through `/profile-data`.
 - `submitProfileForm(form)`: Posts account/profile/listing mutations to `/profile-data` with a Clerk bearer token.
+
+### File: `js/profile-premium.js`
+*Small Premium UI helper for `/profil`.*
+- `currentSubscription(subscriptions, franchiseId)`: Selects the active current subscription when renewal rows already exist for the same listing.
+- `canRenew(subscription)` / `daysUntil(value)`: Implements the 30-day renewal-window check used by the Membership tab.
+- `formatDate(value)` / `orderStatus(status)`: Keeps Premium expiry dates and order labels consistent without growing `js/profile-page.js`.
 
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
@@ -190,7 +196,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `renderQuality()` / `seedEditSuggestion(button)`: Shows data-quality warnings and seeds guided field edit suggestions.
 - `addEditFieldRow(fieldName, value)` / `collectEditChanges()`: Renders and collects guided listing edit rows from server-provided editable field definitions instead of exposing a JSON textarea.
 - `refreshQualityChecks()`: Calls the protected dashboard refresh action to persist current quality checks and normalized contacts.
-- `renderPremiumOperations(data)` / `submitPaymentMethod(event)`: Renders Premium funnel counts, managed payment method fields, recent Premium notifications, and posts admin payment-method updates.
+- `renderPremiumOperations(data)` / `submitPaymentMethod(event)`: Renders Premium funnel counts, managed payment method fields, recent Premium notifications, upcoming expiries, queued-email summaries, and posts admin payment-method updates.
 - `submitEditSuggestion()` / `reviewEditSuggestion()` / `reviewClaim()` / `reviewPremiumPayment()`: Posts dashboard actions for staff/admin workflows, including admin premium payment approval/rejection.
 - `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
 
@@ -362,6 +368,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_premium.js`
 *Shared premium membership constants and helpers.*
 - `PREMIUM_PLAN_CODE` / `PREMIUM_BASE_AMOUNT` / `PREMIUM_PAYMENT`: Centralize the plan code, yearly price, payment window, and fallback public payment instructions.
+- `PREMIUM_RENEWAL_WINDOW_DAYS` / `PREMIUM_EXPIRING_LOOKAHEAD_DAYS`: Define the owner renewal window and dashboard expiry lookahead window.
 - `PREMIUM_NETWORK_SITE_IDS` / `PREMIUM_NETWORK_SITE_DOMAINS`: Centralize the included Premium Network publication sites.
 - `nextPremiumUniqueCode(db)`: Generates a three-digit unique transfer code that avoids active pending orders.
 - `payableAmount(uniqueCode)` / `formatUniqueCode(code)`: Derive the user-facing amount and code label.
@@ -375,13 +382,16 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `recordPremiumEvent(db, event)` / `loadPremiumFunnelSummary(db)`: Store and summarize Premium funnel events for `/premium`, profile membership, and dashboard review actions.
 - `createPremiumNotification(db, notification)` / `notifyAdmins(db, notification)`: Persist owner/admin Premium status messages without blocking the main action if notification storage is unavailable.
 - `loadPremiumNotifications(db, userId)` / `loadAdminPremiumNotifications(db)`: Feed `/profil` owner messages and dashboard Premium Operations messages.
+- `queueNotificationEmail(db, email)` / `queueAdminPremiumEmails(db, email)`: Queue owner/admin payment emails in `notification_email_queue` without requiring an outbound provider during the main action.
+- `loadNotificationEmailQueueSummary(db)`: Supplies dashboard queue counts grouped by status/category.
+- `loadExpiringPremiumSubscriptions(db, days)`: Supplies upcoming Premium expiries for dashboard operations follow-up.
 - `premiumReadinessForListing(listing)`: Scores logo, cover, description, contact, investment info, and proposal readiness for Premium review.
 
 ### File: `functions/_profile-premium.js`
 *Profile-owned premium workflow module.*
 - `CreatePremiumOrderSchema` / `ConfirmPremiumPaymentSchema`: Zod schemas for profile-side Premium actions, including optional `proof_asset_id`.
-- `createPremiumOrder(db, actor, data)`: Verifies owned listing access, prevents duplicate active orders/subscriptions, creates a unique-code transfer order, writes audit data, and records a Premium funnel event.
-- `confirmPremiumPayment(db, actor, data)`: Validates submitted amount and optional proof asset ownership, creates a pending payment confirmation, updates order status, writes audit data, records funnel events, and creates owner/admin notifications.
+- `createPremiumOrder(db, actor, data)`: Verifies owned listing access, prevents duplicate active orders/subscriptions except within the renewal window, creates a unique-code transfer order, writes audit data, and records a Premium funnel event.
+- `confirmPremiumPayment(db, actor, data)`: Validates submitted amount and optional proof asset ownership, creates a pending payment confirmation, updates order status, writes audit data, records funnel events, creates owner/admin notifications, and queues payment-status emails.
 - `loadPremiumMembershipData(db, userId, franchiseIds)`: Returns plan/payment method data, active/pending orders, subscriptions, readiness checks, and recent owner notifications for `/profil`.
 
 ### File: `functions/premium-event.js`
@@ -458,7 +468,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
 - `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display.
 - `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Operations tab.
-- `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, and recent Premium notifications for the Operations tab.
+- `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, recent Premium notifications, upcoming expiries, and queued-email summaries for the Operations tab.
 - `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, and product-event counts.
 
 ### File: `functions/_dashboard-actions.js`
@@ -467,7 +477,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleSuggestEdit(db, auth, data)`: Stores guided field changes as structured diffs in `listing_edit_suggestions`. Admin or active trusted staff suggestions apply immediately; normal staff suggestions stay pending.
 - `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs write field-by-field to whitelisted `franchises` columns, write audit events, and queue a static rebuild through `siteRebuildStatements()`.
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
-- `handleReviewPremiumPayment(db, auth, data)`: Admin-only approve/reject. Approval marks the order paid, activates a one-year `franchise_subscriptions` row, sets the listing premium, creates missing publication rows for included network sites, publishes those rows, writes audit/events/notifications, and queues rebuilds for each affected site.
+- `handleReviewPremiumPayment(db, auth, data)`: Admin-only approve/reject. Approval marks the order paid, creates or renews a one-year `franchise_subscriptions` row, sets the listing premium, creates missing publication rows for included network sites, publishes those rows, writes audit/events/notifications, queues owner email notifications, and queues rebuilds for each affected site.
 - `handleUpdatePaymentMethod(db, auth, data)`: Admin-only upsert for the manual BCA payment method shown to franchisors during Premium payment.
 - `handleRefreshQualityChecks(db, auth)`: Refreshes normalized contacts and persistent quality checks, then returns scanned/contact/open-check counts.
 - `handleUpdatePublication(db, auth, data)`: Admin-only publication status update for one listing/site pair; writes audit events and queues a static rebuild for the affected site.

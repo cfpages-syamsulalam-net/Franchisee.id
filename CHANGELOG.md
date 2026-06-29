@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-30 04:36 (Asia/Jakarta)
+### Added
+- `migrations/0011_notification_email_queue.sql`: Added `notification_email_queue` for durable owner/admin payment email queueing before an outbound provider is connected.
+- `js/profile-premium.js`: Added a small `/profil` Premium helper for active subscription selection, renewal-window checks, expiry formatting, and order status labels.
+- `.context/session-20260630-0436.md`: Added this session snapshot.
+
+### Changed
+- Remote Cloudflare: Applied `migrations/0011_notification_email_queue.sql` to `franchise_db` and verified `notification_email_queue` exists.
+- `functions/_premium.js`, `functions/_premium-ops.js`, `functions/_profile-premium.js`, `functions/_dashboard-actions.js`, and `functions/_dashboard-queries.js`: Added Premium renewal windows, expiring subscription reads, queued payment email writes, queue summaries, and renewal-safe admin approval behavior.
+- `js/profile-page.js`, `src/pages/profil/index.astro`, `js/dashboard-admin.js`, and `src/pages/dashboard/index.astro`: Added profile Membership renewal CTA/state handling, loaded the Premium helper, and surfaced upcoming Premium expiries plus queued-email summaries in dashboard Premium Operations.
+- `src/pages/premium/index.astro`: Moved static payment-account copy behind the profile Membership action so users get the current payment instructions for the selected listing.
+- `SUGGESTION.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Marked copy-quality suggestion 15 done, added and completed suggestions 22-26, documented the renewal/email-queue work, and refreshed the audit to match the recent Premium codebase.
+- `json/d1-generated-pages-manifest.json`: Refreshed generated timestamps during `pnpm run build`; the D1 builder reported 197 detail pages skipped and no content rewrites.
+
 ## 2026-06-29 00:28 (Asia/Jakarta)
 ### Added
 - `migrations/0010_premium_operations.sql`: Added admin-managed `payment_methods`, `premium_funnel_events`, and `premium_notifications` for premium operations.

@@ -18,6 +18,8 @@
   var premiumPaymentRows = document.querySelector("[data-premium-payment-rows]");
   var premiumFunnel = document.querySelector("[data-premium-funnel]");
   var premiumNotifications = document.querySelector("[data-premium-notifications]");
+  var premiumExpiring = document.querySelector("[data-premium-expiring]");
+  var premiumEmailQueue = document.querySelector("[data-premium-email-queue]");
   var paymentMethodForm = document.querySelector("[data-payment-method-form]");
   var outreachCount = document.querySelector("[data-outreach-count]");
   var editRows = document.querySelector("[data-edit-rows]");
@@ -381,6 +383,25 @@
       premiumNotifications.innerHTML = notifications.length ? notifications.slice(0, 6).map(function (item) {
         return '<li><strong>' + escapeHtml(item.title || "Info Premium") + '</strong><span>' + escapeHtml((item.brand_name ? item.brand_name + " - " : "") + (item.message || "")) + '</span></li>';
       }).join("") : '<li><span>Belum ada info Premium terbaru.</span></li>';
+    }
+
+    if (premiumExpiring) {
+      var expiring = data.expiring_subscriptions || [];
+      premiumExpiring.innerHTML = expiring.length ? expiring.slice(0, 6).map(function (item) {
+        var days = Number(item.days_left || 0);
+        return '<li><strong>' + escapeHtml(item.brand_name || item.franchise_id || "Listing") + '</strong><span>' +
+          escapeHtml((days > 0 ? days + " hari lagi" : "Segera berakhir") + (item.primary_email ? " - " + item.primary_email : "")) +
+          '</span></li>';
+      }).join("") : '<li><span>Tidak ada Premium yang segera berakhir.</span></li>';
+    }
+
+    if (premiumEmailQueue) {
+      var queue = data.email_queue || [];
+      premiumEmailQueue.innerHTML = queue.length ? queue.slice(0, 6).map(function (item) {
+        return '<li><strong>' + escapeHtml((item.status || "pending") + " - " + (item.category || "email")) + '</strong><span>' +
+          escapeHtml((item.count || 0) + " email") +
+          '</span></li>';
+      }).join("") : '<li><span>Belum ada antrean email 30 hari terakhir.</span></li>';
     }
   }
 

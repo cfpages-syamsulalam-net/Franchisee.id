@@ -1,6 +1,8 @@
 export const PREMIUM_PLAN_CODE = "premium_network_yearly";
 export const PREMIUM_BASE_AMOUNT = 3000000;
 export const PREMIUM_ORDER_WINDOW_HOURS = 24;
+export const PREMIUM_RENEWAL_WINDOW_DAYS = 30;
+export const PREMIUM_EXPIRING_LOOKAHEAD_DAYS = 45;
 export const PREMIUM_NETWORK_SITE_IDS = [
   "site_franchisee_id",
   "site_franchise_id",

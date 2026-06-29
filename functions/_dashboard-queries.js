@@ -9,6 +9,8 @@ import {
 } from "./_dashboard-utils.js";
 import {
   loadAdminPremiumNotifications,
+  loadExpiringPremiumSubscriptions,
+  loadNotificationEmailQueueSummary,
   loadPaymentMethods,
   loadPremiumFunnelSummary,
   premiumReadinessForListing,
@@ -269,15 +271,19 @@ export async function getPendingPremiumPayments(db) {
 }
 
 export async function getPremiumOperations(db) {
-  const [funnel, paymentMethods, notifications] = await Promise.all([
+  const [funnel, paymentMethods, notifications, expiringSubscriptions, emailQueue] = await Promise.all([
     loadPremiumFunnelSummary(db),
     loadPaymentMethods(db),
     loadAdminPremiumNotifications(db),
+    loadExpiringPremiumSubscriptions(db),
+    loadNotificationEmailQueueSummary(db),
   ]);
   return {
     funnel,
     payment_methods: paymentMethods,
     notifications,
+    expiring_subscriptions: expiringSubscriptions,
+    email_queue: emailQueue,
   };
 }
 

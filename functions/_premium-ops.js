@@ -1,4 +1,10 @@
-import { PREMIUM_NETWORK_SITE_DOMAINS, PREMIUM_PLAN_CODE, PREMIUM_BASE_AMOUNT, PREMIUM_PAYMENT } from "./_premium.js";
+import {
+  PREMIUM_NETWORK_SITE_DOMAINS,
+  PREMIUM_PLAN_CODE,
+  PREMIUM_BASE_AMOUNT,
+  PREMIUM_PAYMENT,
+  PREMIUM_EXPIRING_LOOKAHEAD_DAYS,
+} from "./_premium.js";
 
 export const PREMIUM_EVENT_TYPES = new Set([
   "premium_page_view",
@@ -153,6 +159,103 @@ export async function notifyAdmins(db, notification) {
     return null;
   }
   return true;
+}
+
+export async function queueNotificationEmail(db, email) {
+  const toEmail = textOrNull(email?.to_email || email?.toEmail);
+  if (!db || !toEmail) return null;
+  try {
+    const id = `email_${randomId()}`;
+    await db
+      .prepare(
+        `INSERT INTO notification_email_queue (
+           id, user_id, to_email, subject, body_text, category,
+           related_entity_type, related_entity_id
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        email.user_id || email.userId || null,
+        toEmail,
+        textOrNull(email.subject) || "Info Franchisee.id",
+        textOrNull(email.body_text || email.bodyText) || "",
+        textOrNull(email.category) || "general",
+        textOrNull(email.related_entity_type || email.relatedEntityType) || null,
+        textOrNull(email.related_entity_id || email.relatedEntityId) || null,
+      )
+      .run();
+    return id;
+  } catch (_error) {
+    return null;
+  }
+}
+
+export async function queueAdminPremiumEmails(db, email) {
+  try {
+    const result = await db
+      .prepare(
+        `SELECT DISTINCT u.id, u.primary_email
+         FROM users u
+         JOIN user_roles r ON r.user_id = u.id
+         WHERE r.role = 'admin'
+           AND COALESCE(u.status, 'active') = 'active'
+           AND COALESCE(u.primary_email, '') != ''
+         LIMIT 20`,
+      )
+      .all();
+    await Promise.all((result.results || []).map((row) => queueNotificationEmail(db, {
+      ...email,
+      user_id: row.id,
+      to_email: row.primary_email,
+    })));
+  } catch (_error) {
+    return null;
+  }
+  return true;
+}
+
+export async function loadNotificationEmailQueueSummary(db) {
+  try {
+    const result = await db
+      .prepare(
+        `SELECT status, category, COUNT(*) AS count, MAX(created_at) AS latest_at
+         FROM notification_email_queue
+         WHERE created_at >= datetime('now', '-30 days')
+         GROUP BY status, category
+         ORDER BY latest_at DESC
+         LIMIT 20`,
+      )
+      .all();
+    return result.results || [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+export async function loadExpiringPremiumSubscriptions(db, days = PREMIUM_EXPIRING_LOOKAHEAD_DAYS) {
+  try {
+    const result = await db
+      .prepare(
+        `SELECT
+           s.id, s.franchise_id, s.user_id, s.plan_code, s.status, s.starts_at, s.ends_at, s.renewal_status,
+           f.brand_name, f.slug,
+           u.primary_email, u.display_name,
+           ROUND(julianday(s.ends_at) - julianday('now')) AS days_left
+         FROM franchise_subscriptions s
+         JOIN franchises f ON f.id = s.franchise_id
+         LEFT JOIN users u ON u.id = s.user_id
+         WHERE s.status = 'active'
+           AND s.ends_at > CURRENT_TIMESTAMP
+           AND s.ends_at <= datetime('now', ?)
+         ORDER BY s.ends_at ASC
+         LIMIT 40`,
+      )
+      .bind(`+${Number(days || PREMIUM_EXPIRING_LOOKAHEAD_DAYS)} days`)
+      .all();
+    return result.results || [];
+  } catch (_error) {
+    return [];
+  }
 }
 
 export async function loadPremiumNotifications(db, userId) {

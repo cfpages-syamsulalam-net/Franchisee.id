@@ -3,6 +3,7 @@ import {
   PREMIUM_BASE_AMOUNT,
   PREMIUM_ORDER_WINDOW_HOURS,
   PREMIUM_PLAN_CODE,
+  PREMIUM_RENEWAL_WINDOW_DAYS,
   nextPremiumUniqueCode,
   normalizeSubmittedAmount,
   payableAmount,
@@ -16,6 +17,8 @@ import {
   loadPremiumNotifications,
   notifyAdmins,
   premiumReadinessForListing,
+  queueAdminPremiumEmails,
+  queueNotificationEmail,
   recordPremiumEvent,
   textOrNull,
 } from "./_premium-ops.js";
@@ -53,8 +56,12 @@ export async function createPremiumOrder(db, actor, data) {
     )
     .bind(listing.id)
     .first();
-  if (active) {
-    return jsonResponse({ success: false, message: "Listing ini sudah aktif Premium." }, { status: 409 });
+  if (active && !isRenewableSubscription(active)) {
+    return jsonResponse({
+      success: false,
+      message: `Premium masih aktif sampai ${active.ends_at}. Renewal bisa dibuat mendekati masa berakhir.`,
+      active_subscription: active,
+    }, { status: 409 });
   }
 
   const existing = await db
@@ -99,6 +106,7 @@ export async function createPremiumOrder(db, actor, data) {
       franchise_id: listing.id,
       brand_name: listing.brand_name,
       payable_amount: payableAmount(code),
+      renewal_for_subscription_id: active?.id || null,
     }, actor.id),
   ]);
 
@@ -213,6 +221,15 @@ export async function confirmPremiumPayment(db, actor, data) {
       message: "Pembayaran Premium Anda sudah masuk antrean pengecekan.",
       action_url: "/profil/?tab=membership",
     }),
+    queueNotificationEmail(db, {
+      user_id: actor.id,
+      to_email: actor.primary_email,
+      category: "premium_payment",
+      subject: "Konfirmasi pembayaran Premium diterima",
+      body_text: `${order.brand_name || "Listing"}: pembayaran Premium sudah masuk antrean pengecekan. Buka profil untuk melihat status terbaru.`,
+      related_entity_type: "premium_order",
+      related_entity_id: order.id,
+    }),
     notifyAdmins(db, {
       franchise_id: order.franchise_id,
       order_id: order.id,
@@ -220,6 +237,13 @@ export async function confirmPremiumPayment(db, actor, data) {
       title: "Konfirmasi Premium baru",
       message: `${order.brand_name || "Listing"} mengirim konfirmasi pembayaran Premium.`,
       action_url: "/dashboard/#operations",
+    }),
+    queueAdminPremiumEmails(db, {
+      category: "premium_payment",
+      subject: "Konfirmasi Premium baru",
+      body_text: `${order.brand_name || "Listing"} mengirim konfirmasi pembayaran Premium. Buka dashboard untuk mengecek pembayaran.`,
+      related_entity_type: "premium_order",
+      related_entity_id: order.id,
     }),
   ]);
 
@@ -357,4 +381,13 @@ function optionalText(max) {
     .optional()
     .nullable()
     .transform((value) => textOrNull(value));
+}
+
+function isRenewableSubscription(subscription) {
+  const text = String(subscription?.ends_at || "");
+  const endsAt = new Date(text.includes("T") ? text : text.replace(" ", "T") + "Z");
+  if (Number.isNaN(endsAt.getTime())) return false;
+  const msLeft = endsAt.getTime() - Date.now();
+  const daysLeft = msLeft / (24 * 60 * 60 * 1000);
+  return daysLeft <= PREMIUM_RENEWAL_WINDOW_DAYS;
 }

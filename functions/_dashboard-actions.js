@@ -11,7 +11,7 @@ import { getListingSnapshot, hasAutoApproval } from "./_dashboard-queries.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, parseJson, randomId } from "./_dashboard-utils.js";
 import { refreshDashboardQualityChecks } from "./_quality-checks.js";
 import { siteRebuildStatements } from "./_site-publish-queue.js";
-import { createPremiumNotification, recordPremiumEvent } from "./_premium-ops.js";
+import { createPremiumNotification, queueNotificationEmail, recordPremiumEvent } from "./_premium-ops.js";
 
 export async function handleLogOutreach(db, auth, data) {
   const eventId = `outreach_${randomId()}`;
@@ -339,10 +339,12 @@ export async function handleReviewPremiumPayment(db, auth, data) {
   assertAdmin(auth);
   const confirmation = await db
     .prepare(
-      `SELECT c.*, o.payable_amount, o.status AS order_status, o.plan_code, f.brand_name, f.slug
+      `SELECT c.*, o.payable_amount, o.status AS order_status, o.plan_code, f.brand_name, f.slug,
+              u.primary_email AS user_email
        FROM premium_payment_confirmations c
        JOIN premium_orders o ON o.id = c.order_id
        JOIN franchises f ON f.id = c.franchise_id
+       LEFT JOIN users u ON u.id = c.user_id
        WHERE c.id = ?
        LIMIT 1`,
     )
@@ -384,6 +386,17 @@ export async function handleReviewPremiumPayment(db, auth, data) {
   ];
 
   if (approved) {
+    const currentSubscription = await db
+      .prepare(
+        `SELECT id, ends_at
+         FROM franchise_subscriptions
+         WHERE franchise_id = ? AND status = 'active' AND ends_at > CURRENT_TIMESTAMP
+         ORDER BY ends_at DESC
+         LIMIT 1`,
+      )
+      .bind(confirmation.franchise_id)
+      .first();
+    const renewalStartsAt = currentSubscription?.ends_at || null;
     const subscriptionId = premiumSubscriptionId(randomId);
     const premiumSitePlaceholders = PREMIUM_NETWORK_SITE_IDS.map(() => "?").join(", ");
     statements.push(
@@ -391,9 +404,24 @@ export async function handleReviewPremiumPayment(db, auth, data) {
         .prepare(
           `INSERT INTO franchise_subscriptions (
             id, franchise_id, user_id, plan_code, status, starts_at, ends_at, renewal_status, source_order_id
-          ) VALUES (?, ?, ?, ?, 'active', CURRENT_TIMESTAMP, datetime('now', '+1 year'), 'none', ?)`,
+          ) VALUES (
+            ?, ?, ?, ?, 'active',
+            COALESCE(?, CURRENT_TIMESTAMP),
+            CASE WHEN ? IS NOT NULL THEN datetime(?, '+1 year') ELSE datetime('now', '+1 year') END,
+            'none',
+            ?
+          )`,
         )
-        .bind(subscriptionId, confirmation.franchise_id, confirmation.user_id, confirmation.plan_code || PREMIUM_PLAN_CODE, confirmation.order_id),
+        .bind(
+          subscriptionId,
+          confirmation.franchise_id,
+          confirmation.user_id,
+          confirmation.plan_code || PREMIUM_PLAN_CODE,
+          renewalStartsAt,
+          renewalStartsAt,
+          renewalStartsAt,
+          confirmation.order_id,
+        ),
       ...PREMIUM_NETWORK_SITE_IDS.map((siteId) =>
         db
           .prepare(
@@ -434,6 +462,7 @@ export async function handleReviewPremiumPayment(db, auth, data) {
         franchise_id: confirmation.franchise_id,
         brand_name: confirmation.brand_name,
         network_sites: PREMIUM_NETWORK_SITE_IDS,
+        renewal_for_subscription_id: currentSubscription?.id || null,
       }, auth.id),
       ...PREMIUM_NETWORK_SITE_IDS.flatMap((siteId) => siteRebuildStatements(db, {
         siteId,
@@ -446,6 +475,17 @@ export async function handleReviewPremiumPayment(db, auth, data) {
         metadata: { order_id: confirmation.order_id, brand_name: confirmation.brand_name },
       })),
     );
+    if (currentSubscription) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE franchise_subscriptions
+             SET renewal_status = 'renewed', updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?`,
+          )
+          .bind(currentSubscription.id),
+      );
+    }
   }
 
   await db.batch(statements);
@@ -486,6 +526,17 @@ export async function handleReviewPremiumPayment(db, auth, data) {
       message: "Listing Anda sudah mendapat status Premium.",
       action_url: "/profil/?tab=membership",
     }) : null,
+    queueNotificationEmail(db, {
+      user_id: confirmation.user_id,
+      to_email: confirmation.user_email,
+      category: approved ? "premium_payment_approved" : "premium_payment_rejected",
+      subject: approved ? "Premium Anda sudah aktif" : "Konfirmasi pembayaran Premium perlu diperiksa",
+      body_text: approved
+        ? `${confirmation.brand_name || "Listing"} sudah aktif Premium. Buka profil untuk melihat masa aktif dan status distribusi.`
+        : `${confirmation.brand_name || "Listing"} belum bisa disetujui. Buka profil untuk melihat status dan kirim ulang konfirmasi bila perlu.`,
+      related_entity_type: "premium_order",
+      related_entity_id: confirmation.order_id,
+    }),
   ]);
   return jsonResponse({ success: true, status });
 }

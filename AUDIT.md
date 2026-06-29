@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-29 00:28 (Asia/Jakarta)
+Last updated: 2026-06-30 04:36 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
@@ -67,6 +67,10 @@ Principle: every blocked action should answer three questions in the UI: what ha
 | Premium operations | Added `payment_methods`, `premium_funnel_events`, `premium_notifications`, dashboard funnel/payment settings/notification views, owner Premium notifications, and `/premium` CTA tracking through migration `0010_premium_operations.sql`; applied and verified on remote D1. | Done |
 | Payment proof | Added protected receipt upload to R2 with image/PDF validation, confirmation attachment metadata, profile upload flow, and dashboard proof links. | Done |
 | Readiness checks | Added owner/admin Premium readiness checks so incomplete listings are visible before or during Premium review. | Done |
+| Public payment copy | `/premium` now sends users to `/profil/?tab=membership` to generate the current nominal and payment instructions instead of exposing payment-account details in static public copy. | Done |
+| Renewal flow | Added a 30-day renewal window, renewal CTA in `/profil`, backend renewal order allowance, and approval logic that starts renewed subscriptions after the current term ends. | Done |
+| Expiry operations | Dashboard Premium Operations now shows subscriptions ending soon so admins can follow up before lapse. | Done |
+| Email queue foundation | Added `notification_email_queue`, applied and verified the migration on remote D1, and queued owner/admin payment emails for submitted, approved, and rejected Premium payments. Delivery provider integration is still a future decision. | Done |
 | Automation gap | Bank transaction reading and automatic approval still need a provider/API decision and credential setup before implementation. | Open |
 
 Actionability checklist for future edits:
@@ -76,6 +80,8 @@ Actionability checklist for future edits:
 - [x] Permanent working rule added to `AGENTS.md`.
 - [x] Replace remaining public form `alert()` feedback with inline/SweetAlert action CTAs.
 - [x] Review `/login` and `/daftar` recovery states for direct `next` links after the next auth UI pass.
+- [x] Remove static public payment-account details from `/premium`; route users to the action that generates current instructions.
+- [x] Standardize touched public Premium/Profile copy away from technical/internal language.
 
 ## Target Architecture
 
@@ -177,7 +183,7 @@ API/server routes:
 | 7. Public directory rebuild | In progress | D1-backed static HTML bridge generates root `/peluang-usaha/` output and a D1 snapshot; Astro static routes now generate canonical `/peluang-usaha`, flat detail pages, CSS-only image placeholders, readable yellow/category chip states, self-contained detail tabs, parsed public contact data for unclaimed listings, all-caps description presentation normalization, cleaned metadata, and redirect-only compatibility for old directory/category archives, then the build copies legacy static assets/pages without overwriting Astro output. Next add real popularity/view/lead metrics and verify deployed route precedence. |
 | 8. D1-to-static publish automation | In progress | D1 dirty queue tables, `/form-submit` enqueueing, and the 30-minute GitHub Actions poller are implemented. Remaining setup: add GitHub secrets for Cloudflare API/deploy hook, push workflow, and verify the first dirty-to-build cycle. |
 | 9. Dashboards | In progress | `/dashboard` and `/dashboard-data` now implement the Franchisee.id admin/staff MVP: protected D1 overview metrics, tabbed operations UI with visual icons, icon-only action toolbars with custom tooltips, unclaimed WhatsApp outreach links, manual outreach logging, persisted data-quality checks, guided edit suggestions, admin approve/reject for suggestions/claims/premium payments, lead summary, system-health telemetry, publish queue state, multi-site publication status controls, audit writes, and rebuild queue writes for approved public changes. `DASHBOARD.md` remains the progress tracker for richer payment metrics and future network-wide operations. |
-| 10. Premium monetization | In progress | The manual premium membership MVP is implemented from `PREMIUM_MONETIZATION_PLAN.md`: `/premium` public sales page, D1 premium order/payment/subscription tables, profile membership tab, unique-code transfer instructions, admin payment review, premium activation, creation/publication of included network site rows, audit logging, and rebuild queueing. Remaining work is automated payment matching, admin-managed payment methods, premium readiness checks, and conversion analytics. |
+| 10. Premium monetization | In progress | The manual premium membership path is implemented from `PREMIUM_MONETIZATION_PLAN.md`: `/premium` public sales page, D1 premium order/payment/subscription tables, profile membership tab, unique-code transfer instructions, receipt uploads, admin payment review, premium activation/renewal, admin-managed payment methods, readiness checks, funnel analytics, owner/admin notifications, queued payment emails, expiry operations, creation/publication of included network site rows, audit logging, and rebuild queueing. Remaining work is automated payment matching and actual outbound email delivery. |
 | 11. Decommission Sheets dependency | Pending | Freeze or remove Sheets writes, keep optional import/export admin tooling only. |
 
 ## Long File Refactor Tracker
@@ -193,8 +199,8 @@ Current maintained code hotspots by line count, excluding generated legacy HTML 
 | `scripts/build-d1-franchise-pages.ts` | 736 | Builder mixes D1 fetch, snapshot shaping, file writing, manifest/prune behavior, and remote access fallback. | Split D1 fetch/snapshot writer/manifest pruning into modules after the Astro route bridge is stable. | Pending |
 | `scripts/import-csv-to-d1.ts` | 664 | Importer mixes CSV parsing, validation, row mapping, SQL generation, and remote apply. | Split parser, mappers, and SQL writer before the next large import source is added. | Pending |
 | `functions/form-submit.js` | 621 | Form API still handles multiple submission types, role checks, D1 writes, duplicate checks, test-data actions, and publish queueing in one file. | Split by workflow after dashboard/auth refactors: franchisee submit, franchisor submit, claim submit, and dev/test actions. | Pending |
-| `functions/profile-data.js` | 1500 after profile/premium value additions | Profile API now owns account edits, public role add-on, profile/listing edits, saved opportunities, inquiry creation, lead status, and premium order/confirmation flows. | Split by workflow after premium MVP stabilizes: account, franchisee value, franchisor listing, leads, and premium membership modules. | Pending |
-| `js/profile-page.js` | 1364 after membership tab addition | Profile client now renders many role-specific sections plus premium order/payment UI. | Split panel renderers into small modules once the current profile UX stabilizes; keep behavior unchanged during extraction. | Pending |
+| `functions/profile-data.js` | 1500 after profile/premium value additions | Profile API now owns account edits, public role add-on, profile/listing edits, saved opportunities, inquiry creation, and lead status, while premium order/confirmation/renewal flows are delegated to `_profile-premium.js`. | Continue splitting by workflow after premium renewal settles: account, franchisee value, franchisor listing, and leads. | In progress |
+| `js/profile-page.js` | 1431 after membership renewal addition | Profile client now renders many role-specific sections plus premium order/payment UI. Premium status/date/renewal helpers have been extracted to `js/profile-premium.js`, but panel rendering remains large. | Split panel renderers into small modules once the current profile UX stabilizes; keep behavior unchanged during extraction. | In progress |
 | `src/lib/franchise-static-assets.ts` | 620 | Helper owns generated directory/detail CSS/JS injection and CSS-only missing-image placeholders. Its length is mostly literal CSS/JS copied from the prior renderer. | Later move literal CSS into owned static CSS assets if the build pipeline can guarantee those assets on all generated pages. | Extracted |
 
 Refactor rule: prefer behavior-preserving extraction with validation after each step. Do not combine extraction with feature changes unless the feature needs the boundary.
@@ -212,6 +218,7 @@ Use this checklist as the next implementation tracker:
 | 5 | Split `functions/dashboard-data.js` into schemas, queries, actions, and utilities. | `/dashboard-data` remains the only public endpoint, but file length drops and each module has one responsibility. | Done |
 | 6 | Split `src/lib/franchise-static.ts` contact/text/ranking helpers. | Public `/peluang-usaha` output hash should remain unchanged except for intentional formatting differences. | Pending |
 | 7 | Split D1 builder/importer scripts. | Existing `pnpm run build:d1:franchises`, `pnpm run import:csv:dry`, and build pipeline behavior remains unchanged. | Pending |
+| 8 | Continue profile client extraction. | Premium helper extraction is complete; next extraction moves account/franchisee/franchisor panel renderers without behavior changes. | Started |
 
 ## Migration Rules
 - Do not remove existing form fields while migrating; map every current field to D1 or a deliberate archival field.
