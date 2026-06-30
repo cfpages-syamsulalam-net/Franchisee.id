@@ -430,12 +430,18 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/profile-data.js`
 *Protected profile read/write API for `/profil`.*
-- `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and returns D1 user, roles, franchisee profile, franchisor profile, owned franchises, claims, franchisee recommendations, D1 saved opportunities, franchisee inquiry history, franchisor lead inbox, premium membership/order state, and completion flags.
+- `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and delegates the profile response payload to `functions/_profile-read-model.js`.
 - `onRequestPost()`: Dispatches mutations validated by `functions/_profile-schemas.js` for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, `update_listing`, `add_public_role`, `create_franchise_inquiry`, `save_franchise_opportunity`, `remove_franchise_opportunity`, `update_franchise_lead_status`, `create_premium_order`, and `confirm_premium_payment`.
 - Account and role-add mutations are delegated to `functions/_profile-account.js`.
 - Franchisee profile, inquiry, save, and remove mutations are delegated to `functions/_profile-franchisee-actions.js`.
-- Premium actions are delegated to `functions/_profile-premium.js`; recommendations, listing patch construction, schemas, and shared utilities are also split into profile helper modules.
-- Remaining inline write workflows are franchisor profile, owned listing update, and lead status update; the next split target is `functions/_profile-franchisor-actions.js`.
+- Franchisor profile, owner listing update, publication distribution reads, and lead status mutations are delegated to `functions/_profile-franchisor-actions.js`.
+- Premium actions are delegated to `functions/_profile-premium.js`; read-model composition, recommendations, listing patch construction, schemas, and shared utilities are also split into profile helper modules.
+
+### File: `functions/_profile-read-model.js`
+*Profile GET/read-model helper for `/profile-data`.*
+- `loadProfileData(db, actor)`: Builds the unchanged `/profile-data` GET payload with user summary, completion flags, profile rows, owned listings, claims, recommendations, saved opportunities, inquiry history, lead inbox, and Premium membership state.
+- `profileLoaders`: Exposes `loadFranchiseeProfile()`, `loadPublicOpportunity()`, `loadSavedOpportunities()`, `loadFranchiseeInquiryHistory()`, and `loadFranchiseeLead()` callbacks consumed by franchisee action handlers.
+- Owned listing edit lock state still uses `OWNER_LISTING_EDIT_INTERVAL_HOURS` from `functions/_profile-franchisor-actions.js`.
 
 ### File: `functions/_profile-account.js`
 *Account and role-add mutation helper for `/profile-data`.*
@@ -447,6 +453,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `updateFranchiseeProfile(db, actor, data, loaders)`: Upserts the franchisee profile, writes an audit event, and returns the refreshed profile row.
 - `createFranchiseInquiry(db, actor, data, loaders)`: Creates an owner lead from a recommended/saved opportunity after confirming the franchisee profile is complete enough to contact.
 - `saveFranchiseOpportunity(db, actor, data, loaders)` / `removeFranchiseOpportunity(db, actor, data, loaders)`: Writes D1 saved opportunity state and records privacy-safe product events.
+
+### File: `functions/_profile-franchisor-actions.js`
+*Franchisor mutation and owned-listing helper for `/profile-data`.*
+- `OWNER_LISTING_EDIT_INTERVAL_HOURS`: Shared six-hour owner listing edit window used by `/profile-data` response composition and listing save validation.
+- `updateFranchisorProfile(db, actor, data)`: Updates franchisor company/contact/legal fields, writes an audit event, and returns the refreshed profile row.
+- `updateOwnedListing(db, actor, data)`: Verifies owner access, enforces edit throttling, applies the allowed listing patch, writes an audit event, and queues a public rebuild.
+- `updateFranchiseLeadStatus(db, actor, data)`: Verifies owner access to the lead, updates status, writes an audit event, and returns the refreshed lead inbox.
+- `loadOwnedPublicationDistribution()` / `loadFranchisorLeadInbox()` / `loadFranchisorProfile()` / `loadOwnedListing()`: Shared read helpers used by the profile facade and franchisor actions.
 
 ### File: `functions/_profile-schemas.js`
 *Zod mutation schemas for `/profile-data`.*

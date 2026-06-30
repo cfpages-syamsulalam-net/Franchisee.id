@@ -4,6 +4,28 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-01 03:15 (Asia/Jakarta)
+### Added
+- `functions/_profile-read-model.js`: Added the `/profile-data` read-model module for GET response composition and franchisee action loader callbacks.
+- `.context/session-20260701-0315.md`: Added this session snapshot.
+
+### Changed
+- `functions/profile-data.js`: Reduced the profile API to a 92-line endpoint facade by delegating GET/read-model work to `functions/_profile-read-model.js`.
+- `SUGGESTION.md`: Marked suggestion 37 done and added suggestion 38 for focused `/profile-data` smoke tests.
+- `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Updated profile API module boundaries, line counts, and read-model ownership.
+- `json/d1-generated-pages-manifest.json`: Refreshed generated timestamps during build validation; the D1 builder reported 197 detail pages skipped and no content rewrites.
+
+## 2026-07-01 01:25 (Asia/Jakarta)
+### Added
+- `functions/_profile-franchisor-actions.js`: Added the `/profile-data` franchisor profile, owner listing edit, owned publication distribution, and lead status action module.
+- `.context/session-20260701-0125.md`: Added this session snapshot.
+
+### Changed
+- `functions/profile-data.js`: Reduced the profile API to a 346-line facade by delegating franchisor/listing/lead workflows to `functions/_profile-franchisor-actions.js`.
+- `SUGGESTION.md`: Marked suggestion 36 done and added suggestion 37 for a later `/profile-data` read-model split.
+- `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Updated profile API refactor status, module map, and inventory for the franchisor action split.
+- `json/d1-generated-pages-manifest.json`: Refreshed generated timestamps during build validation; the D1 builder reported 197 detail pages skipped and no content rewrites.
+
 ## 2026-07-01 01:00 (Asia/Jakarta)
 ### Added
 - `js/dashboard-operations.js`: Added the dashboard Operations module for outreach logging, Premium payment review, publication controls, lead summaries, publish status, and health rendering.
