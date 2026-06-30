@@ -599,9 +599,11 @@ Operations note: payment instructions now read from admin-managed `payment_metho
 
 - [x] 30/14/7/1-day renewal reminders.
 - [x] Renewal payment order creation.
-- [ ] Expired premium downgrade behavior.
-- [ ] Annual performance report.
-- [ ] Multi-brand discount rules.
+- [x] Expired premium downgrade behavior.
+- [x] Annual performance report.
+- [x] Multi-brand discount rules.
+
+Implementation note: Premium lifecycle settings are managed from `/dashboard` Premium Operations. Defaults are 3 grace days, daily grace email enabled, annual report enabled, and multi-brand discount disabled at 0%. After grace, Premium returns to Free and Premium network publication rows are hidden until renewal.
 
 ## Open Decisions
 
@@ -633,7 +635,7 @@ Manual setup checklist:
 ## Recommended Decisions
 
 1. Premium covers one brand/listing.
-2. Full price stays Rp 3.000.000/year, but early customers can get "bonus article" instead of price discount.
+2. Full price stays Rp 3.000.000/year by default; multi-brand discounts are an admin setting and are disabled until intentionally enabled.
 3. Premium can be paid before listing is complete, but public premium publication waits until minimum content is complete.
 4. Public `/premium` should explain the price, but exact payable amount should be generated after login/order so unique code works.
 5. Start manual BCA unique-code flow first, then implement gateway webhooks.

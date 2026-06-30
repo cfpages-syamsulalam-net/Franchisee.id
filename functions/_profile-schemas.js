@@ -1,0 +1,129 @@
+import { z } from "zod";
+import { ConfirmPremiumPaymentSchema, CreatePremiumOrderSchema } from "./_profile-premium.js";
+
+const AccountSchema = z.object({
+  action: z.literal("update_account"),
+  display_name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(254),
+});
+
+const FranchiseeProfileSchema = z.object({
+  action: z.literal("update_franchisee_profile"),
+  country_code: optionalText(12),
+  whatsapp: optionalText(40),
+  city_origin: optionalText(120),
+  interest_category: optionalText(120),
+  budget_range: optionalText(120),
+  location_plan: optionalText(120),
+  message: optionalText(1200),
+});
+
+const FranchisorProfileSchema = z.object({
+  action: z.literal("update_franchisor_profile"),
+  company_name: optionalText(180),
+  country_code: optionalText(12),
+  whatsapp: optionalText(40),
+  website_url: optionalText(500),
+  instagram_url: optionalText(500),
+  facebook_url: optionalText(500),
+  tiktok_url: optionalText(500),
+  youtube_url: optionalText(500),
+  linkedin_url: optionalText(500),
+  nib_number: optionalText(32),
+  haki_status: z.enum(["registered", "process", "none", ""]).optional(),
+  haki_number: optionalText(80),
+});
+
+const ListingSchema = z.object({
+  action: z.literal("update_listing"),
+  franchise_id: z.string().trim().min(3).max(120),
+  brand_name: optionalText(180),
+  category: optionalText(120),
+  year_established: optionalInt(),
+  city_origin: optionalText(120),
+  outlet_type: optionalText(120),
+  location_requirement: optionalText(240),
+  rent_cost_text: optionalText(240),
+  fee_license_idr: optionalMoney(),
+  fee_capex_idr: optionalMoney(),
+  fee_construction_idr: optionalMoney(),
+  total_investment_idr: optionalMoney(),
+  min_investment_idr: optionalMoney(),
+  max_investment_idr: optionalMoney(),
+  estimated_bep_months: optionalInt(),
+  net_profit_percent: optionalNumber(),
+  royalty_percent: optionalNumber(),
+  royalty_basis: optionalText(80),
+  short_desc: optionalText(280),
+  full_desc: optionalText(5000),
+  support_system: optionalText(2000),
+  phone: optionalText(80),
+  office_address: optionalText(800),
+  outlets_location: optionalText(800),
+  logo_url: optionalText(500),
+  cover_url: optionalText(500),
+  gallery_urls: optionalText(2000),
+  video_url: optionalText(500),
+  proposal_url: optionalText(500),
+});
+
+const AddPublicRoleSchema = z.object({
+  action: z.literal("add_public_role"),
+  role: z.enum(["franchisee", "franchisor"]),
+});
+
+const FranchiseInquirySchema = z.object({
+  action: z.literal("create_franchise_inquiry"),
+  franchise_id: z.string().trim().min(3).max(120),
+  message: optionalText(1200),
+});
+
+const SaveOpportunitySchema = z.object({
+  action: z.literal("save_franchise_opportunity"),
+  franchise_id: z.string().trim().min(3).max(120),
+  note: optionalText(500),
+});
+
+const RemoveOpportunitySchema = z.object({
+  action: z.literal("remove_franchise_opportunity"),
+  franchise_id: z.string().trim().min(3).max(120),
+});
+
+const LeadStatusSchema = z.object({
+  action: z.literal("update_franchise_lead_status"),
+  lead_id: z.string().trim().min(3).max(120),
+  status: z.enum(["new", "sent", "viewed", "contacted", "qualified", "closed", "archived"]),
+});
+
+export const MutationSchema = z.discriminatedUnion("action", [
+  AccountSchema,
+  FranchiseeProfileSchema,
+  FranchisorProfileSchema,
+  ListingSchema,
+  AddPublicRoleSchema,
+  FranchiseInquirySchema,
+  SaveOpportunitySchema,
+  RemoveOpportunitySchema,
+  LeadStatusSchema,
+  CreatePremiumOrderSchema,
+  ConfirmPremiumPaymentSchema,
+]);
+
+function optionalText(max) {
+  return z.string().trim().max(max).optional().or(z.literal(""));
+}
+
+function optionalInt() {
+  return z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : Number(value)), z.number().int().optional());
+}
+
+function optionalNumber() {
+  return z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : Number(value)), z.number().optional());
+}
+
+function optionalMoney() {
+  return z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) return undefined;
+    return Number(String(value).replace(/[^\d.-]/g, ""));
+  }, z.number().int().optional());
+}

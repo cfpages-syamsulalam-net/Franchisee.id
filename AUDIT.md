@@ -1,9 +1,9 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-30 08:38 (Asia/Jakarta)
+Last updated: 2026-06-30 10:39 (Asia/Jakarta)
 
 ## Executive Summary
-The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
+The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
 
 Recommended target: keep the Cloudflare hosting model, preserve existing styling, and migrate the application layer to an Astro-on-Cloudflare stack with D1, R2, Clerk, and Cloudflare Workers/Pages Functions. Next.js remains viable, especially for a React-heavy dashboard, but Astro is the better default for this project because the public product is a content-heavy franchise directory that should stay static-first and lightweight.
 
@@ -11,24 +11,22 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 
 | Area | Current Implementation | Observed Fit |
 | --- | --- | --- |
-| Hosting | Cloudflare Pages serving static WordPress-exported HTML. | Good for static SEO pages, weak for app workflows. |
-| Backend | Cloudflare Pages Functions in `/functions`. | Good edge runtime, but currently tied to Google Sheets APIs. |
-| Database | Google Sheets tabs (`FRANCHISOR`, `UNCLAIMED`, `FRANCHISEE`). | Useful prototype/CMS, poor as transactional app database. |
-| Assets | WordPress uploads, external image URLs, Cloudinary transforms in code. | Fragmented ownership; not ideal for franchisor uploads. |
-| Auth | No real app auth; legacy `/login` and `/daftar` static routes. | Blocking requirement for franchisee/franchisor dashboards. |
-| SSG | Node scripts in `/js` generate listing/detail/sitemap pages. | Preserves SEO, but duplicates parsing/auth and relies on Sheets. |
+| Hosting | Cloudflare Pages serving Astro `dist` plus copied legacy static export. | Good fit for static SEO pages and lightweight protected app shells. |
+| Backend | Cloudflare Pages Functions in `/functions`, using Clerk auth, D1 writes, R2 uploads, telemetry, and protected worker endpoints. | Good edge runtime; main risk is growing route modules and manual production verification. |
+| Database | Cloudflare D1 `franchise_db` for users, roles, profiles, listings, claims, leads, saved opportunities, premium orders/subscriptions, quality checks, publish queue, telemetry, and audit events. | Current source of truth. Google Sheets is archive/import-only and should not regain write paths. |
+| Assets | Cloudflare R2 `franchise-assets` exposed via `https://assets.franchisee.id`; legacy WordPress/external URLs still exist for imported rows. | New owner uploads have durable ownership; legacy asset cleanup can happen gradually. |
+| Auth | Clerk custom UI for `/login`, `/daftar`, `/profil`, `/dashboard`, and `/sso-callback`; D1 remains authoritative for roles. | Functional app auth exists; production QA remains important because identity/account-linking is high-impact. |
+| SSG | Astro routes generate canonical `/peluang-usaha` and flat detail HTML from D1 snapshots; legacy static copy fills the rest of the site. | Good transition path. Next risk is keeping static rebuild automation and public metrics current. |
 | Styling | Existing WordPress/Astra/Elementor CSS plus modular form CSS. | Keep and reuse; no extra styling dependency needed. |
-| Automation | GitHub Actions rebuild generated pages from Sheets hash. | Works for Sheets, but should shift to D1-driven builds or on-demand rendering. |
+| Automation | D1 publish poller workflow triggers Cloudflare Pages Deploy Hook when public-page D1 changes are dirty; Premium email worker workflow calls the protected email endpoint. | Direction is correct; dirty-to-build and email sending should keep getting production verification. |
 
 ## Primary Problems
-- Google Sheets is not a reliable source of truth for authenticated users, row-level ownership, approvals, revisions, saved searches, and paid/verified tiers.
-- Form submissions append rows but do not create durable user/listing relationships.
-- Claim flow mutates Sheets by appending a franchisor row and deleting an unclaimed row; this is hard to audit and recover.
-- Runtime and builder code duplicate Google auth, row mapping, slugging, sanitization, and CSV fallback logic.
-- Asset storage is not unified; future franchisor uploads need private/direct upload policies, ownership checks, and stable object keys.
-- Login/register is not implemented as an authenticated app surface.
-- The current `package.json` does not declare builder dependencies despite workflows installing `googleapis` and `dotenv`.
-- Several warning/error states still explain the problem without giving a direct next action. User-facing blocked states should include a clear CTA whenever the next step is known.
+- Several runtime files have become large orchestration modules after the D1/Clerk/Profile/Premium work. Refactor risk is now concentrated in `js/profile-page.js`, `functions/profile-data.js`, `src/lib/franchise-static.ts`, `functions/_premium-ops.js`, `js/auth-clerk.js`, and remaining dashboard modules.
+- Static freshness depends on the D1 dirty queue and deploy-hook workflow. That path is implemented, but production dirty-to-build verification should remain tracked.
+- Public popularity/recommendation signals still use a mix of deterministic quality proxies and newer product events; richer ranking needs a dedicated model once event volume grows.
+- Bank transaction matching is still manual; Premium activation is production-ready for manual review, but automatic payment matching needs a provider/API decision.
+- Legacy Google Sheets/CSV and WordPress-exported HTML remain in the transition layer. They should stay readable/importable but not regain write ownership.
+- Several blocked states are now CTA-backed, but every new public-facing error/empty/warning state should keep following the “clear next action” rule.
 
 ## UX Actionability Audit - 2026-06-28
 
@@ -75,6 +73,10 @@ Principle: every blocked action should answer three questions in the UI: what ha
 | Email worker delivery | Added Resend-backed `/premium-email-worker`, GitHub cron trigger, provider/attempt metadata, failed retry backoff, and admin retry/cancel controls in Premium Operations. Delivery requires manual Resend/DNS/secret setup before real emails are sent. | Done |
 | Renewal reminders | Added 30/14/7/1-day reminder queueing and `premium_subscription_reminders` idempotency through migration `0012_premium_email_worker_guardrails.sql`; applied and verified on remote D1. | Done |
 | Data guardrails | Added unique D1 guardrails for one active pending Premium order per listing/user/plan and one subscription per source order. Remote duplicate checks passed before migration. | Done |
+| Grace downgrade | Added configurable grace-period settings with 3 days default, daily grace emails, downgrade to Free after grace, Premium network publication hiding, audit events, and rebuild queue writes. | Done |
+| Annual reports | Added annual report records and queued report emails using product events/leads for listing views, saves, inquiries, contact clicks, and leads. | Done |
+| Multi-brand discount | Added dashboard-managed discount settings and new order pricing that can discount yearly Premium for owners with multiple brands. Disabled by default. | Done |
+| Stale Sheets workflow | Removed `.github/workflows/generate-pages.yaml` so the old Google Sheets auto-update/commit workflow cannot fight the current D1/Astro publish path. | Done |
 | Automation gap | Bank transaction reading and automatic approval still need a provider/API decision and credential setup before implementation. | Open |
 
 Actionability checklist for future edits:
@@ -179,15 +181,15 @@ API/server routes:
 | --- | --- | --- |
 | 0. Documentation baseline | In progress | Root docs are centralized around `AGENTS.md`, `CODEBASE.md`, `AUDIT.md`, and `docs/README.md`; long form references moved under `docs/`. Keep reducing duplication as implementation changes. |
 | 1. Data contract design | In progress | Initial shared-network D1 SQL migration created and applied remotely; TypeScript/Zod importer now maps current CSV snapshots into the first D1 schema. Next define reusable API/form payload schemas. |
-| 2. Cloudflare project config | In progress | `wrangler.toml` now points to `franchise_db` and declares Pages output `dist` without unsupported `account_id`; migrations are applied through `cfman`. Cloudflare Pages project still must keep build command set to `pnpm run build` or `pnpm run build:astro`; R2 binding and environment split still pending. |
+| 2. Cloudflare project config | In progress | `wrangler.toml` points to `franchise_db`, declares Pages output `dist`, and keeps unsupported `account_id` out of config. R2 production custom domain is `https://assets.franchisee.id`. Migrations are applied through `cfman` sequentially. Cloudflare Pages must keep build command set to `pnpm run build` or `pnpm run build:astro`. |
 | 3. Import pipeline | In progress | `scripts/import-csv-to-d1.ts` imports CSV snapshots into D1, preserves `UNCLAIMED` sanitization and stable slugs, and has completed the first remote import. Runtime reads now use D1 first through `/get-franchises`. |
 | 4. Auth foundation | In progress | Custom Clerk email/password and Google login/register surfaces, OAuth callback finalization before session checks, `/auth-config`, `/auth-sync`, `/clerk-webhook`, `/user-role`, `/sync-clerk-metadata`, D1 user mapping, email-based pre-login role grants, D1-to-Clerk metadata snapshots, and D1 role checks are implemented. `admin@alampintar.org` and `email@franchisor.id` are pre-authorized in remote D1 through `email_role_grants` for first Google/email login. Next redeploy and verify Google OAuth on Cloudflare Pages. |
 | 5. Form API replacement | In progress | `/form-submit` now performs D1-only writes for franchisee, franchisor, claim, and dev test-data actions with Clerk session verification, D1 role checks, owner fields, and actor audit events. Next verify deployed form submissions against the real Pages binding and Clerk app. |
-| 6. Asset pipeline | Pending | Move uploads to R2 with object ownership, validation, and public/served URLs. |
+| 6. Asset pipeline | In progress | Protected R2 uploads are implemented for owner listing media and Premium receipt proofs, with D1 `franchise_assets` ownership metadata and public URLs from the R2 custom domain. Remaining work is legacy media cleanup/backfill and optional gallery support. |
 | 7. Public directory rebuild | In progress | D1-backed static HTML bridge generates root `/peluang-usaha/` output and a D1 snapshot; Astro static routes now generate canonical `/peluang-usaha`, flat detail pages, CSS-only image placeholders, readable yellow/category chip states, self-contained detail tabs, parsed public contact data for unclaimed listings, all-caps description presentation normalization, cleaned metadata, and redirect-only compatibility for old directory/category archives, then the build copies legacy static assets/pages without overwriting Astro output. Next add real popularity/view/lead metrics and verify deployed route precedence. |
-| 8. D1-to-static publish automation | In progress | D1 dirty queue tables, `/form-submit` enqueueing, and the 30-minute GitHub Actions poller are implemented. Remaining setup: add GitHub secrets for Cloudflare API/deploy hook, push workflow, and verify the first dirty-to-build cycle. |
+| 8. D1-to-static publish automation | In progress | D1 dirty queue tables, `/form-submit`, `/profile-data`, `/profile-upload`, dashboard approvals/publication changes, and Premium downgrade writes enqueue rebuild requests where public pages can change. The 30-minute GitHub Actions poller exists, and the stale Google Sheets auto-update workflow was removed. Remaining work: production dirty-to-build verification and alerting for stuck requests. |
 | 9. Dashboards | In progress | `/dashboard` and `/dashboard-data` now implement the Franchisee.id admin/staff MVP: protected D1 overview metrics, tabbed operations UI with visual icons, icon-only action toolbars with custom tooltips, unclaimed WhatsApp outreach links, manual outreach logging, persisted data-quality checks, guided edit suggestions, admin approve/reject for suggestions/claims/premium payments, lead summary, system-health telemetry, publish queue state, multi-site publication status controls, audit writes, and rebuild queue writes for approved public changes. `DASHBOARD.md` remains the progress tracker for richer payment metrics and future network-wide operations. |
-| 10. Premium monetization | In progress | The manual premium membership path is implemented from `PREMIUM_MONETIZATION_PLAN.md`: `/premium` public sales page, D1 premium order/payment/subscription tables, profile membership tab, unique-code transfer instructions, receipt uploads, admin payment review, premium activation/renewal, admin-managed payment methods, readiness checks, funnel analytics, owner/admin notifications, queued payment emails, expiry operations, creation/publication of included network site rows, audit logging, and rebuild queueing. Remaining work is automated payment matching and actual outbound email delivery. |
+| 10. Premium monetization | In progress | The manual premium membership path is implemented from `PREMIUM_MONETIZATION_PLAN.md`: `/premium` public sales page, D1 premium order/payment/subscription tables, profile membership tab, unique-code transfer instructions, receipt uploads, admin payment review, premium activation/renewal, admin-managed payment methods/settings, readiness checks, funnel analytics, owner/admin notifications, queued/sent payment emails through Resend, grace-period downgrade behavior, annual report queueing, configurable multi-brand discounts, creation/publication of included network site rows, audit logging, and rebuild queueing. The Premium email worker GitHub Action has successfully authenticated with delivery configured. Remaining work is automated payment matching. |
 | 11. Decommission Sheets dependency | Pending | Freeze or remove Sheets writes, keep optional import/export admin tooling only. |
 
 ## Long File Refactor Tracker
@@ -196,19 +198,93 @@ Current maintained code hotspots by line count, excluding generated legacy HTML 
 
 | File | Approx. lines | Risk | Refactor direction | Status |
 | --- | ---: | --- | --- | --- |
-| `src/pages/dashboard/index.astro` | 351 after premium panel addition | Static dashboard shell now owns route markup, protected login/debug shells, metric cards, and tabbed dashboard panels including premium payment review. Client behavior is in `js/dashboard-admin.js`; styles are in `css/dashboard.css`. | Keep future dashboard behavior in `js/dashboard-admin.js` and future dashboard styling in `css/dashboard.css`; avoid re-growing inline Astro logic. | Extracted |
-| `src/lib/franchise-static.ts` | 944 after first extraction | Still mixes D1 snapshot validation, directory/detail rendering, contact parsing, SEO, text normalization, and scoring. The generated CSS/JS injection and CSS placeholder rendering were extracted to `src/lib/franchise-static-assets.ts` on 2026-06-22. | Split contact parsing into `src/lib/franchise-contact.ts`, text normalization into `src/lib/franchise-text.ts`, and scoring/category helpers into `src/lib/franchise-ranking.ts`. | Pending |
-| `js/auth-clerk.js` | 742 after debug extraction | High-priority browser auth hotspot. It still owns Clerk config/script loading, session token helpers, `/auth-sync`, public login/register HTML, OAuth start/callback handling, and pending role/next storage. Masked diagnostics now live in `js/auth-clerk-debug.js`. | Continue splitting into behavior-preserving browser modules loaded in order: `js/auth-clerk-core.js` for Clerk boot/token/sync and `js/auth-clerk-ui.js` for login/register DOM. Keep `js/auth-clerk.js` as the compatibility facade until every route is updated. | Debug extracted; UI/core pending |
+| `js/profile-page.js` | 900 after profile module split | Profile client now acts as `/profil` boot/controller facade for auth, data load, tab routing, submit/fetch workflows, franchisee/franchisor forms, listing uploads, opportunities, and claims. Account, role add-on, Premium membership, leads, saved-opportunity storage, and shared UI helpers were extracted. | Next extraction: move franchisee opportunity rendering and franchisor listing/media rendering into focused modules if this file grows again. | In progress |
+| `functions/profile-data.js` | 869 after profile API module split | Profile API facade owns auth/error handling plus core profile/listing/lead/saved-opportunity write workflows. Zod schemas, shared response utilities, recommendation scoring, listing patch construction, and Premium workflows are delegated to helper modules. | Next extraction: move account/franchisee/franchisor write workflows into action modules after behavior stabilizes. | In progress |
+| `src/lib/franchise-static.ts` | 785 after text helper split | Astro-side renderer now keeps route-facing snapshot loading, directory/detail composition, contact parsing, SEO/detail enhancements, category/ranking, and template orchestration. Text normalization, URL cleanup, escaping, truncation, paragraph rendering, and legacy link canonicalization live in `src/lib/franchise-text.ts`. | Next extraction: move contact parsing and ranking/category helpers into focused modules. | In progress |
+| `functions/_premium-ops.js` | 865 | Premium operations helper now owns settings, funnel events, notifications, email queue reads/writes, expiring reads, annual reports, grace downgrade, renewal reminders, discount pricing, and readiness checks. | Split into `_premium-settings.js`, `_premium-notifications.js`, `_premium-lifecycle.js`, and `_premium-readiness.js` after email/lifecycle production behavior is observed. | Pending |
+| `js/auth-clerk.js` | 826 | High-priority browser auth hotspot. It still owns Clerk config/script loading, session token helpers, `/auth-sync`, OAuth start/callback handling, pending role/next storage, and compatibility facade behavior. Masked diagnostics and UI rendering already live in `js/auth-clerk-debug.js` and `js/auth-clerk-ui.js`. | Continue splitting into behavior-preserving browser modules loaded in order: `js/auth-clerk-core.js` for Clerk boot/token/sync and keep `js/auth-clerk.js` as the compatibility facade until every route is updated. | Debug/UI extracted; core pending |
 | `functions/dashboard-data.js` | 96 after split | Endpoint is now a thin router for auth, action dispatch, response shaping, and imported dashboard modules. | Keep schemas in `_dashboard-schemas.js`, reads in `_dashboard-queries.js`, writes in `_dashboard-actions.js`, and shared helpers in `_dashboard-utils.js`. | Extracted |
-| `scripts/build-d1-franchise-pages.ts` | 736 | Builder mixes D1 fetch, snapshot shaping, file writing, manifest/prune behavior, and remote access fallback. | Split D1 fetch/snapshot writer/manifest pruning into modules after the Astro route bridge is stable. | Pending |
-| `scripts/import-csv-to-d1.ts` | 664 | Importer mixes CSV parsing, validation, row mapping, SQL generation, and remote apply. | Split parser, mappers, and SQL writer before the next large import source is added. | Pending |
-| `functions/form-submit.js` | 621 | Form API still handles multiple submission types, role checks, D1 writes, duplicate checks, test-data actions, and publish queueing in one file. | Split by workflow after dashboard/auth refactors: franchisee submit, franchisor submit, claim submit, and dev/test actions. | Pending |
-| `functions/profile-data.js` | 1500 after profile/premium value additions | Profile API now owns account edits, public role add-on, profile/listing edits, saved opportunities, inquiry creation, and lead status, while premium order/confirmation/renewal flows are delegated to `_profile-premium.js`. | Continue splitting by workflow after premium renewal settles: account, franchisee value, franchisor listing, and leads. | In progress |
-| `js/profile-page.js` | 1431 after membership renewal addition | Profile client now renders many role-specific sections plus premium order/payment UI. Premium status/date/renewal helpers have been extracted to `js/profile-premium.js`, but panel rendering remains large. | Split panel renderers into small modules once the current profile UX stabilizes; keep behavior unchanged during extraction. | In progress |
-| `js/dashboard-admin.js` | Growing after Premium lifecycle/settings work | Dashboard client now owns auth/debug, tab control, outreach, data quality, review edits, claims, publication controls, Premium payments, Premium operations/settings, email queue recovery, leads, and health rendering. Future dashboard changes will get slower and easier to break if all panels stay in one file. | After the Premium lifecycle pass, split into `dashboard-core`, `dashboard-actions`, `dashboard-premium`, `dashboard-review`, and `dashboard-render-utils` modules while preserving the current static dashboard shell and API contract. | Started |
-| `src/lib/franchise-static-assets.ts` | 620 | Helper owns generated directory/detail CSS/JS injection and CSS-only missing-image placeholders. Its length is mostly literal CSS/JS copied from the prior renderer. | Later move literal CSS into owned static CSS assets if the build pipeline can guarantee those assets on all generated pages. | Extracted |
+| `scripts/build-d1-franchise-pages.ts` | 675 | Builder mixes D1 fetch, snapshot shaping, file writing, manifest/prune behavior, and remote access fallback. | Split D1 fetch/snapshot writer/manifest pruning into modules after the Astro route bridge is stable. | Pending |
+| `scripts/import-csv-to-d1.ts` | 648 | Importer mixes CSV parsing, validation, row mapping, SQL generation, and remote apply. | Split parser, mappers, and SQL writer before the next large import source is added. | Pending |
+| `functions/_dashboard-queries.js` | 619 | Dashboard read model handles overview, outreach, quality, claims, premium, editable listings, publications, leads, health, telemetry, and audit summaries. | Split read domains only if new dashboard features continue to grow the file: `_dashboard-query-premium.js`, `_dashboard-query-quality.js`, `_dashboard-query-publication.js`. | Watch |
+| `src/lib/franchise-static-assets.ts` | 615 | Helper owns generated directory/detail CSS/JS injection and CSS-only missing-image placeholders. Its length is mostly literal CSS/JS copied from the prior renderer. | Later move literal CSS into owned static CSS assets if generated pages can depend on shared assets without SEO/rendering regressions. | Extracted |
+| `functions/form-submit.js` | 597 | Form API still handles multiple submission types, role checks, D1 writes, duplicate checks, test-data actions, and publish queueing in one file. | Split by workflow after dashboard/auth refactors: franchisee submit, franchisor submit, claim submit, and dev/test actions. | Pending |
+| `functions/_dashboard-actions.js` | 570 | Dashboard writes cover outreach, guided edits, quality refresh, claims, publication, Premium settings/email/payment, audit, and rebuild queueing. | Split only when action growth resumes; likely `_dashboard-action-premium.js` and `_dashboard-action-review.js`. | Watch |
+| `js/dashboard-admin.js` | 541 after dashboard module split | Dashboard client now owns auth/debug, tab control, outreach, Premium payment review, publication controls, leads, and health rendering. Shared render utilities, Premium Operations, and Review/Data Quality/Claim workflows were extracted. | Next extraction: move outreach and publication controls into `js/dashboard-operations.js`, keeping auth boot/tabs/status in this file. | In progress |
+| `js/dashboard-utils.js` | New shared browser utility module | Owns dashboard HTML escaping, currency formatting, form-value writes, and icon-only action toolbar/button/link render helpers used by dashboard modules. | Keep generic browser-only dashboard helpers here instead of duplicating escape/action markup across panel modules. | Extracted |
+| `js/dashboard-premium-operations.js` | New dashboard Premium module | Owns Premium Operations rendering, managed payment/settings form submission, and queued-email retry/cancel actions. | Keep Premium-specific dashboard growth outside the core dashboard boot/controller file. | Extracted |
+| `js/dashboard-review.js` | New dashboard review module | Owns Data Quality rendering, claim review rendering/actions, guided listing edit rows, edit suggestion submission, and edit/claim review actions. | Keep future review/data-quality workflow changes here instead of growing `js/dashboard-admin.js`. | Extracted |
+| `js/profile-ui-utils.js` | New profile UI helper module | Owns shared profile HTML escaping, form field render helpers, empty states, Rupiah formatting, status labels, Clerk account helper copy, and form busy/message utilities. | Keep small reusable profile UI helpers here instead of adding them back to `js/profile-page.js`. | Extracted |
+| `js/profile-account.js` | New profile account renderer | Owns account tab rendering for name/email granular edit controls and password add/change UI. | Account submit/password submit workflows remain in `js/profile-page.js` until action handlers are split. | Extracted |
+| `js/profile-roles.js` | New profile role add-on renderer | Owns missing-role CTA cards and confirmation modal rendering. | Role add POST workflow remains in `js/profile-page.js`. | Extracted |
+| `js/profile-leads.js` | New profile leads renderer | Owns franchisor lead list/card rendering and status select markup. | Lead status POST workflow remains in `js/profile-page.js`. | Extracted |
+| `js/profile-opportunities.js` | New profile saved-opportunity helper | Owns local saved-opportunity storage, local/server merge, lookup, and inquiry-history lookup helpers. | Server sync and save/remove POST workflow remain in `js/profile-page.js`. | Extracted |
+| `functions/_profile-schemas.js` | New profile API schema module | Owns `/profile-data` mutation schemas, including account/profile/listing/role/inquiry/saved-opportunity/lead/Premium actions. | Keep payload validation here for new profile actions. | Extracted |
+| `functions/_profile-utils.js` | New profile API utility module | Owns JSON responses, validation error response, D1 binding check, audit statement helper, normalization, id generation, and Clerk name/email helpers. | Reuse from profile API modules instead of duplicating response/normalization helpers. | Extracted |
+| `functions/_profile-recommendations.js` | New profile recommendation module | Owns franchisee recommendation query, budget fit, interest matching, analytics-weighted scoring, and reason labels. | Keep recommendation algorithm changes here. | Extracted |
+| `functions/_profile-listing-patch.js` | New profile listing mutation helper | Owns listing editable field extraction, typed normalization, and SQL update statement construction. | Keep owner listing patch changes here. | Extracted |
+| `src/lib/franchise-text.ts` | New static text helper module | Owns display text normalization, URL normalization, escaping, truncation, paragraph rendering, Rupiah formatting, slugify, and generated HTML cleanup/link canonicalization. | Continue splitting contact/ranking/category helpers only after build output remains stable. | Extracted |
 
 Refactor rule: prefer behavior-preserving extraction with validation after each step. Do not combine extraction with feature changes unless the feature needs the boundary.
+
+### Large File Refactor Plans Over 900 Lines
+
+These are the files currently above 900 lines and already planned for refactor. Each split should be behavior-preserving first, then followed by focused validation. Do not change public copy, API contracts, or generated HTML intentionally during these extractions.
+
+#### `js/profile-page.js` - Target Browser Modules
+
+| Target file | Move from `js/profile-page.js` | Keep in facade | Validation |
+| --- | --- | --- | --- |
+| `js/profile-ui-utils.js` | `emptyState`, `emptyInline`, `field`, `textarea`, `readonlyIdentity`, `roleBadges`, `formatRupiah`, `formatFullRupiah`, `setBusy`, `setMessage`, `errorBox`, `attr`, `escapeHtml`, status labels, and Clerk account helper copy. Implemented. | Shared `state`, `loadProfile`, `render`, root event delegation, and API post helpers stay in `profile-page.js`. | `node --check` all profile scripts; `/profil` still renders account/franchisee/franchisor/membership tabs. |
+| `js/profile-account.js` | `accountPanel`, `accountFieldForm`, `passwordEditForm`. Implemented. | Click/submit event routing and `submitPasswordForm` stay in `profile-page.js` first. Summary stays in facade because it depends on role/tab orchestration. | Account edit/password controls keep current Clerk behavior. |
+| `js/profile-franchisee.js` | `franchiseePanel`, `opportunitiesPanel`, `opportunityCard`, `submitFranchiseInquiry` if this file grows again. | Saved opportunity storage/merge/lookup moved to `js/profile-opportunities.js`; API auth headers and `loadProfile` reload remain centralized. | Saved opportunities still migrate local-to-D1, save/remove, and inquiry CTA still posts. |
+| `js/profile-franchisor.js` | `franchisorPanel`, `listingPanel`, `publicationDistribution`, `mediaUploadControl`, `claimsPanel`, `uploadListingMedia`, `updateLeadStatus`, `selectedListing` if this file grows again. | `leadsPanel` and `leadCard` moved to `js/profile-leads.js`; status/WhatsApp helpers moved to `js/profile-ui-utils.js`. | Listing selector, R2 media upload, lead status update, and claim display remain unchanged. |
+| `js/profile-premium.js` | `membershipPanel`, `premiumNotificationsBlock`, `premiumReadinessBlock`, `premiumUpgradeBlock`, `premiumPaymentBlock`, `premiumConfirmationForm`, `activePremiumBlock`, active subscription/date/status helpers. Implemented in the existing Premium helper. | `createPremiumOrder`, `submitPremiumConfirmation`, receipt upload, and membership state refresh stay in `profile-page.js`. | Membership tab still creates orders, uploads proof, submits confirmation, and shows discounts/readiness/notifications. |
+| `js/profile-roles.js` | Missing-role CTA cards and confirmation modal. Implemented. | `submitPublicRoleAdd` stays in `profile-page.js`. | Additive franchisee/franchisor role flow keeps the same redirect behavior. |
+| `js/profile-leads.js` | Lead list/card rendering. Implemented. | `updateLeadStatus` stays in `profile-page.js`. | Lead contact shortcuts and status select markup remain unchanged. |
+| `js/profile-opportunities.js` | Local saved-opportunity storage/merge/lookup helpers. Implemented. | Server sync, inquiry submit, and opportunity card rendering stay in `profile-page.js`. | Existing local-to-D1 saved opportunity migration keeps working. |
+
+Recommended order:
+1. Extract `profile-ui-utils` first because it has the least state coupling.
+2. Extract `profile-membership` second because Premium helpers already have a partial boundary.
+3. Extract account, then franchisee, then franchisor panels.
+4. Only after panel extraction should root event delegation be split.
+
+#### `functions/profile-data.js` - Target API Modules
+
+| Target file | Move from `functions/profile-data.js` | Keep in facade | Validation |
+| --- | --- | --- | --- |
+| `functions/_profile-schemas.js` | `AccountSchema`, `FranchiseeProfileSchema`, `FranchisorProfileSchema`, `ListingSchema`, role/inquiry/save/lead schemas, `MutationSchema`, and scalar helpers `optionalText`, `optionalInt`, `optionalNumber`, `optionalMoney`. Implemented. | `onRequestGet` and `onRequestPost` stay in facade. | `pnpm exec tsc --noEmit`; invalid payload still returns same validation response shape. |
+| `functions/_profile-account.js` | `updateAccount`, `addPublicRole`, `splitDisplayName`, `getPrimaryEmail`, Clerk metadata sync calls specific to account/role writes. | D1 auth via `requireD1User` remains in endpoint facade. | Account name/email update still updates Clerk then D1; public role add-on still redirects clients through existing response. |
+| `functions/_profile-franchisee.js` | `updateFranchiseeProfile`, `createFranchiseInquiry`, `saveFranchiseOpportunity`, `removeFranchiseOpportunity`, `incompleteFranchiseeProfileResponse`, `loadFranchiseeProfile`, `loadPublicOpportunity`, `loadSavedOpportunities`, `loadFranchiseeInquiryHistory` if this file grows again. | Recommendation query/scoring moved to `functions/_profile-recommendations.js`; main `loadProfileData` can call imported loaders until GET composition is later split. | Save, unsave, inquiry, recommendation scoring, and missing-profile CTA metadata remain identical. |
+| `functions/_profile-franchisor.js` | `updateFranchisorProfile`, `updateOwnedListing`, `updateFranchiseLeadStatus`, `loadOwnedPublicationDistribution`, `loadFranchisorLeadInbox`, `loadFranchiseeLead`, `loadFranchisorProfile`, `loadOwnedListing` if this file grows again. | Listing patch/update construction moved to `functions/_profile-listing-patch.js`; shared audit/rebuild helpers stay imported from existing modules. | Owner listing edit rate limit, rebuild queueing, and lead status ownership checks stay intact. |
+| `functions/_profile-read-model.js` | `loadProfileData` orchestration after the write modules are stable. | Endpoint facade keeps auth, error telemetry, and JSON response handling. | GET `/profile-data` response keys remain unchanged for `/profil`. |
+| `functions/_profile-utils.js` | `getDb`, `jsonResponse`, `validationError`, `auditStatement`, `normalizeWhatsapp`, `textOrNull`, `normalizeText`, `intOrNull`, `numberOrNull`, `randomId`, missing-table detection, and Clerk name/email helpers. Implemented. | Only truly shared helpers should move here; avoid dumping workflow-specific logic into a new catch-all file. | Unit-free validation is build/typecheck plus existing API handler tests/build. |
+| `functions/_profile-listing-patch.js` | Listing editable-field extraction, typed normalization, and SQL update statement construction. Implemented. | Owner listing save workflow remains in `profile-data.js`. | Owner listing edits keep the same fields and throttling. |
+| `functions/_profile-recommendations.js` | Published franchise query, budget/category matching, analytics-weighted scoring, and recommendation reasons. Implemented. | `RECOMMENDATION_LIMIT` remains controlled by `profile-data.js`. | Recommendation response keys remain unchanged. |
+
+Recommended order:
+1. Extract schemas and scalar validators first.
+2. Extract account/role handlers.
+3. Extract franchisee value handlers and loaders.
+4. Extract franchisor/listing/lead handlers and loaders.
+5. Extract read model only after POST workflow modules are stable.
+
+#### `src/lib/franchise-static.ts` - Target TypeScript Modules
+
+| Target file | Move from `src/lib/franchise-static.ts` | Keep in facade | Validation |
+| --- | --- | --- | --- |
+| `src/lib/franchise-text.ts` | `normalizeText`, `normalizeBrandName`, `normalizeCompanyName`, `normalizeDescriptionText`, title/sentence case helpers, uppercase-term restoration, `truncate`, `paragraphs`, `escapeHtml`, `escapeAttr`, URL normalizers, `formatRupiah`, `getThumb`, `slugify`, generated HTML cleanup, and legacy-link canonicalization. Implemented. | Public exports `renderListingPage`, `renderDetailPage`, sorting functions, and route entry functions stay in `franchise-static.ts` initially. | `pnpm run build` should produce unchanged generated page hashes except manifest timestamps. |
+| `src/lib/franchise-contact.ts` | `parsePhoneContacts`, phone start/label/type inference, Indonesian digit normalization/formatting, phone/contact row generation, office address row, WhatsApp claim href. | `generateContactBlock` can move with contact helpers or remain until detail rendering is extracted. | Detail pages still show parsed public contact rows for unclaimed listings and owner contacts for claimed listings. |
+| `src/lib/franchise-ranking.ts` | `compareFranchises`, `getRecommendedRows`, `getPopularRows`, `getAlphabeticalRows`, `scoreRecommendation`, `scorePopularity`, `completenessScore`, `formatRupiah` if ranking/cards use it. | Route-facing exports can re-export from `franchise-static.ts` first. | Directory sort/query states remain stable. |
+| `src/lib/franchise-category.ts` | `getCategoryRouteEntries`, `getCategorySummaries`, `addCategoryAlias`, `categorySlug`, `canonicalCategoryHref`, category card helpers if the category renderer moves. | `renderCategoryIndexPage` can remain in `franchise-static.ts` until category rendering is extracted. | Category aliases and canonical `/peluang-usaha?kategori=...` links stay unchanged. |
+| `src/lib/franchise-renderers.ts` | `generateCard`, `generateCategoryCard`, `generateSaveOpportunityButton`, `generateDirectoryControls`, `generateStatusBadge`, `generateFactChips`, JSON-LD/breadcrumb/sticky/disclaimer/tabs/detail enhancement functions if not split further. | `franchise-static.ts` becomes the orchestration facade reading templates, loading data, and composing imported renderers. | Snapshot build still writes/skips same public pages; no visual copy changes unless intentional. |
+
+Recommended order:
+1. Extract `franchise-text.ts` first and re-export only what is needed.
+2. Extract `franchise-contact.ts` next because the function cluster is self-contained.
+3. Extract `franchise-ranking.ts` and `franchise-category.ts`.
+4. Extract renderer helpers last, after text/contact/ranking imports are stable.
 
 ### Refactor Implementation Order
 
@@ -217,13 +293,17 @@ Use this checklist as the next implementation tracker:
 | Order | Task | Done when | Status |
 | ---: | --- | --- | --- |
 | 1 | Extract `js/auth-clerk.js` debug utilities. | `window.FranchiseAuth.getDebugSnapshot()` and existing dashboard/sso debug panels still work; `node --check` passes for all auth scripts; deployed SSO behavior is unchanged. | Done |
-| 2 | Extract `js/auth-clerk.js` UI renderer/events. | `/login`, `/register`, and `/dashboard` still render the same custom login/register/staff auth UI; Google and email/password paths still use the same public API. | Pending |
+| 2 | Extract `js/auth-clerk.js` UI renderer/events. | `/login`, `/register`, and `/dashboard` still render the same custom login/register/staff auth UI; Google and email/password paths still use the same public API. | Done |
 | 3 | Extract `js/auth-clerk.js` Clerk boot/token/sync core. | `window.FranchiseAuth` remains backward compatible for `/daftar`, `/dashboard`, and future route scripts. | Pending |
 | 4 | Extract dashboard inline client JS from `src/pages/dashboard/index.astro`. | `/dashboard` markup becomes mostly static shell; all current sections still render from `/dashboard-data`; admin action buttons still work. | Done |
 | 5 | Split `functions/dashboard-data.js` into schemas, queries, actions, and utilities. | `/dashboard-data` remains the only public endpoint, but file length drops and each module has one responsibility. | Done |
-| 6 | Split `src/lib/franchise-static.ts` contact/text/ranking helpers. | Public `/peluang-usaha` output hash should remain unchanged except for intentional formatting differences. | Pending |
-| 7 | Split D1 builder/importer scripts. | Existing `pnpm run build:d1:franchises`, `pnpm run import:csv:dry`, and build pipeline behavior remains unchanged. | Pending |
-| 8 | Continue profile client extraction. | Premium helper extraction is complete; next extraction moves account/franchisee/franchisor panel renderers without behavior changes. | Started |
+| 6 | Extract dashboard shared render utilities. | Icon-only action controls, escaping, currency formatting, and form-value writes live outside the dashboard controller; dashboard buttons keep shared custom tooltips. | Done |
+| 7 | Extract dashboard Premium Operations. | Premium funnel/settings/payment/email queue rendering and actions live outside `js/dashboard-admin.js`. | Done |
+| 8 | Extract dashboard Review/Data Quality/Claim workflows. | Guided edit fields, quality warning seeding, edit submission/review, and claim review live outside `js/dashboard-admin.js`. | Done |
+| 9 | Extract dashboard Outreach/Publications workflows. | Outreach rows/logging and publication controls live in a focused module; `js/dashboard-admin.js` becomes core boot/tabs/status plus orchestration. | Pending |
+| 10 | Split `src/lib/franchise-static.ts` contact/text/ranking helpers. | Public `/peluang-usaha` output hash should remain unchanged except for intentional formatting differences. | In progress - text helpers extracted; contact/ranking/category remain |
+| 11 | Split D1 builder/importer scripts. | Existing `pnpm run build:d1:franchises`, `pnpm run import:csv:dry`, and build pipeline behavior remains unchanged. | Pending |
+| 12 | Continue profile client extraction. | `js/profile-page.js` remains the controller facade; account, role, leads, Premium membership, UI helpers, and saved-opportunity storage are extracted. | In progress |
 
 ## Migration Rules
 - Do not remove existing form fields while migrating; map every current field to D1 or a deliberate archival field.
@@ -246,11 +326,11 @@ Use this checklist as the next implementation tracker:
 - Legacy static HTML volume is large; migration should prioritize app-critical routes instead of converting every exported page at once.
 
 ## Immediate Next Work
-1. Deploy/test `/get-franchises` and `/form-submit` against Cloudflare Pages with the `franchise_db` binding and compare real frontend behavior against the previous Sheets-backed behavior.
-2. Decide deployment cutover for Astro output: either deploy `dist/` as the Cloudflare Pages output or continue writing selected generated pages into the legacy root during transition.
-3. Extract reusable TypeScript/Zod schemas into shared modules so the function-level schemas, importer schemas, and future Astro server routes do not drift.
-4. Configure Clerk production/preview environment variables and verify `/login`, `/register`, `/auth-sync`, and `/form-submit` on Cloudflare Pages.
-5. Build protected role landing pages for `/franchisee`, `/franchisor`, and later `/admin`.
+1. Production-check the next dashboard deploy: login as admin, open Operations, confirm Premium settings, email queue controls, Review, Data Quality, Claim, and Premium payment actions still render after the dashboard module split.
+2. Verify one controlled D1 dirty-to-build cycle: make a low-risk public listing edit, confirm `site_rebuild_requests`, poller/deploy hook, and public HTML freshness.
+3. Continue behavior-preserving refactors in this order: dashboard Outreach/Publications, profile client account/franchisee/franchisor renderers, then profile API workflow modules.
+4. Add automated payment matching only after choosing a safe Indonesian bank/aggregator read-only transaction source.
+5. Keep auth/account-linking production QA current for `/login`, `/daftar`, `/profil`, Google SSO, password recovery, and same-email linking.
 
 ## Import Status
 - First D1 CSV importer: `scripts/import-csv-to-d1.ts`.

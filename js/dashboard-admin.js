@@ -10,9 +10,6 @@
   var dashboardTabs = Array.from(document.querySelectorAll("[data-dashboard-tab]"));
   var dashboardPanels = Array.from(document.querySelectorAll("[data-dashboard-panel]"));
   var outreachRows = document.querySelector("[data-outreach-rows]");
-  var qualityRows = document.querySelector("[data-quality-rows]");
-  var refreshQualityButton = document.querySelector("[data-refresh-quality]");
-  var claimRows = document.querySelector("[data-claim-rows]");
   var publishState = document.querySelector("[data-publish-state]");
   var publicationRows = document.querySelector("[data-publication-rows]");
   var premiumPaymentRows = document.querySelector("[data-premium-payment-rows]");
@@ -24,21 +21,51 @@
   var paymentMethodForm = document.querySelector("[data-payment-method-form]");
   var premiumSettingsForm = document.querySelector("[data-premium-settings-form]");
   var outreachCount = document.querySelector("[data-outreach-count]");
-  var editRows = document.querySelector("[data-edit-rows]");
-  var editCount = document.querySelector("[data-edit-count]");
-  var editForm = document.querySelector("[data-edit-form]");
-  var editPanelTitle = document.querySelector("[data-edit-panel-title]");
-  var editPanelCopy = document.querySelector("[data-edit-panel-copy]");
-  var listingSelect = document.querySelector("[data-listing-select]");
-  var editReason = document.querySelector("[data-edit-reason]");
-  var editFieldList = document.querySelector("[data-edit-field-list]");
-  var addEditFieldButton = document.querySelector("[data-add-edit-field]");
-  var editSubmitButton = document.querySelector("[data-edit-submit]");
-  var editHelp = document.querySelector("[data-edit-help]");
   var leadSummary = document.querySelector("[data-lead-summary]");
   var systemHealth = document.querySelector("[data-system-health]");
   var dashboardState = null;
   var currentUserIsAdmin = false;
+  var dashboardUtils = window.FranchiseDashboardUtils;
+  var escapeHtml = dashboardUtils.escapeHtml;
+  var escapeAttr = dashboardUtils.escapeAttr;
+  var formatCurrency = dashboardUtils.formatCurrency;
+  var renderActionToolbar = dashboardUtils.renderActionToolbar;
+  var renderActionButton = dashboardUtils.renderActionButton;
+  var renderActionLink = dashboardUtils.renderActionLink;
+  var premiumOperations = window.FranchiseDashboardPremium.createOperations({
+    premiumFunnel: premiumFunnel,
+    premiumNotifications: premiumNotifications,
+    premiumReports: premiumReports,
+    premiumExpiring: premiumExpiring,
+    premiumEmailQueue: premiumEmailQueue,
+    paymentMethodForm: paymentMethodForm,
+    premiumSettingsForm: premiumSettingsForm,
+    isAdmin: function () { return currentUserIsAdmin; },
+    postDashboardAction: postDashboardAction,
+    reloadDashboard: reloadDashboard,
+    setStatus: setStatus
+  });
+  var reviewOperations = window.FranchiseDashboardReview.createOperations({
+    qualityRows: document.querySelector("[data-quality-rows]"),
+    refreshQualityButton: document.querySelector("[data-refresh-quality]"),
+    claimRows: document.querySelector("[data-claim-rows]"),
+    editRows: document.querySelector("[data-edit-rows]"),
+    editCount: document.querySelector("[data-edit-count]"),
+    editForm: document.querySelector("[data-edit-form]"),
+    editPanelTitle: document.querySelector("[data-edit-panel-title]"),
+    editPanelCopy: document.querySelector("[data-edit-panel-copy]"),
+    listingSelect: document.querySelector("[data-listing-select]"),
+    editReason: document.querySelector("[data-edit-reason]"),
+    editFieldList: document.querySelector("[data-edit-field-list]"),
+    addEditFieldButton: document.querySelector("[data-add-edit-field]"),
+    editSubmitButton: document.querySelector("[data-edit-submit]"),
+    editHelp: document.querySelector("[data-edit-help]"),
+    getDashboardState: function () { return dashboardState; },
+    isAdmin: function () { return currentUserIsAdmin; },
+    postDashboardAction: postDashboardAction,
+    reloadDashboard: reloadDashboard,
+    setStatus: setStatus
+  });
 
   window.FRANCHISE_AUTH_DEBUG = true;
   bindDashboardTabs();
@@ -50,25 +77,12 @@
   if (authDebugCopy) {
     authDebugCopy.addEventListener("click", copyAuthDebug);
   }
-  if (editForm) {
-    editForm.addEventListener("submit", submitEditSuggestion);
-  }
-  if (addEditFieldButton) {
-    addEditFieldButton.addEventListener("click", function () {
-      addEditFieldRow("phone", "");
-    });
-  }
-  if (listingSelect) {
-    listingSelect.addEventListener("change", refreshFieldOldValues);
-  }
-  if (refreshQualityButton) {
-    refreshQualityButton.addEventListener("click", refreshQualityChecks);
-  }
+  reviewOperations.bind();
   if (paymentMethodForm) {
-    paymentMethodForm.addEventListener("submit", submitPaymentMethod);
+    paymentMethodForm.addEventListener("submit", premiumOperations.submitPaymentMethod);
   }
   if (premiumSettingsForm) {
-    premiumSettingsForm.addEventListener("submit", submitPremiumSettings);
+    premiumSettingsForm.addEventListener("submit", premiumOperations.submitPremiumSettings);
   }
   activateDashboardTab(initialDashboardTab(), false);
   boot();
@@ -152,45 +166,20 @@
     setStatus("Dashboard aktif untuk site franchisee.id.", false);
     renderAuthDebug("dashboard:ready", { roles: data.user.roles || [] });
     userEl.textContent = (data.user.name || data.user.email || "Admin/staff") + " - " + data.user.roles.join(", ");
-    renderEditRoleCopy();
     setMetric("total_listings", data.overview.total_listings);
     setMetric("unclaimed_listings", data.overview.unclaimed_listings);
     setMetric("verified_listings", data.overview.verified_listings + data.overview.premium_listings);
     setMetric("pending_publish", (data.publish_state.requests_by_status.pending || 0) + (data.publish_state.requests_by_status.failed_retryable || 0));
     renderOutreach(data.outreach_queue || [], data.outreach_summary || {});
-    renderQuality(data.data_quality || []);
-    renderClaims(data.pending_claims || []);
-    renderPremiumOperations(data.premium_operations || {});
+    reviewOperations.render(data);
+    premiumOperations.render(data.premium_operations || {});
     renderPremiumPayments(data.pending_premium_payments || []);
     renderPublish(data.publish_state || {});
     renderPublicationControls(data.publication_controls || { sites: [], listings: [] });
-    renderListingOptions(data.editable_listings || []);
-    ensureEditFieldRows();
-    renderEditSuggestions(data.edit_suggestions || { summary: {}, pending: [] });
     renderLeads(data.lead_summary || { by_status: {}, recent: [] });
     renderHealth(data.system_health || {});
     if (window.FranchiseTooltip && typeof window.FranchiseTooltip.refresh === "function") {
       window.FranchiseTooltip.refresh();
-    }
-  }
-
-  function renderEditRoleCopy() {
-    if (editPanelTitle) editPanelTitle.textContent = currentUserIsAdmin ? "Edit Listing Langsung" : "Listing Edit Suggestions";
-    if (editPanelCopy) {
-      editPanelCopy.textContent = currentUserIsAdmin
-        ? "Admin bisa memperbaiki data listing dan menerapkannya langsung."
-        : "Staff menyiapkan perubahan; admin menyetujui sebelum tampil.";
-    }
-    if (editHelp) {
-      editHelp.textContent = currentUserIsAdmin
-        ? "Perubahan admin langsung tersimpan dan masuk antrean publish."
-        : "Perubahan staff masuk review admin sebelum tampil.";
-    }
-    if (editSubmitButton) {
-      var label = currentUserIsAdmin ? "Terapkan edit langsung" : "Kirim saran edit";
-      editSubmitButton.setAttribute("aria-label", label);
-      editSubmitButton.setAttribute("data-fr-tooltip", label);
-      editSubmitButton.innerHTML = '<i class="' + (currentUserIsAdmin ? "fas fa-save" : "fas fa-paper-plane") + '" aria-hidden="true"></i>';
     }
   }
 
@@ -246,78 +235,6 @@
     outreachRows.querySelectorAll("[data-log-outreach]").forEach(function (link) {
       link.addEventListener("click", function () {
         logOutreach(link);
-      });
-    });
-  }
-
-  function renderQuality(rows) {
-    if (!rows.length) {
-      qualityRows.innerHTML = '<tr><td colspan="4" class="dash-empty">Tidak ada warning prioritas.</td></tr>';
-      return;
-    }
-    qualityRows.innerHTML = rows.map(function (row) {
-      return '<tr>' +
-        '<td><a href="' + escapeAttr(row.public_url) + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a></td>' +
-        '<td>' + escapeHtml(row.category || "-") + '</td>' +
-        '<td>' + row.warnings.map(function (warning) { return '<span class="dash-badge">' + escapeHtml(warning) + '</span>'; }).join(" ") + '</td>' +
-        '<td>' + renderActionToolbar([
-          renderActionButton({
-            label: "Buat saran edit",
-            icon: "fas fa-pen",
-            attrs: {
-              "data-quick-edit": "",
-              "data-franchise-id": row.id,
-              "data-brand": row.brand_name,
-              "data-warnings": row.warnings.join(",")
-            }
-          })
-        ], "Aksi data quality") + '</td>' +
-      '</tr>';
-    }).join("");
-
-    qualityRows.querySelectorAll("[data-quick-edit]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        seedEditSuggestion(button);
-      });
-    });
-  }
-
-  function renderClaims(rows) {
-    if (!rows.length) {
-      claimRows.innerHTML = '<li><strong>Tidak ada claim pending</strong><span>Queue claim kosong.</span></li>';
-      return;
-    }
-    claimRows.innerHTML = rows.map(function (row) {
-      var actions = currentUserIsAdmin
-        ? renderActionToolbar([
-          renderActionButton({
-            label: "Setujui claim",
-            icon: "fas fa-check",
-            tone: "success",
-            attrs: {
-              "data-review-claim": "",
-              "data-claim-id": row.id,
-              "data-decision": "approve"
-            }
-          }),
-          renderActionButton({
-            label: "Tolak claim",
-            icon: "fas fa-times",
-            tone: "danger",
-            attrs: {
-              "data-review-claim": "",
-              "data-claim-id": row.id,
-              "data-decision": "reject"
-            }
-          })
-        ], "Review claim")
-        : '<span>Login admin dibutuhkan untuk approve/reject.</span>';
-      return '<li><strong>' + escapeHtml(row.brand_name) + '</strong><span>' + escapeHtml(row.claimant_email || row.claimant_name || "Tanpa claimant") + ' - ' + escapeHtml(row.created_at) + '</span>' + actions + '</li>';
-    }).join("");
-
-    claimRows.querySelectorAll("[data-review-claim]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        reviewClaim(button);
       });
     });
   }
@@ -387,109 +304,6 @@
     });
   }
 
-  function renderPremiumOperations(data) {
-    var funnel = data.funnel || {};
-    if (premiumFunnel) {
-      var rows = [
-        ["Halaman dilihat", funnel.premium_page_view || 0],
-        ["CTA diklik", funnel.premium_cta_click || 0],
-        ["Tagihan dibuat", funnel.premium_order_created || 0],
-        ["Konfirmasi masuk", funnel.premium_confirmation_submitted || 0],
-        ["Premium aktif", funnel.premium_activated || 0]
-      ];
-      premiumFunnel.innerHTML = rows.map(function (row) {
-        return '<li><strong>' + escapeHtml(row[0]) + '</strong><span>' + escapeHtml(row[1]) + '</span></li>';
-      }).join("");
-    }
-
-    var method = (data.payment_methods || []).find(function (item) { return item.code === "manual_bca"; }) || (data.payment_methods || [])[0];
-    if (paymentMethodForm && method) {
-      setFormValue(paymentMethodForm, "label", method.label || "");
-      setFormValue(paymentMethodForm, "provider", method.provider || "");
-      setFormValue(paymentMethodForm, "account_name", method.account_name || "");
-      setFormValue(paymentMethodForm, "account_number", method.account_number || "");
-      setFormValue(paymentMethodForm, "instructions", method.instructions || "");
-    }
-
-    if (premiumSettingsForm) {
-      var settings = data.settings || {};
-      setFormValue(premiumSettingsForm, "grace_period_days", settings.grace_period_days == null ? 3 : settings.grace_period_days);
-      setFormValue(premiumSettingsForm, "grace_daily_email_enabled", Number(settings.grace_daily_email_enabled == null ? 1 : settings.grace_daily_email_enabled));
-      setFormValue(premiumSettingsForm, "annual_report_enabled", Number(settings.annual_report_enabled == null ? 1 : settings.annual_report_enabled));
-      setFormValue(premiumSettingsForm, "multi_brand_discount_enabled", Number(settings.multi_brand_discount_enabled || 0));
-      setFormValue(premiumSettingsForm, "multi_brand_discount_percent", settings.multi_brand_discount_percent || 0);
-      setFormValue(premiumSettingsForm, "multi_brand_min_owned_brands", settings.multi_brand_min_owned_brands || 2);
-    }
-
-    if (premiumNotifications) {
-      var notifications = data.notifications || [];
-      premiumNotifications.innerHTML = notifications.length ? notifications.slice(0, 6).map(function (item) {
-        return '<li><strong>' + escapeHtml(item.title || "Info Premium") + '</strong><span>' + escapeHtml((item.brand_name ? item.brand_name + " - " : "") + (item.message || "")) + '</span></li>';
-      }).join("") : '<li><span>Belum ada info Premium terbaru.</span></li>';
-    }
-
-    if (premiumExpiring) {
-      var expiring = data.expiring_subscriptions || [];
-      premiumExpiring.innerHTML = expiring.length ? expiring.slice(0, 6).map(function (item) {
-        var days = Number(item.days_left || 0);
-        return '<li><strong>' + escapeHtml(item.brand_name || item.franchise_id || "Listing") + '</strong><span>' +
-          escapeHtml((days > 0 ? days + " hari lagi" : "Segera berakhir") + (item.primary_email ? " - " + item.primary_email : "")) +
-          '</span></li>';
-      }).join("") : '<li><span>Tidak ada Premium yang segera berakhir.</span></li>';
-    }
-
-    if (premiumReports) {
-      var reports = data.annual_reports || [];
-      premiumReports.innerHTML = reports.length ? reports.slice(0, 6).map(function (item) {
-        return '<li><strong>' + escapeHtml(item.brand_name || item.franchise_id || "Listing") + '</strong><span>' +
-          escapeHtml("view " + (item.listing_views || 0) + " / save " + (item.saves || 0) + " / inquiry " + (item.inquiries || 0) + " / lead " + (item.leads || 0)) +
-          '</span></li>';
-      }).join("") : '<li><span>Belum ada laporan tahunan Premium.</span></li>';
-    }
-
-    if (premiumEmailQueue) {
-      var queueRows = data.email_queue_rows || [];
-      var queueSummary = data.email_queue || [];
-      premiumEmailQueue.innerHTML = queueRows.length ? queueRows.slice(0, 8).map(function (item) {
-        var status = item.status || "pending";
-        var actions = currentUserIsAdmin ? renderActionToolbar([
-          status === "failed" || status === "cancelled" ? renderActionButton({
-            label: "Kirim ulang email",
-            icon: "fas fa-redo",
-            tone: "success",
-            attrs: {
-              "data-email-action": "retry",
-              "data-email-id": item.id
-            }
-          }) : "",
-          status === "pending" || status === "failed" ? renderActionButton({
-            label: "Batalkan email",
-            icon: "fas fa-ban",
-            tone: "danger",
-            attrs: {
-              "data-email-action": "cancel",
-              "data-email-id": item.id
-            }
-          }) : ""
-        ], "Aksi email") : "";
-        return '<li><strong>' + escapeHtml(status + " - " + (item.category || "email")) + '</strong>' +
-          '<span>' + escapeHtml((item.subject || "Email") + " untuk " + (item.to_email || "-")) + '</span>' +
-          (item.last_error ? '<span class="dash-muted">' + escapeHtml(item.last_error) + '</span>' : '') +
-          actions +
-          '</li>';
-      }).join("") : queueSummary.length ? queueSummary.slice(0, 6).map(function (item) {
-        return '<li><strong>' + escapeHtml((item.status || "pending") + " - " + (item.category || "email")) + '</strong><span>' +
-          escapeHtml((item.count || 0) + " email") +
-          '</span></li>';
-      }).join("") : '<li><span>Belum ada antrean email 30 hari terakhir.</span></li>';
-      premiumEmailQueue.querySelectorAll("[data-email-action]").forEach(function (button) {
-        button.addEventListener("click", function () {
-          manageNotificationEmail(button);
-        });
-      });
-    }
-  }
-
   function renderPublicationControls(data) {
     if (!publicationRows) return;
     var sites = data.sites || [];
@@ -519,62 +333,6 @@
     publicationRows.querySelectorAll("[data-publication-status]").forEach(function (select) {
       select.addEventListener("change", function () {
         updatePublicationStatus(select);
-      });
-    });
-  }
-
-  function renderListingOptions(rows) {
-    if (!listingSelect) return;
-    listingSelect.innerHTML = '<option value="">Pilih listing...</option>' + rows.map(function (row) {
-      return '<option value="' + escapeAttr(row.id) + '">' + escapeHtml(row.brand_name + " - " + (row.category || "Tanpa kategori")) + '</option>';
-    }).join("");
-  }
-
-  function renderEditSuggestions(data) {
-    var pending = data.pending || [];
-    var summary = data.summary || {};
-    editCount.textContent = (summary.pending || 0) + " pending";
-    if (!pending.length) {
-      editRows.innerHTML = '<tr><td colspan="4" class="dash-empty">Tidak ada edit suggestion pending.</td></tr>';
-      return;
-    }
-
-    editRows.innerHTML = pending.map(function (row) {
-      var actions = currentUserIsAdmin
-        ? renderActionToolbar([
-          renderActionButton({
-            label: "Setujui edit",
-            icon: "fas fa-check",
-            tone: "success",
-            attrs: {
-              "data-review-edit": "",
-              "data-suggestion-id": row.id,
-              "data-decision": "approve"
-            }
-          }),
-          renderActionButton({
-            label: "Tolak edit",
-            icon: "fas fa-times",
-            tone: "danger",
-            attrs: {
-              "data-review-edit": "",
-              "data-suggestion-id": row.id,
-              "data-decision": "reject"
-            }
-          })
-        ], "Review edit")
-        : '<span class="dash-muted">Menunggu admin.</span>';
-      return '<tr>' +
-        '<td><a href="' + escapeAttr(row.public_url || "#") + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a><br><span class="dash-muted">' + escapeHtml(row.suggested_by_email || row.suggested_by_name || "staff") + '</span></td>' +
-        '<td>' + renderFieldDiff(row.old_value || {}, row.suggested_value || {}) + '</td>' +
-        '<td>' + escapeHtml(row.reason || "-") + '</td>' +
-        '<td>' + actions + '</td>' +
-      '</tr>';
-    }).join("");
-
-    editRows.querySelectorAll("[data-review-edit]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        reviewEditSuggestion(button);
       });
     });
   }
@@ -612,193 +370,10 @@
     })).join("");
   }
 
-  function seedEditSuggestion(button) {
-    var franchiseId = button.getAttribute("data-franchise-id") || "";
-    var warnings = (button.getAttribute("data-warnings") || "").split(",");
-    listingSelect.value = franchiseId;
-    editReason.value = "Data quality: " + warnings.filter(Boolean).join(", ");
-    renderSeededEditFields(warnings);
-    if (editFieldList) {
-      var firstInput = editFieldList.querySelector("[data-edit-value]");
-      if (firstInput) firstInput.focus();
-    }
-  }
-
-  function renderSeededEditFields(warnings) {
-    var fields = [];
-    if (warnings.indexOf("missing_contact") >= 0 || warnings.indexOf("suspicious_contact") >= 0) fields.push("phone");
-    if (warnings.indexOf("missing_category") >= 0) fields.push("category");
-    if (warnings.indexOf("missing_description") >= 0 || warnings.indexOf("likely_all_caps") >= 0) fields.push("short_desc");
-    if (warnings.indexOf("missing_image") >= 0) fields.push("logo_url");
-    if (warnings.indexOf("invalid_url") >= 0) fields.push("logo_url");
-    if (!fields.length) fields.push("short_desc");
-    clearEditFieldRows();
-    fields.forEach(function (field) {
-      addEditFieldRow(field, "");
-    });
-  }
-
-  function ensureEditFieldRows() {
-    if (!editFieldList) return;
-    if (!editFieldList.children.length) addEditFieldRow("phone", "");
-  }
-
-  function clearEditFieldRows() {
-    if (editFieldList) editFieldList.innerHTML = "";
-  }
-
-  function addEditFieldRow(fieldName, value) {
-    if (!editFieldList) return;
-    var fields = getEditableFields();
-    var selected = fields.some(function (field) { return field.name === fieldName; }) ? fieldName : fields[0].name;
-    var row = document.createElement("div");
-    row.className = "dash-field-row";
-    row.innerHTML = '<div class="dash-field-main">' +
-      '<label>Field<select data-edit-field>' + renderFieldOptions(selected) + '</select></label>' +
-      '<label>Nilai baru<span data-edit-value-wrap></span><span class="dash-field-old" data-edit-old></span></label>' +
-      '</div>' +
-      '<button class="dash-icon-button dash-field-remove" type="button" data-remove-edit-field aria-label="Hapus field" data-fr-tooltip="Hapus field"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>';
-    editFieldList.appendChild(row);
-    bindEditFieldRow(row, value);
-  }
-
-  function bindEditFieldRow(row, value) {
-    var fieldSelect = row.querySelector("[data-edit-field]");
-    var removeButton = row.querySelector("[data-remove-edit-field]");
-    fieldSelect.addEventListener("change", function () {
-      renderValueInput(row, "");
-      refreshFieldOldValue(row);
-    });
-    removeButton.addEventListener("click", function () {
-      if (editFieldList.children.length <= 1) {
-        renderValueInput(row, "");
-        return;
-      }
-      row.remove();
-    });
-    renderValueInput(row, value);
-    refreshFieldOldValue(row);
-    if (window.FranchiseTooltip && typeof window.FranchiseTooltip.refresh === "function") {
-      window.FranchiseTooltip.refresh();
-    }
-  }
-
-  function renderValueInput(row, value) {
-    var fieldName = row.querySelector("[data-edit-field]").value;
-    var field = getFieldDef(fieldName);
-    var wrap = row.querySelector("[data-edit-value-wrap]");
-    if (!wrap) return;
-
-    if (field.type === "select") {
-      wrap.innerHTML = '<select data-edit-value>' + (field.options || []).map(function (option) {
-        return '<option value="' + escapeAttr(option) + '">' + escapeHtml(option) + '</option>';
-      }).join("") + '</select>';
-    } else if (field.type === "textarea") {
-      wrap.innerHTML = '<textarea data-edit-value></textarea>';
-    } else {
-      var inputType = field.type === "integer" || field.type === "number" ? "number" : field.type === "url" ? "url" : "text";
-      var step = field.type === "number" ? ' step="0.01"' : "";
-      wrap.innerHTML = '<input data-edit-value type="' + inputType + '"' + step + '>';
-    }
-
-    var input = wrap.querySelector("[data-edit-value]");
-    if (input) input.value = value == null ? "" : value;
-  }
-
-  function refreshFieldOldValues() {
-    if (!editFieldList) return;
-    Array.from(editFieldList.querySelectorAll(".dash-field-row")).forEach(refreshFieldOldValue);
-  }
-
-  function refreshFieldOldValue(row) {
-    var fieldName = row.querySelector("[data-edit-field]").value;
-    var oldEl = row.querySelector("[data-edit-old]");
-    var listing = selectedListing();
-    if (!oldEl) return;
-    oldEl.textContent = "Saat ini: " + formatFieldValue(listing ? listing[fieldName] : "");
-  }
-
-  function collectEditChanges() {
-    if (!listingSelect || !listingSelect.value) throw new Error("Pilih listing terlebih dahulu.");
-    if (!editFieldList) throw new Error("Tambahkan minimal satu field.");
-    var changes = {};
-    Array.from(editFieldList.querySelectorAll(".dash-field-row")).forEach(function (row) {
-      var fieldName = row.querySelector("[data-edit-field]").value;
-      var input = row.querySelector("[data-edit-value]");
-      var value = input ? input.value : "";
-      if (!String(value).trim()) return;
-      changes[fieldName] = value;
-    });
-    if (!Object.keys(changes).length) throw new Error("Isi nilai baru minimal pada satu field.");
-    return changes;
-  }
-
-  function renderFieldOptions(selected) {
-    return getEditableFields().map(function (field) {
-      return '<option value="' + escapeAttr(field.name) + '"' + (field.name === selected ? " selected" : "") + '>' + escapeHtml(field.label || field.name) + '</option>';
-    }).join("");
-  }
-
   function publicationStatusOptions(selected) {
     return ["draft", "published", "hidden", "archived"].map(function (status) {
       return '<option value="' + escapeAttr(status) + '"' + (status === selected ? " selected" : "") + '>' + escapeHtml(status) + '</option>';
     }).join("");
-  }
-
-  function getEditableFields() {
-    return dashboardState && dashboardState.editable_fields && dashboardState.editable_fields.length
-      ? dashboardState.editable_fields
-      : [
-        { name: "phone", label: "Telepon/WhatsApp", type: "text" },
-        { name: "office_address", label: "Alamat kantor", type: "textarea" },
-        { name: "category", label: "Kategori", type: "text" },
-        { name: "short_desc", label: "Deskripsi singkat", type: "textarea" },
-        { name: "logo_url", label: "URL logo", type: "url" }
-      ];
-  }
-
-  function getFieldDef(fieldName) {
-    return getEditableFields().filter(function (field) { return field.name === fieldName; })[0] || getEditableFields()[0];
-  }
-
-  function selectedListing() {
-    if (!dashboardState || !listingSelect) return null;
-    return (dashboardState.editable_listings || []).filter(function (listing) {
-      return listing.id === listingSelect.value;
-    })[0] || null;
-  }
-
-  function renderFieldDiff(oldValue, suggestedValue) {
-    var fields = Object.keys(suggestedValue || {});
-    if (!fields.length) return '<span class="dash-muted">Tidak ada field.</span>';
-    return '<div class="dash-field-diff">' + fields.map(function (fieldName) {
-      var field = getFieldDef(fieldName);
-      return '<div class="dash-field-diff-row">' +
-        '<strong>' + escapeHtml(field.label || fieldName) + '</strong>' +
-        '<span><b>Semula:</b> ' + escapeHtml(formatFieldValue(oldValue[fieldName])) + '<br><b>Usulan:</b> ' + escapeHtml(formatFieldValue(suggestedValue[fieldName])) + '</span>' +
-      '</div>';
-    }).join("") + '</div>';
-  }
-
-  function formatFieldValue(value) {
-    if (value === null || value === undefined || value === "") return "-";
-    if (typeof value === "object") return JSON.stringify(value);
-    return String(value);
-  }
-
-  async function refreshQualityChecks() {
-    try {
-      refreshQualityButton.disabled = true;
-      refreshQualityButton.classList.add("is-busy");
-      var result = await postDashboardAction({ action: "refresh_quality_checks" });
-      setStatus("Quality checks diperbarui: " + Number(result.result && result.result.scanned || 0).toLocaleString("id-ID") + " listing dicek.", false);
-      await reloadDashboard();
-    } catch (error) {
-      setStatus(error.message, true);
-    } finally {
-      refreshQualityButton.disabled = false;
-      refreshQualityButton.classList.remove("is-busy");
-    }
   }
 
   async function logOutreach(link) {
@@ -828,57 +403,6 @@
     }
   }
 
-  async function submitEditSuggestion(event) {
-    event.preventDefault();
-    try {
-      var changes = collectEditChanges();
-      var result = await postDashboardAction({
-        action: "suggest_edit",
-        franchise_id: listingSelect.value,
-        changes: changes,
-        reason: editReason.value || ""
-      });
-      setStatus(result.applied ? "Edit langsung diterapkan dan publish queue sudah ditandai dirty." : "Edit suggestion dikirim untuk admin review.", false);
-      clearEditFieldRows();
-      ensureEditFieldRows();
-      await reloadDashboard();
-    } catch (error) {
-      setStatus(error.message, true);
-    }
-  }
-
-  async function reviewEditSuggestion(button) {
-    try {
-      button.disabled = true;
-      await postDashboardAction({
-        action: "review_edit_suggestion",
-        suggestion_id: button.getAttribute("data-suggestion-id"),
-        decision: button.getAttribute("data-decision"),
-        notes: ""
-      });
-      await reloadDashboard();
-    } catch (error) {
-      button.disabled = false;
-      setStatus(error.message, true);
-    }
-  }
-
-  async function reviewClaim(button) {
-    try {
-      button.disabled = true;
-      await postDashboardAction({
-        action: "review_claim",
-        claim_id: button.getAttribute("data-claim-id"),
-        decision: button.getAttribute("data-decision"),
-        notes: ""
-      });
-      await reloadDashboard();
-    } catch (error) {
-      button.disabled = false;
-      setStatus(error.message, true);
-    }
-  }
-
   async function reviewPremiumPayment(button) {
     try {
       button.disabled = true;
@@ -893,84 +417,6 @@
       button.disabled = false;
       setStatus(error.message, true);
     }
-  }
-
-  async function manageNotificationEmail(button) {
-    try {
-      button.disabled = true;
-      await postDashboardAction({
-        action: "manage_notification_email",
-        email_id: button.getAttribute("data-email-id"),
-        email_action: button.getAttribute("data-email-action")
-      });
-      setStatus(button.getAttribute("data-email-action") === "retry" ? "Email masuk antrean kirim ulang." : "Email dibatalkan.", false);
-      await reloadDashboard();
-    } catch (error) {
-      button.disabled = false;
-      setStatus(error.message || "Aksi email belum bisa diproses.", true);
-    }
-  }
-
-  async function submitPaymentMethod(event) {
-    event.preventDefault();
-    if (!paymentMethodForm || !currentUserIsAdmin) {
-      setStatus("Hanya admin yang bisa mengubah metode pembayaran.", true);
-      return;
-    }
-    var button = paymentMethodForm.querySelector("button[type='submit']");
-    if (button) button.disabled = true;
-    try {
-      var form = new FormData(paymentMethodForm);
-      await postDashboardAction({
-        action: "update_payment_method",
-        code: String(form.get("code") || "manual_bca"),
-        label: String(form.get("label") || ""),
-        provider: String(form.get("provider") || ""),
-        account_name: String(form.get("account_name") || ""),
-        account_number: String(form.get("account_number") || ""),
-        instructions: String(form.get("instructions") || ""),
-        is_active: true
-      });
-      setStatus("Metode pembayaran tersimpan.", false);
-      await reloadDashboard();
-    } catch (error) {
-      setStatus(error.message || "Metode pembayaran belum bisa disimpan.", true);
-    } finally {
-      if (button) button.disabled = false;
-    }
-  }
-
-  async function submitPremiumSettings(event) {
-    event.preventDefault();
-    if (!premiumSettingsForm || !currentUserIsAdmin) {
-      setStatus("Hanya admin yang bisa mengubah pengaturan Premium.", true);
-      return;
-    }
-    var button = premiumSettingsForm.querySelector("button[type='submit']");
-    if (button) button.disabled = true;
-    try {
-      var form = new FormData(premiumSettingsForm);
-      await postDashboardAction({
-        action: "update_premium_settings",
-        grace_period_days: Number(form.get("grace_period_days") || 3),
-        grace_daily_email_enabled: String(form.get("grace_daily_email_enabled") || "1") === "1",
-        annual_report_enabled: String(form.get("annual_report_enabled") || "1") === "1",
-        multi_brand_discount_enabled: String(form.get("multi_brand_discount_enabled") || "0") === "1",
-        multi_brand_discount_percent: Number(form.get("multi_brand_discount_percent") || 0),
-        multi_brand_min_owned_brands: Number(form.get("multi_brand_min_owned_brands") || 2)
-      });
-      setStatus("Pengaturan Premium tersimpan.", false);
-      await reloadDashboard();
-    } catch (error) {
-      setStatus(error.message || "Pengaturan Premium belum bisa disimpan.", true);
-    } finally {
-      if (button) button.disabled = false;
-    }
-  }
-
-  function setFormValue(form, name, value) {
-    var input = form.querySelector('[name="' + name + '"]');
-    if (input) input.value = value == null ? "" : value;
   }
 
   async function updatePublicationStatus(select) {
@@ -1092,63 +538,4 @@
     textarea.remove();
   }
 
-  function formatCurrency(value) {
-    var amount = Number(value || 0);
-    if (!amount) return "-";
-    return "Rp " + amount.toLocaleString("id-ID");
-  }
-
-  function renderActionToolbar(items, label) {
-    var html = (items || []).filter(Boolean).join("");
-    if (!html) return "";
-    return '<div class="dash-actions dash-toolbar" role="toolbar" aria-label="' + escapeAttr(label || "Aksi") + '">' + html + '</div>';
-  }
-
-  function renderActionButton(config) {
-    config = config || {};
-    var attrs = Object.assign({}, config.attrs || {}, {
-      type: "button",
-      "aria-label": config.label || "Aksi",
-      "data-fr-tooltip": config.label || "Aksi"
-    });
-    return '<button class="' + escapeAttr(actionClass(config.tone)) + '"' + renderAttrs(attrs) + '><i class="' + escapeAttr(config.icon || "fas fa-circle") + '" aria-hidden="true"></i></button>';
-  }
-
-  function renderActionLink(config) {
-    config = config || {};
-    var attrs = Object.assign({}, config.attrs || {}, {
-      href: config.href || "#",
-      target: "_blank",
-      rel: "noopener",
-      "aria-label": config.label || "Buka",
-      "data-fr-tooltip": config.label || "Buka"
-    });
-    return '<a class="' + escapeAttr(actionClass(config.tone)) + '"' + renderAttrs(attrs) + '><i class="' + escapeAttr(config.icon || "fas fa-external-link-alt") + '" aria-hidden="true"></i></a>';
-  }
-
-  function actionClass(tone) {
-    return ["dash-icon-button", "dash-action-button", tone ? "is-" + tone : ""].filter(Boolean).join(" ");
-  }
-
-  function renderAttrs(attrs) {
-    return Object.keys(attrs || {}).map(function (name) {
-      var value = attrs[name];
-      if (value === false || value === null || value === undefined) return "";
-      if (value === true || value === "") return " " + name;
-      return " " + name + '="' + escapeAttr(value) + '"';
-    }).join("");
-  }
-
-  function escapeHtml(value) {
-    return String(value == null ? "" : value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
-  function escapeAttr(value) {
-    return escapeHtml(value);
-  }
 }());

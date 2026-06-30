@@ -41,7 +41,7 @@ The initial schema supports this with:
 - `franchise_site_publications`: where a franchise is visible and which slug/canonical URL each site uses.
 - `subscriptions` and `subscription_site_entitlements`: payment/plan state that can grant publication across one or all network sites.
 - `premium_orders`, `premium_payment_confirmations`, and `franchise_subscriptions`: current manual premium membership workflow for transfer orders, owner confirmations, admin review, and active listing membership state.
-- `payment_methods`, `premium_funnel_events`, `premium_notifications`, `notification_email_queue`, and `premium_subscription_reminders`: current premium operations workflow for admin-managed payment instructions, conversion tracking, owner/admin status messages, queued/sent payment emails, expiry follow-up, and renewal-reminder idempotency.
+- `payment_methods`, `premium_settings`, `premium_funnel_events`, `premium_notifications`, `notification_email_queue`, `premium_subscription_reminders`, `premium_grace_notifications`, and `premium_annual_reports`: current premium operations workflow for admin-managed payment instructions/settings, conversion tracking, owner/admin status messages, queued/sent payment emails, expiry/grace follow-up, renewal-reminder idempotency, and annual performance reports.
 - `audit_events`: who changed what, from which site.
 - `franchise_product_events`: privacy-safe interaction signals for ranking/recommendations without storing IP or user-agent data.
 - `operation_events`: operational telemetry for dashboard health, webhook/API failure visibility, and support diagnostics.
@@ -114,6 +114,7 @@ Remote migration status:
 - `0010_premium_operations.sql` was applied remotely to `franchise_db` on 2026-06-29 and verified to create `payment_methods`, `premium_funnel_events`, and `premium_notifications`, including default `manual_bca` payment details.
 - `0011_notification_email_queue.sql` was applied remotely to `franchise_db` on 2026-06-30 and verified to create `notification_email_queue`.
 - `0012_premium_email_worker_guardrails.sql` was applied remotely to `franchise_db` on 2026-06-30 and verified to add email delivery metadata, `premium_subscription_reminders`, due-email indexes, and Premium duplicate-order/subscription guardrails.
+- `0013_premium_lifecycle_settings_reports.sql` was applied remotely to `franchise_db` on 2026-06-30 and verified to create Premium settings/report/grace tables plus default 3-day grace settings. A later sequential `PRAGMA table_info(premium_orders)` verified the discount columns; a `notification_email_queue` column check hit the known intermittent Wrangler availability issue after the migration had already applied successfully.
 - Remote verification confirmed `d1_migrations` contains `0001_initial_network_schema.sql`.
 
 ## Cloudflare Account Switching
@@ -190,6 +191,7 @@ Dashboard scaffold:
 - Leads and system health are MVP panels. `operation_events` now backs webhook/API failure visibility, recent operation summaries, and dashboard health counts. Premium Operations shows funnel/payment-method data, recent payment notifications, upcoming expiries, queued email rows, and admin retry/cancel controls. Deeper R2 asset health still needs a dedicated data model.
 - Admin publication controls can update `franchise_site_publications.publication_status` per site and enqueue rebuild requests for the affected site. Franchisors see read-only distribution status in `/profil`.
 - Premium email delivery uses `/premium-email-worker`, a protected Pages Function triggered by `.github/workflows/premium-email-worker.yaml`. The first provider path is Resend via `RESEND_API_KEY`; required runtime setup also includes `PREMIUM_EMAIL_WORKER_SECRET`, `PREMIUM_EMAIL_FROM`, and optional `PREMIUM_EMAIL_REPLY_TO`.
+- The old Google Sheets auto-update workflow was removed. D1/Astro generation plus the D1 publish poller is the active public directory update path.
 
 ### D1 Change To Static Publish Mechanism
 Target mechanism for franchisor edits, admin edits, claims, listing deletes, and publication-status changes:

@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-06-29 00:28 (Asia/Jakarta)
+Last updated: 2026-06-30 09:20 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -26,6 +26,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: staged plan for reconciling lightweight account creation with `/daftar` profile/listing completion and public navbar account state.
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: staged plan for the protected `/profil` account center, side-tab sections, D1 profile/listing reads, and owner edit workflows.
 - `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: premium network membership, `/premium` page, manual payment operations, conversion tracking, payment confirmation, traffic growth, and renewal roadmap.
+- `docs/architecture/RESEND_EMAIL_DELIVERY.md`: Resend/Cloudflare Pages email delivery setup for queued Premium emails, reports, and reminders.
 
 ## Forms
 - `docs/forms/AUTO_SAVE.md`: franchisor draft autosave behavior.

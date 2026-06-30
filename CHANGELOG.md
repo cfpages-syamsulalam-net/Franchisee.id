@@ -4,6 +4,64 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-30 11:23 (Asia/Jakarta)
+### Added
+- `js/profile-ui-utils.js`: Added shared `/profil` UI helpers for escaping, field markup, empty states, Rupiah formatting, status/contact labels, Clerk account copy, and form busy/message handling.
+- `js/profile-account.js`: Added the `/profil` account tab renderer for granular name/email edits and password add/change controls.
+- `js/profile-roles.js`: Added the `/profil` missing-role CTA and confirmation modal renderer.
+- `js/profile-leads.js`: Added the `/profil` franchisor lead list/card renderer.
+- `js/profile-opportunities.js`: Added saved-opportunity localStorage merge/lookup helpers for `/profil`.
+- `functions/_profile-schemas.js`: Added profile mutation Zod schemas for `/profile-data`.
+- `functions/_profile-utils.js`: Added shared profile API response, audit, normalization, id, and Clerk identity helpers.
+- `functions/_profile-recommendations.js`: Added franchisee recommendation query/scoring helpers.
+- `functions/_profile-listing-patch.js`: Added owner listing patch normalization and update SQL helpers.
+- `src/lib/franchise-text.ts`: Added shared static page text, URL, escaping, generated HTML cleanup, and canonical legacy-link helpers.
+- `.context/session-20260630-1123.md`: Added this session snapshot.
+
+### Changed
+- `js/profile-page.js`: Refactored the profile client into a 900-line controller facade while delegating account, role, lead, Premium membership, saved-opportunity storage, and shared UI helpers to modules.
+- `js/profile-premium.js`: Expanded the existing Premium helper to render the `/profil` Membership tab while keeping payment/confirmation fetch workflows in `js/profile-page.js`.
+- `src/pages/profil/index.astro`: Loads the new profile helper modules before `js/profile-page.js`.
+- `functions/profile-data.js`: Delegates schemas, shared utilities, recommendation scoring, listing patch construction, and Premium workflows to helper modules, reducing the endpoint facade to 869 lines.
+- `src/lib/franchise-static.ts`: Delegates text normalization, escaping, URL cleanup, `slugify`, generated HTML cleanup, and legacy-link canonicalization to `src/lib/franchise-text.ts`, reducing the renderer to 785 lines.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Updated refactor status, module map, inventories, and follow-up suggestions for the new profile/static module boundaries.
+- `json/d1-franchise-static-data.json` and `json/d1-generated-pages-manifest.json`: Refreshed during build validation.
+
+## 2026-06-30 10:24 (Asia/Jakarta)
+### Added
+- `js/dashboard-utils.js`: Added shared browser helpers for dashboard escaping, Rupiah formatting, form-value writes, and icon-only action toolbar/button/link rendering.
+- `js/dashboard-premium-operations.js`: Added a Premium Operations dashboard module for Premium funnel/settings/payment/email queue rendering and admin actions.
+- `js/dashboard-review.js`: Added a dashboard Review/Data Quality module for quality rows, guided listing edit fields, edit suggestion submission/review, and claim review.
+- `.context/session-20260630-1024.md`: Added this session snapshot.
+
+### Changed
+- `js/dashboard-admin.js`: Delegated shared render helpers, Premium Operations logic, and Review/Data Quality/Claim workflows to dashboard modules, reducing the main dashboard controller to 541 lines.
+- `src/pages/dashboard/index.astro`: Loads `dashboard-utils.js`, `dashboard-premium-operations.js`, and `dashboard-review.js` before `dashboard-admin.js`.
+- `SUGGESTION.md`: Marked suggestion 32 done, marked suggestion 33 in progress after review extraction, and added suggestion 34 for profile client modularization.
+- `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Refreshed current-stack language, actual large-file refactor sizes, dashboard module split status, and next refactor targets.
+- `AUDIT.md`: Added detailed refactor split plans for files over 900 lines: `js/profile-page.js`, `functions/profile-data.js`, and `src/lib/franchise-static.ts`.
+- `docs/architecture/RESEND_EMAIL_DELIVERY.md`: Recorded the successful Premium email worker GitHub Action summary with delivery configured and no due email work.
+- `json/d1-generated-pages-manifest.json`: Refreshed generated timestamps during build validation; listing hashes were unchanged.
+
+## 2026-06-30 09:20 (Asia/Jakarta)
+### Added
+- `migrations/0013_premium_lifecycle_settings_reports.sql`: Added Premium lifecycle settings, grace-period notification idempotency, annual report records, HTML email bodies, and order discount fields.
+- `docs/architecture/RESEND_EMAIL_DELIVERY.md`: Added the Resend/Cloudflare Pages email delivery reference for queued Premium emails.
+- `.context/session-20260630-0920.md`: Added this session snapshot.
+
+### Changed
+- Remote Cloudflare: Applied `0013_premium_lifecycle_settings_reports.sql` to `franchise_db`, verified the new settings/report/grace objects, verified default settings, and verified `premium_orders` discount columns.
+- `AGENTS.md`: Added a hard rule to never run remote `cfman`/Wrangler verification commands in parallel.
+- `functions/_premium.js`, `functions/_premium-ops.js`, `functions/_premium-email-worker.js`, `functions/_profile-premium.js`, and `functions/premium-email-worker.js`: Added admin-managed Premium settings, discount-aware order pricing, HTML email support, annual report queueing, grace-period daily emails, and downgrade-after-grace behavior with rebuild queue writes.
+- `functions/_dashboard-schemas.js`, `functions/_dashboard-actions.js`, `functions/_dashboard-queries.js`, and `functions/dashboard-data.js`: Added Premium settings validation, update handling, dashboard read payloads for settings/reports, and audit writes.
+- `src/pages/dashboard/index.astro` and `js/dashboard-admin.js`: Added Premium settings controls and recent annual report rendering in Premium Operations.
+- `js/profile-page.js`: Shows a discount row in Premium payment instructions when multi-brand discount applies.
+- `json/d1-generated-pages-manifest.json`: Refreshed generated timestamps during the local build validation; listing hashes were unchanged.
+- `SUGGESTION.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/README.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, and `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: Documented Premium lifecycle completion, Resend setup, dashboard refactor recommendation, stale workflow removal, and migration status.
+
+### Removed
+- `.github/workflows/generate-pages.yaml`: Removed stale Google Sheets auto-update workflow; D1/Astro publish queue is now the active public directory update path.
+
 ## 2026-06-30 08:38 (Asia/Jakarta)
 ### Added
 - `functions/_premium-email-worker.js` and `functions/premium-email-worker.js`: Added the protected Premium email worker, Resend delivery path, retry backoff, provider message-id storage, expired-subscription marking, and renewal reminder queueing.

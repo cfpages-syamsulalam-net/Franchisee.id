@@ -1,0 +1,207 @@
+(function () {
+  var utils = window.FranchiseDashboardUtils;
+  if (!utils) throw new Error("Dashboard utilities belum tersedia.");
+
+  function createOperations(options) {
+    options = options || {};
+
+    function isAdmin() {
+      return Boolean(options.isAdmin && options.isAdmin());
+    }
+
+    function render(data) {
+      data = data || {};
+      renderFunnel(data.funnel || {});
+      renderPaymentMethod(data.payment_methods || []);
+      renderSettings(data.settings || {});
+      renderNotifications(data.notifications || []);
+      renderExpiring(data.expiring_subscriptions || []);
+      renderAnnualReports(data.annual_reports || []);
+      renderEmailQueue(data.email_queue_rows || [], data.email_queue || []);
+    }
+
+    function renderFunnel(funnel) {
+      if (!options.premiumFunnel) return;
+      var rows = [
+        ["Halaman dilihat", funnel.premium_page_view || 0],
+        ["CTA diklik", funnel.premium_cta_click || 0],
+        ["Tagihan dibuat", funnel.premium_order_created || 0],
+        ["Konfirmasi masuk", funnel.premium_confirmation_submitted || 0],
+        ["Premium aktif", funnel.premium_activated || 0]
+      ];
+      options.premiumFunnel.innerHTML = rows.map(function (row) {
+        return '<li><strong>' + utils.escapeHtml(row[0]) + '</strong><span>' + utils.escapeHtml(row[1]) + '</span></li>';
+      }).join("");
+    }
+
+    function renderPaymentMethod(methods) {
+      var method = methods.find(function (item) { return item.code === "manual_bca"; }) || methods[0];
+      if (!options.paymentMethodForm || !method) return;
+      utils.setFormValue(options.paymentMethodForm, "label", method.label || "");
+      utils.setFormValue(options.paymentMethodForm, "provider", method.provider || "");
+      utils.setFormValue(options.paymentMethodForm, "account_name", method.account_name || "");
+      utils.setFormValue(options.paymentMethodForm, "account_number", method.account_number || "");
+      utils.setFormValue(options.paymentMethodForm, "instructions", method.instructions || "");
+    }
+
+    function renderSettings(settings) {
+      if (!options.premiumSettingsForm) return;
+      utils.setFormValue(options.premiumSettingsForm, "grace_period_days", settings.grace_period_days == null ? 3 : settings.grace_period_days);
+      utils.setFormValue(options.premiumSettingsForm, "grace_daily_email_enabled", Number(settings.grace_daily_email_enabled == null ? 1 : settings.grace_daily_email_enabled));
+      utils.setFormValue(options.premiumSettingsForm, "annual_report_enabled", Number(settings.annual_report_enabled == null ? 1 : settings.annual_report_enabled));
+      utils.setFormValue(options.premiumSettingsForm, "multi_brand_discount_enabled", Number(settings.multi_brand_discount_enabled || 0));
+      utils.setFormValue(options.premiumSettingsForm, "multi_brand_discount_percent", settings.multi_brand_discount_percent || 0);
+      utils.setFormValue(options.premiumSettingsForm, "multi_brand_min_owned_brands", settings.multi_brand_min_owned_brands || 2);
+    }
+
+    function renderNotifications(notifications) {
+      if (!options.premiumNotifications) return;
+      options.premiumNotifications.innerHTML = notifications.length ? notifications.slice(0, 6).map(function (item) {
+        return '<li><strong>' + utils.escapeHtml(item.title || "Info Premium") + '</strong><span>' + utils.escapeHtml((item.brand_name ? item.brand_name + " - " : "") + (item.message || "")) + '</span></li>';
+      }).join("") : '<li><span>Belum ada info Premium terbaru.</span></li>';
+    }
+
+    function renderExpiring(expiring) {
+      if (!options.premiumExpiring) return;
+      options.premiumExpiring.innerHTML = expiring.length ? expiring.slice(0, 6).map(function (item) {
+        var days = Number(item.days_left || 0);
+        return '<li><strong>' + utils.escapeHtml(item.brand_name || item.franchise_id || "Listing") + '</strong><span>' +
+          utils.escapeHtml((days > 0 ? days + " hari lagi" : "Segera berakhir") + (item.primary_email ? " - " + item.primary_email : "")) +
+          '</span></li>';
+      }).join("") : '<li><span>Tidak ada Premium yang segera berakhir.</span></li>';
+    }
+
+    function renderAnnualReports(reports) {
+      if (!options.premiumReports) return;
+      options.premiumReports.innerHTML = reports.length ? reports.slice(0, 6).map(function (item) {
+        return '<li><strong>' + utils.escapeHtml(item.brand_name || item.franchise_id || "Listing") + '</strong><span>' +
+          utils.escapeHtml("view " + (item.listing_views || 0) + " / save " + (item.saves || 0) + " / inquiry " + (item.inquiries || 0) + " / lead " + (item.leads || 0)) +
+          '</span></li>';
+      }).join("") : '<li><span>Belum ada laporan tahunan Premium.</span></li>';
+    }
+
+    function renderEmailQueue(queueRows, queueSummary) {
+      if (!options.premiumEmailQueue) return;
+      options.premiumEmailQueue.innerHTML = queueRows.length ? queueRows.slice(0, 8).map(function (item) {
+        var status = item.status || "pending";
+        var actions = isAdmin() ? utils.renderActionToolbar([
+          status === "failed" || status === "cancelled" ? utils.renderActionButton({
+            label: "Kirim ulang email",
+            icon: "fas fa-redo",
+            tone: "success",
+            attrs: {
+              "data-email-action": "retry",
+              "data-email-id": item.id
+            }
+          }) : "",
+          status === "pending" || status === "failed" ? utils.renderActionButton({
+            label: "Batalkan email",
+            icon: "fas fa-ban",
+            tone: "danger",
+            attrs: {
+              "data-email-action": "cancel",
+              "data-email-id": item.id
+            }
+          }) : ""
+        ], "Aksi email") : "";
+        return '<li><strong>' + utils.escapeHtml(status + " - " + (item.category || "email")) + '</strong>' +
+          '<span>' + utils.escapeHtml((item.subject || "Email") + " untuk " + (item.to_email || "-")) + '</span>' +
+          (item.last_error ? '<span class="dash-muted">' + utils.escapeHtml(item.last_error) + '</span>' : '') +
+          actions +
+          '</li>';
+      }).join("") : queueSummary.length ? queueSummary.slice(0, 6).map(function (item) {
+        return '<li><strong>' + utils.escapeHtml((item.status || "pending") + " - " + (item.category || "email")) + '</strong><span>' +
+          utils.escapeHtml((item.count || 0) + " email") +
+          '</span></li>';
+      }).join("") : '<li><span>Belum ada antrean email 30 hari terakhir.</span></li>';
+      options.premiumEmailQueue.querySelectorAll("[data-email-action]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          manageNotificationEmail(button);
+        });
+      });
+    }
+
+    async function manageNotificationEmail(button) {
+      try {
+        button.disabled = true;
+        await options.postDashboardAction({
+          action: "manage_notification_email",
+          email_id: button.getAttribute("data-email-id"),
+          email_action: button.getAttribute("data-email-action")
+        });
+        options.setStatus(button.getAttribute("data-email-action") === "retry" ? "Email masuk antrean kirim ulang." : "Email dibatalkan.", false);
+        await options.reloadDashboard();
+      } catch (error) {
+        button.disabled = false;
+        options.setStatus(error.message || "Aksi email belum bisa diproses.", true);
+      }
+    }
+
+    async function submitPaymentMethod(event) {
+      event.preventDefault();
+      if (!options.paymentMethodForm || !isAdmin()) {
+        options.setStatus("Hanya admin yang bisa mengubah metode pembayaran.", true);
+        return;
+      }
+      var button = options.paymentMethodForm.querySelector("button[type='submit']");
+      if (button) button.disabled = true;
+      try {
+        var form = new FormData(options.paymentMethodForm);
+        await options.postDashboardAction({
+          action: "update_payment_method",
+          code: String(form.get("code") || "manual_bca"),
+          label: String(form.get("label") || ""),
+          provider: String(form.get("provider") || ""),
+          account_name: String(form.get("account_name") || ""),
+          account_number: String(form.get("account_number") || ""),
+          instructions: String(form.get("instructions") || ""),
+          is_active: true
+        });
+        options.setStatus("Metode pembayaran tersimpan.", false);
+        await options.reloadDashboard();
+      } catch (error) {
+        options.setStatus(error.message || "Metode pembayaran belum bisa disimpan.", true);
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    async function submitPremiumSettings(event) {
+      event.preventDefault();
+      if (!options.premiumSettingsForm || !isAdmin()) {
+        options.setStatus("Hanya admin yang bisa mengubah pengaturan Premium.", true);
+        return;
+      }
+      var button = options.premiumSettingsForm.querySelector("button[type='submit']");
+      if (button) button.disabled = true;
+      try {
+        var form = new FormData(options.premiumSettingsForm);
+        await options.postDashboardAction({
+          action: "update_premium_settings",
+          grace_period_days: Number(form.get("grace_period_days") || 3),
+          grace_daily_email_enabled: String(form.get("grace_daily_email_enabled") || "1") === "1",
+          annual_report_enabled: String(form.get("annual_report_enabled") || "1") === "1",
+          multi_brand_discount_enabled: String(form.get("multi_brand_discount_enabled") || "0") === "1",
+          multi_brand_discount_percent: Number(form.get("multi_brand_discount_percent") || 0),
+          multi_brand_min_owned_brands: Number(form.get("multi_brand_min_owned_brands") || 2)
+        });
+        options.setStatus("Pengaturan Premium tersimpan.", false);
+        await options.reloadDashboard();
+      } catch (error) {
+        options.setStatus(error.message || "Pengaturan Premium belum bisa disimpan.", true);
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    return {
+      render: render,
+      submitPaymentMethod: submitPaymentMethod,
+      submitPremiumSettings: submitPremiumSettings
+    };
+  }
+
+  window.FranchiseDashboardPremium = {
+    createOperations: createOperations
+  };
+}());

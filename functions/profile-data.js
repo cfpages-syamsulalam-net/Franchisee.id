@@ -1,132 +1,33 @@
 import { createClerkClient } from "@clerk/backend";
-import { z } from "zod";
 import {
   authErrorResponse,
   requireD1User,
   syncClerkMetadataForD1User,
   syncClerkMetadataFromD1,
 } from "./_clerk-auth.js";
-import { analyticsScore, loadProductEventCounts, recordProductEvent } from "./_analytics.js";
+import { recordProductEvent } from "./_analytics.js";
+import { buildUpdate, listingPatch } from "./_profile-listing-patch.js";
+import { confirmPremiumPayment, createPremiumOrder, loadPremiumMembershipData } from "./_profile-premium.js";
+import { loadFranchiseeRecommendations } from "./_profile-recommendations.js";
+import { MutationSchema } from "./_profile-schemas.js";
 import {
-  ConfirmPremiumPaymentSchema,
-  CreatePremiumOrderSchema,
-  confirmPremiumPayment,
-  createPremiumOrder,
-  loadPremiumMembershipData,
-} from "./_profile-premium.js";
+  auditStatement,
+  getDb,
+  getPrimaryEmail,
+  isMissingSavedTableError,
+  jsonResponse,
+  normalizeText,
+  normalizeWhatsapp,
+  randomId,
+  splitDisplayName,
+  textOrNull,
+  validationError,
+} from "./_profile-utils.js";
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
 import { logOperationEvent } from "./_telemetry.js";
 
 const OWNER_LISTING_EDIT_INTERVAL_HOURS = 6;
 const RECOMMENDATION_LIMIT = 6;
-
-const AccountSchema = z.object({
-  action: z.literal("update_account"),
-  display_name: z.string().trim().min(2).max(120),
-  email: z.string().trim().email().max(254),
-});
-
-const FranchiseeProfileSchema = z.object({
-  action: z.literal("update_franchisee_profile"),
-  country_code: optionalText(12),
-  whatsapp: optionalText(40),
-  city_origin: optionalText(120),
-  interest_category: optionalText(120),
-  budget_range: optionalText(120),
-  location_plan: optionalText(120),
-  message: optionalText(1200),
-});
-
-const FranchisorProfileSchema = z.object({
-  action: z.literal("update_franchisor_profile"),
-  company_name: optionalText(180),
-  country_code: optionalText(12),
-  whatsapp: optionalText(40),
-  website_url: optionalText(500),
-  instagram_url: optionalText(500),
-  facebook_url: optionalText(500),
-  tiktok_url: optionalText(500),
-  youtube_url: optionalText(500),
-  linkedin_url: optionalText(500),
-  nib_number: optionalText(32),
-  haki_status: z.enum(["registered", "process", "none", ""]).optional(),
-  haki_number: optionalText(80),
-});
-
-const ListingSchema = z.object({
-  action: z.literal("update_listing"),
-  franchise_id: z.string().trim().min(3).max(120),
-  brand_name: optionalText(180),
-  category: optionalText(120),
-  year_established: optionalInt(),
-  city_origin: optionalText(120),
-  outlet_type: optionalText(120),
-  location_requirement: optionalText(240),
-  rent_cost_text: optionalText(240),
-  fee_license_idr: optionalMoney(),
-  fee_capex_idr: optionalMoney(),
-  fee_construction_idr: optionalMoney(),
-  total_investment_idr: optionalMoney(),
-  min_investment_idr: optionalMoney(),
-  max_investment_idr: optionalMoney(),
-  estimated_bep_months: optionalInt(),
-  net_profit_percent: optionalNumber(),
-  royalty_percent: optionalNumber(),
-  royalty_basis: optionalText(80),
-  short_desc: optionalText(280),
-  full_desc: optionalText(5000),
-  support_system: optionalText(2000),
-  phone: optionalText(80),
-  office_address: optionalText(800),
-  outlets_location: optionalText(800),
-  logo_url: optionalText(500),
-  cover_url: optionalText(500),
-  gallery_urls: optionalText(2000),
-  video_url: optionalText(500),
-  proposal_url: optionalText(500),
-});
-
-const AddPublicRoleSchema = z.object({
-  action: z.literal("add_public_role"),
-  role: z.enum(["franchisee", "franchisor"]),
-});
-
-const FranchiseInquirySchema = z.object({
-  action: z.literal("create_franchise_inquiry"),
-  franchise_id: z.string().trim().min(3).max(120),
-  message: optionalText(1200),
-});
-
-const SaveOpportunitySchema = z.object({
-  action: z.literal("save_franchise_opportunity"),
-  franchise_id: z.string().trim().min(3).max(120),
-  note: optionalText(500),
-});
-
-const RemoveOpportunitySchema = z.object({
-  action: z.literal("remove_franchise_opportunity"),
-  franchise_id: z.string().trim().min(3).max(120),
-});
-
-const LeadStatusSchema = z.object({
-  action: z.literal("update_franchise_lead_status"),
-  lead_id: z.string().trim().min(3).max(120),
-  status: z.enum(["new", "sent", "viewed", "contacted", "qualified", "closed", "archived"]),
-});
-
-const MutationSchema = z.discriminatedUnion("action", [
-  AccountSchema,
-  FranchiseeProfileSchema,
-  FranchisorProfileSchema,
-  ListingSchema,
-  AddPublicRoleSchema,
-  FranchiseInquirySchema,
-  SaveOpportunitySchema,
-  RemoveOpportunitySchema,
-  LeadStatusSchema,
-  CreatePremiumOrderSchema,
-  ConfirmPremiumPaymentSchema,
-]);
 
 export async function onRequestGet({ request, env }) {
   try {
@@ -290,7 +191,7 @@ async function loadProfileData(db, actor) {
   const franchisorLeads = await loadFranchisorLeadInbox(db, actor.id, franchisorProfile?.id || null);
   const premiumMembership = await loadPremiumMembershipData(db, actor.id, ownedRows.map((row) => row.id));
   const recommendations = franchiseeProfile
-    ? await loadFranchiseeRecommendations(db, franchiseeProfile, new Set(ownedRows.map((row) => row.id)))
+    ? await loadFranchiseeRecommendations(db, franchiseeProfile, new Set(ownedRows.map((row) => row.id)), RECOMMENDATION_LIMIT)
     : [];
 
   const roles = (actor.roles || []).map((role) => role.role).filter(Boolean);
@@ -802,58 +703,6 @@ async function loadPublicOpportunity(db, franchiseId) {
     .first();
 }
 
-async function loadFranchiseeRecommendations(db, profile, ownedIds) {
-  const result = await db
-    .prepare(
-      `SELECT f.id, f.brand_name, f.slug, f.category, f.city_origin, f.status, f.verification_tier,
-              f.min_investment_idr, f.max_investment_idr, f.total_investment_idr,
-              f.estimated_bep_months, f.short_desc, f.logo_url, f.cover_url,
-              p.canonical_url, p.publication_status
-       FROM franchises f
-       INNER JOIN franchise_site_publications p
-          ON p.franchise_id = f.id
-         AND p.site_id = ?
-         AND p.publication_status = 'published'
-       ORDER BY f.updated_at DESC, f.brand_name ASC
-       LIMIT 220`
-    )
-    .bind(SITE_FRANCHISEE_ID)
-    .all();
-
-  const rows = result.results || [];
-  const eventCounts = await loadProductEventCounts(db, rows.map((row) => row.id));
-  return rows
-    .filter((row) => !ownedIds.has(row.id))
-    .map((row) => {
-      const budget = budgetFit(row, profile.budget_range);
-      const categoryMatch = matchesInterest(row.category, profile.interest_category);
-      const reasons = recommendationReasons(row, profile, budget, categoryMatch);
-      return {
-        id: row.id,
-        brand_name: row.brand_name,
-        slug: row.slug,
-        category: row.category,
-        city_origin: row.city_origin,
-        verification_tier: row.verification_tier,
-        min_investment_idr: row.min_investment_idr,
-        max_investment_idr: row.max_investment_idr,
-        total_investment_idr: row.total_investment_idr,
-        estimated_bep_months: row.estimated_bep_months,
-        short_desc: row.short_desc,
-        logo_url: row.logo_url,
-        cover_url: row.cover_url,
-        canonical_url: row.canonical_url || (row.slug ? `/peluang-usaha/${row.slug}` : ""),
-        budget_fit: budget.fit,
-        budget_label: budget.label,
-        reasons,
-        event_counts: eventCounts.get(row.id) || {},
-        score: recommendationScore(row, budget, categoryMatch, reasons, eventCounts.get(row.id) || {}),
-      };
-    })
-    .sort((a, b) => b.score - a.score || String(a.brand_name || "").localeCompare(String(b.brand_name || "")))
-    .slice(0, RECOMMENDATION_LIMIT);
-}
-
 async function loadOwnedPublicationDistribution(db, franchiseIds) {
   const ids = Array.from(new Set((franchiseIds || []).filter(Boolean)));
   if (!ids.length) return new Map();
@@ -1017,239 +866,4 @@ async function loadOwnedListing(db, actor, franchiseId, franchisorProfileId) {
     )
     .bind(SITE_FRANCHISEE_ID, franchiseId, actor.id, franchisorProfileId || null, franchisorProfileId || null)
     .first();
-}
-
-function listingPatch(data) {
-  const fields = [
-    "brand_name",
-    "category",
-    "year_established",
-    "city_origin",
-    "outlet_type",
-    "location_requirement",
-    "rent_cost_text",
-    "fee_license_idr",
-    "fee_capex_idr",
-    "fee_construction_idr",
-    "total_investment_idr",
-    "min_investment_idr",
-    "max_investment_idr",
-    "estimated_bep_months",
-    "net_profit_percent",
-    "royalty_percent",
-    "royalty_basis",
-    "short_desc",
-    "full_desc",
-    "support_system",
-    "phone",
-    "office_address",
-    "outlets_location",
-    "logo_url",
-    "cover_url",
-    "gallery_urls",
-    "video_url",
-    "proposal_url",
-  ];
-  const patch = {};
-  fields.forEach((field) => {
-    if (Object.prototype.hasOwnProperty.call(data, field)) {
-      patch[field] = normalizePatchValue(field, data[field]);
-    }
-  });
-  return patch;
-}
-
-function normalizePatchValue(field, value) {
-  if (value === undefined || value === "") return null;
-  if (field.endsWith("_idr") || field === "year_established" || field === "estimated_bep_months") return intOrNull(value);
-  if (field === "net_profit_percent" || field === "royalty_percent") return numberOrNull(value);
-  return textOrNull(value);
-}
-
-function buildUpdate(table, patch, idColumn) {
-  const keys = Object.keys(patch);
-  return {
-    sql: `UPDATE ${table} SET ${keys.map((key) => `${key} = ?`).join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE ${idColumn} = ?`,
-    values: keys.map((key) => patch[key]),
-  };
-}
-
-function recommendationScore(row, budget, categoryMatch, reasons, eventCounts = {}) {
-  let score = 0;
-  if (categoryMatch) score += 50;
-  if (budget.fit === "fit") score += 35;
-  if (budget.fit === "near") score += 18;
-  if (budget.fit === "unknown") score += 6;
-  if (row.verification_tier === "premium") score += 8;
-  if (row.verification_tier === "verified") score += 6;
-  if (Number(row.estimated_bep_months || 0) > 0 && Number(row.estimated_bep_months) <= 24) score += 5;
-  score += Math.min(reasons.length, 3);
-  score += Math.min(analyticsScore(eventCounts), 60);
-  return score;
-}
-
-function recommendationReasons(row, profile, budget, categoryMatch) {
-  const reasons = [];
-  if (categoryMatch) reasons.push("Sesuai minat kategori");
-  if (budget.fit === "fit") reasons.push("Cocok dengan budget Anda");
-  if (budget.fit === "near") reasons.push("Dekat dengan budget Anda");
-  if (profile.location_plan === "ready") reasons.push("Siap dibandingkan dengan lokasi Anda");
-  if (Number(row.estimated_bep_months || 0) > 0) reasons.push(`Estimasi BEP ${row.estimated_bep_months} bulan`);
-  if (!reasons.length) reasons.push("Peluang aktif di direktori");
-  return reasons.slice(0, 3);
-}
-
-function matchesInterest(category, interest) {
-  const text = normalizeForMatch(category);
-  const aliases = {
-    fb: ["fnb", "food", "makanan", "minuman", "restoran", "restaurant", "cafe", "kopi", "teh"],
-    retail: ["retail", "minimarket", "toko", "mart", "sembako", "produk"],
-    service: ["jasa", "layanan", "service", "laundry", "logistik", "otomotif", "travel"],
-    edu: ["pendidikan", "kursus", "edukasi", "education", "training", "belajar", "sekolah"],
-    beauty: ["kecantikan", "kesehatan", "beauty", "health", "salon", "spa", "aesthetic"],
-  };
-  const keys = aliases[normalizeForMatch(interest)] || [];
-  return keys.some((key) => text.includes(key));
-}
-
-function budgetFit(row, budgetRange) {
-  if (!textOrNull(budgetRange)) return { fit: "unknown", label: "Budget belum diisi" };
-  const range = parseBudgetRange(budgetRange);
-  const amount = Number(row.min_investment_idr || row.total_investment_idr || row.max_investment_idr || 0);
-  if (!amount) return { fit: "unknown", label: "Budget belum tersedia" };
-  if (!range.max && range.min) {
-    return amount >= range.min ? { fit: "fit", label: "Sesuai budget" } : { fit: "fit", label: "Di bawah budget" };
-  }
-  if (range.max && amount <= range.max) return { fit: "fit", label: "Sesuai budget" };
-  if (range.max && amount <= Math.round(range.max * 1.25)) return { fit: "near", label: "Sedikit di atas budget" };
-  return { fit: "over", label: "Di atas budget" };
-}
-
-function parseBudgetRange(value) {
-  const text = normalizeForMatch(value);
-  if (text.includes("<50")) return { min: 0, max: 50000000 };
-  if (text.includes("50-100")) return { min: 50000000, max: 100000000 };
-  if (text.includes("100-500")) return { min: 100000000, max: 500000000 };
-  if (text.includes(">500")) return { min: 500000000, max: null };
-  return { min: 0, max: null };
-}
-
-function normalizeForMatch(value) {
-  return normalizeText(value).toLowerCase().replace(/&/g, "and");
-}
-
-function splitDisplayName(displayName) {
-  const parts = normalizeText(displayName).split(/\s+/).filter(Boolean);
-  return {
-    firstName: parts.shift() || displayName,
-    lastName: parts.join(" ") || undefined,
-  };
-}
-
-function getPrimaryEmail(clerkUser) {
-  const primaryId = clerkUser?.primaryEmailAddressId;
-  const primary = (clerkUser?.emailAddresses || []).find((email) => email.id === primaryId) || clerkUser?.emailAddresses?.[0];
-  return primary?.emailAddress || "";
-}
-
-function optionalText(max) {
-  return z.string().trim().max(max).optional().or(z.literal(""));
-}
-
-function optionalInt() {
-  return z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : Number(value)), z.number().int().optional());
-}
-
-function optionalNumber() {
-  return z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : Number(value)), z.number().optional());
-}
-
-function optionalMoney() {
-  return z.preprocess((value) => {
-    if (value === "" || value === null || value === undefined) return undefined;
-    return Number(String(value).replace(/[^\d.-]/g, ""));
-  }, z.number().int().optional());
-}
-
-function getDb(env) {
-  if (!env.franchise_db) {
-    throw new Error("Layanan profil belum siap. Silakan coba lagi nanti.");
-  }
-  return env.franchise_db;
-}
-
-function jsonResponse(payload, init = {}) {
-  return new Response(JSON.stringify(payload), {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init.headers || {}),
-    },
-  });
-}
-
-function validationError(error) {
-  return jsonResponse(
-    {
-      success: false,
-      error: "VALIDATION_ERROR",
-      message: "Data profil belum valid.",
-      issues: error.issues,
-    },
-    { status: 400 }
-  );
-}
-
-function isMissingSavedTableError(error) {
-  return /franchise_saved_opportunities|no such table/i.test(error?.message || "");
-}
-
-function auditStatement(db, action, entityType, entityId, metadata = {}, actorUserId = null) {
-  return db
-    .prepare(
-      `INSERT INTO audit_events (id, actor_user_id, source_site_id, action, entity_type, entity_id, metadata)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    )
-    .bind(
-      `audit_${randomId()}`,
-      actorUserId,
-      SITE_FRANCHISEE_ID,
-      action,
-      entityType,
-      entityId,
-      JSON.stringify(metadata)
-    );
-}
-
-function normalizeWhatsapp(value) {
-  const text = textOrNull(value);
-  if (!text) return null;
-  return text.replace(/[^\d+]/g, "");
-}
-
-function textOrNull(value) {
-  const normalized = normalizeText(value);
-  return normalized || null;
-}
-
-function normalizeText(value) {
-  return (value ?? "").toString().trim().replace(/\s+/g, " ");
-}
-
-function intOrNull(value) {
-  const clean = String(value ?? "").replace(/[^\d-]/g, "");
-  if (!clean) return null;
-  const parsed = Number.parseInt(clean, 10);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function numberOrNull(value) {
-  if (value === null || value === undefined || value === "") return null;
-  const parsed = Number(String(value).replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function randomId() {
-  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-  return Math.random().toString(36).slice(2, 12);
 }
