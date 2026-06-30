@@ -4,6 +4,25 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-01 01:00 (Asia/Jakarta)
+### Added
+- `js/dashboard-operations.js`: Added the dashboard Operations module for outreach logging, Premium payment review, publication controls, lead summaries, publish status, and health rendering.
+- `js/profile-franchisee.js`: Added the `/profil` franchisee renderer for Minat Usaha and Peluang Saya panels.
+- `js/profile-franchisor.js`: Added the `/profil` franchisor renderer for Data Brand, Listing Brand, distribution chips, media upload controls, and claim history.
+- `functions/_profile-account.js`: Added the `/profile-data` account and public role-add action module.
+- `functions/_profile-franchisee-actions.js`: Added the `/profile-data` franchisee profile, inquiry, and saved-opportunity action module.
+- `.context/session-20260701-0100.md`: Added this session snapshot.
+
+### Changed
+- `js/dashboard-admin.js`: Reduced the dashboard controller to a 279-line boot/tabs/auth facade that delegates Operations, Review/Data Quality, and Premium Operations workflows.
+- `src/pages/dashboard/index.astro`: Loads `js/dashboard-operations.js` before `js/dashboard-admin.js`.
+- `js/profile-page.js`: Reduced the profile client to a 727-line controller facade that delegates franchisee and franchisor panel rendering to role-focused modules.
+- `src/pages/profil/index.astro`: Loads the new profile role renderer modules before `js/profile-page.js`.
+- `functions/profile-data.js`: Reduced the profile API to a 582-line facade by delegating account/role and franchisee write actions to helper modules.
+- `SUGGESTION.md`: Marked suggestions 33, 34, and 35 done, and added suggestion 36 for the remaining franchisor/listing/lead profile API split.
+- `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Updated the refactor tracker, codebase map, and technical inventory for the new dashboard/profile/profile-API module boundaries.
+- `json/d1-generated-pages-manifest.json`: Refreshed generated timestamps during build validation; the D1 builder reported 197 detail pages skipped and no content rewrites.
+
 ## 2026-06-30 11:23 (Asia/Jakarta)
 ### Added
 - `js/profile-ui-utils.js`: Added shared `/profil` UI helpers for escaping, field markup, empty states, Rupiah formatting, status/contact labels, Clerk account copy, and form busy/message handling.

@@ -166,14 +166,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Client controller for the protected `/profil` profile center.*
 - `init()`: Requires a Clerk session and redirects anonymous users to `/login/?next=/profil/`.
 - `loadProfile()`: Fetches `/profile-data` with `window.FranchiseAuth.getAuthHeaders()`.
-- `render()` / `renderActivePanel()`: Renders side tabs for summary and role-allowed franchisee/franchisor/owner listing/claims sections, delegating account, role add-on, membership, and leads UI to profile modules.
+- `render()` / `renderActivePanel()`: Renders side tabs for summary and role-allowed franchisee/franchisor/owner listing/claims sections, delegating account, franchisee, franchisor/listing/claim, role add-on, membership, and leads UI to profile modules.
 - `visibleTabs()` / `canSeeFranchisee()` / `canSeeFranchisor()`: Filters `/profil` navigation from D1 roles so franchisee users only see franchisee areas, franchisor users only see franchisor/listing/claim areas, and admin/staff users see both.
 - `submitPublicRoleAdd(role)`: Posts the additive access change to `/profile-data` and redirects to the matching `/daftar` tab; role CTA/modal rendering lives in `js/profile-roles.js`.
-- `opportunitiesPanel()` / `opportunityCard()` / `submitFranchiseInquiry(franchiseId)`: Renders `Peluang Saya` recommendations, budget-fit labels, D1 saved opportunities, and inquiry history; posts `create_franchise_inquiry` to `/profile-data`.
+- `submitFranchiseInquiry(franchiseId)`: Posts `create_franchise_inquiry` to `/profile-data`; recommendation/card rendering lives in `js/profile-franchisee.js`.
 - `syncLocalSavedOpportunities()` / `toggleSavedOpportunity()`: Migrates old browser-saved opportunities into D1 when possible and posts save/remove actions to `/profile-data`; local storage/lookup helpers live in `js/profile-opportunities.js`.
 - `submitPasswordForm(form)`: Uses ClerkJS on the current session to let Google-only users add a password login and password users change their password, with custom inline copy and no browser tooltip hints; account rendering lives in `js/profile-account.js`.
-- `franchiseePanel()` / `franchisorPanel()`: Shows role-specific D1 profile rows and preserves identity fields as read-only.
-- `listingPanel()` / `uploadListingMedia(input)`: Shows owned D1 `franchises`, selects a listing, uploads logo/cover/proposal media through `/profile-upload`, and disables saving when the owner edit rate limit is active.
+- `uploadListingMedia(input)`: Uploads logo/cover/proposal media through `/profile-upload`; listing and claim panel markup lives in `js/profile-franchisor.js`.
 - Membership tab rendering is delegated to `js/profile-premium.js`, while `createPremiumOrder()` and `submitPremiumConfirmation()` stay in this controller.
 - `createPremiumOrder(franchiseId)` / `submitPremiumConfirmation(form)`: Creates unique-code bank transfer orders or renewal orders through `/profile-data`, uploads optional proof files through `/premium-receipt-upload`, and submits payment confirmation for admin review.
 - `updateLeadStatus(select)`: Saves owner-checked lead status updates through `/profile-data`; lead list/card rendering lives in `js/profile-leads.js`.
@@ -209,6 +208,19 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `loadSavedOpportunities()` / `persistSavedOpportunities()` / `mergeSavedOpportunities()`: Preserve local-to-D1 saved opportunity migration behavior.
 - `isOpportunitySaved()` / `opportunityById()` / `hasAskedInfo()`: Shared lookup helpers for opportunity cards and inquiry history.
 
+### File: `js/profile-franchisee.js`
+*Franchisee profile and opportunity renderer for `/profil`.*
+- `window.FranchiseProfileFranchisee.createRenderer(state, helpers)`: Returns `franchiseePanel()` and `opportunitiesPanel()` using shared state/helpers from `js/profile-page.js`.
+- `franchiseePanel()`: Renders the read-only identity rows plus editable franchisee preference fields.
+- `opportunitiesPanel()` / `opportunityCard()`: Renders `Peluang Saya` recommendations, budget-fit labels, D1 saved opportunities, and inquiry history while action handlers stay in `js/profile-page.js`.
+
+### File: `js/profile-franchisor.js`
+*Franchisor profile, owned listing, and claim renderer for `/profil`.*
+- `window.FranchiseProfileFranchisor.createRenderer(state, helpers)`: Returns `franchisorPanel()`, `listingPanel()`, and `claimsPanel()` using shared state/helpers from `js/profile-page.js`.
+- `franchisorPanel()`: Renders the read-only identity rows plus editable company/contact fields.
+- `listingPanel()` / `publicationDistribution()` / `mediaUploadControl()`: Renders owned D1 listing edit controls, network publication chips, media upload controls, and owner edit limit state.
+- `claimsPanel()`: Renders submitted claim status and direct `/daftar` claim CTA copy.
+
 ### File: `js/profile-premium.js`
 *Premium UI helper and Membership renderer for `/profil`.*
 - `currentSubscription(subscriptions, franchiseId)`: Selects the active current subscription when renewal rows already exist for the same listing.
@@ -237,13 +249,20 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `refreshQualityChecks()`: Posts the protected refresh action and reloads dashboard data.
 - `submitEditSuggestion(event)` / `reviewEditSuggestion(button)` / `reviewClaim(button)`: Posts guided edit submissions and admin review decisions through the existing `/dashboard-data` contract.
 
+### File: `js/dashboard-operations.js`
+*General Operations client module for `/dashboard`.*
+- `window.FranchiseDashboardOperations.createOperations(options)`: Creates the outreach, publish, Premium payment review, publication-control, lead, and health renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`.
+- `render(data)`: Fans dashboard API data into outreach, Premium payment review, publish queue, publication controls, leads, and health panels.
+- `renderOutreach()` / `logOutreach()`: Renders staff-personal WhatsApp outreach rows and records manually confirmed outreach through `/dashboard-data`.
+- `renderPremiumPayments()` / `reviewPremiumPayment()`: Renders icon-only admin approval/rejection controls for pending Premium confirmations.
+- `renderPublicationControls()` / `updatePublicationStatus()`: Renders network publication controls and posts admin status changes.
+- `renderLeads()` / `renderHealth()`: Renders lead rows and system health summaries.
+
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
 - `boot()`: Initializes `window.FranchiseAuth`, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
 - `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, and Operations, including arrow/Home/End keyboard navigation.
-- `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics, outreach, delegated Review/Data Quality/Claim workflows, delegated Premium Operations, premium payments, publish, leads, and health renderers.
-- `renderOutreach(rows, summary)` / `logOutreach(link)`: Renders staff-personal WhatsApp links, shows contact-ready/published-unclaimed subset counts from `outreach_summary`, and records manually confirmed outreach through `/dashboard-data`.
-- `reviewPremiumPayment()`: Posts admin premium payment approval/rejection.
+- `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics plus delegated Operations, Review/Data Quality/Claim, and Premium Operations modules.
 - `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
 
 ### File: `js/build-listing.js`
@@ -310,7 +329,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/pages/profil/index.astro`
 *Protected profile page shell.*
 - Static Astro route at `/profil/` with `noindex,nofollow`.
-- Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, `css/profile.css`, and `js/profile-page.js`.
+- Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, `css/profile.css`, profile renderer modules, and `js/profile-page.js`.
 - Anonymous protection is client-side; all profile data and writes are protected again by `/profile-data`.
 
 ### File: `src/pages/premium/index.astro`
@@ -386,7 +405,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Static protected admin/staff dashboard shell.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
-- Loads `js/auth-clerk-debug.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
+- Loads `js/auth-clerk-debug.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, `js/dashboard-operations.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
 - Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by dashboard browser modules; dashboard styling is owned by `css/dashboard.css`.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
@@ -413,9 +432,21 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Protected profile read/write API for `/profil`.*
 - `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and returns D1 user, roles, franchisee profile, franchisor profile, owned franchises, claims, franchisee recommendations, D1 saved opportunities, franchisee inquiry history, franchisor lead inbox, premium membership/order state, and completion flags.
 - `onRequestPost()`: Dispatches mutations validated by `functions/_profile-schemas.js` for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, `update_listing`, `add_public_role`, `create_franchise_inquiry`, `save_franchise_opportunity`, `remove_franchise_opportunity`, `update_franchise_lead_status`, `create_premium_order`, and `confirm_premium_payment`.
-- `updateAccount()`: Updates Clerk identity first, then D1 `users` plus profile identity fields, writes audit events, and resyncs Clerk metadata from D1 roles.
-- `addPublicRole()`: Allows logged-in public users to add the missing `franchisee` or `franchisor` role, writes an audit event, and resyncs Clerk metadata; admin/staff role assignment remains outside self-service.
+- Account and role-add mutations are delegated to `functions/_profile-account.js`.
+- Franchisee profile, inquiry, save, and remove mutations are delegated to `functions/_profile-franchisee-actions.js`.
 - Premium actions are delegated to `functions/_profile-premium.js`; recommendations, listing patch construction, schemas, and shared utilities are also split into profile helper modules.
+- Remaining inline write workflows are franchisor profile, owned listing update, and lead status update; the next split target is `functions/_profile-franchisor-actions.js`.
+
+### File: `functions/_profile-account.js`
+*Account and role-add mutation helper for `/profile-data`.*
+- `updateAccount(env, db, actor, data)`: Updates Clerk identity first, then D1 `users` plus profile identity fields, writes audit events, and resyncs Clerk metadata from D1 roles.
+- `addPublicRole(env, db, actor, data, loadProfileData)`: Allows logged-in public users to add the missing `franchisee` or `franchisor` role, writes an audit event, resyncs Clerk metadata, and returns the refreshed profile payload.
+
+### File: `functions/_profile-franchisee-actions.js`
+*Franchisee mutation helper for `/profile-data`.*
+- `updateFranchiseeProfile(db, actor, data, loaders)`: Upserts the franchisee profile, writes an audit event, and returns the refreshed profile row.
+- `createFranchiseInquiry(db, actor, data, loaders)`: Creates an owner lead from a recommended/saved opportunity after confirming the franchisee profile is complete enough to contact.
+- `saveFranchiseOpportunity(db, actor, data, loaders)` / `removeFranchiseOpportunity(db, actor, data, loaders)`: Writes D1 saved opportunity state and records privacy-safe product events.
 
 ### File: `functions/_profile-schemas.js`
 *Zod mutation schemas for `/profile-data`.*
