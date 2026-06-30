@@ -10,9 +10,12 @@ import {
 import {
   loadAdminPremiumNotifications,
   loadExpiringPremiumSubscriptions,
+  loadNotificationEmailQueueRows,
   loadNotificationEmailQueueSummary,
   loadPaymentMethods,
+  loadPremiumAnnualReports,
   loadPremiumFunnelSummary,
+  loadPremiumSettings,
   premiumReadinessForListing,
 } from "./_premium-ops.js";
 
@@ -271,12 +274,15 @@ export async function getPendingPremiumPayments(db) {
 }
 
 export async function getPremiumOperations(db) {
-  const [funnel, paymentMethods, notifications, expiringSubscriptions, emailQueue] = await Promise.all([
+  const [funnel, paymentMethods, notifications, expiringSubscriptions, emailQueue, emailQueueRows, settings, annualReports] = await Promise.all([
     loadPremiumFunnelSummary(db),
     loadPaymentMethods(db),
     loadAdminPremiumNotifications(db),
     loadExpiringPremiumSubscriptions(db),
     loadNotificationEmailQueueSummary(db),
+    loadNotificationEmailQueueRows(db),
+    loadPremiumSettings(db),
+    loadPremiumAnnualReports(db),
   ]);
   return {
     funnel,
@@ -284,6 +290,9 @@ export async function getPremiumOperations(db) {
     notifications,
     expiring_subscriptions: expiringSubscriptions,
     email_queue: emailQueue,
+    email_queue_rows: emailQueueRows,
+    settings,
+    annual_reports: annualReports,
   };
 }
 

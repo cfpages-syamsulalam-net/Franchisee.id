@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-06-30 04:36 (Asia/Jakarta)
+Last updated: 2026-06-30 08:38 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -41,7 +41,7 @@ The initial schema supports this with:
 - `franchise_site_publications`: where a franchise is visible and which slug/canonical URL each site uses.
 - `subscriptions` and `subscription_site_entitlements`: payment/plan state that can grant publication across one or all network sites.
 - `premium_orders`, `premium_payment_confirmations`, and `franchise_subscriptions`: current manual premium membership workflow for transfer orders, owner confirmations, admin review, and active listing membership state.
-- `payment_methods`, `premium_funnel_events`, `premium_notifications`, and `notification_email_queue`: current premium operations workflow for admin-managed payment instructions, conversion tracking, owner/admin status messages, queued payment emails, expiry follow-up, and later outbound email delivery.
+- `payment_methods`, `premium_funnel_events`, `premium_notifications`, `notification_email_queue`, and `premium_subscription_reminders`: current premium operations workflow for admin-managed payment instructions, conversion tracking, owner/admin status messages, queued/sent payment emails, expiry follow-up, and renewal-reminder idempotency.
 - `audit_events`: who changed what, from which site.
 - `franchise_product_events`: privacy-safe interaction signals for ranking/recommendations without storing IP or user-agent data.
 - `operation_events`: operational telemetry for dashboard health, webhook/API failure visibility, and support diagnostics.
@@ -113,6 +113,7 @@ Remote migration status:
 - `0009_premium_membership.sql` was applied remotely to `franchise_db` on 2026-06-28 and verified to create `premium_orders`, `premium_payment_confirmations`, and `franchise_subscriptions`.
 - `0010_premium_operations.sql` was applied remotely to `franchise_db` on 2026-06-29 and verified to create `payment_methods`, `premium_funnel_events`, and `premium_notifications`, including default `manual_bca` payment details.
 - `0011_notification_email_queue.sql` was applied remotely to `franchise_db` on 2026-06-30 and verified to create `notification_email_queue`.
+- `0012_premium_email_worker_guardrails.sql` was applied remotely to `franchise_db` on 2026-06-30 and verified to add email delivery metadata, `premium_subscription_reminders`, due-email indexes, and Premium duplicate-order/subscription guardrails.
 - Remote verification confirmed `d1_migrations` contains `0001_initial_network_schema.sql`.
 
 ## Cloudflare Account Switching
@@ -186,8 +187,9 @@ Dashboard scaffold:
 - Staff edit policy is implemented in the dashboard MVP: staff submit guided field changes backed by shared editable-field definitions; admin approve/reject applies approved values field-by-field to D1, writes audit events, and queues static rebuilds. Active `staff_auto_approval_rules` allow trusted staff edits to apply immediately while preserving the same audit/suggestion trail.
 - Data Quality can refresh persistent checks and normalized contacts from current listing/profile fields. The read path falls back to computed warnings before migration/refresh data exists.
 - Claim review is implemented for pending `franchise_claims`: admin approval attaches owner/profile data where present, moves unclaimed listings to free claimed state, writes audit events, and queues static rebuilds. Rejection records the review without changing the public listing.
-- Leads and system health are MVP panels. `operation_events` now backs webhook/API failure visibility, recent operation summaries, and dashboard health counts. Premium Operations shows funnel/payment-method data, recent payment notifications, upcoming expiries, and queued email summaries. Deeper R2 asset health still needs a dedicated data model.
+- Leads and system health are MVP panels. `operation_events` now backs webhook/API failure visibility, recent operation summaries, and dashboard health counts. Premium Operations shows funnel/payment-method data, recent payment notifications, upcoming expiries, queued email rows, and admin retry/cancel controls. Deeper R2 asset health still needs a dedicated data model.
 - Admin publication controls can update `franchise_site_publications.publication_status` per site and enqueue rebuild requests for the affected site. Franchisors see read-only distribution status in `/profil`.
+- Premium email delivery uses `/premium-email-worker`, a protected Pages Function triggered by `.github/workflows/premium-email-worker.yaml`. The first provider path is Resend via `RESEND_API_KEY`; required runtime setup also includes `PREMIUM_EMAIL_WORKER_SECRET`, `PREMIUM_EMAIL_FROM`, and optional `PREMIUM_EMAIL_REPLY_TO`.
 
 ### D1 Change To Static Publish Mechanism
 Target mechanism for franchisor edits, admin edits, claims, listing deletes, and publication-status changes:

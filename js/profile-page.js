@@ -653,6 +653,7 @@
           <div><dt>Bank</dt><dd>${escapeHtml(payment.bank_name || "BCA")}</dd></div>
           <div><dt>Atas nama</dt><dd>${escapeHtml(payment.account_name || "Syamsul Alam")}</dd></div>
           <div><dt>No. rekening</dt><dd>${escapeHtml(payment.account_number || "0183579751")}</dd></div>
+          ${Number(payment.discount_amount || order.discount_amount || 0) > 0 ? `<div><dt>Diskon</dt><dd>${formatFullRupiah(payment.discount_amount || order.discount_amount)}${payment.discount_reason || order.discount_reason ? ` - ${escapeHtml(payment.discount_reason || order.discount_reason)}` : ""}</dd></div>` : ""}
           <div><dt>Nominal</dt><dd>${formatFullRupiah(payment.payable_amount || order.payable_amount)}</dd></div>
           <div><dt>Kode unik</dt><dd>${escapeHtml(payment.unique_code || order.unique_code || "-")}</dd></div>
         </dl>

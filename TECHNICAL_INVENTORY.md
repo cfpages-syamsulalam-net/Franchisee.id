@@ -383,9 +383,16 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `createPremiumNotification(db, notification)` / `notifyAdmins(db, notification)`: Persist owner/admin Premium status messages without blocking the main action if notification storage is unavailable.
 - `loadPremiumNotifications(db, userId)` / `loadAdminPremiumNotifications(db)`: Feed `/profil` owner messages and dashboard Premium Operations messages.
 - `queueNotificationEmail(db, email)` / `queueAdminPremiumEmails(db, email)`: Queue owner/admin payment emails in `notification_email_queue` without requiring an outbound provider during the main action.
-- `loadNotificationEmailQueueSummary(db)`: Supplies dashboard queue counts grouped by status/category.
+- `loadNotificationEmailQueueSummary(db)` / `loadNotificationEmailQueueRows(db, limit)`: Supplies dashboard queue counts plus recent queued email rows with status/error/provider metadata.
 - `loadExpiringPremiumSubscriptions(db, days)`: Supplies upcoming Premium expiries for dashboard operations follow-up.
+- `markExpiredPremiumSubscriptions(db)` / `queuePremiumRenewalReminders(db)`: Marks ended subscriptions expired and creates one 30/14/7/1-day renewal reminder email/in-app notice per subscription window.
 - `premiumReadinessForListing(listing)`: Scores logo, cover, description, contact, investment info, and proposal readiness for Premium review.
+
+### File: `functions/_premium-email-worker.js`
+*Premium email delivery worker service.*
+- `processPremiumEmailWorker(env, options)`: Marks expired subscriptions, queues renewal reminders, sends due email rows when `RESEND_API_KEY` is configured, and returns delivery counts.
+- `sendWithResend(env, row)`: Sends a text email through Resend using `PREMIUM_EMAIL_FROM` and optional `PREMIUM_EMAIL_REPLY_TO`.
+- Queue updates store `provider='resend'`, `provider_message_id`, `attempt_count`, `next_attempt_at`, `last_error`, and `sent_at`.
 
 ### File: `functions/_profile-premium.js`
 *Profile-owned premium workflow module.*
@@ -397,6 +404,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/premium-event.js`
 *Public Premium funnel endpoint.*
 - `onRequestPost()`: Accepts only `premium_page_view` and `premium_cta_click`, trims metadata, writes through `_premium-ops.js`, and returns a no-store JSON response.
+
+### File: `functions/premium-email-worker.js`
+*Protected Premium email worker route.*
+- `onRequestPost()`: Requires `PREMIUM_EMAIL_WORKER_SECRET` through `Authorization: Bearer ...` or `x-worker-secret`, runs `processPremiumEmailWorker()`, logs operation telemetry, and returns a no-store JSON summary.
+- `onRequestGet()`: Returns 405 because the worker should only be triggered by POST.
 
 ### File: `functions/premium-receipt-upload.js`
 *Protected Premium proof-of-payment upload endpoint.*
@@ -455,7 +467,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, `review_claim`, `review_premium_payment`, `update_payment_method`, `refresh_quality_checks`, and `update_publication`.
+- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, `review_claim`, `review_premium_payment`, `update_payment_method`, `manage_notification_email`, `refresh_quality_checks`, and `update_publication`.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
@@ -468,7 +480,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
 - `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display.
 - `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Operations tab.
-- `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, recent Premium notifications, upcoming expiries, and queued-email summaries for the Operations tab.
+- `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, recent Premium notifications, upcoming expiries, queued-email summaries, and recent queued email rows for the Operations tab.
 - `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, and product-event counts.
 
 ### File: `functions/_dashboard-actions.js`
@@ -479,6 +491,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
 - `handleReviewPremiumPayment(db, auth, data)`: Admin-only approve/reject. Approval marks the order paid, creates or renews a one-year `franchise_subscriptions` row, sets the listing premium, creates missing publication rows for included network sites, publishes those rows, writes audit/events/notifications, queues owner email notifications, and queues rebuilds for each affected site.
 - `handleUpdatePaymentMethod(db, auth, data)`: Admin-only upsert for the manual BCA payment method shown to franchisors during Premium payment.
+- `handleManageNotificationEmail(db, auth, data)`: Admin-only retry/cancel for queued email rows, with audit events so recovery actions do not require manual D1 edits.
 - `handleRefreshQualityChecks(db, auth)`: Refreshes normalized contacts and persistent quality checks, then returns scanned/contact/open-check counts.
 - `handleUpdatePublication(db, auth, data)`: Admin-only publication status update for one listing/site pair; writes audit events and queues a static rebuild for the affected site.
 

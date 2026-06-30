@@ -68,8 +68,9 @@ export async function nextPremiumUniqueCode(db) {
   throw new Error("Kode pembayaran sedang penuh. Silakan coba lagi nanti.");
 }
 
-export function payableAmount(uniqueCode) {
-  return PREMIUM_BASE_AMOUNT + Number(uniqueCode || 0);
+export function payableAmount(uniqueCode, baseAmount = PREMIUM_BASE_AMOUNT, discountAmount = 0) {
+  const discountedBase = Math.max(0, Number(baseAmount || PREMIUM_BASE_AMOUNT) - Number(discountAmount || 0));
+  return discountedBase + Number(uniqueCode || 0);
 }
 
 export function formatUniqueCode(code) {
@@ -85,9 +86,11 @@ export function paymentInstructions(order, method = null) {
     account_name: selected.account_name || PREMIUM_PAYMENT.accountName,
     account_number: selected.account_number || PREMIUM_PAYMENT.accountNumber,
     instructions: selected.instructions || PREMIUM_PAYMENT.instructions,
-    base_amount: PREMIUM_BASE_AMOUNT,
+    base_amount: Number(order.base_amount || PREMIUM_BASE_AMOUNT),
+    discount_amount: Number(order.discount_amount || 0),
+    discount_reason: order.discount_reason || null,
     unique_code: formatUniqueCode(order.unique_code),
-    payable_amount: Number(order.payable_amount || payableAmount(order.unique_code)),
+    payable_amount: Number(order.payable_amount || payableAmount(order.unique_code, order.base_amount, order.discount_amount)),
     expires_at: order.expires_at,
   };
 }

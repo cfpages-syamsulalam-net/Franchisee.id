@@ -16,6 +16,7 @@ import {
   loadActivePaymentMethod,
   loadPremiumNotifications,
   notifyAdmins,
+  premiumOrderPricing,
   premiumReadinessForListing,
   queueAdminPremiumEmails,
   queueNotificationEmail,
@@ -83,29 +84,35 @@ export async function createPremiumOrder(db, actor, data) {
   }
 
   const code = await nextPremiumUniqueCode(db);
+  const pricing = await premiumOrderPricing(db, actor, listing);
+  const amount = payableAmount(code, pricing.base_amount, pricing.discount_amount);
   const orderId = premiumOrderId(randomId);
   await db.batch([
     db
       .prepare(
         `INSERT INTO premium_orders (
           id, user_id, franchise_id, plan_code, base_amount, unique_code, payable_amount,
-          currency, status, payment_method, payment_provider, expires_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'IDR', 'pending_payment', 'bank_transfer', 'manual_bca', datetime('now', ?))`,
+          currency, status, payment_method, payment_provider, expires_at, discount_amount, discount_reason
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'IDR', 'pending_payment', 'bank_transfer', 'manual_bca', datetime('now', ?), ?, ?)`,
       )
       .bind(
         orderId,
         actor.id,
         listing.id,
         PREMIUM_PLAN_CODE,
-        PREMIUM_BASE_AMOUNT,
+        pricing.base_amount,
         code,
-        payableAmount(code),
+        amount,
         `+${PREMIUM_ORDER_WINDOW_HOURS} hours`,
+        pricing.discount_amount,
+        pricing.discount_reason,
       ),
     auditStatement(db, "premium.order.create", "premium_orders", orderId, {
       franchise_id: listing.id,
       brand_name: listing.brand_name,
-      payable_amount: payableAmount(code),
+      payable_amount: amount,
+      discount_amount: pricing.discount_amount,
+      discount_reason: pricing.discount_reason,
       renewal_for_subscription_id: active?.id || null,
     }, actor.id),
   ]);

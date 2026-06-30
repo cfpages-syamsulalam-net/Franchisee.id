@@ -18,17 +18,23 @@
   var premiumPaymentRows = document.querySelector("[data-premium-payment-rows]");
   var premiumFunnel = document.querySelector("[data-premium-funnel]");
   var premiumNotifications = document.querySelector("[data-premium-notifications]");
+  var premiumReports = document.querySelector("[data-premium-reports]");
   var premiumExpiring = document.querySelector("[data-premium-expiring]");
   var premiumEmailQueue = document.querySelector("[data-premium-email-queue]");
   var paymentMethodForm = document.querySelector("[data-payment-method-form]");
+  var premiumSettingsForm = document.querySelector("[data-premium-settings-form]");
   var outreachCount = document.querySelector("[data-outreach-count]");
   var editRows = document.querySelector("[data-edit-rows]");
   var editCount = document.querySelector("[data-edit-count]");
   var editForm = document.querySelector("[data-edit-form]");
+  var editPanelTitle = document.querySelector("[data-edit-panel-title]");
+  var editPanelCopy = document.querySelector("[data-edit-panel-copy]");
   var listingSelect = document.querySelector("[data-listing-select]");
   var editReason = document.querySelector("[data-edit-reason]");
   var editFieldList = document.querySelector("[data-edit-field-list]");
   var addEditFieldButton = document.querySelector("[data-add-edit-field]");
+  var editSubmitButton = document.querySelector("[data-edit-submit]");
+  var editHelp = document.querySelector("[data-edit-help]");
   var leadSummary = document.querySelector("[data-lead-summary]");
   var systemHealth = document.querySelector("[data-system-health]");
   var dashboardState = null;
@@ -60,6 +66,9 @@
   }
   if (paymentMethodForm) {
     paymentMethodForm.addEventListener("submit", submitPaymentMethod);
+  }
+  if (premiumSettingsForm) {
+    premiumSettingsForm.addEventListener("submit", submitPremiumSettings);
   }
   activateDashboardTab(initialDashboardTab(), false);
   boot();
@@ -143,6 +152,7 @@
     setStatus("Dashboard aktif untuk site franchisee.id.", false);
     renderAuthDebug("dashboard:ready", { roles: data.user.roles || [] });
     userEl.textContent = (data.user.name || data.user.email || "Admin/staff") + " - " + data.user.roles.join(", ");
+    renderEditRoleCopy();
     setMetric("total_listings", data.overview.total_listings);
     setMetric("unclaimed_listings", data.overview.unclaimed_listings);
     setMetric("verified_listings", data.overview.verified_listings + data.overview.premium_listings);
@@ -159,6 +169,29 @@
     renderEditSuggestions(data.edit_suggestions || { summary: {}, pending: [] });
     renderLeads(data.lead_summary || { by_status: {}, recent: [] });
     renderHealth(data.system_health || {});
+    if (window.FranchiseTooltip && typeof window.FranchiseTooltip.refresh === "function") {
+      window.FranchiseTooltip.refresh();
+    }
+  }
+
+  function renderEditRoleCopy() {
+    if (editPanelTitle) editPanelTitle.textContent = currentUserIsAdmin ? "Edit Listing Langsung" : "Listing Edit Suggestions";
+    if (editPanelCopy) {
+      editPanelCopy.textContent = currentUserIsAdmin
+        ? "Admin bisa memperbaiki data listing dan menerapkannya langsung."
+        : "Staff menyiapkan perubahan; admin menyetujui sebelum tampil.";
+    }
+    if (editHelp) {
+      editHelp.textContent = currentUserIsAdmin
+        ? "Perubahan admin langsung tersimpan dan masuk antrean publish."
+        : "Perubahan staff masuk review admin sebelum tampil.";
+    }
+    if (editSubmitButton) {
+      var label = currentUserIsAdmin ? "Terapkan edit langsung" : "Kirim saran edit";
+      editSubmitButton.setAttribute("aria-label", label);
+      editSubmitButton.setAttribute("data-fr-tooltip", label);
+      editSubmitButton.innerHTML = '<i class="' + (currentUserIsAdmin ? "fas fa-save" : "fas fa-paper-plane") + '" aria-hidden="true"></i>';
+    }
   }
 
   function renderOutreach(rows, summary) {
@@ -378,6 +411,16 @@
       setFormValue(paymentMethodForm, "instructions", method.instructions || "");
     }
 
+    if (premiumSettingsForm) {
+      var settings = data.settings || {};
+      setFormValue(premiumSettingsForm, "grace_period_days", settings.grace_period_days == null ? 3 : settings.grace_period_days);
+      setFormValue(premiumSettingsForm, "grace_daily_email_enabled", Number(settings.grace_daily_email_enabled == null ? 1 : settings.grace_daily_email_enabled));
+      setFormValue(premiumSettingsForm, "annual_report_enabled", Number(settings.annual_report_enabled == null ? 1 : settings.annual_report_enabled));
+      setFormValue(premiumSettingsForm, "multi_brand_discount_enabled", Number(settings.multi_brand_discount_enabled || 0));
+      setFormValue(premiumSettingsForm, "multi_brand_discount_percent", settings.multi_brand_discount_percent || 0);
+      setFormValue(premiumSettingsForm, "multi_brand_min_owned_brands", settings.multi_brand_min_owned_brands || 2);
+    }
+
     if (premiumNotifications) {
       var notifications = data.notifications || [];
       premiumNotifications.innerHTML = notifications.length ? notifications.slice(0, 6).map(function (item) {
@@ -395,13 +438,55 @@
       }).join("") : '<li><span>Tidak ada Premium yang segera berakhir.</span></li>';
     }
 
+    if (premiumReports) {
+      var reports = data.annual_reports || [];
+      premiumReports.innerHTML = reports.length ? reports.slice(0, 6).map(function (item) {
+        return '<li><strong>' + escapeHtml(item.brand_name || item.franchise_id || "Listing") + '</strong><span>' +
+          escapeHtml("view " + (item.listing_views || 0) + " / save " + (item.saves || 0) + " / inquiry " + (item.inquiries || 0) + " / lead " + (item.leads || 0)) +
+          '</span></li>';
+      }).join("") : '<li><span>Belum ada laporan tahunan Premium.</span></li>';
+    }
+
     if (premiumEmailQueue) {
-      var queue = data.email_queue || [];
-      premiumEmailQueue.innerHTML = queue.length ? queue.slice(0, 6).map(function (item) {
+      var queueRows = data.email_queue_rows || [];
+      var queueSummary = data.email_queue || [];
+      premiumEmailQueue.innerHTML = queueRows.length ? queueRows.slice(0, 8).map(function (item) {
+        var status = item.status || "pending";
+        var actions = currentUserIsAdmin ? renderActionToolbar([
+          status === "failed" || status === "cancelled" ? renderActionButton({
+            label: "Kirim ulang email",
+            icon: "fas fa-redo",
+            tone: "success",
+            attrs: {
+              "data-email-action": "retry",
+              "data-email-id": item.id
+            }
+          }) : "",
+          status === "pending" || status === "failed" ? renderActionButton({
+            label: "Batalkan email",
+            icon: "fas fa-ban",
+            tone: "danger",
+            attrs: {
+              "data-email-action": "cancel",
+              "data-email-id": item.id
+            }
+          }) : ""
+        ], "Aksi email") : "";
+        return '<li><strong>' + escapeHtml(status + " - " + (item.category || "email")) + '</strong>' +
+          '<span>' + escapeHtml((item.subject || "Email") + " untuk " + (item.to_email || "-")) + '</span>' +
+          (item.last_error ? '<span class="dash-muted">' + escapeHtml(item.last_error) + '</span>' : '') +
+          actions +
+          '</li>';
+      }).join("") : queueSummary.length ? queueSummary.slice(0, 6).map(function (item) {
         return '<li><strong>' + escapeHtml((item.status || "pending") + " - " + (item.category || "email")) + '</strong><span>' +
           escapeHtml((item.count || 0) + " email") +
           '</span></li>';
       }).join("") : '<li><span>Belum ada antrean email 30 hari terakhir.</span></li>';
+      premiumEmailQueue.querySelectorAll("[data-email-action]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          manageNotificationEmail(button);
+        });
+      });
     }
   }
 
@@ -810,6 +895,22 @@
     }
   }
 
+  async function manageNotificationEmail(button) {
+    try {
+      button.disabled = true;
+      await postDashboardAction({
+        action: "manage_notification_email",
+        email_id: button.getAttribute("data-email-id"),
+        email_action: button.getAttribute("data-email-action")
+      });
+      setStatus(button.getAttribute("data-email-action") === "retry" ? "Email masuk antrean kirim ulang." : "Email dibatalkan.", false);
+      await reloadDashboard();
+    } catch (error) {
+      button.disabled = false;
+      setStatus(error.message || "Aksi email belum bisa diproses.", true);
+    }
+  }
+
   async function submitPaymentMethod(event) {
     event.preventDefault();
     if (!paymentMethodForm || !currentUserIsAdmin) {
@@ -834,6 +935,34 @@
       await reloadDashboard();
     } catch (error) {
       setStatus(error.message || "Metode pembayaran belum bisa disimpan.", true);
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function submitPremiumSettings(event) {
+    event.preventDefault();
+    if (!premiumSettingsForm || !currentUserIsAdmin) {
+      setStatus("Hanya admin yang bisa mengubah pengaturan Premium.", true);
+      return;
+    }
+    var button = premiumSettingsForm.querySelector("button[type='submit']");
+    if (button) button.disabled = true;
+    try {
+      var form = new FormData(premiumSettingsForm);
+      await postDashboardAction({
+        action: "update_premium_settings",
+        grace_period_days: Number(form.get("grace_period_days") || 3),
+        grace_daily_email_enabled: String(form.get("grace_daily_email_enabled") || "1") === "1",
+        annual_report_enabled: String(form.get("annual_report_enabled") || "1") === "1",
+        multi_brand_discount_enabled: String(form.get("multi_brand_discount_enabled") || "0") === "1",
+        multi_brand_discount_percent: Number(form.get("multi_brand_discount_percent") || 0),
+        multi_brand_min_owned_brands: Number(form.get("multi_brand_min_owned_brands") || 2)
+      });
+      setStatus("Pengaturan Premium tersimpan.", false);
+      await reloadDashboard();
+    } catch (error) {
+      setStatus(error.message || "Pengaturan Premium belum bisa disimpan.", true);
     } finally {
       if (button) button.disabled = false;
     }

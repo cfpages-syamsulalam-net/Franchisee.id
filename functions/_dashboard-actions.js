@@ -11,7 +11,7 @@ import { getListingSnapshot, hasAutoApproval } from "./_dashboard-queries.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, parseJson, randomId } from "./_dashboard-utils.js";
 import { refreshDashboardQualityChecks } from "./_quality-checks.js";
 import { siteRebuildStatements } from "./_site-publish-queue.js";
-import { createPremiumNotification, queueNotificationEmail, recordPremiumEvent } from "./_premium-ops.js";
+import { createPremiumNotification, queueNotificationEmail, recordPremiumEvent, updatePremiumSettings } from "./_premium-ops.js";
 
 export async function handleLogOutreach(db, auth, data) {
   const eventId = `outreach_${randomId()}`;
@@ -333,6 +333,67 @@ export async function handleUpdatePaymentMethod(db, auth, data) {
     }, auth.id),
   ]);
   return jsonResponse({ success: true, payment_method_code: code });
+}
+
+export async function handleManageNotificationEmail(db, auth, data) {
+  assertAdmin(auth);
+  const email = await db
+    .prepare(
+      `SELECT id, status, category, to_email
+       FROM notification_email_queue
+       WHERE id = ?
+       LIMIT 1`,
+    )
+    .bind(data.email_id)
+    .first();
+  if (!email) return jsonResponse({ success: false, error: "EMAIL_QUEUE_ITEM_NOT_FOUND" }, { status: 404 });
+
+  const update = data.email_action === "retry"
+    ? db
+      .prepare(
+        `UPDATE notification_email_queue
+         SET status = 'pending',
+             attempt_count = 0,
+             next_attempt_at = CURRENT_TIMESTAMP,
+             locked_at = NULL,
+             last_error = NULL,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND status IN ('failed', 'cancelled')`,
+      )
+      .bind(data.email_id)
+    : db
+      .prepare(
+        `UPDATE notification_email_queue
+         SET status = 'cancelled',
+             next_attempt_at = NULL,
+             locked_at = NULL,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND status IN ('pending', 'failed')`,
+      )
+      .bind(data.email_id);
+
+  await db.batch([
+    update,
+    auditStatement(db, data.email_action === "retry" ? "premium.email.retry" : "premium.email.cancel", "notification_email_queue", data.email_id, {
+      status: email.status,
+      category: email.category,
+      to_email: email.to_email,
+    }, auth.id),
+  ]);
+  return jsonResponse({ success: true, email_id: data.email_id, email_action: data.email_action });
+}
+
+export async function handleUpdatePremiumSettings(db, auth, data) {
+  assertAdmin(auth);
+  const settings = await updatePremiumSettings(db, data, auth.id);
+  await db
+    .prepare(
+      `INSERT INTO audit_events (id, actor_user_id, source_site_id, action, entity_type, entity_id, metadata)
+       VALUES (?, ?, ?, 'premium.settings.update', 'premium_settings', 'premium_settings', ?)`,
+    )
+    .bind(`audit_${randomId()}`, auth.id, SITE_ID, JSON.stringify(settings))
+    .run();
+  return jsonResponse({ success: true, settings });
 }
 
 export async function handleReviewPremiumPayment(db, auth, data) {

@@ -73,6 +73,22 @@ const UpdatePaymentMethodSchema = z.object({
   is_active: z.boolean().optional().default(true),
 });
 
+const ManageNotificationEmailSchema = z.object({
+  action: z.literal("manage_notification_email"),
+  email_id: z.string().trim().min(1),
+  email_action: z.enum(["retry", "cancel"]),
+});
+
+const UpdatePremiumSettingsSchema = z.object({
+  action: z.literal("update_premium_settings"),
+  grace_period_days: z.coerce.number().min(0).max(30).default(3),
+  grace_daily_email_enabled: z.boolean().optional().default(true),
+  annual_report_enabled: z.boolean().optional().default(true),
+  multi_brand_discount_enabled: z.boolean().optional().default(false),
+  multi_brand_discount_percent: z.coerce.number().min(0).max(90).default(0),
+  multi_brand_min_owned_brands: z.coerce.number().int().min(2).max(50).default(2),
+});
+
 export const DashboardActionSchema = z.discriminatedUnion("action", [
   OutreachEventSchema,
   SuggestEditSchema,
@@ -82,6 +98,8 @@ export const DashboardActionSchema = z.discriminatedUnion("action", [
   UpdatePublicationSchema,
   ReviewPremiumPaymentSchema,
   UpdatePaymentMethodSchema,
+  ManageNotificationEmailSchema,
+  UpdatePremiumSettingsSchema,
 ]);
 
 export function sanitizeChanges(changes) {

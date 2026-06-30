@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-06-30 04:36 (Asia/Jakarta)
+Last updated: 2026-06-30 08:38 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is a static WordPress export with a custom Google Sheets-backed runtime. It works for SEO and basic form capture, but it is not a durable application architecture for authenticated franchisee/franchisor accounts, dashboards, asset ownership, listing edits, or reliable directory search.
@@ -53,6 +53,7 @@ Principle: every blocked action should answer three questions in the UI: what ha
 | Normalized contacts | Added `franchise_contacts` migration plus contact normalization helpers for phone, WhatsApp, email, website, address, and social links. | Done |
 | Persistent quality checks | Added `franchise_quality_checks`, dashboard refresh logic, persisted read path, and computed fallback before migration/refresh. | Done |
 | Guided review edits | Replaced staff JSON diff input with guided field rows and changed pending admin review display to old/new values per field. | Done |
+| Admin direct edits | Admin edit submissions already applied directly in the backend, but the dashboard copy looked staff-oriented. The edit panel now switches title/help/button state for admin so direct edits are clear. | Done |
 | Shared schemas | Added shared Function schemas for dashboard decisions, editable listing fields, contact types, quality-check types, form submissions, `/get-franchises` query params, and listing field normalization. Added shared TypeScript schemas for CSV import rows and D1 static snapshot rows used by import/build/Astro paths. | Done |
 | Remaining schema adoption | Active form payload, query, CSV import, build, and Astro static snapshot validation paths now use shared schema modules. Future new trust-boundary schemas should be added to the shared modules instead of redefined locally. | Closed |
 
@@ -70,7 +71,10 @@ Principle: every blocked action should answer three questions in the UI: what ha
 | Public payment copy | `/premium` now sends users to `/profil/?tab=membership` to generate the current nominal and payment instructions instead of exposing payment-account details in static public copy. | Done |
 | Renewal flow | Added a 30-day renewal window, renewal CTA in `/profil`, backend renewal order allowance, and approval logic that starts renewed subscriptions after the current term ends. | Done |
 | Expiry operations | Dashboard Premium Operations now shows subscriptions ending soon so admins can follow up before lapse. | Done |
-| Email queue foundation | Added `notification_email_queue`, applied and verified the migration on remote D1, and queued owner/admin payment emails for submitted, approved, and rejected Premium payments. Delivery provider integration is still a future decision. | Done |
+| Email queue foundation | Added `notification_email_queue`, applied and verified the migration on remote D1, and queued owner/admin payment emails for submitted, approved, and rejected Premium payments. | Done |
+| Email worker delivery | Added Resend-backed `/premium-email-worker`, GitHub cron trigger, provider/attempt metadata, failed retry backoff, and admin retry/cancel controls in Premium Operations. Delivery requires manual Resend/DNS/secret setup before real emails are sent. | Done |
+| Renewal reminders | Added 30/14/7/1-day reminder queueing and `premium_subscription_reminders` idempotency through migration `0012_premium_email_worker_guardrails.sql`; applied and verified on remote D1. | Done |
+| Data guardrails | Added unique D1 guardrails for one active pending Premium order per listing/user/plan and one subscription per source order. Remote duplicate checks passed before migration. | Done |
 | Automation gap | Bank transaction reading and automatic approval still need a provider/API decision and credential setup before implementation. | Open |
 
 Actionability checklist for future edits:
@@ -201,6 +205,7 @@ Current maintained code hotspots by line count, excluding generated legacy HTML 
 | `functions/form-submit.js` | 621 | Form API still handles multiple submission types, role checks, D1 writes, duplicate checks, test-data actions, and publish queueing in one file. | Split by workflow after dashboard/auth refactors: franchisee submit, franchisor submit, claim submit, and dev/test actions. | Pending |
 | `functions/profile-data.js` | 1500 after profile/premium value additions | Profile API now owns account edits, public role add-on, profile/listing edits, saved opportunities, inquiry creation, and lead status, while premium order/confirmation/renewal flows are delegated to `_profile-premium.js`. | Continue splitting by workflow after premium renewal settles: account, franchisee value, franchisor listing, and leads. | In progress |
 | `js/profile-page.js` | 1431 after membership renewal addition | Profile client now renders many role-specific sections plus premium order/payment UI. Premium status/date/renewal helpers have been extracted to `js/profile-premium.js`, but panel rendering remains large. | Split panel renderers into small modules once the current profile UX stabilizes; keep behavior unchanged during extraction. | In progress |
+| `js/dashboard-admin.js` | Growing after Premium lifecycle/settings work | Dashboard client now owns auth/debug, tab control, outreach, data quality, review edits, claims, publication controls, Premium payments, Premium operations/settings, email queue recovery, leads, and health rendering. Future dashboard changes will get slower and easier to break if all panels stay in one file. | After the Premium lifecycle pass, split into `dashboard-core`, `dashboard-actions`, `dashboard-premium`, `dashboard-review`, and `dashboard-render-utils` modules while preserving the current static dashboard shell and API contract. | Started |
 | `src/lib/franchise-static-assets.ts` | 620 | Helper owns generated directory/detail CSS/JS injection and CSS-only missing-image placeholders. Its length is mostly literal CSS/JS copied from the prior renderer. | Later move literal CSS into owned static CSS assets if the build pipeline can guarantee those assets on all generated pages. | Extracted |
 
 Refactor rule: prefer behavior-preserving extraction with validation after each step. Do not combine extraction with feature changes unless the feature needs the boundary.

@@ -1,0 +1,28 @@
+name: Premium Email Worker
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "12,42 * * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  run-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger protected email worker
+        env:
+          SITE_URL: ${{ vars.FRANCHISEE_SITE_URL || 'https://franchisee.id' }}
+          PREMIUM_EMAIL_WORKER_SECRET: ${{ secrets.PREMIUM_EMAIL_WORKER_SECRET }}
+        run: |
+          if [ -z "$PREMIUM_EMAIL_WORKER_SECRET" ]; then
+            echo "PREMIUM_EMAIL_WORKER_SECRET is not set."
+            exit 1
+          fi
+          curl -fsS -X POST "$SITE_URL/premium-email-worker" \
+            -H "Authorization: Bearer $PREMIUM_EMAIL_WORKER_SECRET" \
+            -H "Content-Type: application/json" \
+            --data '{"source":"github-actions"}'

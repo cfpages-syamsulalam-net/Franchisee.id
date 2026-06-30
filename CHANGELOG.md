@@ -4,6 +4,28 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-06-30 08:38 (Asia/Jakarta)
+### Added
+- `functions/_premium-email-worker.js` and `functions/premium-email-worker.js`: Added the protected Premium email worker, Resend delivery path, retry backoff, provider message-id storage, expired-subscription marking, and renewal reminder queueing.
+- `.github/workflows/premium-email-worker.yaml`: Added a scheduled/manual GitHub Actions trigger for `/premium-email-worker`.
+- `migrations/0012_premium_email_worker_guardrails.sql`: Added email delivery metadata, renewal reminder idempotency, due-email indexing, and Premium duplicate-order/source-order guardrails.
+- `.context/session-20260630-0838.md`: Added this session snapshot.
+
+### Changed
+- Remote Cloudflare: Checked for duplicate pending Premium orders/source orders, applied `0012_premium_email_worker_guardrails.sql` to `franchise_db`, and verified the new columns/table/indexes.
+- `functions/_premium-ops.js`, `functions/_dashboard-schemas.js`, `functions/_dashboard-actions.js`, `functions/_dashboard-queries.js`, and `functions/dashboard-data.js`: Added renewal reminder helpers, recent email queue reads, admin email retry/cancel validation/actions, and dashboard payload support.
+- `js/dashboard-admin.js` and `src/pages/dashboard/index.astro`: Made the edit form role-aware so admin sees direct-edit wording, added Premium email queue row controls, refreshed dynamic tooltips, and kept the payment-method save action icon-only.
+- `json/d1-generated-pages-manifest.json`: Refreshed generated timestamps during `pnpm run build`; the D1 builder reported 197 detail pages skipped and no content rewrites.
+- `SUGGESTION.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, and `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: Marked suggestions 27-30 implemented, documented the email worker/provider setup state, and added suggestion 31 for expired Premium public downgrade behavior.
+
+## 2026-06-30 08:20 (Asia/Jakarta)
+### Added
+- `.context/session-20260630-0820.md`: Added this session snapshot.
+
+### Changed
+- `AGENTS.md`: Made the end-of-session suggestion pass mandatory for every work session, including an explicit final-response phrase when there are no new suggestions.
+- `SUGGESTION.md`: Added follow-up recommendations 27-30 for outbound email delivery, Premium expiry reminders, queued-email admin controls, and Premium renewal/order data guardrails.
+
 ## 2026-06-30 04:36 (Asia/Jakarta)
 ### Added
 - `migrations/0011_notification_email_queue.sql`: Added `notification_email_queue` for durable owner/admin payment email queueing before an outbound provider is connected.

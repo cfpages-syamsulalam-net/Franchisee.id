@@ -1,12 +1,14 @@
 import { authErrorResponse, requireD1User } from "./_clerk-auth.js";
 import {
   handleLogOutreach,
+  handleManageNotificationEmail,
   handleRefreshQualityChecks,
   handleReviewPremiumPayment,
   handleReviewClaim,
   handleReviewEditSuggestion,
   handleSuggestEdit,
   handleUpdatePaymentMethod,
+  handleUpdatePremiumSettings,
   handleUpdatePublication,
 } from "./_dashboard-actions.js";
 import {
@@ -112,6 +114,8 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "review_claim") return handleReviewClaim(env.franchise_db, auth, data);
     if (data.action === "review_premium_payment") return handleReviewPremiumPayment(env.franchise_db, auth, data);
     if (data.action === "update_payment_method") return handleUpdatePaymentMethod(env.franchise_db, auth, data);
+    if (data.action === "manage_notification_email") return handleManageNotificationEmail(env.franchise_db, auth, data);
+    if (data.action === "update_premium_settings") return handleUpdatePremiumSettings(env.franchise_db, auth, data);
     if (data.action === "refresh_quality_checks") return handleRefreshQualityChecks(env.franchise_db, auth);
     if (data.action === "update_publication") return handleUpdatePublication(env.franchise_db, auth, data);
 

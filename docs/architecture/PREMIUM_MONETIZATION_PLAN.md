@@ -1,6 +1,6 @@
 # Premium Monetization Plan
 
-Last updated: 2026-06-28 23:43 (Asia/Jakarta)
+Last updated: 2026-06-30 08:38 (Asia/Jakarta)
 
 This is the working plan and progress tracker for monetizing the Franchisee.id network while keeping the public franchise directory free.
 
@@ -560,7 +560,7 @@ Do not sell with unverified numbers. Show real metrics once collected.
 
 Implementation note: the first production-ready version is a manual unique-code transfer flow. A franchisor creates an order from `/profil/?tab=membership`, transfers the generated amount, submits confirmation, and an admin approves/rejects it in `/dashboard`. Approval activates one brand/listing for one year, marks it premium, creates missing publication rows for Franchisee.id, Franchise.id, Franchisor.id, and Waralaba.id, publishes them, records audit events, and queues public rebuilds.
 
-Operations note: payment instructions now read from admin-managed `payment_methods` with a BCA fallback, Premium funnel events track `/premium` CTA views/clicks plus profile/dashboard payment milestones, owner/admin Premium notifications are persisted, and proof-of-payment files can be uploaded to R2 and reviewed from dashboard.
+Operations note: payment instructions now read from admin-managed `payment_methods` with a BCA fallback, Premium funnel events track `/premium` CTA views/clicks plus profile/dashboard payment milestones, owner/admin Premium notifications are persisted, proof-of-payment files can be uploaded to R2 and reviewed from dashboard, and Premium emails are queued for delivery through the protected email worker once provider secrets are configured.
 
 ### Milestone 2: Premium Listing Value
 
@@ -584,6 +584,7 @@ Operations note: payment instructions now read from admin-managed `payment_metho
 - [x] Accept proof-of-payment attachment for manual review.
 - [x] Notify owner/admin about manual payment status.
 - [x] Track manual premium funnel events in dashboard.
+- [x] Queue/send payment status emails through an outbound email worker.
 
 ### Milestone 4: Traffic Growth
 
@@ -596,8 +597,8 @@ Operations note: payment instructions now read from admin-managed `payment_metho
 
 ### Milestone 5: Renewal And Retention
 
-- [ ] 30/14/7-day renewal reminders.
-- [ ] Renewal payment order creation.
+- [x] 30/14/7/1-day renewal reminders.
+- [x] Renewal payment order creation.
 - [ ] Expired premium downgrade behavior.
 - [ ] Annual performance report.
 - [ ] Multi-brand discount rules.
@@ -610,6 +611,24 @@ Operations note: payment instructions now read from admin-managed `payment_metho
 - [ ] Should premium include one editorial article or make it paid add-on?
 - [ ] Which payment gateway should be first after manual transfer?
 - [x] Should the public `/premium` page show the BCA account immediately, or only after the user creates an order with a unique code? Decision: public page can show the BCA account for clarity, but exact payable amount is generated after login/order.
+
+## Email Delivery Setup
+
+Chosen first path: Resend. The code can already send queued Premium emails through `/premium-email-worker`, but real delivery starts only after the sender is verified and secrets are configured.
+
+Manual setup checklist:
+
+1. Create a Resend account and add the sending domain or sender address.
+2. Add the DNS records Resend asks for, then wait until Resend shows the domain/sender as verified.
+3. Create a Resend API key.
+4. Add these Cloudflare Pages production secrets:
+   - `RESEND_API_KEY`
+   - `PREMIUM_EMAIL_WORKER_SECRET`
+   - `PREMIUM_EMAIL_FROM`, for example `Franchisee.id <premium@franchisee.id>`
+   - Optional: `PREMIUM_EMAIL_REPLY_TO`
+5. Add the same `PREMIUM_EMAIL_WORKER_SECRET` as a GitHub repository secret.
+6. Optional: add GitHub repository variable `FRANCHISEE_SITE_URL=https://franchisee.id`.
+7. After the next deploy, run `.github/workflows/premium-email-worker.yaml` manually once from GitHub Actions and check `/dashboard` Premium Operations for sent/failed queue status.
 
 ## Recommended Decisions
 
@@ -626,3 +645,4 @@ Operations note: payment instructions now read from admin-managed `payment_metho
 - Xendit docs: API setup requires a dashboard account and secret API key over HTTPS with test/live environments: https://docs.xendit.co/apidocs
 - Duitku docs: Indonesian payment gateway with dashboard, API integration, and disbursement references: https://docs.duitku.com/
 - BCA Developer API: BCA lists APIs for Mutasi Rekening, Informasi Saldo, Virtual Account, and business API onboarding/cooperation flow: https://developer.bca.co.id/
+- Resend: chosen first outbound email provider candidate for Premium notifications because it has a generous free tier and Cloudflare Workers examples; setup still requires a verified sender/domain and API key: https://resend.com/pricing and https://resend.com/docs/send-with-cloudflare-workers

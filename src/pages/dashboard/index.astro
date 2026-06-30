@@ -152,8 +152,8 @@ export const prerender = true;
                   <div class="dash-panel-title">
                     <i class="fas fa-edit dash-section-icon" aria-hidden="true"></i>
                     <div>
-                      <h2>Listing Edit Suggestions</h2>
-                      <p>Staff menyiapkan perubahan; admin menyetujui sebelum tampil.</p>
+                      <h2 data-edit-panel-title>Listing Edit Suggestions</h2>
+                      <p data-edit-panel-copy>Staff menyiapkan perubahan; admin menyetujui sebelum tampil.</p>
                     </div>
                   </div>
                   <span class="dash-badge" data-edit-count>-</span>
@@ -173,7 +173,7 @@ export const prerender = true;
                     <div class="dash-field-editor-head">
                       <div>
                         <strong>Perubahan field</strong>
-                        <span>Pilih field, isi nilai baru, lalu kirim untuk review.</span>
+                        <span>Pilih field, isi nilai baru, lalu kirim sesuai akses akun.</span>
                       </div>
                       <button class="dash-icon-button dash-action-button" type="button" data-add-edit-field aria-label="Tambah field" data-fr-tooltip="Tambah field">
                         <i class="fas fa-plus" aria-hidden="true"></i>
@@ -182,7 +182,7 @@ export const prerender = true;
                     <div class="dash-field-list" data-edit-field-list></div>
                   </div>
                   <div class="dash-form-wide dash-actions dash-toolbar" role="toolbar" aria-label="Aksi edit suggestion">
-                    <button class="dash-icon-button dash-action-button is-primary" type="submit" aria-label="Kirim saran edit" data-fr-tooltip="Kirim saran edit">
+                    <button class="dash-icon-button dash-action-button is-primary" type="submit" data-edit-submit aria-label="Kirim saran edit" data-fr-tooltip="Kirim saran edit">
                       <i class="fas fa-paper-plane" aria-hidden="true"></i>
                     </button>
                     <span class="dash-muted" data-edit-help>Perubahan akan masuk review admin kecuali akun ini punya izin approve langsung.</span>
@@ -315,10 +315,53 @@ export const prerender = true;
                       <span>Instruksi</span>
                       <textarea name="instructions" rows="2" placeholder="Instruksi singkat untuk pembayar"></textarea>
                     </label>
-                    <button class="dash-button" type="submit"><i class="fas fa-save" aria-hidden="true"></i> Simpan metode</button>
+                    <button class="dash-icon-button dash-action-button is-primary" type="submit" aria-label="Simpan metode pembayaran" data-fr-tooltip="Simpan metode pembayaran">
+                      <i class="fas fa-save" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                  <form class="dash-payment-form" data-premium-settings-form>
+                    <label>
+                      <span>Masa tenggang</span>
+                      <input name="grace_period_days" type="number" min="0" max="30" step="1" placeholder="3" />
+                    </label>
+                    <label>
+                      <span>Email harian</span>
+                      <select name="grace_daily_email_enabled">
+                        <option value="1">Aktif</option>
+                        <option value="0">Nonaktif</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Laporan tahunan</span>
+                      <select name="annual_report_enabled">
+                        <option value="1">Aktif</option>
+                        <option value="0">Nonaktif</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Diskon multi-brand</span>
+                      <select name="multi_brand_discount_enabled">
+                        <option value="0">Nonaktif</option>
+                        <option value="1">Aktif</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Diskon %</span>
+                      <input name="multi_brand_discount_percent" type="number" min="0" max="90" step="1" placeholder="0" />
+                    </label>
+                    <label>
+                      <span>Minimal brand</span>
+                      <input name="multi_brand_min_owned_brands" type="number" min="2" max="50" step="1" placeholder="2" />
+                    </label>
+                    <button class="dash-icon-button dash-action-button is-primary" type="submit" aria-label="Simpan pengaturan Premium" data-fr-tooltip="Simpan pengaturan Premium">
+                      <i class="fas fa-sliders-h" aria-hidden="true"></i>
+                    </button>
                   </form>
                   <ul class="dash-list" data-premium-notifications>
                     <li><span>Memuat info Premium...</span></li>
+                  </ul>
+                  <ul class="dash-list" data-premium-reports>
+                    <li><span>Memuat laporan Premium...</span></li>
                   </ul>
                   <ul class="dash-list" data-premium-expiring>
                     <li><span>Memuat renewal Premium...</span></li>
