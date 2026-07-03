@@ -1,0 +1,23 @@
+---
+import {
+  getCategoryRouteEntries,
+  loadFranchiseStaticRows,
+  renderCategoryLandingPage,
+  type CategoryRouteEntry,
+  type FranchiseStaticRow,
+} from "../../../lib/franchise-static";
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  const rows = loadFranchiseStaticRows();
+  return getCategoryRouteEntries(rows).map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry, rows },
+  }));
+}
+
+const { entry, rows } = Astro.props as { entry: CategoryRouteEntry; rows: FranchiseStaticRow[] };
+const html = renderCategoryLandingPage(entry, rows);
+---
+<Fragment set:html={html} />

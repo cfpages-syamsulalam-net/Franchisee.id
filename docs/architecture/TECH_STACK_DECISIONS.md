@@ -115,6 +115,7 @@ Remote migration status:
 - `0011_notification_email_queue.sql` was applied remotely to `franchise_db` on 2026-06-30 and verified to create `notification_email_queue`.
 - `0012_premium_email_worker_guardrails.sql` was applied remotely to `franchise_db` on 2026-06-30 and verified to add email delivery metadata, `premium_subscription_reminders`, due-email indexes, and Premium duplicate-order/subscription guardrails.
 - `0013_premium_lifecycle_settings_reports.sql` was applied remotely to `franchise_db` on 2026-06-30 and verified to create Premium settings/report/grace tables plus default 3-day grace settings. A later sequential `PRAGMA table_info(premium_orders)` verified the discount columns; a `notification_email_queue` column check hit the known intermittent Wrangler availability issue after the migration had already applied successfully.
+- `0015_premium_promo_settings.sql` was applied remotely to `franchise_db` on 2026-07-04 and verified sequentially to create the `promo_*` Premium event/ribbon settings in `premium_settings`.
 - Remote verification confirmed `d1_migrations` contains `0001_initial_network_schema.sql`.
 
 ## Cloudflare Account Switching

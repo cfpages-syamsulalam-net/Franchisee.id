@@ -434,13 +434,43 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Astro static listing page.*
 - `prerender = true`.
 - Loads rows with `loadFranchiseStaticRows()`.
-- Outputs full listing HTML with `renderListingPage(rows)`, including client-side query-param controls for `q`, `sort`, `kategori`, `status`, and `view=kategori`.
+- Outputs full listing HTML with `renderListingPage(rows)`, including client-side query-param controls for `q`, `sort`, `kategori`, and `status`, plus quick links to static category/modal pages, buyer tools, and comparison.
 
 ### File: `src/pages/peluang-usaha/[slug].astro`
 *Astro static franchise detail pages with flat `.html` output under `build.format: "preserve"`.*
 - `prerender = true`.
 - `getStaticPaths()`: Creates one static route per snapshot row using the D1 slug.
 - Outputs full detail HTML with `renderDetailPage(row)`.
+
+### File: `src/pages/peluang-usaha/kategori/index.astro`
+*Astro static category index page.*
+- `prerender = true`.
+- Outputs category cards with `renderCategoryIndexPage(loadFranchiseStaticRows())`.
+
+### File: `src/pages/peluang-usaha/kategori/[slug].astro`
+*Astro static category landing pages.*
+- `getStaticPaths()`: Builds one page per populated category/alias from the D1 snapshot.
+- Outputs filtered listing pages with category intro copy, SEO metadata, and standard directory controls.
+
+### File: `src/pages/peluang-usaha/modal/index.astro`
+*Astro static capital-range index page.*
+- `prerender = true`.
+- Outputs capital range cards with `renderCapitalIndexPage(loadFranchiseStaticRows())`.
+
+### File: `src/pages/peluang-usaha/modal/[slug].astro`
+*Astro static capital-range landing pages.*
+- `getStaticPaths()`: Builds seven populated capital-range pages from comparable investment fields.
+- Outputs filtered listing pages with modal-range intro copy, SEO metadata, and standard directory controls.
+
+### File: `src/pages/bandingkan/index.astro`
+*Static comparison tool page.*
+- Embeds compact listing data through `renderComparisonPage()`.
+- Runtime compare add/remove behavior lives in `js/franchise-compare.js`.
+
+### File: `src/pages/alat-franchise/index.astro`
+*Static buyer tools page.*
+- Embeds compact listing data through `renderBuyerToolsPage()`.
+- Runtime budget matcher and BEP simulation live in `js/franchise-buyer-tools.js`.
 
 ### File: `src/pages/dashboard/index.astro`
 *Static protected admin/staff dashboard shell.*
@@ -463,8 +493,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `public/_redirects`
 *Cloudflare Pages redirects.*
-- Redirects legacy duplicate directory URLs to canonical `/peluang-usaha` query-param states:
-  `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/kategori/*`, `/category/*`, and known top-level category aliases.
+- Redirects legacy duplicate directory URLs to canonical `/peluang-usaha` states:
+  `/direktori-franchise`, `/rekomendasi`, `/populer`, and `/abjad`.
+- Redirects legacy category URLs and known top-level category aliases to static `/peluang-usaha/kategori/[slug]` landing pages.
 - Prevents duplicate generated directory/category permalink families while preserving old external links.
 
 ## 3. Directory: `/functions` (Cloudflare Edge Logic)
@@ -549,7 +580,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `loadPremiumNotifications(db, userId)` / `loadAdminPremiumNotifications(db)`: Feed `/profil` owner messages and dashboard Premium Operations messages.
 - `queueNotificationEmail(db, email)` / `queueAdminPremiumEmails(db, email)`: Queue owner/admin payment emails in `notification_email_queue` without requiring an outbound provider during the main action.
 - `loadNotificationEmailQueueSummary(db)` / `loadNotificationEmailQueueRows(db, limit)`: Supplies dashboard queue counts plus recent queued email rows with status/error/provider metadata.
-- `loadPremiumSettings(db)` / `updatePremiumSettings(db, data, actorUserId)`: Read and update admin-managed Premium lifecycle/discount settings.
+- `loadPremiumSettings(db)` / `updatePremiumSettings(db, data, actorUserId)`: Read and update admin-managed Premium lifecycle/discount/promo settings.
+- `loadPublicPremiumPromo(db)`: Returns only active, date-gated promo ribbon fields for public pages.
 - `premiumOrderPricing(db, actor, listing)`: Applies the current multi-brand discount rule during new Premium order creation.
 - `loadExpiringPremiumSubscriptions(db, days)`: Supplies upcoming Premium expiries for dashboard operations follow-up.
 - `processPremiumLifecycle(db)` / `queuePremiumGraceEmails(db, settings)` / `expirePremiumAfterGrace(db, settings)`: Generate annual reports, queue daily grace emails, and downgrade Premium to Free after the configured grace period while queuing public rebuilds.
@@ -574,6 +606,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Public Premium funnel endpoint.*
 - `onRequestPost()`: Accepts only `premium_page_view` and `premium_cta_click`, trims metadata, writes through `_premium-ops.js`, and returns a no-store JSON response.
 
+### File: `functions/premium-promo.js`
+*Public Premium promo endpoint.*
+- `onRequestGet()`: Reads active promo settings through `_premium-ops.js`, returns safe JSON for the public top ribbon, and caches for 60 seconds.
+
 ### File: `functions/premium-email-worker.js`
 *Protected Premium email worker route.*
 - `onRequestPost()`: Requires `PREMIUM_EMAIL_WORKER_SECRET` through `Authorization: Bearer ...` or `x-worker-secret`, runs `processPremiumEmailWorker()`, logs operation telemetry, and returns a no-store JSON summary.
@@ -586,6 +622,21 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/payment-method-upload.js`
 *Admin-only payment method QRIS upload endpoint.*
 - `onRequestPost()`: Requires Clerk auth plus D1 `admin`, validates JPG/PNG/WebP QRIS images up to 3 MB, stores the file in R2 under `payment-methods/{code}/`, returns the public URL for `payment_methods.qris_image_url`, and writes an audit event.
+
+### File: `js/franchise-compare.js`
+*Buyer comparison runtime.*
+- Reads selected ids from `?ids=` or `localStorage.franchise_compare_ids`.
+- Lets buyers add/remove up to four brands and renders a comparison table for category, modal, BEP, royalty, city, notes, and detail links.
+
+### File: `js/franchise-buyer-tools.js`
+*Buyer tools runtime.*
+- Runs a local budget matcher against embedded listing data.
+- Calculates a simple BEP estimate from modal awal, omzet bulanan, margin bersih, and biaya tetap.
+
+### File: `js/site-promo-bar.js`
+*Shared public Premium promo bar.*
+- Fetches `/premium-promo` and injects a top ribbon only when an admin-managed campaign is active.
+- Used by generated listing/detail pages, `/premium`, `/bandingkan`, and `/alat-franchise`.
 
 ### File: `functions/profile-upload.js`
 *Protected owner media upload API for `/profil`.*

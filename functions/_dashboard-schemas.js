@@ -90,6 +90,15 @@ const UpdatePremiumSettingsSchema = z.object({
   multi_brand_discount_enabled: z.boolean().optional().default(false),
   multi_brand_discount_percent: z.coerce.number().min(0).max(90).default(0),
   multi_brand_min_owned_brands: z.coerce.number().int().min(2).max(50).default(2),
+  promo_enabled: z.boolean().optional().default(false),
+  promo_discount_percent: z.coerce.number().min(0).max(90).default(0),
+  promo_label: z.string().trim().max(120).optional().default(""),
+  promo_message: z.string().trim().max(220).optional().default(""),
+  promo_bonus_text: z.string().trim().max(220).optional().default(""),
+  promo_cta_label: z.string().trim().max(80).optional().default("Lihat Premium"),
+  promo_cta_url: z.string().trim().max(220).optional().default("/premium/"),
+  promo_starts_at: z.string().trim().max(40).optional().default(""),
+  promo_ends_at: z.string().trim().max(40).optional().default(""),
 });
 
 export const DashboardActionSchema = z.discriminatedUnion("action", [

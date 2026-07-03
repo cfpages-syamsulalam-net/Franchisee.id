@@ -40,7 +40,27 @@ export const PREMIUM_SETTINGS_DEFAULTS = {
   multi_brand_discount_enabled: 0,
   multi_brand_discount_percent: 0,
   multi_brand_min_owned_brands: 2,
+  promo_enabled: 0,
+  promo_discount_percent: 0,
+  promo_label: "",
+  promo_message: "",
+  promo_bonus_text: "",
+  promo_cta_label: "Lihat Premium",
+  promo_cta_url: "/premium/",
+  promo_starts_at: "",
+  promo_ends_at: "",
 };
+
+const PREMIUM_NUMERIC_SETTINGS = new Set([
+  "grace_period_days",
+  "grace_daily_email_enabled",
+  "annual_report_enabled",
+  "multi_brand_discount_enabled",
+  "multi_brand_discount_percent",
+  "multi_brand_min_owned_brands",
+  "promo_enabled",
+  "promo_discount_percent",
+]);
 
 export async function loadActivePaymentMethod(db, code = "manual_bca") {
   try {
@@ -104,9 +124,9 @@ export async function loadPremiumSettings(db) {
       .all();
     for (const row of result.results || []) {
       if (!(row.setting_key in settings)) continue;
-      settings[row.setting_key] = row.value_number !== null && row.value_number !== undefined
-        ? Number(row.value_number)
-        : Number(row.value_text || settings[row.setting_key] || 0);
+      settings[row.setting_key] = PREMIUM_NUMERIC_SETTINGS.has(row.setting_key)
+        ? Number(row.value_number !== null && row.value_number !== undefined ? row.value_number : settings[row.setting_key] || 0)
+        : textOrNull(row.value_text) || settings[row.setting_key] || "";
     }
   } catch (_error) {
     return settings;
@@ -116,18 +136,20 @@ export async function loadPremiumSettings(db) {
 
 export async function updatePremiumSettings(db, data, actorUserId = null) {
   const settings = normalizePremiumSettings(data || {});
-  const statements = Object.keys(PREMIUM_SETTINGS_DEFAULTS).map((key) =>
-    db
+  const statements = Object.keys(PREMIUM_SETTINGS_DEFAULTS).map((key) => {
+    const isNumeric = PREMIUM_NUMERIC_SETTINGS.has(key);
+    return db
       .prepare(
-        `INSERT INTO premium_settings (setting_key, value_number, updated_by_user_id)
-         VALUES (?, ?, ?)
+        `INSERT INTO premium_settings (setting_key, value_number, value_text, updated_by_user_id)
+         VALUES (?, ?, ?, ?)
          ON CONFLICT(setting_key) DO UPDATE SET
            value_number = excluded.value_number,
+           value_text = excluded.value_text,
            updated_by_user_id = excluded.updated_by_user_id,
            updated_at = CURRENT_TIMESTAMP`,
       )
-      .bind(key, settings[key], actorUserId),
-  );
+      .bind(key, isNumeric ? Number(settings[key] || 0) : null, isNumeric ? null : textOrNull(settings[key]) || "", actorUserId);
+  });
   await db.batch(statements);
   return settings;
 }
@@ -754,6 +776,37 @@ export function premiumReadinessForListing(listing) {
   };
 }
 
+export async function loadPublicPremiumPromo(db) {
+  const settings = await loadPremiumSettings(db);
+  if (Number(settings.promo_enabled || 0) !== 1) return { enabled: false };
+  const now = Date.now();
+  const startsAt = parseDateMillis(settings.promo_starts_at);
+  const endsAt = parseDateMillis(settings.promo_ends_at);
+  if (startsAt && now < startsAt) return { enabled: false };
+  if (endsAt && now > endsAt) return { enabled: false };
+  const discount = clampNumber(settings.promo_discount_percent, 0, 90);
+  const bonus = textOrNull(settings.promo_bonus_text);
+  const reason = textOrNull(settings.promo_label);
+  const message = textOrNull(settings.promo_message)
+    || [
+      reason || "Promo Premium",
+      discount ? `diskon ${discount}%` : "",
+      bonus ? `bonus ${bonus}` : "",
+    ].filter(Boolean).join(" - ");
+  if (!message) return { enabled: false };
+  return {
+    enabled: true,
+    label: reason || "Promo Premium",
+    message,
+    discount_percent: discount,
+    bonus_text: bonus || "",
+    cta_label: textOrNull(settings.promo_cta_label) || "Lihat Premium",
+    cta_url: textOrNull(settings.promo_cta_url) || "/premium/",
+    starts_at: textOrNull(settings.promo_starts_at) || "",
+    ends_at: textOrNull(settings.promo_ends_at) || "",
+  };
+}
+
 async function loadAnnualReportMetrics(db, row) {
   const metrics = {
     listing_view: 0,
@@ -854,6 +907,15 @@ function normalizePremiumSettings(value) {
     multi_brand_discount_enabled: Number(settings.multi_brand_discount_enabled) ? 1 : 0,
     multi_brand_discount_percent: clampNumber(settings.multi_brand_discount_percent, 0, 90),
     multi_brand_min_owned_brands: Math.max(2, Math.floor(Number(settings.multi_brand_min_owned_brands || 2))),
+    promo_enabled: Number(settings.promo_enabled) ? 1 : 0,
+    promo_discount_percent: clampNumber(settings.promo_discount_percent, 0, 90),
+    promo_label: textOrNull(settings.promo_label) || "",
+    promo_message: textOrNull(settings.promo_message) || "",
+    promo_bonus_text: textOrNull(settings.promo_bonus_text) || "",
+    promo_cta_label: textOrNull(settings.promo_cta_label) || "Lihat Premium",
+    promo_cta_url: textOrNull(settings.promo_cta_url) || "/premium/",
+    promo_starts_at: textOrNull(settings.promo_starts_at) || "",
+    promo_ends_at: textOrNull(settings.promo_ends_at) || "",
   };
 }
 
@@ -909,6 +971,13 @@ function formatDate(value) {
   const date = new Date(String(value || "").replace(" ", "T") + (String(value || "").includes("Z") ? "" : "Z"));
   if (Number.isNaN(date.getTime())) return String(value || "-");
   return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function parseDateMillis(value) {
+  const text = textOrNull(value);
+  if (!text) return 0;
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
 function escapeHtml(value) {

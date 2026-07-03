@@ -39,6 +39,24 @@ export function injectDirectoryAssets(html: string) {
   background: #ffffff;
   font-family: Outfit, "DM Sans", Arial, sans-serif;
 }
+.franchise-directory-intro {
+  max-width: 1200px;
+  margin: 0 auto 18px;
+  padding: 18px;
+  border-left: 4px solid #f0ca00;
+  background: #fffaf0;
+  color: #303030;
+  font-family: Outfit, "DM Sans", Arial, sans-serif;
+}
+.franchise-directory-intro p {
+  margin: 0 0 8px;
+  color: #303030;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.franchise-directory-intro p:last-child {
+  margin-bottom: 0;
+}
 .franchise-directory-control-row {
   display: grid;
   grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(150px, 1fr)) auto;
@@ -266,6 +284,88 @@ export function injectDirectoryAssets(html: string) {
 .franchise-fact-chip strong {
   font-weight: 700;
 }
+.fr-compare-wrap--card {
+  position: absolute;
+  left: 52px;
+  top: 8px;
+  z-index: 6;
+}
+.fr-compare-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #111111;
+  font-family: Outfit, "DM Sans", Arial, sans-serif;
+  font-weight: 800;
+  cursor: pointer;
+}
+.fr-compare-button--card {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+.fr-compare-button--card span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.fr-compare-button--detail {
+  min-height: 42px;
+  padding: 8px 13px;
+}
+.fr-compare-button.is-added {
+  background: #f0ca00;
+  color: #111111;
+}
+.fr-compare-floating {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 90;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border: 1px solid #111111;
+  background: #111111;
+  color: #ffffff !important;
+  font-family: Outfit, "DM Sans", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none !important;
+}
+.fr-compare-floating.is-visible {
+  display: inline-flex;
+}
+.fr-site-promo-bar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 9px 16px;
+  background: #111111;
+  color: #ffffff;
+  font-family: "DM Sans", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+}
+.fr-site-promo-bar a {
+  color: #111111 !important;
+  background: #f0ca00;
+  padding: 5px 9px;
+  text-decoration: none !important;
+}
 @media (max-width: 980px) {
   .franchise-directory-control-row {
     grid-template-columns: 1fr 1fr;
@@ -294,6 +394,8 @@ export function injectDirectoryAssets(html: string) {
 (function () {
   var form = document.querySelector("[data-directory-controls]");
   var grid = document.querySelector("#uc_post_grid_elementor_d0f4a5f .uc-items-wrapper");
+  initCompareButtons();
+  initPromoBar();
   if (!form || !grid) return;
 
   var cards = Array.prototype.slice.call(grid.querySelectorAll("[data-franchise-card]"));
@@ -367,6 +469,74 @@ export function injectDirectoryAssets(html: string) {
   });
 
   applyFilters();
+
+  function initCompareButtons() {
+    var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-compare-franchise]"));
+    if (!buttons.length) return;
+    var floating = document.querySelector("[data-compare-floating]");
+    if (!floating) {
+      floating = document.createElement("a");
+      floating.href = "/bandingkan";
+      floating.className = "fr-compare-floating";
+      floating.setAttribute("data-compare-floating", "");
+      floating.innerHTML = '<i class="fas fa-scale-balanced" aria-hidden="true"></i><span data-compare-count>Bandingkan</span>';
+      document.body.appendChild(floating);
+    }
+
+    function getSelected() {
+      try {
+        return JSON.parse(localStorage.getItem("franchise_compare_ids") || "[]");
+      } catch (_error) {
+        return [];
+      }
+    }
+
+    function setSelected(ids) {
+      try {
+        localStorage.setItem("franchise_compare_ids", JSON.stringify(ids.slice(0, 4)));
+      } catch (_error) {
+        return null;
+      }
+    }
+
+    function renderState() {
+      var selected = getSelected();
+      buttons.forEach(function (button) {
+        var active = selected.indexOf(button.getAttribute("data-compare-franchise")) !== -1;
+        button.classList.toggle("is-added", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+      floating.classList.toggle("is-visible", selected.length > 0);
+      var count = floating.querySelector("[data-compare-count]");
+      if (count) count.textContent = selected.length + " dibandingkan";
+      floating.href = selected.length ? "/bandingkan?ids=" + selected.join(",") : "/bandingkan";
+    }
+
+    buttons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        var id = button.getAttribute("data-compare-franchise");
+        var selected = getSelected();
+        var index = selected.indexOf(id);
+        if (index >= 0) selected.splice(index, 1);
+        else if (selected.length < 4) selected.push(id);
+        else {
+          selected.shift();
+          selected.push(id);
+        }
+        setSelected(selected);
+        renderState();
+      });
+    });
+    renderState();
+  }
+
+  function initPromoBar() {
+    if (window.__franchisePromoBarLoaded) return;
+    var script = document.createElement("script");
+    script.src = "/js/site-promo-bar.js";
+    script.defer = true;
+    document.head.appendChild(script);
+  }
 }());
 </script>
 </body>`,

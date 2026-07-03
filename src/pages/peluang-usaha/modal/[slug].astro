@@ -1,0 +1,23 @@
+---
+import {
+  getCapitalRouteEntries,
+  loadFranchiseStaticRows,
+  renderCapitalLandingPage,
+  type FranchiseStaticRow,
+} from "../../../lib/franchise-static";
+import type { CapitalRangeEntry } from "../../../lib/franchise-capital";
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  const rows = loadFranchiseStaticRows();
+  return getCapitalRouteEntries(rows).map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry, rows },
+  }));
+}
+
+const { entry, rows } = Astro.props as { entry: CapitalRangeEntry; rows: FranchiseStaticRow[] };
+const html = renderCapitalLandingPage(entry, rows);
+---
+<Fragment set:html={html} />

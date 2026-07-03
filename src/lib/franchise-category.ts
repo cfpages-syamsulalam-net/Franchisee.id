@@ -37,7 +37,7 @@ export function getCategorySummaries(rows: FranchiseStaticRow[]) {
 }
 
 export function canonicalCategoryHref(categoryOrSlug: string) {
-  return `/peluang-usaha?kategori=${slugify(categoryOrSlug)}`;
+  return `/peluang-usaha/kategori/${slugify(categoryOrSlug)}`;
 }
 
 function addCategoryAlias(

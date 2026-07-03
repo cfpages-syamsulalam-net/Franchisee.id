@@ -142,10 +142,10 @@ export function applyCanonicalLegacyLinks(html: string) {
     .replace(/\bhref=(["'])\/rekomendasi\/?\1/g, "href=$1/peluang-usaha?sort=rekomendasi$1")
     .replace(/\bhref=(["'])\/populer\/?\1/g, "href=$1/peluang-usaha?sort=populer$1")
     .replace(/\bhref=(["'])\/abjad\/?\1/g, "href=$1/peluang-usaha?sort=abjad$1")
-    .replace(/\bhref=(["'])\/kategori\/?\1/g, "href=$1/peluang-usaha?view=kategori$1")
-    .replace(/\bhref=(["'])\/category\/?\1/g, "href=$1/peluang-usaha?view=kategori$1")
-    .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha?kategori=$2$1")
-    .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha?kategori=$2$1");
+    .replace(/\bhref=(["'])\/kategori\/?\1/g, "href=$1/peluang-usaha/kategori/$1")
+    .replace(/\bhref=(["'])\/category\/?\1/g, "href=$1/peluang-usaha/kategori/$1")
+    .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha/kategori/$2$1")
+    .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha/kategori/$2$1");
 }
 
 function normalizeTitleLikeName(value: unknown): string {

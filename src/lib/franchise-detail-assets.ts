@@ -395,6 +395,66 @@ export function injectDetailAssets(html: string) {
   color: #6b7280;
   font-weight: 700;
 }
+.fr-compare-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(17, 17, 17, 0.16);
+  border-radius: 999px;
+  padding: 8px 13px;
+  background: #ffffff;
+  color: #111111;
+  font-family: Outfit, "DM Sans", Arial, sans-serif;
+  font-weight: 800;
+  cursor: pointer;
+}
+.fr-compare-button.is-added {
+  background: #f0ca00;
+}
+.fr-compare-floating {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 90;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border: 1px solid #111111;
+  background: #111111;
+  color: #ffffff !important;
+  font-family: Outfit, "DM Sans", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none !important;
+}
+.fr-compare-floating.is-visible {
+  display: inline-flex;
+}
+.fr-site-promo-bar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 9px 16px;
+  background: #111111;
+  color: #ffffff;
+  font-family: "DM Sans", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+}
+.fr-site-promo-bar a {
+  color: #111111 !important;
+  background: #f0ca00;
+  padding: 5px 9px;
+  text-decoration: none !important;
+}
 @media (max-width: 720px) {
   .fr-premium-lead-panel,
   .fr-proposal-head {
@@ -440,6 +500,8 @@ document.querySelectorAll(".e-n-tabs").forEach(function (tabs) {
   var selected = tabs.querySelector('.e-n-tab-title[aria-selected="true"]');
   setFranchiseDetailTab(tabs, selected ? selected.getAttribute("data-tab-index") || "1" : "1");
 });
+initCompareButtons();
+initPromoBar();
 document.addEventListener("click", function (event) {
   var button = event.target && event.target.closest ? event.target.closest("[data-proposal-pdf]") : null;
   if (!button) return;
@@ -565,6 +627,68 @@ function triggerDownload(blob, filename) {
   link.click();
   link.remove();
   window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+function initCompareButtons() {
+  var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-compare-franchise]"));
+  if (!buttons.length) return;
+  var floating = document.querySelector("[data-compare-floating]");
+  if (!floating) {
+    floating = document.createElement("a");
+    floating.href = "/bandingkan";
+    floating.className = "fr-compare-floating";
+    floating.setAttribute("data-compare-floating", "");
+    floating.innerHTML = '<i class="fas fa-scale-balanced" aria-hidden="true"></i><span data-compare-count>Bandingkan</span>';
+    document.body.appendChild(floating);
+  }
+  function getSelected() {
+    try {
+      return JSON.parse(localStorage.getItem("franchise_compare_ids") || "[]");
+    } catch (_error) {
+      return [];
+    }
+  }
+  function setSelected(ids) {
+    try {
+      localStorage.setItem("franchise_compare_ids", JSON.stringify(ids.slice(0, 4)));
+    } catch (_error) {
+      return null;
+    }
+  }
+  function renderState() {
+    var selected = getSelected();
+    buttons.forEach(function (button) {
+      var active = selected.indexOf(button.getAttribute("data-compare-franchise")) !== -1;
+      button.classList.toggle("is-added", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    floating.classList.toggle("is-visible", selected.length > 0);
+    var count = floating.querySelector("[data-compare-count]");
+    if (count) count.textContent = selected.length + " dibandingkan";
+    floating.href = selected.length ? "/bandingkan?ids=" + selected.join(",") : "/bandingkan";
+  }
+  buttons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      var id = button.getAttribute("data-compare-franchise");
+      var selected = getSelected();
+      var index = selected.indexOf(id);
+      if (index >= 0) selected.splice(index, 1);
+      else if (selected.length < 4) selected.push(id);
+      else {
+        selected.shift();
+        selected.push(id);
+      }
+      setSelected(selected);
+      renderState();
+    });
+  });
+  renderState();
+}
+function initPromoBar() {
+  if (window.__franchisePromoBarLoaded) return;
+  var script = document.createElement("script");
+  script.src = "/js/site-promo-bar.js";
+  script.defer = true;
+  document.head.appendChild(script);
 }
 </script>
 </body>`,

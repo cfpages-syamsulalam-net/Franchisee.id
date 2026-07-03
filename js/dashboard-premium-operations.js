@@ -65,6 +65,15 @@
       utils.setFormValue(options.premiumSettingsForm, "multi_brand_discount_enabled", Number(settings.multi_brand_discount_enabled || 0));
       utils.setFormValue(options.premiumSettingsForm, "multi_brand_discount_percent", settings.multi_brand_discount_percent || 0);
       utils.setFormValue(options.premiumSettingsForm, "multi_brand_min_owned_brands", settings.multi_brand_min_owned_brands || 2);
+      utils.setFormValue(options.premiumSettingsForm, "promo_enabled", Number(settings.promo_enabled || 0));
+      utils.setFormValue(options.premiumSettingsForm, "promo_discount_percent", settings.promo_discount_percent || 0);
+      utils.setFormValue(options.premiumSettingsForm, "promo_label", settings.promo_label || "");
+      utils.setFormValue(options.premiumSettingsForm, "promo_message", settings.promo_message || "");
+      utils.setFormValue(options.premiumSettingsForm, "promo_bonus_text", settings.promo_bonus_text || "");
+      utils.setFormValue(options.premiumSettingsForm, "promo_cta_label", settings.promo_cta_label || "Lihat Premium");
+      utils.setFormValue(options.premiumSettingsForm, "promo_cta_url", settings.promo_cta_url || "/premium/");
+      utils.setFormValue(options.premiumSettingsForm, "promo_starts_at", toDateTimeLocal(settings.promo_starts_at));
+      utils.setFormValue(options.premiumSettingsForm, "promo_ends_at", toDateTimeLocal(settings.promo_ends_at));
     }
 
     function renderNotifications(notifications) {
@@ -223,7 +232,16 @@
           annual_report_enabled: String(form.get("annual_report_enabled") || "1") === "1",
           multi_brand_discount_enabled: String(form.get("multi_brand_discount_enabled") || "0") === "1",
           multi_brand_discount_percent: Number(form.get("multi_brand_discount_percent") || 0),
-          multi_brand_min_owned_brands: Number(form.get("multi_brand_min_owned_brands") || 2)
+          multi_brand_min_owned_brands: Number(form.get("multi_brand_min_owned_brands") || 2),
+          promo_enabled: String(form.get("promo_enabled") || "0") === "1",
+          promo_discount_percent: Number(form.get("promo_discount_percent") || 0),
+          promo_label: String(form.get("promo_label") || ""),
+          promo_message: String(form.get("promo_message") || ""),
+          promo_bonus_text: String(form.get("promo_bonus_text") || ""),
+          promo_cta_label: String(form.get("promo_cta_label") || "Lihat Premium"),
+          promo_cta_url: String(form.get("promo_cta_url") || "/premium/"),
+          promo_starts_at: normalizeDateTimeLocal(form.get("promo_starts_at")),
+          promo_ends_at: normalizeDateTimeLocal(form.get("promo_ends_at"))
         });
         options.setStatus("Pengaturan Premium tersimpan.", false);
         await options.reloadDashboard();
@@ -239,6 +257,22 @@
       submitPaymentMethod: submitPaymentMethod,
       submitPremiumSettings: submitPremiumSettings
     };
+  }
+
+  function toDateTimeLocal(value) {
+    if (!value) return "";
+    var text = String(value);
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(text)) return text.slice(0, 16);
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(text)) return text.replace(" ", "T").slice(0, 16);
+    var date = new Date(text);
+    if (Number.isNaN(date.getTime())) return "";
+    var offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+  }
+
+  function normalizeDateTimeLocal(value) {
+    var text = String(value || "");
+    return text ? text : "";
   }
 
   window.FranchiseDashboardPremium = {

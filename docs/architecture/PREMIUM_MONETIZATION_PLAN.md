@@ -250,6 +250,11 @@ Build SEO clusters:
 Implementation guardrail:
 - Avoid thin duplicate pages. Category/capital/city pages need real filters, useful explanations, and internal links.
 
+Current implementation:
+- [x] Static capital-based directory pages under `/peluang-usaha/modal/` and `/peluang-usaha/modal/[range]`, generated from the D1 franchise snapshot during build.
+- [x] Static category landing pages under `/peluang-usaha/kategori/` and `/peluang-usaha/kategori/[slug]`, generated from the same listing data with useful intro copy and client-side filters.
+- [x] Internal links from directory controls, category cards, detail breadcrumbs, and buyer tools point to the new modal/category pages.
+
 ### Buyer Tools
 
 Tools create repeat usage and better leads:
@@ -262,6 +267,11 @@ Tools create repeat usage and better leads:
 - Checklist download.
 
 These also justify premium because franchisors receive better-qualified leads.
+
+Current implementation:
+- [x] `/bandingkan/` comparison page lets buyers compare 2-4 brands selected from directory/detail cards or from the page picker.
+- [x] `/alat-franchise/` includes a budget matcher and BEP calculator, plus quick links to capital and category directories.
+- [x] Directory and detail pages include "Bandingkan" controls that save selected brands in the browser and link to `/bandingkan/`.
 
 ### Content And Distribution
 
@@ -627,12 +637,14 @@ Implementation note: Premium detail pages now add richer owner-facing value dire
 
 ### Milestone 4: Traffic Growth
 
-- [ ] Build capital-based directory pages.
-- [ ] Build category landing pages with useful copy and filters.
-- [ ] Add comparison feature.
-- [ ] Add buyer tools: budget matcher and BEP calculator.
+- [x] Build capital-based directory pages.
+- [x] Build category landing pages with useful copy and filters.
+- [x] Add comparison feature.
+- [x] Add buyer tools: budget matcher and BEP calculator.
 - [ ] Add weekly content workflow.
 - [x] Add internal analytics report for premium sales proof.
+
+Implementation note: the first traffic-growth surface now ships as static SEO pages for modal/category discovery plus buyer tools for comparison, budget matching, and BEP simulation. These pages use the same D1-backed snapshot as `/peluang-usaha`, so public rebuilds refresh the related directories when listings are added, edited, or removed.
 
 ### Milestone 5: Renewal And Retention
 
@@ -647,7 +659,7 @@ Implementation note: Premium lifecycle settings are managed from `/dashboard` Pr
 ## Open Decisions
 
 - [x] Should premium cover exactly one brand or all brands owned by the same franchisor account? Decision: one premium membership covers one brand/listing.
-- [ ] Should early customers get founder pricing or full Rp 3.000.000/year immediately?
+- [x] Should early customers get founder pricing or full Rp 3.000.000/year immediately? Decision: keep full Rp 3.000.000/year as the base price; temporary event discounts, bonus packages, or campaign ribbons can be configured from dashboard.
 - [x] Should premium activation wait for listing completeness review? Decision: do not block payment/approval yet; show readiness warnings to owners and admin reviewers so incomplete listings can be fixed before or after activation.
 - [ ] Should premium include one editorial article or make it paid add-on?
 - [ ] Which payment gateway should be first after manual transfer?
@@ -679,6 +691,31 @@ Manual setup checklist:
 4. Public `/premium` should explain the price, but exact payable amount should be generated after login/order so unique code works.
 5. Start manual BCA unique-code flow first, then implement gateway webhooks.
 6. Use payment gateway before BCA direct API unless direct BCA integration becomes strategically necessary.
+
+## Event Discount And Bonus Plan
+
+Base Premium price stays Rp 3.000.000/year. Short campaigns can use dashboard-managed promo settings instead of changing the default price.
+
+Configurable campaign fields:
+- Event name, for example "Promo Hari Kemerdekaan".
+- Optional discount percentage.
+- Optional bonus text.
+- Public ribbon message.
+- CTA label and link.
+- Start and end datetime.
+
+Good low-cost bonuses that still feel valuable:
+- Featured category placement for a limited period.
+- One extra brand profile article draft.
+- Proposal cleanup checklist and copy review.
+- Priority readiness review.
+- Extra monthly performance summary during the campaign.
+- Inclusion in one newsletter or roundup when the category fits.
+
+Current implementation:
+- [x] Admin can configure promo/event ribbon settings in `/dashboard` Premium Operations.
+- [x] `/premium-promo` exposes only active public promo data.
+- [x] Public pages that load the shared promo script can show a top ribbon with CTA while the campaign is active.
 
 ## External References Checked
 

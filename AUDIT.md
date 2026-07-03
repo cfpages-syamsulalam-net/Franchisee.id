@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-04 00:10 (Asia/Jakarta)
+Last updated: 2026-07-04 05:20 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -76,8 +76,18 @@ Principle: every blocked action should answer three questions in the UI: what ha
 | Grace downgrade | Added configurable grace-period settings with 3 days default, daily grace emails, downgrade to Free after grace, Premium network publication hiding, audit events, and rebuild queue writes. | Done |
 | Annual reports | Added annual report records and queued report emails using product events/leads for listing views, saves, inquiries, contact clicks, and leads. | Done |
 | Multi-brand discount | Added dashboard-managed discount settings and new order pricing that can discount yearly Premium for owners with multiple brands. Disabled by default. | Done |
+| Event promo ribbon | Added dashboard-managed Premium event settings for temporary discount/bonus/ribbon campaigns, public `/premium-promo`, and a shared top bar script for public pages. Full price remains Rp 3.000.000/year by default. | Done |
 | Stale Sheets workflow | Removed `.github/workflows/generate-pages.yaml` so the old Google Sheets auto-update/commit workflow cannot fight the current D1/Astro publish path. | Done |
 | Automation gap | Bank transaction reading and automatic approval still need a provider/API decision and credential setup before implementation. | Open |
+
+## Traffic Growth Surface - 2026-07-04
+
+| Area | Upgrade | Status |
+| --- | --- | --- |
+| Capital directories | Added static `/peluang-usaha/modal/` and seven modal-range pages generated from D1 snapshot investment data, with SEO metadata, intro copy, filters, and internal directory links. | Done |
+| Category landing pages | Added static `/peluang-usaha/kategori/` and per-category pages generated from D1 snapshot categories, replacing canonical category query links with indexable landing pages. | Done |
+| Comparison | Added `/bandingkan/`, listing/detail compare buttons, localStorage selected ids, and a static comparison table for 2-4 brands. | Done |
+| Buyer tools | Added `/alat-franchise/` with budget matcher, BEP calculator, and quick links into modal/category directories. | Done |
 
 Actionability checklist for future edits:
 - [x] Public save card uses icon-only UI with shared tooltip.
@@ -201,7 +211,7 @@ Current maintained code hotspots by line count, excluding generated legacy HTML 
 | `js/profile-page.js` | 727 after profile module split | Profile client now acts as `/profil` boot/controller facade for auth, data load, tab routing, submit/fetch workflows, media upload, lead status, and payment/inquiry actions. Account, role add-on, franchisee, franchisor/listing/claims, Premium membership, leads, saved-opportunity storage, and shared UI helpers were extracted. | Next extraction: split remaining submit/fetch workflows only if new profile features grow this file again. | Extracted |
 | `functions/profile-data.js` | 92 after read-model split | Profile API facade owns auth/error handling and POST dispatch only. GET response composition, read-model loader callbacks, Zod schemas, shared response utilities, account/role actions, franchisee actions, franchisor/listing/lead actions, recommendation scoring, listing patch construction, and Premium workflows are delegated to helper modules. | Keep as the endpoint router/facade. Add smoke tests before new profile feature batches. | Extracted |
 | `src/lib/franchise-static.ts` | 499 after static helper splits | Astro-side renderer now keeps route-facing snapshot loading, directory/detail composition, SEO/detail enhancements, and template orchestration. Text helpers live in `src/lib/franchise-text.ts`, Premium detail helpers in `src/lib/franchise-premium-detail.ts`, contact rendering/parsing in `src/lib/franchise-contact.ts`, ranking in `src/lib/franchise-ranking.ts`, category route helpers in `src/lib/franchise-category.ts`, and generated assets in `src/lib/franchise-static-assets.ts` / `src/lib/franchise-detail-assets.ts`. | Keep as the public static-renderer facade; extract renderer markup only if future listing/detail features push it back above the long-file threshold. | Extracted |
-| `functions/_premium-ops.js` | 865 | Premium operations helper now owns settings, funnel events, notifications, email queue reads/writes, expiring reads, annual reports, grace downgrade, renewal reminders, discount pricing, and readiness checks. | Split into `_premium-settings.js`, `_premium-notifications.js`, `_premium-lifecycle.js`, and `_premium-readiness.js` after email/lifecycle production behavior is observed. | Pending |
+| `functions/_premium-ops.js` | 990 | Premium operations helper now owns settings, public promo ribbon reads, funnel events, notifications, email queue reads/writes, expiring reads, annual reports, grace downgrade, renewal reminders, discount pricing, and readiness checks. | Split into `_premium-settings.js`, `_premium-notifications.js`, `_premium-lifecycle.js`, and `_premium-readiness.js`; settings/promo extraction is now the first safe split because it has a clear boundary. | Priority |
 | `js/auth-clerk.js` | 826 | High-priority browser auth hotspot. It still owns Clerk config/script loading, session token helpers, `/auth-sync`, OAuth start/callback handling, pending role/next storage, and compatibility facade behavior. Masked diagnostics and UI rendering already live in `js/auth-clerk-debug.js` and `js/auth-clerk-ui.js`. | Continue splitting into behavior-preserving browser modules loaded in order: `js/auth-clerk-core.js` for Clerk boot/token/sync and keep `js/auth-clerk.js` as the compatibility facade until every route is updated. | Debug/UI extracted; core pending |
 | `functions/dashboard-data.js` | 96 after split | Endpoint is now a thin router for auth, action dispatch, response shaping, and imported dashboard modules. | Keep schemas in `_dashboard-schemas.js`, reads in `_dashboard-queries.js`, writes in `_dashboard-actions.js`, and shared helpers in `_dashboard-utils.js`. | Extracted |
 | `scripts/build-d1-franchise-pages.ts` | 675 | Builder mixes D1 fetch, snapshot shaping, file writing, manifest/prune behavior, and remote access fallback. | Split D1 fetch/snapshot writer/manifest pruning into modules after the Astro route bridge is stable. | Pending |

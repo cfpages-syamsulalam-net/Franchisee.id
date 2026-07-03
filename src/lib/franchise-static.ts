@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { z } from "zod";
+import { capitalIndexCopy, capitalLandingCopy, getCapitalRouteEntries, getCapitalSummaries } from "./franchise-capital";
 import { canonicalCategoryHref, categorySlug, getCategoryRouteEntries, getCategorySummaries } from "./franchise-category";
 import { generateContactBlock } from "./franchise-contact";
 import { generateCssPlaceholder, injectDetailAssets, injectDirectoryAssets } from "./franchise-static-assets";
@@ -24,7 +25,7 @@ import {
 } from "./franchise-text";
 import { D1FranchiseRowSchema } from "./shared-schemas";
 export { slugify } from "./franchise-text";
-export { getAlphabeticalRows, getCategoryRouteEntries, getPopularRows, getRecommendedRows };
+export { getAlphabeticalRows, getCapitalRouteEntries, getCategoryRouteEntries, getPopularRows, getRecommendedRows };
 
 const ROOT_DIR = resolve(process.cwd());
 const DETAIL_TEMPLATE_PATH = join(ROOT_DIR, "templates", "detail-franchise-tpl.html");
@@ -42,6 +43,7 @@ export interface DirectoryPageOptions {
   description: string;
   canonicalPath: string;
   rows?: FranchiseStaticRow[];
+  introHtml?: string;
 }
 
 export interface CategoryRouteEntry {
@@ -64,7 +66,7 @@ export function renderListingPage(rows: FranchiseStaticRow[], options?: Director
     .replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)
     .replace(
       '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
-      `${generateDirectoryControls(rows)}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+      `${generateDirectoryIntro(options)}${generateDirectoryControls(rows)}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
     );
   return normalizeGeneratedHtml(injectDirectoryAssets(applyCanonicalLegacyLinks(applyDirectoryMeta(html, options))));
 }
@@ -73,16 +75,76 @@ export function renderCategoryIndexPage(rows: FranchiseStaticRow[]) {
   const template = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
   const summaries = getCategorySummaries(rows);
   const cards = summaries.map((summary, index) => generateCategoryCard(summary, index + 1)).join("");
-  const html = template.replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards);
+  const html = template
+    .replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)
+    .replace(
+      '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
+      `${generateDirectoryIntro({
+        title: "Kategori Franchise",
+        description: "Jelajahi peluang franchise berdasarkan kategori bisnis, mulai dari makanan minuman, pendidikan, jasa, retail, otomotif, hingga kesehatan.",
+        canonicalPath: "/peluang-usaha/kategori/",
+        introHtml: "<p>Pilih kategori bisnis untuk melihat listing yang lebih relevan dengan minat, pengalaman, dan target lokasi Anda.</p>",
+      })}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+    );
   return normalizeGeneratedHtml(
     injectDirectoryAssets(
       applyCanonicalLegacyLinks(applyDirectoryMeta(html, {
         title: "Kategori Franchise",
         description: "Jelajahi peluang franchise berdasarkan kategori bisnis, mulai dari makanan minuman, pendidikan, jasa, retail, otomotif, hingga kesehatan.",
-        canonicalPath: "/peluang-usaha?view=kategori",
+        canonicalPath: "/peluang-usaha/kategori/",
       })),
     ),
   );
+}
+
+export function renderCategoryLandingPage(entry: CategoryRouteEntry, allRows: FranchiseStaticRow[]) {
+  const label = normalizeText(entry.label) || "Bisnis Umum";
+  const introHtml = [
+    `<p>Temukan ${escapeHtml(entry.rows.length)} peluang franchise kategori ${escapeHtml(label)}. Gunakan filter modal, status, dan pencarian brand agar pilihan lebih cepat mengerucut.</p>`,
+    "<p>Halaman ini dibuat dari data direktori utama, sehingga listing baru, edit brand, dan penghapusan akan ikut masuk pada build berikutnya.</p>",
+  ].join("");
+  return renderListingPage(allRows, {
+    title: `Franchise ${label}`,
+    description: `Cari peluang franchise kategori ${label}. Bandingkan modal, BEP, status listing, dan detail brand sebelum menghubungi franchisor.`,
+    canonicalPath: entry.canonicalPath,
+    rows: entry.rows,
+    introHtml,
+  });
+}
+
+export function renderCapitalIndexPage(rows: FranchiseStaticRow[]) {
+  const template = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
+  const cards = getCapitalSummaries(rows).map((summary, index) => generateCapitalCard(summary, index + 1)).join("");
+  const html = template
+    .replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)
+    .replace(
+      '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
+      `${generateDirectoryIntro({
+        title: "Franchise Berdasarkan Modal",
+        description: "Pilih peluang franchise berdasarkan kisaran modal investasi agar pencarian lebih sesuai budget.",
+        canonicalPath: "/peluang-usaha/modal/",
+        introHtml: capitalIndexCopy(rows),
+      })}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+    );
+  return normalizeGeneratedHtml(
+    injectDirectoryAssets(
+      applyCanonicalLegacyLinks(applyDirectoryMeta(html, {
+        title: "Franchise Berdasarkan Modal",
+        description: "Pilih peluang franchise berdasarkan kisaran modal investasi agar pencarian lebih sesuai budget.",
+        canonicalPath: "/peluang-usaha/modal/",
+      })),
+    ),
+  );
+}
+
+export function renderCapitalLandingPage(entry: ReturnType<typeof getCapitalRouteEntries>[number], allRows: FranchiseStaticRow[]) {
+  return renderListingPage(allRows, {
+    title: entry.label,
+    description: entry.description,
+    canonicalPath: entry.canonicalPath,
+    rows: entry.rows,
+    introHtml: capitalLandingCopy(entry),
+  });
 }
 
 export function renderDetailPage(row: FranchiseStaticRow) {
@@ -167,6 +229,7 @@ function generateCard(row: FranchiseStaticRow, index: number) {
             </div>
         </a>
         ${generateSaveOpportunityButton(row, "card")}
+        ${generateCompareButton(row, "card")}
         <div class="uc_content">
             <div class="uc_content_inner">
                 <div class="uc_content-info-wrapper">
@@ -191,6 +254,17 @@ function generateCard(row: FranchiseStaticRow, index: number) {
             </div>
         </div>
     </div>`;
+}
+
+function generateCompareButton(row: FranchiseStaticRow, variant: "card" | "detail" = "detail") {
+  const brandName = normalizeBrandName(row.brand_name);
+  const className = variant === "card" ? "fr-compare-button fr-compare-button--card" : "fr-compare-button fr-compare-button--detail";
+  return `
+    <span class="fr-compare-wrap fr-compare-wrap--${escapeAttr(variant)}">
+      <button class="${className}" type="button" data-compare-franchise="${escapeAttr(row.id)}" data-compare-brand="${escapeAttr(brandName)}" aria-label="Bandingkan ${escapeAttr(brandName)}" data-fr-tooltip="Tambah ke perbandingan">
+        <i class="fas fa-scale-balanced" aria-hidden="true"></i><span>Bandingkan</span>
+      </button>
+    </span>`;
 }
 
 function generateCategoryCard(summary: { label: string; slug: string; count: number }, index: number) {
@@ -224,6 +298,43 @@ function generateCategoryCard(summary: { label: string; slug: string; count: num
             </div>
         </div>
     </div>`;
+}
+
+function generateCapitalCard(summary: { label: string; shortLabel: string; count: number; canonicalPath: string }, index: number) {
+  return `
+    <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item category-directory-card">
+        <a class="uc_post_grid_style_one_image" href="${escapeAttr(summary.canonicalPath)}">
+            <div class="uc_post_image">
+                ${generateCssPlaceholder(summary.shortLabel, "franchise-css-placeholder category-css-placeholder")}
+                <div class="uc_post_image_overlay"></div>
+            </div>
+        </a>
+        <div class="uc_content">
+            <div class="uc_content_inner">
+                <div class="uc_content-info-wrapper">
+                    <div class="uc_post_title">
+                        <a href="${escapeAttr(summary.canonicalPath)}" class="ue_p_title">${escapeHtml(summary.label)}</a>
+                    </div>
+                    <div class="ue-meta-data">
+                        <span class="ue-grid-item-category">
+                            <a href="${escapeAttr(summary.canonicalPath)}">${escapeHtml(summary.count)} franchise</a>
+                        </span>
+                    </div>
+                    <div class="uc_post_text">Lihat peluang franchise dengan kisaran modal ${escapeHtml(summary.shortLabel)}.</div>
+                </div>
+                <div class="uc_post_button">
+                    <a class="uc_more_btn" href="${escapeAttr(summary.canonicalPath)}">
+                        <div class="uc_btn_inner"><div class="uc_btn_txt">Lihat Modal</div></div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+function generateDirectoryIntro(options?: DirectoryPageOptions) {
+  if (!options?.introHtml) return "";
+  return `<section class="franchise-directory-intro" aria-label="Panduan direktori">${options.introHtml}</section>`;
 }
 
 function generateSaveOpportunityButton(row: FranchiseStaticRow, variant: "card" | "detail" = "detail") {
@@ -292,7 +403,10 @@ function generateDirectoryControls(rows: FranchiseStaticRow[]) {
         <a href="/peluang-usaha?sort=rekomendasi">Rekomendasi</a>
         <a href="/peluang-usaha?sort=populer">Populer</a>
         <a href="/peluang-usaha?sort=abjad">Abjad</a>
-        <a href="/peluang-usaha?view=kategori">Kategori</a>
+        <a href="/peluang-usaha/kategori/">Kategori</a>
+        <a href="/peluang-usaha/modal/">Modal</a>
+        <a href="/alat-franchise/">Budget & BEP</a>
+        <a href="/bandingkan">Bandingkan</a>
       </div>
       <p class="franchise-directory-result-count" aria-live="polite"></p>
     </form>`;
@@ -418,6 +532,7 @@ function generateTabs(row: FranchiseStaticRow, description: string, isUnclaimed:
   return `
             <div class="franchise-detail-actions">
                 ${generateSaveOpportunityButton(row)}
+                ${generateCompareButton(row)}
             </div>
             ${generatePremiumLeadPanel(row)}
             <div class="e-n-tabs" data-widget-number="26009074">
@@ -470,8 +585,8 @@ function applyDetailEnhancements(
       /<script type="application\/ld\+json" class="rank-math-schema">.*?<\/script><!-- \/Rank Math WordPress SEO plugin -->/,
       `${generateBreadcrumbJsonLd(row)}<!-- /Rank Math WordPress SEO plugin -->`,
     )
-    .replace(/href="\/category\/([^"#?]+)"/g, 'href="/peluang-usaha?kategori=$1"')
-    .replace(/href="\/kategori\/([^"#?]+)"/g, 'href="/peluang-usaha?kategori=$1"');
+    .replace(/href="\/category\/([^"#?]+)"/g, 'href="/peluang-usaha/kategori/$1"')
+    .replace(/href="\/kategori\/([^"#?]+)"/g, 'href="/peluang-usaha/kategori/$1"');
   enhanced = applyCanonicalLegacyLinks(enhanced);
 
   if (!assets.heroImage) {

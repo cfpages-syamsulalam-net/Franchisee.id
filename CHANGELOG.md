@@ -9,13 +9,33 @@ Format:
 - `src/lib/franchise-contact.ts`: Added the extracted generated detail contact renderer and phone parsing helpers.
 - `src/lib/franchise-ranking.ts`: Added the extracted deterministic directory ranking helpers.
 - `src/lib/franchise-category.ts`: Added the extracted category route/summary helpers.
+- `src/lib/franchise-capital.ts`: Added capital-range route helpers for static modal-based directory pages.
+- `src/lib/franchise-buyer-tools.ts`: Added static comparison and buyer-tool page renderers.
+- `src/pages/peluang-usaha/kategori/index.astro` and `src/pages/peluang-usaha/kategori/[slug].astro`: Added static category directory pages.
+- `src/pages/peluang-usaha/modal/index.astro` and `src/pages/peluang-usaha/modal/[slug].astro`: Added static capital-range directory pages.
+- `src/pages/bandingkan/index.astro`: Added the static franchise comparison page.
+- `src/pages/alat-franchise/index.astro`: Added the static buyer tools page with budget matcher and BEP calculator.
+- `css/franchise-buyer-tools.css`: Added shared styles for comparison, buyer tools, and public promo ribbon pages.
+- `js/franchise-compare.js`: Added browser comparison behavior backed by selected listing ids.
+- `js/franchise-buyer-tools.js`: Added browser budget matcher and BEP calculator behavior.
+- `js/site-promo-bar.js`: Added shared public Premium promo ribbon loader.
+- `functions/premium-promo.js`: Added public, date-gated Premium promo settings endpoint.
+- `migrations/0015_premium_promo_settings.sql`: Added default Premium promo/event ribbon settings.
+- `.context/session-20260704-0520.md`: Added this session snapshot for the traffic-growth and promo implementation.
 - `scripts/migrate-blogspot-proposals-to-r2.mjs`: Added a resumable operational migration script for legacy Blogspot/Blogger proposal images into R2 with D1 asset metadata updates.
 - `migrations/0014_payment_method_qris_image.sql`: Added optional QRIS image fields for admin-managed Premium payment instructions.
 - `functions/payment-method-upload.js`: Added admin-only QRIS image upload to R2 for dashboard payment settings.
 - `.context/session-20260704-0010.md`: Added this session snapshot.
 
 ### Changed
-- `src/lib/franchise-static.ts`: Reduced the static renderer facade to 499 lines by delegating contact, ranking, and category behavior to focused modules while preserving route-facing exports.
+- `src/lib/franchise-static.ts`: Kept the static renderer modular through contact/ranking/category/capital helpers while adding traffic-growth renderers and compare controls.
+- `src/lib/franchise-static.ts`: Added static category/modal landing renderers, directory intro blocks, internal links to category/modal/tools/compare pages, and compare controls on listing/detail pages.
+- `src/lib/franchise-static-assets.ts` and `src/lib/franchise-detail-assets.ts`: Added compare button/floating-link behavior and public promo bar loading to generated listing/detail pages.
+- `src/lib/franchise-category.ts` and `src/lib/franchise-text.ts`: Changed generated category links from query-param category filters to static `/peluang-usaha/kategori/[slug]` pages.
+- `public/_redirects`: Changed legacy category redirects to point at static category landing pages.
+- `functions/_premium-ops.js`, `functions/_dashboard-schemas.js`, `src/pages/dashboard/index.astro`, and `js/dashboard-premium-operations.js`: Added dashboard-managed Premium event discount/bonus/ribbon settings.
+- `src/pages/premium/index.astro`: Loads the shared public promo ribbon script.
+- Remote D1 `franchise_db`: Applied and sequentially verified `0015_premium_promo_settings.sql`.
 - `package.json`: Added `pnpm run migrate:proposal-r2`.
 - `src/pages/dashboard/index.astro`, `js/dashboard-premium-operations.js`, and `css/dashboard.css`: Added QRIS upload, preview, and persistence to the dashboard Premium payment method form.
 - `js/profile-premium.js` and `css/profile.css`: Added QRIS display inside the franchisor Premium payment instructions when an admin QRIS image is configured.
@@ -26,7 +46,7 @@ Format:
 - Remote D1 `franchise_db`: Applied generated migration SQL that upserts proposal `franchise_assets`, rewrites migrated `franchises.proposal_url` values to R2 public URLs, and queues static rebuild requests.
 - Remote D1 `franchise_db`: Applied `0014_payment_method_qris_image.sql` and verified the `payment_methods.qris_image_url` column.
 - `.gitignore`: Ignored `.context/proposal-r2-migration/` so large generated migration work files do not enter git.
-- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, and `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: Updated refactor status, proposal migration status, payment/QRIS status, media plan, and remaining PDF-generation recommendation.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, and `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: Updated refactor status, proposal migration status, payment/QRIS status, media plan, traffic-growth pages/tools status, promo event decision, and remaining recommendations.
 
 ### Removed
 - `.context/proposal-r2-migration/files/`: Removed the ignored local proposal image download cache after confirming the images were uploaded to R2. This freed about 79.1 MB of image files.

@@ -372,6 +372,45 @@ export const prerender = true;
                       <span>Minimal brand</span>
                       <input name="multi_brand_min_owned_brands" type="number" min="2" max="50" step="1" placeholder="2" />
                     </label>
+                    <label>
+                      <span>Promo ribbon</span>
+                      <select name="promo_enabled">
+                        <option value="0">Nonaktif</option>
+                        <option value="1">Aktif</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Diskon event %</span>
+                      <input name="promo_discount_percent" type="number" min="0" max="90" step="1" placeholder="0" />
+                    </label>
+                    <label>
+                      <span>Nama event</span>
+                      <input name="promo_label" type="text" placeholder="Promo Hari Kemerdekaan" />
+                    </label>
+                    <label>
+                      <span>Bonus</span>
+                      <input name="promo_bonus_text" type="text" placeholder="Contoh: profil artikel gratis" />
+                    </label>
+                    <label class="is-wide">
+                      <span>Pesan ribbon</span>
+                      <input name="promo_message" type="text" placeholder="Premium Network diskon spesial bulan ini." />
+                    </label>
+                    <label>
+                      <span>CTA ribbon</span>
+                      <input name="promo_cta_label" type="text" placeholder="Lihat Premium" />
+                    </label>
+                    <label>
+                      <span>Link CTA</span>
+                      <input name="promo_cta_url" type="text" placeholder="/premium/" />
+                    </label>
+                    <label>
+                      <span>Mulai</span>
+                      <input name="promo_starts_at" type="datetime-local" />
+                    </label>
+                    <label>
+                      <span>Berakhir</span>
+                      <input name="promo_ends_at" type="datetime-local" />
+                    </label>
                     <button class="dash-icon-button dash-action-button is-primary" type="submit" aria-label="Simpan pengaturan Premium" data-fr-tooltip="Simpan pengaturan Premium">
                       <i class="fas fa-sliders-h" aria-hidden="true"></i>
                     </button>
