@@ -461,7 +461,7 @@ async function downloadProposalPdf(button) {
   button.disabled = true;
   var original = button.innerHTML;
   button.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Membuat PDF</span>';
-  setProposalStatus(status, "Menyiapkan PDF proposal...");
+  setProposalStatus(status, "Menyiapkan PDF proposal di browser...");
   try {
     var pages = [];
     for (var index = 0; index < images.length; index += 1) {
@@ -507,7 +507,7 @@ function imageToJpegPage(url) {
         context.drawImage(image, (pageWidth - drawWidth) / 2, (pageHeight - drawHeight) / 2, drawWidth, drawHeight);
         resolve({ dataUrl: canvas.toDataURL("image/jpeg", 0.92), width: pageWidth, height: pageHeight });
       } catch (_error) {
-        reject(new Error("Browser tidak bisa membuat PDF dari gambar ini. Buka gambar proposal atau coba lagi setelah gambar dipindahkan ke media Franchisee.id."));
+        reject(new Error("Browser belum bisa membuat PDF dari gambar ini. Buka gambar proposal atau coba ulangi download."));
       }
     };
     image.onerror = function () {

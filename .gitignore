@@ -8,3 +8,4 @@ dist/
 .context/.wrangler/
 .context/d1-import-franchise-data.sql
 .context/d1-franchise-page-query.sql
+.context/proposal-r2-migration/

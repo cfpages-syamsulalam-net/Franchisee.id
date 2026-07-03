@@ -292,7 +292,8 @@ body {
 }
 
 .dash-payment-form input,
-.dash-payment-form textarea {
+.dash-payment-form textarea,
+.dash-payment-form select {
   border: 1px solid #d7d7d7;
   border-radius: 4px;
   color: #111111;
@@ -301,6 +302,35 @@ body {
   min-height: 38px;
   padding: 8px 10px;
   width: 100%;
+}
+
+.dash-payment-qris-preview {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  display: grid;
+  gap: 8px 12px;
+  grid-template-columns: 72px 1fr;
+  padding: 10px;
+}
+
+.dash-payment-qris-preview span {
+  color: var(--dash-muted);
+  font-size: 12px;
+  font-weight: 800;
+  grid-column: 1 / -1;
+}
+
+.dash-payment-qris-preview img {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  height: 72px;
+  object-fit: contain;
+  width: 72px;
+}
+
+.dash-payment-qris-preview .dash-link {
+  align-self: center;
 }
 .dash-field-editor {
   display: grid;

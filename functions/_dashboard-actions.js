@@ -305,30 +305,39 @@ export async function handleUpdatePaymentMethod(db, auth, data) {
     db
       .prepare(
         `INSERT INTO payment_methods (
-          id, code, method_type, label, account_name, account_number, provider, instructions, sort_order, is_active
-        ) VALUES (?, ?, 'bank_transfer', ?, ?, ?, ?, ?, 10, ?)
+          id, code, method_type, label, account_name, account_number, provider, instructions,
+          sort_order, is_active, qris_image_url, qris_image_alt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 10, ?, ?, ?)
         ON CONFLICT(code) DO UPDATE SET
+          method_type = excluded.method_type,
           label = excluded.label,
           account_name = excluded.account_name,
           account_number = excluded.account_number,
           provider = excluded.provider,
           instructions = excluded.instructions,
+          qris_image_url = excluded.qris_image_url,
+          qris_image_alt = excluded.qris_image_alt,
           is_active = excluded.is_active,
           updated_at = CURRENT_TIMESTAMP`,
       )
       .bind(
         `payment_method_${code.replace(/[^a-zA-Z0-9_-]/g, "") || "manual_bca"}`,
         code,
+        data.method_type || "bank_transfer",
         data.label,
         data.account_name,
         data.account_number,
         data.provider,
         data.instructions || "",
         data.is_active ? 1 : 0,
+        data.qris_image_url || null,
+        data.qris_image_alt || null,
       ),
     auditStatement(db, "dashboard.payment_method.update", "payment_methods", code, {
       label: data.label,
       provider: data.provider,
+      method_type: data.method_type || "bank_transfer",
+      has_qris_image: Boolean(data.qris_image_url),
       is_active: data.is_active,
     }, auth.id),
   ]);

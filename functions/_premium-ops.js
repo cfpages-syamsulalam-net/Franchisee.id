@@ -46,7 +46,8 @@ export async function loadActivePaymentMethod(db, code = "manual_bca") {
   try {
     const row = await db
       .prepare(
-        `SELECT id, code, method_type, label, account_name, account_number, provider, instructions, sort_order, is_active
+        `SELECT id, code, method_type, label, account_name, account_number, provider, instructions,
+                sort_order, is_active, qris_image_url, qris_image_alt
          FROM payment_methods
          WHERE code = ? AND is_active = 1
          LIMIT 1`,
@@ -63,7 +64,8 @@ export async function loadPaymentMethods(db) {
   try {
     const result = await db
       .prepare(
-        `SELECT id, code, method_type, label, account_name, account_number, provider, instructions, sort_order, is_active, updated_at
+        `SELECT id, code, method_type, label, account_name, account_number, provider, instructions,
+                sort_order, is_active, updated_at, qris_image_url, qris_image_alt
          FROM payment_methods
          ORDER BY is_active DESC, sort_order ASC, label ASC`,
       )
@@ -84,6 +86,8 @@ export function fallbackPaymentMethod() {
     account_number: PREMIUM_PAYMENT.accountNumber,
     provider: PREMIUM_PAYMENT.bankName,
     instructions: PREMIUM_PAYMENT.instructions,
+    qris_image_url: null,
+    qris_image_alt: null,
     sort_order: 10,
     is_active: 1,
   };

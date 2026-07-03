@@ -37,11 +37,24 @@
     function renderPaymentMethod(methods) {
       var method = methods.find(function (item) { return item.code === "manual_bca"; }) || methods[0];
       if (!options.paymentMethodForm || !method) return;
+      utils.setFormValue(options.paymentMethodForm, "method_type", method.method_type || "bank_transfer");
       utils.setFormValue(options.paymentMethodForm, "label", method.label || "");
       utils.setFormValue(options.paymentMethodForm, "provider", method.provider || "");
       utils.setFormValue(options.paymentMethodForm, "account_name", method.account_name || "");
       utils.setFormValue(options.paymentMethodForm, "account_number", method.account_number || "");
       utils.setFormValue(options.paymentMethodForm, "instructions", method.instructions || "");
+      utils.setFormValue(options.paymentMethodForm, "qris_image_url", method.qris_image_url || "");
+      utils.setFormValue(options.paymentMethodForm, "qris_image_alt", method.qris_image_alt || "");
+      renderQrisPreview(method.qris_image_url || "", method.qris_image_alt || "");
+    }
+
+    function renderQrisPreview(url, label) {
+      var preview = options.paymentMethodForm && options.paymentMethodForm.querySelector("[data-qris-preview]");
+      if (!preview) return;
+      preview.hidden = !url;
+      preview.innerHTML = url
+        ? '<span>QRIS saat ini</span><img src="' + utils.escapeAttr(url) + '" alt="' + utils.escapeAttr(label || "QRIS pembayaran Premium") + '" loading="lazy"><a class="dash-link" href="' + utils.escapeAttr(url) + '" target="_blank" rel="noopener">Buka gambar</a>'
+        : "";
     }
 
     function renderSettings(settings) {
@@ -147,14 +160,23 @@
       if (button) button.disabled = true;
       try {
         var form = new FormData(options.paymentMethodForm);
+        var qrisUrl = String(form.get("qris_image_url") || "");
+        var qrisFile = form.get("qris_image");
+        if (qrisFile && qrisFile.name) {
+          options.setStatus("Mengunggah QRIS...", false);
+          qrisUrl = await uploadQrisImage(form, qrisFile);
+        }
         await options.postDashboardAction({
           action: "update_payment_method",
           code: String(form.get("code") || "manual_bca"),
+          method_type: String(form.get("method_type") || "bank_transfer"),
           label: String(form.get("label") || ""),
           provider: String(form.get("provider") || ""),
           account_name: String(form.get("account_name") || ""),
           account_number: String(form.get("account_number") || ""),
           instructions: String(form.get("instructions") || ""),
+          qris_image_url: qrisUrl,
+          qris_image_alt: String(form.get("qris_image_alt") || ""),
           is_active: true
         });
         options.setStatus("Metode pembayaran tersimpan.", false);
@@ -164,6 +186,24 @@
       } finally {
         if (button) button.disabled = false;
       }
+    }
+
+    async function uploadQrisImage(form, file) {
+      if (!window.FranchiseAuth || typeof window.FranchiseAuth.getAuthHeaders !== "function") {
+        throw new Error("Sesi admin belum siap untuk upload QRIS.");
+      }
+      var uploadForm = new FormData();
+      uploadForm.set("code", String(form.get("code") || "manual_bca"));
+      uploadForm.set("qris_image", file);
+      var headers = await window.FranchiseAuth.getAuthHeaders();
+      var response = await fetch("/payment-method-upload", {
+        method: "POST",
+        headers: headers,
+        body: uploadForm
+      });
+      var result = await response.json().catch(function () { return {}; });
+      if (!response.ok || !result.success) throw new Error(result.message || "QRIS belum bisa diunggah.");
+      return result.qris_image_url || "";
     }
 
     async function submitPremiumSettings(event) {

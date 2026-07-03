@@ -131,6 +131,15 @@
             <div><dt>Kode unik</dt><dd>${escapeHtml(payment.unique_code || order.unique_code || "-")}</dd></div>
           </dl>
           <p class="fr-profile-muted">Transfer sesuai nominal agar pembayaran lebih mudah dicocokkan.</p>
+          ${payment.qris_image_url ? `
+            <div class="fr-profile-qris-box">
+              <img src="${attr(payment.qris_image_url)}" alt="${attr(payment.qris_image_alt || "QRIS pembayaran Premium")}" loading="lazy">
+              <div>
+                <strong>Bayar via QRIS</strong>
+                <span>Scan QRIS ini, lalu masukkan nominal yang sama persis.</span>
+              </div>
+            </div>
+          ` : ""}
           ${order.proof_url ? `<p class="fr-profile-muted"><a class="fr-profile-text-link" href="${attr(order.proof_url)}" target="_blank" rel="noopener">Bukti transfer sudah diunggah</a></p>` : ""}
         </div>
         ${pendingConfirmation ? `<div class="fr-profile-notice"><i class="fas fa-clock" aria-hidden="true"></i><div>Konfirmasi sudah masuk dan sedang dicek.</div></div>` : premiumConfirmationForm(order)}

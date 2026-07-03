@@ -86,6 +86,8 @@ export function paymentInstructions(order, method = null) {
     account_name: selected.account_name || PREMIUM_PAYMENT.accountName,
     account_number: selected.account_number || PREMIUM_PAYMENT.accountNumber,
     instructions: selected.instructions || PREMIUM_PAYMENT.instructions,
+    qris_image_url: selected.qris_image_url || null,
+    qris_image_alt: selected.qris_image_alt || null,
     base_amount: Number(order.base_amount || PREMIUM_BASE_AMOUNT),
     discount_amount: Number(order.discount_amount || 0),
     discount_reason: order.discount_reason || null,

@@ -65,11 +65,14 @@ const ReviewPremiumPaymentSchema = z.object({
 const UpdatePaymentMethodSchema = z.object({
   action: z.literal("update_payment_method"),
   code: z.string().trim().min(2).max(80).default("manual_bca"),
+  method_type: z.enum(["bank_transfer", "qris", "ewallet", "gateway", "other"]).optional().default("bank_transfer"),
   label: z.string().trim().min(2).max(120),
   provider: z.string().trim().min(2).max(80),
   account_name: z.string().trim().min(2).max(160),
   account_number: z.string().trim().min(2).max(80),
   instructions: z.string().trim().max(600).optional().default(""),
+  qris_image_url: z.string().trim().url().max(500).optional().or(z.literal("")).default(""),
+  qris_image_alt: z.string().trim().max(160).optional().default(""),
   is_active: z.boolean().optional().default(true),
 });
 

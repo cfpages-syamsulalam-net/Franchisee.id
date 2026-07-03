@@ -4,6 +4,33 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-04 00:10 (Asia/Jakarta)
+### Added
+- `src/lib/franchise-contact.ts`: Added the extracted generated detail contact renderer and phone parsing helpers.
+- `src/lib/franchise-ranking.ts`: Added the extracted deterministic directory ranking helpers.
+- `src/lib/franchise-category.ts`: Added the extracted category route/summary helpers.
+- `scripts/migrate-blogspot-proposals-to-r2.mjs`: Added a resumable operational migration script for legacy Blogspot/Blogger proposal images into R2 with D1 asset metadata updates.
+- `migrations/0014_payment_method_qris_image.sql`: Added optional QRIS image fields for admin-managed Premium payment instructions.
+- `functions/payment-method-upload.js`: Added admin-only QRIS image upload to R2 for dashboard payment settings.
+- `.context/session-20260704-0010.md`: Added this session snapshot.
+
+### Changed
+- `src/lib/franchise-static.ts`: Reduced the static renderer facade to 499 lines by delegating contact, ranking, and category behavior to focused modules while preserving route-facing exports.
+- `package.json`: Added `pnpm run migrate:proposal-r2`.
+- `src/pages/dashboard/index.astro`, `js/dashboard-premium-operations.js`, and `css/dashboard.css`: Added QRIS upload, preview, and persistence to the dashboard Premium payment method form.
+- `js/profile-premium.js` and `css/profile.css`: Added QRIS display inside the franchisor Premium payment instructions when an admin QRIS image is configured.
+- `functions/_dashboard-schemas.js`, `functions/_dashboard-actions.js`, `functions/_premium-ops.js`, and `functions/_premium.js`: Added QRIS payment method fields through validation, persistence, reads, and owner-facing payment instructions.
+- `src/lib/franchise-detail-assets.ts`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: Clarified that proposal PDF downloads are generated client-side as local browser blobs from R2 images and are not stored as duplicate PDF files.
+- `json/d1-franchise-static-data.json`: Refreshed from remote D1 after migrating 491 proposal images for 34 franchises to first-party `assets.franchisee.id` URLs.
+- `json/d1-generated-pages-manifest.json`: Refreshed during build validation.
+- Remote D1 `franchise_db`: Applied generated migration SQL that upserts proposal `franchise_assets`, rewrites migrated `franchises.proposal_url` values to R2 public URLs, and queues static rebuild requests.
+- Remote D1 `franchise_db`: Applied `0014_payment_method_qris_image.sql` and verified the `payment_methods.qris_image_url` column.
+- `.gitignore`: Ignored `.context/proposal-r2-migration/` so large generated migration work files do not enter git.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, and `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: Updated refactor status, proposal migration status, payment/QRIS status, media plan, and remaining PDF-generation recommendation.
+
+### Removed
+- `.context/proposal-r2-migration/files/`: Removed the ignored local proposal image download cache after confirming the images were uploaded to R2. This freed about 79.1 MB of image files.
+
 ## 2026-07-03 20:36 (Asia/Jakarta)
 ### Added
 - `src/lib/franchise-premium-detail.ts`: Added Premium detail-page rendering helpers for the lead CTA panel, Galeri/Proposal/FAQ tabs, legacy proposal/media URL parsing, and proposal image metadata.

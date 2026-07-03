@@ -295,9 +295,19 @@ export const prerender = true;
                   </ul>
                   <form class="dash-payment-form" data-payment-method-form>
                     <input type="hidden" name="code" value="manual_bca" />
+                    <input type="hidden" name="qris_image_url" />
                     <label>
                       <span>Label</span>
                       <input name="label" type="text" placeholder="Transfer BCA" />
+                    </label>
+                    <label>
+                      <span>Tipe</span>
+                      <select name="method_type">
+                        <option value="bank_transfer">Bank transfer</option>
+                        <option value="qris">Bank + QRIS</option>
+                        <option value="ewallet">E-wallet</option>
+                        <option value="other">Lainnya</option>
+                      </select>
                     </label>
                     <label>
                       <span>Bank/provider</span>
@@ -311,6 +321,15 @@ export const prerender = true;
                       <span>Nomor</span>
                       <input name="account_number" type="text" placeholder="Nomor rekening" />
                     </label>
+                    <label>
+                      <span>Upload QRIS</span>
+                      <input name="qris_image" type="file" accept="image/jpeg,image/png,image/webp" />
+                    </label>
+                    <label>
+                      <span>Label QRIS</span>
+                      <input name="qris_image_alt" type="text" placeholder="QRIS pembayaran Premium" />
+                    </label>
+                    <div class="dash-payment-qris-preview is-wide" data-qris-preview hidden></div>
                     <label class="is-wide">
                       <span>Instruksi</span>
                       <textarea name="instructions" rows="2" placeholder="Instruksi singkat untuk pembayar"></textarea>

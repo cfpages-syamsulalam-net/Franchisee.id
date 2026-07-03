@@ -1,6 +1,6 @@
 # Premium Monetization Plan
 
-Last updated: 2026-07-03 20:28 (Asia/Jakarta)
+Last updated: 2026-07-04 00:10 (Asia/Jakarta)
 
 This is the working plan and progress tracker for monetizing the Franchisee.id network while keeping the public franchise directory free.
 
@@ -81,7 +81,14 @@ Implemented public listing surfaces:
 - [x] Direct PDF proposal assets are shown as a clear "Buka PDF asli" link.
 
 Implementation note:
-- Browser-side PDF generation depends on the source image allowing canvas use. Legacy Blogspot images may work, but the more reliable long-term path is moving proposal images into the owned media bucket and generating/storing a first-party PDF.
+- Legacy Blogspot/Blogger proposal images have been moved into the owned R2 media bucket for the migrated rows, so proposal display/download now reads first-party `assets.franchisee.id` image URLs after the static snapshot is refreshed. Current decision: keep PDF generation client-side from those first-party images so we do not store duplicate PDF files in R2. Revisit stored PDFs only if production usage shows mobile performance or sharing problems.
+
+Client-side PDF method:
+- Proposal images are stored once in R2 as page images.
+- The detail page embeds those image URLs in the Proposal tab button metadata.
+- When a visitor clicks Download PDF, browser JavaScript loads each image, draws it onto an A4-sized canvas, converts each canvas page to JPEG data, builds a PDF Blob in memory, and triggers a normal browser download.
+- The generated PDF exists only on the visitor's device. It is not uploaded to R2 and does not create a second stored file.
+- This saves storage while keeping the user-facing download behavior. If a very large proposal causes slow mobile downloads later, the fallback decision can be revisited.
 
 ### 4. Trust And Verification
 
@@ -170,8 +177,10 @@ Current implementation:
 - [x] Owner profile already supports logo, cover, and proposal upload.
 - [x] Public detail build now includes `gallery_urls`, `video_url`, and `proposal_url` in the D1 snapshot query.
 - [x] Premium Galeri tab displays cover/logo/gallery images and a video link when available.
-- [ ] Add first-party proposal image ingestion from legacy Blogspot assets into the owned media bucket.
-- [ ] Add server-side or build-time PDF generation for proposal images so PDF download does not depend on browser canvas/CORS behavior.
+- [x] Add first-party proposal image ingestion from legacy Blogspot assets into the owned media bucket.
+- [x] Keep proposal PDF download client-side from first-party R2 images to avoid duplicate PDF storage.
+
+Migration note: on 2026-07-04, `scripts/migrate-blogspot-proposals-to-r2.mjs` migrated 491 legacy proposal images for 34 franchises into R2, wrote `franchise_assets` rows with the original source URLs, replaced `franchises.proposal_url` with first-party public image arrays, and queued static rebuild requests.
 
 ### 9. Claim And Edit Priority
 
@@ -524,7 +533,7 @@ Admin actions:
 - Cancel subscription.
 - Regenerate unique code.
 - Add/edit payment methods shown on `/premium`.
-- Add QRIS image/payment instructions later.
+- Add QRIS image/payment instructions.
 
 Staff actions:
 - View pending confirmations.
@@ -587,7 +596,7 @@ Do not sell with unverified numbers. Show real metrics once collected.
 
 Implementation note: the first production-ready version is a manual unique-code transfer flow. A franchisor creates an order from `/profil/?tab=membership`, transfers the generated amount, submits confirmation, and an admin approves/rejects it in `/dashboard`. Approval activates one brand/listing for one year, marks it premium, creates missing publication rows for Franchisee.id, Franchise.id, Franchisor.id, and Waralaba.id, publishes them, records audit events, and queues public rebuilds.
 
-Operations note: payment instructions now read from admin-managed `payment_methods` with a BCA fallback, Premium funnel events track `/premium` CTA views/clicks plus profile/dashboard payment milestones, owner/admin Premium notifications are persisted, proof-of-payment files can be uploaded to R2 and reviewed from dashboard, and Premium emails are queued for delivery through the protected email worker once provider secrets are configured.
+Operations note: payment instructions now read from admin-managed `payment_methods` with a BCA fallback, optional QRIS image upload is available from `/dashboard`, Premium funnel events track `/premium` CTA views/clicks plus profile/dashboard payment milestones, owner/admin Premium notifications are persisted, proof-of-payment files can be uploaded to R2 and reviewed from dashboard, and Premium emails are queued for delivery through the protected email worker once provider secrets are configured.
 
 ### Milestone 2: Premium Listing Value
 
@@ -599,7 +608,7 @@ Operations note: payment instructions now read from admin-managed `payment_metho
 - [x] Network publication status shown to owner.
 - [x] Premium readiness checklist shown to owner and admin reviewers.
 
-Implementation note: Premium detail pages now add richer owner-facing value directly on the listing: a highlighted inquiry/contact block, dynamic Galeri/Proposal/FAQ tabs, proposal image rendering from imported legacy media URLs, and an in-browser PDF download action on the Proposal tab. `/profil` now includes owner analytics for views, saves, inquiries, contact clicks, and conversion rate. The current PDF implementation is a practical first pass; legacy third-party image hosts can still block browser PDF creation, so first-party proposal ingestion and server/build-time PDF generation remain the durable upgrade path.
+Implementation note: Premium detail pages now add richer owner-facing value directly on the listing: a highlighted inquiry/contact block, dynamic Galeri/Proposal/FAQ tabs, proposal image rendering from first-party R2 proposal URLs where legacy assets have been migrated, and an in-browser PDF download action on the Proposal tab. `/profil` now includes owner analytics for views, saves, inquiries, contact clicks, and conversion rate. Since proposal images are now first-party, the browser PDF path is the preferred storage-light approach for now.
 
 ### Milestone 3: Payment Automation
 
@@ -610,6 +619,7 @@ Implementation note: Premium detail pages now add richer owner-facing value dire
 - [ ] Auto-activate premium after paid webhook.
 - [ ] Keep manual transfer as fallback.
 - [x] Store editable manual payment method instructions.
+- [x] Upload QRIS image for manual payment instructions.
 - [x] Accept proof-of-payment attachment for manual review.
 - [x] Notify owner/admin about manual payment status.
 - [x] Track manual premium funnel events in dashboard.

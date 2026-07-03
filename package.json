@@ -15,6 +15,7 @@
     "build:astro": "pnpm run astro:sync && astro build && pnpm run copy:legacy-static",
     "copy:legacy-static": "node scripts/copy-legacy-static.mjs",
     "publish:d1:poll": "node scripts/d1-static-publish-poller.mjs",
+    "migrate:proposal-r2": "node scripts/migrate-blogspot-proposals-to-r2.mjs",
     "dev:astro": "pnpm run astro:sync && astro dev --host 127.0.0.1",
     "preview:astro": "astro preview --host 127.0.0.1"
   },

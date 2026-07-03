@@ -400,6 +400,34 @@
   margin: 0;
 }
 
+.fr-profile-qris-box {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(17, 24, 39, 0.1);
+  display: flex;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.fr-profile-qris-box img {
+  background: #ffffff;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  height: 116px;
+  object-fit: contain;
+  width: 116px;
+}
+
+.fr-profile-qris-box strong,
+.fr-profile-qris-box span {
+  display: block;
+}
+
+.fr-profile-qris-box span {
+  color: #667085;
+  font-size: 14px;
+}
+
 .fr-profile-field label {
   align-items: center;
   color: #374151;

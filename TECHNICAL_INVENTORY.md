@@ -1,5 +1,7 @@
 # Technical Inventory: Franchise.id Codebase
 
+Last updated: 2026-07-04 00:10 (Asia/Jakarta)
+
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
 ## Migration Direction
@@ -315,6 +317,16 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `evaluateGuardrails(state)`: Enforces daily publish limit and minimum interval.
 - D1 access: uses the Cloudflare D1 HTTP API with `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_D1_DATABASE_ID`.
 
+### File: `scripts/migrate-blogspot-proposals-to-r2.mjs`
+*Resumable operational migration for legacy image-based franchise proposals.*
+- `extractProposalUrls(value)`: Parses JSON arrays, raw URL lists, HTML `src` attributes, and legacy Blogspot/Blogger/googleusercontent values from `proposal_url`.
+- `buildAssetRecords(rows, options)`: Preserves each image-to-franchise mapping with `franchise_id`, slug, brand name, source URL, deterministic R2 key, display order, asset id, and public URL.
+- `downloadAssets(records, options)`: Downloads proposal pages into `.context/proposal-r2-migration/files` so interrupted runs can resume.
+- `uploadAssets(records, options)`: Uploads objects sequentially through `npx cfman wrangler --account franchise-network r2 object put --remote` and can skip existing public objects.
+- `buildSql(records, options)`: Generates idempotent SQL that upserts `franchise_assets`, rewrites `franchises.proposal_url` to first-party R2 public URLs per brand, and queues `site_rebuild_requests`.
+- `applySqlRemote(options)`: Applies generated SQL to remote D1 in chunks to avoid D1 reset/time-limit failures.
+- Command: `pnpm run migrate:proposal-r2 -- --download --upload-r2 --write-sql --apply-remote`.
+
 ### File: `scripts/copy-legacy-static.mjs`
 *Post-Astro legacy static export copier for Cloudflare Pages output.*
 - Copies root legacy HTML/XML/XSL files and public legacy directories into `dist`.
@@ -357,19 +369,28 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Directory cards link to franchise information pages with a neutral `Info Franchise` CTA; unclaimed-specific claim CTAs remain on detail pages.
 - `renderCategoryIndexPage(rows)`: Legacy helper that renders category cards, but canonical category browsing is now `/peluang-usaha?view=kategori` or `/peluang-usaha?kategori=[slug]`.
 - `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including dynamic Premium Galeri/Proposal/FAQ tabs when the row has premium/media/proposal data.
-- Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`; Premium detail CTA/tab rendering is delegated to `src/lib/franchise-premium-detail.ts`.
+- Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`; Premium detail CTA/tab rendering is delegated to `src/lib/franchise-premium-detail.ts`; contact parsing/rendering is delegated to `src/lib/franchise-contact.ts`; directory ranking is delegated to `src/lib/franchise-ranking.ts`; category route helpers are delegated to `src/lib/franchise-category.ts`.
+- Remaining local helper functions focus on template composition: JSON-LD serialization, investment summary rendering, dynamic tab assembly, cards, breadcrumbs, disclaimers, sticky claim CTA, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
+
+### File: `src/lib/franchise-contact.ts`
+*Detail contact renderer for D1-backed franchise static pages.*
 - `generateContactBlock(row, isUnclaimed)`: Renders D1 contact/social links into the detail page contact tab, including imported public phone/address data for unclaimed listings with a claim CTA.
 - `parsePhoneContacts(value, defaultLabel, source)`: Splits messy Indonesian phone text into contact rows while preserving nearby labels such as Marketing, WA, Kantor, Office, and Owner.
-- `findPhoneStarts(text)`: Locates likely phone-number start positions without splitting inside the same number.
-- `inferPhoneLabel(text, start, end, fallback)`: Derives a readable contact label from text around each detected phone number.
-- `classifyPhone(normalized, label, source)`: Classifies parsed numbers as WhatsApp, mobile, landline/office, or generic phone for display and link generation.
-- `formatIndonesianPhone(normalized, type)`: Formats mobile numbers in 4-digit groups and landlines with area-code grouping.
+- `findPhoneStarts(text)`, `inferPhoneLabel(text, start, end, fallback)`, `classifyPhone(normalized, label, source)`, and `formatIndonesianPhone(normalized, type)`: Infer phone starts, labels, contact type, and Indonesian display formatting.
 - `generatePhoneContactRow(contact, row, isUnclaimed)`: Renders parsed phone contacts as styled `tel:` rows and adds a WhatsApp claim-notification link for unclaimed mobile/WhatsApp-capable numbers.
+
+### File: `src/lib/franchise-ranking.ts`
+*Deterministic directory ranking helper.*
 - `getRecommendedRows(rows)`: Sorts directory rows by verification/status and listing completeness; public access is now `/peluang-usaha?sort=rekomendasi`.
 - `getPopularRows(rows)`: Sorts directory rows by the current deterministic popularity proxy; dynamic product-event signals are currently used in profile recommendations and dashboard analytics.
 - `getAlphabeticalRows(rows)`: Sorts directory rows alphabetically by brand name; public access is now `/peluang-usaha?sort=abjad`.
+- `scoreRecommendation(row)`, `scorePopularity(row)`, and `compareFranchises(a, b)`: Keep deterministic score/tie-break behavior outside the route renderer.
+
+### File: `src/lib/franchise-category.ts`
+*Category route and summary helper for generated directory pages.*
+- `categorySlug(value)` and `canonicalCategoryHref(category)`: Normalize category links into canonical `/peluang-usaha?kategori=...` URLs.
 - `getCategoryRouteEntries(rows)`: Legacy helper for category aliases; do not add new indexable category archive routes without changing the canonical route policy.
-- Remaining helper functions mirror the D1 bridge mapping: JSON-LD serialization, investment summary rendering, dynamic tabs, cards, breadcrumbs, disclaimers, social/contact links, Indonesian phone parsing/display normalization, sticky claim CTA, category summaries, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
+- `getCategorySummaries(rows)`: Aggregates counts and representative rows for category browsing.
 
 ### File: `src/lib/franchise-text.ts`
 *Shared text/display helper for D1-backed franchise static pages.*
@@ -396,7 +417,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/franchise-detail-assets.ts`
 *Generated detail-page CSS/JS helper for D1-backed Astro pages.*
 - `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts.
-- `downloadProposalPdf(button)` / `buildPdfFromJpegs(pages)`: Browser-side proposal image to PDF flow used only inside the Proposal tab; shows inline status and avoids browser alerts.
+- `downloadProposalPdf(button)` / `buildPdfFromJpegs(pages)`: Browser-side proposal image to PDF flow used only inside the Proposal tab; loads R2 image pages, builds a local PDF Blob in memory, triggers browser download, stores no duplicate PDF in R2, shows inline status, and avoids browser alerts.
 - Owns Premium detail CTA/gallery/proposal/FAQ styling outside the directory asset helper.
 
 ### File: `js/product-events.js`
@@ -522,7 +543,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_premium-ops.js`
 *Shared premium operations helpers.*
-- `loadActivePaymentMethod(db)` / `loadPaymentMethods(db)`: Read admin-managed payment instructions with a safe BCA fallback.
+- `loadActivePaymentMethod(db)` / `loadPaymentMethods(db)`: Read admin-managed payment instructions, including optional QRIS image fields, with a safe BCA fallback.
 - `recordPremiumEvent(db, event)` / `loadPremiumFunnelSummary(db)`: Store and summarize Premium funnel events for `/premium`, profile membership, and dashboard review actions.
 - `createPremiumNotification(db, notification)` / `notifyAdmins(db, notification)`: Persist owner/admin Premium status messages without blocking the main action if notification storage is unavailable.
 - `loadPremiumNotifications(db, userId)` / `loadAdminPremiumNotifications(db)`: Feed `/profil` owner messages and dashboard Premium Operations messages.
@@ -561,6 +582,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/premium-receipt-upload.js`
 *Protected Premium proof-of-payment upload endpoint.*
 - `onRequestPost()`: Requires Clerk/D1 auth, verifies the selected Premium order belongs to the actor, validates JPG/PNG/WebP/PDF files up to 6 MB, stores the receipt in R2, creates a `franchise_assets` row, and writes an audit event.
+
+### File: `functions/payment-method-upload.js`
+*Admin-only payment method QRIS upload endpoint.*
+- `onRequestPost()`: Requires Clerk auth plus D1 `admin`, validates JPG/PNG/WebP QRIS images up to 3 MB, stores the file in R2 under `payment-methods/{code}/`, returns the public URL for `payment_methods.qris_image_url`, and writes an audit event.
 
 ### File: `functions/profile-upload.js`
 *Protected owner media upload API for `/profil`.*
