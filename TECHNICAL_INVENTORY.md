@@ -149,9 +149,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `bindLogout(item, clerk)`: Signs the active Clerk session out and returns to `/`.
 
 ### File: `js/opportunity-save.js`
-*Public save-opportunity controller for generated franchise pages.*
-- Handles `data-save-franchise` buttons on directory cards and detail pages.
-- Requires a Clerk session, redirects anonymous users to `/login/?next=...`, then posts `save_franchise_opportunity` or `remove_franchise_opportunity` to `/profile-data`.
+*Public save-opportunity and premium inquiry controller for generated franchise pages.*
+- Handles `data-save-franchise` buttons on directory cards/detail pages and `data-create-franchise-inquiry` buttons on Premium detail CTAs.
+- Requires a Clerk session, redirects anonymous users to `/login/?next=...`, then posts `save_franchise_opportunity`, `remove_franchise_opportunity`, or `create_franchise_inquiry` to `/profile-data`.
+- Uses CTA-backed inline status messages from the API, including the direct `/daftar` action when a franchisee needs to complete their interest profile first.
 - Uses `css/opportunity-save.css` for icon-only directory save buttons, detail save buttons, and CTA-backed inline status styling.
 
 ### File: `js/shared-tooltip.js`
@@ -166,7 +167,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Client controller for the protected `/profil` profile center.*
 - `init()`: Requires a Clerk session and redirects anonymous users to `/login/?next=/profil/`.
 - `loadProfile()`: Fetches `/profile-data` with `window.FranchiseAuth.getAuthHeaders()`.
-- `render()` / `renderActivePanel()`: Renders side tabs for summary and role-allowed franchisee/franchisor/owner listing/claims sections, delegating account, franchisee, franchisor/listing/claim, role add-on, membership, and leads UI to profile modules.
+- `render()` / `renderActivePanel()`: Renders side tabs for summary and role-allowed franchisee/franchisor/owner listing/claims sections, delegating account, franchisee, franchisor/listing/claim, role add-on, membership, leads, and owner analytics UI to profile modules.
 - `visibleTabs()` / `canSeeFranchisee()` / `canSeeFranchisor()`: Filters `/profil` navigation from D1 roles so franchisee users only see franchisee areas, franchisor users only see franchisor/listing/claim areas, and admin/staff users see both.
 - `submitPublicRoleAdd(role)`: Posts the additive access change to `/profile-data` and redirects to the matching `/daftar` tab; role CTA/modal rendering lives in `js/profile-roles.js`.
 - `submitFranchiseInquiry(franchiseId)`: Posts `create_franchise_inquiry` to `/profile-data`; recommendation/card rendering lives in `js/profile-franchisee.js`.
@@ -201,6 +202,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Lead renderer for `/profil`.*
 - `window.FranchiseProfileLeads.createRenderer(state, helpers)`: Returns `leadsPanel()` for franchisor lead UI.
 - `leadCard(lead)`: Renders email/WhatsApp/listing shortcuts and status select markup; status saving stays in `js/profile-page.js`.
+
+### File: `js/profile-analytics.js`
+*Owner analytics renderer for `/profil`.*
+- `window.FranchiseProfileAnalytics.createRenderer(state, helpers)`: Returns `analyticsPanel()` for franchisor/admin/staff users.
+- `analyticsPanel()` / `listingAnalyticsCard(item)`: Renders 30-day views, saves, inquiries, contact clicks, conversion rate, and per-listing total counts from `owner_analytics`.
 
 ### File: `js/profile-opportunities.js`
 *Saved opportunity storage helper for `/profil`.*
@@ -350,8 +356,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, and category filtering.
 - Directory cards link to franchise information pages with a neutral `Info Franchise` CTA; unclaimed-specific claim CTAs remain on detail pages.
 - `renderCategoryIndexPage(rows)`: Legacy helper that renders category cards, but canonical category browsing is now `/peluang-usaha?view=kategori` or `/peluang-usaha?kategori=[slug]`.
-- `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row.
-- Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`.
+- `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including dynamic Premium Galeri/Proposal/FAQ tabs when the row has premium/media/proposal data.
+- Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`; Premium detail CTA/tab rendering is delegated to `src/lib/franchise-premium-detail.ts`.
 - `generateContactBlock(row, isUnclaimed)`: Renders D1 contact/social links into the detail page contact tab, including imported public phone/address data for unclaimed listings with a claim CTA.
 - `parsePhoneContacts(value, defaultLabel, source)`: Splits messy Indonesian phone text into contact rows while preserving nearby labels such as Marketing, WA, Kantor, Office, and Owner.
 - `findPhoneStarts(text)`: Locates likely phone-number start positions without splitting inside the same number.
@@ -372,12 +378,26 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `normalizeUrl()` / `normalizeExternalUrl()` / `escapeHtml()` / `escapeAttr()`: Shared URL and HTML output safety helpers.
 - `normalizeGeneratedHtml()` / `applyCanonicalLegacyLinks()`: Cleanup generated template output and rewrite legacy directory/category links to canonical `/peluang-usaha` query URLs.
 
+### File: `src/lib/franchise-premium-detail.ts`
+*Premium detail-page renderer helper for D1-backed franchise static pages.*
+- `isPremiumListing(row)`: Detects listing premium state from verification/status values.
+- `generatePremiumLeadPanel(row)`: Renders the prominent Premium CTA panel with WhatsApp, inline inquiry, and proposal shortcut when proposal assets exist.
+- `generatePremiumTabs(row)`: Returns dynamic Galeri, Proposal, and FAQ tab entries for `src/lib/franchise-static.ts`.
+- `extractUrls(value)`: Parses proposal/gallery values from JSON arrays, raw URL lists, HTML `src` attributes, legacy Blogspot/Blogger text, and comma/newline-separated values.
+- Proposal tab output stores image URLs for the detail asset script to generate a browser-downloaded PDF.
+
 ### File: `src/lib/franchise-static-assets.ts`
-*Generated CSS/JS and placeholder helper for D1-backed Astro pages.*
+*Generated directory CSS/JS and placeholder helper for D1-backed Astro pages.*
 - `injectDirectoryAssets(html)`: Injects the generated directory CSS plus client-side query-param filtering/sorting script, including overflow/z-index overrides so card badge tooltips render above card parents and neighboring elements.
-- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization script.
 - `generateCssPlaceholder(label, className)`: Renders the CSS-only missing-logo placeholder used by directory cards, category cards, and detail pages.
-- Extracted from `src/lib/franchise-static.ts` on 2026-06-22 to keep the main renderer below the highest-risk long-file threshold.
+- Re-exports `injectDetailAssets(html)` from `src/lib/franchise-detail-assets.ts` so existing imports remain stable.
+- Extracted from `src/lib/franchise-static.ts` on 2026-06-22, then split again on 2026-07-03 so directory and detail generated assets can evolve independently.
+
+### File: `src/lib/franchise-detail-assets.ts`
+*Generated detail-page CSS/JS helper for D1-backed Astro pages.*
+- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts.
+- `downloadProposalPdf(button)` / `buildPdfFromJpegs(pages)`: Browser-side proposal image to PDF flow used only inside the Proposal tab; shows inline status and avoids browser alerts.
+- Owns Premium detail CTA/gallery/proposal/FAQ styling outside the directory asset helper.
 
 ### File: `js/product-events.js`
 *Public privacy-safe listing interaction tracker.*
@@ -439,9 +459,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_profile-read-model.js`
 *Profile GET/read-model helper for `/profile-data`.*
-- `loadProfileData(db, actor)`: Builds the unchanged `/profile-data` GET payload with user summary, completion flags, profile rows, owned listings, claims, recommendations, saved opportunities, inquiry history, lead inbox, and Premium membership state.
+- `loadProfileData(db, actor)`: Builds the `/profile-data` GET payload with user summary, completion flags, profile rows, owned listings, claims, recommendations, saved opportunities, inquiry history, lead inbox, Premium membership state, and owner analytics.
 - `profileLoaders`: Exposes `loadFranchiseeProfile()`, `loadPublicOpportunity()`, `loadSavedOpportunities()`, `loadFranchiseeInquiryHistory()`, and `loadFranchiseeLead()` callbacks consumed by franchisee action handlers.
 - Owned listing edit lock state still uses `OWNER_LISTING_EDIT_INTERVAL_HOURS` from `functions/_profile-franchisor-actions.js`.
+
+### File: `functions/_profile-owner-analytics.js`
+*Owner analytics read helper for `/profile-data`.*
+- `loadOwnerAnalytics(db, ownedRows)`: Aggregates `franchise_product_events` for owned listings into total and 30-day counts for views, saves, inquiries, and contact clicks.
+- `conversionRate(metrics)`: Calculates view-to-inquiry conversion for summary and per-listing cards, returning zero when view counts are unavailable.
 
 ### File: `functions/_profile-account.js`
 *Account and role-add mutation helper for `/profile-data`.*

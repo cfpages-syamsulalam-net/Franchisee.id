@@ -4,6 +4,25 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-03 20:36 (Asia/Jakarta)
+### Added
+- `src/lib/franchise-premium-detail.ts`: Added Premium detail-page rendering helpers for the lead CTA panel, Galeri/Proposal/FAQ tabs, legacy proposal/media URL parsing, and proposal image metadata.
+- `src/lib/franchise-detail-assets.ts`: Added the extracted detail-page generated CSS/JS module, including Premium detail styling, tab activation, and browser proposal PDF generation.
+- `functions/_profile-owner-analytics.js`: Added owned-listing analytics aggregation for `/profil`.
+- `js/profile-analytics.js`: Added the `/profil` owner analytics tab renderer.
+- `.context/session-20260703-2036.md`: Added this session snapshot.
+
+### Changed
+- `src/lib/franchise-static.ts`: Added Premium detail CTA/tabs to generated franchise pages and kept the detail renderer delegated through focused helper modules.
+- `src/lib/franchise-static-assets.ts`: Split detail assets into `src/lib/franchise-detail-assets.ts`, leaving directory assets and placeholders in the original module with a compatibility re-export.
+- `scripts/build-d1-franchise-pages.ts`: Included gallery, video, and proposal media fields in the D1 static snapshot.
+- `json/d1-franchise-static-data.json` and `json/d1-generated-pages-manifest.json`: Refreshed during build validation.
+- `js/opportunity-save.js`: Added Premium detail inquiry CTA handling through `/profile-data` with CTA-backed recovery messages.
+- `functions/_profile-read-model.js`: Added `owner_analytics` to the profile read model.
+- `js/profile-page.js`, `src/pages/profil/index.astro`, and `css/profile.css`: Added the owner analytics tab wiring, script loading, and styles.
+- `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: Marked Premium listing value milestone items complete for the current implementation and documented the proposal PDF limitation.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Updated module maps, refactor status, Premium/static asset notes, and suggestion 40 status.
+
 ## 2026-07-01 03:15 (Asia/Jakarta)
 ### Added
 - `functions/_profile-read-model.js`: Added the `/profile-data` read-model module for GET response composition and franchisee action loader callbacks.

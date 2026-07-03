@@ -5,6 +5,7 @@
   const AccountClient = window.FranchiseProfileAccount || {};
   const RoleClient = window.FranchiseProfileRoles || {};
   const LeadsClient = window.FranchiseProfileLeads || {};
+  const AnalyticsClient = window.FranchiseProfileAnalytics || {};
   const FranchiseeClient = window.FranchiseProfileFranchisee || {};
   const FranchisorClient = window.FranchiseProfileFranchisor || {};
   const ProfileUi = window.FranchiseProfileUi || {};
@@ -89,6 +90,12 @@
   const leadsPanel = LeadsRenderer.leadsPanel || function () {
     return errorBox("Lead belum bisa ditampilkan. Muat ulang halaman.");
   };
+  const AnalyticsRenderer = AnalyticsClient.createRenderer
+    ? AnalyticsClient.createRenderer(state, { attr, emptyInline, escapeHtml })
+    : {};
+  const analyticsPanel = AnalyticsRenderer.analyticsPanel || function () {
+    return errorBox("Analytics belum bisa ditampilkan. Muat ulang halaman.");
+  };
   const FranchiseeRenderer = FranchiseeClient.createRenderer
     ? FranchiseeClient.createRenderer(state, { attr, emptyInline, emptyState, escapeHtml, field, formatRupiah, readonlyIdentity, statusLabel, textarea, hasAskedInfo, isOpportunitySaved })
     : {};
@@ -119,6 +126,7 @@
     ["franchisor", "fa-store", "Franchisor"],
     ["listing", "fa-pen-to-square", "Listing"],
     ["leads", "fa-inbox", "Leads"],
+    ["analytics", "fa-chart-line", "Analytics"],
     ["membership", "fa-crown", "Membership"],
     ["claims", "fa-certificate", "Klaim"],
   ];
@@ -301,6 +309,7 @@
     if (state.activeTab === "franchisor") return franchisorPanel();
     if (state.activeTab === "listing") return listingPanel();
     if (state.activeTab === "leads") return leadsPanel();
+    if (state.activeTab === "analytics") return analyticsPanel();
     if (state.activeTab === "membership") return membershipPanel();
     if (state.activeTab === "claims") return claimsPanel();
     return summaryPanel();
@@ -497,7 +506,7 @@
   function visibleTabs() {
     return TAB_DEFS.filter(([id]) => {
       if (id === "franchisee" || id === "opportunities") return canSeeFranchisee();
-      if (id === "franchisor" || id === "listing" || id === "leads" || id === "membership" || id === "claims") return canSeeFranchisor();
+      if (id === "franchisor" || id === "listing" || id === "leads" || id === "analytics" || id === "membership" || id === "claims") return canSeeFranchisor();
       return true;
     });
   }

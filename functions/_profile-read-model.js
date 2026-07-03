@@ -4,6 +4,7 @@ import {
   loadOwnedPublicationDistribution,
 } from "./_profile-franchisor-actions.js";
 import { loadPremiumMembershipData } from "./_profile-premium.js";
+import { loadOwnerAnalytics } from "./_profile-owner-analytics.js";
 import { loadFranchiseeRecommendations } from "./_profile-recommendations.js";
 import { getPrimaryEmail, isMissingSavedTableError } from "./_profile-utils.js";
 import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
@@ -94,6 +95,7 @@ export async function loadProfileData(db, actor) {
   const savedOpportunities = await loadSavedOpportunities(db, actor.id);
   const franchisorLeads = await loadFranchisorLeadInbox(db, actor.id, franchisorProfile?.id || null);
   const premiumMembership = await loadPremiumMembershipData(db, actor.id, ownedRows.map((row) => row.id));
+  const ownerAnalytics = await loadOwnerAnalytics(db, ownedRows);
   const recommendations = franchiseeProfile
     ? await loadFranchiseeRecommendations(db, franchiseeProfile, new Set(ownedRows.map((row) => row.id)), RECOMMENDATION_LIMIT)
     : [];
@@ -129,6 +131,7 @@ export async function loadProfileData(db, actor) {
     inquiry_history: inquiryHistory,
     franchisor_leads: franchisorLeads,
     premium_membership: premiumMembership,
+    owner_analytics: ownerAnalytics,
   };
 }
 

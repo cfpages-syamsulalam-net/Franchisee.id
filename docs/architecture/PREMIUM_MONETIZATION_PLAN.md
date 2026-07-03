@@ -1,6 +1,6 @@
 # Premium Monetization Plan
 
-Last updated: 2026-06-30 08:38 (Asia/Jakarta)
+Last updated: 2026-07-03 20:28 (Asia/Jakarta)
 
 This is the working plan and progress tracker for monetizing the Franchisee.id network while keeping the public franchise directory free.
 
@@ -73,6 +73,16 @@ Premium listing page:
 
 The premium page should feel like a mini landing page inside the trusted directory.
 
+Implemented public listing surfaces:
+- [x] Premium CTA panel above the detail tabs with WhatsApp, "Minta info", and proposal shortcut when proposal assets exist.
+- [x] Dynamic premium tabs on franchise detail pages: Galeri, Proposal, and FAQ appear only when relevant data exists.
+- [x] Proposal tab reads image-based proposal assets from `proposal_url`, including legacy imported Blogspot/Blogger image URL lists from the old `brochures` CSV column.
+- [x] Proposal image pages are displayed inline and can be combined into a browser-downloaded PDF from a sticky "Download PDF" button inside the Proposal tab.
+- [x] Direct PDF proposal assets are shown as a clear "Buka PDF asli" link.
+
+Implementation note:
+- Browser-side PDF generation depends on the source image allowing canvas use. Legacy Blogspot images may work, but the more reliable long-term path is moving proposal images into the owned media bucket and generating/storing a first-party PDF.
+
 ### 4. Trust And Verification
 
 Premium should include a clear trust layer, not just a badge.
@@ -107,6 +117,11 @@ High-value feature:
 - Matching lead context: budget, location, category interest, and preferred timeline from franchisee profile.
 - This makes the lead more useful than a raw phone number.
 
+Current implementation:
+- [x] Premium detail CTA sends logged-in franchisees through the same lead creation path as `/profil`.
+- [x] If the franchisee has not completed their interest profile, the inline message returns a direct CTA to complete the form first.
+- [x] WhatsApp/contact clicks and proposal PDF downloads reuse product event tracking so owner analytics can show meaningful actions.
+
 ### 6. Analytics Dashboard
 
 Premium should include a simple performance report:
@@ -123,6 +138,11 @@ Keep public copy practical:
 - "Lihat berapa kali profil brand dilihat dan berapa calon mitra yang tertarik."
 
 Implementation can reuse `franchise_product_events`.
+
+Current implementation:
+- [x] `/profil` includes an Analytics tab for franchisors and staff/admin users.
+- [x] Owner analytics show 30-day views, saves, inquiries, contact clicks, and view-to-inquiry conversion.
+- [x] Each owned listing has a per-listing analytics card with total and recent counts.
 
 ### 7. Content And SEO Support
 
@@ -145,6 +165,13 @@ Premium includes:
 - Standardized asset presentation across network sites.
 
 This gives franchisors a cleaner public sales page even if they do not have a polished website.
+
+Current implementation:
+- [x] Owner profile already supports logo, cover, and proposal upload.
+- [x] Public detail build now includes `gallery_urls`, `video_url`, and `proposal_url` in the D1 snapshot query.
+- [x] Premium Galeri tab displays cover/logo/gallery images and a video link when available.
+- [ ] Add first-party proposal image ingestion from legacy Blogspot assets into the owned media bucket.
+- [ ] Add server-side or build-time PDF generation for proposal images so PDF download does not depend on browser canvas/CORS behavior.
 
 ### 9. Claim And Edit Priority
 
@@ -564,13 +591,15 @@ Operations note: payment instructions now read from admin-managed `payment_metho
 
 ### Milestone 2: Premium Listing Value
 
-- [ ] Premium listing hero/media/gallery.
-- [ ] Proposal PDF display/download.
-- [ ] Premium FAQ section.
-- [ ] Lead form prominence for premium.
-- [ ] Owner analytics in `/profil`.
+- [x] Premium listing hero/media/gallery.
+- [x] Proposal PDF display/download.
+- [x] Premium FAQ section.
+- [x] Lead form prominence for premium.
+- [x] Owner analytics in `/profil`.
 - [x] Network publication status shown to owner.
 - [x] Premium readiness checklist shown to owner and admin reviewers.
+
+Implementation note: Premium detail pages now add richer owner-facing value directly on the listing: a highlighted inquiry/contact block, dynamic Galeri/Proposal/FAQ tabs, proposal image rendering from imported legacy media URLs, and an in-browser PDF download action on the Proposal tab. `/profil` now includes owner analytics for views, saves, inquiries, contact clicks, and conversion rate. The current PDF implementation is a practical first pass; legacy third-party image hosts can still block browser PDF creation, so first-party proposal ingestion and server/build-time PDF generation remain the durable upgrade path.
 
 ### Milestone 3: Payment Automation
 

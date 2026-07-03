@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { z } from "zod";
 import { generateCssPlaceholder, injectDetailAssets, injectDirectoryAssets } from "./franchise-static-assets";
+import { generatePremiumLeadPanel, generatePremiumTabs } from "./franchise-premium-detail";
 import {
   applyCanonicalLegacyLinks,
   escapeAttr,
@@ -426,29 +427,50 @@ function generateDisclaimer(row: FranchiseStaticRow) {
 function generateTabs(row: FranchiseStaticRow, description: string, isUnclaimed: boolean) {
   const contact = generateContactBlock(row, isUnclaimed);
   const support = normalizeText(row.support_system);
+  const tabEntries = [
+    {
+      label: "Profil",
+      icon: "fa-store",
+      content: `<div class="elementor-widget-container">${paragraphs(description)}</div>`,
+    },
+    {
+      label: "Kontak",
+      icon: "fa-address-book",
+      content: `<div class="elementor-widget-container">${contact}</div>`,
+    },
+    ...(support
+      ? [
+          {
+            label: "Support",
+            icon: "fa-handshake-angle",
+            content: `<div class="elementor-widget-container">${paragraphs(support)}</div>`,
+          },
+        ]
+      : []),
+    ...generatePremiumTabs(row),
+  ];
 
   return `
             <div class="franchise-detail-actions">
                 ${generateSaveOpportunityButton(row)}
             </div>
+            ${generatePremiumLeadPanel(row)}
             <div class="e-n-tabs" data-widget-number="26009074">
                 <div class="e-n-tabs-heading" role="tablist">
-                    <button class="e-n-tab-title" aria-selected="true" data-tab-index="1" role="tab">Profil</button>
-                    <button class="e-n-tab-title" aria-selected="false" data-tab-index="2" role="tab">Kontak</button>
-                    ${support ? '<button class="e-n-tab-title" aria-selected="false" data-tab-index="3" role="tab">Support</button>' : ""}
+                    ${tabEntries
+                      .map(
+                        (entry, index) =>
+                          `<button class="e-n-tab-title" aria-selected="${index === 0 ? "true" : "false"}" data-tab-index="${index + 1}" role="tab"><i class="fas ${escapeAttr(entry.icon)}" aria-hidden="true"></i> ${escapeHtml(entry.label)}</button>`,
+                      )
+                      .join("")}
                 </div>
                 <div class="e-n-tabs-content">
-                    <div class="e-n-tab-content e-active" data-tab-index="1">
-                        <div class="elementor-widget-container">${paragraphs(description)}</div>
-                    </div>
-                    <div class="e-n-tab-content" data-tab-index="2">
-                        <div class="elementor-widget-container">${contact}</div>
-                    </div>
-                    ${
-                      support
-                        ? `<div class="e-n-tab-content" data-tab-index="3"><div class="elementor-widget-container">${paragraphs(support)}</div></div>`
-                        : ""
-                    }
+                    ${tabEntries
+                      .map(
+                        (entry, index) =>
+                          `<div class="e-n-tab-content ${index === 0 ? "e-active" : ""}" data-tab-index="${index + 1}">${entry.content}</div>`,
+                      )
+                      .join("")}
                 </div>
             </div>`;
 }

@@ -3,6 +3,13 @@
   if (!Auth) return;
 
   document.addEventListener("click", async function (event) {
+    const inquiryButton = event.target.closest("[data-create-franchise-inquiry]");
+    if (inquiryButton) {
+      event.preventDefault();
+      await createInquiry(inquiryButton);
+      return;
+    }
+
     const button = event.target.closest("[data-save-franchise]");
     if (!button) return;
     event.preventDefault();
@@ -48,6 +55,45 @@
     }
   }
 
+  async function createInquiry(button) {
+    const franchiseId = button.getAttribute("data-create-franchise-inquiry") || "";
+    const brand = button.getAttribute("data-inquiry-brand") || "brand ini";
+    if (!franchiseId || button.disabled) return;
+    setInquiryBusy(button, true);
+    setActionMessage(button, { message: "" }, "", "");
+
+    try {
+      const clerk = await Auth.init();
+      if (!clerk?.session) {
+        window.location.href = "/login/?next=" + encodeURIComponent(window.location.pathname + window.location.search);
+        return;
+      }
+      const headers = await Auth.getAuthHeaders();
+      const response = await fetch("/profile-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          action: "create_franchise_inquiry",
+          franchise_id: franchiseId,
+          message: "Saya tertarik dengan " + brand + ".",
+        }),
+      });
+      const payload = await response.json();
+      if (!payload.success) {
+        setActionMessage(button, payload, "Permintaan info belum terkirim.", "error");
+        return;
+      }
+      if (window.FranchiseProductEvents && typeof window.FranchiseProductEvents.record === "function") {
+        window.FranchiseProductEvents.record(franchiseId, "inquiry", "premium_detail");
+      }
+      setActionMessage(button, { message: payload.already_sent ? "Anda sudah pernah meminta info untuk brand ini." : "Permintaan info terkirim." }, "", "success");
+    } catch (error) {
+      setActionMessage(button, { message: error.message || "Permintaan info belum terkirim." }, "", "error");
+    } finally {
+      setInquiryBusy(button, false);
+    }
+  }
+
   function applySavedState(button, saved) {
     const label = saved ? "Tersimpan" : "Simpan";
     const tooltip = saved ? "Hapus dari tersimpan" : "Simpan peluang";
@@ -70,6 +116,15 @@
       button.innerHTML = `<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span class="${labelClass}">Menyimpan</span>`;
     } else {
       applySavedState(button, button.getAttribute("data-saved") === "true");
+    }
+  }
+
+  function setInquiryBusy(button, busy) {
+    button.disabled = busy;
+    if (busy) {
+      button.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Mengirim</span>';
+    } else {
+      button.innerHTML = '<i class="fas fa-paper-plane" aria-hidden="true"></i><span>Minta info</span>';
     }
   }
 
