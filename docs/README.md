@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-06-30 09:20 (Asia/Jakarta)
+Last updated: 2026-07-04 22:54 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -12,6 +12,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`: comparison of twice-daily static publishing versus GitHub Actions polling/direct deploy for D1-backed SEO pages.
 - `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: implementation tracker for public login/register, role-first onboarding, `/daftar` completion, and logged-in navbar state.
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: implementation tracker for `/profil`, read-only identity fields in `/daftar`, profile/listing ownership UX, and owner-facing profile APIs.
+- `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `FORM_SCHEMA.md`: canonical form field inventory.
 - `FORM_PRESERVATION_MANDATE.md`: binding rule set for preserving existing form fields and payloads.
 - `TECHNICAL_INVENTORY.md`: function/module inventory for runtime and migration code.
@@ -39,6 +40,9 @@ This repository previously accumulated many root-level Markdown files. Going for
 ## Testing And Debugging
 - `docs/testing/DEBUGGING.md`: personal `/daftar?dev=1` and cache debugging workflow.
 - `docs/testing/TEST_DATA_GENERATOR.md`: dev-only test data generator plan and cleanup notes.
+
+## UX And Conversion
+- `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: readiness verdict, code-path evidence, visual critique, and implementation tracker for the homepage, free member, `/profil`, and Premium funnel.
 
 ## Compatibility Pointer Files
 `GEMINI.md`, `KNOWLEDGE.md`, `QWEN.md`, and `PRD.md` may remain as compatibility entry points for other tools or older workflows. Do not let them become independent sources of truth. They should point back to the canonical files above when project direction changes.

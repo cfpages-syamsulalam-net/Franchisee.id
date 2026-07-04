@@ -1,6 +1,6 @@
 # SUGGESTION.md - Assistant Recommendations
 
-Last updated: 2026-07-04 15:18 (Asia/Jakarta)
+Last updated: 2026-07-04 22:54 (Asia/Jakarta)
 
 ## Purpose
 This file is exclusively for Codex/assistant suggestions. It is where I record improvement ideas I notice while working on the project: product value, UX, reliability, performance, security, data quality, operations, migration safety, and developer workflow.
@@ -68,3 +68,4 @@ User decisions remain authoritative. This file is not a replacement for `AGENTS.
 | 48 | Premium maintainability | Done | Split `_premium-ops.js` into focused Premium operation modules. | The file combined settings, pricing, promo, notifications, email queue, lifecycle expiry, annual reports, reminders, and readiness; that size increased risk for future Premium changes. | Added `_premium-settings.js`, `_premium-notifications.js`, `_premium-lifecycle.js`, `_premium-readiness.js`, and `_premium-ops-utils.js`; `_premium-ops.js` now remains as a compatibility facade. |
 | 49 | Profile CSS maintainability | Done | Split `css/profile.css` by profile surface after the backend Premium split lands. | Profile CSS was the largest maintained file and mixed shell, Premium, franchisor listing/location/media, analytics, roles, and lead styles. Splitting it reduces CSS regression risk during future profile UI work. | Planned in `AUDIT.md`, then added `css/profile-premium.css`, `css/profile-franchisor.css`, and `css/profile-analytics.css`; `/profil` now loads those after the base profile stylesheet. |
 | 50 | Refactor safety | Suggested | Add focused smoke tests for the newly split auth, form-submit, D1 builder, and CSV importer boundaries. | The large files are now modular, but future edits need quick proof that facade-to-helper wiring still preserves route/script behavior. | Add mocked-D1 tests for `/form-submit` dispatch and fixture-based dry-run output checks for the D1 builder/importer; include browser load-order checks for auth script globals. |
+| 51 | Traffic conversion UX | Suggested | Strengthen the homepage-to-free-member-to-Premium funnel before paid traffic. | The code path exists, but homepage brand/CTA hierarchy, `/profil` next-step prominence, and Premium discoverability are not strong enough for serious acquisition spend. | Use `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md` as the tracker: fix homepage brand/CTA clarity, retheme `/profil`, add a next-best-action panel, and run one production QA pass through free member creation and Premium activation. |

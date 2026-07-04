@@ -4,6 +4,15 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-04 22:54 (Asia/Jakarta)
+### Added
+- `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: Added a traffic-readiness and UX conversion audit for the homepage-to-free-member-to-Premium funnel, including code-path evidence, visual critique for `/profil`, and an implementation tracker.
+- `.context/session-20260704-2254.md`: Added this session snapshot for the funnel UX audit.
+
+### Changed
+- `docs/README.md`: Linked the new traffic funnel UX audit from the documentation index.
+- `SUGGESTION.md`: Added suggestion 51 for strengthening homepage CTA hierarchy, `/profil` next-step prominence, and Premium conversion readiness before paid traffic.
+
 ## 2026-07-04 15:18 (Asia/Jakarta)
 ### Added
 - `js/auth-clerk-core.js`: Added the Clerk browser core module for publishable-key config, script loading, OAuth callback finalization, pending role/next storage, `/auth-sync`, token/header helpers, signed-in guards, and URL cleanup.
