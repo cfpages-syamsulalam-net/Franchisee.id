@@ -372,6 +372,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Rewrites copied legacy HTML links from `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known top-level category aliases to `/peluang-usaha` query-param URLs.
 - Copies `node_modules/@clerk/clerk-js/dist` into `dist/clerk` so browser auth can load ClerkJS locally before trying CDN fallbacks.
 
+### File: `scripts/check-profile-client.mjs`
+*Focused `/profil` browser regression check.*
+- Runs `node --check` against `js/profile-page.js`, `js/profile-premium.js`, `js/profile-franchisee.js`, and `js/profile-franchisor.js`.
+- Fails if stale undefined profile helper calls such as `selectedFranchise()` reappear.
+- Exposed through `pnpm run profile:check`.
+
 ## 2. Directory: `/src` (Astro Static Generation)
 
 ### File: `src/lib/shared-schemas.ts`

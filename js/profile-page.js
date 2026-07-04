@@ -318,7 +318,7 @@
 
   function nextActionPanel() {
     const data = state.data || {};
-    const listing = selectedFranchise();
+    const listing = selectedListing();
 
     if (isStaffAccess() && !hasRole("franchisee") && !hasRole("franchisor")) {
       return nextActionCard({

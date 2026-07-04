@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-05 05:35 (Asia/Jakarta)
+### Added
+- `.context/session-20260705-0535.md`: Added this session snapshot for the `/profil` admin login bugfix.
+- `scripts/check-profile-client.mjs`: Added a focused profile client regression check for profile script syntax and stale undefined helper usage.
+
+### Changed
+- `js/profile-page.js`: Fixed the `/profil` next-action panel by replacing the undefined `selectedFranchise()` call with the existing `selectedListing()` helper.
+- `package.json`: Added `profile:check` to run the profile client regression check.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the new profile client regression check and package script.
+- `SUGGESTION.md`: Added and completed suggestion 53 for a focused profile client undefined-helper regression check.
+
 ## 2026-07-05 00:40 (Asia/Jakarta)
 ### Added
 - `.context/session-20260705-0040.md`: Added this session snapshot for the non-manual traffic-funnel implementation pass.
