@@ -4,6 +4,24 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-04 15:18 (Asia/Jakarta)
+### Added
+- `js/auth-clerk-core.js`: Added the Clerk browser core module for publishable-key config, script loading, OAuth callback finalization, pending role/next storage, `/auth-sync`, token/header helpers, signed-in guards, and URL cleanup.
+- `scripts/d1-page-renderer.ts`: Added pure rendering/hash/sort/canonicalization helpers for the D1 public page builder.
+- `scripts/import-csv-utils.ts`: Added reusable CSV parsing, SQL builder, normalization, id/hash, import stats, and remote apply helpers for the D1 importer.
+- `functions/_form-submit-franchisee.js`, `functions/_form-submit-franchisor.js`, `functions/_form-submit-test-actions.js`, and `functions/_form-submit-utils.js`: Added focused form-submit workflow and utility modules.
+- `.context/session-20260704-1518.md`: Added this session snapshot for the auth, D1 builder, CSV importer, and form-submit modularization.
+
+### Changed
+- `AUDIT.md`: Planned the requested refactors before implementation, updated line counts, and marked the auth core, D1 page renderer, CSV importer utility, and form-submit workflow splits as extracted.
+- `js/auth-clerk.js`: Reduced the file to an auth page/event facade that delegates Clerk/session primitives to `js/auth-clerk-core.js`.
+- `login/index.html`, `register/index.html`, `daftar/index.html`, `src/pages/dashboard/index.astro`, `src/pages/premium/index.astro`, `src/pages/profil/index.astro`, `src/pages/sso-callback/index.astro`, `templates/detail-franchise-tpl.html`, and `templates/peluang-usaha-tpl.html`: Load `js/auth-clerk-core.js` between the auth UI module and the auth facade.
+- `scripts/build-d1-franchise-pages.ts`: Reduced the builder to D1 access, orchestration, file/manifest writes, and pruning while delegating pure rendering to `scripts/d1-page-renderer.ts`.
+- `scripts/import-csv-to-d1.ts`: Reduced the importer to CLI/import-plan orchestration and row mapping while delegating reusable parsing/SQL/normalization helpers to `scripts/import-csv-utils.ts`.
+- `functions/form-submit.js`: Reduced the endpoint to D1 binding checks, base validation, Clerk/D1 role authorization, telemetry, and workflow dispatch.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the new module boundaries and updated auth/form/import/build ownership.
+- `SUGGESTION.md`: Added suggestion 50 for focused smoke tests around the newly split module boundaries before validation.
+
 ## 2026-07-04 10:59 (Asia/Jakarta)
 ### Added
 - `css/profile-premium.css`, `css/profile-franchisor.css`, and `css/profile-analytics.css`: Added focused `/profil` stylesheet modules for Membership, franchisor/listing/location/media/leads, and owner analytics UI.

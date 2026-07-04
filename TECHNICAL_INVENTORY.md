@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-04 10:59 (Asia/Jakarta)
+Last updated: 2026-07-04 15:18 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -120,14 +120,20 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `summarizeClerk(clerk)`: Converts Clerk runtime/session/client state into safe booleans, counts, and short id hints.
 - `keyHint(value)` / `tokenHint(value)` / `sessionHint(value)`: Generates masked hints for public keys, bearer tokens, and Clerk session/user ids.
 
-### File: `js/auth-clerk.js`
-*Custom ClerkJS client integration using existing site CSS.*
+### File: `js/auth-clerk-core.js`
+*Custom ClerkJS core runtime shared by auth-enabled pages.*
+- `window.FranchiseAuthCore.create(options)`: Builds the core auth controller used by `js/auth-clerk.js`.
 - `Auth.init()`: Fetches `/auth-config`, normalizes the publishable key with a public client fallback when config is stale/empty, sets `window.__clerk_publishable_key` plus Clerk script data attributes before browser-bundle evaluation, loads locally copied `/clerk/clerk.browser.js` with CDN fallbacks, initializes Clerk, and finalizes any Clerk OAuth redirect callback before token checks run.
 - `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
 - `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
-- `Auth.getDebugSnapshot()` / `Auth.recordDebug()`: Delegates masked Clerk lifecycle diagnostics to `js/auth-clerk-debug.js` for `/dashboard` and `/sso-callback/`.
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign explicit or pending self-selectable `franchisee`/`franchisor` roles.
 - `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
+- `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to `clerk.setActive()` with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
+
+### File: `js/auth-clerk.js`
+*Custom ClerkJS auth page facade using existing site CSS.*
+- `Auth.init()` / `Auth.getToken()` / `Auth.getAuthHeaders()` / `Auth.syncUser()`: Exposed through the backward-compatible `window.FranchiseAuth` object, delegated to `js/auth-clerk-core.js`.
+- `Auth.getDebugSnapshot()` / `Auth.recordDebug()`: Delegates masked Clerk lifecycle diagnostics to `js/auth-clerk-debug.js` for `/dashboard` and `/sso-callback/`.
 - `mountAuthPage()`: Replaces `/login` legacy WPForms markup with public `Masuk`/`Buat Akun`/forgot-password/forgot-email/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
 - `showInitialAuthMessage(root)`: Shows CTA-backed info messages when anonymous `/daftar` or `/profil` visitors are redirected to `/login?next=...`.
 - `showMessage(root, message, type)`: Renders plain or structured auth messages with optional hint text and CTA buttons/links, including panel switches for register/reset recovery.
@@ -136,7 +142,6 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI; public registration redirects to `/daftar/?role=...&continue=1` after account creation.
 - `handleForgotPassword()` / `handleResetPassword()`: Sends Clerk reset-password email codes, shows a direct "Masukkan kode" recovery CTA, verifies the code, saves the new password, activates the resulting session, and returns to the normal next URL.
 - `handleOAuth(root, button)`: Starts Clerk Google OAuth sign-in/sign-up with `/sso-callback/` as the dedicated Clerk callback route; public registration requires selected `franchisee`/`franchisor` role and stores the role-specific `/daftar` completion destination until OAuth completion.
-- `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to `clerk.setActive()` with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
 
 ### File: `js/auth-clerk-ui.js`
 *Custom auth page renderer.*
@@ -306,15 +311,29 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - D1 row validation uses `D1FranchiseRowSchema` from `src/lib/shared-schemas.ts` so build-time and Astro snapshot rendering share the same row contract.
 - `fetchRowsFromD1Http(sql, token)`: Build-safe D1 query path for Cloudflare Pages and CI. Uses `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` when set, with current project defaults.
 - `fetchRowsFromD1Wrangler(sql, options)`: Local fallback path that runs `pnpm exec wrangler d1 execute` with a cfman token.
-- `renderDetailPage(row, template)`: Inserts D1 franchise data into `templates/detail-franchise-tpl.html` and marks output with `d1-generated:franchisee.id`.
-- `generateContactBlock(row)`: Renders public contact and social links from D1 franchisor profile fields when present.
 - `buildListingIndex(rows, template, previousManifest, nextManifest, options, stats)`: Renders `/peluang-usaha/index.html` from D1 data and skips unchanged output by manifest hash.
-- Directory card CTAs use the neutral `Info Franchise` label for all listing tiers.
 - `buildUnclaimedJson(rows, options, stats)`: Regenerates `json/unclaimed-brands.json` from D1 unclaimed rows for claim search.
 - Snapshot behavior: non-dry runs write `json/d1-franchise-static-data.json`, which Astro consumes for static route generation.
 - Detail output behavior: writes flat `/peluang-usaha/[slug].html` files while generated links remain extensionless `/peluang-usaha/[slug]`.
 - Manifest behavior: `json/d1-generated-pages-manifest.json` tracks D1-owned pages; prune only removes tracked files that still contain the D1 marker, including old marker-owned folder indexes when paths change.
 - Wrangler fallback uses project-pinned `pnpm exec wrangler` so the script does not resolve a newer Node-22-only Wrangler version under Node 20.
+
+### File: `scripts/d1-page-renderer.ts`
+*Pure renderer/helper module for D1-backed public page generation.*
+- `buildListingHtml(rows, template)`: Renders `/peluang-usaha/index.html` cards and keeps directory CTAs on the neutral `Info Franchise` label.
+- `renderDetailPage(row, template)`: Inserts D1 franchise data into `templates/detail-franchise-tpl.html`, renders JSON-LD/breadcrumb/sticky/disclaimer/tab/contact markup, and marks output with `d1-generated:franchisee.id`.
+- `buildUnclaimedItems(rows)`: Creates sanitized unclaimed claim-search JSON items from published rows.
+- `compareFranchises()`, `sha256()`, and `stableJson()`: Keep sorting and manifest hashing outside the D1/filerunner facade.
+- HTML cleanup and legacy link canonicalization helpers keep generated bridge output compatible with canonical `/peluang-usaha` URLs.
+
+### File: `scripts/import-csv-to-d1.ts`
+*TypeScript/Zod CSV-to-D1 import facade.*
+- Loads current CSV snapshots, validates rows through shared schemas, maps franchisor/unclaimed/franchisee rows into D1 write plans, preserves strict `UNCLAIMED` claim-search sanitization, collects warnings, prints stats, and optionally applies through the helper remote-apply path.
+- Row-specific mapping remains here so source column contracts stay easy to audit.
+
+### File: `scripts/import-csv-utils.ts`
+*Reusable CSV importer utility module.*
+- Owns quote-aware CSV parsing/loading, SQL insert/update/raw value serialization, package/publication/legacy source builders, stats helpers, stable id/hash generation, slug/text/number normalization, claim row filters, and remote apply execution.
 
 ### File: `scripts/d1-static-publish-poller.mjs`
 *Dependency-free GitHub Actions poller for D1-backed static publishing.*
@@ -525,7 +544,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Static protected admin/staff dashboard shell.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
-- Loads `js/auth-clerk-debug.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, `js/dashboard-operations.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
+- Loads `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, `js/dashboard-operations.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
 - Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, guided review controls, admin Area Listing controls, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by dashboard browser modules; dashboard styling is owned by `css/dashboard.css`.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
@@ -536,7 +555,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Hidden Clerk OAuth callback route.*
 - `prerender = true`.
 - Builds `/sso-callback/index.html` with `noindex,nofollow`.
-- Loads `js/auth-clerk-debug.js` and `js/auth-clerk.js`, then calls `window.FranchiseAuth.init()` so Clerk can run `handleRedirectCallback()` on Google OAuth return.
+- Loads `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, and `js/auth-clerk.js`, then calls `window.FranchiseAuth.init()` so Clerk can run `handleRedirectCallback()` on Google OAuth return.
 - Redirects to the saved pending destination from the masked auth snapshot only when Clerk has an active session.
 - Shows a minimal masked debug fallback with an icon-only copy button when callback processing fails or returns without an active session.
 
@@ -840,15 +859,28 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `parseWhatsAppContacts(value)` / `buildWhatsAppUrl(internationalDigits, row)`: Indonesian phone parsing and claim-notification link generation.
 - `isLikelyAllCapsDescription(value)`: JavaScript-side all-caps heuristic used by data-quality checks.
 
-### File: `functions/form-submit.js` (v2.5)
-*Clerk-authenticated D1-backed backend processing for all current form submissions.*
-- `onRequestPost()`: Main entry point; requires `env.franchise_db`, validates base payload with Zod, requires Clerk/D1 role authorization, routes franchisee/franchisor/claim/test actions, records operation telemetry for server failures, and returns the legacy success/error JSON envelope.
-- `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Imported shared Zod runtime validation for form payloads before D1 writes.
+### File: `functions/form-submit.js` (v2.6)
+*Clerk-authenticated D1-backed form-submit router.*
+- `onRequestPost()`: Main entry point; requires `env.franchise_db`, validates base payload with Zod, requires Clerk/D1 role authorization, routes franchisee/franchisor/claim/test actions to focused modules, records operation telemetry for server failures, and returns the legacy success/error JSON envelope.
+- `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Imported shared Zod runtime validation for form payloads before delegated D1 writes.
+
+### File: `functions/_form-submit-franchisee.js`
+*Franchisee profile submit workflow.*
 - `handleFranchiseeSubmit(db, data, actor)`: Checks duplicates and writes `franchisee_profiles.user_id`, `legacy_source_rows`, and actor-aware `audit_events`.
+
+### File: `functions/_form-submit-franchisor.js`
+*Franchisor listing and claim submit workflow.*
 - `handleFranchisorSubmit(db, data, isClaim, actor)`: Checks duplicates and writes or updates franchisor/listing/package/publication/claim/audit D1 records with `user_id`, `owner_user_id`, `claimant_user_id`, franchisor profile contact/social URLs, and static rebuild queue requests for `site_franchisee_id`.
+
+### File: `functions/_form-submit-test-actions.js`
+*Staff/admin dev test-data workflows.*
+- `handleCreateUnclaimed()` / `handleClearTestData()`: Dev test-data actions operate in D1 instead of Google Sheets and enqueue static rebuild requests because they affect public listing/claim-search output.
+
+### File: `functions/_form-submit-utils.js`
+*Shared helpers for the form-submit modules.*
 - `findClaimSource(db, data)`: Finds D1 `UNCLAIMED` franchise rows by `unclaimed_id` or normalized brand name for claim migration.
-- `handleCreateUnclaimed()` / `handleClearTestData()`: Dev test-data actions now operate in D1 instead of Google Sheets and enqueue static rebuild requests because they affect public listing/claim-search output.
 - `uniqueSlug()` / `slugExists()`: Generates non-conflicting D1 slugs for new submitted listings.
+- Also owns validation/duplicate/json responses, payload cleaning, normalization, id/timestamp generation, common franchise bind values, and audit/legacy-source statements.
 - Important: `/form-submit` must remain D1-only and authenticated; do not restore anonymous writes.
 
 ## 3a. Directory: `/.github/workflows` (Automation)
