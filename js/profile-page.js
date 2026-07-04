@@ -358,7 +358,12 @@
         franchisee: "update_franchisee_profile",
         franchisor: "update_franchisor_profile",
         listing: "update_listing",
+        listing_locations: "update_listing_locations",
       }[type];
+      if (type === "listing_locations") {
+        body.locations = parseLocationRows(body.locations_text);
+        delete body.locations_text;
+      }
       const headers = await Auth.getAuthHeaders();
       const response = await fetch("/profile-data", {
         method: "POST",
@@ -460,6 +465,7 @@
           action: "create_franchise_inquiry",
           franchise_id: franchiseId,
           message: item?.brand_name ? `Saya tertarik dengan ${item.brand_name}.` : "",
+          buyer_context: getBuyerContext(),
         }),
       });
       const payload = await response.json();
@@ -501,6 +507,16 @@
         </div>
       </article>
     `;
+  }
+
+  function getBuyerContext() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem("franchise_buyer_context") || "{}");
+      if (!parsed || typeof parsed !== "object") return {};
+      return parsed;
+    } catch (_error) {
+      return {};
+    }
   }
 
   function visibleTabs() {
@@ -731,6 +747,31 @@
       setBusy(form, false);
       render();
     }
+  }
+
+  function parseLocationRows(value) {
+    return String(value || "")
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 24)
+      .map((line) => {
+        const parts = line.split("|").map((part) => part.trim());
+        return {
+          city: parts[0] || "",
+          location_type: parseLocationType(parts[1]),
+          province: parts[2] || "",
+        };
+      })
+      .filter((row) => row.city.length >= 2);
+  }
+
+  function parseLocationType(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    if (["kantor", "head office", "headoffice", "office", "pusat"].includes(normalized)) return "head_office";
+    if (["outlet", "gerai", "cabang"].includes(normalized)) return "outlet";
+    if (["asal", "origin", "kota asal"].includes(normalized)) return "origin";
+    return "available_area";
   }
 
 })(window, document);

@@ -57,6 +57,7 @@ export const D1FranchiseRowSchema = z.object({
   phone: nullableString,
   office_address: nullableString,
   outlets_location: nullableString,
+  structured_locations: nullableString,
   logo_url: nullableString,
   cover_url: nullableString,
   gallery_urls: nullableString,

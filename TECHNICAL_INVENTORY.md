@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-04 00:10 (Asia/Jakarta)
+Last updated: 2026-07-04 06:36 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -154,6 +154,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Public save-opportunity and premium inquiry controller for generated franchise pages.*
 - Handles `data-save-franchise` buttons on directory cards/detail pages and `data-create-franchise-inquiry` buttons on Premium detail CTAs.
 - Requires a Clerk session, redirects anonymous users to `/login/?next=...`, then posts `save_franchise_opportunity`, `remove_franchise_opportunity`, or `create_franchise_inquiry` to `/profile-data`.
+- `getBuyerContext()`: Reads optional comparison, budget matcher, and BEP calculator context from `localStorage` and attaches it to Premium inquiry submissions.
 - Uses CTA-backed inline status messages from the API, including the direct `/daftar` action when a franchisee needs to complete their interest profile first.
 - Uses `css/opportunity-save.css` for icon-only directory save buttons, detail save buttons, and CTA-backed inline status styling.
 
@@ -172,14 +173,15 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `render()` / `renderActivePanel()`: Renders side tabs for summary and role-allowed franchisee/franchisor/owner listing/claims sections, delegating account, franchisee, franchisor/listing/claim, role add-on, membership, leads, and owner analytics UI to profile modules.
 - `visibleTabs()` / `canSeeFranchisee()` / `canSeeFranchisor()`: Filters `/profil` navigation from D1 roles so franchisee users only see franchisee areas, franchisor users only see franchisor/listing/claim areas, and admin/staff users see both.
 - `submitPublicRoleAdd(role)`: Posts the additive access change to `/profile-data` and redirects to the matching `/daftar` tab; role CTA/modal rendering lives in `js/profile-roles.js`.
-- `submitFranchiseInquiry(franchiseId)`: Posts `create_franchise_inquiry` to `/profile-data`; recommendation/card rendering lives in `js/profile-franchisee.js`.
+- `submitFranchiseInquiry(franchiseId)`: Posts `create_franchise_inquiry` to `/profile-data` with optional browser buyer context; recommendation/card rendering lives in `js/profile-franchisee.js`.
+- `getBuyerContext()`: Reads optional comparison, budget matcher, and BEP calculator context from `localStorage` for inquiry payloads.
 - `syncLocalSavedOpportunities()` / `toggleSavedOpportunity()`: Migrates old browser-saved opportunities into D1 when possible and posts save/remove actions to `/profile-data`; local storage/lookup helpers live in `js/profile-opportunities.js`.
 - `submitPasswordForm(form)`: Uses ClerkJS on the current session to let Google-only users add a password login and password users change their password, with custom inline copy and no browser tooltip hints; account rendering lives in `js/profile-account.js`.
 - `uploadListingMedia(input)`: Uploads logo/cover/proposal media through `/profile-upload`; listing and claim panel markup lives in `js/profile-franchisor.js`.
 - Membership tab rendering is delegated to `js/profile-premium.js`, while `createPremiumOrder()` and `submitPremiumConfirmation()` stay in this controller.
 - `createPremiumOrder(franchiseId)` / `submitPremiumConfirmation(form)`: Creates unique-code bank transfer orders or renewal orders through `/profile-data`, uploads optional proof files through `/premium-receipt-upload`, and submits payment confirmation for admin review.
 - `updateLeadStatus(select)`: Saves owner-checked lead status updates through `/profile-data`; lead list/card rendering lives in `js/profile-leads.js`.
-- `submitProfileForm(form)`: Posts account/profile/listing mutations to `/profile-data` with a Clerk bearer token.
+- `submitProfileForm(form)`: Posts account/profile/listing/location mutations to `/profile-data` with a Clerk bearer token; listing location text is parsed into structured city/type/province rows before submit.
 
 ### File: `js/profile-ui-utils.js`
 *Shared UI helpers for `/profil` modules.*
@@ -226,6 +228,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Franchisor profile, owned listing, and claim renderer for `/profil`.*
 - `window.FranchiseProfileFranchisor.createRenderer(state, helpers)`: Returns `franchisorPanel()`, `listingPanel()`, and `claimsPanel()` using shared state/helpers from `js/profile-page.js`.
 - `franchisorPanel()`: Renders the read-only identity rows plus editable company/contact fields.
+- `locationEditor(listing)`: Renders the owner Area Listing editor from `structured_locations`, preserving source labels and one-line-per-city input format.
 - `listingPanel()` / `publicationDistribution()` / `mediaUploadControl()`: Renders owned D1 listing edit controls, network publication chips, media upload controls, and owner edit limit state.
 - `claimsPanel()`: Renders submitted claim status and direct `/daftar` claim CTA copy.
 
@@ -253,7 +256,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-review.js`
 *Review/Data Quality client module for `/dashboard`.*
 - `window.FranchiseDashboardReview.createOperations(options)`: Creates the review controller from DOM references, current dashboard state getter, admin-state callback, and shared action/reload/status callbacks.
-- `render(data)`: Renders data-quality rows, pending claims, listing edit options, guided edit field rows, and pending edit suggestions.
+- `render(data)`: Renders data-quality rows, pending claims, listing edit options, guided edit field rows, pending edit suggestions, and admin Area Listing controls.
+- `submitLocationUpdate(event)`: Admin-only dashboard action that posts structured location rows to `/dashboard-data` and reloads dashboard state after rebuild queueing.
 - `refreshQualityChecks()`: Posts the protected refresh action and reloads dashboard data.
 - `submitEditSuggestion(event)` / `reviewEditSuggestion(button)` / `reviewClaim(button)`: Posts guided edit submissions and admin review decisions through the existing `/dashboard-data` contract.
 
@@ -294,7 +298,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `scripts/build-d1-franchise-pages.ts`
 *TypeScript D1-backed public page generation bridge.*
-- `fetchRowsFromD1(options)`: Loads published `site_franchisee_id` franchise rows from `franchise_db`, including public `phone` and `office_address` fields for Astro detail contact rendering, preferring the Cloudflare D1 HTTP API with `CLOUDFLARE_API_TOKEN` or a cfman token and falling back to Wrangler/cfman only when needed.
+- `fetchRowsFromD1(options)`: Loads published `site_franchisee_id` franchise rows from `franchise_db`, including public `phone`, `office_address`, and aggregated `structured_locations` JSON for Astro rendering. Owner/admin-managed location rows override generated rows when present. Prefers the Cloudflare D1 HTTP API with `CLOUDFLARE_API_TOKEN` or a cfman token and falls back to Wrangler/cfman only when needed.
 - D1 row validation uses `D1FranchiseRowSchema` from `src/lib/shared-schemas.ts` so build-time and Astro snapshot rendering share the same row contract.
 - `fetchRowsFromD1Http(sql, token)`: Build-safe D1 query path for Cloudflare Pages and CI. Uses `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` when set, with current project defaults.
 - `fetchRowsFromD1Wrangler(sql, options)`: Local fallback path that runs `pnpm exec wrangler d1 execute` with a cfman token.
@@ -327,6 +331,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `applySqlRemote(options)`: Applies generated SQL to remote D1 in chunks to avoid D1 reset/time-limit failures.
 - Command: `pnpm run migrate:proposal-r2 -- --download --upload-r2 --write-sql --apply-remote`.
 
+### File: `scripts/sync-franchise-locations.ts`
+*Repeatable structured location backfill for local SEO pages.*
+- Reads `json/d1-franchise-static-data.json` and validates rows through `D1FranchiseRowSchema`.
+- Uses `inferFranchiseLocations()` to generate `locations` and source-tagged `franchise_locations` rows for supported cities.
+- Deletes only generated rows whose `source_field` matches known inferred fields for the current franchise ids, then reinserts the current inferred rows.
+- Command: `pnpm run locations:sync` writes `.context/franchise-location-sync.sql`; `pnpm run locations:sync -- --apply-remote` applies it through cfman/wrangler.
+
 ### File: `scripts/copy-legacy-static.mjs`
 *Post-Astro legacy static export copier for Cloudflare Pages output.*
 - Copies root legacy HTML/XML/XSL files and public legacy directories into `dist`.
@@ -342,6 +353,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Shared TypeScript schemas for import/build/Astro validation.*
 - `ImportFranchisorRowSchema` / `ImportUnclaimedRowSchema` / `ImportFranchiseeRowSchema`: CSV row validators used by the D1 importer.
 - `D1FranchiseRowSchema`: Shared D1 static snapshot row validator used by the D1 page builder and Astro renderer.
+- `structured_locations`: Optional JSON field in the D1 static snapshot, populated by the public page builder from `locations` and `franchise_locations`.
 - `normalizeListingStatusValue()` / `normalizeVerificationTierValue()` / `normalizeRoyaltyBasisValue()` / `normalizeHakiStatusValue()`: Shared enum/value normalizers for import and build paths.
 
 ### File: `src/pages/profil/index.astro`
@@ -353,7 +365,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/pages/premium/index.astro`
 *Public premium membership sales page.*
 - Static Astro route at `/premium/` with public SEO copy for the Rp 3.000.000/year premium offer.
-- Loads Font Awesome, `css/premium.css`, and `js/premium-page.js`.
+- Shows editorial article and social media exposure add-on pricing alongside the yearly Premium offer.
+- Loads Font Awesome, `css/premium.css`, `js/site-promo-bar.js`, and `js/premium-page.js`.
 - CTAs point to `/login/?mode=register` and `/profil/?tab=membership` without exposing internal infrastructure terms, and include `data-premium-cta` attributes for coarse funnel tracking.
 
 ### File: `scripts/shared-csv.cjs`
@@ -365,11 +378,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Astro D1 snapshot validator and template renderer.*
 - `FranchiseStaticRowSchema`: Re-export of the shared D1 row schema for rows in `json/d1-franchise-static-data.json`.
 - `loadFranchiseStaticRows()`: Reads and validates the generated D1 snapshot.
-- `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, and category filtering.
+- `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, category filtering, and internal links to modal/category/city/tools pages.
 - Directory cards link to franchise information pages with a neutral `Info Franchise` CTA; unclaimed-specific claim CTAs remain on detail pages.
 - `renderCategoryIndexPage(rows)`: Legacy helper that renders category cards, but canonical category browsing is now `/peluang-usaha?view=kategori` or `/peluang-usaha?kategori=[slug]`.
 - `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including dynamic Premium Galeri/Proposal/FAQ tabs when the row has premium/media/proposal data.
-- Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`; Premium detail CTA/tab rendering is delegated to `src/lib/franchise-premium-detail.ts`; contact parsing/rendering is delegated to `src/lib/franchise-contact.ts`; directory ranking is delegated to `src/lib/franchise-ranking.ts`; category route helpers are delegated to `src/lib/franchise-category.ts`.
+- `renderCityIndexPage(rows)` / `renderCityLandingPage(entry, rows)`: Render static city discovery pages from structured D1 location rows with text inference fallback.
+- Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`; Premium detail CTA/tab rendering is delegated to `src/lib/franchise-premium-detail.ts`; contact parsing/rendering is delegated to `src/lib/franchise-contact.ts`; directory ranking is delegated to `src/lib/franchise-ranking.ts`; category route helpers are delegated to `src/lib/franchise-category.ts`; city route helpers are delegated to `src/lib/franchise-city.ts` and `src/lib/franchise-location-normalization.ts`.
 - Remaining local helper functions focus on template composition: JSON-LD serialization, investment summary rendering, dynamic tab assembly, cards, breadcrumbs, disclaimers, sticky claim CTA, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
 
 ### File: `src/lib/franchise-contact.ts`
@@ -391,6 +405,26 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `categorySlug(value)` and `canonicalCategoryHref(category)`: Normalize category links into canonical `/peluang-usaha?kategori=...` URLs.
 - `getCategoryRouteEntries(rows)`: Legacy helper for category aliases; do not add new indexable category archive routes without changing the canonical route policy.
 - `getCategorySummaries(rows)`: Aggregates counts and representative rows for category browsing.
+
+### File: `src/lib/franchise-location-normalization.ts`
+*Shared city/location normalization helper.*
+- `CITY_ALIASES`: Supported Indonesian city/province aliases for current local discovery pages and backfill.
+- `extractFranchiseLocations(row)`: Reads structured D1 location JSON first, then falls back to inferred text matches.
+- `inferFranchiseLocations(row)`: Infers origin, head office, outlet, and available-area city rows from listing fields with source field and confidence metadata.
+- `matchCityAliases(value)`: Finds supported city aliases with token-aware matching to reduce false positives.
+
+### File: `src/lib/franchise-city.ts`
+*City discovery route helper for generated directory pages.*
+- `getCityRouteEntries(rows)`: Builds city page entries from `structured_locations` when present, with fallback to supported city aliases found in `city_origin`, office address, outlet location, and location requirement text; only keeps cities with enough listings.
+- `getCitySummaries(rows)`: Returns compact city counts for directory/buyer-tool quick links.
+- `primaryCityLabel(row)`: Returns the first matched city label for comparison payload display.
+- `cityIndexCopy(rows)` / `cityLandingCopy(entry)`: Generate user-facing city page copy that explains the data source without overpromising area availability.
+
+### File: `src/lib/franchise-buyer-tools.ts`
+*Buyer tool and comparison page renderer.*
+- `renderComparisonPage(rows)`: Renders `/bandingkan/` with an embedded compact listing payload.
+- `renderBuyerToolsPage(rows)`: Renders `/alat-franchise/` with budget matcher, BEP calculator, and quick links into modal/category/city pages.
+- `comparisonPayload(rows)`: Builds safe browser payload fields including brand, modal, category, BEP, royalty, primary city label, status, image, and detail URL.
 
 ### File: `src/lib/franchise-text.ts`
 *Shared text/display helper for D1-backed franchise static pages.*
@@ -462,6 +496,16 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getStaticPaths()`: Builds seven populated capital-range pages from comparable investment fields.
 - Outputs filtered listing pages with modal-range intro copy, SEO metadata, and standard directory controls.
 
+### File: `src/pages/peluang-usaha/kota/index.astro`
+*Astro static city index page.*
+- `prerender = true`.
+- Outputs city cards with `renderCityIndexPage(loadFranchiseStaticRows())`.
+
+### File: `src/pages/peluang-usaha/kota/[slug].astro`
+*Astro static city landing pages.*
+- `getStaticPaths()`: Builds one page per supported city with enough matched listings from location text.
+- Outputs filtered listing pages with city intro copy, SEO metadata, and standard directory controls.
+
 ### File: `src/pages/bandingkan/index.astro`
 *Static comparison tool page.*
 - Embeds compact listing data through `renderComparisonPage()`.
@@ -471,13 +515,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Static buyer tools page.*
 - Embeds compact listing data through `renderBuyerToolsPage()`.
 - Runtime budget matcher and BEP simulation live in `js/franchise-buyer-tools.js`.
+- Quick links include modal, category, and city discovery pages.
 
 ### File: `src/pages/dashboard/index.astro`
 *Static protected admin/staff dashboard shell.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads `js/auth-clerk-debug.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, `js/dashboard-operations.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
-- Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by dashboard browser modules; dashboard styling is owned by `css/dashboard.css`.
+- Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, guided review controls, admin Area Listing controls, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by dashboard browser modules; dashboard styling is owned by `css/dashboard.css`.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
@@ -503,7 +548,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/profile-data.js`
 *Protected profile read/write API for `/profil`.*
 - `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and delegates the profile response payload to `functions/_profile-read-model.js`.
-- `onRequestPost()`: Dispatches mutations validated by `functions/_profile-schemas.js` for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, `update_listing`, `add_public_role`, `create_franchise_inquiry`, `save_franchise_opportunity`, `remove_franchise_opportunity`, `update_franchise_lead_status`, `create_premium_order`, and `confirm_premium_payment`.
+- `onRequestPost()`: Dispatches mutations validated by `functions/_profile-schemas.js` for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, `update_listing`, `update_listing_locations`, `add_public_role`, `create_franchise_inquiry`, `save_franchise_opportunity`, `remove_franchise_opportunity`, `update_franchise_lead_status`, `create_premium_order`, and `confirm_premium_payment`.
 - Account and role-add mutations are delegated to `functions/_profile-account.js`.
 - Franchisee profile, inquiry, save, and remove mutations are delegated to `functions/_profile-franchisee-actions.js`.
 - Franchisor profile, owner listing update, publication distribution reads, and lead status mutations are delegated to `functions/_profile-franchisor-actions.js`.
@@ -511,7 +556,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_profile-read-model.js`
 *Profile GET/read-model helper for `/profile-data`.*
-- `loadProfileData(db, actor)`: Builds the `/profile-data` GET payload with user summary, completion flags, profile rows, owned listings, claims, recommendations, saved opportunities, inquiry history, lead inbox, Premium membership state, and owner analytics.
+- `loadProfileData(db, actor)`: Builds the `/profile-data` GET payload with user summary, completion flags, profile rows, owned listings, structured location rows, claims, recommendations, saved opportunities, inquiry history, lead inbox, Premium membership state, and owner analytics.
 - `profileLoaders`: Exposes `loadFranchiseeProfile()`, `loadPublicOpportunity()`, `loadSavedOpportunities()`, `loadFranchiseeInquiryHistory()`, and `loadFranchiseeLead()` callbacks consumed by franchisee action handlers.
 - Owned listing edit lock state still uses `OWNER_LISTING_EDIT_INTERVAL_HOURS` from `functions/_profile-franchisor-actions.js`.
 
@@ -528,7 +573,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_profile-franchisee-actions.js`
 *Franchisee mutation helper for `/profile-data`.*
 - `updateFranchiseeProfile(db, actor, data, loaders)`: Upserts the franchisee profile, writes an audit event, and returns the refreshed profile row.
-- `createFranchiseInquiry(db, actor, data, loaders)`: Creates an owner lead from a recommended/saved opportunity after confirming the franchisee profile is complete enough to contact.
+- `createFranchiseInquiry(db, actor, data, loaders)`: Creates an owner lead from a recommended/saved opportunity after confirming the franchisee profile is complete enough to contact, storing sanitized optional buyer context in the lead raw payload.
+- `sanitizeBuyerContext(value)`: Keeps only compact top-level/nested intent data from comparison, budget matcher, and BEP tools before persistence.
 - `saveFranchiseOpportunity(db, actor, data, loaders)` / `removeFranchiseOpportunity(db, actor, data, loaders)`: Writes D1 saved opportunity state and records privacy-safe product events.
 
 ### File: `functions/_profile-franchisor-actions.js`
@@ -536,12 +582,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `OWNER_LISTING_EDIT_INTERVAL_HOURS`: Shared six-hour owner listing edit window used by `/profile-data` response composition and listing save validation.
 - `updateFranchisorProfile(db, actor, data)`: Updates franchisor company/contact/legal fields, writes an audit event, and returns the refreshed profile row.
 - `updateOwnedListing(db, actor, data)`: Verifies owner access, enforces edit throttling, applies the allowed listing patch, writes an audit event, and queues a public rebuild.
+- `updateListingLocations(db, actor, data)`: Verifies owner access, replaces owner-managed `franchise_locations` rows for the listing, writes an audit event, and queues a public rebuild.
 - `updateFranchiseLeadStatus(db, actor, data)`: Verifies owner access to the lead, updates status, writes an audit event, and returns the refreshed lead inbox.
-- `loadOwnedPublicationDistribution()` / `loadFranchisorLeadInbox()` / `loadFranchisorProfile()` / `loadOwnedListing()`: Shared read helpers used by the profile facade and franchisor actions.
+- `loadOwnedStructuredLocations()` / `loadOwnedPublicationDistribution()` / `loadFranchisorLeadInbox()` / `loadFranchisorProfile()` / `loadOwnedListing()`: Shared read helpers used by the profile facade and franchisor actions.
 
 ### File: `functions/_profile-schemas.js`
 *Zod mutation schemas for `/profile-data`.*
-- `MutationSchema`: Discriminated union for account/profile/listing/role/inquiry/saved-opportunity/lead/Premium actions.
+- `MutationSchema`: Discriminated union for account/profile/listing/location/role/inquiry/saved-opportunity/lead/Premium actions.
+- `FranchiseInquirySchema`: Accepts optional `buyer_context` so public/profile inquiry clients can pass recent tool intent without changing lead table columns.
 - Scalar validators keep text, integer, number, and money parsing consistent before profile writes.
 
 ### File: `functions/_profile-utils.js`
@@ -604,7 +652,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/premium-event.js`
 *Public Premium funnel endpoint.*
-- `onRequestPost()`: Accepts only `premium_page_view` and `premium_cta_click`, trims metadata, writes through `_premium-ops.js`, and returns a no-store JSON response.
+- `onRequestPost()`: Accepts `premium_page_view`, `premium_cta_click`, `promo_ribbon_view`, and `promo_ribbon_click`, trims metadata, writes through `_premium-ops.js`, and returns a no-store JSON response.
 
 ### File: `functions/premium-promo.js`
 *Public Premium promo endpoint.*
@@ -627,15 +675,18 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Buyer comparison runtime.*
 - Reads selected ids from `?ids=` or `localStorage.franchise_compare_ids`.
 - Lets buyers add/remove up to four brands and renders a comparison table for category, modal, BEP, royalty, city, notes, and detail links.
+- Writes selected brand ids/names into `localStorage.franchise_buyer_context` so later logged-in inquiries can include comparison intent.
 
 ### File: `js/franchise-buyer-tools.js`
 *Buyer tools runtime.*
 - Runs a local budget matcher against embedded listing data.
 - Calculates a simple BEP estimate from modal awal, omzet bulanan, margin bersih, and biaya tetap.
+- Writes the latest budget matcher/BEP inputs and results into `localStorage.franchise_buyer_context` for optional lead context.
 
 ### File: `js/site-promo-bar.js`
 *Shared public Premium promo bar.*
 - Fetches `/premium-promo` and injects a top ribbon only when an admin-managed campaign is active.
+- Records ribbon impressions and CTA clicks through `/premium-event` with safe campaign metadata.
 - Used by generated listing/detail pages, `/premium`, `/bandingkan`, and `/alat-franchise`.
 
 ### File: `functions/profile-upload.js`
@@ -691,7 +742,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, `review_claim`, `review_premium_payment`, `update_payment_method`, `update_premium_settings`, `manage_notification_email`, `refresh_quality_checks`, and `update_publication`.
+- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, `review_claim`, `review_premium_payment`, `update_payment_method`, `update_premium_settings`, `manage_notification_email`, `refresh_quality_checks`, `update_publication`, and `update_listing_locations`.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
@@ -702,7 +753,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getDataQuality(db)`: Reads persisted open `franchise_quality_checks` when available, falling back to computed warnings for missing images, contact, description, category, all-caps descriptions, suspicious contacts, stale listings, and invalid URLs.
 - `getUnclaimedOutreachQueue(db)`: Reads up to 250 published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
 - `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
-- `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display.
+- `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display and structured location rows for the admin Area Listing editor.
 - `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Operations tab.
 - `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, Premium settings, recent Premium notifications, upcoming expiries, annual reports, queued-email summaries, and recent queued email rows for the Operations tab.
 - `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, and product-event counts.
@@ -714,6 +765,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs write field-by-field to whitelisted `franchises` columns, write audit events, and queue a static rebuild through `siteRebuildStatements()`.
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
 - `handleReviewPremiumPayment(db, auth, data)`: Admin-only approve/reject. Approval marks the order paid, creates or renews a one-year `franchise_subscriptions` row, sets the listing premium, creates missing publication rows for included network sites, publishes those rows, writes audit/events/notifications, queues owner email notifications, and queues rebuilds for each affected site.
+- `handleUpdateListingLocations(db, auth, data)`: Admin-only structured location update for one listing. Replaces owner/admin-managed `franchise_locations` rows, writes an audit event, and queues a static rebuild.
 - `handleUpdatePaymentMethod(db, auth, data)`: Admin-only upsert for the manual BCA payment method shown to franchisors during Premium payment.
 - `handleUpdatePremiumSettings(db, auth, data)`: Admin-only update for grace period, daily grace emails, annual reports, and multi-brand discount settings.
 - `handleManageNotificationEmail(db, auth, data)`: Admin-only retry/cancel for queued email rows, with audit events so recovery actions do not require manual D1 edits.

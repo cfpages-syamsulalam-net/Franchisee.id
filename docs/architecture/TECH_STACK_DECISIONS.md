@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-06-30 08:38 (Asia/Jakarta)
+Last updated: 2026-07-04 06:36 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -41,6 +41,7 @@ The initial schema supports this with:
 - `franchise_site_publications`: where a franchise is visible and which slug/canonical URL each site uses.
 - `subscriptions` and `subscription_site_entitlements`: payment/plan state that can grant publication across one or all network sites.
 - `premium_orders`, `premium_payment_confirmations`, and `franchise_subscriptions`: current manual premium membership workflow for transfer orders, owner confirmations, admin review, and active listing membership state.
+- `locations` and `franchise_locations`: normalized city/service-area/head-office/outlet rows used by local discovery pages such as `/peluang-usaha/kota/[slug]`.
 - `payment_methods`, `premium_settings`, `premium_funnel_events`, `premium_notifications`, `notification_email_queue`, `premium_subscription_reminders`, `premium_grace_notifications`, and `premium_annual_reports`: current premium operations workflow for admin-managed payment instructions/settings, conversion tracking, owner/admin status messages, queued/sent payment emails, expiry/grace follow-up, renewal-reminder idempotency, and annual performance reports.
 - `audit_events`: who changed what, from which site.
 - `franchise_product_events`: privacy-safe interaction signals for ranking/recommendations without storing IP or user-agent data.
@@ -116,6 +117,7 @@ Remote migration status:
 - `0012_premium_email_worker_guardrails.sql` was applied remotely to `franchise_db` on 2026-06-30 and verified to add email delivery metadata, `premium_subscription_reminders`, due-email indexes, and Premium duplicate-order/subscription guardrails.
 - `0013_premium_lifecycle_settings_reports.sql` was applied remotely to `franchise_db` on 2026-06-30 and verified to create Premium settings/report/grace tables plus default 3-day grace settings. A later sequential `PRAGMA table_info(premium_orders)` verified the discount columns; a `notification_email_queue` column check hit the known intermittent Wrangler availability issue after the migration had already applied successfully.
 - `0015_premium_promo_settings.sql` was applied remotely to `franchise_db` on 2026-07-04 and verified sequentially to create the `promo_*` Premium event/ribbon settings in `premium_settings`.
+- `0016_franchise_location_metadata.sql` was applied remotely to `franchise_db` on 2026-07-04 and verified sequentially. The first `scripts/sync-franchise-locations.ts` backfill created 45 `locations` rows and 715 generated `franchise_locations` rows.
 - Remote verification confirmed `d1_migrations` contains `0001_initial_network_schema.sql`.
 
 ## Cloudflare Account Switching

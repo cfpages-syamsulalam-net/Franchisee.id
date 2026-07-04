@@ -1,6 +1,7 @@
 import type { FranchiseStaticRow } from "./franchise-static";
 import { getCapitalSummaries, budgetRecommendationLabel, getComparableCapital } from "./franchise-capital";
 import { getCategorySummaries, canonicalCategoryHref } from "./franchise-category";
+import { getCitySummaries, primaryCityLabel } from "./franchise-city";
 import {
   escapeAttr,
   escapeHtml,
@@ -49,6 +50,7 @@ export function renderBuyerToolsPage(rows: FranchiseStaticRow[]) {
   const payload = comparisonPayload(rows);
   const categories = getCategorySummaries(rows).slice(0, 14);
   const capitalSummaries = getCapitalSummaries(rows);
+  const citySummaries = getCitySummaries(rows).slice(0, 14);
   return basePage({
     title: "Alat Bantu Pilih Franchise",
     description: "Gunakan budget matcher dan kalkulator BEP untuk menyaring peluang franchise berdasarkan modal, omzet, biaya, dan estimasi balik modal.",
@@ -88,6 +90,7 @@ export function renderBuyerToolsPage(rows: FranchiseStaticRow[]) {
           <div class="fr-tool-link-grid">
             ${capitalSummaries.map((item) => `<a href="${escapeAttr(item.canonicalPath)}"><strong>${escapeHtml(item.shortLabel)}</strong><span>${escapeHtml(item.count)} listing</span></a>`).join("")}
             ${categories.map((item) => `<a href="${escapeAttr(canonicalCategoryHref(item.slug))}"><strong>${escapeHtml(item.label)}</strong><span>${escapeHtml(item.count)} listing</span></a>`).join("")}
+            ${citySummaries.map((item) => `<a href="${escapeAttr(item.canonicalPath)}"><strong>${escapeHtml(item.label)}</strong><span>${escapeHtml(item.count)} listing</span></a>`).join("")}
           </div>
         </section>
       </main>
@@ -110,7 +113,7 @@ function comparisonPayload(rows: FranchiseStaticRow[]) {
       capitalLabel: formatRupiah(capital),
       bep: row.estimated_bep_months ? `${row.estimated_bep_months} bulan` : "Tanya Admin",
       royalty: row.royalty_percent ? `${row.royalty_percent}%` : "Tanya Admin",
-      city: normalizeText(row.city_origin) || "-",
+      city: primaryCityLabel(row) || normalizeText(row.city_origin) || "-",
       status: normalizeText(row.verification_tier || row.status) || "free",
       description: truncate(normalizeDescriptionText(row.short_desc || row.full_desc, row.brand_name) || `Peluang franchise ${normalizeBrandName(row.brand_name)}.`, 120),
       image: getThumb(row.cover_url || row.logo_url),

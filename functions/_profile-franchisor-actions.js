@@ -120,6 +120,72 @@ export async function updateOwnedListing(db, actor, data) {
   });
 }
 
+export async function updateListingLocations(db, actor, data) {
+  const franchisorProfile = await loadFranchisorProfile(db, actor.id);
+  const listing = await loadOwnedListing(db, actor, data.franchise_id, franchisorProfile?.id || null);
+  if (!listing) {
+    return jsonResponse({ success: false, message: "Listing tidak ditemukan atau bukan milik akun ini." }, { status: 404 });
+  }
+
+  const locations = normalizeOwnerLocations(data.locations || []);
+  const statements = [
+    db.prepare("DELETE FROM franchise_locations WHERE franchise_id = ? AND source_field = 'owner_profile'").bind(listing.id),
+  ];
+
+  for (const location of locations) {
+    const locationId = `location_${location.slug}`;
+    const relationId = ownerLocationRelationId(listing.id, location.location_type, location.slug);
+    statements.push(
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO locations (id, country_code, province, city, slug)
+           VALUES (?, 'ID', ?, ?, ?)`,
+        )
+        .bind(locationId, location.province, location.city, location.slug),
+      db
+        .prepare(
+          `INSERT INTO franchise_locations
+             (id, franchise_id, location_id, location_text, location_type, source_field, confidence_score)
+           VALUES (?, ?, ?, ?, ?, 'owner_profile', 1)`,
+        )
+        .bind(relationId, listing.id, locationId, location.city, location.location_type),
+    );
+  }
+
+  statements.push(
+    auditStatement(
+      db,
+      "profile.listing.locations.update",
+      "franchise_locations",
+      listing.id,
+      { source: "profile", count: locations.length, locations: locations.map((item) => ({ city: item.city, type: item.location_type })) },
+      actor.id,
+    ),
+    ...siteRebuildStatements(db, {
+      siteId: SITE_FRANCHISEE_ID,
+      franchiseId: listing.id,
+      reason: "owner_listing_locations_update",
+      entityType: "franchise_locations",
+      entityId: listing.id,
+      actorUserId: actor.id,
+      source: "profile",
+      metadata: {
+        slug: listing.slug,
+        brand_name: listing.brand_name,
+        count: locations.length,
+      },
+    }),
+  );
+
+  await db.batch(statements);
+  const locationMap = await loadOwnedStructuredLocations(db, [listing.id]);
+
+  return jsonResponse({
+    success: true,
+    structured_locations: locationMap.get(listing.id) || [],
+  });
+}
+
 export async function updateFranchiseLeadStatus(db, actor, data) {
   const lead = await db
     .prepare(
@@ -150,6 +216,50 @@ export async function updateFranchiseLeadStatus(db, actor, data) {
     success: true,
     franchisor_leads: await loadFranchisorLeadInbox(db, actor.id, franchisorProfile?.id || null),
   });
+}
+
+export async function loadOwnedStructuredLocations(db, franchiseIds) {
+  const ids = Array.from(new Set((franchiseIds || []).filter(Boolean)));
+  if (!ids.length) return new Map();
+  const placeholders = ids.map(() => "?").join(",");
+  try {
+    const result = await db
+      .prepare(
+        `SELECT
+          fl.id,
+          fl.franchise_id,
+          fl.location_text,
+          fl.location_type,
+          fl.source_field,
+          fl.confidence_score,
+          l.city,
+          l.slug,
+          l.province
+         FROM franchise_locations fl
+         LEFT JOIN locations l ON l.id = fl.location_id
+         WHERE fl.franchise_id IN (${placeholders})
+           AND COALESCE(l.city, fl.location_text) IS NOT NULL
+         ORDER BY
+           CASE fl.source_field WHEN 'owner_profile' THEN 0 ELSE 1 END,
+           CASE fl.location_type WHEN 'head_office' THEN 0 WHEN 'origin' THEN 1 WHEN 'outlet' THEN 2 ELSE 3 END,
+           COALESCE(l.city, fl.location_text) ASC`,
+      )
+      .bind(...ids)
+      .all();
+    const byFranchise = new Map();
+    for (const row of result.results || []) {
+      const rows = byFranchise.get(row.franchise_id) || [];
+      rows.push({
+        ...row,
+        city: row.city || row.location_text || "",
+        source_label: row.source_field === "owner_profile" ? "Diatur pemilik" : "Data awal",
+      });
+      byFranchise.set(row.franchise_id, rows);
+    }
+    return byFranchise;
+  } catch (_error) {
+    return new Map();
+  }
 }
 
 export async function loadOwnedPublicationDistribution(db, franchiseIds) {
@@ -241,4 +351,44 @@ export async function loadOwnedListing(db, actor, franchiseId, franchisorProfile
     )
     .bind(SITE_FRANCHISEE_ID, franchiseId, actor.id, franchisorProfileId || null, franchisorProfileId || null)
     .first();
+}
+
+function normalizeOwnerLocations(rows) {
+  const dedupe = new Set();
+  const output = [];
+  for (const row of rows || []) {
+    const city = textOrNull(row.city);
+    if (!city) continue;
+    const locationType = ["head_office", "outlet", "available_area", "origin"].includes(row.location_type)
+      ? row.location_type
+      : "available_area";
+    const slug = slugifyLocation(city);
+    if (!slug) continue;
+    const key = `${locationType}:${slug}`;
+    if (dedupe.has(key)) continue;
+    dedupe.add(key);
+    output.push({
+      city,
+      province: textOrNull(row.province),
+      location_type: locationType,
+      slug,
+    });
+  }
+  return output.slice(0, 24);
+}
+
+function ownerLocationRelationId(franchiseId, locationType, slug) {
+  const safeFranchiseId = slugifyLocation(franchiseId).slice(0, 48) || "franchise";
+  return `franchise_location_owner_${safeFranchiseId}_${locationType}_${slug}`.slice(0, 190);
+}
+
+function slugifyLocation(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " dan ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 90);
 }

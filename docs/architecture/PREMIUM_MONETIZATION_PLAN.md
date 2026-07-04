@@ -1,6 +1,6 @@
 # Premium Monetization Plan
 
-Last updated: 2026-07-04 00:10 (Asia/Jakarta)
+Last updated: 2026-07-04 06:36 (Asia/Jakarta)
 
 This is the working plan and progress tracker for monetizing the Franchisee.id network while keeping the public franchise directory free.
 
@@ -154,13 +154,29 @@ Current implementation:
 ### 7. Content And SEO Support
 
 Premium can include light editorial support:
-- One brand profile article per year.
+- One brand profile article as a campaign bonus when configured.
 - Inclusion in category roundups when relevant.
 - Inclusion in "franchise modal..." pages if package data matches.
 - Internal links from educational articles.
 - Optional interview/Q&A template.
 
 This is valuable because it compounds traffic over time.
+
+Current editorial decision:
+- Editorial article is a paid add-on by default, including for non-Premium brands that only want content exposure.
+- Premium can receive one editorial article as a campaign bonus, annual bonus, or package bonus when that bonus is explicitly configured. It should not be promised as an unlimited base benefit.
+- Monthly editorial is reasonable only when each piece has a distinct angle: new package, expansion city, partner case study, founder interview, event/promo, category education, or comparison-style guide. Repeating the same brand profile every month is weak for readers and SEO.
+- Social media exposure across the Franchisee.id network is a good add-on and a good campaign bonus because it is cheaper to produce than a full article while still adding visibility.
+
+Recommended add-on pricing:
+
+| Add-on | Public price | Premium owner price | Notes |
+| --- | ---: | ---: | --- |
+| Editorial article, one-off | Rp 750.000 / article | Rp 500.000 / article | Good for brand profile, interview, city expansion, category education, or package launch. |
+| Editorial + social bundle | Rp 1.000.000 / campaign | Rp 750.000 / campaign | One article plus one social media exposure slot. |
+| Social media exposure | Rp 250.000 / mention | Rp 200.000 / mention | Can be a feed post, story, short mention, or roundup slot depending on available channels. |
+| Social media package | Rp 1.000.000 / 5 mentions | Rp 750.000 / 5 mentions | Useful as a bonus during event campaigns. |
+| Monthly content package | Rp 2.000.000 / month | Rp 1.500.000 / month | Use only when there are enough real angles; do not publish repetitive brand-profile articles. |
 
 ### 8. Media And Proposal Hosting
 
@@ -253,7 +269,9 @@ Implementation guardrail:
 Current implementation:
 - [x] Static capital-based directory pages under `/peluang-usaha/modal/` and `/peluang-usaha/modal/[range]`, generated from the D1 franchise snapshot during build.
 - [x] Static category landing pages under `/peluang-usaha/kategori/` and `/peluang-usaha/kategori/[slug]`, generated from the same listing data with useful intro copy and client-side filters.
-- [x] Internal links from directory controls, category cards, detail breadcrumbs, and buyer tools point to the new modal/category pages.
+- [x] Static city landing pages under `/peluang-usaha/kota/` and `/peluang-usaha/kota/[slug]`, generated from listing city/address/outlet/service-area text when enough listings match a city.
+- [x] Structured location backfill into D1 `locations` and `franchise_locations`; city pages now prefer `structured_locations` from D1 and use text inference only as fallback.
+- [x] Internal links from directory controls, category cards, detail breadcrumbs, and buyer tools point to the new modal/category/city pages.
 
 ### Buyer Tools
 
@@ -272,6 +290,7 @@ Current implementation:
 - [x] `/bandingkan/` comparison page lets buyers compare 2-4 brands selected from directory/detail cards or from the page picker.
 - [x] `/alat-franchise/` includes a budget matcher and BEP calculator, plus quick links to capital and category directories.
 - [x] Directory and detail pages include "Bandingkan" controls that save selected brands in the browser and link to `/bandingkan/`.
+- [x] Budget matcher, BEP calculator, and comparison selections save optional lead context in the browser so a later logged-in inquiry can include useful buyer intent for the franchisor.
 
 ### Content And Distribution
 
@@ -641,10 +660,13 @@ Implementation note: Premium detail pages now add richer owner-facing value dire
 - [x] Build category landing pages with useful copy and filters.
 - [x] Add comparison feature.
 - [x] Add buyer tools: budget matcher and BEP calculator.
+- [x] Build city/region discovery pages from available listing location text.
+- [x] Attach comparison/calculator intent as optional context on logged-in lead submissions.
+- [x] Track promo ribbon impressions and CTA clicks.
 - [ ] Add weekly content workflow.
 - [x] Add internal analytics report for premium sales proof.
 
-Implementation note: the first traffic-growth surface now ships as static SEO pages for modal/category discovery plus buyer tools for comparison, budget matching, and BEP simulation. These pages use the same D1-backed snapshot as `/peluang-usaha`, so public rebuilds refresh the related directories when listings are added, edited, or removed.
+Implementation note: the first traffic-growth surface now ships as static SEO pages for modal/category/city discovery plus buyer tools for comparison, budget matching, and BEP simulation. These pages use the same D1-backed snapshot as `/peluang-usaha`, so public rebuilds refresh the related directories when listings are added, edited, or removed. Buyer tools also preserve optional intent context for later lead submissions.
 
 ### Milestone 5: Renewal And Retention
 
@@ -661,7 +683,7 @@ Implementation note: Premium lifecycle settings are managed from `/dashboard` Pr
 - [x] Should premium cover exactly one brand or all brands owned by the same franchisor account? Decision: one premium membership covers one brand/listing.
 - [x] Should early customers get founder pricing or full Rp 3.000.000/year immediately? Decision: keep full Rp 3.000.000/year as the base price; temporary event discounts, bonus packages, or campaign ribbons can be configured from dashboard.
 - [x] Should premium activation wait for listing completeness review? Decision: do not block payment/approval yet; show readiness warnings to owners and admin reviewers so incomplete listings can be fixed before or after activation.
-- [ ] Should premium include one editorial article or make it paid add-on?
+- [x] Should premium include one editorial article or make it paid add-on? Decision: editorial article is a paid add-on by default. It can be used as a Premium campaign bonus, and monthly editorial only makes sense when each article has a distinct useful angle. Social media exposure is also a paid add-on or configurable bonus.
 - [ ] Which payment gateway should be first after manual transfer?
 - [x] Should the public `/premium` page show the BCA account immediately, or only after the user creates an order with a unique code? Decision: public page can show the BCA account for clarity, but exact payable amount is generated after login/order.
 
@@ -716,6 +738,7 @@ Current implementation:
 - [x] Admin can configure promo/event ribbon settings in `/dashboard` Premium Operations.
 - [x] `/premium-promo` exposes only active public promo data.
 - [x] Public pages that load the shared promo script can show a top ribbon with CTA while the campaign is active.
+- [x] Promo ribbon impressions and CTA clicks are recorded as coarse Premium funnel events so campaigns can be compared before repeating discounts or bonuses.
 
 ## External References Checked
 

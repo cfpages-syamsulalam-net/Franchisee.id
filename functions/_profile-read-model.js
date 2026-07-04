@@ -2,6 +2,7 @@ import {
   OWNER_LISTING_EDIT_INTERVAL_HOURS,
   loadFranchisorLeadInbox,
   loadOwnedPublicationDistribution,
+  loadOwnedStructuredLocations,
 } from "./_profile-franchisor-actions.js";
 import { loadPremiumMembershipData } from "./_profile-premium.js";
 import { loadOwnerAnalytics } from "./_profile-owner-analytics.js";
@@ -91,6 +92,7 @@ export async function loadProfileData(db, actor) {
 
   const ownedRows = owned.results || [];
   const publicationDistribution = await loadOwnedPublicationDistribution(db, ownedRows.map((row) => row.id));
+  const structuredLocations = await loadOwnedStructuredLocations(db, ownedRows.map((row) => row.id));
   const inquiryHistory = await loadFranchiseeInquiryHistory(db, actor.id, franchiseeProfile?.id || null);
   const savedOpportunities = await loadSavedOpportunities(db, actor.id);
   const franchisorLeads = await loadFranchisorLeadInbox(db, actor.id, franchisorProfile?.id || null);
@@ -122,6 +124,8 @@ export async function loadProfileData(db, actor) {
     owned_franchises: ownedRows.map((row) => ({
       ...row,
       publication_distribution: publicationDistribution.get(row.id) || [],
+      structured_locations: structuredLocations.get(row.id) || [],
+      location_override_active: (structuredLocations.get(row.id) || []).some((item) => item.source_field === "owner_profile"),
       edit_locked: Number(row.owner_edits_window || 0) > 0,
       edit_interval_hours: OWNER_LISTING_EDIT_INTERVAL_HOURS,
     })),

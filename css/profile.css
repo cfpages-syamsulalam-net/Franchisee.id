@@ -980,6 +980,56 @@
   text-decoration: underline;
 }
 
+.fr-profile-location-editor {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  display: grid;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 14px;
+}
+
+.fr-profile-location-editor .fr-profile-copy {
+  margin-bottom: 0;
+}
+
+.fr-profile-location-status {
+  background: rgba(255, 192, 61, 0.2);
+  color: #5c4200;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 8px;
+  text-transform: uppercase;
+}
+
+.fr-profile-location-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.fr-profile-location-chips span {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  color: #374151;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 6px;
+  padding: 7px 9px;
+}
+
+.fr-profile-location-form {
+  display: grid;
+  gap: 10px;
+}
+
+.fr-profile-location-form textarea {
+  min-height: 132px;
+}
+
 .fr-profile-opportunity-actions {
   align-items: center;
   display: flex;

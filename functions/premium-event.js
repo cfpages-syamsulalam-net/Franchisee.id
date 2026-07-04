@@ -2,7 +2,7 @@ import { z } from "zod";
 import { recordPremiumEvent } from "./_premium-ops.js";
 
 const PublicPremiumEventSchema = z.object({
-  event_type: z.enum(["premium_page_view", "premium_cta_click"]),
+  event_type: z.enum(["premium_page_view", "premium_cta_click", "promo_ribbon_view", "promo_ribbon_click"]),
   surface: z.string().trim().max(80).optional().default("premium"),
   channel: z.string().trim().max(80).optional().default("web"),
   metadata: z.record(z.unknown()).optional().default({}),

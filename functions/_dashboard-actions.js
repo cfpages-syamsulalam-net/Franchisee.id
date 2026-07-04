@@ -298,6 +298,59 @@ export async function handleUpdatePublication(db, auth, data) {
   return jsonResponse({ success: true, publication_status: data.publication_status });
 }
 
+export async function handleUpdateListingLocations(db, auth, data) {
+  assertAdmin(auth);
+  const listing = await db
+    .prepare("SELECT id, brand_name, slug FROM franchises WHERE id = ? LIMIT 1")
+    .bind(data.franchise_id)
+    .first();
+  if (!listing) return jsonResponse({ success: false, error: "LISTING_NOT_FOUND" }, { status: 404 });
+
+  const locations = normalizeDashboardLocations(data.locations || []);
+  const statements = [
+    db.prepare("DELETE FROM franchise_locations WHERE franchise_id = ? AND source_field = 'owner_profile'").bind(listing.id),
+  ];
+
+  for (const location of locations) {
+    const locationId = `location_${location.slug}`;
+    statements.push(
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO locations (id, country_code, province, city, slug)
+           VALUES (?, 'ID', ?, ?, ?)`,
+        )
+        .bind(locationId, location.province, location.city, location.slug),
+      db
+        .prepare(
+          `INSERT INTO franchise_locations
+             (id, franchise_id, location_id, location_text, location_type, source_field, confidence_score)
+           VALUES (?, ?, ?, ?, ?, 'owner_profile', 1)`,
+        )
+        .bind(ownerLocationRelationId(listing.id, location.location_type, location.slug), listing.id, locationId, location.city, location.location_type),
+    );
+  }
+
+  statements.push(
+    auditStatement(db, "dashboard.listing.locations.update", "franchise_locations", listing.id, {
+      count: locations.length,
+      locations: locations.map((item) => ({ city: item.city, type: item.location_type })),
+    }, auth.id),
+    ...siteRebuildStatements(db, {
+      siteId: SITE_ID,
+      franchiseId: listing.id,
+      reason: "dashboard_listing_locations_update",
+      entityType: "franchise_locations",
+      entityId: listing.id,
+      actorUserId: auth.id,
+      source: "dashboard",
+      metadata: { brand_name: listing.brand_name, slug: listing.slug, count: locations.length },
+    }),
+  );
+
+  await db.batch(statements);
+  return jsonResponse({ success: true, location_count: locations.length });
+}
+
 export async function handleUpdatePaymentMethod(db, auth, data) {
   assertAdmin(auth);
   const code = data.code || "manual_bca";
@@ -612,3 +665,43 @@ export async function handleReviewPremiumPayment(db, auth, data) {
 }
 
 export { AuthError };
+
+function normalizeDashboardLocations(rows) {
+  const seen = new Set();
+  const output = [];
+  for (const row of rows || []) {
+    const city = String(row.city || "").trim();
+    if (!city) continue;
+    const locationType = ["head_office", "outlet", "available_area", "origin"].includes(row.location_type)
+      ? row.location_type
+      : "available_area";
+    const slug = slugifyLocation(city);
+    if (!slug) continue;
+    const key = `${locationType}:${slug}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    output.push({
+      city,
+      province: String(row.province || "").trim() || null,
+      location_type: locationType,
+      slug,
+    });
+  }
+  return output.slice(0, 24);
+}
+
+function ownerLocationRelationId(franchiseId, locationType, slug) {
+  const safeFranchiseId = slugifyLocation(franchiseId).slice(0, 48) || "franchise";
+  return `franchise_location_owner_${safeFranchiseId}_${locationType}_${slug}`.slice(0, 190);
+}
+
+function slugifyLocation(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " dan ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 90);
+}

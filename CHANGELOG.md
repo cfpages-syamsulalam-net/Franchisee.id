@@ -4,6 +4,58 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-04 09:50 (Asia/Jakarta)
+### Added
+- `/profil` Listing Brand: Added an owner-facing Area Listing editor for city/service-area rows with source labels and owner-managed override persistence.
+- `/dashboard` Review tab: Added an admin-only Area Listing editor for structured listing locations.
+
+### Changed
+- `functions/_profile-schemas.js`, `functions/profile-data.js`, `functions/_profile-franchisor-actions.js`, and `functions/_profile-read-model.js`: Added the protected `update_listing_locations` profile action, D1 writes to `locations`/`franchise_locations`, profile read payload location rows, audit events, and public rebuild queueing.
+- `functions/_dashboard-schemas.js`, `functions/dashboard-data.js`, `functions/_dashboard-actions.js`, and `functions/_dashboard-queries.js`: Added admin validation, mutation dispatch, D1 location writes, editable listing location rows, audit events, and public rebuild queueing for dashboard location management.
+- `js/profile-franchisor.js`, `js/profile-page.js`, and `css/profile.css`: Added owner location editor rendering, textarea parsing, submit routing, and styling.
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-review.js`, and `css/dashboard.css`: Added dashboard location editor markup, runtime wiring, parsing, admin-only submit behavior, and styling.
+- `scripts/build-d1-franchise-pages.ts`: Updated the static D1 snapshot query so owner/admin-managed location rows override generated location rows during public city page generation.
+- `SUGGESTION.md`, `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented suggestion 46 completion and the structured location management contracts; added suggestion 47 for consolidating duplicated location-write helpers.
+- `.context/session-20260704-0950.md`: Added this session snapshot for location management UX.
+
+## 2026-07-04 06:36 (Asia/Jakarta)
+### Added
+- `migrations/0016_franchise_location_metadata.sql`: Added generated-row metadata and indexes to the existing `franchise_locations` table.
+- `src/lib/franchise-location-normalization.ts`: Added shared city/province alias matching, structured location parsing, and text-to-location inference helpers.
+- `scripts/sync-franchise-locations.ts`: Added a repeatable D1 location backfill script that writes `locations` and generated `franchise_locations` SQL from the static franchise snapshot.
+- `.context/session-20260704-0636.md`: Added this session snapshot for structured location backfill and city-page source upgrades.
+
+### Changed
+- `package.json`: Added `pnpm run locations:sync`.
+- `.gitignore`: Ignored generated `.context/franchise-location-sync.sql` backfill output.
+- `src/lib/shared-schemas.ts`: Added optional `structured_locations` to the D1 static row schema.
+- `scripts/build-d1-franchise-pages.ts`: Added `structured_locations` aggregation from D1 `locations` and `franchise_locations` into the static snapshot query.
+- `src/lib/franchise-city.ts` and `src/lib/franchise-buyer-tools.ts`: Switched city matching/labels to use structured location data first with text inference fallback.
+- `json/d1-franchise-static-data.json` and `json/d1-generated-pages-manifest.json`: Refreshed during build validation after structured location backfill.
+- Remote D1 `franchise_db`: Applied `0016_franchise_location_metadata.sql`, then backfilled 45 `locations` and 715 generated `franchise_locations` rows from current listing data.
+- `SUGGESTION.md`: Marked suggestion 45 done and added suggestion 46 for future admin/owner location management UI.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented structured location data, the sync script, remote backfill status, and the next location-management recommendation.
+
+## 2026-07-04 05:56 (Asia/Jakarta)
+### Added
+- `src/lib/franchise-city.ts`: Added city discovery helpers for static `/peluang-usaha/kota/` landing pages from listing city/address/outlet/service-area text.
+- `src/pages/peluang-usaha/kota/index.astro` and `src/pages/peluang-usaha/kota/[slug].astro`: Added static city directory pages generated from the D1 franchise snapshot.
+- `SUGGESTION.md`: Added suggestion 45 for structured location/service-area data before scaling long-tail city SEO further.
+- `.context/session-20260704-0556.md`: Added this session snapshot for city pages, buyer lead context, promo measurement, and Premium add-on pricing.
+
+### Changed
+- `src/lib/franchise-static.ts`: Added city index/landing renderers and city internal links in the directory controls.
+- `src/lib/franchise-buyer-tools.ts`: Added city quick links, used matched city labels in comparison payloads, and kept buyer-tool pages aligned with city discovery pages.
+- `js/franchise-buyer-tools.js`: Stores budget matcher and BEP calculator intent in optional browser buyer context.
+- `js/franchise-compare.js`, `src/lib/franchise-static-assets.ts`, and `src/lib/franchise-detail-assets.ts`: Store selected comparison brand context when buyers use comparison controls.
+- `js/opportunity-save.js`, `js/profile-page.js`, `functions/_profile-schemas.js`, and `functions/_profile-franchisee-actions.js`: Attach sanitized optional buyer context to logged-in franchise inquiry leads.
+- `functions/_premium-ops.js`, `functions/premium-event.js`, and `js/site-promo-bar.js`: Track public promo ribbon impressions and CTA clicks as coarse Premium funnel events.
+- `src/pages/premium/index.astro` and `css/premium.css`: Added editorial article, monthly content, and social media exposure add-on pricing to the public Premium page.
+- `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: Recorded the editorial/social add-on pricing decision, marked the editorial open decision complete, and documented city pages, buyer context, and promo measurement progress.
+- `SUGGESTION.md`: Marked suggestions 42, 43, and 44 done.
+- `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Updated the implementation map for city pages, buyer qualification context, promo measurement, and Premium add-ons.
+- `json/d1-generated-pages-manifest.json`: Refreshed during build validation after adding static city directory pages.
+
 ## 2026-07-04 00:10 (Asia/Jakarta)
 ### Added
 - `src/lib/franchise-contact.ts`: Added the extracted generated detail contact renderer and phone parsing helpers.

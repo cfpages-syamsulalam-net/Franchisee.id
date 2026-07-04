@@ -67,6 +67,18 @@ const ListingSchema = z.object({
   proposal_url: optionalText(500),
 });
 
+const ListingLocationSchema = z.object({
+  city: z.string().trim().min(2).max(100),
+  province: optionalText(100),
+  location_type: z.enum(["head_office", "outlet", "available_area", "origin"]).default("available_area"),
+});
+
+const ListingLocationsSchema = z.object({
+  action: z.literal("update_listing_locations"),
+  franchise_id: z.string().trim().min(3).max(120),
+  locations: z.array(ListingLocationSchema).max(24).default([]),
+});
+
 const AddPublicRoleSchema = z.object({
   action: z.literal("add_public_role"),
   role: z.enum(["franchisee", "franchisor"]),
@@ -76,6 +88,7 @@ const FranchiseInquirySchema = z.object({
   action: z.literal("create_franchise_inquiry"),
   franchise_id: z.string().trim().min(3).max(120),
   message: optionalText(1200),
+  buyer_context: z.record(z.unknown()).optional().default({}),
 });
 
 const SaveOpportunitySchema = z.object({
@@ -100,6 +113,7 @@ export const MutationSchema = z.discriminatedUnion("action", [
   FranchiseeProfileSchema,
   FranchisorProfileSchema,
   ListingSchema,
+  ListingLocationsSchema,
   AddPublicRoleSchema,
   FranchiseInquirySchema,
   SaveOpportunitySchema,

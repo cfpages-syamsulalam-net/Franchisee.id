@@ -75,6 +75,15 @@
   function saveSelected() {
     try {
       localStorage.setItem("franchise_compare_ids", JSON.stringify(selected));
+      var current = JSON.parse(localStorage.getItem("franchise_buyer_context") || "{}");
+      current.updated_at = new Date().toISOString();
+      current.last_tool = "comparison";
+      current.comparison = {
+        source: "comparison",
+        selected_brand_ids: selected,
+        selected_brand_names: selected.map(function (id) { return byId[id] && byId[id].brand; }).filter(Boolean)
+      };
+      localStorage.setItem("franchise_buyer_context", JSON.stringify(current));
     } catch (_error) {
       return null;
     }

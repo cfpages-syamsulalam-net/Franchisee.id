@@ -403,6 +403,23 @@ body {
   font-size: 12px;
   word-break: break-word;
 }
+
+.dash-location-editor {
+  border-top: 1px solid var(--dash-line);
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px 16px;
+}
+
+.dash-location-form {
+  border: 1px solid #ececec;
+  grid-template-columns: 1fr;
+  padding: 12px;
+}
+
+.dash-location-form textarea {
+  min-height: 130px;
+}
 .dash-panel-wide {
   grid-column: 1 / -1;
 }

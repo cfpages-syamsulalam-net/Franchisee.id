@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { z } from "zod";
 import { capitalIndexCopy, capitalLandingCopy, getCapitalRouteEntries, getCapitalSummaries } from "./franchise-capital";
 import { canonicalCategoryHref, categorySlug, getCategoryRouteEntries, getCategorySummaries } from "./franchise-category";
+import { cityIndexCopy, cityLandingCopy, getCityRouteEntries, getCitySummaries, type CityRouteEntry } from "./franchise-city";
 import { generateContactBlock } from "./franchise-contact";
 import { generateCssPlaceholder, injectDetailAssets, injectDirectoryAssets } from "./franchise-static-assets";
 import { generatePremiumLeadPanel, generatePremiumTabs } from "./franchise-premium-detail";
@@ -25,7 +26,7 @@ import {
 } from "./franchise-text";
 import { D1FranchiseRowSchema } from "./shared-schemas";
 export { slugify } from "./franchise-text";
-export { getAlphabeticalRows, getCapitalRouteEntries, getCategoryRouteEntries, getPopularRows, getRecommendedRows };
+export { getAlphabeticalRows, getCapitalRouteEntries, getCategoryRouteEntries, getCityRouteEntries, getPopularRows, getRecommendedRows };
 
 const ROOT_DIR = resolve(process.cwd());
 const DETAIL_TEMPLATE_PATH = join(ROOT_DIR, "templates", "detail-franchise-tpl.html");
@@ -144,6 +145,41 @@ export function renderCapitalLandingPage(entry: ReturnType<typeof getCapitalRout
     canonicalPath: entry.canonicalPath,
     rows: entry.rows,
     introHtml: capitalLandingCopy(entry),
+  });
+}
+
+export function renderCityIndexPage(rows: FranchiseStaticRow[]) {
+  const template = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
+  const cards = getCitySummaries(rows).map((summary, index) => generateCityCard(summary, index + 1)).join("");
+  const html = template
+    .replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)
+    .replace(
+      '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
+      `${generateDirectoryIntro({
+        title: "Franchise Berdasarkan Kota",
+        description: "Temukan peluang franchise berdasarkan data kota, kantor, outlet, atau ekspansi yang tersedia di listing.",
+        canonicalPath: "/peluang-usaha/kota/",
+        introHtml: cityIndexCopy(rows),
+      })}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+    );
+  return normalizeGeneratedHtml(
+    injectDirectoryAssets(
+      applyCanonicalLegacyLinks(applyDirectoryMeta(html, {
+        title: "Franchise Berdasarkan Kota",
+        description: "Temukan peluang franchise berdasarkan data kota, kantor, outlet, atau ekspansi yang tersedia di listing.",
+        canonicalPath: "/peluang-usaha/kota/",
+      })),
+    ),
+  );
+}
+
+export function renderCityLandingPage(entry: CityRouteEntry, allRows: FranchiseStaticRow[]) {
+  return renderListingPage(allRows, {
+    title: `Peluang Franchise di ${entry.label}`,
+    description: `Cari peluang franchise di ${entry.label}. Bandingkan modal, kategori, BEP, dan detail brand sebelum menghubungi franchisor.`,
+    canonicalPath: entry.canonicalPath,
+    rows: entry.rows,
+    introHtml: cityLandingCopy(entry),
   });
 }
 
@@ -332,6 +368,38 @@ function generateCapitalCard(summary: { label: string; shortLabel: string; count
     </div>`;
 }
 
+function generateCityCard(summary: { label: string; count: number; canonicalPath: string }, index: number) {
+  return `
+    <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item category-directory-card">
+        <a class="uc_post_grid_style_one_image" href="${escapeAttr(summary.canonicalPath)}">
+            <div class="uc_post_image">
+                ${generateCssPlaceholder(summary.label, "franchise-css-placeholder category-css-placeholder")}
+                <div class="uc_post_image_overlay"></div>
+            </div>
+        </a>
+        <div class="uc_content">
+            <div class="uc_content_inner">
+                <div class="uc_content-info-wrapper">
+                    <div class="uc_post_title">
+                        <a href="${escapeAttr(summary.canonicalPath)}" class="ue_p_title">Franchise di ${escapeHtml(summary.label)}</a>
+                    </div>
+                    <div class="ue-meta-data">
+                        <span class="ue-grid-item-category">
+                            <a href="${escapeAttr(summary.canonicalPath)}">${escapeHtml(summary.count)} franchise</a>
+                        </span>
+                    </div>
+                    <div class="uc_post_text">Lihat brand dengan data lokasi atau outlet terkait ${escapeHtml(summary.label)}.</div>
+                </div>
+                <div class="uc_post_button">
+                    <a class="uc_more_btn" href="${escapeAttr(summary.canonicalPath)}">
+                        <div class="uc_btn_inner"><div class="uc_btn_txt">Lihat Kota</div></div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
 function generateDirectoryIntro(options?: DirectoryPageOptions) {
   if (!options?.introHtml) return "";
   return `<section class="franchise-directory-intro" aria-label="Panduan direktori">${options.introHtml}</section>`;
@@ -405,6 +473,7 @@ function generateDirectoryControls(rows: FranchiseStaticRow[]) {
         <a href="/peluang-usaha?sort=abjad">Abjad</a>
         <a href="/peluang-usaha/kategori/">Kategori</a>
         <a href="/peluang-usaha/modal/">Modal</a>
+        <a href="/peluang-usaha/kota/">Kota</a>
         <a href="/alat-franchise/">Budget & BEP</a>
         <a href="/bandingkan">Bandingkan</a>
       </div>

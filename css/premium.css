@@ -278,6 +278,46 @@
   margin-top: 8px;
 }
 
+.fr-premium-addons > p {
+  max-width: 760px;
+}
+
+.fr-premium-addon-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 24px;
+}
+
+.fr-premium-addon-grid article {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.fr-premium-addon-grid i {
+  color: #0f766e;
+  font-size: 22px;
+  margin-bottom: 14px;
+}
+
+.fr-premium-addon-grid h3 {
+  color: #111827;
+  margin: 0 0 8px;
+}
+
+.fr-premium-addon-grid strong {
+  color: #17202a;
+  display: block;
+  font-size: 15px;
+}
+
+.fr-premium-addon-grid p {
+  font-size: 14px;
+  margin-top: 10px;
+}
+
 .fr-premium-steps ol {
   display: grid;
   gap: 12px;
@@ -328,7 +368,8 @@
 
   .fr-premium-hero,
   .fr-premium-price,
-  .fr-premium-grid {
+  .fr-premium-grid,
+  .fr-premium-addon-grid {
     grid-template-columns: 1fr;
   }
 

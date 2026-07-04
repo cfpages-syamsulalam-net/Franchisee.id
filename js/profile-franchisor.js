@@ -56,6 +56,7 @@
           ${mediaUploadControl("Cover", "cover", selected.cover_url, "fa-panorama")}
           ${mediaUploadControl("Proposal", "proposal", selected.proposal_url, "fa-file-pdf")}
         </div>
+        ${locationEditor(selected)}
         ${selected.edit_locked ? `<div class="fr-profile-notice"><i class="fas fa-clock" aria-hidden="true"></i><div>Listing ini baru diedit pada ${escapeHtml(selected.last_owner_edit_at || "beberapa waktu lalu")}. Tunggu sebelum menyimpan perubahan berikutnya.</div></div>` : ""}
         <form data-profile-form="listing">
           <input type="hidden" name="franchise_id" value="${attr(selected.id)}">
@@ -81,6 +82,39 @@
             ${selected.slug ? `<a class="fr-profile-secondary" href="/peluang-usaha/${encodeURIComponent(selected.slug)}"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i> Lihat Halaman</a>` : ""}
           </div>
         </form>
+      `;
+    }
+
+    function locationEditor(listing) {
+      var locations = listing.structured_locations || [];
+      var hasManual = locations.some(function (item) { return item.source_field === "owner_profile"; });
+      return `
+        <section class="fr-profile-location-editor">
+          <div class="fr-profile-section-head">
+            <h3><i class="fas fa-map-location-dot" aria-hidden="true"></i> Area Listing</h3>
+            <span class="fr-profile-location-status">${hasManual ? "Diatur pemilik" : "Data awal"}</span>
+          </div>
+          <p class="fr-profile-copy">Atur kota yang ingin ditampilkan di halaman kota dan pencarian area. Tulis satu kota per baris.</p>
+          ${locations.length ? `
+            <div class="fr-profile-location-chips">
+              ${locations.slice(0, 18).map(function (item) {
+                return `<span><i class="fas ${locationTypeIcon(item.location_type)}" aria-hidden="true"></i> ${escapeHtml(item.city || item.location_text || "")} · ${escapeHtml(locationTypeLabel(item.location_type))}</span>`;
+              }).join("")}
+            </div>
+          ` : `<div class="fr-profile-empty-inline"><i class="fas fa-circle-info" aria-hidden="true"></i><span>Belum ada kota yang terhubung ke listing ini.</span></div>`}
+          <form data-profile-form="listing_locations" class="fr-profile-location-form">
+            <input type="hidden" name="franchise_id" value="${attr(listing.id)}">
+            <label class="fr-profile-field is-wide">
+              <span><i class="fas fa-location-dot" aria-hidden="true"></i> Kota dan area</span>
+              <textarea name="locations_text" rows="6" placeholder="Jakarta | area | DKI Jakarta&#10;Bandung | outlet | Jawa Barat&#10;Surabaya | kantor | Jawa Timur">${escapeHtml(locationRowsText(listing))}</textarea>
+            </label>
+            <p class="fr-profile-field-note">Gunakan format: kota | jenis | provinsi. Jenis bisa ditulis: area, outlet, kantor, atau asal.</p>
+            <p class="fr-profile-message" data-profile-message></p>
+            <div class="fr-profile-actions">
+              <button class="fr-profile-button" type="submit"><i class="fas fa-floppy-disk" aria-hidden="true"></i> Simpan Area</button>
+            </div>
+          </form>
+        </section>
       `;
     }
 
@@ -138,6 +172,44 @@
           </label>
         </section>
       `;
+    }
+
+    function locationRowsText(listing) {
+      var locations = listing.structured_locations || [];
+      var rows = locations.some(function (item) { return item.source_field === "owner_profile"; })
+        ? locations.filter(function (item) { return item.source_field === "owner_profile"; })
+        : locations;
+      return rows.map(function (item) {
+        var parts = [item.city || item.location_text || "", locationTypeInputLabel(item.location_type), item.province || ""].filter(Boolean);
+        return parts.join(" | ");
+      }).join("\n");
+    }
+
+    function locationTypeLabel(type) {
+      return {
+        head_office: "kantor",
+        outlet: "outlet",
+        origin: "asal",
+        available_area: "area",
+      }[type] || "area";
+    }
+
+    function locationTypeInputLabel(type) {
+      return {
+        head_office: "kantor",
+        outlet: "outlet",
+        origin: "asal",
+        available_area: "area",
+      }[type] || "area";
+    }
+
+    function locationTypeIcon(type) {
+      return {
+        head_office: "fa-building",
+        outlet: "fa-store",
+        origin: "fa-flag",
+        available_area: "fa-map-pin",
+      }[type] || "fa-map-pin";
     }
 
     return { franchisorPanel: franchisorPanel, listingPanel: listingPanel, claimsPanel: claimsPanel };

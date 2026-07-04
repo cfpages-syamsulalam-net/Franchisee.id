@@ -649,7 +649,13 @@ function initCompareButtons() {
   }
   function setSelected(ids) {
     try {
-      localStorage.setItem("franchise_compare_ids", JSON.stringify(ids.slice(0, 4)));
+      var nextIds = ids.slice(0, 4);
+      localStorage.setItem("franchise_compare_ids", JSON.stringify(nextIds));
+      var current = JSON.parse(localStorage.getItem("franchise_buyer_context") || "{}");
+      current.updated_at = new Date().toISOString();
+      current.last_tool = "comparison";
+      current.comparison = { source: "comparison", selected_brand_ids: nextIds };
+      localStorage.setItem("franchise_buyer_context", JSON.stringify(current));
     } catch (_error) {
       return null;
     }

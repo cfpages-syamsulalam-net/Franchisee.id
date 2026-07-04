@@ -55,6 +55,18 @@ const UpdatePublicationSchema = z.object({
   publication_status: z.enum(["draft", "published", "hidden", "archived"]),
 });
 
+const ListingLocationSchema = z.object({
+  city: z.string().trim().min(2).max(100),
+  province: z.string().trim().max(100).optional().or(z.literal("")).default(""),
+  location_type: z.enum(["head_office", "outlet", "available_area", "origin"]).default("available_area"),
+});
+
+const UpdateListingLocationsSchema = z.object({
+  action: z.literal("update_listing_locations"),
+  franchise_id: z.string().trim().min(1),
+  locations: z.array(ListingLocationSchema).max(24).default([]),
+});
+
 const ReviewPremiumPaymentSchema = z.object({
   action: z.literal("review_premium_payment"),
   confirmation_id: z.string().trim().min(1),
@@ -108,6 +120,7 @@ export const DashboardActionSchema = z.discriminatedUnion("action", [
   ReviewClaimSchema,
   RefreshQualityChecksSchema,
   UpdatePublicationSchema,
+  UpdateListingLocationsSchema,
   ReviewPremiumPaymentSchema,
   UpdatePaymentMethodSchema,
   ManageNotificationEmailSchema,

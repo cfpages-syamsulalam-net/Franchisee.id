@@ -83,6 +83,7 @@ export async function createFranchiseInquiry(db, actor, data, loaders) {
 
   const leadId = `lead_${randomId()}`;
   const message = textOrNull(data.message) || franchiseeProfile.message || `Saya tertarik dengan ${franchise.brand_name}.`;
+  const buyerContext = sanitizeBuyerContext(data.buyer_context);
   await db.batch([
     db
       .prepare(
@@ -105,7 +106,7 @@ export async function createFranchiseInquiry(db, actor, data, loaders) {
         franchiseeProfile.city_origin || null,
         franchiseeProfile.budget_range || null,
         message,
-        JSON.stringify({ source: "profile_opportunity", franchise_slug: franchise.slug }),
+        JSON.stringify({ source: "profile_opportunity", franchise_slug: franchise.slug, buyer_context: buyerContext }),
       ),
     auditStatement(db, "profile.franchisee.inquiry", "franchise_leads", leadId, { franchise_id: franchise.id, brand_name: franchise.brand_name }, actor.id),
   ]);
@@ -121,6 +122,29 @@ export async function createFranchiseInquiry(db, actor, data, loaders) {
     lead: await loaders.loadFranchiseeLead(db, leadId),
     inquiry_history: await loaders.loadFranchiseeInquiryHistory(db, actor.id, franchiseeProfile.id),
   });
+}
+
+function sanitizeBuyerContext(value) {
+  const context = value && typeof value === "object" ? value : {};
+  const clean = {};
+  for (const [key, rawValue] of Object.entries(context).slice(0, 8)) {
+    const safeKey = String(key || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
+    if (!safeKey) continue;
+    if (rawValue && typeof rawValue === "object") {
+      const nested = {};
+      for (const [nestedKey, nestedValue] of Object.entries(rawValue).slice(0, 12)) {
+        const safeNestedKey = String(nestedKey || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
+        if (!safeNestedKey) continue;
+        nested[safeNestedKey] = Array.isArray(nestedValue)
+          ? nestedValue.slice(0, 8).map((item) => String(item == null ? "" : item).slice(0, 120))
+          : String(nestedValue == null ? "" : nestedValue).slice(0, 180);
+      }
+      clean[safeKey] = nested;
+    } else {
+      clean[safeKey] = String(rawValue == null ? "" : rawValue).slice(0, 180);
+    }
+  }
+  return clean;
 }
 
 export async function saveFranchiseOpportunity(db, actor, data, loaders) {

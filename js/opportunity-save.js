@@ -76,6 +76,7 @@
           action: "create_franchise_inquiry",
           franchise_id: franchiseId,
           message: "Saya tertarik dengan " + brand + ".",
+          buyer_context: getBuyerContext(),
         }),
       });
       const payload = await response.json();
@@ -178,6 +179,16 @@
       return parsed.pathname + parsed.search + parsed.hash;
     } catch (_) {
       return url;
+    }
+  }
+
+  function getBuyerContext() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem("franchise_buyer_context") || "{}");
+      if (!parsed || typeof parsed !== "object") return {};
+      return parsed;
+    } catch (_) {
+      return {};
     }
   }
 })(window, document);

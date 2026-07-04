@@ -1,0 +1,23 @@
+---
+import {
+  getCityRouteEntries,
+  loadFranchiseStaticRows,
+  renderCityLandingPage,
+  type FranchiseStaticRow,
+} from "../../../lib/franchise-static";
+import type { CityRouteEntry } from "../../../lib/franchise-city";
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  const rows = loadFranchiseStaticRows();
+  return getCityRouteEntries(rows).map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry, rows },
+  }));
+}
+
+const { entry, rows } = Astro.props as { entry: CityRouteEntry; rows: FranchiseStaticRow[] };
+const html = renderCityLandingPage(entry, rows);
+---
+<Fragment set:html={html} />

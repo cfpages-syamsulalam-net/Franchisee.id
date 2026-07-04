@@ -402,10 +402,53 @@ export async function getEditableListings(db) {
     )
     .bind(SITE_ID)
     .all();
+  const rows = result.results || [];
+  const locationsByFranchise = await getStructuredLocationsForListings(db, rows.map((row) => row.id));
   return (result.results || []).map((row) => ({
     ...row,
+    structured_locations: locationsByFranchise.get(row.id) || [],
+    location_override_active: (locationsByFranchise.get(row.id) || []).some((item) => item.source_field === "owner_profile"),
     public_url: `/peluang-usaha/${row.slug}`,
   }));
+}
+
+async function getStructuredLocationsForListings(db, franchiseIds) {
+  const ids = Array.from(new Set((franchiseIds || []).filter(Boolean)));
+  if (!ids.length) return new Map();
+  const placeholders = ids.map(() => "?").join(",");
+  const result = await db
+    .prepare(
+      `SELECT
+        fl.franchise_id,
+        fl.location_text,
+        fl.location_type,
+        fl.source_field,
+        fl.confidence_score,
+        l.city,
+        l.slug,
+        l.province
+       FROM franchise_locations fl
+       LEFT JOIN locations l ON l.id = fl.location_id
+       WHERE fl.franchise_id IN (${placeholders})
+         AND COALESCE(l.city, fl.location_text) IS NOT NULL
+       ORDER BY
+         CASE fl.source_field WHEN 'owner_profile' THEN 0 ELSE 1 END,
+         CASE fl.location_type WHEN 'head_office' THEN 0 WHEN 'origin' THEN 1 WHEN 'outlet' THEN 2 ELSE 3 END,
+         COALESCE(l.city, fl.location_text) ASC`,
+    )
+    .bind(...ids)
+    .all();
+  const byFranchise = new Map();
+  for (const row of result.results || []) {
+    const list = byFranchise.get(row.franchise_id) || [];
+    list.push({
+      ...row,
+      city: row.city || row.location_text || "",
+      source_label: row.source_field === "owner_profile" ? "Diatur pemilik/admin" : "Data awal",
+    });
+    byFranchise.set(row.franchise_id, list);
+  }
+  return byFranchise;
 }
 
 export async function getRecentOutreach(db) {

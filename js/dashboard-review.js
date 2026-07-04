@@ -25,6 +25,12 @@
       if (options.listingSelect) {
         options.listingSelect.addEventListener("change", refreshFieldOldValues);
       }
+      if (options.locationListingSelect) {
+        options.locationListingSelect.addEventListener("change", renderSelectedLocationRows);
+      }
+      if (options.locationForm) {
+        options.locationForm.addEventListener("submit", submitLocationUpdate);
+      }
       if (options.refreshQualityButton) {
         options.refreshQualityButton.addEventListener("click", refreshQualityChecks);
       }
@@ -57,6 +63,16 @@
         options.editSubmitButton.setAttribute("aria-label", label);
         options.editSubmitButton.setAttribute("data-fr-tooltip", label);
         options.editSubmitButton.innerHTML = '<i class="' + (isAdmin() ? "fas fa-save" : "fas fa-paper-plane") + '" aria-hidden="true"></i>';
+      }
+      if (options.locationSubmit) {
+        options.locationSubmit.disabled = !isAdmin();
+        options.locationSubmit.setAttribute("aria-label", isAdmin() ? "Simpan area listing" : "Login admin dibutuhkan");
+        options.locationSubmit.setAttribute("data-fr-tooltip", isAdmin() ? "Simpan area listing" : "Login admin dibutuhkan");
+      }
+      if (options.locationHelp) {
+        options.locationHelp.textContent = isAdmin()
+          ? "Gunakan format: kota | jenis | provinsi. Jenis: area, outlet, kantor, asal."
+          : "Staff bisa melihat area listing. Login admin dibutuhkan untuk menyimpan perubahan.";
       }
     }
 
@@ -136,9 +152,16 @@
 
     function renderListingOptions(rows) {
       if (!options.listingSelect) return;
-      options.listingSelect.innerHTML = '<option value="">Pilih listing...</option>' + rows.map(function (row) {
+      var html = '<option value="">Pilih listing...</option>' + rows.map(function (row) {
         return '<option value="' + utils.escapeAttr(row.id) + '">' + utils.escapeHtml(row.brand_name + " - " + (row.category || "Tanpa kategori")) + '</option>';
       }).join("");
+      options.listingSelect.innerHTML = html;
+      if (options.locationListingSelect) {
+        var current = options.locationListingSelect.value;
+        options.locationListingSelect.innerHTML = html;
+        if (current && rows.some(function (row) { return row.id === current; })) options.locationListingSelect.value = current;
+        renderSelectedLocationRows();
+      }
     }
 
     function renderEditSuggestions(data) {
@@ -343,6 +366,34 @@
       })[0] || null;
     }
 
+    function selectedLocationListing() {
+      var state = dashboardState();
+      if (!state || !options.locationListingSelect) return null;
+      return (state.editable_listings || []).filter(function (listing) {
+        return listing.id === options.locationListingSelect.value;
+      })[0] || null;
+    }
+
+    function renderSelectedLocationRows() {
+      if (!options.locationText || !options.locationCurrent) return;
+      var listing = selectedLocationListing();
+      if (!listing) {
+        options.locationText.value = "";
+        options.locationCurrent.textContent = "Belum ada listing dipilih.";
+        return;
+      }
+      var locations = listing.structured_locations || [];
+      var rows = locations.some(function (item) { return item.source_field === "owner_profile"; })
+        ? locations.filter(function (item) { return item.source_field === "owner_profile"; })
+        : locations;
+      options.locationText.value = rows.map(function (item) {
+        return [item.city || item.location_text || "", locationTypeInputLabel(item.location_type), item.province || ""].filter(Boolean).join(" | ");
+      }).join("\n");
+      options.locationCurrent.textContent = rows.length
+        ? rows.length + " area terhubung" + (listing.location_override_active ? " (diatur manual)." : " dari data awal.")
+        : "Belum ada area untuk listing ini.";
+    }
+
     function renderFieldDiff(oldValue, suggestedValue) {
       var fields = Object.keys(suggestedValue || {});
       if (!fields.length) return '<span class="dash-muted">Tidak ada field.</span>';
@@ -395,6 +446,32 @@
       }
     }
 
+    async function submitLocationUpdate(event) {
+      event.preventDefault();
+      if (!isAdmin()) {
+        options.setStatus("Login admin dibutuhkan untuk menyimpan area listing.", true);
+        return;
+      }
+      if (!options.locationListingSelect || !options.locationListingSelect.value) {
+        options.setStatus("Pilih listing terlebih dahulu.", true);
+        return;
+      }
+      try {
+        if (options.locationSubmit) options.locationSubmit.disabled = true;
+        await options.postDashboardAction({
+          action: "update_listing_locations",
+          franchise_id: options.locationListingSelect.value,
+          locations: parseLocationRows(options.locationText ? options.locationText.value : "")
+        });
+        options.setStatus("Area listing tersimpan dan publish queue sudah ditandai dirty.", false);
+        await options.reloadDashboard();
+      } catch (error) {
+        options.setStatus(error.message, true);
+      } finally {
+        if (options.locationSubmit) options.locationSubmit.disabled = !isAdmin();
+      }
+    }
+
     async function reviewEditSuggestion(button) {
       try {
         button.disabled = true;
@@ -425,6 +502,40 @@
         button.disabled = false;
         options.setStatus(error.message, true);
       }
+    }
+
+    function parseLocationRows(value) {
+      return String(value || "")
+        .split(/\r?\n/)
+        .map(function (line) { return line.trim(); })
+        .filter(Boolean)
+        .slice(0, 24)
+        .map(function (line) {
+          var parts = line.split("|").map(function (part) { return part.trim(); });
+          return {
+            city: parts[0] || "",
+            location_type: parseLocationType(parts[1]),
+            province: parts[2] || ""
+          };
+        })
+        .filter(function (row) { return row.city.length >= 2; });
+    }
+
+    function parseLocationType(value) {
+      var normalized = String(value || "").trim().toLowerCase();
+      if (["kantor", "head office", "headoffice", "office", "pusat"].indexOf(normalized) >= 0) return "head_office";
+      if (["outlet", "gerai", "cabang"].indexOf(normalized) >= 0) return "outlet";
+      if (["asal", "origin", "kota asal"].indexOf(normalized) >= 0) return "origin";
+      return "available_area";
+    }
+
+    function locationTypeInputLabel(type) {
+      return {
+        head_office: "kantor",
+        outlet: "outlet",
+        origin: "asal",
+        available_area: "area"
+      }[type] || "area";
     }
 
     return {

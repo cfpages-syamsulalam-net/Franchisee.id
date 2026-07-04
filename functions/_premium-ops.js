@@ -16,6 +16,8 @@ export const PREMIUM_EVENT_TYPES = new Set([
   "premium_payment_approved",
   "premium_payment_rejected",
   "premium_activated",
+  "promo_ribbon_view",
+  "promo_ribbon_click",
 ]);
 
 export const PREMIUM_NOTIFICATION_TYPES = new Set([
