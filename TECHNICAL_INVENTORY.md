@@ -582,7 +582,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `OWNER_LISTING_EDIT_INTERVAL_HOURS`: Shared six-hour owner listing edit window used by `/profile-data` response composition and listing save validation.
 - `updateFranchisorProfile(db, actor, data)`: Updates franchisor company/contact/legal fields, writes an audit event, and returns the refreshed profile row.
 - `updateOwnedListing(db, actor, data)`: Verifies owner access, enforces edit throttling, applies the allowed listing patch, writes an audit event, and queues a public rebuild.
-- `updateListingLocations(db, actor, data)`: Verifies owner access, replaces owner-managed `franchise_locations` rows for the listing, writes an audit event, and queues a public rebuild.
+- `updateListingLocations(db, actor, data)`: Verifies owner access, replaces owner-managed `franchise_locations` rows through `functions/_location-writes.js`, writes an audit event, and queues a public rebuild.
 - `updateFranchiseLeadStatus(db, actor, data)`: Verifies owner access to the lead, updates status, writes an audit event, and returns the refreshed lead inbox.
 - `loadOwnedStructuredLocations()` / `loadOwnedPublicationDistribution()` / `loadFranchisorLeadInbox()` / `loadFranchisorProfile()` / `loadOwnedListing()`: Shared read helpers used by the profile facade and franchisor actions.
 
@@ -608,6 +608,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Owner listing update helper for `/profile-data`.*
 - `listingPatch(data)`: Keeps the allowed owner-editable franchise fields in one place.
 - `buildUpdate(table, patch, idColumn)`: Builds the SQL update fragment used by the rate-limited owner listing save path.
+
+### File: `functions/_location-writes.js`
+*Shared manual location write helper for profile and dashboard actions.*
+- `normalizeManualLocations(rows)`: Trims city/province input, defaults unknown types to `available_area`, slugifies city names, deduplicates by type/slug, and caps writes at 24 rows.
+- `manualLocationWriteStatements(db, franchiseId, rows, sourceField)`: Builds the delete-plus-insert D1 statements for manual `locations` and `franchise_locations` rows while preserving the existing `owner_profile` source field contract.
+- `manualLocationRelationId()` / `manualLocationId()` / `slugifyLocation()`: Centralize deterministic location ids used by owner/admin location saves.
+- `manualLocationSummary(locations)`: Builds compact audit metadata for profile and dashboard location update events.
 
 ### File: `functions/_premium.js`
 *Shared premium membership constants and helpers.*
@@ -765,7 +772,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs write field-by-field to whitelisted `franchises` columns, write audit events, and queue a static rebuild through `siteRebuildStatements()`.
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
 - `handleReviewPremiumPayment(db, auth, data)`: Admin-only approve/reject. Approval marks the order paid, creates or renews a one-year `franchise_subscriptions` row, sets the listing premium, creates missing publication rows for included network sites, publishes those rows, writes audit/events/notifications, queues owner email notifications, and queues rebuilds for each affected site.
-- `handleUpdateListingLocations(db, auth, data)`: Admin-only structured location update for one listing. Replaces owner/admin-managed `franchise_locations` rows, writes an audit event, and queues a static rebuild.
+- `handleUpdateListingLocations(db, auth, data)`: Admin-only structured location update for one listing. Replaces owner/admin-managed `franchise_locations` rows through `functions/_location-writes.js`, writes an audit event, and queues a static rebuild.
 - `handleUpdatePaymentMethod(db, auth, data)`: Admin-only upsert for the manual BCA payment method shown to franchisors during Premium payment.
 - `handleUpdatePremiumSettings(db, auth, data)`: Admin-only update for grace period, daily grace emails, annual reports, and multi-brand discount settings.
 - `handleManageNotificationEmail(db, auth, data)`: Admin-only retry/cancel for queued email rows, with audit events so recovery actions do not require manual D1 edits.

@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-04 10:16 (Asia/Jakarta)
+### Added
+- `functions/_location-writes.js`: Added shared manual location normalization, deterministic id generation, D1 write statement creation, and audit-summary helpers for owner/admin Area Listing saves.
+- `.context/session-20260704-1016.md`: Added this session snapshot for the location write helper extraction.
+
+### Changed
+- `AGENTS.md`: Moved the assistant suggestion pass to happen before validation and instructed closely related low-risk modular/helper suggestions to be implemented in the same session before validation.
+- `functions/_profile-franchisor-actions.js` and `functions/_dashboard-actions.js`: Reused the shared location write helper for `update_listing_locations` instead of duplicating owner/admin `locations` and `franchise_locations` write logic.
+- `SUGGESTION.md`: Marked suggestion 47 done with the shared location helper result.
+- `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented the shared location write helper and updated profile/dashboard location write responsibilities.
+
 ## 2026-07-04 09:50 (Asia/Jakarta)
 ### Added
 - `/profil` Listing Brand: Added an owner-facing Area Listing editor for city/service-area rows with source labels and owner-managed override persistence.

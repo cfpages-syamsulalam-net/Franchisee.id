@@ -1,5 +1,6 @@
 import { buildUpdate, listingPatch } from "./_profile-listing-patch.js";
 import { auditStatement, jsonResponse, normalizeWhatsapp, textOrNull } from "./_profile-utils.js";
+import { manualLocationSummary, manualLocationWriteStatements } from "./_location-writes.js";
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
 
 export const OWNER_LISTING_EDIT_INTERVAL_HOURS = 6;
@@ -127,30 +128,7 @@ export async function updateListingLocations(db, actor, data) {
     return jsonResponse({ success: false, message: "Listing tidak ditemukan atau bukan milik akun ini." }, { status: 404 });
   }
 
-  const locations = normalizeOwnerLocations(data.locations || []);
-  const statements = [
-    db.prepare("DELETE FROM franchise_locations WHERE franchise_id = ? AND source_field = 'owner_profile'").bind(listing.id),
-  ];
-
-  for (const location of locations) {
-    const locationId = `location_${location.slug}`;
-    const relationId = ownerLocationRelationId(listing.id, location.location_type, location.slug);
-    statements.push(
-      db
-        .prepare(
-          `INSERT OR IGNORE INTO locations (id, country_code, province, city, slug)
-           VALUES (?, 'ID', ?, ?, ?)`,
-        )
-        .bind(locationId, location.province, location.city, location.slug),
-      db
-        .prepare(
-          `INSERT INTO franchise_locations
-             (id, franchise_id, location_id, location_text, location_type, source_field, confidence_score)
-           VALUES (?, ?, ?, ?, ?, 'owner_profile', 1)`,
-        )
-        .bind(relationId, listing.id, locationId, location.city, location.location_type),
-    );
-  }
+  const { locations, statements } = manualLocationWriteStatements(db, listing.id, data.locations || []);
 
   statements.push(
     auditStatement(
@@ -158,7 +136,7 @@ export async function updateListingLocations(db, actor, data) {
       "profile.listing.locations.update",
       "franchise_locations",
       listing.id,
-      { source: "profile", count: locations.length, locations: locations.map((item) => ({ city: item.city, type: item.location_type })) },
+      { source: "profile", count: locations.length, locations: manualLocationSummary(locations) },
       actor.id,
     ),
     ...siteRebuildStatements(db, {
@@ -351,44 +329,4 @@ export async function loadOwnedListing(db, actor, franchiseId, franchisorProfile
     )
     .bind(SITE_FRANCHISEE_ID, franchiseId, actor.id, franchisorProfileId || null, franchisorProfileId || null)
     .first();
-}
-
-function normalizeOwnerLocations(rows) {
-  const dedupe = new Set();
-  const output = [];
-  for (const row of rows || []) {
-    const city = textOrNull(row.city);
-    if (!city) continue;
-    const locationType = ["head_office", "outlet", "available_area", "origin"].includes(row.location_type)
-      ? row.location_type
-      : "available_area";
-    const slug = slugifyLocation(city);
-    if (!slug) continue;
-    const key = `${locationType}:${slug}`;
-    if (dedupe.has(key)) continue;
-    dedupe.add(key);
-    output.push({
-      city,
-      province: textOrNull(row.province),
-      location_type: locationType,
-      slug,
-    });
-  }
-  return output.slice(0, 24);
-}
-
-function ownerLocationRelationId(franchiseId, locationType, slug) {
-  const safeFranchiseId = slugifyLocation(franchiseId).slice(0, 48) || "franchise";
-  return `franchise_location_owner_${safeFranchiseId}_${locationType}_${slug}`.slice(0, 190);
-}
-
-function slugifyLocation(value) {
-  return String(value || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/&/g, " dan ")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 90);
 }
