@@ -1,6 +1,6 @@
 # Traffic Funnel UX Audit
 
-Last updated: 2026-07-04 22:54 (Asia/Jakarta)
+Last updated: 2026-07-04 23:26 (Asia/Jakarta)
 
 ## Verdict
 
@@ -12,12 +12,12 @@ The codebase has the core path for free membership and Premium membership, but t
 
 | Funnel step | Current code path | Readiness | Finding |
 | --- | --- | --- | --- |
-| Landing / homepage | `index.html` | Needs work | Homepage still uses `Franchise.id` title/copy/assets in several places and mostly drives users to directory/contact pages, not a clear free-member or Premium ladder. |
+| Landing / homepage | `index.html` | Improved, needs one legacy metadata cleanup pass | Homepage visible copy, main metadata, and CTA hierarchy now use `Franchisee.id`, benefit-led buyer/franchisor copy, directory CTAs, free-brand CTAs, and a Premium education path. Some generated inline schema/RSS/config remnants still mention the old brand and should be cleaned in a focused legacy-export pass. |
 | Directory / top pages | `src/pages/peluang-usaha/*`, `templates/peluang-usaha-tpl.html`, generated detail pages | Mostly ready | Public directory/detail routes exist, with save/inquiry/claim/member paths. The buyer path is clearer than the franchisor-to-Premium path. |
 | Account creation | `login/index.html`, `js/auth-clerk-ui.js`, `js/auth-clerk.js`, `js/auth-clerk-core.js` | Mostly ready, needs production QA | Login/register uses role selection, Google/email flows, and `next` redirects. Code path is coherent, but identity/OAuth still needs real production verification before paid traffic. |
 | Free member completion | `/daftar/index.html`, `js/form-06-submit-validation.js`, `functions/form-submit.js` and helpers | Mostly ready, needs production QA | Authenticated D1 writes exist for franchisee/franchisor/claim paths. The UI should more explicitly tell franchisors that free member/listing completion is step 1 before Premium. |
-| Logged-in landing after member creation | `src/pages/profil/index.astro`, `js/profile-page.js`, profile modules | Needs UX work | `/profil` shows completion status and tabs, but it does not strongly surface the next best action. A franchisor with a completed free listing should see a prominent “Aktifkan Premium” card without needing to discover the Membership tab. |
-| Premium education | `src/pages/premium/index.astro`, `css/premium.css`, `js/premium-page.js` | Good base | `/premium` explains price, benefits, steps, and CTA. The copy should be adjusted so cold users understand the sequence: create a free franchisor account/listing first, then activate Premium. |
+| Logged-in landing after member creation | `src/pages/profil/index.astro`, `js/profile-page.js`, profile modules | Improved | `/profil` now uses a brand-aligned yellow/black/cream shell and a prominent next-best-action panel above tabs for free profile completion, Premium activation/payment state, active Premium growth, or buyer opportunity discovery. |
+| Premium education | `src/pages/premium/index.astro`, `css/premium.css`, `js/premium-page.js` | Improved | `/premium` now frames Premium as a benefit-led upgrade after the free brand page is ready: more trust, easier discovery, and easier follow-up with calon mitra. |
 | Premium order/payment | `js/profile-premium.js`, `functions/_profile-premium.js`, `/premium-receipt-upload` | Code path exists | The Membership tab can create an order, show payment instructions, upload proof, and submit confirmation. Needs end-to-end production QA and stronger entry points from `/profil`. |
 | Admin approval to live Premium | `dashboard-data` Premium review modules, publish queue | Code path exists | Admin approval, subscription activation, notifications, and rebuild queue behavior exist. Needs one controlled production test before scaling. |
 
@@ -27,18 +27,18 @@ The codebase has the core path for free membership and Premium membership, but t
 
 | ID | Finding | Evidence | Required change | Status |
 | --- | --- | --- | --- | --- |
-| TF-01 | Homepage brand is inconsistent with app pages. | `index.html` title/copy/schema still say `Franchise.id`; app pages use `Franchisee.id`. | Decide the public brand for this domain and update homepage metadata, visible copy, logo alt text, and schema so users are not confused after login. | Planned |
-| TF-02 | Homepage does not clearly present the member ladder. | Main homepage CTAs point to `/direktori-franchise` and `/kontak-kami`; login/daftar are in nav but not framed as “Daftar Brand Gratis” or “Jadi Member”. | Add primary CTAs: “Cari Peluang Usaha”, “Daftar Brand Gratis”, and a secondary “Upgrade Premium” path for franchisors. | Planned |
+| TF-01 | Homepage brand is inconsistent with app pages. | `index.html` title/copy/schema still say `Franchise.id`; app pages use `Franchisee.id`. | Decide the public brand for this domain and update homepage metadata, visible copy, logo alt text, and schema so users are not confused after login. | Partial: visible copy/main metadata/logo alt updated; generated inline schema/RSS/config cleanup remains. |
+| TF-02 | Homepage does not clearly present the member ladder. | Main homepage CTAs point to `/direktori-franchise` and `/kontak-kami`; login/daftar are in nav but not framed as “Daftar Brand Gratis” or “Jadi Member”. | Add primary CTAs: “Cari Peluang Usaha”, “Daftar Brand Gratis”, and a secondary “Upgrade Premium” path for franchisors. | Done |
 | TF-03 | Full production account/member/Premium path is not yet manually verified after the latest modularization. | Code path exists across Clerk, D1, `/daftar`, `/profil`, Premium order, receipt upload, dashboard approval, and static publish queue. | Run a controlled production QA script after push: create franchisor account, complete free listing, see `/profil`, create Premium order, submit proof, approve in dashboard, verify Premium state and public rebuild. | Planned |
 
 ### P1 - Should fix before broad paid acquisition
 
 | ID | Finding | Evidence | Required change | Status |
 | --- | --- | --- | --- | --- |
-| TF-04 | `/profil` feels too white and detached from the homepage/Premium visual language. | `css/profile.css` uses many white cards on `#f6f7f8`; homepage uses stronger yellow/black, square CTAs, high-contrast sections, and `Outfit` headings. | Retheme `/profil` with shared yellow/black/cream tokens, stronger header/hero, dark/yellow next-action cards, and less “white SaaS dashboard” density. | Planned |
-| TF-05 | Logged-in franchisors do not get a strong Premium next step. | `summaryPanel()` shows completion stats and missing-data notices, but no prominent Premium CTA when listing data is complete. | Add a “Langkah berikutnya” panel to `/profil`: if franchisor data/listing is incomplete, show free-listing completion; if complete and no active/pending Premium, show “Aktifkan Premium Network”. | Planned |
-| TF-06 | Premium is hidden behind a tab for eligible users. | `membership` is one tab among many in `js/profile-page.js`; active tab defaults to summary unless URL requests membership. | Add a visible Premium CTA in the profile hero/summary for franchisors, and consider defaulting to Membership only when arriving from `/premium` or after free listing completion. | Planned |
-| TF-07 | `/premium` CTA wording can overpromise the first action. | Public CTA says “Daftar Premium”, but cold users must first create an account and have a listing to upgrade. | Change primary copy to “Daftar Brand Gratis, lalu aktifkan Premium” or similar; keep payment confirmation CTA for returning users. | Planned |
+| TF-04 | `/profil` feels too white and detached from the homepage/Premium visual language. | `css/profile.css` uses many white cards on `#f6f7f8`; homepage uses stronger yellow/black, square CTAs, high-contrast sections, and `Outfit` headings. | Retheme `/profil` with shared yellow/black/cream tokens, stronger header/hero, dark/yellow next-action cards, and less “white SaaS dashboard” density. | Done |
+| TF-05 | Logged-in franchisors do not get a strong Premium next step. | `summaryPanel()` shows completion stats and missing-data notices, but no prominent Premium CTA when listing data is complete. | Add a “Langkah berikutnya” panel to `/profil`: if franchisor data/listing is incomplete, show free-listing completion; if complete and no active/pending Premium, show “Aktifkan Premium Network”. | Done |
+| TF-06 | Premium is hidden behind a tab for eligible users. | `membership` is one tab among many in `js/profile-page.js`; active tab defaults to summary unless URL requests membership. | Add a visible Premium CTA in the profile hero/summary for franchisors, and consider defaulting to Membership only when arriving from `/premium` or after free listing completion. | Done |
+| TF-07 | `/premium` CTA wording can overpromise the first action. | Public CTA says “Daftar Premium”, but cold users must first create an account and have a listing to upgrade. | Change primary copy to “Daftar Brand Gratis, lalu aktifkan Premium” or similar; keep payment confirmation CTA for returning users. | Done |
 | TF-08 | Directory/detail pages are buyer-strong, franchisor-weak. | Detail pages support claim CTA, but general franchisor Premium entry is not a repeated network-wide CTA. | Add tasteful franchisor CTA modules on directory/detail pages: “Punya brand franchise? Daftar gratis / tampil Premium”. | Planned |
 
 ### P2 - Optimization after core funnel is stable
@@ -86,16 +86,24 @@ The backend/client pieces for the full journey are present:
 
 Main risk is UX prominence and production verification, not absence of the code path.
 
+## Copy Direction
+
+Public-facing copy should stay benefit-first:
+
+- Lead with the user's outcome: find a suitable opportunity, compare with more confidence, make a brand easier to trust, or receive more actionable prospect interest.
+- Use product mechanics only as support. Avoid making the primary message about features such as network distribution, inboxes, analytics, dashboards, queues, or internal publication mechanics.
+- CTAs should describe the next useful action in plain terms: “Mulai Gratis”, “Tampilkan Brand Gratis”, “Aktifkan Premium”, “Bandingkan Peluang Usaha”, or “Pantau Minat Calon Mitra”.
+
 ## Implementation Tracker
 
 | Phase | Task | Files likely touched | Status |
 | --- | --- | --- | --- |
-| 1 | Fix homepage brand mismatch and top CTA hierarchy. | `index.html`, maybe generated/nav helper scripts if added | Planned |
-| 1 | Add homepage franchisor CTA: free brand listing first, Premium second. | `index.html` | Planned |
-| 1 | Retheme `/profil` to match site: warmer background, dark/yellow hero, square CTAs, stronger contrast. | `css/profile.css`, `css/profile-premium.css`, `css/profile-franchisor.css`, `css/profile-analytics.css` | Planned |
-| 1 | Add `/profil` next-best-action panel above tabs. | `js/profile-page.js`, `js/profile-premium.js`, `css/profile.css`, `css/profile-premium.css` | Planned |
-| 1 | Make Premium CTA visible from profile summary/hero for completed franchisors. | `js/profile-page.js`, `js/profile-premium.js`, `css/profile.css` | Planned |
-| 2 | Adjust `/premium` copy so cold users understand free listing before Premium. | `src/pages/premium/index.astro`, `css/premium.css` if CTA layout changes | Planned |
+| 1 | Fix homepage brand mismatch and top CTA hierarchy. | `index.html`, maybe generated/nav helper scripts if added | Partial: visible/main metadata done; generated inline schema/RSS/config remains. |
+| 1 | Add homepage franchisor CTA: free brand listing first, Premium second. | `index.html` | Done |
+| 1 | Retheme `/profil` to match site: warmer background, dark/yellow hero, square CTAs, stronger contrast. | `css/profile.css`, `css/profile-premium.css`, `css/profile-franchisor.css`, `css/profile-analytics.css` | Done |
+| 1 | Add `/profil` next-best-action panel above tabs. | `js/profile-page.js`, `js/profile-premium.js`, `css/profile.css`, `css/profile-premium.css` | Done |
+| 1 | Make Premium CTA visible from profile summary/hero for completed franchisors. | `js/profile-page.js`, `js/profile-premium.js`, `css/profile.css` | Done |
+| 2 | Adjust `/premium` copy so cold users understand free listing before Premium. | `src/pages/premium/index.astro`, `css/premium.css` if CTA layout changes | Done |
 | 2 | Add franchisor CTA modules on directory/detail pages without distracting buyers. | `src/lib/franchise-static.ts`, `src/lib/franchise-static-assets.ts`, `src/lib/franchise-detail-assets.ts`, templates if needed | Planned |
 | 2 | Add a production QA checklist for full free-member-to-Premium flow. | `docs/testing/` or this document | Planned |
 | 3 | Add analytics checkpoints and dashboard report for funnel steps. | `functions/premium-event.js`, `js/premium-page.js`, profile/form auth events, dashboard metrics | Planned |

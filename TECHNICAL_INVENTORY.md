@@ -175,7 +175,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Client controller for the protected `/profil` profile center.*
 - `init()`: Requires a Clerk session and redirects anonymous users to `/login/?next=/profil/`.
 - `loadProfile()`: Fetches `/profile-data` with `window.FranchiseAuth.getAuthHeaders()`.
-- `render()` / `renderActivePanel()`: Renders side tabs for summary and role-allowed franchisee/franchisor/owner listing/claims sections, delegating account, franchisee, franchisor/listing/claim, role add-on, membership, leads, and owner analytics UI to profile modules.
+- `render()` / `renderActivePanel()`: Renders the branded profile hero, next-best-action panel, and side tabs for summary and role-allowed franchisee/franchisor/owner listing/claims sections, delegating account, franchisee, franchisor/listing/claim, role add-on, membership, leads, and owner analytics UI to profile modules.
+- `nextActionPanel()` / `nextActionCard(config)`: Chooses the most useful benefit-led CTA above the tabs: complete buyer preferences, complete a free brand page, activate Premium, finish/check Premium payment, review active Premium analytics, or continue buyer opportunity discovery.
+- `premiumStateForListing(listing)`: Reads current membership subscriptions/orders for the selected listing so the profile next-action panel matches the Premium state shown in the Membership tab.
 - `visibleTabs()` / `canSeeFranchisee()` / `canSeeFranchisor()`: Filters `/profil` navigation from D1 roles so franchisee users only see franchisee areas, franchisor users only see franchisor/listing/claim areas, and admin/staff users see both.
 - `submitPublicRoleAdd(role)`: Posts the additive access change to `/profile-data` and redirects to the matching `/daftar` tab; role CTA/modal rendering lives in `js/profile-roles.js`.
 - `submitFranchiseInquiry(franchiseId)`: Posts `create_franchise_inquiry` to `/profile-data` with optional browser buyer context; recommendation/card rendering lives in `js/profile-franchisee.js`.
@@ -382,15 +384,16 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/pages/profil/index.astro`
 *Protected profile page shell.*
 - Static Astro route at `/profil/` with `noindex,nofollow`.
-- Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, `css/profile.css`, `css/profile-premium.css`, `css/profile-analytics.css`, `css/profile-franchisor.css`, profile renderer modules, and `js/profile-page.js`.
+- Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, Outfit/DM Sans fonts, `css/profile.css`, `css/profile-premium.css`, `css/profile-analytics.css`, `css/profile-franchisor.css`, profile renderer modules, and `js/profile-page.js`.
 - Anonymous protection is client-side; all profile data and writes are protected again by `/profile-data`.
 
 ### File: `src/pages/premium/index.astro`
 *Public premium membership sales page.*
-- Static Astro route at `/premium/` with public SEO copy for the Rp 3.000.000/year premium offer.
+- Static Astro route at `/premium/` with benefit-led public SEO copy for the Rp 3.000.000/year Premium offer after a free brand page is ready.
 - Shows editorial article and social media exposure add-on pricing alongside the yearly Premium offer.
 - Loads Font Awesome, `css/premium.css`, `js/site-promo-bar.js`, and `js/premium-page.js`.
 - CTAs point to `/login/?mode=register` and `/profil/?tab=membership` without exposing internal infrastructure terms, and include `data-premium-cta` attributes for coarse funnel tracking.
+- Public copy leads with outcomes such as trust, easier discovery, and better follow-up rather than feature-first language.
 
 ### File: `scripts/shared-csv.cjs`
 *Shared quote-aware CSV parser for legacy Node builders.*

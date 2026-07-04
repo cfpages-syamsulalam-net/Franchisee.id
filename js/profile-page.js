@@ -281,10 +281,11 @@
         <div>
           <p class="fr-profile-kicker">Profil Akun</p>
           <h1 class="fr-profile-title">${escapeHtml(data.user.display_name || "Akun")}</h1>
-      <p class="fr-profile-subtitle">Kelola akun, minat kemitraan, data brand, dan listing dari satu tempat.</p>
+          <p class="fr-profile-subtitle">Lanjutkan langkah yang paling berdampak untuk menemukan peluang tepat atau membuat brand lebih mudah dipilih calon mitra.</p>
         </div>
         <div class="fr-profile-badges">${roleBadges(data.user.roles)}</div>
       </div>
+      ${nextActionPanel()}
       <div class="fr-profile-layout">
         <aside class="fr-profile-tabs" aria-label="Menu profil">${renderTabs()}</aside>
         <section class="fr-profile-panel">${renderActivePanel()}</section>
@@ -313,6 +314,146 @@
     if (state.activeTab === "membership") return membershipPanel();
     if (state.activeTab === "claims") return claimsPanel();
     return summaryPanel();
+  }
+
+  function nextActionPanel() {
+    const data = state.data || {};
+    const listing = selectedFranchise();
+
+    if (isStaffAccess() && !hasRole("franchisee") && !hasRole("franchisor")) {
+      return nextActionCard({
+        icon: "fa-table-columns",
+        tone: "premium",
+        kicker: "Akses operasional",
+        title: "Kelola data dan review dari dashboard.",
+        copy: "Gunakan dashboard untuk memeriksa review, pembayaran Premium, kualitas data, dan pekerjaan operasional lain.",
+        primaryHref: "/dashboard/",
+        primaryLabel: "Buka Dashboard",
+        secondaryHref: "/profil/?tab=account",
+        secondaryLabel: "Cek Akun",
+      });
+    }
+
+    if (canSeeFranchisor()) {
+      if (!data.completion?.franchisor || !listing) {
+        return nextActionCard({
+          icon: "fa-store",
+          tone: "premium",
+          kicker: "Langkah berikutnya",
+          title: "Buat brand Anda siap ditemukan calon mitra.",
+          copy: "Lengkapi profil brand gratis agar orang yang sedang mencari peluang usaha punya alasan jelas untuk menghubungi Anda.",
+          primaryHref: "/daftar/?role=franchisor&continue=1",
+          primaryLabel: "Lengkapi Brand",
+          secondaryHref: "/premium/",
+          secondaryLabel: "Lihat Cara Dapat Lebih Banyak Perhatian",
+        });
+      }
+
+      const premiumState = premiumStateForListing(listing);
+      const brandName = listing.brand_name || "Brand Anda";
+      if (premiumState.active) {
+        return nextActionCard({
+          icon: "fa-chart-line",
+          tone: "success",
+          kicker: "Siap ditumbuhkan",
+          title: `${brandName} sudah punya dorongan Premium.`,
+          copy: "Pantau minat calon mitra dan rapikan informasi brand agar setiap pengunjung lebih mudah mengambil keputusan.",
+          primaryHref: "/profil/?tab=analytics",
+          primaryLabel: "Pantau Minat Calon Mitra",
+          secondaryHref: "/profil/?tab=listing",
+          secondaryLabel: "Rapikan Halaman Brand",
+        });
+      }
+
+      if (premiumState.order) {
+        const waitingReview = ["confirmation_submitted", "under_review"].includes(premiumState.order.status)
+          || ["pending", "submitted", "under_review"].includes(premiumState.order.confirmation_status);
+        return nextActionCard({
+          icon: waitingReview ? "fa-clock" : "fa-crown",
+          tone: "premium",
+          kicker: waitingReview ? "Sedang dicek" : "Hampir aktif",
+          title: waitingReview ? "Pembayaran sedang dicek." : "Selesaikan pembayaran agar brand mendapat dorongan lebih kuat.",
+          copy: waitingReview
+            ? "Setelah cocok, manfaat Premium akan mulai berjalan untuk brand ini tanpa perlu membuat tagihan baru."
+            : "Premium membantu brand tampil lebih meyakinkan dan lebih mudah ditindaklanjuti oleh calon mitra.",
+          primaryHref: "/profil/?tab=membership",
+          primaryLabel: waitingReview ? "Lihat Status Premium" : "Selesaikan Aktivasi",
+          secondaryHref: "/profil/?tab=listing",
+          secondaryLabel: "Periksa Data Brand",
+        });
+      }
+
+      return nextActionCard({
+        icon: "fa-crown",
+        tone: "premium",
+        kicker: "Siap mendapat perhatian lebih",
+        title: "Bantu calon mitra lebih yakin memilih brand Anda.",
+        copy: "Aktifkan Premium saat data brand sudah rapi supaya halaman Anda terlihat lebih lengkap, mudah dipercaya, dan siap menerima prospek.",
+        primaryHref: "/profil/?tab=membership",
+        primaryLabel: "Aktifkan Premium",
+        secondaryHref: "/profil/?tab=listing",
+        secondaryLabel: "Rapikan Data Dulu",
+      });
+    }
+
+    if (canSeeFranchisee()) {
+      if (!data.completion?.franchisee) {
+        return nextActionCard({
+          icon: "fa-user-tie",
+          tone: "warm",
+          kicker: "Langkah berikutnya",
+          title: "Dapatkan rekomendasi yang lebih sesuai dengan modal dan minat Anda.",
+          copy: "Lengkapi preferensi usaha agar peluang yang muncul lebih relevan, bukan sekadar daftar panjang yang harus Anda saring sendiri.",
+          primaryHref: "/daftar/?role=franchisee&continue=1",
+          primaryLabel: "Lengkapi Minat Usaha",
+          secondaryHref: "/peluang-usaha/",
+          secondaryLabel: "Jelajahi Dulu",
+        });
+      }
+
+      return nextActionCard({
+        icon: "fa-magnifying-glass-chart",
+        tone: "warm",
+        kicker: "Mulai membandingkan",
+        title: "Temukan peluang yang paling masuk akal untuk Anda tindaklanjuti.",
+        copy: "Simpan brand menarik, bandingkan dengan modal Anda, lalu minta info ketika sudah siap bicara dengan pemilik brand.",
+        primaryHref: "/profil/?tab=opportunities",
+        primaryLabel: "Lihat Peluang Saya",
+        secondaryHref: "/peluang-usaha/",
+        secondaryLabel: "Cari Peluang Baru",
+      });
+    }
+
+    return "";
+  }
+
+  function nextActionCard(config) {
+    return `
+      <section class="fr-profile-next-action is-${attr(config.tone || "warm")}" aria-label="Langkah berikutnya">
+        <div class="fr-profile-next-icon"><i class="fas ${attr(config.icon || "fa-arrow-right")}" aria-hidden="true"></i></div>
+        <div class="fr-profile-next-copy">
+          <span>${escapeHtml(config.kicker || "Langkah berikutnya")}</span>
+          <h2>${escapeHtml(config.title || "")}</h2>
+          <p>${escapeHtml(config.copy || "")}</p>
+        </div>
+        <div class="fr-profile-next-actions">
+          <a class="fr-profile-next-primary" href="${attr(config.primaryHref || "/profil/")}">${escapeHtml(config.primaryLabel || "Lanjutkan")}</a>
+          ${config.secondaryHref ? `<a class="fr-profile-next-secondary" href="${attr(config.secondaryHref)}">${escapeHtml(config.secondaryLabel || "Pelajari")}</a>` : ""}
+        </div>
+      </section>
+    `;
+  }
+
+  function premiumStateForListing(listing) {
+    if (!listing?.id) return { active: null, order: null };
+    const membership = state.data?.premium_membership || {};
+    const subscriptions = membership.subscriptions || [];
+    const orders = membership.orders || [];
+    const active = PremiumClient.currentSubscription
+      ? PremiumClient.currentSubscription(subscriptions, listing.id)
+      : subscriptions.find((item) => item.franchise_id === listing.id && item.status === "active");
+    const order = orders.find((item) => item.franchise_id === listing.id && !["paid", "cancelled", "expired"].includes(item.status));
+    return { active: active || null, order: order || null };
   }
 
   function summaryPanel() {
