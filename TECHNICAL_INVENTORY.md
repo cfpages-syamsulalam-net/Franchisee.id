@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-04 06:36 (Asia/Jakarta)
+Last updated: 2026-07-04 10:32 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -628,21 +628,38 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `normalizeSubmittedAmount(raw)`: Converts Indonesian currency text into integer rupiah before validation/storage.
 
 ### File: `functions/_premium-ops.js`
-*Shared premium operations helpers.*
-- `loadActivePaymentMethod(db)` / `loadPaymentMethods(db)`: Read admin-managed payment instructions, including optional QRIS image fields, with a safe BCA fallback.
+*Premium operations compatibility facade.*
+- Re-exports focused Premium operation modules so existing imports in profile, dashboard, public promo/event, and email worker code remain stable after modular extraction.
+
+### File: `functions/_premium-settings.js`
+*Premium payment/settings/pricing helper.*
+- `loadActivePaymentMethod(db)` / `loadPaymentMethods(db)` / `fallbackPaymentMethod()`: Read admin-managed payment instructions, including optional QRIS image fields, with a safe BCA fallback.
+- `loadPremiumSettings(db)` / `updatePremiumSettings(db, data, actorUserId)`: Read and update admin-managed lifecycle, discount, and promo settings.
+- `premiumOrderPricing(db, actor, listing)`: Applies the current multi-brand discount rule during new Premium order creation.
+- `loadPublicPremiumPromo(db)`: Returns only active, date-gated promo ribbon fields for public pages.
+
+### File: `functions/_premium-notifications.js`
+*Premium event, notification, and email queue helper.*
 - `recordPremiumEvent(db, event)` / `loadPremiumFunnelSummary(db)`: Store and summarize Premium funnel events for `/premium`, profile membership, and dashboard review actions.
 - `createPremiumNotification(db, notification)` / `notifyAdmins(db, notification)`: Persist owner/admin Premium status messages without blocking the main action if notification storage is unavailable.
 - `loadPremiumNotifications(db, userId)` / `loadAdminPremiumNotifications(db)`: Feed `/profil` owner messages and dashboard Premium Operations messages.
 - `queueNotificationEmail(db, email)` / `queueAdminPremiumEmails(db, email)`: Queue owner/admin payment emails in `notification_email_queue` without requiring an outbound provider during the main action.
 - `loadNotificationEmailQueueSummary(db)` / `loadNotificationEmailQueueRows(db, limit)`: Supplies dashboard queue counts plus recent queued email rows with status/error/provider metadata.
-- `loadPremiumSettings(db)` / `updatePremiumSettings(db, data, actorUserId)`: Read and update admin-managed Premium lifecycle/discount/promo settings.
-- `loadPublicPremiumPromo(db)`: Returns only active, date-gated promo ribbon fields for public pages.
-- `premiumOrderPricing(db, actor, listing)`: Applies the current multi-brand discount rule during new Premium order creation.
+
+### File: `functions/_premium-lifecycle.js`
+*Premium expiry, renewal reminder, and annual-report helper.*
 - `loadExpiringPremiumSubscriptions(db, days)`: Supplies upcoming Premium expiries for dashboard operations follow-up.
 - `processPremiumLifecycle(db)` / `queuePremiumGraceEmails(db, settings)` / `expirePremiumAfterGrace(db, settings)`: Generate annual reports, queue daily grace emails, and downgrade Premium to Free after the configured grace period while queuing public rebuilds.
 - `queuePremiumRenewalReminders(db)`: Creates one 30/14/7/1-day renewal reminder email/in-app notice per subscription window.
-- `loadPremiumAnnualReports(db, limit)`: Supplies recent annual report rows for dashboard Premium Operations.
+- `loadPremiumAnnualReports(db, limit)` / `queuePremiumAnnualReports(db)`: Supplies and creates annual report rows with product-event/lead metrics.
+
+### File: `functions/_premium-readiness.js`
+*Premium readiness scoring helper.*
 - `premiumReadinessForListing(listing)`: Scores logo, cover, description, contact, investment info, and proposal readiness for Premium review.
+
+### File: `functions/_premium-ops-utils.js`
+*Small Premium operation utilities.*
+- `textOrNull()`, `clampNumber()`, `safeAll()`, `safeJson()`, `randomId()`, `formatDate()`, `parseDateMillis()`, and `escapeHtml()` support the focused Premium modules.
 
 ### File: `functions/_premium-email-worker.js`
 *Premium email delivery worker service.*
