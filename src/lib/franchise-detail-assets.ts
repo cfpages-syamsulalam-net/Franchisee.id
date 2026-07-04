@@ -253,6 +253,73 @@ export function injectDetailAssets(html: string) {
   margin: 0;
   color: #4b5563;
 }
+.fr-owner-cta {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24px 0 0;
+  padding: clamp(18px, 3vw, 28px);
+  border: 1px solid rgba(240, 202, 0, 0.38);
+  background:
+    radial-gradient(circle at 88% 16%, rgba(240, 202, 0, 0.25), transparent 30%),
+    linear-gradient(135deg, #111111 0%, #1f2937 100%);
+  color: #ffffff;
+  font-family: Outfit, "DM Sans", Arial, sans-serif;
+}
+.fr-owner-cta__content {
+  max-width: 720px;
+}
+.fr-owner-cta__eyebrow {
+  display: inline-flex;
+  margin-bottom: 8px;
+  color: #f0ca00;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.fr-owner-cta h2 {
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.12;
+}
+.fr-owner-cta p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  line-height: 1.65;
+}
+.fr-owner-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.fr-owner-cta__primary,
+.fr-owner-cta__secondary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 16px;
+  border-radius: 0;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none !important;
+}
+.fr-owner-cta__primary {
+  border: 1px solid #f0ca00;
+  background: #f0ca00;
+  color: #111111 !important;
+}
+.fr-owner-cta__secondary {
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff !important;
+}
 .fr-premium-lead-actions {
   display: flex;
   flex-wrap: wrap;
@@ -456,14 +523,18 @@ export function injectDetailAssets(html: string) {
   text-decoration: none !important;
 }
 @media (max-width: 720px) {
+  .fr-owner-cta,
   .fr-premium-lead-panel,
   .fr-proposal-head {
     align-items: stretch;
     flex-direction: column;
   }
+  .fr-owner-cta__actions,
   .fr-premium-lead-actions {
     justify-content: stretch;
   }
+  .fr-owner-cta__primary,
+  .fr-owner-cta__secondary,
   .fr-premium-action,
   .fr-proposal-download {
     width: 100%;

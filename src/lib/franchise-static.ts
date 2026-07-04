@@ -67,9 +67,9 @@ export function renderListingPage(rows: FranchiseStaticRow[], options?: Director
     .replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)
     .replace(
       '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
-      `${generateDirectoryIntro(options)}${generateDirectoryControls(rows)}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+      `${generateDirectoryIntro(options)}${generateDirectoryControls(rows)}${generateFranchisorDirectoryCta()}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
     );
-  return normalizeGeneratedHtml(injectDirectoryAssets(applyCanonicalLegacyLinks(applyDirectoryMeta(html, options))));
+  return normalizeGeneratedHtml(applySiteBranding(injectDirectoryAssets(applyCanonicalLegacyLinks(applyDirectoryMeta(html, options)))));
 }
 
 export function renderCategoryIndexPage(rows: FranchiseStaticRow[]) {
@@ -85,16 +85,16 @@ export function renderCategoryIndexPage(rows: FranchiseStaticRow[]) {
         description: "Jelajahi peluang franchise berdasarkan kategori bisnis, mulai dari makanan minuman, pendidikan, jasa, retail, otomotif, hingga kesehatan.",
         canonicalPath: "/peluang-usaha/kategori/",
         introHtml: "<p>Pilih kategori bisnis untuk melihat listing yang lebih relevan dengan minat, pengalaman, dan target lokasi Anda.</p>",
-      })}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+      })}${generateFranchisorDirectoryCta()}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
     );
   return normalizeGeneratedHtml(
-    injectDirectoryAssets(
+    applySiteBranding(injectDirectoryAssets(
       applyCanonicalLegacyLinks(applyDirectoryMeta(html, {
         title: "Kategori Franchise",
         description: "Jelajahi peluang franchise berdasarkan kategori bisnis, mulai dari makanan minuman, pendidikan, jasa, retail, otomotif, hingga kesehatan.",
         canonicalPath: "/peluang-usaha/kategori/",
       })),
-    ),
+    )),
   );
 }
 
@@ -102,7 +102,7 @@ export function renderCategoryLandingPage(entry: CategoryRouteEntry, allRows: Fr
   const label = normalizeText(entry.label) || "Bisnis Umum";
   const introHtml = [
     `<p>Temukan ${escapeHtml(entry.rows.length)} peluang franchise kategori ${escapeHtml(label)}. Gunakan filter modal, status, dan pencarian brand agar pilihan lebih cepat mengerucut.</p>`,
-    "<p>Halaman ini dibuat dari data direktori utama, sehingga listing baru, edit brand, dan penghapusan akan ikut masuk pada build berikutnya.</p>",
+    "<p>Daftar ini diperbarui berkala agar calon mitra bisa melihat pilihan yang lebih relevan dan pemilik brand punya ruang tampil yang lebih rapi.</p>",
   ].join("");
   return renderListingPage(allRows, {
     title: `Franchise ${label}`,
@@ -125,16 +125,16 @@ export function renderCapitalIndexPage(rows: FranchiseStaticRow[]) {
         description: "Pilih peluang franchise berdasarkan kisaran modal investasi agar pencarian lebih sesuai budget.",
         canonicalPath: "/peluang-usaha/modal/",
         introHtml: capitalIndexCopy(rows),
-      })}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+      })}${generateFranchisorDirectoryCta()}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
     );
   return normalizeGeneratedHtml(
-    injectDirectoryAssets(
+    applySiteBranding(injectDirectoryAssets(
       applyCanonicalLegacyLinks(applyDirectoryMeta(html, {
         title: "Franchise Berdasarkan Modal",
         description: "Pilih peluang franchise berdasarkan kisaran modal investasi agar pencarian lebih sesuai budget.",
         canonicalPath: "/peluang-usaha/modal/",
       })),
-    ),
+    )),
   );
 }
 
@@ -160,16 +160,16 @@ export function renderCityIndexPage(rows: FranchiseStaticRow[]) {
         description: "Temukan peluang franchise berdasarkan data kota, kantor, outlet, atau ekspansi yang tersedia di listing.",
         canonicalPath: "/peluang-usaha/kota/",
         introHtml: cityIndexCopy(rows),
-      })}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+      })}${generateFranchisorDirectoryCta()}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
     );
   return normalizeGeneratedHtml(
-    injectDirectoryAssets(
+    applySiteBranding(injectDirectoryAssets(
       applyCanonicalLegacyLinks(applyDirectoryMeta(html, {
         title: "Franchise Berdasarkan Kota",
         description: "Temukan peluang franchise berdasarkan data kota, kantor, outlet, atau ekspansi yang tersedia di listing.",
         canonicalPath: "/peluang-usaha/kota/",
       })),
-    ),
+    )),
   );
 }
 
@@ -235,6 +235,7 @@ export function renderDetailPage(row: FranchiseStaticRow) {
 
   html = stripLegacyDetailTabComment(html);
   html = applyDetailEnhancements(html, row, { logoUrl, heroImage });
+  html = applySiteBranding(html);
 
   return normalizeGeneratedHtml(`${GENERATED_MARKER}:v1 slug=${escapeAttr(row.slug)} franchise_id=${escapeAttr(row.id)} -->\n${html}`);
 }
@@ -403,6 +404,36 @@ function generateCityCard(summary: { label: string; count: number; canonicalPath
 function generateDirectoryIntro(options?: DirectoryPageOptions) {
   if (!options?.introHtml) return "";
   return `<section class="franchise-directory-intro" aria-label="Panduan direktori">${options.introHtml}</section>`;
+}
+
+function generateFranchisorDirectoryCta() {
+  return `
+    <section class="fr-owner-cta fr-owner-cta--directory" aria-label="Untuk pemilik brand franchise">
+      <div class="fr-owner-cta__content">
+        <span class="fr-owner-cta__eyebrow">Punya brand franchise?</span>
+        <h2>Tampilkan brand gratis, lalu tingkatkan saat siap menarik calon mitra.</h2>
+        <p>Buat halaman brand agar orang lebih mudah memahami peluang Anda. Setelah data rapi, Premium membantu brand tampil lebih meyakinkan.</p>
+      </div>
+      <div class="fr-owner-cta__actions">
+        <a class="fr-owner-cta__primary" href="/login/?mode=register&amp;role=franchisor&amp;next=%2Fdaftar%2F%3Frole%3Dfranchisor%26continue%3D1">Tampilkan Brand Gratis</a>
+        <a class="fr-owner-cta__secondary" href="/premium/">Pelajari Premium</a>
+      </div>
+    </section>`;
+}
+
+function generateFranchisorDetailCta() {
+  return `
+            <section class="fr-owner-cta fr-owner-cta--detail" aria-label="Untuk pemilik brand franchise">
+              <div class="fr-owner-cta__content">
+                <span class="fr-owner-cta__eyebrow">Untuk pemilik brand</span>
+                <h2>Ingin brand Anda lebih mudah dipercaya calon mitra?</h2>
+                <p>Mulai dengan halaman brand gratis. Saat sudah siap menerima lebih banyak perhatian, aktifkan Premium agar langkah berikutnya lebih jelas bagi calon mitra.</p>
+              </div>
+              <div class="fr-owner-cta__actions">
+                <a class="fr-owner-cta__primary" href="/login/?mode=register&amp;role=franchisor&amp;next=%2Fdaftar%2F%3Frole%3Dfranchisor%26continue%3D1">Mulai Gratis</a>
+                <a class="fr-owner-cta__secondary" href="/premium/">Lihat Premium</a>
+              </div>
+            </section>`;
 }
 
 function generateSaveOpportunityButton(row: FranchiseStaticRow, variant: "card" | "detail" = "detail") {
@@ -621,12 +652,13 @@ function generateTabs(row: FranchiseStaticRow, description: string, isUnclaimed:
                       )
                       .join("")}
                 </div>
-            </div>`;
+            </div>
+            ${generateFranchisorDetailCta()}`;
 }
 
 function applyDirectoryMeta(html: string, options?: DirectoryPageOptions) {
   if (!options) return html;
-  const title = `${options.title} - Franchise.id`;
+  const title = `${options.title} - Franchisee.id`;
   return html
     .replace(/<title>.*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${escapeAttr(options.description)}">`)
@@ -638,6 +670,13 @@ function applyDirectoryMeta(html: string, options?: DirectoryPageOptions) {
     .replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${escapeAttr(options.description)}">`)
     .replace(/<h1 class="elementor-heading-title elementor-size-default">.*?<\/h1>/, `<h1 class="elementor-heading-title elementor-size-default">${escapeHtml(options.title)}</h1>`)
     .replace(/<h2 class="elementor-heading-title elementor-size-default">.*?<\/h2>/, `<h2 class="elementor-heading-title elementor-size-default">${escapeHtml(options.title)}</h2>`);
+}
+
+function applySiteBranding(html: string) {
+  return html
+    .replace(/Franchise\.id/g, "Franchisee.id")
+    .replace(/logo website franchise\.id white/g, "logo website Franchisee.id white")
+    .replace(/email@franchise\.id/g, "email@franchisee.id");
 }
 
 function applyDetailEnhancements(

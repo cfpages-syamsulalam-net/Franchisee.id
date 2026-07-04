@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-05 00:40 (Asia/Jakarta)
+### Added
+- `.context/session-20260705-0040.md`: Added this session snapshot for the non-manual traffic-funnel implementation pass.
+
+### Changed
+- `index.html`: Cleaned generated homepage JSON-LD/RSS/Elementor config and footer logo alt text to use Franchisee.id public branding, and updated the footer support mailbox to `email@franchisee.id`.
+- `src/lib/franchise-static.ts`: Added benefit-led franchisor CTA modules to generated directory/index/detail pages, updated generated directory title branding to Franchisee.id, normalized legacy-template public brand text/support mailbox in generated output, and replaced public build-mechanic copy with user-facing refresh language.
+- `src/lib/franchise-static-assets.ts`: Added responsive generated-directory owner CTA styling.
+- `src/lib/franchise-detail-assets.ts`: Added matching generated-detail owner CTA styling.
+- `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: Marked homepage brand cleanup and directory/detail franchisor CTA work done, with production QA still planned.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented generated owner CTA behavior and updated static renderer/asset responsibilities.
+- Legacy static pages and generated templates: Replaced the old support mailbox with `email@franchisee.id` across tracked public HTML/template files.
+- `SUGGESTION.md`: Updated suggestion 51 and marked suggestion 52 done after the user confirmed `email@franchisee.id` as the public support mailbox.
+
 ## 2026-07-04 23:26 (Asia/Jakarta)
 ### Added
 - `.context/session-20260704-2326.md`: Added this session snapshot for the traffic-funnel implementation pass.

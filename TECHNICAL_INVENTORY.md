@@ -404,13 +404,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Astro D1 snapshot validator and template renderer.*
 - `FranchiseStaticRowSchema`: Re-export of the shared D1 row schema for rows in `json/d1-franchise-static-data.json`.
 - `loadFranchiseStaticRows()`: Reads and validates the generated D1 snapshot.
-- `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, category filtering, and internal links to modal/category/city/tools pages.
+- `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, category filtering, a benefit-led franchisor CTA, and internal links to modal/category/city/tools pages.
 - Directory cards link to franchise information pages with a neutral `Info Franchise` CTA; unclaimed-specific claim CTAs remain on detail pages.
 - `renderCategoryIndexPage(rows)`: Legacy helper that renders category cards, but canonical category browsing is now `/peluang-usaha?view=kategori` or `/peluang-usaha?kategori=[slug]`.
-- `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including dynamic Premium Galeri/Proposal/FAQ tabs when the row has premium/media/proposal data.
+- `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including dynamic Premium Galeri/Proposal/FAQ tabs when the row has premium/media/proposal data and a post-tabs franchisor CTA for free brand creation plus Premium education.
 - `renderCityIndexPage(rows)` / `renderCityLandingPage(entry, rows)`: Render static city discovery pages from structured D1 location rows with text inference fallback.
+- `applySiteBranding(html)`: Normalizes legacy template public brand text from Franchise.id to Franchisee.id, updates logo alt text, and rewrites old support mailbox references to `email@franchisee.id`.
 - Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`; Premium detail CTA/tab rendering is delegated to `src/lib/franchise-premium-detail.ts`; contact parsing/rendering is delegated to `src/lib/franchise-contact.ts`; directory ranking is delegated to `src/lib/franchise-ranking.ts`; category route helpers are delegated to `src/lib/franchise-category.ts`; city route helpers are delegated to `src/lib/franchise-city.ts` and `src/lib/franchise-location-normalization.ts`.
-- Remaining local helper functions focus on template composition: JSON-LD serialization, investment summary rendering, dynamic tab assembly, cards, breadcrumbs, disclaimers, sticky claim CTA, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
+- Remaining local helper functions focus on template composition: JSON-LD serialization, investment summary rendering, dynamic tab assembly, owner CTAs, cards, breadcrumbs, disclaimers, sticky claim CTA, listing status badges/tooltips, fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
 
 ### File: `src/lib/franchise-contact.ts`
 *Detail contact renderer for D1-backed franchise static pages.*
@@ -469,16 +470,16 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/lib/franchise-static-assets.ts`
 *Generated directory CSS/JS and placeholder helper for D1-backed Astro pages.*
-- `injectDirectoryAssets(html)`: Injects the generated directory CSS plus client-side query-param filtering/sorting script, including overflow/z-index overrides so card badge tooltips render above card parents and neighboring elements.
+- `injectDirectoryAssets(html)`: Injects the generated directory CSS plus client-side query-param filtering/sorting script, including owner CTA styling and overflow/z-index overrides so card badge tooltips render above card parents and neighboring elements.
 - `generateCssPlaceholder(label, className)`: Renders the CSS-only missing-logo placeholder used by directory cards, category cards, and detail pages.
 - Re-exports `injectDetailAssets(html)` from `src/lib/franchise-detail-assets.ts` so existing imports remain stable.
 - Extracted from `src/lib/franchise-static.ts` on 2026-06-22, then split again on 2026-07-03 so directory and detail generated assets can evolve independently.
 
 ### File: `src/lib/franchise-detail-assets.ts`
 *Generated detail-page CSS/JS helper for D1-backed Astro pages.*
-- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts.
+- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts, including owner CTA styling below the detail tabs.
 - `downloadProposalPdf(button)` / `buildPdfFromJpegs(pages)`: Browser-side proposal image to PDF flow used only inside the Proposal tab; loads R2 image pages, builds a local PDF Blob in memory, triggers browser download, stores no duplicate PDF in R2, shows inline status, and avoids browser alerts.
-- Owns Premium detail CTA/gallery/proposal/FAQ styling outside the directory asset helper.
+- Owns Premium detail CTA/gallery/proposal/FAQ styling and franchisor owner CTA styling outside the directory asset helper.
 
 ### File: `js/product-events.js`
 *Public privacy-safe listing interaction tracker.*
@@ -494,13 +495,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Astro static listing page.*
 - `prerender = true`.
 - Loads rows with `loadFranchiseStaticRows()`.
-- Outputs full listing HTML with `renderListingPage(rows)`, including client-side query-param controls for `q`, `sort`, `kategori`, and `status`, plus quick links to static category/modal pages, buyer tools, and comparison.
+- Outputs full listing HTML with `renderListingPage(rows)`, including client-side query-param controls for `q`, `sort`, `kategori`, and `status`, a free-brand/Premium franchisor CTA, plus quick links to static category/modal pages, buyer tools, and comparison.
 
 ### File: `src/pages/peluang-usaha/[slug].astro`
 *Astro static franchise detail pages with flat `.html` output under `build.format: "preserve"`.*
 - `prerender = true`.
 - `getStaticPaths()`: Creates one static route per snapshot row using the D1 slug.
-- Outputs full detail HTML with `renderDetailPage(row)`.
+- Outputs full detail HTML with `renderDetailPage(row)`, including the post-tabs franchisor CTA.
 
 ### File: `src/pages/peluang-usaha/kategori/index.astro`
 *Astro static category index page.*
