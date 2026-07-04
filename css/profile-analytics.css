@@ -1,0 +1,67 @@
+.fr-profile-analytics-summary .fr-profile-stat strong {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.fr-profile-analytics-summary .fr-profile-stat i {
+  color: #c28d00;
+  font-size: 18px;
+}
+
+.fr-profile-analytics-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.fr-profile-analytics-card {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  padding: 16px;
+}
+
+.fr-profile-analytics-card-head {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.fr-profile-analytics-card h3 {
+  color: #111827;
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.fr-profile-analytics-card p {
+  color: #6b7280;
+  font-weight: 700;
+  margin: 0;
+}
+
+.fr-profile-analytics-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+.fr-profile-analytics-metric {
+  background: #f9fafb;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+}
+
+.fr-profile-analytics-metric strong {
+  color: #111827;
+  font-size: 22px;
+}
+
+.fr-profile-analytics-metric span,
+.fr-profile-analytics-metric small {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 800;
+}

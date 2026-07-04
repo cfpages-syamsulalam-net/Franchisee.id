@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-04 10:32 (Asia/Jakarta)
+Last updated: 2026-07-04 10:59 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -21,7 +21,7 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 | Automation | D1 publish poller workflow triggers Cloudflare Pages Deploy Hook when public-page D1 changes are dirty; Premium email worker workflow calls the protected email endpoint. | Direction is correct; dirty-to-build and email sending should keep getting production verification. |
 
 ## Primary Problems
-- Several runtime files have become large orchestration modules after the D1/Clerk/Profile/Premium work. Recent profile/dashboard/static renderer/static asset/Premium operations splits reduced the highest frontend and Premium backend risk, but refactor risk still remains in `css/profile.css`, `js/auth-clerk.js`, `scripts/build-d1-franchise-pages.ts`, `scripts/import-csv-to-d1.ts`, and `functions/form-submit.js`.
+- Several runtime files have become large orchestration modules after the D1/Clerk/Profile/Premium work. Recent profile/dashboard/static renderer/static asset/Premium operations/profile CSS splits reduced the highest frontend and Premium backend risk, but refactor risk still remains in `js/auth-clerk.js`, `scripts/build-d1-franchise-pages.ts`, `scripts/import-csv-to-d1.ts`, and `functions/form-submit.js`.
 - Static freshness depends on the D1 dirty queue and deploy-hook workflow. That path is implemented, but production dirty-to-build verification should remain tracked.
 - Public popularity/recommendation signals still use a mix of deterministic quality proxies and newer product events; richer ranking needs a dedicated model once event volume grows.
 - Bank transaction matching is still manual; Premium activation is production-ready for manual review, but automatic payment matching needs a provider/API decision.
@@ -217,7 +217,7 @@ Current maintained code hotspots by line count, excluding generated legacy HTML 
 | `js/profile-page.js` | 777 after profile module split and location action wiring | Profile client now acts as `/profil` boot/controller facade for auth, data load, tab routing, submit/fetch workflows, media upload, lead status, payment/inquiry actions, and small payload parsers for profile forms. Account, role add-on, franchisee, franchisor/listing/claims, Premium membership, leads, saved-opportunity storage, and shared UI helpers were extracted. | Next extraction: split remaining submit/fetch workflows and payload parsers if new profile features grow this file again. | Extracted; watch |
 | `functions/profile-data.js` | 92 after read-model split | Profile API facade owns auth/error handling and POST dispatch only. GET response composition, read-model loader callbacks, Zod schemas, shared response utilities, account/role actions, franchisee actions, franchisor/listing/lead actions, recommendation scoring, listing patch construction, and Premium workflows are delegated to helper modules. | Keep as the endpoint router/facade. Add smoke tests before new profile feature batches. | Extracted |
 | `src/lib/franchise-static.ts` | 499 after static helper splits | Astro-side renderer now keeps route-facing snapshot loading, directory/detail composition, SEO/detail enhancements, and template orchestration. Text helpers live in `src/lib/franchise-text.ts`, Premium detail helpers in `src/lib/franchise-premium-detail.ts`, contact rendering/parsing in `src/lib/franchise-contact.ts`, ranking in `src/lib/franchise-ranking.ts`, category route helpers in `src/lib/franchise-category.ts`, and generated assets in `src/lib/franchise-static-assets.ts` / `src/lib/franchise-detail-assets.ts`. | Keep as the public static-renderer facade; extract renderer markup only if future listing/detail features push it back above the long-file threshold. | Extracted |
-| `css/profile.css` | 1271 | Profile styling is now the largest maintained file and mixes shell layout, account/forms, Premium membership, role prompts, analytics, owner listing/location/media, and lead cards. | Split by page domain only when touching related UI: `css/profile-premium.css`, `css/profile-franchisor.css`, and `css/profile-analytics.css`, loaded after the base profile shell. | Planned |
+| `css/profile.css` | 773 after profile CSS split; modules: `css/profile-premium.css` 216, `css/profile-franchisor.css` 222, `css/profile-analytics.css` 67 | Base profile styling now owns shell layout, account/forms, role prompts, franchisee opportunity cards, shared chips/lists/notices/buttons, and base responsive behavior. Premium, franchisor/location/media/leads, and analytics styles moved to focused modules. | Keep base/global profile styles here; add domain-specific styling to the matching profile CSS module loaded after the base stylesheet. | Extracted |
 | `functions/_premium-ops.js` | 5 after Premium operations split | Compatibility facade for existing Premium operation imports. Settings/pricing/promo, notifications/email queue/events, lifecycle/reporting, readiness, and utility helpers now live in focused modules. | Keep as re-export facade until callers are gradually moved to focused modules. | Extracted |
 | `functions/_premium-settings.js` | 218 | Owns payment method fallbacks, admin-managed Premium settings, multi-brand discount pricing, and public promo ribbon settings. | Keep pricing/settings/promo changes here instead of growing the facade. | Extracted |
 | `functions/_premium-notifications.js` | 240 | Owns Premium funnel events, owner/admin in-app notifications, queued email writes, queue summaries, and notification feeds. | Keep event/notification/email-queue changes here. | Extracted |
@@ -261,6 +261,14 @@ Refactor rule: prefer behavior-preserving extraction with validation after each 
 ### Large File Refactor Plans Over 900 Lines
 
 These are the files currently above 900 lines and already planned for refactor. Each split should be behavior-preserving first, then followed by focused validation. Do not change public copy, API contracts, or generated HTML intentionally during these extractions.
+
+#### `css/profile.css` - Target Stylesheet Modules
+
+| Target file | Move from `css/profile.css` | Keep in base stylesheet | Validation |
+| --- | --- | --- | --- |
+| `css/profile-premium.css` | Premium membership card, Premium benefit/price grid, payment instruction box, QRIS display, readiness checklist, Premium notifications, and related responsive rules. Implemented. | Global profile shell, tabs, panels, form fields, buttons, notices, account rows, role add-on/modal styles, franchisee opportunity cards, and generic chip/list helpers. | `/profil` keeps the Membership tab layout, payment details, QRIS image, readiness checklist, and mobile stacking after the stylesheet split. |
+| `css/profile-analytics.css` | Owner analytics summary card icon treatment, analytics listing cards, metric grid, and metric text styling. Implemented. | Shared summary/stat card base styles remain in `css/profile.css` because non-analytics panels reuse them. | Owner analytics tab keeps the same card spacing, icon color, and metric grid. |
+| `css/profile-franchisor.css` | Franchisor publication distribution chips, owner Area Listing editor, listing selector, media upload controls, lead inbox cards/status controls, and related responsive rules. Implemented. | Shared `fr-profile-chip-row`, generic empty/list text, account identity lock notes, and public opportunity-card styles remain in `css/profile.css` unless a later split needs them. | Data Brand, Listing Brand, Area Listing, media upload, claims, and Leads tabs keep current layout and controls. |
 
 #### `js/profile-page.js` - Target Browser Modules
 

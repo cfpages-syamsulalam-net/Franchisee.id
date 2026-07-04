@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-04 10:32 (Asia/Jakarta)
+Last updated: 2026-07-04 10:59 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -206,11 +206,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Lead renderer for `/profil`.*
 - `window.FranchiseProfileLeads.createRenderer(state, helpers)`: Returns `leadsPanel()` for franchisor lead UI.
 - `leadCard(lead)`: Renders email/WhatsApp/listing shortcuts and status select markup; status saving stays in `js/profile-page.js`.
+- Lead inbox layout lives in `css/profile-franchisor.css` on top of shared profile chips/buttons from `css/profile.css`.
 
 ### File: `js/profile-analytics.js`
 *Owner analytics renderer for `/profil`.*
 - `window.FranchiseProfileAnalytics.createRenderer(state, helpers)`: Returns `analyticsPanel()` for franchisor/admin/staff users.
 - `analyticsPanel()` / `listingAnalyticsCard(item)`: Renders 30-day views, saves, inquiries, contact clicks, conversion rate, and per-listing total counts from `owner_analytics`.
+- Analytics card/metric styling lives in `css/profile-analytics.css` on top of shared profile summary/stat styles.
 
 ### File: `js/profile-opportunities.js`
 *Saved opportunity storage helper for `/profil`.*
@@ -231,6 +233,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `locationEditor(listing)`: Renders the owner Area Listing editor from `structured_locations`, preserving source labels and one-line-per-city input format.
 - `listingPanel()` / `publicationDistribution()` / `mediaUploadControl()`: Renders owned D1 listing edit controls, network publication chips, media upload controls, and owner edit limit state.
 - `claimsPanel()`: Renders submitted claim status and direct `/daftar` claim CTA copy.
+- Franchisor/listing/location/media styling lives in `css/profile-franchisor.css` on top of the shared profile base stylesheet.
 
 ### File: `js/profile-premium.js`
 *Premium UI helper and Membership renderer for `/profil`.*
@@ -238,6 +241,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `canRenew(subscription)` / `daysUntil(value)`: Implements the 30-day renewal-window check used by the Membership tab.
 - `formatDate(value)` / `orderStatus(status)`: Keeps Premium expiry dates and order labels consistent without growing `js/profile-page.js`.
 - `createProfileRenderer(state, helpers)`: Returns `membershipPanel()` for Premium readiness, owner notifications, payment instructions, confirmation form, active subscription, and renewal CTA rendering.
+- Membership tab styling lives in `css/profile-premium.css` on top of the shared profile base stylesheet.
 
 ### File: `js/dashboard-utils.js`
 *Shared browser helpers for dashboard modules.*
@@ -359,7 +363,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/pages/profil/index.astro`
 *Protected profile page shell.*
 - Static Astro route at `/profil/` with `noindex,nofollow`.
-- Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, `css/profile.css`, profile renderer modules, and `js/profile-page.js`.
+- Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, `css/profile.css`, `css/profile-premium.css`, `css/profile-analytics.css`, `css/profile-franchisor.css`, profile renderer modules, and `js/profile-page.js`.
 - Anonymous protection is client-side; all profile data and writes are protected again by `/profile-data`.
 
 ### File: `src/pages/premium/index.astro`
