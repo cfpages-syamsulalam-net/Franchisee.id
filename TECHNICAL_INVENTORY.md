@@ -389,6 +389,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Fails if stale undefined profile helper calls such as `selectedFranchise()` reappear.
 - Exposed through `pnpm run profile:check`.
 
+### File: `scripts/check-contact-parser.mjs`
+*Focused imported-contact parser regression check.*
+- Reads `functions/_dashboard-utils.js` and exercises the same parser helpers used by dashboard quality refresh/outreach.
+- Covers Taiwan country-code mobile numbers, two-number Indonesian mobile fields, space-grouped mobile pairs, hyphenated zero-prefixed groups, landlines, and call-center short numbers.
+- Exposed through `pnpm run contact:check`.
+
 ## 2. Directory: `/src` (Astro Static Generation)
 
 ### File: `src/lib/shared-schemas.ts`
@@ -433,8 +439,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/franchise-contact.ts`
 *Detail contact renderer for D1-backed franchise static pages.*
 - `generateContactBlock(row, isUnclaimed)`: Renders D1 contact/social links into the detail page contact tab, including imported public phone/address data for unclaimed listings with a claim CTA.
-- `parsePhoneContacts(value, defaultLabel, source)`: Splits messy Indonesian phone text into contact rows while preserving nearby labels such as Marketing, WA, Kantor, Office, and Owner.
-- `findPhoneStarts(text)`, `inferPhoneLabel(text, start, end, fallback)`, `classifyPhone(normalized, label, source)`, and `formatIndonesianPhone(normalized, type)`: Infer phone starts, labels, contact type, and Indonesian display formatting.
+- `parsePhoneContacts(value, defaultLabel, source)`: Splits messy imported phone text into contact rows, including Indonesian mobile pairs, Taiwan mobile country-code numbers, Indonesian landlines, and call-center short numbers while preserving nearby labels such as Marketing, WhatsApp, Kantor, Office, Call Center, and Owner.
+- `findPhoneStarts(text)`, `isGroupedNonMobileStart(text, start)`, `matchPhoneCandidate(value)`, `inferPhoneLabel(text, start, end, fallback)`, `classifyPhone(parsed, label, source)`, `normalizePhoneDigits(value)`, and `formatPhoneDisplay(parsed, type)`: Infer safe phone starts, avoid treating middle number groups as new contacts, classify mobile/landline/call-center numbers, and format public display values.
 - `generatePhoneContactRow(contact, row, isUnclaimed)`: Renders parsed phone contacts as styled `tel:` rows and adds a WhatsApp claim-notification link for unclaimed mobile/WhatsApp-capable numbers.
 
 ### File: `src/lib/franchise-ranking.ts`
@@ -867,7 +873,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_contact-normalization.js`
 *Normalized contact extraction for dashboard operations.*
-- `buildNormalizedContacts(row)`: Converts existing listing/profile fields into high-confidence contact rows for phone, WhatsApp, email, website, address, and social links.
+- `buildNormalizedContacts(row)`: Converts existing listing/profile fields into high-confidence contact rows for phone, WhatsApp, email, website, address, and social links. Phone extraction now records structured mobile, Taiwan mobile, landline, and call-center values; WhatsApp source rows are filtered to WhatsApp-capable numbers only.
 - `hasInvalidContactUrl(row)` / `normalizeExternalUrl(value, field)`: URL validation/normalization used by quality checks.
 
 ### File: `functions/_quality-checks.js`
@@ -879,7 +885,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Shared dashboard helpers.*
 - `jsonResponse(payload, init)`: Standard no-store JSON response helper.
 - `auditStatement(db, action, entityType, entityId, metadata, actorUserId)`: Shared audit-event insert statement builder.
-- `parseWhatsAppContacts(value)` / `buildWhatsAppUrl(internationalDigits, row)`: Indonesian phone parsing and claim-notification link generation.
+- `parsePhoneContacts(value, defaultLabel)` / `parseWhatsAppContacts(value)` / `buildWhatsAppUrl(internationalDigits, row)`: Imported contact parsing and claim-notification link generation. `parsePhoneContacts()` recognizes structured phone contacts for Data Quality, while `parseWhatsAppContacts()` filters to WhatsApp-capable contacts for outreach.
 - `isLikelyAllCapsDescription(value)`: JavaScript-side all-caps heuristic used by data-quality checks.
 
 ### File: `functions/form-submit.js` (v2.6)

@@ -66,21 +66,20 @@ function parsePhoneContacts(value: unknown, defaultLabel: string, source: "whats
     const start = starts[index];
     const nextStart = starts[index + 1] ?? text.length;
     const slice = text.slice(start, nextStart);
-    const raw = slice.match(/^(?:\(\s*)?(?:\+?62|0)(?:[\s().-]*\d){5,15}/)?.[0];
+    const raw = matchPhoneCandidate(slice);
     if (!raw) continue;
 
-    const digits = raw.replace(/\D/g, "");
-    const normalized = normalizeIndonesianDigits(digits);
-    if (!isUsablePhoneNumber(normalized)) continue;
+    const parsed = normalizePhoneDigits(raw);
+    if (!parsed) continue;
 
     const end = start + raw.length;
     const label = inferPhoneLabel(text, start, end, defaultLabel);
-    const type = classifyPhone(normalized, label, source);
+    const type = classifyPhone(parsed, label, source);
     contacts.push({
       label: label || defaultLabel,
-      display: formatIndonesianPhone(normalized, type),
-      href: `tel:+${toInternationalDigits(normalized)}`,
-      whatsappHref: normalized.startsWith("08") ? `https://wa.me/${toInternationalDigits(normalized)}` : "",
+      display: formatPhoneDisplay(parsed, type),
+      href: toPhoneHref(parsed),
+      whatsappHref: parsed.canUseWhatsApp ? `https://wa.me/${parsed.internationalDigits}` : "",
       type,
     });
   }
@@ -90,16 +89,33 @@ function parsePhoneContacts(value: unknown, defaultLabel: string, source: "whats
 
 function findPhoneStarts(text: string) {
   const starts: number[] = [];
-  const startPattern = /(?:\(\s*)?(?:\+?62|0)(?=[\s().-]*\d)/g;
+  const startPattern = /(?:\(\s*)?(?:(?:\+?\s*62|0)(?=[\s().-]*[2-9])|\+?\s*886(?=[\s().-]*9)|1(?=[\s().-]*5[\s().-]*0[\s().-]*0[\s().-]*\d))/g;
   let match: RegExpExecArray | null;
 
   while ((match = startPattern.exec(text))) {
     const previous = text[match.index - 1] || "";
+    const beforePrevious = text[match.index - 2] || "";
     if (/\d/.test(previous)) continue;
+    if (/[-.]/.test(previous) && /\d/.test(beforePrevious)) continue;
+    if (/\s/.test(previous) && /\d/.test(beforePrevious) && isGroupedNonMobileStart(text, match.index)) continue;
     starts.push(match.index);
   }
 
   return starts;
+}
+
+function isGroupedNonMobileStart(text: string, start: number) {
+  return /^(?:\(\s*)?0[\s().-]*[2-79]/.test(text.slice(start));
+}
+
+function matchPhoneCandidate(value: string) {
+  return (
+    value.match(/^(?:\(\s*)?(?:\+?\s*62|0)\s*8(?:[\s().-]*\d){8,11}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*886\s*9(?:[\s().-]*\d){8}/)?.[0] ||
+    value.match(/^(?:\(\s*)?(?:\+?\s*62|0)\s*[2-9](?:[\s().-]*\d){6,11}/)?.[0] ||
+    value.match(/^1(?:[\s().-]*\d){5,7}/)?.[0] ||
+    ""
+  );
 }
 
 function inferPhoneLabel(text: string, start: number, end: number, fallback: string) {
@@ -111,42 +127,149 @@ function inferPhoneLabel(text: string, start: number, end: number, fallback: str
   const beforeColon = before.match(/([A-Za-z][A-Za-z\s./-]{1,28})\s*[:：]\s*$/);
   if (beforeColon?.[1]) return titleCaseLabel(beforeColon[1]);
 
-  const keyword = before.match(/\b(marketing|whatsapp|wa|kantor|office|telp kantor|telepon kantor|telepon|telp|owner|admin|cp)\b\s*$/i);
+  const keyword = before.match(/\b(call center|marketing|whatsapp|wa|kantor|office|telp kantor|telepon kantor|telepon|telp|owner|admin|cp)\b\s*$/i);
   if (keyword?.[1]) return titleCaseLabel(keyword[1]);
 
   return fallback;
 }
 
-function classifyPhone(normalized: string, label: string, source: "whatsapp" | "phone"): ParsedPhoneContact["type"] {
+function classifyPhone(parsed: NormalizedPhoneDigits, label: string, source: "whatsapp" | "phone"): ParsedPhoneContact["type"] {
   const lower = label.toLowerCase();
-  if ((source === "whatsapp" || /\b(wa|whatsapp)\b/.test(lower)) && normalized.startsWith("08")) return "whatsapp";
-  if (normalized.startsWith("08")) return "mobile";
+  if ((source === "whatsapp" || /\b(wa|whatsapp)\b/.test(lower)) && parsed.canUseWhatsApp) return "whatsapp";
+  if (parsed.kind === "mobile") return "mobile";
   return "landline";
 }
 
-function normalizeIndonesianDigits(digits: string) {
-  if (digits.startsWith("620")) return `0${digits.slice(3)}`;
-  if (digits.startsWith("62")) return `0${digits.slice(2)}`;
-  return digits;
+interface NormalizedPhoneDigits {
+  countryCode: "62" | "886" | "";
+  localDigits: string;
+  internationalDigits: string;
+  kind: "mobile" | "landline" | "call_center";
+  canUseWhatsApp: boolean;
 }
 
-function isUsablePhoneNumber(digits: string) {
-  if (!/^0\d{7,13}$/.test(digits)) return false;
+function normalizePhoneDigits(value: string): NormalizedPhoneDigits | null {
+  const digits = value.replace(/\D/g, "");
+  if (!hasUsefulDigitVariety(digits)) return null;
+
+  if (digits.startsWith("0")) {
+    if (!/^08/.test(digits)) {
+      if (!isIndonesianLandline(digits)) return null;
+      return {
+        countryCode: "62",
+        localDigits: digits,
+        internationalDigits: `62${digits.slice(1)}`,
+        kind: "landline",
+        canUseWhatsApp: false,
+      };
+    }
+
+    if (!/^08\d{8,11}$/.test(digits)) return null;
+    return {
+      countryCode: "62",
+      localDigits: digits,
+      internationalDigits: `62${digits.slice(1)}`,
+      kind: "mobile",
+      canUseWhatsApp: true,
+    };
+  }
+
+  if (digits.startsWith("620")) {
+    const normalized = `62${digits.slice(3)}`;
+    if (!/^628\d{8,11}$/.test(normalized)) return null;
+    return {
+      countryCode: "62",
+      localDigits: `0${normalized.slice(2)}`,
+      internationalDigits: normalized,
+      kind: "mobile",
+      canUseWhatsApp: true,
+    };
+  }
+
+  if (digits.startsWith("62")) {
+    if (/^628\d{8,11}$/.test(digits)) {
+      return {
+        countryCode: "62",
+        localDigits: `0${digits.slice(2)}`,
+        internationalDigits: digits,
+        kind: "mobile",
+        canUseWhatsApp: true,
+      };
+    }
+
+    const landlineLocal = `0${digits.slice(2)}`;
+    if (!isIndonesianLandline(landlineLocal)) return null;
+    return {
+      countryCode: "62",
+      localDigits: landlineLocal,
+      internationalDigits: digits,
+      kind: "landline",
+      canUseWhatsApp: false,
+    };
+  }
+
+  if (isIndonesianLandline(digits)) {
+    return {
+      countryCode: "62",
+      localDigits: digits,
+      internationalDigits: `62${digits.slice(1)}`,
+      kind: "landline",
+      canUseWhatsApp: false,
+    };
+  }
+
+  if (digits.startsWith("886")) {
+    if (!/^8869\d{8}$/.test(digits)) return null;
+    return {
+      countryCode: "886",
+      localDigits: digits,
+      internationalDigits: digits,
+      kind: "mobile",
+      canUseWhatsApp: true,
+    };
+  }
+
+  if (/^1500\d{3,5}$/.test(digits)) {
+    return {
+      countryCode: "",
+      localDigits: digits,
+      internationalDigits: digits,
+      kind: "call_center",
+      canUseWhatsApp: false,
+    };
+  }
+
+  return null;
+}
+
+function formatPhoneDisplay(parsed: NormalizedPhoneDigits, _type: ParsedPhoneContact["type"]) {
+  if (parsed.countryCode === "886") {
+    const local = parsed.internationalDigits.slice(3);
+    return `+886 ${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
+  }
+
+  if (parsed.kind === "call_center") return groupDigits(parsed.localDigits, 4);
+  if (parsed.kind === "landline") return formatIndonesianLandline(parsed.localDigits);
+  return groupDigits(parsed.localDigits, 4);
+}
+
+function toPhoneHref(parsed: NormalizedPhoneDigits) {
+  return parsed.kind === "call_center" ? `tel:${parsed.localDigits}` : `tel:+${parsed.internationalDigits}`;
+}
+
+function hasUsefulDigitVariety(digits: string) {
   return new Set(digits.split("")).size > 2;
 }
 
-function toInternationalDigits(normalized: string) {
-  return normalized.startsWith("0") ? `62${normalized.slice(1)}` : normalized;
+function isIndonesianLandline(digits: string) {
+  return /^0[2-9]\d{7,11}$/.test(digits) && !/^08/.test(digits);
 }
 
-function formatIndonesianPhone(normalized: string, type: ParsedPhoneContact["type"]) {
-  if (type === "landline") {
-    const areaLength = normalized.startsWith("021") ? 3 : normalized.startsWith("02") || normalized.startsWith("03") || normalized.startsWith("04") ? 4 : 3;
-    const area = normalized.slice(0, areaLength);
-    const local = normalized.slice(areaLength);
-    return `(${area}) ${groupDigits(local, 4)}`;
-  }
-  return groupDigits(normalized, 4);
+function formatIndonesianLandline(localDigits: string) {
+  const areaLength = localDigits.startsWith("021") ? 3 : /^0[2-9]\d{2}/.test(localDigits) ? 4 : 3;
+  const area = localDigits.slice(0, areaLength);
+  const local = localDigits.slice(areaLength);
+  return `(${area}) ${groupDigits(local, 4)}`;
 }
 
 function groupDigits(value: string, size: number) {
@@ -166,6 +289,7 @@ function titleCaseLabel(label: string) {
     office: "Kantor",
     "telp kantor": "Telepon Kantor",
     "telepon kantor": "Telepon Kantor",
+    "call center": "Call Center",
     cp: "CP",
   };
   const key = normalized.toLowerCase();

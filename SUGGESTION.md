@@ -1,6 +1,6 @@
 # SUGGESTION.md - Assistant Recommendations
 
-Last updated: 2026-07-05 17:28 (Asia/Jakarta)
+Last updated: 2026-07-05 18:03 (Asia/Jakarta)
 
 ## Purpose
 This file is exclusively for Codex/assistant suggestions. It is where I record improvement ideas I notice while working on the project: product value, UX, reliability, performance, security, data quality, operations, migration safety, and developer workflow.
@@ -74,3 +74,4 @@ User decisions remain authoritative. This file is not a replacement for `AGENTS.
 | 54 | Authenticated UI QA | Suggested | Add a lightweight visual QA checklist for protected app shells after each profile/dashboard style pass. | `/profil` and `/dashboard` are now visually aligned, but authenticated states still need manual viewport checks because navbar account replacement, role badges, tabs, and admin-only panels depend on live session data. | Add checklist items for `/profil` logged-out redirect, franchisee/franchisor/admin nav states, tab hover/active states, `/dashboard` locked/login/ready states, mobile layout, and dark-header contrast after the next deploy. |
 | 55 | Dashboard reliability | Suggested | Add a high-volume `/dashboard-data` read-model smoke test. | The dashboard failed only when enough editable listing IDs were loaded to exceed D1's SQL variable limit; normal build/type checks did not exercise that data volume. | Add a mocked-D1 or fixture-based test that loads more than 100 editable listings with structured locations and asserts dashboard GET composition succeeds without oversized bind lists. |
 | 56 | Dashboard QA | Suggested | Add a browser-level dashboard interaction smoke test for Data Quality quick edit. | The pencil action was wired but seeded a hidden Review form, so it appeared to do nothing and only manual interaction exposed the bug. | Add a DOM/browser test that clicks a Data Quality quick-edit button, asserts the Review tab becomes active, the listing/reason/field controls are seeded, and admin copy says direct edit rather than suggestion. |
+| 57 | Contact data QA | Done | Add regression coverage for imported contact parser edge cases. | Data Quality false positives came from real imported contact formats: Taiwan country codes, multiple mobile numbers, hyphenated groups, landlines, and call centers. These can regress silently without focused checks. | Added `scripts/check-contact-parser.mjs` and `pnpm run contact:check` covering those edge cases. |

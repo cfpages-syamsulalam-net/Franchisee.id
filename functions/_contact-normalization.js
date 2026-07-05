@@ -1,4 +1,4 @@
-import { parseWhatsAppContacts, normalizeText } from "./_dashboard-utils.js";
+import { parsePhoneContacts, normalizeText } from "./_dashboard-utils.js";
 
 const CONTACT_LABELS = {
   phone: "Telepon",
@@ -62,14 +62,14 @@ export function normalizeExternalUrl(value, field = "") {
 }
 
 function addPhoneContacts(contacts, value, type, sourceField) {
-  const parsed = parseWhatsAppContacts(value);
+  const parsed = parsePhoneContacts(value).filter((contact) => type !== "whatsapp" || contact.can_use_whatsapp);
   parsed.forEach((contact, index) => {
     contacts.push({
       contact_type: type,
       label: contact.label || CONTACT_LABELS[type],
       value: contact.display,
       normalized_value: contact.international_digits,
-      url: `https://wa.me/${contact.international_digits}`,
+      url: contact.url || null,
       source_field: sourceField,
       confidence: "high",
       is_primary: index === 0 ? 1 : 0,

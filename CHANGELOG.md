@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-05 18:03 (Asia/Jakarta)
+### Added
+- `.context/session-20260705-1803.md`: Added this session snapshot for the Data Quality contact parser and remote cleanup work.
+- `.context/contact-quality-cleanup-20260705-remote.sql`: Added the generated remote D1 cleanup SQL used to upsert structured contacts and resolve false-positive `suspicious_contact` checks.
+- `scripts/check-contact-parser.mjs`: Added a focused parser regression check for Taiwan mobile, multi-number Indonesian mobile, hyphenated mobile, landline, and call-center contact formats.
+
+### Changed
+- `functions/_dashboard-utils.js`: Added generic structured phone parsing alongside WhatsApp-only parsing, including Taiwan mobile numbers, Indonesian mobile multi-number strings, Indonesian landlines, call-center numbers, and safer grouped-number start detection.
+- `functions/_contact-normalization.js`: Switched normalized contact extraction to structured phone parsing while keeping WhatsApp source rows limited to WhatsApp-capable contacts.
+- `src/lib/franchise-contact.ts`: Mirrored the stronger contact parser for public franchise detail contact rendering.
+- `package.json`: Added `contact:check` for the focused contact parser regression check.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the stronger contact parsing, remote cleanup, and completed parser regression suggestion.
+- Remote D1 `franchise_db`: Upserted 65 structured contact rows and resolved 36 false-positive open `suspicious_contact` quality checks.
+
 ## 2026-07-05 17:28 (Asia/Jakarta)
 ### Added
 - `.context/session-20260705-1728.md`: Added this session snapshot for the dashboard Data Quality quick-edit bugfix.
