@@ -1,6 +1,6 @@
 # International Franchisor Policy
 
-Last updated: 2026-07-05 19:30 (Asia/Jakarta)
+Last updated: 2026-07-05 23:55 (Asia/Jakarta)
 
 ## Rule
 Franchisee.id should stay low-friction for Indonesian franchisors while still clearly supporting overseas brands that want Indonesian partners.
@@ -17,6 +17,7 @@ Franchisee.id should stay low-friction for Indonesian franchisors while still cl
 - Keep the fields collapsed under a “Brand dari luar Indonesia?” section.
 - If a franchisor selects a non-Indonesia contact country code, open the section and prefill the matching brand country while keeping target market as Indonesia.
 - For non-Indonesia franchisors, the form should support Southeast Asia and nearby Asian markets with flag labels.
+- Supported country names, dial codes, aliases, flag labels, WhatsApp digit ranges, and international mobile patterns live in `data/country-metadata.json`; runtime adapters and public JSON should stay aligned with that source.
 
 ## Public Listing UX
 - Do not add country badges to Indonesian listings.

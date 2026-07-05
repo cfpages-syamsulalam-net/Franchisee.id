@@ -2,6 +2,7 @@ import {
   normalizeHakiStatusValue,
   normalizeRoyaltyBasisValue,
 } from "./_shared-schemas.js";
+import { DEFAULT_COUNTRY_NAME, countryNameFromDialCode } from "./_country-metadata.js";
 
 export function franchiseBindValues(data, profileId, publicId, now, investment) {
   return [
@@ -41,42 +42,11 @@ export function franchiseBindValues(data, profileId, publicId, now, investment) 
 }
 
 function listingBrandCountry(data) {
-  return textOrNull(data.brand_country) || countryFromDialCode(data.country_code) || "Indonesia";
+  return textOrNull(data.brand_country) || countryNameFromDialCode(data.country_code) || DEFAULT_COUNTRY_NAME;
 }
 
 function listingTargetMarket(data) {
-  return textOrNull(data.target_market) || "Indonesia";
-}
-
-function countryFromDialCode(value) {
-  const code = `+${(value || "").toString().replace(/\D/g, "") || "62"}`;
-  const countries = {
-    "+62": "Indonesia",
-    "+60": "Malaysia",
-    "+65": "Singapore",
-    "+673": "Brunei",
-    "+855": "Cambodia",
-    "+670": "Timor-Leste",
-    "+856": "Laos",
-    "+95": "Myanmar",
-    "+63": "Philippines",
-    "+66": "Thailand",
-    "+84": "Vietnam",
-    "+86": "China",
-    "+852": "Hong Kong",
-    "+853": "Macau",
-    "+886": "Taiwan",
-    "+81": "Japan",
-    "+82": "South Korea",
-    "+91": "India",
-    "+880": "Bangladesh",
-    "+92": "Pakistan",
-    "+94": "Sri Lanka",
-    "+977": "Nepal",
-    "+61": "Australia",
-    "+1": "United States",
-  };
-  return countries[code] || null;
+  return textOrNull(data.target_market) || DEFAULT_COUNTRY_NAME;
 }
 
 export async function hasDuplicateFranchisee(db, email, whatsapp) {

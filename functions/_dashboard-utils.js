@@ -1,4 +1,8 @@
 import { AuthError } from "./_clerk-auth.js";
+import {
+  formatInternationalPhone as formatInternationalPhoneFromMetadata,
+  internationalMobileRuleForDigits,
+} from "./_country-metadata.js";
 import { SITE_ID } from "./_dashboard-schemas.js";
 
 export function auditStatement(db, action, entityType, entityId, metadata, actorUserId) {
@@ -247,89 +251,8 @@ function normalizePhoneDigits(value) {
     };
   }
 
-  if (digits.startsWith("886")) {
-    return normalizeInternationalMobile(digits, "886", /^9\d{8}$/);
-  }
-
-  if (digits.startsWith("852")) {
-    return normalizeInternationalMobile(digits, "852", /^[569]\d{7}$/);
-  }
-
-  if (digits.startsWith("853")) {
-    return normalizeInternationalMobile(digits, "853", /^6\d{7}$/);
-  }
-
-  if (digits.startsWith("84")) {
-    return normalizeInternationalMobile(digits, "84", /^[35789]\d{8}$/);
-  }
-
-  if (digits.startsWith("86")) {
-    return normalizeInternationalMobile(digits, "86", /^1\d{10}$/);
-  }
-
-  if (digits.startsWith("65")) {
-    return normalizeInternationalMobile(digits, "65", /^[689]\d{7}$/);
-  }
-
-  if (digits.startsWith("60")) {
-    return normalizeInternationalMobile(digits, "60", /^1\d{7,9}$/);
-  }
-
-  if (digits.startsWith("673")) {
-    return normalizeInternationalMobile(digits, "673", /^[78]\d{6}$/);
-  }
-
-  if (digits.startsWith("855")) {
-    return normalizeInternationalMobile(digits, "855", /^[1-9]\d{7,8}$/);
-  }
-
-  if (digits.startsWith("670")) {
-    return normalizeInternationalMobile(digits, "670", /^7\d{6,7}$/);
-  }
-
-  if (digits.startsWith("856")) {
-    return normalizeInternationalMobile(digits, "856", /^20\d{8}$/);
-  }
-
-  if (digits.startsWith("95")) {
-    return normalizeInternationalMobile(digits, "95", /^9\d{7,9}$/);
-  }
-
-  if (digits.startsWith("63")) {
-    return normalizeInternationalMobile(digits, "63", /^9\d{9}$/);
-  }
-
-  if (digits.startsWith("66")) {
-    return normalizeInternationalMobile(digits, "66", /^[689]\d{8}$/);
-  }
-
-  if (digits.startsWith("81")) {
-    return normalizeInternationalMobile(digits, "81", /^[789]0\d{8}$/);
-  }
-
-  if (digits.startsWith("82")) {
-    return normalizeInternationalMobile(digits, "82", /^10\d{8}$/);
-  }
-
-  if (digits.startsWith("91")) {
-    return normalizeInternationalMobile(digits, "91", /^[6-9]\d{9}$/);
-  }
-
-  if (digits.startsWith("880")) {
-    return normalizeInternationalMobile(digits, "880", /^1\d{9}$/);
-  }
-
-  if (digits.startsWith("92")) {
-    return normalizeInternationalMobile(digits, "92", /^3\d{9}$/);
-  }
-
-  if (digits.startsWith("94")) {
-    return normalizeInternationalMobile(digits, "94", /^7\d{8}$/);
-  }
-
-  if (digits.startsWith("977")) {
-    return normalizeInternationalMobile(digits, "977", /^9[78]\d{8}$/);
-  }
+  const internationalRule = internationalMobileRuleForDigits(digits);
+  if (internationalRule) return normalizeInternationalMobile(digits, internationalRule.countryCode, internationalRule.localDigits);
 
   if (/^1500\d{3,5}$/.test(digits)) {
     return {
@@ -359,9 +282,7 @@ function hasUsefulDigitVariety(digits) {
   return new Set(digits.split("")).size > 2;
 }
 
-function normalizeInternationalMobile(digits, countryCode, nationalPattern) {
-  const localDigits = digits.slice(countryCode.length);
-  if (!nationalPattern.test(localDigits)) return null;
+function normalizeInternationalMobile(digits, countryCode, localDigits) {
   return {
     countryCode,
     localDigits,
@@ -373,12 +294,7 @@ function normalizeInternationalMobile(digits, countryCode, nationalPattern) {
 }
 
 function formatInternationalPhone(countryCode, localDigits) {
-  if (countryCode === "886") return `+886 ${localDigits.slice(0, 3)} ${localDigits.slice(3, 6)} ${localDigits.slice(6)}`;
-  if (countryCode === "852" || countryCode === "65") return `+${countryCode} ${localDigits.slice(0, 4)} ${localDigits.slice(4)}`;
-  if (countryCode === "84") return `+84 ${localDigits.slice(0, 3)} ${localDigits.slice(3, 6)} ${localDigits.slice(6)}`;
-  if (countryCode === "86") return `+86 ${localDigits.slice(0, 3)} ${localDigits.slice(3, 7)} ${localDigits.slice(7)}`;
-  if (countryCode === "60") return `+60 ${localDigits.slice(0, 2)} ${localDigits.slice(2, 6)} ${localDigits.slice(6)}`.trim();
-  return `+${countryCode} ${groupDigits(localDigits, 4)}`;
+  return formatInternationalPhoneFromMetadata(countryCode, localDigits);
 }
 
 function isIndonesianLandline(digits) {

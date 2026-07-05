@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-07-05 23:27 (Asia/Jakarta)
+Last updated: 2026-07-05 23:55 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -13,6 +13,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: implementation tracker for public login/register, role-first onboarding, `/daftar` completion, and logged-in navbar state.
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: implementation tracker for `/profil`, read-only identity fields in `/daftar`, profile/listing ownership UX, and owner-facing profile APIs.
 - `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: low-friction defaults and public-display rules for Indonesian vs overseas franchisor origin/target-market metadata.
+- `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `FORM_SCHEMA.md`: canonical form field inventory.
 - `FORM_PRESERVATION_MANDATE.md`: binding rule set for preserving existing form fields and payloads.

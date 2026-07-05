@@ -171,33 +171,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const countryCode = form.querySelector('select[name="country_code"]');
         if (!brandCountry || !targetMarket) return;
 
-        const countryByDialCode = {
-            '+62': 'Indonesia',
-            '+60': 'Malaysia',
-            '+65': 'Singapore',
-            '+673': 'Brunei',
-            '+855': 'Cambodia',
-            '+670': 'Timor-Leste',
-            '+856': 'Laos',
-            '+95': 'Myanmar',
-            '+63': 'Philippines',
-            '+66': 'Thailand',
-            '+84': 'Vietnam',
-            '+86': 'China',
-            '+852': 'Hong Kong',
-            '+853': 'Macau',
-            '+886': 'Taiwan',
-            '+81': 'Japan',
-            '+82': 'South Korea',
-            '+91': 'India',
-            '+880': 'Bangladesh',
-            '+92': 'Pakistan',
-            '+94': 'Sri Lanka',
-            '+977': 'Nepal',
-            '+61': 'Australia',
-            '+1': 'United States'
-        };
-
         function normalizeCode(value) {
             const digits = (value || '').toString().replace(/\D/g, '');
             return digits ? '+' + digits : '+62';
@@ -213,6 +186,19 @@ document.addEventListener('DOMContentLoaded', function () {
             if (indonesia || !targetMarket.value.trim()) targetMarket.value = 'Indonesia';
         }
 
+        function renderBrandCountryOptions() {
+            const metadata = Array.isArray(FF.countryMetadata) ? FF.countryMetadata : [];
+            if (!metadata.length) return;
+            const previousValue = brandCountry.value || 'Indonesia';
+            brandCountry.innerHTML = metadata.map((country) => {
+                const name = (country.name || '').toString();
+                const label = `${country.flag || ''} ${name}`.trim();
+                const selected = name === previousValue ? ' selected' : '';
+                return `<option value="${escapeAttr(name)}"${selected}>${escapeHtml(label)}</option>`;
+            }).join('');
+            if (!metadata.some((country) => country.name === previousValue)) brandCountry.value = 'Indonesia';
+        }
+
         function syncFromContactCountry() {
             if (!countryCode) {
                 setTargetVisibility();
@@ -220,7 +206,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const code = normalizeCode(countryCode.value);
-            const inferredCountry = countryByDialCode[code] || '';
+            const inferredCountry = typeof FF.countryNameFromDialCode === 'function'
+                ? FF.countryNameFromDialCode(code)
+                : '';
             const current = (brandCountry.value || '').trim();
 
             if (code !== '+62' && inferredCountry && (!current || current === 'Indonesia')) {
@@ -243,7 +231,25 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!targetMarket.value.trim()) targetMarket.value = 'Indonesia';
         });
 
+        renderBrandCountryOptions();
         setTargetVisibility();
         window.setTimeout(syncFromContactCountry, 300);
+        document.addEventListener('franchise:countries-loaded', () => {
+            renderBrandCountryOptions();
+            syncFromContactCountry();
+        });
+    }
+
+    function escapeHtml(value) {
+        return (value || '').toString()
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escapeAttr(value) {
+        return escapeHtml(value);
     }
 });

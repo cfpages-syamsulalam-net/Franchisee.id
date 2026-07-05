@@ -14,32 +14,61 @@
         CLAIM_STORAGE_TTL_MS: 24 * 60 * 60 * 1000,
         FRANCHISOR_DRAFT_KEY: 'franchisor_form_draft',
         FRANCHISOR_DRAFT_TTL_MS: 72 * 60 * 60 * 1000,
-        DEFAULT_COUNTRY_CODES: [
-            { code: '+62', label: '🇮🇩 ID +62' },
-            { code: '+60', label: '🇲🇾 MY +60' },
-            { code: '+65', label: '🇸🇬 SG +65' },
-            { code: '+673', label: '🇧🇳 BN +673' },
-            { code: '+855', label: '🇰🇭 KH +855' },
-            { code: '+670', label: '🇹🇱 TL +670' },
-            { code: '+856', label: '🇱🇦 LA +856' },
-            { code: '+95', label: '🇲🇲 MM +95' },
-            { code: '+63', label: '🇵🇭 PH +63' },
-            { code: '+66', label: '🇹🇭 TH +66' },
-            { code: '+84', label: '🇻🇳 VN +84' },
-            { code: '+86', label: '🇨🇳 CN +86' },
-            { code: '+852', label: '🇭🇰 HK +852' },
-            { code: '+853', label: '🇲🇴 MO +853' },
-            { code: '+886', label: '🇹🇼 TW +886' },
-            { code: '+81', label: '🇯🇵 JP +81' },
-            { code: '+82', label: '🇰🇷 KR +82' },
-            { code: '+91', label: '🇮🇳 IN +91' },
-            { code: '+880', label: '🇧🇩 BD +880' },
-            { code: '+92', label: '🇵🇰 PK +92' },
-            { code: '+94', label: '🇱🇰 LK +94' },
-            { code: '+977', label: '🇳🇵 NP +977' },
-            { code: '+1', label: '🇺🇸 US +1' },
-            { code: '+61', label: '🇦🇺 AU +61' }
+        COUNTRY_METADATA: [
+            { name: 'Indonesia', iso2: 'ID', flag: '🇮🇩', dialCode: '+62', whatsappDigits: [9, 13] },
+            { name: 'Malaysia', iso2: 'MY', flag: '🇲🇾', dialCode: '+60', whatsappDigits: [8, 10] },
+            { name: 'Singapore', iso2: 'SG', flag: '🇸🇬', dialCode: '+65', whatsappDigits: [8, 8] },
+            { name: 'Brunei', iso2: 'BN', flag: '🇧🇳', dialCode: '+673', whatsappDigits: [7, 7] },
+            { name: 'Cambodia', iso2: 'KH', flag: '🇰🇭', dialCode: '+855', whatsappDigits: [8, 9] },
+            { name: 'Timor-Leste', iso2: 'TL', flag: '🇹🇱', dialCode: '+670', whatsappDigits: [7, 8] },
+            { name: 'Laos', iso2: 'LA', flag: '🇱🇦', dialCode: '+856', whatsappDigits: [10, 10] },
+            { name: 'Myanmar', iso2: 'MM', flag: '🇲🇲', dialCode: '+95', whatsappDigits: [8, 10] },
+            { name: 'Philippines', iso2: 'PH', flag: '🇵🇭', dialCode: '+63', whatsappDigits: [10, 10] },
+            { name: 'Thailand', iso2: 'TH', flag: '🇹🇭', dialCode: '+66', whatsappDigits: [9, 9] },
+            { name: 'Vietnam', iso2: 'VN', flag: '🇻🇳', dialCode: '+84', whatsappDigits: [9, 10] },
+            { name: 'China', iso2: 'CN', flag: '🇨🇳', dialCode: '+86', whatsappDigits: [11, 11] },
+            { name: 'Hong Kong', iso2: 'HK', flag: '🇭🇰', dialCode: '+852', whatsappDigits: [8, 8] },
+            { name: 'Macau', iso2: 'MO', flag: '🇲🇴', dialCode: '+853', whatsappDigits: [8, 8] },
+            { name: 'Taiwan', iso2: 'TW', flag: '🇹🇼', dialCode: '+886', whatsappDigits: [9, 9] },
+            { name: 'Japan', iso2: 'JP', flag: '🇯🇵', dialCode: '+81', whatsappDigits: [10, 10] },
+            { name: 'South Korea', iso2: 'KR', flag: '🇰🇷', dialCode: '+82', whatsappDigits: [10, 10] },
+            { name: 'India', iso2: 'IN', flag: '🇮🇳', dialCode: '+91', whatsappDigits: [10, 10] },
+            { name: 'Bangladesh', iso2: 'BD', flag: '🇧🇩', dialCode: '+880', whatsappDigits: [10, 10] },
+            { name: 'Pakistan', iso2: 'PK', flag: '🇵🇰', dialCode: '+92', whatsappDigits: [10, 10] },
+            { name: 'Sri Lanka', iso2: 'LK', flag: '🇱🇰', dialCode: '+94', whatsappDigits: [9, 9] },
+            { name: 'Nepal', iso2: 'NP', flag: '🇳🇵', dialCode: '+977', whatsappDigits: [10, 10] },
+            { name: 'United States', iso2: 'US', flag: '🇺🇸', dialCode: '+1', whatsappDigits: [10, 10] },
+            { name: 'Australia', iso2: 'AU', flag: '🇦🇺', dialCode: '+61', whatsappDigits: [9, 9] }
         ]
+    };
+    FF.constants.DEFAULT_COUNTRY_CODES = FF.constants.COUNTRY_METADATA.map((country) => ({
+        code: country.dialCode,
+        label: `${country.flag} ${country.iso2} ${country.dialCode}`
+    }));
+
+    FF.countryMetadata = Array.isArray(FF.countryMetadata) && FF.countryMetadata.length
+        ? FF.countryMetadata
+        : FF.constants.COUNTRY_METADATA;
+
+    FF.setCountryMetadata = function (metadata) {
+        if (!Array.isArray(metadata) || metadata.length === 0) return;
+        FF.countryMetadata = metadata;
+        FF.constants.DEFAULT_COUNTRY_CODES = metadata.map((country) => ({
+            code: country.dialCode,
+            label: `${country.flag} ${country.iso2} ${country.dialCode}`
+        }));
+    };
+
+    FF.countryNameFromDialCode = function (value) {
+        const code = '+' + ((value || '').toString().replace(/\D/g, '') || '62');
+        const country = (FF.countryMetadata || []).find((item) => item.dialCode === code);
+        return country ? country.name : '';
+    };
+
+    FF.whatsappDigitRangeForDialCode = function (value) {
+        const code = '+' + ((value || '').toString().replace(/\D/g, '') || '62');
+        const country = (FF.countryMetadata || []).find((item) => item.dialCode === code);
+        return country && Array.isArray(country.whatsappDigits) ? country.whatsappDigits : [8, 13];
     };
 
     const utils = FF.utils = FF.utils || {};

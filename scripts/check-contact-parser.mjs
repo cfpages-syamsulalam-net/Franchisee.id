@@ -1,13 +1,20 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
+const countrySource = fs
+  .readFileSync("functions/_country-metadata.js", "utf8")
+  .replace(/export /g, "")
+  .replace("function formatInternationalPhone(", "function formatInternationalPhoneFromMetadata(");
+
 const helperSource = fs
   .readFileSync("functions/_dashboard-utils.js", "utf8")
-  .replace(/^import[^\n]+\n/gm, "")
+  .replace(/^import[\s\S]*?;\n/gm, "")
   .replace(/export /g, "");
 
 const { parsePhoneContacts, parseWhatsAppContacts } = new Function(
-  `${helperSource}; return { parsePhoneContacts, parseWhatsAppContacts };`,
+  `${countrySource};
+   ${helperSource};
+   return { parsePhoneContacts, parseWhatsAppContacts };`,
 )();
 
 const cases = [

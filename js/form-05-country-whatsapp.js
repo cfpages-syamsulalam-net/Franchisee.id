@@ -67,12 +67,17 @@
     FF.loadCountryCodeOptions = async function () {
         FF.applyCountryCodeOptions(DEFAULT_COUNTRY_CODES);
         try {
-            const response = await fetch('/json/country-codes.json');
+            const response = await fetch('/json/country-metadata.json');
             if (!response.ok) return;
             const payload = await response.json();
-            FF.applyCountryCodeOptions(payload);
+            if (typeof FF.setCountryMetadata === 'function') FF.setCountryMetadata(payload);
+            FF.applyCountryCodeOptions((payload || []).map((country) => ({
+                code: country.dialCode,
+                label: `${country.flag} ${country.iso2} ${country.dialCode}`
+            })));
+            document.dispatchEvent(new CustomEvent('franchise:countries-loaded', { detail: { countries: payload } }));
         } catch (_) {
-            console.warn('⚠️ Failed to load /json/country-codes.json, using defaults.');
+            console.warn('⚠️ Failed to load /json/country-metadata.json, using defaults.');
         }
     };
 

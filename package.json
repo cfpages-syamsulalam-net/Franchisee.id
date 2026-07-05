@@ -17,6 +17,7 @@
     "publish:d1:poll": "node scripts/d1-static-publish-poller.mjs",
     "migrate:proposal-r2": "node scripts/migrate-blogspot-proposals-to-r2.mjs",
     "locations:sync": "tsx scripts/sync-franchise-locations.ts",
+    "country:check": "node scripts/check-country-metadata.mjs",
     "profile:check": "node scripts/check-profile-client.mjs",
     "contact:check": "node scripts/check-contact-parser.mjs",
     "dev:astro": "pnpm run astro:sync && astro dev --host 127.0.0.1",

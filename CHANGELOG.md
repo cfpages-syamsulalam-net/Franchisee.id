@@ -4,6 +4,23 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-05 23:55 (Asia/Jakarta)
+### Added
+- `.context/session-20260705-2355.md`: Added this session snapshot for suggestion 60 country metadata centralization.
+- `data/country-metadata.json` and `json/country-metadata.json`: Added canonical/public supported-country metadata for names, ISO codes, flags, dial codes, aliases, WhatsApp digit ranges, mobile patterns, and display grouping.
+- `functions/_country-metadata.js` and `src/lib/country-metadata.ts`: Added shared Functions and Astro/static country metadata adapters for country lookup/display and international mobile matching/formatting.
+- `scripts/check-country-metadata.mjs`: Added country metadata drift validation.
+
+### Changed
+- `package.json`: Added `country:check`.
+- `js/form-01-state-helpers.js`, `js/form-05-country-whatsapp.js`, `js/form-07-init.js`, and `js/form-utils.js`: Switched form country-code rendering, collapsed origin-country inference, and WhatsApp digit-range validation to shared country metadata.
+- `functions/_form-submit-utils.js`: Switched brand-country fallback from a local dial-code map to shared country metadata.
+- `functions/_dashboard-utils.js`: Switched international mobile validation/display from local country-specific branches to shared country metadata helpers.
+- `src/lib/franchise-static.ts` and `src/lib/franchise-contact.ts`: Switched public country display and international phone matching/formatting to shared country metadata.
+- `scripts/check-contact-parser.mjs`: Loaded the shared country metadata adapter in the parser regression harness.
+- `json/d1-generated-pages-manifest.json`: Refreshed during `pnpm run build:astro` validation after shared country metadata wiring.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/README.md`, `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`, and `SUGGESTION.md`: Documented the shared country metadata source/adapters and marked suggestion 60 complete.
+
 ## 2026-07-05 23:27 (Asia/Jakarta)
 ### Added
 - `.context/session-20260705-2327.md`: Added this session snapshot for low-friction Indonesian defaults, overseas franchisor support, and legacy origin/target backfill.
