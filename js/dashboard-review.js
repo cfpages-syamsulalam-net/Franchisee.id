@@ -83,14 +83,15 @@
         return;
       }
       options.qualityRows.innerHTML = rows.map(function (row) {
+        var quickEditLabel = isAdmin() ? "Edit langsung" : "Buat saran edit";
         return '<tr>' +
           '<td><a href="' + utils.escapeAttr(row.public_url) + '" target="_blank" rel="noopener">' + utils.escapeHtml(row.brand_name) + '</a></td>' +
           '<td>' + utils.escapeHtml(row.category || "-") + '</td>' +
           '<td>' + row.warnings.map(function (warning) { return '<span class="dash-badge">' + utils.escapeHtml(warning) + '</span>'; }).join(" ") + '</td>' +
           '<td>' + utils.renderActionToolbar([
             utils.renderActionButton({
-              label: "Buat saran edit",
-              icon: "fas fa-pen",
+              label: quickEditLabel,
+              icon: isAdmin() ? "fas fa-pen-to-square" : "fas fa-pen",
               attrs: {
                 "data-quick-edit": "",
                 "data-franchise-id": row.id,
@@ -220,9 +221,23 @@
       if (options.listingSelect) options.listingSelect.value = franchiseId;
       if (options.editReason) options.editReason.value = "Data quality: " + warnings.filter(Boolean).join(", ");
       renderSeededEditFields(warnings);
-      if (options.editFieldList) {
-        var firstInput = options.editFieldList.querySelector("[data-edit-value]");
-        if (firstInput) firstInput.focus();
+      openReviewTabForEdit();
+      window.setTimeout(function () {
+        if (options.editFieldList) {
+          var firstInput = options.editFieldList.querySelector("[data-edit-value]");
+          if (firstInput) firstInput.focus();
+        }
+      }, 0);
+      if (options.setStatus) {
+        options.setStatus(isAdmin() ? "Form edit langsung sudah disiapkan di tab Review." : "Form saran edit sudah disiapkan di tab Review.", false);
+      }
+    }
+
+    function openReviewTabForEdit() {
+      var reviewTab = document.querySelector('[data-dashboard-tab="review"]');
+      if (reviewTab && reviewTab.getAttribute("aria-selected") !== "true") reviewTab.click();
+      if (options.editForm && typeof options.editForm.scrollIntoView === "function") {
+        options.editForm.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }
 
@@ -256,7 +271,7 @@
       var row = document.createElement("div");
       row.className = "dash-field-row";
       row.innerHTML = '<div class="dash-field-main">' +
-        '<label>Field<select data-edit-field>' + renderFieldOptions(selected) + '</select></label>' +
+        '<label>Field<select data-edit-field name="field_name">' + renderFieldOptions(selected) + '</select></label>' +
         '<label>Nilai baru<span data-edit-value-wrap></span><span class="dash-field-old" data-edit-old></span></label>' +
         '</div>' +
         '<button class="dash-icon-button dash-field-remove" type="button" data-remove-edit-field aria-label="Hapus field" data-fr-tooltip="Hapus field"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>';
@@ -292,15 +307,15 @@
       if (!wrap) return;
 
       if (field.type === "select") {
-        wrap.innerHTML = '<select data-edit-value>' + (field.options || []).map(function (option) {
+        wrap.innerHTML = '<select data-edit-value name="field_value">' + (field.options || []).map(function (option) {
           return '<option value="' + utils.escapeAttr(option) + '">' + utils.escapeHtml(option) + '</option>';
         }).join("") + '</select>';
       } else if (field.type === "textarea") {
-        wrap.innerHTML = '<textarea data-edit-value></textarea>';
+        wrap.innerHTML = '<textarea data-edit-value name="field_value"></textarea>';
       } else {
         var inputType = field.type === "integer" || field.type === "number" ? "number" : field.type === "url" ? "url" : "text";
         var step = field.type === "number" ? ' step="0.01"' : "";
-        wrap.innerHTML = '<input data-edit-value type="' + inputType + '"' + step + '>';
+        wrap.innerHTML = '<input data-edit-value name="field_value" type="' + inputType + '"' + step + '>';
       }
 
       var input = wrap.querySelector("[data-edit-value]");

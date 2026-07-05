@@ -167,13 +167,13 @@ export const prerender = true;
                 <form class="dash-form" data-edit-form>
                   <label>
                     Listing
-                    <select data-listing-select required>
+                    <select data-listing-select name="franchise_id" required>
                       <option value="">Memuat listing...</option>
                     </select>
                   </label>
                   <label>
                     Reason
-                    <input type="text" data-edit-reason maxlength="1200" placeholder="Contoh: nomor kontak publik salah">
+                    <input type="text" data-edit-reason name="reason" maxlength="1200" placeholder="Contoh: nomor kontak publik salah">
                   </label>
                   <div class="dash-form-wide dash-field-editor">
                     <div class="dash-field-editor-head">
@@ -234,13 +234,13 @@ export const prerender = true;
                   <form class="dash-form dash-location-form" data-location-form>
                     <label class="dash-form-wide">
                       Listing
-                      <select data-location-listing-select>
+                      <select data-location-listing-select name="franchise_id">
                         <option value="">Pilih listing...</option>
                       </select>
                     </label>
                     <label class="dash-form-wide">
                       Kota dan area
-                      <textarea data-location-text rows="6" placeholder="Jakarta | area | DKI Jakarta&#10;Bandung | outlet | Jawa Barat"></textarea>
+                      <textarea data-location-text name="locations_text" rows="6" placeholder="Jakarta | area | DKI Jakarta&#10;Bandung | outlet | Jawa Barat"></textarea>
                     </label>
                     <p class="dash-muted dash-form-wide" data-location-help>Gunakan format: kota | jenis | provinsi. Jenis: area, outlet, kantor, asal.</p>
                     <div class="dash-form-wide dash-actions dash-toolbar" role="toolbar" aria-label="Aksi area listing">

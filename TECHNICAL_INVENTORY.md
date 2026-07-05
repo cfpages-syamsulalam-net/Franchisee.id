@@ -278,6 +278,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Review/Data Quality client module for `/dashboard`.*
 - `window.FranchiseDashboardReview.createOperations(options)`: Creates the review controller from DOM references, current dashboard state getter, admin-state callback, and shared action/reload/status callbacks.
 - `render(data)`: Renders data-quality rows, pending claims, listing edit options, guided edit field rows, pending edit suggestions, and admin Area Listing controls.
+- `seedEditSuggestion(button)`: Seeds the guided edit form from a Data Quality warning, switches to the Review tab, scrolls to the form, and changes copy/action labels for admin direct-edit versus staff suggestion mode.
 - `submitLocationUpdate(event)`: Admin-only dashboard action that posts structured location rows to `/dashboard-data` and reloads dashboard state after rebuild queueing.
 - `refreshQualityChecks()`: Posts the protected refresh action and reloads dashboard data.
 - `submitEditSuggestion(event)` / `reviewEditSuggestion(button)` / `reviewClaim(button)`: Posts guided edit submissions and admin review decisions through the existing `/dashboard-data` contract.
@@ -565,7 +566,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads Outfit/DM Sans fonts, `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, `js/dashboard-operations.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
-- Renders the branded dark/yellow dashboard identity, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, guided review controls, admin Area Listing controls, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by dashboard browser modules; dashboard styling is owned by `css/dashboard.css`.
+- Renders the branded dark/yellow dashboard identity, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, guided review controls with named form fields, admin Area Listing controls, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by dashboard browser modules; dashboard styling is owned by `css/dashboard.css`.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.

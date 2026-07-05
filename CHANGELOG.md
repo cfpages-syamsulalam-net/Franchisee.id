@@ -4,6 +4,16 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-05 17:28 (Asia/Jakarta)
+### Added
+- `.context/session-20260705-1728.md`: Added this session snapshot for the dashboard Data Quality quick-edit bugfix.
+
+### Changed
+- `js/dashboard-review.js`: Made Data Quality quick-edit actions admin-aware, switch to the Review tab, scroll/focus the seeded edit form, show a status message, and add `name` attributes to dynamic guided edit controls.
+- `src/pages/dashboard/index.astro`: Added `name` attributes to static guided edit and listing-location form controls.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the dashboard quick-edit and named-field behavior.
+- `SUGGESTION.md`: Added suggestion 56 for browser-level Data Quality quick-edit smoke coverage.
+
 ## 2026-07-05 16:19 (Asia/Jakarta)
 ### Added
 - `.context/session-20260705-1619.md`: Added this session snapshot for the `/dashboard-data` D1 SQL variable limit bugfix.
