@@ -4,6 +4,24 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-05 23:27 (Asia/Jakarta)
+### Added
+- `.context/session-20260705-2327.md`: Added this session snapshot for low-friction Indonesian defaults, overseas franchisor support, and legacy origin/target backfill.
+- `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: Documented Indonesia/Indonesia defaults, collapsed non-Indonesia form behavior, non-Indonesia public flag display, and phone-signal backfill policy.
+- `migrations/0018_backfill_franchise_origin_target_market.sql`: Added the replayable D1 backfill for legacy `brand_country` / `target_market` values from clear phone-country signals.
+
+### Changed
+- `docs/README.md`: Linked the new international franchisor policy in the documentation index and updated its timestamp.
+- `json/country-codes.json`, `js/form-01-state-helpers.js`, and `daftar/index.html`: Expanded supported phone country options to SEA and nearby Asian markets with flag labels.
+- `daftar/index.html`, `css/form-franchise/03-form-core.css`, and `js/form-07-init.js`: Collapsed brand origin/target-market fields for Indonesian franchisors, defaulted blank submissions to Indonesia/Indonesia, and opened/prefilled origin when a non-Indonesia contact country code is selected.
+- `js/form-utils.js`: Expanded country-specific WhatsApp validation for supported SEA and nearby Asian countries.
+- `functions/_form-submit-utils.js`: Defaulted missing franchisor listing origin/target metadata to Indonesia/Indonesia, with non-Indonesia contact country codes used as a fallback origin signal.
+- `functions/_dashboard-utils.js`, `src/lib/franchise-contact.ts`, and `scripts/check-contact-parser.mjs`: Expanded dashboard/public contact parsing and regression coverage to supported SEA/nearby Asia mobile numbers while preserving Indonesian multi-number, landline, and call-center handling.
+- `src/lib/franchise-static.ts`: Shows brand-origin and target-market facts with flag labels only when the listing origin is non-Indonesia; Indonesian listings remain visually uncluttered.
+- `json/d1-franchise-static-data.json` and `json/d1-generated-pages-manifest.json`: Refreshed from remote D1 after the origin/target backfill so Astro output can render Keding as Taiwan-origin and Indonesian listings as default Indonesia.
+- `FORM_SCHEMA.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented collapsed origin/market form behavior, default/backfill policy, expanded contact support, completed suggestion 59, and added suggestion 60 to centralize country metadata.
+- Remote D1 `franchise_db`: Applied the legacy origin/target backfill. After correcting local Indonesian number precedence, final distribution is 192 Indonesia/Indonesia rows, 1 Taiwan/Indonesia row for Keding, and 4 blank rows without clear contact-country signals.
+
 ## 2026-07-05 18:48 (Asia/Jakarta)
 ### Added
 - `.context/session-20260705-1848.md`: Added this session snapshot for international franchisor contact/onboarding readiness.

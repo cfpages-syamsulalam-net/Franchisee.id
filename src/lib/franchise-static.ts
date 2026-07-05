@@ -528,12 +528,14 @@ function generateStatusBadge(tier: string) {
 }
 
 function generateFactChips(row: FranchiseStaticRow, modal: string) {
+  const origin = nonIndonesiaCountryDisplay(row.brand_country);
+  const target = origin ? marketDisplay(row.target_market || "Indonesia") : "";
   const chips = [
     ["Modal", modal],
     row.estimated_bep_months ? ["BEP", `${row.estimated_bep_months} bulan`] : null,
     row.year_established ? ["Berdiri", String(row.year_established)] : null,
-    normalizeText(row.brand_country) ? ["Asal", normalizeText(row.brand_country)] : null,
-    normalizeText(row.target_market) ? ["Target", normalizeText(row.target_market)] : null,
+    origin ? ["Asal", origin] : null,
+    target ? ["Target", target] : null,
   ].filter(Boolean) as [string, string][];
 
   return `<span class="franchise-card-facts">${chips
@@ -542,9 +544,13 @@ function generateFactChips(row: FranchiseStaticRow, modal: string) {
 }
 
 function generateInternationalFacts(row: FranchiseStaticRow) {
+  const origin = nonIndonesiaCountryDisplay(row.brand_country);
+  if (!origin) return "";
+
+  const target = marketDisplay(row.target_market || "Indonesia");
   const facts = [
-    normalizeText(row.brand_country) ? ["Asal Brand", normalizeText(row.brand_country)] : null,
-    normalizeText(row.target_market) ? ["Target Pasar", normalizeText(row.target_market)] : null,
+    ["Asal Brand", origin],
+    target ? ["Target Pasar", target] : null,
   ].filter(Boolean) as [string, string][];
 
   return facts
@@ -563,6 +569,117 @@ function generateInternationalFacts(row: FranchiseStaticRow) {
     )
     .join("");
 }
+
+function nonIndonesiaCountryDisplay(value: unknown) {
+  const country = normalizeCountryName(value);
+  if (!country || country === "Indonesia") return "";
+  return countryDisplay(country);
+}
+
+function marketDisplay(value: unknown) {
+  const country = normalizeCountryName(value);
+  return country ? countryDisplay(country) : normalizeText(value);
+}
+
+function countryDisplay(country: string) {
+  const flag = COUNTRY_FLAGS[country] || "";
+  return `${flag ? `${flag} ` : ""}${country}`;
+}
+
+function normalizeCountryName(value: unknown) {
+  const raw = normalizeText(value);
+  const key = raw.toLowerCase().replace(/[._-]+/g, " ").replace(/\s+/g, " ").trim();
+  return COUNTRY_ALIASES[key] || raw;
+}
+
+const COUNTRY_ALIASES: Record<string, string> = {
+  id: "Indonesia",
+  indonesia: "Indonesia",
+  "republic of indonesia": "Indonesia",
+  my: "Malaysia",
+  malaysia: "Malaysia",
+  sg: "Singapore",
+  singapore: "Singapore",
+  singapura: "Singapore",
+  bn: "Brunei",
+  brunei: "Brunei",
+  kh: "Cambodia",
+  cambodia: "Cambodia",
+  kamboja: "Cambodia",
+  tl: "Timor-Leste",
+  "timor leste": "Timor-Leste",
+  la: "Laos",
+  laos: "Laos",
+  mm: "Myanmar",
+  myanmar: "Myanmar",
+  ph: "Philippines",
+  philippines: "Philippines",
+  filipina: "Philippines",
+  th: "Thailand",
+  thailand: "Thailand",
+  vn: "Vietnam",
+  vietnam: "Vietnam",
+  cn: "China",
+  china: "China",
+  hongkong: "Hong Kong",
+  "hong kong": "Hong Kong",
+  hk: "Hong Kong",
+  macau: "Macau",
+  makau: "Macau",
+  mo: "Macau",
+  taiwan: "Taiwan",
+  tw: "Taiwan",
+  japan: "Japan",
+  jepang: "Japan",
+  jp: "Japan",
+  korea: "South Korea",
+  "south korea": "South Korea",
+  "korea selatan": "South Korea",
+  kr: "South Korea",
+  india: "India",
+  in: "India",
+  bangladesh: "Bangladesh",
+  bd: "Bangladesh",
+  pakistan: "Pakistan",
+  pk: "Pakistan",
+  "sri lanka": "Sri Lanka",
+  lk: "Sri Lanka",
+  nepal: "Nepal",
+  np: "Nepal",
+  australia: "Australia",
+  au: "Australia",
+  "united states": "United States",
+  "amerika serikat": "United States",
+  usa: "United States",
+  us: "United States",
+};
+
+const COUNTRY_FLAGS: Record<string, string> = {
+  Indonesia: "🇮🇩",
+  Malaysia: "🇲🇾",
+  Singapore: "🇸🇬",
+  Brunei: "🇧🇳",
+  Cambodia: "🇰🇭",
+  "Timor-Leste": "🇹🇱",
+  Laos: "🇱🇦",
+  Myanmar: "🇲🇲",
+  Philippines: "🇵🇭",
+  Thailand: "🇹🇭",
+  Vietnam: "🇻🇳",
+  China: "🇨🇳",
+  "Hong Kong": "🇭🇰",
+  Macau: "🇲🇴",
+  Taiwan: "🇹🇼",
+  Japan: "🇯🇵",
+  "South Korea": "🇰🇷",
+  India: "🇮🇳",
+  Bangladesh: "🇧🇩",
+  Pakistan: "🇵🇰",
+  "Sri Lanka": "🇱🇰",
+  Nepal: "🇳🇵",
+  Australia: "🇦🇺",
+  "United States": "🇺🇸",
+};
 
 function generateJsonLd(row: FranchiseStaticRow, description: string, logoUrl: string, imageUrl: string) {
   const brand = {

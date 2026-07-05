@@ -13,9 +13,9 @@ export function franchiseBindValues(data, profileId, publicId, now, investment) 
     now,
     intOrNull(data.year_established),
     textOrNull(data.city_origin),
-    textOrNull(data.brand_country),
+    listingBrandCountry(data),
     textOrNull(data.outlet_type),
-    textOrNull(data.target_market),
+    listingTargetMarket(data),
     textOrNull(data.location_requirement),
     textOrNull(data.rent_cost),
     moneyOrNull(data.fee_license),
@@ -38,6 +38,45 @@ export function franchiseBindValues(data, profileId, publicId, now, investment) 
     textOrNull(data.proposal_url),
     JSON.stringify(cleanPayload(data)),
   ];
+}
+
+function listingBrandCountry(data) {
+  return textOrNull(data.brand_country) || countryFromDialCode(data.country_code) || "Indonesia";
+}
+
+function listingTargetMarket(data) {
+  return textOrNull(data.target_market) || "Indonesia";
+}
+
+function countryFromDialCode(value) {
+  const code = `+${(value || "").toString().replace(/\D/g, "") || "62"}`;
+  const countries = {
+    "+62": "Indonesia",
+    "+60": "Malaysia",
+    "+65": "Singapore",
+    "+673": "Brunei",
+    "+855": "Cambodia",
+    "+670": "Timor-Leste",
+    "+856": "Laos",
+    "+95": "Myanmar",
+    "+63": "Philippines",
+    "+66": "Thailand",
+    "+84": "Vietnam",
+    "+86": "China",
+    "+852": "Hong Kong",
+    "+853": "Macau",
+    "+886": "Taiwan",
+    "+81": "Japan",
+    "+82": "South Korea",
+    "+91": "India",
+    "+880": "Bangladesh",
+    "+92": "Pakistan",
+    "+94": "Sri Lanka",
+    "+977": "Nepal",
+    "+61": "Australia",
+    "+1": "United States",
+  };
+  return countries[code] || null;
 }
 
 export async function hasDuplicateFranchisee(db, email, whatsapp) {

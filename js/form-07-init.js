@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof FF.loadCountryCodeOptions === 'function') FF.loadCountryCodeOptions();
     if (typeof FF.initFormSubmission === 'function') FF.initFormSubmission();
     if (typeof window.bindAutoFormatting === 'function') window.bindAutoFormatting();
+    initBrandOriginFields();
 
     // HAKI number visibility toggle
     const hakiRadios = document.querySelectorAll('input[name="haki_status"]');
@@ -157,5 +158,92 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function normalizePublicRole(value) {
         return value === 'franchisee' || value === 'franchisor' ? value : '';
+    }
+
+    function initBrandOriginFields() {
+        const form = document.getElementById('franchiseListingForm');
+        if (!form) return;
+
+        const originDetails = form.querySelector('[data-international-origin-details]');
+        const brandCountry = form.querySelector('[data-brand-country-select]');
+        const targetMarket = form.querySelector('input[name="target_market"]');
+        const targetRow = form.querySelector('[data-target-market-row]');
+        const countryCode = form.querySelector('select[name="country_code"]');
+        if (!brandCountry || !targetMarket) return;
+
+        const countryByDialCode = {
+            '+62': 'Indonesia',
+            '+60': 'Malaysia',
+            '+65': 'Singapore',
+            '+673': 'Brunei',
+            '+855': 'Cambodia',
+            '+670': 'Timor-Leste',
+            '+856': 'Laos',
+            '+95': 'Myanmar',
+            '+63': 'Philippines',
+            '+66': 'Thailand',
+            '+84': 'Vietnam',
+            '+86': 'China',
+            '+852': 'Hong Kong',
+            '+853': 'Macau',
+            '+886': 'Taiwan',
+            '+81': 'Japan',
+            '+82': 'South Korea',
+            '+91': 'India',
+            '+880': 'Bangladesh',
+            '+92': 'Pakistan',
+            '+94': 'Sri Lanka',
+            '+977': 'Nepal',
+            '+61': 'Australia',
+            '+1': 'United States'
+        };
+
+        function normalizeCode(value) {
+            const digits = (value || '').toString().replace(/\D/g, '');
+            return digits ? '+' + digits : '+62';
+        }
+
+        function isIndonesia(value) {
+            return (value || '').toString().trim().toLowerCase() === 'indonesia';
+        }
+
+        function setTargetVisibility() {
+            const indonesia = isIndonesia(brandCountry.value);
+            if (targetRow) targetRow.hidden = indonesia;
+            if (indonesia || !targetMarket.value.trim()) targetMarket.value = 'Indonesia';
+        }
+
+        function syncFromContactCountry() {
+            if (!countryCode) {
+                setTargetVisibility();
+                return;
+            }
+
+            const code = normalizeCode(countryCode.value);
+            const inferredCountry = countryByDialCode[code] || '';
+            const current = (brandCountry.value || '').trim();
+
+            if (code !== '+62' && inferredCountry && (!current || current === 'Indonesia')) {
+                brandCountry.value = inferredCountry;
+                if (originDetails) originDetails.open = true;
+            }
+
+            if (code === '+62' && !current) {
+                brandCountry.value = 'Indonesia';
+            }
+
+            if (!targetMarket.value.trim()) targetMarket.value = 'Indonesia';
+            setTargetVisibility();
+        }
+
+        brandCountry.addEventListener('change', setTargetVisibility);
+        if (countryCode) countryCode.addEventListener('change', syncFromContactCountry);
+        form.addEventListener('submit', () => {
+            if (!brandCountry.value.trim()) brandCountry.value = 'Indonesia';
+            if (!targetMarket.value.trim()) targetMarket.value = 'Indonesia';
+        });
+
+        setTargetVisibility();
+        window.setTimeout(syncFromContactCountry, 300);
     }
 });

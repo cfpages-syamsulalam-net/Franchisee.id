@@ -89,7 +89,7 @@ function parsePhoneContacts(value: unknown, defaultLabel: string, source: "whats
 
 function findPhoneStarts(text: string) {
   const starts: number[] = [];
-  const startPattern = /(?:\(\s*)?(?:(?:\+?\s*62|0)(?=[\s().-]*[2-9])|\+?\s*886(?=[\s().-]*9)|\+?\s*852(?=[\s().-]*[569])|\+?\s*84(?=[\s().-]*[35789])|\+?\s*86(?=[\s().-]*1)|\+?\s*65(?=[\s().-]*[689])|\+?\s*60(?=[\s().-]*1)|1(?=[\s().-]*5[\s().-]*0[\s().-]*0[\s().-]*\d))/g;
+  const startPattern = /(?:\(\s*)?(?:(?:\+?\s*62|0)(?=[\s().-]*[2-9])|\+?\s*886(?=[\s().-]*9)|\+?\s*852(?=[\s().-]*[569])|\+?\s*853(?=[\s().-]*6)|\+?\s*84(?=[\s().-]*[35789])|\+?\s*86(?=[\s().-]*1)|\+?\s*65(?=[\s().-]*[689])|\+?\s*60(?=[\s().-]*1)|\+?\s*673(?=[\s().-]*[78])|\+?\s*855(?=[\s().-]*[1-9])|\+?\s*670(?=[\s().-]*7)|\+?\s*856(?=[\s().-]*2[\s().-]*0)|\+?\s*95(?=[\s().-]*9)|\+?\s*63(?=[\s().-]*9)|\+?\s*66(?=[\s().-]*[689])|\+?\s*81(?=[\s().-]*[789][\s().-]*0)|\+?\s*82(?=[\s().-]*1[\s().-]*0)|\+?\s*91(?=[\s().-]*[6-9])|\+?\s*880(?=[\s().-]*1)|\+?\s*92(?=[\s().-]*3)|\+?\s*94(?=[\s().-]*7)|\+?\s*977(?=[\s().-]*9)|1(?=[\s().-]*5[\s().-]*0[\s().-]*0[\s().-]*\d))/g;
   let match: RegExpExecArray | null;
 
   while ((match = startPattern.exec(text))) {
@@ -113,10 +113,25 @@ function matchPhoneCandidate(value: string) {
     value.match(/^(?:\(\s*)?(?:\+?\s*62|0)\s*8(?:[\s().-]*\d){8,11}/)?.[0] ||
     value.match(/^(?:\(\s*)?\+?\s*886\s*9(?:[\s().-]*\d){8}/)?.[0] ||
     value.match(/^(?:\(\s*)?\+?\s*852\s*[569](?:[\s().-]*\d){7}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*853\s*6(?:[\s().-]*\d){7}/)?.[0] ||
     value.match(/^(?:\(\s*)?\+?\s*84\s*[35789](?:[\s().-]*\d){8}/)?.[0] ||
     value.match(/^(?:\(\s*)?\+?\s*86\s*1(?:[\s().-]*\d){10}/)?.[0] ||
     value.match(/^(?:\(\s*)?\+?\s*65\s*[689](?:[\s().-]*\d){7}/)?.[0] ||
     value.match(/^(?:\(\s*)?\+?\s*60\s*1(?:[\s().-]*\d){7,9}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*673\s*[78](?:[\s().-]*\d){6}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*855\s*[1-9](?:[\s().-]*\d){7,8}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*670\s*7(?:[\s().-]*\d){6,7}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*856\s*2[\s().-]*0(?:[\s().-]*\d){8}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*95\s*9(?:[\s().-]*\d){7,9}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*63\s*9(?:[\s().-]*\d){9}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*66\s*[689](?:[\s().-]*\d){8}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*81\s*[789][\s().-]*0(?:[\s().-]*\d){8}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*82\s*1[\s().-]*0(?:[\s().-]*\d){8}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*91\s*[6-9](?:[\s().-]*\d){9}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*880\s*1(?:[\s().-]*\d){9}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*92\s*3(?:[\s().-]*\d){9}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*94\s*7(?:[\s().-]*\d){8}/)?.[0] ||
+    value.match(/^(?:\(\s*)?\+?\s*977\s*9[\s().-]*[78](?:[\s().-]*\d){8}/)?.[0] ||
     value.match(/^(?:\(\s*)?(?:\+?\s*62|0)\s*[2-9](?:[\s().-]*\d){6,11}/)?.[0] ||
     value.match(/^1(?:[\s().-]*\d){5,7}/)?.[0] ||
     ""
@@ -146,7 +161,30 @@ function classifyPhone(parsed: NormalizedPhoneDigits, label: string, source: "wh
 }
 
 interface NormalizedPhoneDigits {
-  countryCode: "62" | "60" | "65" | "84" | "86" | "852" | "886" | "";
+  countryCode:
+    | "62"
+    | "60"
+    | "65"
+    | "673"
+    | "855"
+    | "670"
+    | "856"
+    | "95"
+    | "63"
+    | "66"
+    | "84"
+    | "86"
+    | "852"
+    | "853"
+    | "886"
+    | "81"
+    | "82"
+    | "91"
+    | "880"
+    | "92"
+    | "94"
+    | "977"
+    | "";
   localDigits: string;
   internationalDigits: string;
   kind: "mobile" | "international_mobile" | "landline" | "call_center";
@@ -231,6 +269,10 @@ function normalizePhoneDigits(value: string): NormalizedPhoneDigits | null {
     return normalizeInternationalMobile(digits, "852", /^[569]\d{7}$/);
   }
 
+  if (digits.startsWith("853")) {
+    return normalizeInternationalMobile(digits, "853", /^6\d{7}$/);
+  }
+
   if (digits.startsWith("84")) {
     return normalizeInternationalMobile(digits, "84", /^[35789]\d{8}$/);
   }
@@ -245,6 +287,62 @@ function normalizePhoneDigits(value: string): NormalizedPhoneDigits | null {
 
   if (digits.startsWith("60")) {
     return normalizeInternationalMobile(digits, "60", /^1\d{7,9}$/);
+  }
+
+  if (digits.startsWith("673")) {
+    return normalizeInternationalMobile(digits, "673", /^[78]\d{6}$/);
+  }
+
+  if (digits.startsWith("855")) {
+    return normalizeInternationalMobile(digits, "855", /^[1-9]\d{7,8}$/);
+  }
+
+  if (digits.startsWith("670")) {
+    return normalizeInternationalMobile(digits, "670", /^7\d{6,7}$/);
+  }
+
+  if (digits.startsWith("856")) {
+    return normalizeInternationalMobile(digits, "856", /^20\d{8}$/);
+  }
+
+  if (digits.startsWith("95")) {
+    return normalizeInternationalMobile(digits, "95", /^9\d{7,9}$/);
+  }
+
+  if (digits.startsWith("63")) {
+    return normalizeInternationalMobile(digits, "63", /^9\d{9}$/);
+  }
+
+  if (digits.startsWith("66")) {
+    return normalizeInternationalMobile(digits, "66", /^[689]\d{8}$/);
+  }
+
+  if (digits.startsWith("81")) {
+    return normalizeInternationalMobile(digits, "81", /^[789]0\d{8}$/);
+  }
+
+  if (digits.startsWith("82")) {
+    return normalizeInternationalMobile(digits, "82", /^10\d{8}$/);
+  }
+
+  if (digits.startsWith("91")) {
+    return normalizeInternationalMobile(digits, "91", /^[6-9]\d{9}$/);
+  }
+
+  if (digits.startsWith("880")) {
+    return normalizeInternationalMobile(digits, "880", /^1\d{9}$/);
+  }
+
+  if (digits.startsWith("92")) {
+    return normalizeInternationalMobile(digits, "92", /^3\d{9}$/);
+  }
+
+  if (digits.startsWith("94")) {
+    return normalizeInternationalMobile(digits, "94", /^7\d{8}$/);
+  }
+
+  if (digits.startsWith("977")) {
+    return normalizeInternationalMobile(digits, "977", /^9[78]\d{8}$/);
   }
 
   if (/^1500\d{3,5}$/.test(digits)) {

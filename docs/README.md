@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-07-04 22:54 (Asia/Jakarta)
+Last updated: 2026-07-05 23:27 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -12,6 +12,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/D1_STATIC_PUBLISH_STRATEGY.md`: comparison of twice-daily static publishing versus GitHub Actions polling/direct deploy for D1-backed SEO pages.
 - `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: implementation tracker for public login/register, role-first onboarding, `/daftar` completion, and logged-in navbar state.
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: implementation tracker for `/profil`, read-only identity fields in `/daftar`, profile/listing ownership UX, and owner-facing profile APIs.
+- `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: low-friction defaults and public-display rules for Indonesian vs overseas franchisor origin/target-market metadata.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `FORM_SCHEMA.md`: canonical form field inventory.
 - `FORM_PRESERVATION_MANDATE.md`: binding rule set for preserving existing form fields and payloads.
@@ -26,6 +27,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/CLERK_SETUP.md`: Clerk dashboard/env setup, custom auth flow, D1 user mapping, bidirectional sync endpoints, and role authorization rules.
 - `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: staged plan for reconciling lightweight account creation with `/daftar` profile/listing completion and public navbar account state.
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: staged plan for the protected `/profil` account center, side-tab sections, D1 profile/listing reads, and owner edit workflows.
+- `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: default Indonesia behavior, non-Indonesia form expansion, flag display rules, and legacy origin/target backfill policy.
 - `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: premium network membership, `/premium` page, manual payment operations, conversion tracking, payment confirmation, traffic growth, and renewal roadmap.
 - `docs/architecture/RESEND_EMAIL_DELIVERY.md`: Resend/Cloudflare Pages email delivery setup for queued Premium emails, reports, and reminders.
 

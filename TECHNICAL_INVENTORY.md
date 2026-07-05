@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-05 19:05 (Asia/Jakarta)
+Last updated: 2026-07-05 23:27 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -14,7 +14,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/form-01-state-helpers.js`
 *Shared state + helper/sanitization + localStorage persistence layer.*
 - `FF.state`: Shared runtime state (brands cache, step tracker, city list).
-- `FF.constants`: Shared constants (`franchise_claim_state`, `franchisor_form_draft`, default country-code list). Country-code defaults include Indonesia plus Malaysia, Singapore, China, Hong Kong, Taiwan, Vietnam, US, and Australia so franchisors from regional markets can submit local mobile numbers without being forced into +62.
+- `FF.constants`: Shared constants (`franchise_claim_state`, `franchisor_form_draft`, default country-code list). Country-code defaults include Indonesia plus supported SEA/nearby Asia markets, US, and Australia so regional franchisors can submit local mobile numbers without being forced into +62.
 - `FF.utils.*`: Shared helpers (`slugify`, URL/phone/address/contact/entity filters, clean brand-name normalizer).
 - `FF.buildSearchableClaimBrands(brands)`: Claim-search sanitizer/deduper.
 - `FF.saveClaimModeState/getClaimModeState/clearClaimModeState`: Claim context persistence with TTL.
@@ -68,6 +68,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - DOMContentLoaded orchestrator for claim bindings, calculations/city loader, country-code loader, submit wiring, state restoration, role query tab selection, and `/daftar` Clerk login enforcement.
 - `enforceDaftarAuthAndPrefill()`: Initializes `window.FranchiseAuth`, redirects anonymous users to `/login?next=<current-daftar-url>`, syncs D1 user state, locks franchisee/franchisor email/name/PIC fields from Clerk/D1 identity, and redirects completed profiles to `/profil/`.
 - `redirectCompletedProfileIfNeeded()`: Reads `/profile-data` after auth and sends users whose selected role is already complete away from first-time `/daftar` to `/profil/`.
+- `initBrandOriginFields()`: Keeps `brand_country` / `target_market` collapsed for Indonesian franchisors, opens and prefills origin when a non-Indonesia contact country code is selected, and ensures blank submissions default to Indonesia/Indonesia.
 - `lockIdentityValue()`: Writes Clerk/D1 identity into preserved form fields, keeps them read-only instead of disabled so existing submit contracts remain intact, uses `data-fr-tooltip` for the lock hint, and appends the identity lock note.
 - Re-exposes compatibility globals (`window.fetchUnclaimedBrands`, `window.fillMainFranchisorForm`).
 
@@ -431,7 +432,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, category filtering, a benefit-led franchisor CTA, and internal links to modal/category/city/tools pages.
 - Directory cards link to franchise information pages with a neutral `Info Franchise` CTA; unclaimed-specific claim CTAs remain on detail pages.
 - `renderCategoryIndexPage(rows)`: Legacy helper that renders category cards, but canonical category browsing is now `/peluang-usaha?view=kategori` or `/peluang-usaha?kategori=[slug]`.
-- `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including optional brand-origin/target-market facts, dynamic Premium Galeri/Proposal/FAQ tabs when the row has premium/media/proposal data, and a post-tabs franchisor CTA for free brand creation plus Premium education.
+- `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including non-Indonesia brand-origin/target-market facts with flag labels, dynamic Premium Galeri/Proposal/FAQ tabs when the row has premium/media/proposal data, and a post-tabs franchisor CTA for free brand creation plus Premium education.
 - `renderCityIndexPage(rows)` / `renderCityLandingPage(entry, rows)`: Render static city discovery pages from structured D1 location rows with text inference fallback.
 - `applySiteBranding(html)`: Normalizes legacy template public brand text from Franchise.id to Franchisee.id, updates logo alt text, and rewrites old support mailbox references to `email@franchisee.id`.
 - Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`; Premium detail CTA/tab rendering is delegated to `src/lib/franchise-premium-detail.ts`; contact parsing/rendering is delegated to `src/lib/franchise-contact.ts`; directory ranking is delegated to `src/lib/franchise-ranking.ts`; category route helpers are delegated to `src/lib/franchise-category.ts`; city route helpers are delegated to `src/lib/franchise-city.ts` and `src/lib/franchise-location-normalization.ts`.
@@ -440,7 +441,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/franchise-contact.ts`
 *Detail contact renderer for D1-backed franchise static pages.*
 - `generateContactBlock(row, isUnclaimed)`: Renders D1 contact/social links into the detail page contact tab, including imported public phone/address data for unclaimed listings with a claim CTA.
-- `parsePhoneContacts(value, defaultLabel, source)`: Splits messy imported phone text into contact rows, including Indonesian mobile pairs, Malaysia/Singapore/China/Hong Kong/Taiwan/Vietnam mobile numbers, Indonesian landlines, and call-center short numbers while preserving nearby labels such as Marketing, WhatsApp, Kantor, Office, Call Center, and Owner.
+- `parsePhoneContacts(value, defaultLabel, source)`: Splits messy imported phone text into contact rows, including Indonesian mobile pairs, supported SEA/nearby Asia mobile numbers, Indonesian landlines, and call-center short numbers while preserving nearby labels such as Marketing, WhatsApp, Kantor, Office, Call Center, and Owner.
 - `findPhoneStarts(text)`, `isGroupedNonMobileStart(text, start)`, `matchPhoneCandidate(value)`, `inferPhoneLabel(text, start, end, fallback)`, `classifyPhone(parsed, label, source)`, `normalizePhoneDigits(value)`, `normalizeInternationalMobile(digits, countryCode, nationalPattern)`, `formatPhoneDisplay(parsed, type)`, and `formatInternationalPhone(countryCode, localDigits)`: Infer safe phone starts, avoid treating middle number groups as new contacts, classify mobile/international-mobile/landline/call-center numbers, and format public display values.
 - `generatePhoneContactRow(contact, row, isUnclaimed)`: Renders parsed phone contacts as styled `tel:` rows and adds a WhatsApp claim-notification link for unclaimed mobile/WhatsApp-capable numbers.
 
@@ -867,14 +868,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Shared validation/schema constants for Pages Functions.*
 - `EDITABLE_LISTING_FIELD_DEFS`: Canonical dashboard-editable listing fields with labels, types, and select options, including brand-origin and target-market fields.
 - `sanitizeListingChanges(changes)` / `normalizeListingFieldValue(field, value)`: Shared dashboard listing change validation and normalization.
-- `BaseSubmissionSchema` / `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Shared form payload validators used by `/form-submit`; franchisor submissions accept optional `brand_country` and `target_market`.
+- `BaseSubmissionSchema` / `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Shared form payload validators used by `/form-submit`; franchisor submissions accept optional `brand_country` and `target_market`, which submit helpers default to Indonesia/Indonesia when omitted.
 - `GetFranchisesQuerySchema`: Shared `/get-franchises` query validator.
 - Role/source/form/contact/quality-check enum schemas: Shared Zod enums for public/internal roles, source sheets, form types, test actions, contact types, quality-check statuses, and dashboard review decisions.
 - `normalizeListingStatusValue()` / `normalizeVerificationTierValue()` / `normalizeRoyaltyBasisValue()` / `normalizeHakiStatusValue()`: Shared value normalizers for Function write paths.
 
 ### File: `functions/_contact-normalization.js`
 *Normalized contact extraction for dashboard operations.*
-- `buildNormalizedContacts(row)`: Converts existing listing/profile fields into high-confidence contact rows for phone, WhatsApp, email, website, address, and social links. Phone extraction now records structured Indonesian/regional mobile, landline, and call-center values; WhatsApp source rows are filtered to WhatsApp-capable numbers only.
+- `buildNormalizedContacts(row)`: Converts existing listing/profile fields into high-confidence contact rows for phone, WhatsApp, email, website, address, and social links. Phone extraction now records structured Indonesian, supported SEA/nearby Asia mobile, landline, and call-center values; WhatsApp source rows are filtered to WhatsApp-capable numbers only.
 - `hasInvalidContactUrl(row)` / `normalizeExternalUrl(value, field)`: URL validation/normalization used by quality checks.
 
 ### File: `functions/_quality-checks.js`
@@ -886,7 +887,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Shared dashboard helpers.*
 - `jsonResponse(payload, init)`: Standard no-store JSON response helper.
 - `auditStatement(db, action, entityType, entityId, metadata, actorUserId)`: Shared audit-event insert statement builder.
-- `parsePhoneContacts(value, defaultLabel)` / `parseWhatsAppContacts(value)` / `buildWhatsAppUrl(internationalDigits, row)`: Imported contact parsing and claim-notification link generation. `parsePhoneContacts()` recognizes structured Indonesian/regional phone contacts for Data Quality, while `parseWhatsAppContacts()` filters to WhatsApp-capable contacts for outreach.
+- `parsePhoneContacts(value, defaultLabel)` / `parseWhatsAppContacts(value)` / `buildWhatsAppUrl(internationalDigits, row)`: Imported contact parsing and claim-notification link generation. `parsePhoneContacts()` recognizes structured Indonesian and supported SEA/nearby Asia phone contacts for Data Quality, while `parseWhatsAppContacts()` filters to WhatsApp-capable contacts for outreach.
 - `isLikelyAllCapsDescription(value)`: JavaScript-side all-caps heuristic used by data-quality checks.
 
 ### File: `functions/form-submit.js` (v2.6)
@@ -910,7 +911,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Shared helpers for the form-submit modules.*
 - `findClaimSource(db, data)`: Finds D1 `UNCLAIMED` franchise rows by `unclaimed_id` or normalized brand name for claim migration.
 - `uniqueSlug()` / `slugExists()`: Generates non-conflicting D1 slugs for new submitted listings.
-- Also owns validation/duplicate/json responses, payload cleaning, normalization, id/timestamp generation, common franchise bind values including brand-origin/target-market columns, and audit/legacy-source statements.
+- Also owns validation/duplicate/json responses, payload cleaning, normalization, id/timestamp generation, common franchise bind values including brand-origin/target-market columns, Indonesia/Indonesia defaults for omitted origin/market metadata, and audit/legacy-source statements.
 - Important: `/form-submit` must remain D1-only and authenticated; do not restore anonymous writes.
 
 ## 3a. Directory: `/.github/workflows` (Automation)
