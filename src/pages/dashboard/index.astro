@@ -8,7 +8,9 @@ export const prerender = true;
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title>Dashboard Operasional - Franchisee.id</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/wp-content/plugins/elementor/assets/css/frontend.min.css">
     <link rel="stylesheet" href="/wp-content/plugins/elementor/assets/lib/font-awesome/css/all.min.css?ver=3.32.3">
     <link rel="stylesheet" href="/css/auth-clerk.css">
@@ -20,8 +22,12 @@ export const prerender = true;
       <header class="dash-header">
         <div class="dash-header-inner">
           <div class="dash-title">
-            <h1>Dashboard Operasional</h1>
-            <p>Ruang kerja internal Franchisee.id.</p>
+            <span class="dash-brand-mark" aria-hidden="true">F</span>
+            <div>
+              <p class="dash-kicker">Franchisee.id</p>
+              <h1>Dashboard Operasional</h1>
+              <p>Ruang kerja internal untuk menjaga listing, Premium, dan publikasi tetap rapi.</p>
+            </div>
           </div>
           <div class="dash-user" data-dashboard-user>Memuat sesi...</div>
         </div>

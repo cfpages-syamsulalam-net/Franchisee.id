@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-05 15:57 (Asia/Jakarta)
+### Added
+- `.context/session-20260705-1557.md`: Added this session snapshot for the dashboard/profile UI consistency pass.
+
+### Changed
+- `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: Added authenticated-surface findings for dashboard visual parity, `/profil` logged-in navbar contrast, and `/profil` menu active-state shape; marked implemented fixes done.
+- `css/profile.css`: Added dark-header account navbar overrides for readable logged-in account text/role/logout on `/profil`, and rounded side-tab hover/active fills.
+- `src/pages/dashboard/index.astro`: Added Outfit/DM Sans font loading and branded dashboard header identity markup.
+- `css/dashboard.css`: Rethemed `/dashboard` with the warm yellow/black/cream app shell, dark sticky header, readable user chip, stronger metric cards, rounded tabs/panels/forms/buttons, and improved debug panel styling.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the protected profile/dashboard shell styling responsibilities.
+- `SUGGESTION.md`: Added suggestion 54 for a live authenticated app-shell visual QA checklist after deploy.
+
 ## 2026-07-05 05:35 (Asia/Jakarta)
 ### Added
 - `.context/session-20260705-0535.md`: Added this session snapshot for the `/profil` admin login bugfix.

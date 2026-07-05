@@ -1,6 +1,6 @@
 # Traffic Funnel UX Audit
 
-Last updated: 2026-07-05 00:37 (Asia/Jakarta)
+Last updated: 2026-07-05 15:57 (Asia/Jakarta)
 
 ## Verdict
 
@@ -40,6 +40,9 @@ The codebase has the core path for free membership and Premium membership, and t
 | TF-06 | Premium is hidden behind a tab for eligible users. | `membership` is one tab among many in `js/profile-page.js`; active tab defaults to summary unless URL requests membership. | Add a visible Premium CTA in the profile hero/summary for franchisors, and consider defaulting to Membership only when arriving from `/premium` or after free listing completion. | Done |
 | TF-07 | `/premium` CTA wording can overpromise the first action. | Public CTA says “Daftar Premium”, but cold users must first create an account and have a listing to upgrade. | Change primary copy to “Daftar Brand Gratis, lalu aktifkan Premium” or similar; keep payment confirmation CTA for returning users. | Done |
 | TF-08 | Directory/detail pages are buyer-strong, franchisor-weak. | Detail pages support claim CTA, but general franchisor Premium entry is not a repeated network-wide CTA. | Add tasteful franchisor CTA modules on directory/detail pages: “Punya brand franchise? Daftar gratis / tampil Premium”. | Done: generated directory/index/detail pages now include owner CTAs for free brand creation plus Premium education. |
+| TF-12 | `/dashboard` visually lags behind the refreshed `/profil` app shell. | `css/dashboard.css` still used a flat white/gray admin style while `/profil` moved to warm yellow/black/cream, stronger cards, and rounded panels. | Retheme dashboard shell with the same warm page background, dark/yellow sticky header, stronger metric cards, rounded tabs/panels/forms, and readable user/status chips. | Done |
+| TF-13 | Logged-in account text on `/profil` nav can become unreadable. | `js/auth-navbar.js` injects `.fr-auth-nav-*` account markup styled by shared auth CSS for public white navs; on `/profil` the header is dark. | Add `.fr-profile-nav` scoped overrides for account name, role chip, icon, and logout color so public pages are not affected. | Done |
+| TF-14 | `/profil` side menu active/hover fill looked rectangular inside a rounded parent. | `.fr-profile-tabs` has an 18px rounded parent, but `.fr-profile-tab` did not define its own radius. | Round the tab buttons and keep hover/active backgrounds inside the tab shape. | Done |
 
 ### P2 - Optimization after core funnel is stable
 
@@ -71,6 +74,18 @@ Implementation direction:
   - Completed franchisor listing and no Premium: activate Premium.
   - Pending Premium payment: confirm payment or wait for review.
   - Active Premium: improve listing/readiness/analytics.
+
+## Authenticated App Surface Audit
+
+The refreshed `/profil` page set a useful baseline for protected app surfaces: warm page background, dark/yellow header, strong rounded cards, high-contrast action states, and clear next-step hierarchy. `/dashboard` should not feel like a separate product because admins/staff use it to complete the same free-member-to-Premium journey.
+
+Completed improvements in this pass:
+
+- `/dashboard` now uses the same yellow/black/cream visual system as `/profil`.
+- Dashboard user/session text is presented as a readable dark-header chip instead of muted gray text.
+- Dashboard metric cards, panels, tabs, form controls, debug panels, and icon buttons now use the rounded/warm app style.
+- `/profil` account nav text now has scoped high-contrast overrides for logged-in users.
+- `/profil` side tabs now have rounded hover/active fills that match the rounded menu container.
 
 ## Codewise Flow Notes
 
@@ -105,6 +120,8 @@ Public-facing copy should stay benefit-first:
 | 1 | Make Premium CTA visible from profile summary/hero for completed franchisors. | `js/profile-page.js`, `js/profile-premium.js`, `css/profile.css` | Done |
 | 2 | Adjust `/premium` copy so cold users understand free listing before Premium. | `src/pages/premium/index.astro`, `css/premium.css` if CTA layout changes | Done |
 | 2 | Add franchisor CTA modules on directory/detail pages without distracting buyers. | `src/lib/franchise-static.ts`, `src/lib/franchise-static-assets.ts`, `src/lib/franchise-detail-assets.ts`, templates if needed | Done |
+| 2 | Bring `/dashboard` visual shell up to `/profil` quality. | `src/pages/dashboard/index.astro`, `css/dashboard.css` | Done |
+| 2 | Fix `/profil` authenticated navbar contrast and rounded tab/menu active states. | `css/profile.css` | Done |
 | 2 | Add a production QA checklist for full free-member-to-Premium flow. | `docs/testing/` or this document | Planned |
 | 3 | Add analytics checkpoints and dashboard report for funnel steps. | `functions/premium-event.js`, `js/premium-page.js`, profile/form auth events, dashboard metrics | Planned |
 

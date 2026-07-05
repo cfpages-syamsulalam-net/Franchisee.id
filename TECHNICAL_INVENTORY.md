@@ -171,6 +171,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `positionTooltip(target)`: Uses fixed viewport positioning with top/bottom fallback and edge clamping so parent overflow and stacking contexts do not clip hints.
 - `observeNewTooltips()`: Watches dynamically rendered UI such as `/profil` panels and navbar account controls.
 
+### File: `css/profile.css`
+*Protected profile page base stylesheet.*
+- Owns the branded yellow/black/cream `/profil` shell, sticky dark header, scoped high-contrast logged-in account navbar overrides, dark hero, next-best-action cards, rounded side-tab layout/active states, panels, profile forms, account/security row layout, identity lock notes, role add-on cards/modal, franchisee opportunity cards, budget-fit badges, shared chips/lists/notices/buttons, and responsive stacking.
+- Reuses the public site color language and Font Awesome cues without adding a styling dependency.
+
 ### File: `js/profile-page.js`
 *Client controller for the protected `/profil` profile center.*
 - `init()`: Requires a Clerk session and redirects anonymous users to `/login/?next=/profil/`.
@@ -256,6 +261,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `formatCurrency(value)`: Formats Indonesian Rupiah amounts for dashboard payment rows.
 - `renderActionToolbar(items, label)` / `renderActionButton(config)` / `renderActionLink(config)`: Renders icon-only dashboard action controls with `aria-label` and `data-fr-tooltip`.
 - `setFormValue(form, name, value)`: Writes dashboard form control values without duplicating selector logic.
+
+### File: `css/dashboard.css`
+*Protected admin/staff dashboard stylesheet.*
+- Owns the `/dashboard` warm yellow/black/cream app shell, dark sticky header, readable user/session chip, rounded metric cards, tab controls, panels, dashboard tables/forms/buttons/badges, icon-only action toolbars, guided review field rows, Area Listing editor, Premium Operations grid/payment form, field-level diff display, debug panel, and responsive dashboard behavior.
+- Keeps dashboard styling visually aligned with `/profil` while preserving the existing dashboard DOM/data/action modules.
 
 ### File: `js/dashboard-premium-operations.js`
 *Premium Operations client module for `/dashboard`.*
@@ -554,8 +564,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Static protected admin/staff dashboard shell.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
-- Loads `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, `js/dashboard-operations.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
-- Renders the static dashboard shell, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, guided review controls, admin Area Listing controls, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by dashboard browser modules; dashboard styling is owned by `css/dashboard.css`.
+- Loads Outfit/DM Sans fonts, `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, `js/dashboard-operations.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
+- Renders the branded dark/yellow dashboard identity, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, guided review controls, admin Area Listing controls, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by dashboard browser modules; dashboard styling is owned by `css/dashboard.css`.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.

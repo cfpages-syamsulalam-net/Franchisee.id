@@ -63,16 +63,70 @@
 .fr-profile-nav .hfe-nav-menu {
   align-items: center;
   display: flex;
-  gap: 18px;
+  gap: 10px;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.fr-profile-nav a {
+.fr-profile-nav .menu-item {
+  align-items: center;
+  display: inline-flex;
+}
+
+.fr-profile-nav a.hfe-menu-item {
+  align-items: center;
+  border-radius: 999px;
   color: rgba(255, 255, 255, 0.88);
+  display: inline-flex;
   font-weight: 700;
+  gap: 8px;
+  line-height: 1;
+  padding: 10px 12px;
   text-decoration: none;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.fr-profile-nav a.hfe-menu-item:hover,
+.fr-profile-nav a.hfe-menu-item:focus {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  outline: 0;
+}
+
+.fr-profile-nav .fr-auth-nav-account {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 192, 61, 0.32);
+  border-radius: 999px;
+  padding: 4px 6px 4px 4px;
+}
+
+.fr-profile-nav .fr-auth-nav-link {
+  color: #ffffff !important;
+  max-width: min(34vw, 260px);
+}
+
+.fr-profile-nav .fr-auth-nav-icon,
+.fr-profile-nav .fr-auth-nav-name {
+  color: #ffffff;
+}
+
+.fr-profile-nav .fr-auth-nav-role {
+  background: var(--fr-profile-yellow);
+  border-color: var(--fr-profile-yellow);
+  color: var(--fr-profile-ink);
+}
+
+.fr-profile-nav .fr-auth-nav-logout {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 999px;
+  color: #ffffff !important;
+}
+
+.fr-profile-nav .fr-auth-nav-logout:hover,
+.fr-profile-nav .fr-auth-nav-logout:focus {
+  background: var(--fr-profile-yellow) !important;
+  color: var(--fr-profile-ink) !important;
 }
 
 .fr-profile-main {
@@ -212,6 +266,7 @@
   align-items: center;
   background: transparent;
   border: 0;
+  border-radius: 12px;
   color: #374151;
   cursor: pointer;
   display: flex;
@@ -233,6 +288,7 @@
 .fr-profile-tab:focus {
   background: rgba(17, 24, 39, 0.07);
   color: var(--fr-profile-ink);
+  outline: 0;
 }
 
 .fr-profile-panel {

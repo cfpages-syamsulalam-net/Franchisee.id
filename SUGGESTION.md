@@ -1,6 +1,6 @@
 # SUGGESTION.md - Assistant Recommendations
 
-Last updated: 2026-07-05 05:35 (Asia/Jakarta)
+Last updated: 2026-07-05 15:57 (Asia/Jakarta)
 
 ## Purpose
 This file is exclusively for Codex/assistant suggestions. It is where I record improvement ideas I notice while working on the project: product value, UX, reliability, performance, security, data quality, operations, migration safety, and developer workflow.
@@ -71,3 +71,4 @@ User decisions remain authoritative. This file is not a replacement for `AGENTS.
 | 51 | Traffic conversion UX | In Progress | Strengthen the homepage-to-free-member-to-Premium funnel before paid traffic. | The code path exists, but homepage brand/CTA hierarchy, `/profil` next-step prominence, and Premium discoverability need to be strong enough before serious acquisition spend. | Implemented benefit-led homepage/Premium copy, free-brand/Premium CTA hierarchy, `/profil` next-best-action panel, `/profil` brand retheme, homepage schema/RSS/config cleanup, and directory/detail franchisor CTA modules. Remaining: run one production QA pass through free member creation and Premium activation. |
 | 52 | Contact operations | Done | Confirm the public support mailbox for Franchisee.id before scaling traffic. | Paid traffic should not depend on an ambiguous support address or old-domain mailbox. | User confirmed `email@franchisee.id`; updated support-facing legacy pages, homepage footer, generated templates, and renderer fallback to use that mailbox. |
 | 53 | Profile QA | Done | Add a focused profile client regression check for undefined helper calls. | The `/profil` admin next-action panel broke on a stale `selectedFranchise()` helper name that normal build checks did not catch. | Added `pnpm run profile:check`, which syntax-checks profile client files and fails if the stale undefined helper call reappears. |
+| 54 | Authenticated UI QA | Suggested | Add a lightweight visual QA checklist for protected app shells after each profile/dashboard style pass. | `/profil` and `/dashboard` are now visually aligned, but authenticated states still need manual viewport checks because navbar account replacement, role badges, tabs, and admin-only panels depend on live session data. | Add checklist items for `/profil` logged-out redirect, franchisee/franchisor/admin nav states, tab hover/active states, `/dashboard` locked/login/ready states, mobile layout, and dark-header contrast after the next deploy. |
