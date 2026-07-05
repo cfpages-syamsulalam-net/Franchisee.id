@@ -25,6 +25,8 @@ import {
 } from "./_premium-ops.js";
 import { auditStatement, jsonResponse, randomId } from "./_dashboard-utils.js";
 
+const PREMIUM_MEMBERSHIP_QUERY_CHUNK_SIZE = 80;
+
 export const CreatePremiumOrderSchema = z.object({
   action: z.literal("create_premium_order"),
   franchise_id: z.string().trim().min(3).max(120),
@@ -272,71 +274,92 @@ export async function loadPremiumMembershipData(db, userId, franchiseIds) {
   };
   if (!ids.length) return { plan, orders: [], subscriptions: [], notifications: await loadPremiumNotifications(db, userId) };
 
-  const placeholders = ids.map(() => "?").join(",");
   try {
-    const [ordersResult, subsResult, readinessResult, notifications] = await Promise.all([
-      db
-        .prepare(
-          `SELECT o.*, f.brand_name,
-                  c.id AS confirmation_id,
-                  c.review_status AS confirmation_status,
-                  c.submitted_amount,
-                  c.proof_asset_id,
-                  c.created_at AS confirmation_created_at,
-                  a.public_url AS proof_url
-           FROM premium_orders o
-           JOIN franchises f ON f.id = o.franchise_id
-           LEFT JOIN premium_payment_confirmations c
-             ON c.order_id = o.id
-            AND c.review_status = 'pending'
-           LEFT JOIN franchise_assets a ON a.id = c.proof_asset_id
-           WHERE o.user_id = ?
-             AND o.franchise_id IN (${placeholders})
-             AND o.status IN ('pending_payment', 'confirmation_submitted', 'paid')
-           ORDER BY o.created_at DESC
-           LIMIT 20`,
-        )
-        .bind(userId, ...ids)
-        .all(),
-      db
-        .prepare(
-          `SELECT s.*, f.brand_name
-           FROM franchise_subscriptions s
-           JOIN franchises f ON f.id = s.franchise_id
-           WHERE s.user_id = ?
-             AND s.franchise_id IN (${placeholders})
-           ORDER BY s.ends_at DESC
-           LIMIT 20`,
-        )
-        .bind(userId, ...ids)
-        .all(),
-      db
-        .prepare(
-          `SELECT f.id, f.logo_url, f.cover_url, f.short_desc, f.full_desc, f.phone,
-                  f.total_investment_idr, f.min_investment_idr, f.proposal_url,
-                  fp.whatsapp, fp.email_contact
-           FROM franchises f
-           LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
-           WHERE f.id IN (${placeholders})`,
-        )
-        .bind(...ids)
-        .all(),
-      loadPremiumNotifications(db, userId),
-    ]);
+    const orderRows = [];
+    const subscriptionRows = [];
+    const readinessRows = [];
+    const notificationsPromise = loadPremiumNotifications(db, userId);
+
+    for (const chunk of chunkList(ids, PREMIUM_MEMBERSHIP_QUERY_CHUNK_SIZE)) {
+      const placeholders = chunk.map(() => "?").join(",");
+      const [ordersResult, subsResult, readinessResult] = await Promise.all([
+        db
+          .prepare(
+            `SELECT o.*, f.brand_name,
+                    c.id AS confirmation_id,
+                    c.review_status AS confirmation_status,
+                    c.submitted_amount,
+                    c.proof_asset_id,
+                    c.created_at AS confirmation_created_at,
+                    a.public_url AS proof_url
+             FROM premium_orders o
+             JOIN franchises f ON f.id = o.franchise_id
+             LEFT JOIN premium_payment_confirmations c
+               ON c.order_id = o.id
+              AND c.review_status = 'pending'
+             LEFT JOIN franchise_assets a ON a.id = c.proof_asset_id
+             WHERE o.user_id = ?
+               AND o.franchise_id IN (${placeholders})
+               AND o.status IN ('pending_payment', 'confirmation_submitted', 'paid')
+             ORDER BY o.created_at DESC
+             LIMIT 20`,
+          )
+          .bind(userId, ...chunk)
+          .all(),
+        db
+          .prepare(
+            `SELECT s.*, f.brand_name
+             FROM franchise_subscriptions s
+             JOIN franchises f ON f.id = s.franchise_id
+             WHERE s.user_id = ?
+               AND s.franchise_id IN (${placeholders})
+             ORDER BY s.ends_at DESC
+             LIMIT 20`,
+          )
+          .bind(userId, ...chunk)
+          .all(),
+        db
+          .prepare(
+            `SELECT f.id, f.logo_url, f.cover_url, f.short_desc, f.full_desc, f.phone,
+                    f.total_investment_idr, f.min_investment_idr, f.proposal_url,
+                    fp.whatsapp, fp.email_contact
+             FROM franchises f
+             LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
+             WHERE f.id IN (${placeholders})`,
+          )
+          .bind(...chunk)
+          .all(),
+      ]);
+      orderRows.push(...(ordersResult.results || []));
+      subscriptionRows.push(...(subsResult.results || []));
+      readinessRows.push(...(readinessResult.results || []));
+    }
+
+    const notifications = await notificationsPromise;
+    orderRows.sort((left, right) => String(right.created_at || "").localeCompare(String(left.created_at || "")));
+    subscriptionRows.sort((left, right) => String(right.ends_at || "").localeCompare(String(left.ends_at || "")));
 
     const readiness = {};
-    for (const row of readinessResult.results || []) readiness[row.id] = premiumReadinessForListing(row);
+    for (const row of readinessRows) readiness[row.id] = premiumReadinessForListing(row);
 
     return {
       plan,
-      orders: await Promise.all((ordersResult.results || []).map((order) => serializePremiumOrder(db, order, paymentMethod))),
-      subscriptions: subsResult.results || [],
+      orders: await Promise.all(orderRows.slice(0, 20).map((order) => serializePremiumOrder(db, order, paymentMethod))),
+      subscriptions: subscriptionRows.slice(0, 20),
       readiness,
       notifications,
     };
   } catch (_error) {
     return { plan, orders: [], subscriptions: [], notifications: [], unavailable: true };
   }
+}
+
+function chunkList(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
 }
 
 async function loadOwnedListingForPremium(db, actor, franchiseId) {

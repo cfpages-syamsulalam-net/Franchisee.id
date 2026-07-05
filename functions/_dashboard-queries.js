@@ -20,6 +20,7 @@ import {
 } from "./_premium-ops.js";
 
 const OUTREACH_QUEUE_LIMIT = 250;
+const LOCATION_QUERY_CHUNK_SIZE = 80;
 
 export async function getOverview(db) {
   const row = await db
@@ -415,31 +416,35 @@ export async function getEditableListings(db) {
 async function getStructuredLocationsForListings(db, franchiseIds) {
   const ids = Array.from(new Set((franchiseIds || []).filter(Boolean)));
   if (!ids.length) return new Map();
-  const placeholders = ids.map(() => "?").join(",");
-  const result = await db
-    .prepare(
-      `SELECT
-        fl.franchise_id,
-        fl.location_text,
-        fl.location_type,
-        fl.source_field,
-        fl.confidence_score,
-        l.city,
-        l.slug,
-        l.province
-       FROM franchise_locations fl
-       LEFT JOIN locations l ON l.id = fl.location_id
-       WHERE fl.franchise_id IN (${placeholders})
-         AND COALESCE(l.city, fl.location_text) IS NOT NULL
-       ORDER BY
-         CASE fl.source_field WHEN 'owner_profile' THEN 0 ELSE 1 END,
-         CASE fl.location_type WHEN 'head_office' THEN 0 WHEN 'origin' THEN 1 WHEN 'outlet' THEN 2 ELSE 3 END,
-         COALESCE(l.city, fl.location_text) ASC`,
-    )
-    .bind(...ids)
-    .all();
+  const locationRows = [];
+  for (const chunk of chunkList(ids, LOCATION_QUERY_CHUNK_SIZE)) {
+    const placeholders = chunk.map(() => "?").join(",");
+    const result = await db
+      .prepare(
+        `SELECT
+          fl.franchise_id,
+          fl.location_text,
+          fl.location_type,
+          fl.source_field,
+          fl.confidence_score,
+          l.city,
+          l.slug,
+          l.province
+         FROM franchise_locations fl
+         LEFT JOIN locations l ON l.id = fl.location_id
+         WHERE fl.franchise_id IN (${placeholders})
+           AND COALESCE(l.city, fl.location_text) IS NOT NULL
+         ORDER BY
+           CASE fl.source_field WHEN 'owner_profile' THEN 0 ELSE 1 END,
+           CASE fl.location_type WHEN 'head_office' THEN 0 WHEN 'origin' THEN 1 WHEN 'outlet' THEN 2 ELSE 3 END,
+           COALESCE(l.city, fl.location_text) ASC`,
+      )
+      .bind(...chunk)
+      .all();
+    locationRows.push(...(result.results || []));
+  }
   const byFranchise = new Map();
-  for (const row of result.results || []) {
+  for (const row of locationRows) {
     const list = byFranchise.get(row.franchise_id) || [];
     list.push({
       ...row,
@@ -449,6 +454,14 @@ async function getStructuredLocationsForListings(db, franchiseIds) {
     byFranchise.set(row.franchise_id, list);
   }
   return byFranchise;
+}
+
+function chunkList(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
 }
 
 export async function getRecentOutreach(db) {

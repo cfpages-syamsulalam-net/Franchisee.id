@@ -4,6 +4,7 @@ import { manualLocationSummary, manualLocationWriteStatements } from "./_locatio
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
 
 export const OWNER_LISTING_EDIT_INTERVAL_HOURS = 6;
+const OWNED_LISTING_QUERY_CHUNK_SIZE = 80;
 
 export async function updateFranchisorProfile(db, actor, data) {
   const existing = await db
@@ -199,33 +200,37 @@ export async function updateFranchiseLeadStatus(db, actor, data) {
 export async function loadOwnedStructuredLocations(db, franchiseIds) {
   const ids = Array.from(new Set((franchiseIds || []).filter(Boolean)));
   if (!ids.length) return new Map();
-  const placeholders = ids.map(() => "?").join(",");
   try {
-    const result = await db
-      .prepare(
-        `SELECT
-          fl.id,
-          fl.franchise_id,
-          fl.location_text,
-          fl.location_type,
-          fl.source_field,
-          fl.confidence_score,
-          l.city,
-          l.slug,
-          l.province
-         FROM franchise_locations fl
-         LEFT JOIN locations l ON l.id = fl.location_id
-         WHERE fl.franchise_id IN (${placeholders})
-           AND COALESCE(l.city, fl.location_text) IS NOT NULL
-         ORDER BY
-           CASE fl.source_field WHEN 'owner_profile' THEN 0 ELSE 1 END,
-           CASE fl.location_type WHEN 'head_office' THEN 0 WHEN 'origin' THEN 1 WHEN 'outlet' THEN 2 ELSE 3 END,
-           COALESCE(l.city, fl.location_text) ASC`,
-      )
-      .bind(...ids)
-      .all();
+    const locationRows = [];
+    for (const chunk of chunkList(ids, OWNED_LISTING_QUERY_CHUNK_SIZE)) {
+      const placeholders = chunk.map(() => "?").join(",");
+      const result = await db
+        .prepare(
+          `SELECT
+            fl.id,
+            fl.franchise_id,
+            fl.location_text,
+            fl.location_type,
+            fl.source_field,
+            fl.confidence_score,
+            l.city,
+            l.slug,
+            l.province
+           FROM franchise_locations fl
+           LEFT JOIN locations l ON l.id = fl.location_id
+           WHERE fl.franchise_id IN (${placeholders})
+             AND COALESCE(l.city, fl.location_text) IS NOT NULL
+           ORDER BY
+             CASE fl.source_field WHEN 'owner_profile' THEN 0 ELSE 1 END,
+             CASE fl.location_type WHEN 'head_office' THEN 0 WHEN 'origin' THEN 1 WHEN 'outlet' THEN 2 ELSE 3 END,
+             COALESCE(l.city, fl.location_text) ASC`,
+        )
+        .bind(...chunk)
+        .all();
+      locationRows.push(...(result.results || []));
+    }
     const byFranchise = new Map();
-    for (const row of result.results || []) {
+    for (const row of locationRows) {
       const rows = byFranchise.get(row.franchise_id) || [];
       rows.push({
         ...row,
@@ -243,30 +248,34 @@ export async function loadOwnedStructuredLocations(db, franchiseIds) {
 export async function loadOwnedPublicationDistribution(db, franchiseIds) {
   const ids = Array.from(new Set((franchiseIds || []).filter(Boolean)));
   if (!ids.length) return new Map();
-  const placeholders = ids.map(() => "?").join(",");
   try {
-    const result = await db
-      .prepare(
-        `SELECT
-          p.franchise_id,
-          p.site_id,
-          p.slug,
-          p.canonical_url,
-          p.publication_status,
-          p.is_primary,
-          p.updated_at,
-          ns.domain,
-          ns.name,
-          ns.site_type
-         FROM franchise_site_publications p
-         LEFT JOIN network_sites ns ON ns.id = p.site_id
-         WHERE p.franchise_id IN (${placeholders})
-         ORDER BY p.is_primary DESC, ns.domain ASC`,
-      )
-      .bind(...ids)
-      .all();
+    const publicationRows = [];
+    for (const chunk of chunkList(ids, OWNED_LISTING_QUERY_CHUNK_SIZE)) {
+      const placeholders = chunk.map(() => "?").join(",");
+      const result = await db
+        .prepare(
+          `SELECT
+            p.franchise_id,
+            p.site_id,
+            p.slug,
+            p.canonical_url,
+            p.publication_status,
+            p.is_primary,
+            p.updated_at,
+            ns.domain,
+            ns.name,
+            ns.site_type
+           FROM franchise_site_publications p
+           LEFT JOIN network_sites ns ON ns.id = p.site_id
+           WHERE p.franchise_id IN (${placeholders})
+           ORDER BY p.is_primary DESC, ns.domain ASC`,
+        )
+        .bind(...chunk)
+        .all();
+      publicationRows.push(...(result.results || []));
+    }
     const byFranchise = new Map();
-    for (const row of result.results || []) {
+    for (const row of publicationRows) {
       const rows = byFranchise.get(row.franchise_id) || [];
       rows.push(row);
       byFranchise.set(row.franchise_id, rows);
@@ -275,6 +284,14 @@ export async function loadOwnedPublicationDistribution(db, franchiseIds) {
   } catch (_error) {
     return new Map();
   }
+}
+
+function chunkList(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
 }
 
 export async function loadFranchisorLeadInbox(db, userId, franchisorProfileId) {

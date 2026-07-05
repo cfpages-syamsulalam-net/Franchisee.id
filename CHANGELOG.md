@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-05 16:19 (Asia/Jakarta)
+### Added
+- `.context/session-20260705-1619.md`: Added this session snapshot for the `/dashboard-data` D1 SQL variable limit bugfix.
+
+### Changed
+- `functions/_dashboard-queries.js`: Chunked editable-listing structured-location reads so `/dashboard-data` no longer builds an oversized `IN (...)` bind list when loading many dashboard listings.
+- `functions/_profile-franchisor-actions.js`: Chunked owned-listing location and publication reads to avoid the same D1 bind-limit class of bug in `/profil`.
+- `functions/_profile-premium.js`: Chunked owned-listing Premium membership reads for orders, subscriptions, and readiness checks.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented chunked D1 ID-query behavior for dashboard/profile read models.
+- `SUGGESTION.md`: Added suggestion 55 for a high-volume `/dashboard-data` read-model smoke test.
+
 ## 2026-07-05 15:57 (Asia/Jakarta)
 ### Added
 - `.context/session-20260705-1557.md`: Added this session snapshot for the dashboard/profile UI consistency pass.

@@ -623,11 +623,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_profile-franchisor-actions.js`
 *Franchisor mutation and owned-listing helper for `/profile-data`.*
 - `OWNER_LISTING_EDIT_INTERVAL_HOURS`: Shared six-hour owner listing edit window used by `/profile-data` response composition and listing save validation.
+- `OWNED_LISTING_QUERY_CHUNK_SIZE`: Caps owned-listing location/publication ID batches so D1 does not reject large `IN (...)` reads when an admin/staff user can see many listings.
 - `updateFranchisorProfile(db, actor, data)`: Updates franchisor company/contact/legal fields, writes an audit event, and returns the refreshed profile row.
 - `updateOwnedListing(db, actor, data)`: Verifies owner access, enforces edit throttling, applies the allowed listing patch, writes an audit event, and queues a public rebuild.
 - `updateListingLocations(db, actor, data)`: Verifies owner access, replaces owner-managed `franchise_locations` rows through `functions/_location-writes.js`, writes an audit event, and queues a public rebuild.
 - `updateFranchiseLeadStatus(db, actor, data)`: Verifies owner access to the lead, updates status, writes an audit event, and returns the refreshed lead inbox.
-- `loadOwnedStructuredLocations()` / `loadOwnedPublicationDistribution()` / `loadFranchisorLeadInbox()` / `loadFranchisorProfile()` / `loadOwnedListing()`: Shared read helpers used by the profile facade and franchisor actions.
+- `loadOwnedStructuredLocations()` / `loadOwnedPublicationDistribution()` / `loadFranchisorLeadInbox()` / `loadFranchisorProfile()` / `loadOwnedListing()`: Shared read helpers used by the profile facade and franchisor actions; owned location/publication reads chunk IDs before binding.
 
 ### File: `functions/_profile-schemas.js`
 *Zod mutation schemas for `/profile-data`.*
@@ -715,7 +716,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `CreatePremiumOrderSchema` / `ConfirmPremiumPaymentSchema`: Zod schemas for profile-side Premium actions, including optional `proof_asset_id`.
 - `createPremiumOrder(db, actor, data)`: Verifies owned listing access, prevents duplicate active orders/subscriptions except within the renewal window, applies admin-managed multi-brand discounts when enabled, creates a unique-code transfer order, writes audit data, and records a Premium funnel event.
 - `confirmPremiumPayment(db, actor, data)`: Validates submitted amount and optional proof asset ownership, creates a pending payment confirmation, updates order status, writes audit data, records funnel events, creates owner/admin notifications, and queues payment-status emails.
-- `loadPremiumMembershipData(db, userId, franchiseIds)`: Returns plan/payment method data, active/pending orders, subscriptions, readiness checks, and recent owner notifications for `/profil`.
+- `loadPremiumMembershipData(db, userId, franchiseIds)`: Returns plan/payment method data, active/pending orders, subscriptions, readiness checks, and recent owner notifications for `/profil`, chunking owned-listing ID queries before binding.
 
 ### File: `functions/premium-event.js`
 *Public Premium funnel endpoint.*
@@ -821,6 +822,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getUnclaimedOutreachQueue(db)`: Reads up to 250 published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
 - `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
 - `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display and structured location rows for the admin Area Listing editor.
+- `getStructuredLocationsForListings(db, franchiseIds)`: Chunks editable listing IDs before building `IN (...)` queries so `/dashboard-data` can load the full dashboard without hitting D1's SQL variable limit.
 - `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Operations tab.
 - `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, Premium settings, recent Premium notifications, upcoming expiries, annual reports, queued-email summaries, and recent queued email rows for the Operations tab.
 - `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, and product-event counts.
