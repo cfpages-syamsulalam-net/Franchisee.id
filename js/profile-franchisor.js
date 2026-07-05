@@ -65,6 +65,8 @@
             ${field("Kategori", "category", selected.category, "fa-tags")}
             ${field("Tahun Berdiri", "year_established", selected.year_established, "fa-calendar")}
             ${field("Kota Asal", "city_origin", selected.city_origin, "fa-location-dot")}
+            ${field("Asal Brand", "brand_country", selected.brand_country, "fa-globe-asia")}
+            ${field("Target Pasar", "target_market", selected.target_market, "fa-bullseye")}
             ${field("Min Investasi", "min_investment_idr", selected.min_investment_idr, "fa-wallet")}
             ${field("Total Investasi", "total_investment_idr", selected.total_investment_idr, "fa-coins")}
             ${field("WhatsApp/Telepon", "phone", selected.phone, "fa-phone")}

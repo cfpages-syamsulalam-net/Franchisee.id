@@ -362,6 +362,8 @@
         ? state.editable_fields
         : [
           { name: "phone", label: "Telepon/WhatsApp", type: "text" },
+          { name: "brand_country", label: "Asal brand", type: "text" },
+          { name: "target_market", label: "Target pasar", type: "text" },
           { name: "office_address", label: "Alamat kantor", type: "textarea" },
           { name: "category", label: "Kategori", type: "text" },
           { name: "short_desc", label: "Deskripsi singkat", type: "textarea" },

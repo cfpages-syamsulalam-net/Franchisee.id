@@ -37,7 +37,7 @@ export async function loadProfileData(db, actor) {
   const owned = await db
     .prepare(
       `SELECT f.id, f.brand_name, f.slug, f.category, f.status, f.verification_tier,
-              f.year_established, f.city_origin, f.outlet_type, f.location_requirement,
+              f.year_established, f.city_origin, f.brand_country, f.outlet_type, f.target_market, f.location_requirement,
               f.rent_cost_text, f.fee_license_idr, f.fee_capex_idr, f.fee_construction_idr,
               f.total_investment_idr, f.min_investment_idr, f.max_investment_idr,
               f.estimated_bep_months, f.net_profit_percent, f.royalty_percent, f.royalty_basis,

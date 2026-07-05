@@ -43,6 +43,8 @@ The field inventory is storage-provider neutral. The current frontend posts thes
 - `company_name` (Text, Req): PT/CV.
 - `category` (Select, Req): Kategori Bisnis.
 - `year_established` (Number, Req): Tahun Berdiri.
+- `brand_country` (Text, Opt): Negara asal brand, untuk franchisor Indonesia maupun regional/internasional.
+- `target_market` (Text, Opt): Target pasar atau area ekspansi yang dicari, misalnya mitra di Indonesia.
 - `haki_status` (Radio, Req): Registered, Process, None.
 - `haki_number` (Text, Cond): Required if HAKI is Registered/Process.
 - `nib_number` (Text, Opt): 13 digit NIB.

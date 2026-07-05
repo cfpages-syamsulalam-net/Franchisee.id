@@ -18,6 +18,36 @@ const cases = [
     whatsapp: ["886972940831"],
   },
   {
+    name: "China mobile",
+    input: "+86 138 0013 8000",
+    phones: ["8613800138000"],
+    whatsapp: ["8613800138000"],
+  },
+  {
+    name: "Malaysia mobile",
+    input: "+60 12 345 6789",
+    phones: ["60123456789"],
+    whatsapp: ["60123456789"],
+  },
+  {
+    name: "Singapore mobile",
+    input: "+65 9123 4567",
+    phones: ["6591234567"],
+    whatsapp: ["6591234567"],
+  },
+  {
+    name: "Hong Kong mobile",
+    input: "+852 5123 4567",
+    phones: ["85251234567"],
+    whatsapp: ["85251234567"],
+  },
+  {
+    name: "Vietnam mobile",
+    input: "+84 91 234 5678",
+    phones: ["84912345678"],
+    whatsapp: ["84912345678"],
+  },
+  {
     name: "two Indonesian mobile numbers",
     input: "0851-8455-0162 0812-8441-5836",
     phones: ["6285184550162", "6281284415836"],

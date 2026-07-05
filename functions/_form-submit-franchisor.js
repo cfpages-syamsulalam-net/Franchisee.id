@@ -85,7 +85,9 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
               legacy_timestamp = ?,
               year_established = ?,
               city_origin = ?,
+              brand_country = ?,
               outlet_type = ?,
+              target_market = ?,
               location_requirement = ?,
               rent_cost_text = ?,
               fee_license_idr = ?,
@@ -119,13 +121,13 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
           `INSERT INTO franchises (
             id, owner_user_id, franchisor_profile_id, source_site_id, brand_name, slug, category,
             status, verification_tier, source_type, source_sheet, legacy_row_id,
-            legacy_timestamp, year_established, city_origin, outlet_type,
-            location_requirement, rent_cost_text, fee_license_idr, fee_capex_idr,
+            legacy_timestamp, year_established, city_origin, brand_country, outlet_type,
+            target_market, location_requirement, rent_cost_text, fee_license_idr, fee_capex_idr,
             fee_construction_idr, total_investment_idr, min_investment_idr,
             estimated_bep_months, net_profit_percent, royalty_percent, royalty_basis,
             short_desc, full_desc, support_system, phone, logo_url, cover_url,
             gallery_urls, video_url, proposal_url, raw_payload
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, 'free', 'free', 'franchisor_form', 'FRANCHISOR', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, 'free', 'free', 'franchisor_form', 'FRANCHISOR', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .bind(franchiseId, actor.id, profileId, "site_franchisee_id", normalizeText(data.brand_name), slug, textOrNull(data.category), ...franchiseBindValues(data, profileId, publicId, now, investment).slice(4))
     );

@@ -4,6 +4,27 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-05 18:48 (Asia/Jakarta)
+### Added
+- `.context/session-20260705-1848.md`: Added this session snapshot for international franchisor contact/onboarding readiness.
+- `migrations/0017_franchise_origin_target_market.sql`: Added D1 columns for optional `franchises.brand_country` and `franchises.target_market` metadata.
+
+### Changed
+- `functions/_dashboard-utils.js`: Expanded structured contact parsing from Indonesia/Taiwan to regional mobile numbers for Malaysia, Singapore, China, Hong Kong, Taiwan, and Vietnam.
+- `src/lib/franchise-contact.ts`: Mirrored regional mobile parsing and formatting for public listing detail contact rendering.
+- `json/country-codes.json` and `js/form-01-state-helpers.js`: Added China, Hong Kong, Taiwan, and Vietnam to country-code options while preserving Malaysia/Singapore/US/Australia.
+- `js/form-utils.js`: Made WhatsApp validation country-aware so short local mobile numbers from Singapore/Hong Kong and exact-length regional numbers are accepted.
+- `scripts/check-contact-parser.mjs`: Added parser regression cases for Malaysia, Singapore, China, Hong Kong, and Vietnam.
+- `daftar/index.html`: Added optional franchisor fields for brand origin and target market, and included regional static fallback country-code options for China, Hong Kong, Taiwan, and Vietnam.
+- `functions/_form-submit-utils.js`, `functions/_form-submit-franchisor.js`, and `functions/_shared-schemas.js`: Persisted optional brand-origin and target-market fields for new franchisor listings and claimed listing updates.
+- `functions/_profile-schemas.js`, `functions/_profile-listing-patch.js`, and `functions/_profile-read-model.js`: Allowed owner listing edits to read/write brand-origin and target-market metadata.
+- `js/profile-franchisor.js` and `js/dashboard-review.js`: Exposed brand-origin and target-market fields in the owner listing editor and dashboard guided edit definitions.
+- `scripts/build-d1-franchise-pages.ts`, `src/lib/shared-schemas.ts`, `src/lib/franchise-static.ts`, and `templates/detail-franchise-tpl.html`: Carried brand-origin and target-market metadata into the D1 static snapshot and rendered it on public cards/detail fact sections when available.
+- `json/d1-franchise-static-data.json`, `json/d1-generated-pages-manifest.json`, and D1-generated `peluang-usaha/*.html`: Regenerated static franchise output after adding brand-origin and target-market snapshot fields.
+- `CODEBASE.md`, `FORM_SCHEMA.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented regional franchisor contact support, completed the explicit origin/target-market suggestion, and added the reviewed legacy-origin backfill follow-up.
+- Remote D1 `franchise_db`: Resolved the stale open `missing_contact` warning for Keding after confirming its structured Taiwan contact exists.
+- Remote D1 `franchise_db`: Applied `0017_franchise_origin_target_market.sql` to add optional brand-origin and target-market columns.
+
 ## 2026-07-05 18:03 (Asia/Jakarta)
 ### Added
 - `.context/session-20260705-1803.md`: Added this session snapshot for the Data Quality contact parser and remote cleanup work.

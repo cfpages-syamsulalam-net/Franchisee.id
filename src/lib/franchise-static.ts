@@ -215,6 +215,7 @@ export function renderDetailPage(row: FranchiseStaticRow) {
     "{OUTLETS_NUMBER}": escapeHtml(normalizeText(row.outlets_location) || "-"),
     "{BEP_PERIOD}": escapeHtml(row.estimated_bep_months ? `${row.estimated_bep_months} bulan` : "Tanya Admin"),
     "{ADVERTISING_FEE}": "Tanya Admin",
+    "{INTERNATIONAL_FACTS}": generateInternationalFacts(row),
     "{LONG_DESCRIPTION}": escapeHtml(description),
     "{LOGO_URL}": escapeAttr(logoUrl),
     "{HERO_IMAGE}": escapeAttr(heroImage),
@@ -531,11 +532,36 @@ function generateFactChips(row: FranchiseStaticRow, modal: string) {
     ["Modal", modal],
     row.estimated_bep_months ? ["BEP", `${row.estimated_bep_months} bulan`] : null,
     row.year_established ? ["Berdiri", String(row.year_established)] : null,
+    normalizeText(row.brand_country) ? ["Asal", normalizeText(row.brand_country)] : null,
+    normalizeText(row.target_market) ? ["Target", normalizeText(row.target_market)] : null,
   ].filter(Boolean) as [string, string][];
 
   return `<span class="franchise-card-facts">${chips
     .map(([label, value]) => `<span class="franchise-fact-chip"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></span>`)
     .join("")}</span>`;
+}
+
+function generateInternationalFacts(row: FranchiseStaticRow) {
+  const facts = [
+    normalizeText(row.brand_country) ? ["Asal Brand", normalizeText(row.brand_country)] : null,
+    normalizeText(row.target_market) ? ["Target Pasar", normalizeText(row.target_market)] : null,
+  ].filter(Boolean) as [string, string][];
+
+  return facts
+    .map(
+      ([label, value]) => `
+                                                            <div class="elementor-element elementor-widget elementor-widget-icon-box" data-element_type="widget" data-widget_type="icon-box.default">
+																<div class="elementor-widget-container">
+																	<div class="elementor-icon-box-wrapper">
+																		<div class="elementor-icon-box-content">
+																			<h6 class="elementor-icon-box-title"><span>${escapeHtml(label)}</span></h6>
+																			<p class="elementor-icon-box-description">${escapeHtml(value)}</p>
+																		</div>
+																	</div>
+																</div>
+															</div>`,
+    )
+    .join("");
 }
 
 function generateJsonLd(row: FranchiseStaticRow, description: string, logoUrl: string, imageUrl: string) {

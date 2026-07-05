@@ -271,11 +271,12 @@ window.validateSpecificField = function(field) {
         else if (field.classList.contains('phone-format') || name === 'whatsapp') {
             // WhatsApp validation and auto-formatting
             const digits = val.replace(/\D/g, '');
-            if (digits.length < 9 || digits.length > 13) {
+            const range = window.whatsappDigitRangeForField(field, digits);
+            if (range.nationalDigits.length < range.min || range.nationalDigits.length > range.max) {
                 isValid = false;
-                errorMsg = "Nomor WA harus 9-13 digit. Contoh: 812-3456-7890";
-            } else if (!val.includes('-') && digits.length >= 9) {
-                // Auto-format: add dashes if user typed without them
+                errorMsg = range.message;
+            } else if (range.countryCode === '62' && !val.includes('-') && digits.length >= 9) {
+                // Auto-format Indonesian numbers only; international local formats should stay as typed.
                 const formatted = window.formatWhatsAppNumber(digits);
                 if (formatted !== val) {
                     field.value = formatted;
@@ -294,4 +295,42 @@ window.validateSpecificField = function(field) {
         window.showErrorMsg(field, errorMsg);
     }
     return isValid;
+};
+
+window.whatsappDigitRangeForField = function(field, digits) {
+    const form = field.closest('form');
+    const countryCodeField = form ? form.querySelector('select[name="country_code"]') : null;
+    const countryCode = (countryCodeField && countryCodeField.value ? countryCodeField.value : '+62').replace(/\D/g, '') || '62';
+    const nationalRanges = {
+        62: [9, 13],
+        60: [8, 10],
+        65: [8, 8],
+        84: [9, 10],
+        86: [11, 11],
+        852: [8, 8],
+        886: [9, 9],
+        1: [10, 10],
+        61: [9, 9]
+    };
+    const selectedRange = nationalRanges[countryCode] || [8, 13];
+    let nationalDigits = digits;
+
+    if (nationalDigits.startsWith(countryCode)) {
+        nationalDigits = nationalDigits.slice(countryCode.length);
+    } else if (nationalDigits.startsWith('00' + countryCode)) {
+        nationalDigits = nationalDigits.slice(countryCode.length + 2);
+    } else if (nationalDigits.startsWith('0') && countryCode !== '1') {
+        nationalDigits = nationalDigits.slice(1);
+    }
+
+    const exact = selectedRange[0] === selectedRange[1];
+    return {
+        countryCode,
+        nationalDigits,
+        min: selectedRange[0],
+        max: selectedRange[1],
+        message: exact
+            ? `Nomor WhatsApp untuk +${countryCode} harus ${selectedRange[0]} digit setelah kode negara.`
+            : `Nomor WhatsApp untuk +${countryCode} harus ${selectedRange[0]}-${selectedRange[1]} digit setelah kode negara.`
+    };
 };
