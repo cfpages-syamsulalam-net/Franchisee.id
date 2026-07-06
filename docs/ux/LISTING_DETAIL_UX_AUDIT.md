@@ -1,6 +1,6 @@
 # Listing Detail UX And Worker Usage Audit
 
-Last updated: 2026-07-06 13:42 (Asia/Jakarta)
+Last updated: 2026-07-06 14:25 (Asia/Jakarta)
 
 ## Verdict
 
@@ -82,6 +82,12 @@ Official references:
 | Large vertical gaps before tabs/sidebar | Page required more scrolling than necessary | Reduced generated spacing around actions, tabs, promo lead, and image widgets |
 | Title area lacked an at-a-glance summary | Users had to scroll/scan to understand modal, category, BEP, and status | Added compact quick-fact chips under the brand title, with horizontal sticky behavior on mobile |
 | Floating claim CTA used inline styling | Harder to tune responsively and easy to drift from page theme | Converted generated Astro sticky claim CTA to class-based markup/CSS; D1 bridge keeps fallback CSS for committed flat pages |
+| H1 action placement fought centered hero composition | Save/compare buttons beside the H1 made the centered title feel visually off-balance | Moved detail save/compare actions into the `Informasi Franchise` H2 row |
+| Quick facts repeated the existing icon metadata row | Category appeared twice, with the second instance using weaker formatting | Removed repeated modal/category from hero quick facts; hero chips now only show complementary BEP, international origin/target, or verified/premium status when available |
+| Compare icon contrast was weak in compact mode | White icon on light/white button state could be unreadable | Forced compact detail action buttons to use black/yellow contrast in normal, hover, focus, and selected states |
+| Sticky claim sentence broke mid-copy | Nested brand name was styled as block text, causing `Klaim brand` / brand / `secara gratis` to split awkwardly | Scoped sticky claim CSS so the first headline remains block but the brand name inside the sentence stays inline |
+| Logo, social links, and franchise facts were still separated vertically | Users had to scroll through a logo and then a plain two-column list before reaching tabs/contact | Added a compact brand card + enriched fact panel under `Informasi Franchise`, using icons and available D1/form fields such as social links, origin/target, outlet type, location requirement, contract duration, omzet, profit, and support |
+| Dummy social buttons remained in the legacy detail body | Placeholder `#` social links reduce trust | Hid the legacy dummy social block and render real social links only when D1/form data has official URLs |
 
 ## Next implementation ideas
 
@@ -92,6 +98,10 @@ Official references:
 | Done | Replace legacy inline styles in `generateStickyBar()` with class-based CSS | Astro renderer now uses class-based sticky claim markup/CSS; D1 bridge includes fallback CSS for committed flat pages. |
 | Done | Add Cloudflare analytics review checklist before traffic campaigns | Added the route-level review sequence, required access, and trigger points above. |
 | Done | Evaluate removing promo ribbon script from low-intent generated pages | Removed promo loading from generated franchise directory/detail pages and buyer tools; promo remains on `/premium` and `/profil`, with a dashboard-configured per-day view cap during the configured campaign period. |
+| Done | Move listing-detail actions out of the H1 and into the information section | H1 stays centered; compact save/compare actions sit beside the `Informasi Franchise` brand H2. |
+| Done | Replace the old logo + plain detail list with an enriched summary panel | Generated detail pages now render a side-by-side brand card and icon-enriched data grid, while hiding the legacy vertical blocks. |
+| Done | Render official social links in the brand summary area | Social icons now use D1/form URLs and only appear when real Website/Instagram/Facebook/TikTok/YouTube/LinkedIn links exist. |
+| Done | Make hero quick facts complementary rather than repetitive | Hero facts no longer repeat modal/category; they only appear for BEP, verified/premium status, or international brand context. |
 
 ## Traffic readiness checklist
 
@@ -106,5 +116,7 @@ Official references:
 - [x] Add Cloudflare analytics review checklist before traffic campaigns.
 - [x] Remove promo ribbon loading from generated low-intent pages.
 - [x] Add dashboard-configured promo view cap that resets per visitor/device/day.
+- [x] Keep listing-detail H1 centered and move secondary actions to the information section.
+- [x] Enrich `Informasi Franchise` with side-by-side brand card, real social links, and icon facts from D1/form fields.
 - [ ] Review Cloudflare dashboard Function route metrics after deploy using the checklist above.
 - [ ] QA generated detail pages on production after push, especially mobile first screen and sticky claim behavior.

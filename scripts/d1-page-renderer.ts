@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { generateDetailInfoPanel, generateDetailQuickFacts } from "../src/lib/franchise-detail-summary";
+import { injectDetailAssets } from "../src/lib/franchise-static-assets";
 import type { D1FranchiseRow } from "../src/lib/shared-schemas";
 
 const GENERATED_MARKER = "<!-- d1-generated:franchisee.id";
@@ -64,7 +66,9 @@ export function renderDetailPage(row: D1FranchiseRow, template: string): string 
     "{SEO_DESCRIPTION}": escapeHtml(seoDescription),
     "{VERIFIED_ICON}": tier === "verified" || tier === "premium" ? '<i class="fas fa-check-circle franchise-verified-badge" title="Verified Brand"></i>' : "",
     "{TITLE_ACTIONS}": "",
-    "{DETAIL_QUICK_FACTS}": generateDetailQuickFacts(row, category, minimumModal, tier),
+    "{INFO_SECTION_ACTIONS}": "",
+    "{DETAIL_QUICK_FACTS}": generateDetailQuickFacts(row, tier),
+    "{DETAIL_INFO_PANEL}": generateDetailInfoPanel(row, logoUrl, category, minimumModal),
     "{JSON_LD}": generateJsonLd(row, description, logoUrl),
     "{BREADCRUMBS}": generateBreadcrumbs(row),
     "{CLAIM_STICKY_BAR}": isUnclaimed ? generateStickyBar(row) : "",
@@ -77,9 +81,8 @@ export function renderDetailPage(row: D1FranchiseRow, template: string): string 
     html = html.split(key).join(value);
   }
 
-  return normalizeGeneratedHtml(
-    `${GENERATED_MARKER}:v1 slug=${escapeAttr(row.slug)} franchise_id=${escapeAttr(row.id)} -->\n${canonicalizeLegacyLinks(html)}`,
-  );
+  const enhanced = injectDetailAssets(canonicalizeLegacyLinks(html));
+  return normalizeGeneratedHtml(`${GENERATED_MARKER}:v1 slug=${escapeAttr(row.slug)} franchise_id=${escapeAttr(row.id)} -->\n${enhanced}`);
 }
 
 export function compareFranchises(a: D1FranchiseRow, b: D1FranchiseRow) {
@@ -195,25 +198,13 @@ function generateStickyBar(row: D1FranchiseRow) {
         .fr-claim-sticky__copy { flex: 1; min-width: 250px; color: #332600; }
         .fr-claim-sticky__copy strong { display: block; color: #111; }
         .fr-claim-sticky__copy span { color: #5f5a4f; font-size: 13px; }
+        .fr-claim-sticky__copy span strong { display: inline; }
         .fr-claim-sticky__button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 10px 18px; border-radius: 999px; background: #f0ca00; color: #111 !important; font-weight: 900; text-decoration: none !important; }
         @media (max-width: 600px) {
             #claim-sticky-bar { text-align: center; justify-content: center; }
             #claim-sticky-bar div { text-align: center; }
         }
     </style>`;
-}
-
-function generateDetailQuickFacts(row: D1FranchiseRow, category: string, modal: string, tier: string) {
-  const facts = [
-    ["Modal", modal],
-    ["Kategori", category],
-    row.estimated_bep_months ? ["BEP", `${row.estimated_bep_months} bulan`] : null,
-    [tier === "premium" ? "Status" : "Data", tier === "premium" ? "Premium" : tier === "verified" ? "Terverifikasi" : tier === "unclaimed" ? "Belum diklaim" : "Listing aktif"],
-  ].filter(Boolean) as [string, string][];
-
-  return `<div class="franchise-detail-quickfacts" aria-label="Ringkasan franchise">${facts
-    .map(([label, value]) => `<span class="franchise-detail-quickfact"><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></span>`)
-    .join("")}</div>`;
 }
 
 function generateDisclaimer(row: D1FranchiseRow) {

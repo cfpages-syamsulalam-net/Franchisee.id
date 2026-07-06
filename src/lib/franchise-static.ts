@@ -6,6 +6,7 @@ import { canonicalCategoryHref, categorySlug, getCategoryRouteEntries, getCatego
 import { cityIndexCopy, cityLandingCopy, getCityRouteEntries, getCitySummaries, type CityRouteEntry } from "./franchise-city";
 import { generateContactBlock } from "./franchise-contact";
 import { countryDisplay, normalizeCountryName } from "./country-metadata";
+import { generateDetailInfoPanel, generateDetailQuickFacts } from "./franchise-detail-summary";
 import { generateCssPlaceholder, injectDetailAssets, injectDirectoryAssets } from "./franchise-static-assets";
 import { generatePremiumLeadPanel, generatePremiumTabs } from "./franchise-premium-detail";
 import { compareFranchises, getAlphabeticalRows, getPopularRows, getRecommendedRows, scorePopularity, scoreRecommendation } from "./franchise-ranking";
@@ -224,8 +225,10 @@ export function renderDetailPage(row: FranchiseStaticRow) {
     "{SEO_TITLE}": escapeHtml(seoTitle),
     "{SEO_DESCRIPTION}": escapeHtml(seoDescription),
     "{VERIFIED_ICON}": tier === "verified" || tier === "premium" ? '<i class="fas fa-check-circle franchise-verified-badge" aria-label="Brand terverifikasi"></i>' : "",
-    "{TITLE_ACTIONS}": generateDetailTitleActions(row),
-    "{DETAIL_QUICK_FACTS}": generateDetailQuickFacts(row, category, minimumModal, tier),
+    "{TITLE_ACTIONS}": "",
+    "{INFO_SECTION_ACTIONS}": generateDetailTitleActions(row),
+    "{DETAIL_QUICK_FACTS}": generateDetailQuickFacts(row, tier),
+    "{DETAIL_INFO_PANEL}": generateDetailInfoPanel(row, logoUrl, category, minimumModal),
     "{JSON_LD}": generateJsonLd(row, description, logoUrl, ogImage),
     "{BREADCRUMBS}": generateBreadcrumbs(row),
     "{CLAIM_STICKY_BAR}": isUnclaimed ? generateStickyBar(row) : "",
@@ -552,21 +555,6 @@ function generateDetailTitleActions(row: FranchiseStaticRow) {
                 ${generateSaveOpportunityButton(row)}
                 ${generateCompareButton(row)}
             </div>`;
-}
-
-function generateDetailQuickFacts(row: FranchiseStaticRow, category: string, modal: string, tier: string) {
-  const origin = nonIndonesiaCountryDisplay(row.brand_country);
-  const facts = [
-    ["Modal", modal],
-    ["Kategori", category],
-    row.estimated_bep_months ? ["BEP", `${row.estimated_bep_months} bulan`] : null,
-    origin ? ["Asal", origin] : null,
-    [tier === "premium" ? "Status" : "Data", tier === "premium" ? "Premium" : tier === "verified" ? "Terverifikasi" : tier === "unclaimed" ? "Belum diklaim" : "Listing aktif"],
-  ].filter(Boolean) as [string, string][];
-
-  return `<div class="franchise-detail-quickfacts" aria-label="Ringkasan franchise">${facts
-    .map(([label, value]) => `<span class="franchise-detail-quickfact"><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></span>`)
-    .join("")}</div>`;
 }
 
 function generateInternationalFacts(row: FranchiseStaticRow) {

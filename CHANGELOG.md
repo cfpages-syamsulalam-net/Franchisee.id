@@ -4,6 +4,16 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-06 18:53 (Asia/Jakarta)
+### Added
+- `.context/session-20260706-1853.md`: Added this session snapshot for the follow-up generated listing-detail UX pass.
+- `src/lib/franchise-detail-summary.ts`: Added a shared generated detail summary renderer for complementary hero facts and the enriched `Informasi Franchise` logo/social/fact panel.
+
+### Changed
+- `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: Added the follow-up listing-detail UX audit items for centered H1 composition, non-repetitive hero facts, compact action contrast, inline sticky-claim copy, official social links, and side-by-side information layout.
+- `templates/detail-franchise-tpl.html`, `src/lib/franchise-static.ts`, `scripts/d1-page-renderer.ts`, and `src/lib/franchise-detail-assets.ts`: Moved save/compare actions from the H1 to the `Informasi Franchise` H2 row, rendered the enriched brand summary panel, kept social icons only for real D1/form URLs, hid legacy dummy social/detail blocks, improved compact action contrast, kept sticky claim brand text inline, and reused detail asset injection for D1 bridge flat pages.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the shared detail summary module, new detail placeholders, updated generated detail-page responsibilities, and a follow-up automated visual smoke suggestion.
+
 ## 2026-07-06 15:19 (Asia/Jakarta)
 ### Added
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: Added the Cloudflare pre-campaign Function analytics review checklist with required access, review sequence, route priorities, and daily trigger points.

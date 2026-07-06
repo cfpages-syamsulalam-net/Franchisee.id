@@ -87,11 +87,9 @@ export function injectDetailAssets(html: string) {
   padding-bottom: clamp(22px, 3vw, 38px) !important;
 }
 .franchise-detail-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  display: block;
   max-width: 100%;
+  text-align: center;
 }
 .franchise-detail-title-row h1 {
   margin: 0 !important;
@@ -143,6 +141,23 @@ export function injectDetailAssets(html: string) {
 .elementor-element.elementor-widget-image {
   margin-bottom: 10px !important;
 }
+.elementor-element-f6c9163,
+.elementor-element-37c2875,
+.elementor-element-a331762 {
+  display: none !important;
+}
+.franchise-info-heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.franchise-info-heading-row h2 {
+  margin: 0 !important;
+  flex: 1 1 auto;
+}
 .franchise-detail-actions {
   display: inline-flex;
   flex-wrap: wrap;
@@ -160,6 +175,30 @@ export function injectDetailAssets(html: string) {
   justify-content: center;
   padding: 0 !important;
   border-radius: 999px !important;
+  border: 1px solid rgba(17, 17, 17, 0.18) !important;
+  background: #111111 !important;
+  color: #f0ca00 !important;
+  box-shadow: 0 10px 20px rgba(17, 17, 17, 0.14);
+}
+.franchise-detail-actions .fr-save-opportunity-button--detail i,
+.franchise-detail-actions .fr-compare-button--detail i {
+  color: #f0ca00 !important;
+}
+.franchise-detail-actions .fr-save-opportunity-button--detail:hover,
+.franchise-detail-actions .fr-save-opportunity-button--detail:focus,
+.franchise-detail-actions .fr-compare-button--detail:hover,
+.franchise-detail-actions .fr-compare-button--detail:focus,
+.franchise-detail-actions .fr-compare-button--detail.is-added {
+  background: #f0ca00 !important;
+  color: #111111 !important;
+  transform: translateY(-1px);
+}
+.franchise-detail-actions .fr-save-opportunity-button--detail:hover i,
+.franchise-detail-actions .fr-save-opportunity-button--detail:focus i,
+.franchise-detail-actions .fr-compare-button--detail:hover i,
+.franchise-detail-actions .fr-compare-button--detail:focus i,
+.franchise-detail-actions .fr-compare-button--detail.is-added i {
+  color: #111111 !important;
 }
 .franchise-detail-actions .fr-save-opportunity-label,
 .franchise-detail-actions .fr-compare-button--detail span {
@@ -169,6 +208,115 @@ export function injectDetailAssets(html: string) {
   overflow: hidden !important;
   clip: rect(0 0 0 0) !important;
   white-space: nowrap !important;
+}
+.franchise-info-panel {
+  display: grid;
+  grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
+  gap: clamp(14px, 3vw, 26px);
+  align-items: start;
+  margin: 0 0 20px;
+  padding: clamp(14px, 2.5vw, 22px);
+  border: 1px solid rgba(17, 17, 17, 0.09);
+  background: linear-gradient(135deg, #ffffff 0%, #fffdf4 100%);
+  box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08);
+}
+.franchise-info-brand-card {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 240px;
+}
+.franchise-info-logo-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 240px;
+  min-height: 160px;
+  padding: 16px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  background: #ffffff;
+}
+.franchise-info-logo-card img {
+  width: min(100%, 210px) !important;
+  height: auto !important;
+  max-height: 150px !important;
+  object-fit: contain !important;
+}
+.franchise-info-logo-placeholder {
+  min-height: 140px !important;
+  aspect-ratio: 4 / 3;
+}
+.franchise-info-social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+}
+.franchise-info-social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111111 !important;
+  text-decoration: none !important;
+  box-shadow: 0 8px 18px rgba(17, 17, 17, 0.08);
+}
+.franchise-info-social a:hover,
+.franchise-info-social a:focus {
+  background: #111111;
+  color: #f0ca00 !important;
+  transform: translateY(-1px);
+}
+.franchise-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.franchise-info-item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  background: #ffffff;
+}
+.franchise-info-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #111111;
+  color: #f0ca00;
+}
+.franchise-info-item__body {
+  min-width: 0;
+}
+.franchise-info-item small {
+  display: block;
+  margin-bottom: 2px;
+  color: #70685b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.franchise-info-item strong {
+  display: block;
+  color: #111111;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .fr-claim-sticky {
   position: fixed;
@@ -200,6 +348,9 @@ export function injectDetailAssets(html: string) {
   display: block;
   color: #5f5a4f;
   font-size: 13px;
+}
+.fr-claim-sticky__copy span strong {
+  display: inline;
 }
 .fr-claim-sticky__button {
   display: inline-flex;
@@ -660,7 +811,7 @@ export function injectDetailAssets(html: string) {
     min-height: 210px !important;
   }
   .franchise-detail-title-row {
-    align-items: flex-start;
+    text-align: center;
   }
   .franchise-detail-title-row h1 {
     font-size: clamp(28px, 12vw, 44px) !important;
@@ -678,6 +829,28 @@ export function injectDetailAssets(html: string) {
   .franchise-detail-quickfact {
     min-width: 104px;
     flex: 0 0 auto;
+  }
+  .franchise-info-heading-row {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .franchise-info-heading-row h2 {
+    flex-basis: 100%;
+  }
+  .franchise-info-panel {
+    grid-template-columns: 1fr;
+  }
+  .franchise-info-logo-card {
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  .franchise-info-brand-card {
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  .franchise-info-grid {
+    grid-template-columns: 1fr;
   }
   .fr-claim-sticky {
     justify-content: center;
