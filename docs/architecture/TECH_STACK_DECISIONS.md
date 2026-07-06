@@ -195,6 +195,8 @@ Dashboard scaffold:
 - Admin publication controls can update `franchise_site_publications.publication_status` per site and enqueue rebuild requests for the affected site. Franchisors see read-only distribution status in `/profil`.
 - Premium email delivery uses `/premium-email-worker`, a protected Pages Function triggered by `.github/workflows/premium-email-worker.yaml`. The first provider path is Resend via `RESEND_API_KEY`; required runtime setup also includes `PREMIUM_EMAIL_WORKER_SECRET`, `PREMIUM_EMAIL_FROM`, and optional `PREMIUM_EMAIL_REPLY_TO`.
 - The old Google Sheets auto-update workflow was removed. D1/Astro generation plus the D1 publish poller is the active public directory update path.
+- `migrations/0019_proposal_knowledge.sql` adds auditable proposal text/structured-candidate storage and was applied remotely on 2026-07-06. Owner-uploaded digital PDFs are parsed after upload; only missing-field candidates enter the existing review workflow, while image-only documents remain explicitly marked for a separate OCR backfill. Canonical listing fields stay human-reviewed.
+- `migrations/0020_ocr_provider_configs.sql` adds ten disabled OCR provider configurations and was applied remotely on 2026-07-07. Admins manage masked credential state, endpoints, provider priority, quota metadata, and trial expiry from `/dashboard`; dashboard reads never select or return stored key/secret values. Credentials remain application-readable plaintext in D1 by explicit product decision, with a future external-root-key encryption upgrade recommended in `docs/architecture/OCR_PROVIDER_STRATEGY.md`.
 
 ### D1 Change To Static Publish Mechanism
 Target mechanism for franchisor edits, admin edits, claims, listing deletes, and publication-status changes:

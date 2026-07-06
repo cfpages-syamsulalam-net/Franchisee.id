@@ -45,6 +45,7 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 | Remote D1 migration | Implemented | `0004_dashboard_operations.sql` validates locally and was applied remotely after setting `CLOUDFLARE_ACCOUNT_ID=0ba63b7f0096bc267a93fe5c80b1f571` for Wrangler account context. |
 | Admin approvals | Implemented | `/dashboard-data` supports admin-only approve/reject for claim reviews and edit suggestions. |
 | Dashboard API modularization | Implemented | `/dashboard-data` is now a thin router; schemas, queries, actions, and shared utilities live in dedicated `_dashboard-*` modules. |
+| OCR provider configuration | Implemented | Admin-only OCR tab manages ten provider records, masked key/secret state, endpoint/account/region/model, priority, free quota metadata, trial expiry, and enablement through D1 migration 0020. No external OCR call is made yet. |
 | Listing operations editor | Implemented MVP | Listing selector plus structured JSON diff form covers all whitelisted public listing fields. A richer field-by-field drawer can be added later. |
 | Leads/commercial view | Implemented read-only MVP | Reads `franchise_leads` status counts and recent leads. Payment/subscription revenue metrics remain pending. |
 | System health | Implemented read-only MVP | Shows D1 connectivity/migration probe, Clerk session verification note, and recent publish queue status. R2 and webhook failure telemetry remain pending. |
@@ -131,6 +132,7 @@ D1 additions:
 - `listing_quality_checks`: generated warnings and scores per listing. Pending; current MVP computes quality warnings at read time.
 - `claim_reviews`: review status, reviewer, decision reason, evidence snapshot. Pending; current MVP reuses `franchise_claims` fields.
 - `admin_notes`: internal notes attached to listing/user/claim. Pending.
+- `ocr_provider_configs`: provider priority, credentials, endpoint/model/account metadata, quota metadata, trial expiry, and health state. Implemented in `migrations/0020_ocr_provider_configs.sql`; credentials are never returned by dashboard reads.
 
 Existing tables to reuse:
 
@@ -159,6 +161,7 @@ Existing tables to reuse:
 6. Add claim review workflow. Done.
 7. Add publish queue controls and system health. System health read-only MVP done; manual publish controls pending.
 8. Add data quality checks and commercial metrics. Partially done; read-only quality warnings and lead status counts exist.
+9. Add OCR provider research/configuration. Done; adapter execution, usage accounting, content-hash cache, and resumable failover jobs remain pending.
 
 ## Open Decisions
 

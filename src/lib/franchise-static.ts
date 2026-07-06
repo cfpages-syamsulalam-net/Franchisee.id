@@ -4,7 +4,7 @@ import { z } from "zod";
 import { capitalIndexCopy, capitalLandingCopy, getCapitalRouteEntries, getCapitalSummaries } from "./franchise-capital";
 import { canonicalCategoryHref, categorySlug, getCategoryRouteEntries, getCategorySummaries } from "./franchise-category";
 import { cityIndexCopy, cityLandingCopy, getCityRouteEntries, getCitySummaries, type CityRouteEntry } from "./franchise-city";
-import { generateContactBlock } from "./franchise-contact";
+import { generateContactBlock, replaceLegacyFloatingContacts } from "./franchise-contact";
 import { countryDisplay, normalizeCountryName } from "./country-metadata";
 import { generateDetailQuickFacts } from "./franchise-detail-summary";
 import { generateDetailTabEntries, renderDetailTabsShell } from "./franchise-detail-tabs";
@@ -730,7 +730,7 @@ function applyDetailEnhancements(
     );
   }
 
-  return injectDetailAssets(enhanced);
+  return injectDetailAssets(replaceLegacyFloatingContacts(enhanced, row));
 }
 
 function stripLegacyDetailTabComment(html: string) {

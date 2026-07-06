@@ -1,0 +1,52 @@
+# OCR Provider Strategy
+
+Last updated: 2026-07-07 (Asia/Jakarta)
+
+## Decision
+
+Use local selectable-text extraction first. Send only image-only/scanned brochure pages to external OCR. Provider failover must use one legitimate account per provider, stop on quota/rate errors, and continue with the next enabled provider. Do not create extra accounts or projects to evade a provider's limits.
+
+Provider credentials are stored in D1 because the admin explicitly requested dashboard-managed configuration. This is operationally convenient but weaker than a dedicated secret store: the application must be able to read the original credential, so hashing is impossible and D1/database access can recover it. The dashboard must therefore never return stored credential values, must use blank password fields to preserve existing values, and must audit only configuration metadata.
+
+## Ranked provider shortlist
+
+Free limits change frequently. Verify the provider console before enabling production rotation. “Recurring” means the cited allowance resets; “trial” means it is not durable capacity.
+
+| Rank | Provider | Official free allowance | Reset/type | Brochure fit | Integration notes |
+| ---: | --- | --- | --- | --- | --- |
+| 1 | OCR.Space | 500 requests/day per IP on the free endpoint | Recurring daily | Strong first fallback for page images | Simple OCR-specific API. Treat each raster page as one request. Free endpoint availability and file limits are less enterprise-grade than hyperscalers. Source: https://ocr.space/ocrapi |
+| 2 | Azure AI Vision | 5,000 free transactions/month; 20 transactions/minute on F0 | Recurring monthly | Strong OCR accuracy and predictable quota | Multipage PDF pages count separately. Requires endpoint plus key; F0 availability varies by region. Source: https://azure.microsoft.com/en-us/pricing/details/computer-vision/ |
+| 3 | Cloudflare Workers AI | 10,000 neurons/day at no charge | Recurring daily, compute-based | Best infrastructure fit; useful vision fallback | Not a fixed page quota. Use a vision-capable model and measure actual neurons/page before setting a local page limit. Can use account ID plus scoped API token through REST. Source: https://developers.cloudflare.com/workers-ai/platform/pricing/ |
+| 4 | Google Cloud Vision | First 1,000 OCR units/month free | Recurring monthly | Mature dense-document OCR | Each image/PDF page is a billable unit. Simple image calls can use an API key; async PDF processing has additional Google Cloud storage/auth requirements. Source: https://cloud.google.com/vision/pricing |
+| 5 | Groq vision model | Llama 4 Scout free-plan limit currently 1,000 requests/day | Recurring daily, model/token limited | Useful multimodal fallback for image pages | Not a dedicated OCR endpoint; output must be constrained to transcription only and validated. Organization-level token limits may be reached before request limits. Source: https://console.groq.com/docs/rate-limits |
+| 6 | Amazon Textract | New AWS customers: Detect Document Text up to 1,000 pages/month for three months | Trial, three months | Strong scanned-document OCR | Not a permanent free pool. Requires access key, secret, and region; disable automatically when the trial ends. Source: https://aws.amazon.com/textract/pricing/ |
+| 7 | Veryfi | 100 documents/month on the API free plan | Recurring monthly | Useful for testing structured extraction | The published free allowance focuses on receipts/invoices, so validate general brochure support before production use. Source: https://faq.veryfi.com/en/articles/3743986-what-are-the-plans-prices-for-ocr-api |
+| 8 | Mindee | 200 pages or 14 days | Trial | Good PDF/document pipeline evaluation | Trial only; supports raw text and large PDFs but should not be counted as recurring capacity. Source: https://docs.mindee.com/account-management/plans |
+| 9 | PDF.co | 10,000 credits for one month, no card required | Trial | Useful for PDF-to-text/OCR experiments | Credits are endpoint-dependent rather than a fixed page count. Disable after trial/credits end. Source: https://pdf.co/ |
+| 10 | API4AI OCR | A free RapidAPI plan is advertised; current public docs do not publish a stable quota | Account-specific/unverified | Supports JPEG, PNG, and multipage PDF | Keep disabled until the provider console confirms the exact free quota and commercial terms. Each PDF page is charged separately. Source: https://api4.ai/docs/ocr |
+
+## Rotation policy
+
+1. Compute a content hash and reuse successful OCR text; never resend an unchanged page.
+2. Try selectable PDF text extraction before any external provider.
+3. Sort enabled providers by admin priority, then skip providers in cooldown or whose configured quota counter reached its reset limit.
+4. Retry transient `408`, `429`, and `5xx` responses with bounded backoff; after the retry budget, move to the next provider.
+5. Mark authentication/configuration failures as blocked and require an admin action instead of repeatedly sending requests.
+6. Record page count, provider, latency, response status, quota headers, and extraction confidence without logging credentials or brochure contents.
+7. Trial providers must have an optional expiry date and automatically leave rotation after expiry.
+8. Never spread one brochure across providers unless failover is required; this reduces privacy exposure and inconsistent OCR output.
+9. Normalize every provider response into the existing proposal-knowledge text/candidate contract before admin review.
+10. Keep human approval mandatory before OCR-derived values update canonical listing fields.
+
+## D1 and dashboard implementation plan
+
+- [x] Research and rank ten providers with official source links and free-limit caveats.
+- [x] Add committed D1 storage for provider metadata, masked credential state, priority, enablement, quota, reset period, trial expiry, and health status. Migration `0020_ocr_provider_configs.sql` was applied remotely on 2026-07-07 and seeded ten disabled providers with no credentials.
+- [x] Add admin-only read/update helpers that never return stored key/secret values.
+- [x] Add a dedicated `/dashboard` OCR tab with provider selector, password-style key/secret inputs, endpoint/account/region/model fields, priority, quota metadata, enable toggle, and explicit credential-clear controls.
+- [x] Add Zod validation, audit events without secret values, regression checks, documentation maps, changelog, and session context.
+- [ ] Later integration: provider adapters, quota counters, OCR job queue, content-hash cache, and bounded failover. This session configures providers/credentials only; it does not send brochure data externally.
+
+## Security follow-up
+
+Recommended future upgrade: encrypt credential values with a key held outside D1 (for example, a Cloudflare secret or secrets service). Without an external root key, application-readable D1 credentials cannot be meaningfully encrypted against database disclosure.

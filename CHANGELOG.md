@@ -4,6 +4,40 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-07 01:07 (Asia/Jakarta)
+### Added
+- `docs/architecture/OCR_PROVIDER_STRATEGY.md`: Ranked ten OCR providers using their official free-tier terms, documented provider-specific caveats, and defined a compliant quota-aware rotation, caching, retry, and rollout plan.
+- `migrations/0020_ocr_provider_configs.sql`: Added the admin-managed OCR provider registry and credential/configuration fields; applied it to remote `franchise_db` and verified ten disabled providers with zero configured API keys.
+- `functions/_ocr-provider-config.js`: Added admin-only masked OCR configuration reads and validated updates that preserve blank credentials, support explicit deletion, and never return stored secrets to the browser or audit log.
+- `js/dashboard-ocr.js`: Added the modular dashboard controller for OCR provider status, non-secret settings, password-only credential entry, and explicit credential removal.
+- `scripts/check-ocr-provider-config.ts` and `package.json`: Added `pnpm run ocr:check` regression coverage for action validation and the no-secret-read dashboard contract.
+- `.context/session-20260707-0107.md`: Added the OCR provider research, D1 configuration, deployment state, security decision, and validation snapshot.
+
+### Changed
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, and `css/dashboard.css`: Added the admin-only OCR configuration tab and provider form, including key/secret, endpoint, account/project ID, region, model, priority, quota, trial expiry, activation, and clear-credential controls.
+- `functions/_dashboard-schemas.js` and `functions/dashboard-data.js`: Added validated `update_ocr_provider_config` handling and role-aware masked OCR configuration data to the dashboard API.
+- `docs/README.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `DASHBOARD.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the OCR provider registry, dashboard/API contracts, remote migration state, plaintext-at-rest D1 tradeoff, and future adapter/job-runner work.
+- `SUGGESTION.md`: Advanced the OCR backfill recommendation and added envelope encryption as the recommended follow-up before storing production credentials.
+- `dist/**`: Regenerated ignored Astro build output during validation.
+- `.context/ocr-functions-bundle-check/index.js` and `.context/ocr-functions-final-check/index.js`: Created temporarily for Pages Functions bundle validation, then removed after successful builds.
+
+## 2026-07-06 23:27 (Asia/Jakarta)
+### Added
+- `functions/_proposal-knowledge.js`: Added Worker-compatible selectable-text extraction for uploaded proposal PDFs, deterministic missing-field candidates, auditable knowledge storage, and pending admin-review suggestion statements.
+- `migrations/0019_proposal_knowledge.sql`: Added `franchise_asset_knowledge`; applied and verified it on remote `franchise_db`. Verified existing 0014-0018 changes and reconciled their missing remote migration-ledger entries before applying 0019.
+- `scripts/check-proposal-knowledge.ts` and `package.json`: Added `pnpm run proposal:check` regression coverage for outlet, area, investment, fee, BEP, royalty, profit, and support extraction.
+- `.context/session-20260706-2327.md`: Added this session continuity snapshot.
+
+### Changed
+- `scripts/build-d1-franchise-pages.ts`: Expanded the public D1 snapshot query to include the complete existing outlet/location/cost/contract/omzet/profit/royalty/package/publication fact contract so submitted form data reaches generated detail pages.
+- `src/lib/franchise-premium-detail.ts` and `src/lib/franchise-detail-assets.ts`: Added one-page-at-a-time Brosur navigation, page count, keyboard arrows, compatible icons, simplified profile/tab borders, color-based active/inactive tabs, and bottom-right download-time Franchisee.id watermark compositing without changing R2 originals.
+- `src/lib/franchise-contact.ts`, `src/lib/franchise-static.ts`, and `scripts/d1-page-renderer.ts`: Replaced hard-coded Alam floating detail contacts with each listing's parsed WhatsApp/phone and PIC/brand label.
+- `functions/profile-upload.js` and `js/profile-page.js`: Schedule proposal knowledge extraction after owner PDF uploads and show user-facing review-status copy without delaying the upload response.
+- `package.json` and `pnpm-lock.yaml`: Added the Worker-compatible `unpdf` runtime dependency.
+- `FORM_SCHEMA.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`, and `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: Documented the listing data-contract fix, brochure UX/watermark behavior, extraction/review contract, migration status, and implementation plan.
+- `SUGGESTION.md`: Added suggestion 62 for a resumable, confidence-aware OCR backfill for image-only/scanned R2 proposal pages.
+- `.context/functions-bundle-check/index.js`: Created temporarily to validate the Pages Functions bundle, then removed after successful compilation.
+
 ## 2026-07-06 21:44 (Asia/Jakarta)
 ### Added
 - `src/lib/franchise-detail-tabs.ts`: Added a shared connected-tab composer for generated franchise detail pages, including `Profil`, `Detail`, `Investasi`, optional `Support`, optional Premium/media/Brosur/FAQ, and `Kontak` entries.

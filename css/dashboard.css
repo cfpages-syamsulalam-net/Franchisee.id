@@ -718,6 +718,29 @@ body {
   color: var(--dash-muted);
   font-size: 12px;
 }
+.dash-warning-box {
+  margin-bottom: 14px;
+  border: 1px solid #ead58a;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff8dc;
+  color: #5f4b00;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.dash-check-row {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+}
+.dash-check-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: 0 0 auto;
+}
 @media (max-width: 980px) {
   .dash-grid,
   .dash-layout,

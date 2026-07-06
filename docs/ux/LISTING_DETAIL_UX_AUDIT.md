@@ -99,6 +99,17 @@ Official references:
 | Hero image still consumed first-screen space | The cover image added scroll cost without adding enough decision value on listing detail pages | Hide the generated hero image/title block and promote the information-section brand heading to the page H1 |
 | Tab menu could carry more buyer intent | Two or three tabs did not expose enough of the decision journey | Add intent-based tabs from existing data: `Profil`, `Detail`, `Investasi`, optional `Support`, optional `Galeri`, optional `Brosur`, optional `FAQ`, and `Kontak` |
 
+## 2026-07-06 brochure and listing enrichment plan
+
+| Workstream | Implementation decision | Acceptance check |
+| --- | --- | --- |
+| Form facts on public listings | Expand the D1 static snapshot query to include the existing outlet, location, cost, contract, omzet, profit, and royalty fields already supported by the shared row schema/detail renderer. | A populated `outlet_type` or `location_requirement` reaches the generated `Profil` tab instead of becoming `null` in the snapshot. |
+| Profile/tab styling | Remove the nested card border around the `Profil` content and remove top/side borders from tab buttons; distinguish active/inactive tabs with background and text color. | The tab shell remains readable without a border-inside-border appearance. |
+| Brochure reader | Show one brochure page at a time with previous/next buttons, page count, keyboard navigation, and compatible Font Awesome icons. | Visitors can move through pages without scrolling the whole brochure. |
+| Download watermark | Composite the current Franchisee.id logo/name at bottom-right only while browser-generated PDF pages are rasterized. Keep stored R2 originals unchanged. | Downloaded image-based PDFs are attributed; changing the configured watermark later does not require rewriting R2 objects. |
+| Dynamic contact buttons | Replace the legacy hard-coded Alam WhatsApp/phone floats on generated detail pages with the listing's parsed WhatsApp/phone and PIC label. Hide unavailable channels. | A listing never presents Alam as its brand contact unless Alam is actually its saved PIC. |
+| Brochure knowledge | Extract selectable PDF text after owner upload, store source text plus deterministic structured candidates, and create a reviewable listing-edit suggestion for missing facts rather than silently overwriting owner data. | Digital PDFs produce auditable knowledge; scanned/image-only brochures remain marked for OCR/backfill. |
+
 ## Next implementation ideas
 
 | Priority | Idea | Notes |

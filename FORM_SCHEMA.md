@@ -73,6 +73,7 @@ The field inventory is storage-provider neutral. The current frontend posts thes
 - `video_url` (URL, Opt): YouTube Link.
 - `proposal_url` (Hidden, Opt): PDF E-Proposal.
 Note: these `*_url` field names remain compatibility fields for `/daftar` and D1 listing storage. Owner edits in `/profil` now upload logo, cover, and proposal files through the R2-backed media path and update these URL fields after upload.
+Digital proposal PDFs uploaded through `/profil` are also parsed for selectable text. Extracted facts are stored as auditable knowledge and sent to admin review only for currently missing listing fields; extraction does not remove form fields or silently overwrite owner-entered values.
 
 ### Section 5: Kontak Leads
 - `pic_name` (Text, Req): Nama Contact Person.

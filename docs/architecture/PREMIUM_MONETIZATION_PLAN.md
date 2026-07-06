@@ -90,6 +90,13 @@ Client-side PDF method:
 - The generated PDF exists only on the visitor's device. It is not uploaded to R2 and does not create a second stored file.
 - This saves storage while keeping the user-facing download behavior. If a very large proposal causes slow mobile downloads later, the fallback decision can be revisited.
 
+Brochure knowledge plan (2026-07-06):
+- Owner-uploaded digital PDFs are parsed after upload with a Worker-compatible PDF text extractor.
+- Extracted source text and deterministic field candidates are stored separately from canonical listing fields for auditability.
+- Candidates only target missing listing facts and enter the existing admin review workflow; brochure text never silently replaces owner-entered data.
+- Image-only/scanned PDFs and the existing R2 image-page archive are explicitly marked as needing OCR. OCR backfill remains a separate bounded job because running large image OCR synchronously inside an upload request is unsafe for latency and Worker CPU limits.
+- Migration `0019_proposal_knowledge.sql` was applied to remote `franchise_db` on 2026-07-06. During that apply, verified existing migrations `0014`-`0018` were reconciled into the previously stale Wrangler migration ledger before `0019` ran normally.
+
 ### 4. Trust And Verification
 
 Premium should include a clear trust layer, not just a badge.

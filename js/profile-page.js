@@ -783,7 +783,12 @@
       if (asset.field && asset.public_url) {
         listing[asset.field] = asset.public_url;
       }
-      state.uploadMessage = { type: "success", text: "File berhasil diunggah." };
+      state.uploadMessage = {
+        type: "success",
+        text: assetType === "proposal" && asset.knowledge_status === "processing"
+          ? "Proposal berhasil diunggah. Informasinya sedang dibaca dan hasilnya akan masuk ke tinjauan data."
+          : "File berhasil diunggah.",
+      };
     } catch (error) {
       state.uploadMessage = { type: "error", text: error.message || "File belum bisa diunggah." };
     } finally {

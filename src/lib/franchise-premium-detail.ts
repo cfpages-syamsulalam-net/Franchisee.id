@@ -96,31 +96,34 @@ function generateProposalTab(row: D1FranchiseRow): DetailTabEntry | null {
   const encodedImages = escapeAttr(JSON.stringify(imageUrls));
   const directPdf = pdfUrls[0] || "";
   const pages = imageUrls.length
-    ? `<div class="fr-proposal-pages">${imageUrls
+    ? `<div class="fr-proposal-reader" data-proposal-reader>
+        <div class="fr-proposal-pages">${imageUrls
         .map(
           (url, index) => `
-            <figure class="fr-proposal-page">
+            <figure class="fr-proposal-page${index === 0 ? " is-active" : ""}" data-proposal-page="${index + 1}" aria-hidden="${index === 0 ? "false" : "true"}">
               <img loading="lazy" src="${escapeAttr(url)}" alt="${escapeAttr(`${brandName} proposal halaman ${index + 1}`)}">
               <figcaption>Halaman ${index + 1}</figcaption>
             </figure>`,
         )
-        .join("")}</div>`
+        .join("")}</div>
+        ${imageUrls.length > 1 ? `<div class="fr-proposal-navigation" aria-label="Navigasi halaman brosur"><button type="button" data-proposal-previous><i class="fas fa-chevron-left" aria-hidden="true"></i><span>Sebelumnya</span></button><span class="fr-proposal-counter" data-proposal-counter>1 / ${imageUrls.length}</span><button type="button" data-proposal-next><span>Berikutnya</span><i class="fas fa-chevron-right" aria-hidden="true"></i></button></div>` : ""}
+      </div>`
     : "";
   const directLink = directPdf
     ? `<a class="fr-proposal-direct-link" href="${escapeAttr(directPdf)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-file-pdf" aria-hidden="true"></i> Buka PDF asli</a>`
     : "";
   const downloadButton = imageUrls.length
-    ? `<button class="fr-proposal-download" type="button" data-proposal-pdf data-proposal-images="${encodedImages}" data-proposal-brand="${escapeAttr(slugify(brandName) || "proposal")}" data-franchise-id="${escapeAttr(row.id)}"><i class="fas fa-file-arrow-down" aria-hidden="true"></i><span>Download PDF</span></button>`
+    ? `<button class="fr-proposal-download" type="button" data-proposal-pdf data-proposal-images="${encodedImages}" data-proposal-brand="${escapeAttr(slugify(brandName) || "proposal")}" data-proposal-watermark="/wp-content/uploads/2025/09/franchise.id-favicon-logo.png" data-franchise-id="${escapeAttr(row.id)}"><i class="fas fa-download" aria-hidden="true"></i><span>Download PDF</span></button>`
     : "";
 
   return {
     label: "Brosur",
-    icon: "fa-file-lines",
+    icon: "fa-file-alt",
     content: `
       <div class="fr-premium-tab-block fr-proposal-tab" id="proposal">
         <div class="fr-proposal-head">
           <div>
-            <h3>Brosur ${escapeHtml(brandName)}</h3>
+            <h3><i class="fas fa-file-alt" aria-hidden="true"></i> Brosur ${escapeHtml(brandName)}</h3>
             <p>Baca materi kemitraan, lalu download sebagai PDF bila ingin disimpan.</p>
           </div>
           ${downloadButton}

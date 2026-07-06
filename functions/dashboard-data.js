@@ -30,6 +30,7 @@ import {
 } from "./_dashboard-queries.js";
 import { DashboardActionSchema, EDITABLE_LISTING_FIELD_DEFS, SITE_ID } from "./_dashboard-schemas.js";
 import { jsonResponse } from "./_dashboard-utils.js";
+import { getOcrProviderConfigs, handleUpdateOcrProviderConfig } from "./_ocr-provider-config.js";
 import { logOperationEvent } from "./_telemetry.js";
 
 export async function onRequestGet({ request, env }) {
@@ -37,7 +38,7 @@ export async function onRequestGet({ request, env }) {
     const auth = await requireDashboardAccess(request, env);
     const db = env.franchise_db;
 
-    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, pendingPremiumPayments, premiumOperations, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth] = await Promise.all([
+    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, pendingPremiumPayments, premiumOperations, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth, ocrProviders] = await Promise.all([
       getOverview(db),
       getDataQuality(db),
       getPublishState(db),
@@ -52,6 +53,7 @@ export async function onRequestGet({ request, env }) {
       getEditableListings(db),
       getLeadSummary(db),
       getSystemHealth(db, env),
+      getOcrProviderConfigs(db, auth),
     ]);
 
     return jsonResponse({
@@ -82,6 +84,7 @@ export async function onRequestGet({ request, env }) {
       editable_fields: EDITABLE_LISTING_FIELD_DEFS,
       lead_summary: leadSummary,
       system_health: systemHealth,
+      ocr_providers: ocrProviders,
       generated_at: new Date().toISOString(),
     });
   } catch (error) {
@@ -120,6 +123,7 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "refresh_quality_checks") return handleRefreshQualityChecks(env.franchise_db, auth);
     if (data.action === "update_publication") return handleUpdatePublication(env.franchise_db, auth, data);
     if (data.action === "update_listing_locations") return handleUpdateListingLocations(env.franchise_db, auth, data);
+    if (data.action === "update_ocr_provider_config") return handleUpdateOcrProviderConfig(env.franchise_db, auth, data);
 
     return jsonResponse({ success: false, error: "UNKNOWN_DASHBOARD_ACTION" }, { status: 400 });
   } catch (error) {

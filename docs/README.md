@@ -13,6 +13,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: implementation tracker for public login/register, role-first onboarding, `/daftar` completion, and logged-in navbar state.
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: implementation tracker for `/profil`, read-only identity fields in `/daftar`, profile/listing ownership UX, and owner-facing profile APIs.
 - `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: low-friction defaults and public-display rules for Indonesian vs overseas franchisor origin/target-market metadata.
+- `docs/architecture/OCR_PROVIDER_STRATEGY.md`: ranked OCR free-tier providers, quota-aware rotation policy, D1 credential tradeoffs, and dashboard integration plan.
 - `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: listing detail page compactness, claim CTA, and Cloudflare Pages Function request-limit tracker.
@@ -30,6 +31,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`: staged plan for reconciling lightweight account creation with `/daftar` profile/listing completion and public navbar account state.
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: staged plan for the protected `/profil` account center, side-tab sections, D1 profile/listing reads, and owner edit workflows.
 - `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: default Indonesia behavior, non-Indonesia form expansion, flag display rules, and legacy origin/target backfill policy.
+- `docs/architecture/OCR_PROVIDER_STRATEGY.md`: official free-limit research, provider ranking, failover guardrails, and admin-managed OCR configuration contract.
 - `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: premium network membership, `/premium` page, manual payment operations, conversion tracking, payment confirmation, traffic growth, and renewal roadmap.
 - `docs/architecture/RESEND_EMAIL_DELIVERY.md`: Resend/Cloudflare Pages email delivery setup for queued Premium emails, reports, and reminders.
 

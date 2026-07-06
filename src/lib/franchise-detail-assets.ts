@@ -225,10 +225,10 @@ export function injectDetailAssets(html: string) {
   gap: clamp(14px, 3vw, 26px);
   align-items: start;
   margin: 0;
-  padding: clamp(14px, 2.5vw, 22px);
-  border: 1px solid rgba(17, 17, 17, 0.09);
-  background: linear-gradient(135deg, #ffffff 0%, #fffdf4 100%);
-  box-shadow: 0 18px 40px rgba(17, 17, 17, 0.08);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .franchise-info-brand-card {
   display: grid;
@@ -478,20 +478,20 @@ export function injectDetailAssets(html: string) {
 .e-n-tabs {
   width: 100%;
   margin-top: 18px;
-  border: 1px solid rgba(17, 17, 17, 0.14);
-  background: #ffffff;
-  box-shadow: 0 16px 38px rgba(17, 17, 17, 0.07);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .e-n-tabs-heading {
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
+  gap: 6px;
   align-items: flex-end;
   width: 100%;
-  padding: 8px 8px 0;
+  padding: 0;
   margin: 0;
-  border-bottom: 1px solid rgba(17, 17, 17, 0.14);
-  background: #fff8dc;
+  border: 0;
+  background: transparent;
 }
 .e-n-tab-title {
   position: relative;
@@ -499,13 +499,12 @@ export function injectDetailAssets(html: string) {
   gap: 8px;
   align-items: center;
   cursor: pointer;
-  border: 1px solid transparent !important;
-  border-bottom: 0 !important;
-  background: transparent !important;
+  border: 0 !important;
+  background: #eee8dc !important;
   color: #6b6256 !important;
-  margin-bottom: -1px !important;
+  margin-bottom: 0 !important;
   padding: 11px 16px 12px !important;
-  border-radius: 12px 12px 0 0 !important;
+  border-radius: 4px !important;
   font-weight: 900 !important;
   text-transform: none !important;
 }
@@ -516,15 +515,15 @@ export function injectDetailAssets(html: string) {
 }
 .e-n-tab-title[aria-selected="true"] {
   z-index: 2;
-  border-color: rgba(17, 17, 17, 0.14) !important;
-  border-bottom-color: #ffffff !important;
-  background: #ffffff !important;
-  color: #111111 !important;
-  box-shadow: 0 -8px 18px rgba(17, 17, 17, 0.05);
+  background: #111111 !important;
+  color: #f0ca00 !important;
+  box-shadow: none;
 }
 .e-n-tabs-content {
   width: 100%;
+  margin-top: 8px;
   background: #ffffff;
+  box-shadow: 0 16px 38px rgba(17, 17, 17, 0.07);
 }
 .e-n-tab-content {
   width: 100%;
@@ -871,6 +870,44 @@ export function injectDetailAssets(html: string) {
 .fr-proposal-page {
   padding: 10px;
 }
+.fr-proposal-page:not(.is-active) {
+  display: none;
+}
+.fr-proposal-navigation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+}
+.fr-proposal-navigation button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 0;
+  border-radius: 4px;
+  padding: 10px 14px;
+  background: #111111;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.fr-proposal-navigation button:last-child {
+  justify-self: end;
+}
+.fr-proposal-navigation button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+.fr-proposal-counter {
+  color: #5f574c;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
 .fr-proposal-page figcaption {
   padding-top: 8px;
   color: #6b7280;
@@ -936,6 +973,32 @@ export function injectDetailAssets(html: string) {
 }
 .fr-compare-floating.is-visible {
   display: inline-flex;
+}
+.fr-brand-contact-floats {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 99;
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+.fr-brand-contact-float {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+  border-radius: 999px;
+  padding: 9px 14px;
+  background: #ffffff;
+  color: #111111 !important;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none !important;
+  box-shadow: 0 8px 24px rgba(17, 17, 17, 0.18);
+}
+.fr-brand-contact-float.is-whatsapp i {
+  color: #128c7e;
 }
 .fr-site-promo-bar {
   position: sticky;
@@ -1068,6 +1131,7 @@ document.querySelectorAll(".e-n-tabs").forEach(function (tabs) {
   setFranchiseDetailTab(tabs, selected ? selected.getAttribute("data-tab-index") || "1" : "1");
 });
 initCompareButtons();
+initProposalReaders();
 document.addEventListener("click", function (event) {
   var opener = event.target && event.target.closest ? event.target.closest("[data-open-contact-tab]") : null;
   if (!opener) return;
@@ -1084,6 +1148,12 @@ document.addEventListener("click", function (event) {
   window.setTimeout(function () { contact.focus(); }, 250);
 });
 document.addEventListener("click", function (event) {
+  var navigation = event.target && event.target.closest ? event.target.closest("[data-proposal-previous], [data-proposal-next]") : null;
+  if (navigation) {
+    var reader = navigation.closest("[data-proposal-reader]");
+    if (reader) setProposalPage(reader, Number(reader.getAttribute("data-current-page") || "1") + (navigation.hasAttribute("data-proposal-next") ? 1 : -1));
+    return;
+  }
   var button = event.target && event.target.closest ? event.target.closest("[data-proposal-pdf]") : null;
   if (!button) return;
   event.preventDefault();
@@ -1107,9 +1177,15 @@ async function downloadProposalPdf(button) {
   setProposalStatus(status, "Menyiapkan PDF proposal di browser...");
   try {
     var pages = [];
+    var watermark = null;
+    try {
+      watermark = await loadCanvasImage(button.getAttribute("data-proposal-watermark") || "");
+    } catch (_watermarkError) {
+      watermark = null;
+    }
     for (var index = 0; index < images.length; index += 1) {
       setProposalStatus(status, "Memproses halaman " + (index + 1) + " dari " + images.length + "...");
-      pages.push(await imageToJpegPage(images[index]));
+      pages.push(await imageToJpegPage(images[index], watermark));
     }
     var pdfBlob = buildPdfFromJpegs(pages);
     var filename = (button.getAttribute("data-proposal-brand") || "proposal") + ".pdf";
@@ -1130,7 +1206,7 @@ function setProposalStatus(node, text, isError) {
   node.textContent = text || "";
   node.className = "fr-proposal-status" + (isError ? " is-error" : "");
 }
-function imageToJpegPage(url) {
+function imageToJpegPage(url, watermark) {
   return new Promise(function (resolve, reject) {
     var image = new Image();
     image.crossOrigin = "anonymous";
@@ -1148,6 +1224,7 @@ function imageToJpegPage(url) {
         var drawWidth = image.naturalWidth * scale;
         var drawHeight = image.naturalHeight * scale;
         context.drawImage(image, (pageWidth - drawWidth) / 2, (pageHeight - drawHeight) / 2, drawWidth, drawHeight);
+        drawProposalWatermark(context, watermark, pageWidth, pageHeight);
         resolve({ dataUrl: canvas.toDataURL("image/jpeg", 0.92), width: pageWidth, height: pageHeight });
       } catch (_error) {
         reject(new Error("Browser belum bisa membuat PDF dari gambar ini. Buka gambar proposal atau coba ulangi download."));
@@ -1158,6 +1235,64 @@ function imageToJpegPage(url) {
     };
     image.src = url;
   });
+}
+function loadCanvasImage(url) {
+  return new Promise(function (resolve, reject) {
+    if (!url) return reject(new Error("Watermark belum tersedia."));
+    var image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = function () { resolve(image); };
+    image.onerror = function () { reject(new Error("Logo watermark belum bisa dimuat.")); };
+    image.src = url;
+  });
+}
+function drawProposalWatermark(context, watermark, pageWidth, pageHeight) {
+  var padding = 34;
+  var logoSize = 64;
+  var label = "FRANCHISEE.ID";
+  context.save();
+  context.globalAlpha = 0.78;
+  context.font = "700 28px Arial, sans-serif";
+  var textWidth = context.measureText(label).width;
+  var boxWidth = textWidth + (watermark ? logoSize + 22 : 24);
+  var boxHeight = 82;
+  var x = pageWidth - boxWidth - padding;
+  var y = pageHeight - boxHeight - padding;
+  context.fillStyle = "rgba(255,255,255,0.88)";
+  context.fillRect(x, y, boxWidth, boxHeight);
+  if (watermark) context.drawImage(watermark, x + 9, y + 9, logoSize, logoSize);
+  context.fillStyle = "#111111";
+  context.textBaseline = "middle";
+  context.fillText(label, x + (watermark ? logoSize + 16 : 12), y + boxHeight / 2);
+  context.restore();
+}
+function initProposalReaders() {
+  document.querySelectorAll("[data-proposal-reader]").forEach(function (reader) {
+    setProposalPage(reader, 1);
+    reader.setAttribute("tabindex", "0");
+    reader.addEventListener("keydown", function (event) {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      setProposalPage(reader, Number(reader.getAttribute("data-current-page") || "1") + (event.key === "ArrowRight" ? 1 : -1));
+    });
+  });
+}
+function setProposalPage(reader, requestedPage) {
+  var pages = Array.prototype.slice.call(reader.querySelectorAll("[data-proposal-page]"));
+  if (!pages.length) return;
+  var page = Math.max(1, Math.min(pages.length, Number(requestedPage) || 1));
+  reader.setAttribute("data-current-page", String(page));
+  pages.forEach(function (item, index) {
+    var active = index + 1 === page;
+    item.classList.toggle("is-active", active);
+    item.setAttribute("aria-hidden", active ? "false" : "true");
+  });
+  var counter = reader.querySelector("[data-proposal-counter]");
+  if (counter) counter.textContent = page + " / " + pages.length;
+  var previous = reader.querySelector("[data-proposal-previous]");
+  var next = reader.querySelector("[data-proposal-next]");
+  if (previous) previous.disabled = page === 1;
+  if (next) next.disabled = page === pages.length;
 }
 function buildPdfFromJpegs(pages) {
   var objects = [""];

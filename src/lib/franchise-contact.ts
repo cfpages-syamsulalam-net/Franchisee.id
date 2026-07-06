@@ -55,6 +55,25 @@ export function generateContactBlock(row: FranchiseStaticRow, isUnclaimed = fals
   return `<div class="franchise-contact-block"><p>${escapeHtml(lead)}</p>${contactList}${linkList}</div>`;
 }
 
+export function replaceLegacyFloatingContacts(html: string, row: FranchiseStaticRow) {
+  const whatsapp = parsePhoneContacts(row.whatsapp || row.phone, "WhatsApp", "whatsapp").find((contact) => contact.whatsappHref);
+  const phone = parsePhoneContacts(row.phone, "Telepon", "phone").find((contact) => contact.href !== whatsapp?.href);
+  const contactName = normalizeText(row.pic_name) || normalizeText(row.brand_name);
+  const buttons = [
+    whatsapp
+      ? `<a class="fr-brand-contact-float is-whatsapp" href="${escapeAttr(whatsapp.whatsappHref)}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp ${escapeAttr(contactName)}"><i class="fab fa-whatsapp" aria-hidden="true"></i><span>${escapeHtml(whatsapp.display)}${contactName ? ` (${escapeHtml(contactName)})` : ""}</span></a>`
+      : "",
+    phone
+      ? `<a class="fr-brand-contact-float is-phone" href="${escapeAttr(phone.href)}" aria-label="Telepon ${escapeAttr(contactName)}"><i class="fas fa-phone" aria-hidden="true"></i><span>${escapeHtml(phone.display)}${contactName ? ` (${escapeHtml(contactName)})` : ""}</span></a>`
+      : "",
+  ].filter(Boolean);
+  const replacement = buttons.length ? `<div class="fr-brand-contact-floats" aria-label="Kontak brand">${buttons.join("")}</div>` : "";
+
+  return html
+    .replace(/<div class="whatsapp-floating"[\s\S]*?<\/div>/, replacement)
+    .replace(/<div class="tlp-floating"[\s\S]*?<\/div>/, "");
+}
+
 function parsePhoneContacts(value: unknown, defaultLabel: string, source: "whatsapp" | "phone"): ParsedPhoneContact[] {
   const text = normalizeText(value);
   if (!text) return [];

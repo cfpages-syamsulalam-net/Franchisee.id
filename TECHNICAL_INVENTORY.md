@@ -193,7 +193,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getBuyerContext()`: Reads optional comparison, budget matcher, and BEP calculator context from `localStorage` for inquiry payloads.
 - `syncLocalSavedOpportunities()` / `toggleSavedOpportunity()`: Migrates old browser-saved opportunities into D1 when possible and posts save/remove actions to `/profile-data`; local storage/lookup helpers live in `js/profile-opportunities.js`.
 - `submitPasswordForm(form)`: Uses ClerkJS on the current session to let Google-only users add a password login and password users change their password, with custom inline copy and no browser tooltip hints; account rendering lives in `js/profile-account.js`.
-- `uploadListingMedia(input)`: Uploads logo/cover/proposal media through `/profile-upload`; listing and claim panel markup lives in `js/profile-franchisor.js`.
+- `uploadListingMedia(input)`: Uploads logo/cover/proposal media through `/profile-upload`; proposal success copy explains that extracted facts enter data review, while listing and claim panel markup lives in `js/profile-franchisor.js`.
 - Membership tab rendering is delegated to `js/profile-premium.js`, while `createPremiumOrder()` and `submitPremiumConfirmation()` stay in this controller.
 - `createPremiumOrder(franchiseId)` / `submitPremiumConfirmation(form)`: Creates unique-code bank transfer orders or renewal orders through `/profile-data`, uploads optional proof files through `/premium-receipt-upload`, and submits payment confirmation for admin review.
 - `updateLeadStatus(select)`: Saves owner-checked lead status updates through `/profile-data`; lead list/card rendering lives in `js/profile-leads.js`.
@@ -296,11 +296,17 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `renderPublicationControls()` / `updatePublicationStatus()`: Renders network publication controls and posts admin status changes.
 - `renderLeads()` / `renderHealth()` / `renderTrafficGuardrails()`: Renders lead rows, system health summaries, and Cloudflare Free-plan limit/throttle visibility.
 
+### File: `js/dashboard-ocr.js`
+*Admin OCR provider configuration module for `/dashboard`.*
+- `window.FranchiseDashboardOcr.createOperations(options)`: Creates the OCR tab controller from provider-list/select/form/status DOM references and shared dashboard callbacks.
+- `render(payload)` / `renderList(payload)` / `fillForm(provider)`: Shows ranked provider state, key/secret presence booleans, quota metadata, and non-secret configuration without receiving stored credentials.
+- `submit(event)`: Posts validated provider metadata plus optional replacement credentials or explicit clear flags; blank password inputs preserve existing D1 values.
+
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
 - `boot()`: Initializes `window.FranchiseAuth`, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
-- `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, and Operations, including arrow/Home/End keyboard navigation.
-- `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics plus delegated Operations, Review/Data Quality/Claim, and Premium Operations modules.
+- `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, Operations, and OCR, including arrow/Home/End keyboard navigation.
+- `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics plus delegated Operations, Review/Data Quality/Claim, Premium, and OCR modules.
 - `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
 
 ### File: `js/build-listing.js`
@@ -324,7 +330,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `scripts/build-d1-franchise-pages.ts`
 *TypeScript D1-backed public page generation bridge.*
-- `fetchRowsFromD1(options)`: Loads published `site_franchisee_id` franchise rows from `franchise_db`, including public `phone`, `office_address`, `brand_country`, `target_market`, and aggregated `structured_locations` JSON for Astro rendering. Owner/admin-managed location rows override generated rows when present. Prefers the Cloudflare D1 HTTP API with `CLOUDFLARE_API_TOKEN` or a cfman token and falls back to Wrangler/cfman only when needed.
+- `fetchRowsFromD1(options)`: Loads published `site_franchisee_id` rows with the complete static detail contract, including outlet type, location requirement, cost components, contract duration, omzet, profit, royalty basis/period, contacts, media, and aggregated structured locations. This closes the gap where form data existed in D1/schema but became `null` in generated listings.
 - D1 row validation uses `D1FranchiseRowSchema` from `src/lib/shared-schemas.ts` so build-time and Astro snapshot rendering share the same row contract.
 - `fetchRowsFromD1Http(sql, token)`: Build-safe D1 query path for Cloudflare Pages and CI. Uses `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` when set, with current project defaults.
 - `fetchRowsFromD1Wrangler(sql, options)`: Local fallback path that runs `pnpm exec wrangler d1 execute` with a cfman token.
@@ -461,6 +467,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/franchise-contact.ts`
 *Detail contact renderer for D1-backed franchise static pages.*
 - `generateContactBlock(row, isUnclaimed)`: Renders D1 contact/social links into the detail page contact tab, including imported public phone/address data for unclaimed listings without adding duplicate claim CTAs; unclaimed detail pages use the floating claim bar as the single claim action.
+- `replaceLegacyFloatingContacts(html, row)`: Removes template-level Alam WhatsApp/phone floats and emits only the listing's available parsed channels with its PIC/brand label.
 - `parsePhoneContacts(value, defaultLabel, source)`: Splits messy imported phone text into contact rows, including Indonesian mobile pairs, supported SEA/nearby Asia mobile numbers matched through `src/lib/country-metadata.ts`, Indonesian landlines, and call-center short numbers while preserving nearby labels such as Marketing, WhatsApp, Kantor, Office, Call Center, and Owner.
 - `findPhoneStarts(text)`, `isGroupedNonMobileStart(text, start)`, `matchPhoneCandidate(value)`, `inferPhoneLabel(text, start, end, fallback)`, `classifyPhone(parsed, label, source)`, `normalizePhoneDigits(value)`, `normalizeInternationalMobile(digits, countryCode, nationalPattern)`, `formatPhoneDisplay(parsed, type)`, and `formatInternationalPhone(countryCode, localDigits)`: Infer safe phone starts, avoid treating middle number groups as new contacts, classify mobile/international-mobile/landline/call-center numbers, and format public display values.
 - `generatePhoneContactRow(contact)`: Renders parsed phone contacts as styled `tel:` rows without inserting extra claim-notification links.
@@ -511,7 +518,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `generatePremiumLeadPanel(row)`: Renders the prominent Premium CTA panel with WhatsApp, inline inquiry, and proposal shortcut when proposal assets exist.
 - `generatePremiumTabs(row)`: Returns dynamic Galeri, Brosur, and FAQ tab entries for `src/lib/franchise-detail-tabs.ts`.
 - `extractUrls(value)`: Parses proposal/gallery values from JSON arrays, raw URL lists, HTML `src` attributes, legacy Blogspot/Blogger text, and comma/newline-separated values.
-- Proposal tab output stores image URLs for the detail asset script to generate a browser-downloaded PDF.
+- Proposal tab output stores image URLs, removable watermark metadata, and one-page-at-a-time previous/next controls for the detail asset script.
 
 ### File: `src/lib/franchise-static-assets.ts`
 *Generated directory CSS/JS and placeholder helper for D1-backed Astro pages.*
@@ -522,8 +529,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/lib/franchise-detail-assets.ts`
 *Generated detail-page CSS/JS helper for D1-backed Astro pages.*
-- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts, including hidden legacy hero styling, compact detail spacing, subtler breadcrumbs, information-section icon-only save/compare actions, quick-fact chips, full-width connected tab shell styling, missing-info-to-contact click handling, class-based sticky claim CTA styling, and owner CTA styling below the detail tabs.
-- `downloadProposalPdf(button)` / `buildPdfFromJpegs(pages)`: Browser-side proposal image to PDF flow used only inside the Brosur tab; loads R2 image pages, builds a local PDF Blob in memory, triggers browser download, stores no duplicate PDF in R2, shows inline status, and avoids browser alerts.
+- `injectDetailAssets(html)`: Injects generated detail CSS/JS with border-light profile/tab presentation, tab activation, dynamic contact floats, and brochure reader/download behavior.
+- `initProposalReaders()` / `setProposalPage(reader, requestedPage)`: Initialize one-page-at-a-time brochure navigation, count, disabled boundary buttons, and left/right keyboard navigation.
+- `downloadProposalPdf(button)` / `imageToJpegPage(url, watermark)` / `drawProposalWatermark(...)` / `buildPdfFromJpegs(pages)`: Loads R2 image pages, composites the current bottom-right Franchisee.id watermark only during download rendering, builds a local PDF Blob, and leaves source objects unchanged.
 - Owns Premium detail CTA/gallery/brochure/FAQ styling and franchisor owner CTA styling outside the directory asset helper.
 
 ### File: `js/product-events.js`
@@ -595,8 +603,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Static protected admin/staff dashboard shell.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
-- Loads Franchisee.id favicon/apple-touch icon, Outfit/DM Sans fonts, `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, `js/dashboard-operations.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
-- Renders the branded dark/yellow dashboard identity, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, guided review controls with named form fields, admin Area Listing controls, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by dashboard browser modules; dashboard styling is owned by `css/dashboard.css`.
+- Loads the dashboard auth/tooltips/utilities plus Premium, Review, Operations, OCR, and controller client modules; shows a login-only staff/admin form when no Clerk session exists.
+- Renders the branded dashboard shell and an OCR tab with provider selector, password-style credential fields, endpoint/account/region/model, priority, quota metadata, trial expiry, enablement, and explicit credential clear controls. Runtime authorization remains server-side.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
@@ -791,9 +799,15 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/profile-upload.js`
 *Protected owner media upload API for `/profil`.*
-- `onRequestPost()`: Requires Clerk/D1 auth, validates multipart `franchise_id`, `asset_type`, and `file`, verifies listing ownership, stores logo/cover/proposal files in R2, records `franchise_assets`, updates the matching listing media URL field, writes an audit event, and queues a public-page rebuild.
+- `onRequestPost()`: Requires Clerk/D1 auth, validates and stores owner media, updates listing media, queues a rebuild, and schedules digital proposal text extraction with `context.waitUntil()` so the upload response is not blocked by parsing.
 - Supported files: logo and cover accept JPG/PNG/WebP; proposal accepts PDF.
 - Requires the `FRANCHISE_ASSETS` R2 binding and `FRANCHISE_ASSETS_PUBLIC_BASE_URL`; production uses the R2 custom domain `https://assets.franchisee.id`.
+
+### File: `functions/_proposal-knowledge.js`
+*Auditable proposal text and candidate extraction.*
+- `extractProposalKnowledge(arrayBuffer, listing)`: Parses selectable PDF text with UnPDF, records page count/status, marks low-text documents as `needs_ocr`, and filters deterministic candidates to fields currently missing from the canonical listing.
+- `extractProposalCandidatesFromText(text)`: Extracts bounded outlet type, area/location requirement, total investment, franchise fee, BEP, royalty, net profit, and support candidates.
+- `proposalKnowledgeStatements(db, input)`: Upserts `franchise_asset_knowledge` and creates a pending `listing_edit_suggestions` row for admin review without directly updating `franchises`.
 
 ### File: `functions/_clerk-auth.js`
 *Shared Clerk session verification, D1 user sync, and role authorization helper.*
@@ -836,16 +850,22 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach queue, outreach summary, quality, review, pending premium confirmations, Premium operations, editable field definitions, lead, publish, publication controls, health/telemetry data, and local traffic guardrails from `_dashboard-queries.js`.
-- `onRequestPost()`: Validates the discriminated action payload from `_dashboard-schemas.js`, then routes to `_dashboard-actions.js`; failures are logged to operation telemetry when possible.
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`. Stored key/secret values are never selected by the read query.
+- `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js` plus OCR configuration to `_ocr-provider-config.js`.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for `log_outreach`, `suggest_edit`, `review_edit_suggestion`, `review_claim`, `review_premium_payment`, `update_payment_method`, `update_premium_settings`, `manage_notification_email`, `refresh_quality_checks`, `update_publication`, and `update_listing_locations`.
+- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions plus `update_ocr_provider_config`, with fixed provider IDs, credential size limits, HTTPS endpoint checks, quota enums, and bounded priority.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
+
+### File: `functions/_ocr-provider-config.js`
+*Admin-only OCR provider configuration and credential boundary.*
+- `getOcrProviderConfigs(db, auth)`: Returns provider metadata only to admin; SQL derives `has_api_key` / `has_api_secret` booleans and does not select credential values.
+- `handleUpdateOcrProviderConfig(db, auth, data)`: Preserves blank credential inputs, applies explicit clear flags, enforces provider-specific activation prerequisites, updates D1 state, and audits only non-secret metadata.
+- `maskProviderConfig(row)`: Produces the stable browser response contract without `api_key` or `api_secret` properties.
 
 ### File: `functions/_dashboard-queries.js`
 *Read-only D1 data model for `/dashboard-data`.*

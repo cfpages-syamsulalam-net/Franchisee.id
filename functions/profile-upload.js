@@ -1,6 +1,7 @@
 import { authErrorResponse, requireD1User } from "./_clerk-auth.js";
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
 import { logOperationEvent } from "./_telemetry.js";
+import { extractProposalKnowledge, proposalKnowledgeStatements } from "./_proposal-knowledge.js";
 
 const ASSET_TYPES = {
   logo: {
@@ -23,7 +24,8 @@ const ASSET_TYPES = {
   },
 };
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost(context) {
+  const { request, env } = context;
   try {
     const db = getDb(env);
     const actor = await requireD1User(request, env, db);
@@ -54,7 +56,8 @@ export async function onRequestPost({ request, env }) {
     const objectKey = `franchises/${slugPart(listing.slug || listing.id)}/${config.directory}/${Date.now()}-${randomId()}${extension}`;
     const publicUrl = joinUrl(publicBaseUrl, objectKey);
 
-    await bucket.put(objectKey, file.stream(), {
+    const proposalBuffer = assetType === "proposal" ? await file.arrayBuffer() : null;
+    await bucket.put(objectKey, proposalBuffer || file.stream(), {
       httpMetadata: {
         contentType: file.type || "application/octet-stream",
       },
@@ -101,6 +104,21 @@ export async function onRequestPost({ request, env }) {
       }),
     ]);
 
+    let knowledgeStatus = null;
+    if (proposalBuffer) {
+      knowledgeStatus = "processing";
+      const extraction = persistProposalKnowledge({
+        db,
+        env,
+        buffer: proposalBuffer,
+        listing,
+        assetId,
+        actorUserId: actor.id,
+      });
+      if (typeof context.waitUntil === "function") context.waitUntil(extraction);
+      else await extraction;
+    }
+
     return jsonResponse({
       success: true,
       asset: {
@@ -111,6 +129,7 @@ export async function onRequestPost({ request, env }) {
         public_url: publicUrl,
         mime_type: file.type || "",
         file_size_bytes: file.size || 0,
+        knowledge_status: knowledgeStatus,
       },
     });
   } catch (error) {
@@ -134,7 +153,9 @@ async function loadOwnedListing(db, actor, franchiseId) {
 
   return await db
     .prepare(
-      `SELECT id, owner_user_id, franchisor_profile_id, brand_name, slug
+      `SELECT id, owner_user_id, franchisor_profile_id, brand_name, slug,
+              outlet_type, location_requirement, total_investment_idr, fee_license_idr,
+              estimated_bep_months, royalty_percent, net_profit_percent, support_system
        FROM franchises
        WHERE id = ?
          AND (owner_user_id = ? OR (? IS NOT NULL AND franchisor_profile_id = ?))
@@ -142,6 +163,27 @@ async function loadOwnedListing(db, actor, franchiseId) {
     )
     .bind(franchiseId, actor.id, franchisorProfile?.id || null, franchisorProfile?.id || null)
     .first();
+}
+
+async function persistProposalKnowledge({ db, env, buffer, listing, assetId, actorUserId }) {
+  try {
+    const result = await extractProposalKnowledge(buffer, listing);
+    await db.batch(proposalKnowledgeStatements(db, {
+      assetId,
+      listing,
+      result,
+      actorUserId,
+      siteId: SITE_FRANCHISEE_ID,
+    }));
+  } catch (error) {
+    await logOperationEvent(db, {
+      eventType: "proposal.knowledge.extract_failed",
+      severity: "warning",
+      route: "/profile-upload",
+      message: error.message,
+      metadata: { franchise_id: listing.id, asset_id: assetId },
+    }).catch(() => {});
+  }
 }
 
 function getDb(env) {

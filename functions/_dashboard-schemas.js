@@ -114,6 +114,36 @@ const UpdatePremiumSettingsSchema = z.object({
   promo_max_views_per_user: z.coerce.number().int().min(0).max(30).default(1),
 });
 
+const UpdateOcrProviderConfigSchema = z.object({
+  action: z.literal("update_ocr_provider_config"),
+  provider_key: z.enum([
+    "ocr_space",
+    "azure_vision",
+    "cloudflare_workers_ai",
+    "google_vision",
+    "groq_vision",
+    "aws_textract",
+    "veryfi",
+    "mindee",
+    "pdf_co",
+    "api4ai",
+  ]),
+  api_key: z.string().max(2000).optional().default(""),
+  api_secret: z.string().max(4000).optional().default(""),
+  clear_api_key: z.boolean().optional().default(false),
+  clear_api_secret: z.boolean().optional().default(false),
+  account_id: z.string().trim().max(240).optional().default(""),
+  endpoint_url: z.string().trim().max(500).refine((value) => !value || /^https:\/\//i.test(value), "Endpoint harus memakai HTTPS.").optional().default(""),
+  region: z.string().trim().max(120).optional().default(""),
+  model: z.string().trim().max(240).optional().default(""),
+  priority: z.coerce.number().int().min(1).max(1000).default(100),
+  is_enabled: z.boolean().optional().default(false),
+  free_quota_limit: z.coerce.number().int().min(0).max(100000000).optional().default(0),
+  free_quota_period: z.enum(["daily", "monthly", "trial", "compute_daily", "account_specific"]).default("account_specific"),
+  quota_unit: z.enum(["requests", "transactions", "pages", "neurons", "documents", "credits"]).default("requests"),
+  trial_ends_at: z.string().trim().max(40).optional().default(""),
+});
+
 export const DashboardActionSchema = z.discriminatedUnion("action", [
   OutreachEventSchema,
   SuggestEditSchema,
@@ -126,6 +156,7 @@ export const DashboardActionSchema = z.discriminatedUnion("action", [
   UpdatePaymentMethodSchema,
   ManageNotificationEmailSchema,
   UpdatePremiumSettingsSchema,
+  UpdateOcrProviderConfigSchema,
 ]);
 
 export function sanitizeChanges(changes) {

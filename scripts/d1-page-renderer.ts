@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { generateDetailQuickFacts } from "../src/lib/franchise-detail-summary";
 import { generateDetailTabEntries, renderDetailTabsShell } from "../src/lib/franchise-detail-tabs";
+import { replaceLegacyFloatingContacts } from "../src/lib/franchise-contact";
 import { generatePremiumLeadPanel } from "../src/lib/franchise-premium-detail";
 import { injectDetailAssets } from "../src/lib/franchise-static-assets";
 import type { D1FranchiseRow } from "../src/lib/shared-schemas";
@@ -83,7 +84,7 @@ export function renderDetailPage(row: D1FranchiseRow, template: string): string 
     html = html.split(key).join(value);
   }
 
-  const enhanced = injectDetailAssets(canonicalizeLegacyLinks(html));
+  const enhanced = injectDetailAssets(replaceLegacyFloatingContacts(canonicalizeLegacyLinks(html), row));
   return normalizeGeneratedHtml(`${GENERATED_MARKER}:v1 slug=${escapeAttr(row.slug)} franchise_id=${escapeAttr(row.id)} -->\n${enhanced}`);
 }
 

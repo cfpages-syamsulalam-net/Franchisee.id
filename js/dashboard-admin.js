@@ -16,6 +16,7 @@
   var premiumEmailQueue = document.querySelector("[data-premium-email-queue]");
   var paymentMethodForm = document.querySelector("[data-payment-method-form]");
   var premiumSettingsForm = document.querySelector("[data-premium-settings-form]");
+  var ocrClient = window.FranchiseDashboardOcr;
   var dashboardState = null;
   var currentUserIsAdmin = false;
   var dashboardUtils = window.FranchiseDashboardUtils;
@@ -74,6 +75,16 @@
     reloadDashboard: reloadDashboard,
     setStatus: setStatus
   });
+  var ocrOperations = ocrClient.createOperations({
+    providerList: document.querySelector("[data-ocr-provider-list]"),
+    providerSelect: document.querySelector("[data-ocr-provider-select]"),
+    form: document.querySelector("[data-ocr-config-form]"),
+    status: document.querySelector("[data-ocr-config-status]"),
+    isAdmin: function () { return currentUserIsAdmin; },
+    postDashboardAction: postDashboardAction,
+    reloadDashboard: reloadDashboard,
+    setStatus: setStatus
+  });
 
   window.FRANCHISE_AUTH_DEBUG = true;
   bindDashboardTabs();
@@ -86,6 +97,7 @@
     authDebugCopy.addEventListener("click", copyAuthDebug);
   }
   reviewOperations.bind();
+  ocrOperations.bind();
   if (paymentMethodForm) {
     paymentMethodForm.addEventListener("submit", premiumOperations.submitPaymentMethod);
   }
@@ -181,6 +193,7 @@
     dashboardOperations.render(data);
     reviewOperations.render(data);
     premiumOperations.render(data.premium_operations || {});
+    ocrOperations.render(data.ocr_providers || {});
     if (window.FranchiseTooltip && typeof window.FranchiseTooltip.refresh === "function") {
       window.FranchiseTooltip.refresh();
     }
