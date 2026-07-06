@@ -225,12 +225,7 @@
   color: #6b6256;
 }
 .elementor-element-19b8c8c {
-  min-height: 260px !important;
-}
-.elementor-element-19b8c8c > .e-con-inner {
-  min-height: 260px !important;
-  padding-top: clamp(26px, 4vw, 48px) !important;
-  padding-bottom: clamp(22px, 3vw, 38px) !important;
+  display: none !important;
 }
 .franchise-detail-title-row {
   display: block;
@@ -295,14 +290,29 @@
 .franchise-info-heading-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
+  gap: 14px;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
-.franchise-info-heading-row h2 {
+.franchise-info-heading-copy {
+  flex: 1 1 360px;
+  min-width: 0;
+}
+.franchise-info-kicker {
+  display: inline-flex;
+  margin-bottom: 6px;
+  color: #8a6500;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.franchise-info-heading-row h1 {
   margin: 0 !important;
-  flex: 1 1 auto;
+  color: #111111 !important;
+  font-size: clamp(34px, 6vw, 64px) !important;
+  line-height: 1.02 !important;
 }
 .franchise-detail-actions {
   display: inline-flex;
@@ -360,7 +370,7 @@
   grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
   gap: clamp(14px, 3vw, 26px);
   align-items: start;
-  margin: 0 0 20px;
+  margin: 0;
   padding: clamp(14px, 2.5vw, 22px);
   border: 1px solid rgba(17, 17, 17, 0.09);
   background: linear-gradient(135deg, #ffffff 0%, #fffdf4 100%);
@@ -612,23 +622,34 @@
   aspect-ratio: 300 / 138;
 }
 .e-n-tabs {
+  width: 100%;
   margin-top: 18px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #ffffff;
+  box-shadow: 0 16px 38px rgba(17, 17, 17, 0.07);
 }
 .e-n-tabs-heading {
   display: flex;
   flex-wrap: wrap;
   gap: 0;
   align-items: flex-end;
-  margin-bottom: -1px;
+  width: 100%;
+  padding: 8px 8px 0;
+  margin: 0;
   border-bottom: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff8dc;
 }
 .e-n-tab-title {
   position: relative;
+  display: inline-flex !important;
+  gap: 8px;
+  align-items: center;
   cursor: pointer;
   border: 1px solid transparent !important;
   border-bottom: 0 !important;
   background: transparent !important;
   color: #6b6256 !important;
+  margin-bottom: -1px !important;
   padding: 11px 16px 12px !important;
   border-radius: 12px 12px 0 0 !important;
   font-weight: 900 !important;
@@ -642,17 +663,89 @@
 .e-n-tab-title[aria-selected="true"] {
   z-index: 2;
   border-color: rgba(17, 17, 17, 0.14) !important;
+  border-bottom-color: #ffffff !important;
   background: #ffffff !important;
   color: #111111 !important;
   box-shadow: 0 -8px 18px rgba(17, 17, 17, 0.05);
 }
+.e-n-tabs-content {
+  width: 100%;
+  background: #ffffff;
+}
 .e-n-tab-content {
-  border: 1px solid rgba(17, 17, 17, 0.14);
+  width: 100%;
+  border: 0;
   background: #ffffff;
   padding: clamp(14px, 2vw, 22px);
+  box-sizing: border-box;
 }
 .e-n-tab-content:not(.e-active) {
   display: none !important;
+}
+.fr-detail-tab-block {
+  display: grid;
+  gap: 12px;
+}
+.fr-detail-tab-block h3 {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  margin: 0;
+  color: #111111;
+  font-size: clamp(20px, 2.5vw, 28px);
+  line-height: 1.2;
+}
+.fr-detail-tab-block h3 i {
+  color: #c28d00;
+}
+.fr-detail-tab-block p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.7;
+}
+.fr-detail-copy p + p {
+  margin-top: 8px;
+}
+.fr-detail-tab-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.fr-detail-tab-card {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  background: #fffdf4;
+}
+.fr-detail-tab-card > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #111111;
+  color: #f0ca00;
+}
+.fr-detail-tab-card small {
+  display: block;
+  margin-bottom: 2px;
+  color: #70685b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.fr-detail-tab-card strong {
+  display: block;
+  color: #111111;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .franchise-contact-block ul {
   margin: 12px 0 0 0;
@@ -1013,10 +1106,6 @@
   text-decoration: none !important;
 }
 @media (max-width: 720px) {
-  .elementor-element-19b8c8c,
-  .elementor-element-19b8c8c > .e-con-inner {
-    min-height: 210px !important;
-  }
   .franchise-detail-title-row {
     text-align: center;
   }
@@ -1042,7 +1131,8 @@
     justify-content: center;
     text-align: center;
   }
-  .franchise-info-heading-row h2 {
+  .franchise-info-heading-row h1,
+  .franchise-info-heading-copy {
     flex-basis: 100%;
   }
   .franchise-info-panel {
@@ -1057,6 +1147,17 @@
     margin: 0 auto;
   }
   .franchise-info-grid {
+    grid-template-columns: 1fr;
+  }
+  .e-n-tabs-heading {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .e-n-tab-title {
+    flex: 0 0 auto;
+  }
+  .fr-detail-tab-cards {
     grid-template-columns: 1fr;
   }
   .fr-claim-sticky {
@@ -1249,13 +1350,13 @@
                     <strong>Halaman Belum Diklaim:</strong> Informasi ini dikumpulkan dari sumber publik dan belum dikelola langsung oleh pemilik brand.
                 </div>
 											<!-- HERO IMAGE SECTION -->
-											<div class="elementor-element elementor-element-19b8c8c e-flex e-con-boxed e-con e-parent" data-id="19b8c8c" data-element_type="container" data-settings="{&quot;background_background&quot;:&quot;classic&quot;}" style="background-image: url(''); background-size: cover; background-position: center;">
+											<div class="elementor-element elementor-element-19b8c8c e-flex e-con-boxed e-con e-parent" data-id="19b8c8c" data-element_type="container" data-settings="{&quot;background_background&quot;:&quot;classic&quot;}">
 												<div class="e-con-inner">
 													<div class="elementor-element elementor-element-372848a e-con-full e-flex e-con e-child" data-id="372848a" data-element_type="container">
 														<div class="elementor-element elementor-element-0ccf104 elementor-widget elementor-widget-heading" data-id="0ccf104" data-element_type="widget" data-widget_type="heading.default">
 															<div class="elementor-widget-container">
 																<div class="franchise-detail-title-row">
-																	<h1 class="elementor-heading-title elementor-size-default">SEREM </h1>
+																	<div class="elementor-heading-title elementor-size-default">SEREM </div>
 																</div>
 
 															</div>
@@ -1291,61 +1392,18 @@
 											<div class="elementor-element elementor-element-7d9e6cb e-flex e-con-boxed e-con e-parent" data-id="7d9e6cb" data-element_type="container" data-settings="{&quot;background_background&quot;:&quot;classic&quot;}">
 												<div class="e-con-inner">
 													<div class="elementor-element elementor-element-901b275 e-con-full e-flex e-con e-child" data-id="901b275" data-element_type="container">
-														<div class="elementor-element elementor-element-ec2e357 elementor-widget elementor-widget-heading" data-id="ec2e357" data-element_type="widget" data-widget_type="heading.default">
-															<div class="elementor-widget-container">
-																<h3 class="elementor-heading-title elementor-size-default">Informasi Franchise</h3>
-															</div>
-														</div>
 														<div class="elementor-element elementor-element-be27ecf elementor-widget elementor-widget-heading" data-id="be27ecf" data-element_type="widget" data-widget_type="heading.default">
 															<div class="elementor-widget-container">
 																<div class="franchise-info-heading-row">
-																	<h2 class="elementor-heading-title elementor-size-default">SEREM</h2>
+																	<div class="franchise-info-heading-copy">
+																		<span class="franchise-info-kicker">Profil Franchise</span>
+																		<h1 class="elementor-heading-title elementor-size-default">SEREM </h1>
+
+																	</div>
 
 																</div>
 															</div>
 														</div>
-
-														<section class="franchise-info-panel" aria-label="Informasi utama SEREM">
-															<div class="franchise-info-brand-card">
-																<div class="franchise-info-logo-card">
-																	<div class="franchise-css-placeholder franchise-info-logo-placeholder" aria-label="SEREM"><span>SI</span><small>Logo belum tersedia</small></div>
-																</div>
-
-															</div>
-															<div class="franchise-info-grid">
-																<article class="franchise-info-item">
-																	<span class="franchise-info-item__icon"><i class="fas fa-store" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>Nama Franchise <span class="franchise-info-help" aria-label="Info Nama Franchise" data-fr-tooltip="Nama brand atau peluang usaha yang ditawarkan."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><strong class="franchise-info-value">SEREM</strong></span>
-																</article><article class="franchise-info-item">
-																	<span class="franchise-info-item__icon"><i class="fas fa-coins" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>Modal Minimal <span class="franchise-info-help" aria-label="Info Modal Minimal" data-fr-tooltip="Perkiraan dana awal paling rendah untuk mulai menjadi mitra. Angka ini bisa mencakup paket, peralatan, bahan awal, atau kebutuhan outlet tergantung brand."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><strong class="franchise-info-value">15 Juta</strong></span>
-																</article><article class="franchise-info-item">
-																	<span class="franchise-info-item__icon"><i class="fas fa-tags" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>Kategori Franchise <span class="franchise-info-help" aria-label="Info Kategori Franchise" data-fr-tooltip="Kelompok usaha brand ini. Klik untuk melihat peluang franchise lain di kategori yang sama."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><a class="franchise-info-value franchise-info-value--link" href="/peluang-usaha?kategori=makanan-minuman"><strong>Makanan &amp; Minuman</strong></a></span>
-																</article><article class="franchise-info-item">
-																	<span class="franchise-info-item__icon"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>Franchise Fee <span class="franchise-info-help" aria-label="Info Franchise Fee" data-fr-tooltip="Biaya lisensi awal untuk memakai merek, sistem, panduan operasional, dan hak kemitraan dari franchisor."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info franchise fee."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></span>
-																</article><article class="franchise-info-item">
-																	<span class="franchise-info-item__icon"><i class="fas fa-building" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>Nama Perusahaan <span class="franchise-info-help" aria-label="Info Nama Perusahaan" data-fr-tooltip="Badan usaha atau pengelola resmi di balik brand."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info nama perusahaan."><strong>Hubungi Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></span>
-																</article><article class="franchise-info-item">
-																	<span class="franchise-info-item__icon"><i class="fas fa-percent" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>Biaya Royalti <span class="franchise-info-help" aria-label="Info Biaya Royalti" data-fr-tooltip="Biaya berkala yang biasanya dibayar mitra kepada franchisor. Bisa berupa persentase omzet, persentase profit, nominal tetap, atau tidak ada royalti."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info biaya royalti."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></span>
-																</article><article class="franchise-info-item">
-																	<span class="franchise-info-item__icon"><i class="fas fa-calendar-alt" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>Berdiri Sejak <span class="franchise-info-help" aria-label="Info Berdiri Sejak" data-fr-tooltip="Tahun brand mulai beroperasi. Brand yang lebih lama biasanya punya pengalaman operasional lebih banyak, tetapi tetap perlu dicek kualitas sistemnya."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><strong class="franchise-info-value">-</strong></span>
-																</article><article class="franchise-info-item">
-																	<span class="franchise-info-item__icon"><i class="fas fa-bullhorn" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>Biaya Advertising <span class="franchise-info-help" aria-label="Info Biaya Advertising" data-fr-tooltip="Kontribusi untuk promosi bersama, materi marketing, campaign brand, atau aktivitas pemasaran lain jika diwajibkan."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info biaya advertising."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></span>
-																</article><article class="franchise-info-item">
-																	<span class="franchise-info-item__icon"><i class="fas fa-map-marker-alt" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>Gerai / Area <span class="franchise-info-help" aria-label="Info Gerai / Area" data-fr-tooltip="Lokasi outlet yang sudah ada, asal brand, atau area ekspansi yang disebut dalam data listing."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><strong class="franchise-info-value">-</strong></span>
-																</article><article class="franchise-info-item">
-																	<span class="franchise-info-item__icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>Estimasi BEP <span class="franchise-info-help" aria-label="Info Estimasi BEP" data-fr-tooltip="Perkiraan waktu balik modal. Ini bukan jaminan hasil, karena performa tetap dipengaruhi lokasi, operasional, biaya, dan penjualan."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info estimasi bep."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></span>
-																</article>
-															</div>
-														</section>
 														<div class="elementor-element elementor-element-f6c9163 elementor-widget elementor-widget-image" data-id="f6c9163" data-element_type="widget" data-widget_type="image.default">
 															<div class="elementor-widget-container"><img decoding="async" width="300" height="138" src="" class="attachment-large size-large wp-image-2459" alt="SEREM"></div>
 														</div>
@@ -1514,20 +1572,59 @@
                                                                 <!-- DISINI KITA INJECT HTML TABS SECARA DINAMIS -->
                                                                 <!-- KARENA ISINYA BERBEDA ANTARA VERIFIED DAN FREE -->
 
+
+
             <div class="e-n-tabs" data-widget-number="26009074">
                 <div class="e-n-tabs-heading" role="tablist">
-                    <button class="e-n-tab-title" aria-selected="true" data-tab-index="1" role="tab">Profil</button>
-                    <button class="e-n-tab-title" aria-selected="false" data-tab-index="2" role="tab">Kontak</button>
-
+                    <button class="e-n-tab-title" aria-selected="true" data-tab-index="1" role="tab"><i class="fas fa-store" aria-hidden="true"></i><span>Profil</span></button><button class="e-n-tab-title" aria-selected="false" data-tab-index="2" role="tab"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Detail</span></button><button class="e-n-tab-title" aria-selected="false" data-tab-index="3" role="tab"><i class="fas fa-coins" aria-hidden="true"></i><span>Investasi</span></button><button class="e-n-tab-title" aria-selected="false" data-tab-index="4" role="tab"><i class="fas fa-address-book" aria-hidden="true"></i><span>Kontak</span></button>
                 </div>
                 <div class="e-n-tabs-content">
                     <div class="e-n-tab-content e-active" data-tab-index="1">
-                        <div class="elementor-widget-container"><p>SEREM(Selera rempah) makanan yang menyajikan ragam olahan masakan dengan bumbu rempah</p></div>
-                    </div>
-                    <div class="e-n-tab-content" data-tab-index="2">
-                        <div class="elementor-widget-container"><p>Kontak publik belum tersedia.</p></div>
-                    </div>
+														<section class="franchise-info-panel" aria-label="Informasi utama SEREM">
+															<div class="franchise-info-brand-card">
+																<div class="franchise-info-logo-card">
+																	<div class="franchise-css-placeholder franchise-info-logo-placeholder" aria-label="SEREM"><span>SI</span><small>Logo belum tersedia</small></div>
+																</div>
 
+															</div>
+															<div class="franchise-info-grid">
+																<article class="franchise-info-item">
+																	<span class="franchise-info-item__icon"><i class="fas fa-store" aria-hidden="true"></i></span>
+																	<span class="franchise-info-item__body"><small>Nama Franchise <span class="franchise-info-help" aria-label="Info Nama Franchise" data-fr-tooltip="Nama brand atau peluang usaha yang ditawarkan."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><strong class="franchise-info-value">SEREM</strong></span>
+																</article><article class="franchise-info-item">
+																	<span class="franchise-info-item__icon"><i class="fas fa-coins" aria-hidden="true"></i></span>
+																	<span class="franchise-info-item__body"><small>Modal Minimal <span class="franchise-info-help" aria-label="Info Modal Minimal" data-fr-tooltip="Perkiraan dana awal paling rendah untuk mulai menjadi mitra. Angka ini bisa mencakup paket, peralatan, bahan awal, atau kebutuhan outlet tergantung brand."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><strong class="franchise-info-value">15 Juta</strong></span>
+																</article><article class="franchise-info-item">
+																	<span class="franchise-info-item__icon"><i class="fas fa-tags" aria-hidden="true"></i></span>
+																	<span class="franchise-info-item__body"><small>Kategori Franchise <span class="franchise-info-help" aria-label="Info Kategori Franchise" data-fr-tooltip="Kelompok usaha brand ini. Klik untuk melihat peluang franchise lain di kategori yang sama."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><a class="franchise-info-value franchise-info-value--link" href="/peluang-usaha?kategori=makanan-minuman"><strong>Makanan &amp; Minuman</strong></a></span>
+																</article><article class="franchise-info-item">
+																	<span class="franchise-info-item__icon"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></span>
+																	<span class="franchise-info-item__body"><small>Franchise Fee <span class="franchise-info-help" aria-label="Info Franchise Fee" data-fr-tooltip="Biaya lisensi awal untuk memakai merek, sistem, panduan operasional, dan hak kemitraan dari franchisor."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info franchise fee."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></span>
+																</article><article class="franchise-info-item">
+																	<span class="franchise-info-item__icon"><i class="fas fa-building" aria-hidden="true"></i></span>
+																	<span class="franchise-info-item__body"><small>Nama Perusahaan <span class="franchise-info-help" aria-label="Info Nama Perusahaan" data-fr-tooltip="Badan usaha atau pengelola resmi di balik brand."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info nama perusahaan."><strong>Hubungi Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></span>
+																</article><article class="franchise-info-item">
+																	<span class="franchise-info-item__icon"><i class="fas fa-percent" aria-hidden="true"></i></span>
+																	<span class="franchise-info-item__body"><small>Biaya Royalti <span class="franchise-info-help" aria-label="Info Biaya Royalti" data-fr-tooltip="Biaya berkala yang biasanya dibayar mitra kepada franchisor. Bisa berupa persentase omzet, persentase profit, nominal tetap, atau tidak ada royalti."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info biaya royalti."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></span>
+																</article><article class="franchise-info-item">
+																	<span class="franchise-info-item__icon"><i class="fas fa-calendar-alt" aria-hidden="true"></i></span>
+																	<span class="franchise-info-item__body"><small>Berdiri Sejak <span class="franchise-info-help" aria-label="Info Berdiri Sejak" data-fr-tooltip="Tahun brand mulai beroperasi. Brand yang lebih lama biasanya punya pengalaman operasional lebih banyak, tetapi tetap perlu dicek kualitas sistemnya."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><strong class="franchise-info-value">-</strong></span>
+																</article><article class="franchise-info-item">
+																	<span class="franchise-info-item__icon"><i class="fas fa-bullhorn" aria-hidden="true"></i></span>
+																	<span class="franchise-info-item__body"><small>Biaya Advertising <span class="franchise-info-help" aria-label="Info Biaya Advertising" data-fr-tooltip="Kontribusi untuk promosi bersama, materi marketing, campaign brand, atau aktivitas pemasaran lain jika diwajibkan."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info biaya advertising."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></span>
+																</article><article class="franchise-info-item">
+																	<span class="franchise-info-item__icon"><i class="fas fa-map-marker-alt" aria-hidden="true"></i></span>
+																	<span class="franchise-info-item__body"><small>Gerai / Area <span class="franchise-info-help" aria-label="Info Gerai / Area" data-fr-tooltip="Lokasi outlet yang sudah ada, asal brand, atau area ekspansi yang disebut dalam data listing."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><strong class="franchise-info-value">-</strong></span>
+																</article><article class="franchise-info-item">
+																	<span class="franchise-info-item__icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span>
+																	<span class="franchise-info-item__body"><small>Estimasi BEP <span class="franchise-info-help" aria-label="Info Estimasi BEP" data-fr-tooltip="Perkiraan waktu balik modal. Ini bukan jaminan hasil, karena performa tetap dipengaruhi lokasi, operasional, biaya, dan penjualan."><i class="fas fa-question-circle" aria-hidden="true"></i></span></small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info estimasi bep."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></span>
+																</article>
+															</div>
+														</section></div><div class="e-n-tab-content " data-tab-index="2"><section class="fr-detail-tab-block fr-detail-copy"><h3><i class="fas fa-info-circle" aria-hidden="true"></i> Tentang SEREM</h3><p>SEREM(Selera rempah) makanan yang menyajikan ragam olahan masakan dengan bumbu rempah</p></section></div><div class="e-n-tab-content " data-tab-index="3"><section class="fr-detail-tab-block">
+    <h3><i class="fas fa-coins" aria-hidden="true"></i> Ringkasan investasi</h3>
+    <p>Gunakan angka ini sebagai titik awal perbandingan. Detail final tetap perlu dikonfirmasi ke franchisor.</p>
+    <div class="fr-detail-tab-cards"><article class="fr-detail-tab-card"><span><i class="fas fa-coins" aria-hidden="true"></i></span><div><small>Modal Minimal</small><strong>15 Juta</strong></div></article><article class="fr-detail-tab-card"><span><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></span><div><small>Franchise Fee</small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info franchise fee."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></div></article><article class="fr-detail-tab-card"><span><i class="fas fa-percent" aria-hidden="true"></i></span><div><small>Biaya Royalti</small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info biaya royalti."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></div></article><article class="fr-detail-tab-card"><span><i class="fas fa-chart-line" aria-hidden="true"></i></span><div><small>Estimasi BEP</small><button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info estimasi bep."><strong>Tanya Admin</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button></div></article></div>
+  </section></div><div class="e-n-tab-content " data-tab-index="4"><div class="elementor-widget-container"><p>Kontak publik belum tersedia.</p></div></div>
                 </div>
             </div>
                                                                 <!--
@@ -2471,7 +2568,7 @@ function initCompareButtons() {
     floating.href = "/bandingkan";
     floating.className = "fr-compare-floating";
     floating.setAttribute("data-compare-floating", "");
-    floating.innerHTML = '<i class="fas fa-scale-balanced" aria-hidden="true"></i><span data-compare-count>Bandingkan</span>';
+    floating.innerHTML = '<i class="fas fa-balance-scale" aria-hidden="true"></i><span data-compare-count>Bandingkan</span>';
     document.body.appendChild(floating);
   }
   function getSelected() {

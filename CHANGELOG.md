@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-06 21:44 (Asia/Jakarta)
+### Added
+- `src/lib/franchise-detail-tabs.ts`: Added a shared connected-tab composer for generated franchise detail pages, including `Profil`, `Detail`, `Investasi`, optional `Support`, optional Premium/media/Brosur/FAQ, and `Kontak` entries.
+- `.context/session-20260706-2144.md`: Added this session snapshot for the franchise detail tab/hero consolidation pass.
+
+### Changed
+- `templates/detail-franchise-tpl.html`: Promoted the visible brand heading in the information section to H1, removed the hero background-image binding, and left the old hero/title block hidden by generated detail CSS.
+- `src/lib/franchise-static.ts` and `scripts/d1-page-renderer.ts`: Moved detail profile facts into the shared `Profil` tab, moved description into `Detail`, added `Investasi`, reused the shared tab shell, and kept Astro output aligned with D1 bridge flat output.
+- `src/lib/franchise-detail-assets.ts`: Hid the legacy hero block, restyled generated tabs as a full-width connected shell where the active tab overlaps the content edge, added detail/investment tab card styling, and switched the floating compare icon to the older compatible `fa-balance-scale`.
+- `src/lib/franchise-static-assets.ts` and `src/lib/franchise-static.ts`: Switched generated comparison icons from `fa-scale-balanced` to `fa-balance-scale` for older Font Awesome compatibility.
+- `src/lib/franchise-detail-summary.ts`: Switched net-profit fact icon to `fa-chart-line` for older Font Awesome compatibility.
+- `src/lib/franchise-premium-detail.ts`: Renamed the proposal tab label/copy to buyer-facing `Brosur`.
+- `docs/ux/LISTING_DETAIL_UX_AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented the connected tab shell, hero removal, shared tab composer, and updated detail page responsibilities.
+
 ## 2026-07-06 21:09 (Asia/Jakarta)
 ### Changed
 - `.context/session-20260706-2109.md`: Added this session snapshot for generated listing-detail tooltip/tab polish and protected-shell favicon consistency.

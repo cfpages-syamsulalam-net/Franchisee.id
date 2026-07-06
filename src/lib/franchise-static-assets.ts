@@ -558,7 +558,7 @@ export function injectDirectoryAssets(html: string) {
       floating.href = "/bandingkan";
       floating.className = "fr-compare-floating";
       floating.setAttribute("data-compare-floating", "");
-      floating.innerHTML = '<i class="fas fa-scale-balanced" aria-hidden="true"></i><span data-compare-count>Bandingkan</span>';
+      floating.innerHTML = '<i class="fas fa-balance-scale" aria-hidden="true"></i><span data-compare-count>Bandingkan</span>';
       document.body.appendChild(floating);
     }
 

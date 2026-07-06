@@ -56,7 +56,7 @@ export function generateDetailInfoPanel(row: D1FranchiseRow, logoUrl: string, ca
     normalizeText(row.location_requirement) ? detailInfoItem("fa-ruler-combined", "Kriteria Lokasi", truncate(normalizeText(row.location_requirement), 120)) : "",
     row.contract_duration_months ? detailInfoItem("fa-file-signature", "Durasi Kontrak", formatMonths(row.contract_duration_months)) : "",
     row.omzet_monthly_idr ? detailInfoItem("fa-sack-dollar", "Estimasi Omzet", `${formatRupiah(row.omzet_monthly_idr)} / bulan`) : "",
-    row.net_profit_percent ? detailInfoItem("fa-arrow-trend-up", "Estimasi Laba Bersih", `${formatPercent(row.net_profit_percent)}`) : "",
+    row.net_profit_percent ? detailInfoItem("fa-chart-line", "Estimasi Laba Bersih", `${formatPercent(row.net_profit_percent)}`) : "",
     support ? detailInfoItem("fa-handshake-angle", "Support Franchisor", truncate(support, 140)) : "",
   ].filter(Boolean);
   const logo = logoUrl

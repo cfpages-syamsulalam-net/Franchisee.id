@@ -1,6 +1,6 @@
 # Listing Detail UX And Worker Usage Audit
 
-Last updated: 2026-07-06 19:18 (Asia/Jakarta)
+Last updated: 2026-07-06 21:44 (Asia/Jakarta)
 
 ## Verdict
 
@@ -94,6 +94,10 @@ Official references:
 | Economic/franchise terms were not self-explanatory | Lay buyers may not know the difference between modal, franchise fee, royalty, advertising fee, BEP, and omzet | Added shared-tooltip explanations to fact labels |
 | Category fact did not help exploration | Category is a useful browse path and should connect to similar opportunities | Linked `Kategori Franchise` to the relevant `/peluang-usaha?kategori=...` page |
 | `/profil` and `/dashboard` browser tabs lacked site favicon consistency | Protected app shells felt less integrated with Franchisee.id | Added Franchisee.id favicon/apple-touch icon links to both Astro pages |
+| Tab heading and content still felt visually disconnected | The heading row border visually separated the active tab from the panel, and the panel width could feel driven by inner content rather than the full tab shell | Make the whole tab widget a full-width connected shell, let the active tab overlap the panel edge, and move the border to the shared tab/content container |
+| Logo/facts and description competed with tabs | The page had a separate facts panel plus tabs, so users had to decide whether the real content was above or inside tabs | Move the logo/social/fact panel into the `Profil` tab and move the description into a dedicated `Detail` tab |
+| Hero image still consumed first-screen space | The cover image added scroll cost without adding enough decision value on listing detail pages | Hide the generated hero image/title block and promote the information-section brand heading to the page H1 |
+| Tab menu could carry more buyer intent | Two or three tabs did not expose enough of the decision journey | Add intent-based tabs from existing data: `Profil`, `Detail`, `Investasi`, optional `Support`, optional `Galeri`, optional `Brosur`, optional `FAQ`, and `Kontak` |
 
 ## Next implementation ideas
 
@@ -111,6 +115,10 @@ Official references:
 | Done | Make missing detail values actionable | `Tanya Admin` and `Hubungi Admin` values now open the Kontak tab instead of behaving like static unknown text. |
 | Done | Add layperson tooltips for franchise facts | Modal, fee, royalty, advertising, BEP, omzet, profit, support, and related labels now use shared instant tooltip hints. |
 | Done | Make detail tabs read visually as tabs | Tab headers now connect to the active panel and look less like independent buttons. |
+| Done | Integrate tab content with the active tab | The tab shell now owns the border/background, active tabs overlap the panel edge, and tab content spans the full shell width. |
+| Done | Move profile facts into the tab system | The logo/social/fact summary now lives in the `Profil` tab; the old separate summary panel is no longer rendered above tabs. |
+| Done | Add decision-oriented tabs | Generated detail pages now include `Detail`, `Investasi`, optional `Support`, optional Premium/media tabs, and `Kontak` in addition to `Profil`. |
+| Done | Remove hero-image real estate from generated detail pages | The legacy hero/cover section is hidden and the brand heading in the information section is promoted to H1. |
 
 ## Traffic readiness checklist
 
@@ -130,5 +138,8 @@ Official references:
 - [x] Make missing info values open the contact path.
 - [x] Add explanatory tooltips to franchise fact labels.
 - [x] Add Franchisee.id favicons to `/profil` and `/dashboard`.
+- [x] Connect active tab headers directly to their tab content panel.
+- [x] Move generated detail logo/facts and description into the tab content model.
+- [x] Remove the listing-detail hero image from the visible generated layout.
 - [ ] Review Cloudflare dashboard Function route metrics after deploy using the checklist above.
 - [ ] QA generated detail pages on production after push, especially mobile first screen and sticky claim behavior.

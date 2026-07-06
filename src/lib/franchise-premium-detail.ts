@@ -114,14 +114,14 @@ function generateProposalTab(row: D1FranchiseRow): DetailTabEntry | null {
     : "";
 
   return {
-    label: "Proposal",
+    label: "Brosur",
     icon: "fa-file-lines",
     content: `
       <div class="fr-premium-tab-block fr-proposal-tab" id="proposal">
         <div class="fr-proposal-head">
           <div>
-            <h3>Proposal ${escapeHtml(brandName)}</h3>
-            <p>Baca ringkasan materi kemitraan, lalu download sebagai PDF bila ingin disimpan.</p>
+            <h3>Brosur ${escapeHtml(brandName)}</h3>
+            <p>Baca materi kemitraan, lalu download sebagai PDF bila ingin disimpan.</p>
           </div>
           ${downloadButton}
         </div>

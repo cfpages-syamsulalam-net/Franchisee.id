@@ -79,12 +79,7 @@ export function injectDetailAssets(html: string) {
   color: #6b6256;
 }
 .elementor-element-19b8c8c {
-  min-height: 260px !important;
-}
-.elementor-element-19b8c8c > .e-con-inner {
-  min-height: 260px !important;
-  padding-top: clamp(26px, 4vw, 48px) !important;
-  padding-bottom: clamp(22px, 3vw, 38px) !important;
+  display: none !important;
 }
 .franchise-detail-title-row {
   display: block;
@@ -149,14 +144,29 @@ export function injectDetailAssets(html: string) {
 .franchise-info-heading-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
+  gap: 14px;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
-.franchise-info-heading-row h2 {
+.franchise-info-heading-copy {
+  flex: 1 1 360px;
+  min-width: 0;
+}
+.franchise-info-kicker {
+  display: inline-flex;
+  margin-bottom: 6px;
+  color: #8a6500;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.franchise-info-heading-row h1 {
   margin: 0 !important;
-  flex: 1 1 auto;
+  color: #111111 !important;
+  font-size: clamp(34px, 6vw, 64px) !important;
+  line-height: 1.02 !important;
 }
 .franchise-detail-actions {
   display: inline-flex;
@@ -214,7 +224,7 @@ export function injectDetailAssets(html: string) {
   grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
   gap: clamp(14px, 3vw, 26px);
   align-items: start;
-  margin: 0 0 20px;
+  margin: 0;
   padding: clamp(14px, 2.5vw, 22px);
   border: 1px solid rgba(17, 17, 17, 0.09);
   background: linear-gradient(135deg, #ffffff 0%, #fffdf4 100%);
@@ -466,23 +476,34 @@ export function injectDetailAssets(html: string) {
   aspect-ratio: 300 / 138;
 }
 .e-n-tabs {
+  width: 100%;
   margin-top: 18px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #ffffff;
+  box-shadow: 0 16px 38px rgba(17, 17, 17, 0.07);
 }
 .e-n-tabs-heading {
   display: flex;
   flex-wrap: wrap;
   gap: 0;
   align-items: flex-end;
-  margin-bottom: -1px;
+  width: 100%;
+  padding: 8px 8px 0;
+  margin: 0;
   border-bottom: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff8dc;
 }
 .e-n-tab-title {
   position: relative;
+  display: inline-flex !important;
+  gap: 8px;
+  align-items: center;
   cursor: pointer;
   border: 1px solid transparent !important;
   border-bottom: 0 !important;
   background: transparent !important;
   color: #6b6256 !important;
+  margin-bottom: -1px !important;
   padding: 11px 16px 12px !important;
   border-radius: 12px 12px 0 0 !important;
   font-weight: 900 !important;
@@ -496,17 +517,89 @@ export function injectDetailAssets(html: string) {
 .e-n-tab-title[aria-selected="true"] {
   z-index: 2;
   border-color: rgba(17, 17, 17, 0.14) !important;
+  border-bottom-color: #ffffff !important;
   background: #ffffff !important;
   color: #111111 !important;
   box-shadow: 0 -8px 18px rgba(17, 17, 17, 0.05);
 }
+.e-n-tabs-content {
+  width: 100%;
+  background: #ffffff;
+}
 .e-n-tab-content {
-  border: 1px solid rgba(17, 17, 17, 0.14);
+  width: 100%;
+  border: 0;
   background: #ffffff;
   padding: clamp(14px, 2vw, 22px);
+  box-sizing: border-box;
 }
 .e-n-tab-content:not(.e-active) {
   display: none !important;
+}
+.fr-detail-tab-block {
+  display: grid;
+  gap: 12px;
+}
+.fr-detail-tab-block h3 {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  margin: 0;
+  color: #111111;
+  font-size: clamp(20px, 2.5vw, 28px);
+  line-height: 1.2;
+}
+.fr-detail-tab-block h3 i {
+  color: #c28d00;
+}
+.fr-detail-tab-block p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.7;
+}
+.fr-detail-copy p + p {
+  margin-top: 8px;
+}
+.fr-detail-tab-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.fr-detail-tab-card {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  background: #fffdf4;
+}
+.fr-detail-tab-card > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #111111;
+  color: #f0ca00;
+}
+.fr-detail-tab-card small {
+  display: block;
+  margin-bottom: 2px;
+  color: #70685b;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.fr-detail-tab-card strong {
+  display: block;
+  color: #111111;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .franchise-contact-block ul {
   margin: 12px 0 0 0;
@@ -867,10 +960,6 @@ export function injectDetailAssets(html: string) {
   text-decoration: none !important;
 }
 @media (max-width: 720px) {
-  .elementor-element-19b8c8c,
-  .elementor-element-19b8c8c > .e-con-inner {
-    min-height: 210px !important;
-  }
   .franchise-detail-title-row {
     text-align: center;
   }
@@ -896,7 +985,8 @@ export function injectDetailAssets(html: string) {
     justify-content: center;
     text-align: center;
   }
-  .franchise-info-heading-row h2 {
+  .franchise-info-heading-row h1,
+  .franchise-info-heading-copy {
     flex-basis: 100%;
   }
   .franchise-info-panel {
@@ -911,6 +1001,17 @@ export function injectDetailAssets(html: string) {
     margin: 0 auto;
   }
   .franchise-info-grid {
+    grid-template-columns: 1fr;
+  }
+  .e-n-tabs-heading {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .e-n-tab-title {
+    flex: 0 0 auto;
+  }
+  .fr-detail-tab-cards {
     grid-template-columns: 1fr;
   }
   .fr-claim-sticky {
@@ -1117,7 +1218,7 @@ function initCompareButtons() {
     floating.href = "/bandingkan";
     floating.className = "fr-compare-floating";
     floating.setAttribute("data-compare-floating", "");
-    floating.innerHTML = '<i class="fas fa-scale-balanced" aria-hidden="true"></i><span data-compare-count>Bandingkan</span>';
+    floating.innerHTML = '<i class="fas fa-balance-scale" aria-hidden="true"></i><span data-compare-count>Bandingkan</span>';
     document.body.appendChild(floating);
   }
   function getSelected() {

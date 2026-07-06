@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
-import { generateDetailInfoPanel, generateDetailQuickFacts } from "../src/lib/franchise-detail-summary";
+import { generateDetailQuickFacts } from "../src/lib/franchise-detail-summary";
+import { generateDetailTabEntries, renderDetailTabsShell } from "../src/lib/franchise-detail-tabs";
+import { generatePremiumLeadPanel } from "../src/lib/franchise-premium-detail";
 import { injectDetailAssets } from "../src/lib/franchise-static-assets";
 import type { D1FranchiseRow } from "../src/lib/shared-schemas";
 
@@ -68,11 +70,11 @@ export function renderDetailPage(row: D1FranchiseRow, template: string): string 
     "{TITLE_ACTIONS}": "",
     "{INFO_SECTION_ACTIONS}": "",
     "{DETAIL_QUICK_FACTS}": generateDetailQuickFacts(row, tier),
-    "{DETAIL_INFO_PANEL}": generateDetailInfoPanel(row, logoUrl, category, minimumModal),
+    "{DETAIL_INFO_PANEL}": "",
     "{JSON_LD}": generateJsonLd(row, description, logoUrl),
     "{BREADCRUMBS}": generateBreadcrumbs(row),
     "{CLAIM_STICKY_BAR}": isUnclaimed ? generateStickyBar(row) : "",
-    "{DYNAMIC_TABS_CONTENT}": generateTabs(row, description, isUnclaimed),
+    "{DYNAMIC_TABS_CONTENT}": generateTabs(row, description, isUnclaimed, { logoUrl, category, minimumModal }),
   };
 
   let html = template.replace("<!-- DYNAMIC_DISCLAIMER_BOX -->", isUnclaimed ? generateDisclaimer(row) : "");
@@ -215,33 +217,20 @@ function generateDisclaimer(row: D1FranchiseRow) {
                 </div>`;
 }
 
-function generateTabs(row: D1FranchiseRow, description: string, isUnclaimed: boolean) {
+function generateTabs(
+  row: D1FranchiseRow,
+  description: string,
+  isUnclaimed: boolean,
+  options: { logoUrl: string; category: string; minimumModal: string },
+) {
   const contact = isUnclaimed
     ? "<p>Kontak publik belum tersedia.</p>"
     : generateContactBlock(row);
-  const support = normalizeText(row.support_system);
+  const tabEntries = generateDetailTabEntries(row, { ...options, description, contactHtml: contact });
 
   return `
-            <div class="e-n-tabs" data-widget-number="26009074">
-                <div class="e-n-tabs-heading" role="tablist">
-                    <button class="e-n-tab-title" aria-selected="true" data-tab-index="1" role="tab">Profil</button>
-                    <button class="e-n-tab-title" aria-selected="false" data-tab-index="2" role="tab">Kontak</button>
-                    ${support ? '<button class="e-n-tab-title" aria-selected="false" data-tab-index="3" role="tab">Support</button>' : ""}
-                </div>
-                <div class="e-n-tabs-content">
-                    <div class="e-n-tab-content e-active" data-tab-index="1">
-                        <div class="elementor-widget-container">${paragraphs(description)}</div>
-                    </div>
-                    <div class="e-n-tab-content" data-tab-index="2">
-                        <div class="elementor-widget-container">${contact}</div>
-                    </div>
-                    ${
-                      support
-                        ? `<div class="e-n-tab-content" data-tab-index="3"><div class="elementor-widget-container">${paragraphs(support)}</div></div>`
-                        : ""
-                    }
-                </div>
-            </div>`;
+            ${generatePremiumLeadPanel(row)}
+            ${renderDetailTabsShell(tabEntries)}`;
 }
 
 function generateContactBlock(row: D1FranchiseRow) {
@@ -293,13 +282,6 @@ function initials(label: string) {
   const first = words[0]?.[0] || "F";
   const second = words.find((word) => word.length > 2 && word !== words[0])?.[0] || words[1]?.[0] || "I";
   return `${first}${second}`.toUpperCase();
-}
-
-function paragraphs(text: string) {
-  return normalizeText(text)
-    .split(/\n{2,}/)
-    .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
-    .join("");
 }
 
 function truncate(text: string, maxLength: number) {

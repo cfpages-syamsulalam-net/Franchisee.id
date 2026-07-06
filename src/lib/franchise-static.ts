@@ -6,9 +6,10 @@ import { canonicalCategoryHref, categorySlug, getCategoryRouteEntries, getCatego
 import { cityIndexCopy, cityLandingCopy, getCityRouteEntries, getCitySummaries, type CityRouteEntry } from "./franchise-city";
 import { generateContactBlock } from "./franchise-contact";
 import { countryDisplay, normalizeCountryName } from "./country-metadata";
-import { generateDetailInfoPanel, generateDetailQuickFacts } from "./franchise-detail-summary";
+import { generateDetailQuickFacts } from "./franchise-detail-summary";
+import { generateDetailTabEntries, renderDetailTabsShell } from "./franchise-detail-tabs";
 import { generateCssPlaceholder, injectDetailAssets, injectDirectoryAssets } from "./franchise-static-assets";
-import { generatePremiumLeadPanel, generatePremiumTabs } from "./franchise-premium-detail";
+import { generatePremiumLeadPanel } from "./franchise-premium-detail";
 import { compareFranchises, getAlphabeticalRows, getPopularRows, getRecommendedRows, scorePopularity, scoreRecommendation } from "./franchise-ranking";
 import {
   applyCanonicalLegacyLinks,
@@ -22,7 +23,6 @@ import {
   normalizeGeneratedHtml,
   normalizeText,
   normalizeUrl,
-  paragraphs,
   slugify,
   truncate,
 } from "./franchise-text";
@@ -228,11 +228,11 @@ export function renderDetailPage(row: FranchiseStaticRow) {
     "{TITLE_ACTIONS}": "",
     "{INFO_SECTION_ACTIONS}": generateDetailTitleActions(row),
     "{DETAIL_QUICK_FACTS}": generateDetailQuickFacts(row, tier),
-    "{DETAIL_INFO_PANEL}": generateDetailInfoPanel(row, logoUrl, category, minimumModal),
+    "{DETAIL_INFO_PANEL}": "",
     "{JSON_LD}": generateJsonLd(row, description, logoUrl, ogImage),
     "{BREADCRUMBS}": generateBreadcrumbs(row),
     "{CLAIM_STICKY_BAR}": isUnclaimed ? generateStickyBar(row) : "",
-    "{DYNAMIC_TABS_CONTENT}": generateTabs(row, description, isUnclaimed),
+    "{DYNAMIC_TABS_CONTENT}": generateTabs(row, description, isUnclaimed, { logoUrl, category, minimumModal }),
   };
 
   let html = template.replace("<!-- DYNAMIC_DISCLAIMER_BOX -->", isUnclaimed ? generateDisclaimer(row) : "");
@@ -306,7 +306,7 @@ function generateCompareButton(row: FranchiseStaticRow, variant: "card" | "detai
   return `
     <span class="fr-compare-wrap fr-compare-wrap--${escapeAttr(variant)}">
       <button class="${className}" type="button" data-compare-franchise="${escapeAttr(row.id)}" data-compare-brand="${escapeAttr(brandName)}" aria-label="Bandingkan ${escapeAttr(brandName)}" data-fr-tooltip="Tambah ke perbandingan">
-        <i class="fas fa-scale-balanced" aria-hidden="true"></i><span>Bandingkan</span>
+        <i class="fas fa-balance-scale" aria-hidden="true"></i><span>Bandingkan</span>
       </button>
     </span>`;
 }
@@ -660,52 +660,18 @@ function generateDisclaimer(row: FranchiseStaticRow) {
                 </div>`;
 }
 
-function generateTabs(row: FranchiseStaticRow, description: string, isUnclaimed: boolean) {
+function generateTabs(
+  row: FranchiseStaticRow,
+  description: string,
+  isUnclaimed: boolean,
+  options: { logoUrl: string; category: string; minimumModal: string },
+) {
   const contact = generateContactBlock(row, isUnclaimed);
-  const support = normalizeText(row.support_system);
-  const tabEntries = [
-    {
-      label: "Profil",
-      icon: "fa-store",
-      content: `<div class="elementor-widget-container">${paragraphs(description)}</div>`,
-    },
-    {
-      label: "Kontak",
-      icon: "fa-address-book",
-      content: `<div class="elementor-widget-container">${contact}</div>`,
-    },
-    ...(support
-      ? [
-          {
-            label: "Support",
-            icon: "fa-handshake-angle",
-            content: `<div class="elementor-widget-container">${paragraphs(support)}</div>`,
-          },
-        ]
-      : []),
-    ...generatePremiumTabs(row),
-  ];
+  const tabEntries = generateDetailTabEntries(row, { ...options, description, contactHtml: contact });
 
   return `
             ${generatePremiumLeadPanel(row)}
-            <div class="e-n-tabs" data-widget-number="26009074">
-                <div class="e-n-tabs-heading" role="tablist">
-                    ${tabEntries
-                      .map(
-                        (entry, index) =>
-                          `<button class="e-n-tab-title" aria-selected="${index === 0 ? "true" : "false"}" data-tab-index="${index + 1}" role="tab"><i class="fas ${escapeAttr(entry.icon)}" aria-hidden="true"></i> ${escapeHtml(entry.label)}</button>`,
-                      )
-                      .join("")}
-                </div>
-                <div class="e-n-tabs-content">
-                    ${tabEntries
-                      .map(
-                        (entry, index) =>
-                          `<div class="e-n-tab-content ${index === 0 ? "e-active" : ""}" data-tab-index="${index + 1}">${entry.content}</div>`,
-                      )
-                      .join("")}
-                </div>
-            </div>
+            ${renderDetailTabsShell(tabEntries)}
             ${generateFranchisorDetailCta()}`;
 }
 

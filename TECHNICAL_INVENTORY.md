@@ -338,7 +338,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `scripts/d1-page-renderer.ts`
 *Pure renderer/helper module for D1-backed public page generation.*
 - `buildListingHtml(rows, template)`: Renders `/peluang-usaha/index.html` cards and keeps directory CTAs on the neutral `Info Franchise` label.
-- `renderDetailPage(row, template)`: Inserts D1 franchise data into `templates/detail-franchise-tpl.html`, renders JSON-LD/breadcrumb/sticky/disclaimer/tab/contact markup, uses `src/lib/franchise-detail-summary.ts` for complementary hero facts plus the enriched logo/social/fact panel, reuses generated detail asset injection from `src/lib/franchise-static-assets.ts`, and marks output with `d1-generated:franchisee.id`.
+- `renderDetailPage(row, template)`: Inserts D1 franchise data into `templates/detail-franchise-tpl.html`, renders JSON-LD/breadcrumb/sticky/disclaimer/contact markup, uses `src/lib/franchise-detail-summary.ts` for complementary quick facts, uses `src/lib/franchise-detail-tabs.ts` for the connected Profil/Detail/Investasi/Support/Brosur/Kontak tab shell, reuses generated detail asset injection from `src/lib/franchise-static-assets.ts`, and marks output with `d1-generated:franchisee.id`.
 - `buildUnclaimedItems(rows)`: Creates sanitized unclaimed claim-search JSON items from published rows.
 - `compareFranchises()`, `sha256()`, and `stableJson()`: Keep sorting and manifest hashing outside the D1/filerunner facade.
 - HTML cleanup and legacy link canonicalization helpers keep generated bridge output compatible with canonical `/peluang-usaha` URLs.
@@ -440,17 +440,23 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, category filtering, a benefit-led franchisor CTA, and internal links to modal/category/city/tools pages.
 - Directory cards link to franchise information pages with a neutral `Info Franchise` CTA; unclaimed-specific claim CTAs remain on detail pages.
 - `renderCategoryIndexPage(rows)`: Legacy helper that renders category cards, but canonical category browsing is now `/peluang-usaha?view=kategori` or `/peluang-usaha?kategori=[slug]`.
-- `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including complementary hero facts, information-section save/compare actions, an enriched logo/social/fact panel, non-Indonesia brand-origin/target-market facts with flag labels from `src/lib/country-metadata.ts`, dynamic Premium Galeri/Proposal/FAQ tabs when the row has premium/media/proposal data, and a post-tabs franchisor CTA for free brand creation plus Premium education.
+- `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including complementary quick facts, information-section save/compare actions, a promoted H1 detail heading, non-Indonesia brand-origin/target-market facts with flag labels from `src/lib/country-metadata.ts`, connected buyer-intent tabs from `src/lib/franchise-detail-tabs.ts`, dynamic Premium Galeri/Brosur/FAQ entries when the row has premium/media/proposal data, and a post-tabs franchisor CTA for free brand creation plus Premium education.
 - `renderCityIndexPage(rows)` / `renderCityLandingPage(entry, rows)`: Render static city discovery pages from structured D1 location rows with text inference fallback.
 - `applySiteBranding(html)`: Normalizes legacy template public brand text from Franchise.id to Franchisee.id, updates logo alt text, and rewrites old support mailbox references to `email@franchisee.id`.
-- Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`; detail quick facts and the information summary panel are delegated to `src/lib/franchise-detail-summary.ts`; Premium detail CTA/tab rendering is delegated to `src/lib/franchise-premium-detail.ts`; contact parsing/rendering is delegated to `src/lib/franchise-contact.ts`; directory ranking is delegated to `src/lib/franchise-ranking.ts`; category route helpers are delegated to `src/lib/franchise-category.ts`; city route helpers are delegated to `src/lib/franchise-city.ts` and `src/lib/franchise-location-normalization.ts`.
-- Remaining local helper functions focus on template composition: JSON-LD serialization, investment summary rendering, dynamic tab assembly, owner CTAs, cards, breadcrumbs, disclaimers, sticky claim CTA, listing status badges/tooltips, card fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
+- Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`; detail quick facts and the profile summary panel are delegated to `src/lib/franchise-detail-summary.ts`; connected detail tab composition is delegated to `src/lib/franchise-detail-tabs.ts`; Premium detail CTA/media/Brosur/FAQ rendering is delegated to `src/lib/franchise-premium-detail.ts`; contact parsing/rendering is delegated to `src/lib/franchise-contact.ts`; directory ranking is delegated to `src/lib/franchise-ranking.ts`; category route helpers are delegated to `src/lib/franchise-category.ts`; city route helpers are delegated to `src/lib/franchise-city.ts` and `src/lib/franchise-location-normalization.ts`.
+- Remaining local helper functions focus on template composition: JSON-LD serialization, owner CTAs, cards, breadcrumbs, disclaimers, sticky claim CTA, listing status badges/tooltips, card fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
 
 ### File: `src/lib/franchise-detail-summary.ts`
 *Shared generated franchise detail summary renderer.*
-- `generateDetailQuickFacts(row, tier)`: Returns only complementary hero chips such as BEP, non-Indonesia origin/target, or verified/premium status so the hero does not repeat the existing category/meta row.
-- `generateDetailInfoPanel(row, logoUrl, category, minimumModal)`: Builds the `Informasi Franchise` summary panel with a compact logo card, official social links when Website/Instagram/Facebook/TikTok/YouTube/LinkedIn URLs exist, category link, shared-tooltip explanations, actionable `Tanya Admin` / `Hubungi Admin` contact-tab openers, and icon-enriched fact cards from D1/form fields such as company, fees, royalty, founding year, outlets/area, BEP, origin/target, outlet type, location requirement, contract duration, omzet, net profit, and support.
-- Shared by both `src/lib/franchise-static.ts` and `scripts/d1-page-renderer.ts` so Astro output and the committed D1 bridge stay consistent.
+- `generateDetailQuickFacts(row, tier)`: Returns only complementary chips such as BEP, non-Indonesia origin/target, or verified/premium status so the visible heading does not repeat the existing category/meta row.
+- `generateDetailInfoPanel(row, logoUrl, category, minimumModal)`: Builds the `Profil` tab summary panel with a compact logo card, official social links when Website/Instagram/Facebook/TikTok/YouTube/LinkedIn URLs exist, category link, shared-tooltip explanations, actionable `Tanya Admin` / `Hubungi Admin` contact-tab openers, and icon-enriched fact cards from D1/form fields such as company, fees, royalty, founding year, outlets/area, BEP, origin/target, outlet type, location requirement, contract duration, omzet, net profit, and support.
+- Shared through `src/lib/franchise-detail-tabs.ts` by both `src/lib/franchise-static.ts` and `scripts/d1-page-renderer.ts` so Astro output and the committed D1 bridge stay consistent.
+
+### File: `src/lib/franchise-detail-tabs.ts`
+*Shared connected tab composer for generated franchise detail pages.*
+- `generateDetailTabEntries(row, options)`: Returns buyer-intent tabs from existing D1 data: `Profil`, `Detail`, `Investasi`, optional `Support`, optional Premium/media/Brosur/FAQ entries, and `Kontak`.
+- `renderDetailTabsShell(tabEntries)`: Renders the connected full-width tab heading/content shell used by both Astro detail generation and the D1 bridge.
+- `generateInvestmentTab(row, minimumModal)`: Internal helper that turns modal, fee, royalty, BEP, omzet, and net-profit data into compact icon cards and makes unknown values open the contact tab.
 
 ### File: `src/lib/franchise-contact.ts`
 *Detail contact renderer for D1-backed franchise static pages.*
@@ -503,7 +509,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Premium detail-page renderer helper for D1-backed franchise static pages.*
 - `isPremiumListing(row)`: Detects listing premium state from verification/status values.
 - `generatePremiumLeadPanel(row)`: Renders the prominent Premium CTA panel with WhatsApp, inline inquiry, and proposal shortcut when proposal assets exist.
-- `generatePremiumTabs(row)`: Returns dynamic Galeri, Proposal, and FAQ tab entries for `src/lib/franchise-static.ts`.
+- `generatePremiumTabs(row)`: Returns dynamic Galeri, Brosur, and FAQ tab entries for `src/lib/franchise-detail-tabs.ts`.
 - `extractUrls(value)`: Parses proposal/gallery values from JSON arrays, raw URL lists, HTML `src` attributes, legacy Blogspot/Blogger text, and comma/newline-separated values.
 - Proposal tab output stores image URLs for the detail asset script to generate a browser-downloaded PDF.
 
@@ -516,9 +522,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/lib/franchise-detail-assets.ts`
 *Generated detail-page CSS/JS helper for D1-backed Astro pages.*
-- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts, including compact detail spacing, subtler breadcrumbs, information-section icon-only save/compare actions, quick-fact chips, tab-like panel styling, missing-info-to-contact click handling, class-based sticky claim CTA styling, and owner CTA styling below the detail tabs.
-- `downloadProposalPdf(button)` / `buildPdfFromJpegs(pages)`: Browser-side proposal image to PDF flow used only inside the Proposal tab; loads R2 image pages, builds a local PDF Blob in memory, triggers browser download, stores no duplicate PDF in R2, shows inline status, and avoids browser alerts.
-- Owns Premium detail CTA/gallery/proposal/FAQ styling and franchisor owner CTA styling outside the directory asset helper.
+- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts, including hidden legacy hero styling, compact detail spacing, subtler breadcrumbs, information-section icon-only save/compare actions, quick-fact chips, full-width connected tab shell styling, missing-info-to-contact click handling, class-based sticky claim CTA styling, and owner CTA styling below the detail tabs.
+- `downloadProposalPdf(button)` / `buildPdfFromJpegs(pages)`: Browser-side proposal image to PDF flow used only inside the Brosur tab; loads R2 image pages, builds a local PDF Blob in memory, triggers browser download, stores no duplicate PDF in R2, shows inline status, and avoids browser alerts.
+- Owns Premium detail CTA/gallery/brochure/FAQ styling and franchisor owner CTA styling outside the directory asset helper.
 
 ### File: `js/product-events.js`
 *Public privacy-safe listing interaction tracker.*
