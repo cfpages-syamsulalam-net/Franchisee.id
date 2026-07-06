@@ -411,7 +411,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/pages/profil/index.astro`
 *Protected profile page shell.*
 - Static Astro route at `/profil/` with `noindex,nofollow`.
-- Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, Outfit/DM Sans fonts, `css/profile.css`, `css/profile-premium.css`, `css/profile-analytics.css`, `css/profile-franchisor.css`, profile renderer modules, `js/profile-page.js`, and the high-intent Premium promo ribbon script.
+- Loads Franchisee.id favicon/apple-touch icon, the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, Outfit/DM Sans fonts, `css/profile.css`, `css/profile-premium.css`, `css/profile-analytics.css`, `css/profile-franchisor.css`, profile renderer modules, `js/profile-page.js`, and the high-intent Premium promo ribbon script.
 - Anonymous protection is client-side; all profile data and writes are protected again by `/profile-data`.
 
 ### File: `src/pages/premium/index.astro`
@@ -449,7 +449,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/franchise-detail-summary.ts`
 *Shared generated franchise detail summary renderer.*
 - `generateDetailQuickFacts(row, tier)`: Returns only complementary hero chips such as BEP, non-Indonesia origin/target, or verified/premium status so the hero does not repeat the existing category/meta row.
-- `generateDetailInfoPanel(row, logoUrl, category, minimumModal)`: Builds the `Informasi Franchise` summary panel with a compact logo card, official social links when Website/Instagram/Facebook/TikTok/YouTube/LinkedIn URLs exist, and icon-enriched fact cards from D1/form fields such as company, fees, royalty, founding year, outlets/area, BEP, origin/target, outlet type, location requirement, contract duration, omzet, net profit, and support.
+- `generateDetailInfoPanel(row, logoUrl, category, minimumModal)`: Builds the `Informasi Franchise` summary panel with a compact logo card, official social links when Website/Instagram/Facebook/TikTok/YouTube/LinkedIn URLs exist, category link, shared-tooltip explanations, actionable `Tanya Admin` / `Hubungi Admin` contact-tab openers, and icon-enriched fact cards from D1/form fields such as company, fees, royalty, founding year, outlets/area, BEP, origin/target, outlet type, location requirement, contract duration, omzet, net profit, and support.
 - Shared by both `src/lib/franchise-static.ts` and `scripts/d1-page-renderer.ts` so Astro output and the committed D1 bridge stay consistent.
 
 ### File: `src/lib/franchise-contact.ts`
@@ -516,7 +516,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/lib/franchise-detail-assets.ts`
 *Generated detail-page CSS/JS helper for D1-backed Astro pages.*
-- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts, including compact detail spacing, subtler breadcrumbs, title-row icon-only save/compare actions, quick-fact chips, class-based sticky claim CTA styling, and owner CTA styling below the detail tabs.
+- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts, including compact detail spacing, subtler breadcrumbs, information-section icon-only save/compare actions, quick-fact chips, tab-like panel styling, missing-info-to-contact click handling, class-based sticky claim CTA styling, and owner CTA styling below the detail tabs.
 - `downloadProposalPdf(button)` / `buildPdfFromJpegs(pages)`: Browser-side proposal image to PDF flow used only inside the Proposal tab; loads R2 image pages, builds a local PDF Blob in memory, triggers browser download, stores no duplicate PDF in R2, shows inline status, and avoids browser alerts.
 - Owns Premium detail CTA/gallery/proposal/FAQ styling and franchisor owner CTA styling outside the directory asset helper.
 
@@ -589,7 +589,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Static protected admin/staff dashboard shell.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
-- Loads Outfit/DM Sans fonts, `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, `js/dashboard-operations.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
+- Loads Franchisee.id favicon/apple-touch icon, Outfit/DM Sans fonts, `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, `js/auth-clerk.js`, shared tooltip support, `js/dashboard-utils.js`, `js/dashboard-premium-operations.js`, `js/dashboard-review.js`, `js/dashboard-operations.js`, and `js/dashboard-admin.js`; shows a login-only staff/admin form when no Clerk session exists.
 - Renders the branded dark/yellow dashboard identity, locked/login state, metric cards, icon-led tab navigation, tab panel shells, Premium Operations/payment settings, pending Premium payment review, guided review controls with named form fields, admin Area Listing controls, icon-only action toolbar controls, and debug panel shell. Runtime data rendering and actions are owned by dashboard browser modules; dashboard styling is owned by `css/dashboard.css`.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.

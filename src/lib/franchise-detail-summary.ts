@@ -9,6 +9,7 @@ import {
   normalizeCompanyName,
   normalizeExternalUrl,
   normalizeText,
+  slugify,
   truncate,
 } from "./franchise-text";
 
@@ -37,13 +38,17 @@ export function generateDetailInfoPanel(row: D1FranchiseRow, logoUrl: string, ca
   const fields = [
     detailInfoItem("fa-store", "Nama Franchise", brandName),
     detailInfoItem("fa-coins", "Modal Minimal", minimumModal),
-    detailInfoItem("fa-tags", "Kategori Franchise", category),
+    detailInfoItem("fa-tags", "Kategori Franchise", category, {
+      href: `/peluang-usaha?kategori=${slugify(category)}`,
+      tooltip:
+        "Kelompok usaha brand ini. Klik untuk melihat peluang franchise lain di kategori yang sama.",
+    }),
     detailInfoItem("fa-file-invoice-dollar", "Franchise Fee", formatRupiah(row.fee_license_idr)),
     detailInfoItem("fa-building", "Nama Perusahaan", normalizeCompanyName(row.company_name) || "Hubungi Admin"),
     detailInfoItem("fa-percent", "Biaya Royalti", formatRoyalty(row)),
-    detailInfoItem("fa-calendar-days", "Berdiri Sejak", row.year_established ? String(row.year_established) : "-"),
+    detailInfoItem("fa-calendar-alt", "Berdiri Sejak", row.year_established ? String(row.year_established) : "-"),
     detailInfoItem("fa-bullhorn", "Biaya Advertising", "Tanya Admin"),
-    detailInfoItem("fa-location-dot", "Gerai / Area", normalizeText(row.outlets_location) || normalizeText(row.city_origin) || "-"),
+    detailInfoItem("fa-map-marker-alt", "Gerai / Area", normalizeText(row.outlets_location) || normalizeText(row.city_origin) || "-"),
     detailInfoItem("fa-chart-line", "Estimasi BEP", row.estimated_bep_months ? `${row.estimated_bep_months} bulan` : "Tanya Admin"),
     origin ? detailInfoItem("fa-flag", "Asal Brand", origin) : "",
     target ? detailInfoItem("fa-bullseye", "Target Pasar", target) : "",
@@ -73,11 +78,53 @@ export function generateDetailInfoPanel(row: D1FranchiseRow, logoUrl: string, ca
 														</section>`;
 }
 
-function detailInfoItem(icon: string, label: string, value: string) {
+function detailInfoItem(icon: string, label: string, value: string, options: { href?: string; tooltip?: string } = {}) {
+  const tooltip = options.tooltip || infoTooltip(label);
+  const valueMarkup = renderInfoValue(label, value, options.href);
   return `<article class="franchise-info-item">
 																	<span class="franchise-info-item__icon"><i class="fas ${escapeAttr(icon)}" aria-hidden="true"></i></span>
-																	<span class="franchise-info-item__body"><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></span>
+																	<span class="franchise-info-item__body"><small>${escapeHtml(label)}${tooltip ? ` <span class="franchise-info-help" aria-label="Info ${escapeAttr(label)}" data-fr-tooltip="${escapeAttr(tooltip)}"><i class="fas fa-question-circle" aria-hidden="true"></i></span>` : ""}</small>${valueMarkup}</span>
 																</article>`;
+}
+
+function renderInfoValue(label: string, value: string, href?: string) {
+  const normalized = normalizeText(value);
+  if (href) {
+    return `<a class="franchise-info-value franchise-info-value--link" href="${escapeAttr(href)}"><strong>${escapeHtml(normalized)}</strong></a>`;
+  }
+  if (isContactPlaceholder(normalized)) {
+    return `<button class="franchise-info-value franchise-info-value--contact" type="button" data-open-contact-tab data-fr-tooltip="Buka tab Kontak untuk meminta info ${escapeAttr(label.toLowerCase())}."><strong>${escapeHtml(normalized)}</strong><i class="fas fa-arrow-down" aria-hidden="true"></i></button>`;
+  }
+  return `<strong class="franchise-info-value">${escapeHtml(normalized)}</strong>`;
+}
+
+function isContactPlaceholder(value: string) {
+  const normalized = value.toLowerCase();
+  return normalized === "tanya admin" || normalized === "hubungi admin";
+}
+
+function infoTooltip(label: string) {
+  const tips: Record<string, string> = {
+    "Nama Franchise": "Nama brand atau peluang usaha yang ditawarkan.",
+    "Modal Minimal": "Perkiraan dana awal paling rendah untuk mulai menjadi mitra. Angka ini bisa mencakup paket, peralatan, bahan awal, atau kebutuhan outlet tergantung brand.",
+    "Kategori Franchise": "Jenis usaha brand, misalnya makanan, minuman, pendidikan, laundry, atau jasa. Kategori membantu Anda membandingkan brand sejenis.",
+    "Franchise Fee": "Biaya lisensi awal untuk memakai merek, sistem, panduan operasional, dan hak kemitraan dari franchisor.",
+    "Nama Perusahaan": "Badan usaha atau pengelola resmi di balik brand.",
+    "Biaya Royalti": "Biaya berkala yang biasanya dibayar mitra kepada franchisor. Bisa berupa persentase omzet, persentase profit, nominal tetap, atau tidak ada royalti.",
+    "Berdiri Sejak": "Tahun brand mulai beroperasi. Brand yang lebih lama biasanya punya pengalaman operasional lebih banyak, tetapi tetap perlu dicek kualitas sistemnya.",
+    "Biaya Advertising": "Kontribusi untuk promosi bersama, materi marketing, campaign brand, atau aktivitas pemasaran lain jika diwajibkan.",
+    "Gerai / Area": "Lokasi outlet yang sudah ada, asal brand, atau area ekspansi yang disebut dalam data listing.",
+    "Estimasi BEP": "Perkiraan waktu balik modal. Ini bukan jaminan hasil, karena performa tetap dipengaruhi lokasi, operasional, biaya, dan penjualan.",
+    "Asal Brand": "Negara asal brand. Brand non-Indonesia tetap bisa mencari mitra di Indonesia.",
+    "Target Pasar": "Negara atau wilayah yang menjadi sasaran ekspansi brand.",
+    "Tipe Outlet": "Format operasional yang ditawarkan, misalnya booth, gerobak, ruko, dine-in, cloud kitchen, atau model lain.",
+    "Kriteria Lokasi": "Syarat lokasi yang biasanya dibutuhkan agar outlet berpeluang berjalan baik.",
+    "Durasi Kontrak": "Masa kerja sama lisensi/kemitraan sebelum perlu diperpanjang.",
+    "Estimasi Omzet": "Perkiraan penjualan kotor sebelum dikurangi biaya. Ini berbeda dari laba bersih.",
+    "Estimasi Laba Bersih": "Perkiraan persentase keuntungan setelah biaya utama. Angka ini tetap perlu divalidasi dengan franchisor.",
+    "Support Franchisor": "Bentuk dukungan dari franchisor, misalnya training, SOP, supply bahan, marketing, atau bantuan pembukaan outlet.",
+  };
+  return tips[label] || "";
 }
 
 function generateDetailSocialLinks(row: D1FranchiseRow) {

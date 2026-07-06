@@ -1,6 +1,6 @@
 # Listing Detail UX And Worker Usage Audit
 
-Last updated: 2026-07-06 14:25 (Asia/Jakarta)
+Last updated: 2026-07-06 19:18 (Asia/Jakarta)
 
 ## Verdict
 
@@ -88,6 +88,12 @@ Official references:
 | Sticky claim sentence broke mid-copy | Nested brand name was styled as block text, causing `Klaim brand` / brand / `secara gratis` to split awkwardly | Scoped sticky claim CSS so the first headline remains block but the brand name inside the sentence stays inline |
 | Logo, social links, and franchise facts were still separated vertically | Users had to scroll through a logo and then a plain two-column list before reaching tabs/contact | Added a compact brand card + enriched fact panel under `Informasi Franchise`, using icons and available D1/form fields such as social links, origin/target, outlet type, location requirement, contract duration, omzet, profit, and support |
 | Dummy social buttons remained in the legacy detail body | Placeholder `#` social links reduce trust | Hid the legacy dummy social block and render real social links only when D1/form data has official URLs |
+| Some fact icons did not render in the generated detail page | Newer Font Awesome aliases can fail against the template's older icon bundle | Switched `Berdiri Sejak` and `Gerai / Area` to older compatible icon classes |
+| Unknown values such as `Tanya Admin` were dead text | Buyers who need a missing fee/detail had no obvious next action | Made `Tanya Admin` / `Hubungi Admin` values clickable; they open and scroll to the `Kontak` tab |
+| Detail tabs looked like detached buttons | Users may not understand that clicking a tab swaps the content below | Restyled generated tabs as connected tab headers with an active panel edge |
+| Economic/franchise terms were not self-explanatory | Lay buyers may not know the difference between modal, franchise fee, royalty, advertising fee, BEP, and omzet | Added shared-tooltip explanations to fact labels |
+| Category fact did not help exploration | Category is a useful browse path and should connect to similar opportunities | Linked `Kategori Franchise` to the relevant `/peluang-usaha?kategori=...` page |
+| `/profil` and `/dashboard` browser tabs lacked site favicon consistency | Protected app shells felt less integrated with Franchisee.id | Added Franchisee.id favicon/apple-touch icon links to both Astro pages |
 
 ## Next implementation ideas
 
@@ -102,6 +108,9 @@ Official references:
 | Done | Replace the old logo + plain detail list with an enriched summary panel | Generated detail pages now render a side-by-side brand card and icon-enriched data grid, while hiding the legacy vertical blocks. |
 | Done | Render official social links in the brand summary area | Social icons now use D1/form URLs and only appear when real Website/Instagram/Facebook/TikTok/YouTube/LinkedIn links exist. |
 | Done | Make hero quick facts complementary rather than repetitive | Hero facts no longer repeat modal/category; they only appear for BEP, verified/premium status, or international brand context. |
+| Done | Make missing detail values actionable | `Tanya Admin` and `Hubungi Admin` values now open the Kontak tab instead of behaving like static unknown text. |
+| Done | Add layperson tooltips for franchise facts | Modal, fee, royalty, advertising, BEP, omzet, profit, support, and related labels now use shared instant tooltip hints. |
+| Done | Make detail tabs read visually as tabs | Tab headers now connect to the active panel and look less like independent buttons. |
 
 ## Traffic readiness checklist
 
@@ -118,5 +127,8 @@ Official references:
 - [x] Add dashboard-configured promo view cap that resets per visitor/device/day.
 - [x] Keep listing-detail H1 centered and move secondary actions to the information section.
 - [x] Enrich `Informasi Franchise` with side-by-side brand card, real social links, and icon facts from D1/form fields.
+- [x] Make missing info values open the contact path.
+- [x] Add explanatory tooltips to franchise fact labels.
+- [x] Add Franchisee.id favicons to `/profil` and `/dashboard`.
 - [ ] Review Cloudflare dashboard Function route metrics after deploy using the checklist above.
 - [ ] QA generated detail pages on production after push, especially mobile first screen and sticky claim behavior.

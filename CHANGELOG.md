@@ -4,6 +4,13 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-06 21:09 (Asia/Jakarta)
+### Changed
+- `.context/session-20260706-2109.md`: Added this session snapshot for generated listing-detail tooltip/tab polish and protected-shell favicon consistency.
+- `src/lib/franchise-detail-summary.ts` and `src/lib/franchise-detail-assets.ts`: Switched generated detail fact icons to older compatible Font Awesome classes for founding year and outlet/area, added layperson tooltips for franchise economic terms, linked category facts to category browsing, made `Tanya Admin` / `Hubungi Admin` values open the Kontak tab, and restyled the tab shell to look like connected tabs instead of detached buttons.
+- `src/pages/profil/index.astro` and `src/pages/dashboard/index.astro`: Added Franchisee.id favicon and apple-touch icon links so protected app shells match the public site browser tab branding.
+- `docs/ux/LISTING_DETAIL_UX_AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented the detail fact tooltip/action behavior, tab styling, compatible icons, category link, and protected-shell favicon updates.
+
 ## 2026-07-06 18:53 (Asia/Jakarta)
 ### Added
 - `.context/session-20260706-1853.md`: Added this session snapshot for the follow-up generated listing-detail UX pass.

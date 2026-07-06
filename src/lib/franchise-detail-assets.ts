@@ -318,6 +318,48 @@ export function injectDetailAssets(html: string) {
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
+.franchise-info-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  color: #9a7b00;
+  cursor: help;
+}
+.franchise-info-value--link,
+.franchise-info-value--contact {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111111 !important;
+  font: inherit;
+  text-align: left;
+  text-decoration: none !important;
+  cursor: pointer;
+}
+.franchise-info-value--link strong,
+.franchise-info-value--contact strong {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-decoration-color: rgba(240, 202, 0, 0.75);
+  text-underline-offset: 3px;
+}
+.franchise-info-value--link:hover,
+.franchise-info-value--link:focus,
+.franchise-info-value--contact:hover,
+.franchise-info-value--contact:focus {
+  color: #8a6500 !important;
+}
+.franchise-info-value--contact i {
+  color: #8a6500;
+  font-size: 12px;
+}
 .fr-claim-sticky {
   position: fixed;
   left: 0;
@@ -423,26 +465,45 @@ export function injectDetailAssets(html: string) {
   min-height: 138px;
   aspect-ratio: 300 / 138;
 }
+.e-n-tabs {
+  margin-top: 18px;
+}
 .e-n-tabs-heading {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 0;
+  align-items: flex-end;
+  margin-bottom: -1px;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.14);
 }
 .e-n-tab-title {
+  position: relative;
   cursor: pointer;
-  border: 1px solid #dddddd !important;
-  background: #f5f5f5 !important;
-  color: #1f1f1f !important;
-  padding: 8px 12px !important;
-  border-radius: 4px !important;
-  font-weight: 700 !important;
+  border: 1px solid transparent !important;
+  border-bottom: 0 !important;
+  background: transparent !important;
+  color: #6b6256 !important;
+  padding: 11px 16px 12px !important;
+  border-radius: 12px 12px 0 0 !important;
+  font-weight: 900 !important;
   text-transform: none !important;
 }
-.e-n-tab-title[aria-selected="true"] {
-  border-color: #f0ca00 !important;
-  background: #f0ca00 !important;
+.e-n-tab-title:hover,
+.e-n-tab-title:focus {
   color: #111111 !important;
+  background: #fff7cf !important;
+}
+.e-n-tab-title[aria-selected="true"] {
+  z-index: 2;
+  border-color: rgba(17, 17, 17, 0.14) !important;
+  background: #ffffff !important;
+  color: #111111 !important;
+  box-shadow: 0 -8px 18px rgba(17, 17, 17, 0.05);
+}
+.e-n-tab-content {
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #ffffff;
+  padding: clamp(14px, 2vw, 22px);
 }
 .e-n-tab-content:not(.e-active) {
   display: none !important;
@@ -906,6 +967,21 @@ document.querySelectorAll(".e-n-tabs").forEach(function (tabs) {
   setFranchiseDetailTab(tabs, selected ? selected.getAttribute("data-tab-index") || "1" : "1");
 });
 initCompareButtons();
+document.addEventListener("click", function (event) {
+  var opener = event.target && event.target.closest ? event.target.closest("[data-open-contact-tab]") : null;
+  if (!opener) return;
+  event.preventDefault();
+  var tabs = document.querySelector(".e-n-tabs");
+  if (!tabs) return;
+  var buttons = Array.prototype.slice.call(tabs.querySelectorAll(".e-n-tab-title"));
+  var contact = buttons.find(function (button) {
+    return (button.textContent || "").toLowerCase().indexOf("kontak") !== -1;
+  });
+  if (!contact) return;
+  setFranchiseDetailTab(tabs, contact.getAttribute("data-tab-index") || "2");
+  tabs.scrollIntoView({ behavior: "smooth", block: "start" });
+  window.setTimeout(function () { contact.focus(); }, 250);
+});
 document.addEventListener("click", function (event) {
   var button = event.target && event.target.closest ? event.target.closest("[data-proposal-pdf]") : null;
   if (!button) return;
