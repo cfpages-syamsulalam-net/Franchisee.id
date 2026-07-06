@@ -154,7 +154,7 @@ async function build() {
                 disclaimer = `
                 <div class="disclaimer-box">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Halaman Belum Diklaim:</strong> Informasi ini dikumpulkan dari sumber publik. Jika Anda pemilik brand ini, silakan <a href="/daftar?claim=${slug}">klaim halaman ini</a> untuk memperbarui data.
+                    <strong>Halaman Belum Diklaim:</strong> Informasi ini dikumpulkan dari sumber publik dan belum dikelola langsung oleh pemilik brand.
                 </div>`;
             }
             html = html.replace('<!-- DYNAMIC_DISCLAIMER_BOX -->', disclaimer);

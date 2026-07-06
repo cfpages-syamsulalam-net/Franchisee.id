@@ -5,7 +5,7 @@ export async function onRequestGet({ env }) {
     const promo = await loadPublicPremiumPromo(env.franchise_db);
     return json(promo, {
       headers: {
-        "Cache-Control": "public, max-age=60",
+        "Cache-Control": "public, max-age=900, stale-while-revalidate=3600",
       },
     });
   } catch (_error) {

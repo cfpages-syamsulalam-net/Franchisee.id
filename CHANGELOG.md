@@ -4,6 +4,23 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-06 10:55 (Asia/Jakarta)
+### Added
+- `.context/session-20260706-1055.md`: Added this session snapshot for Cloudflare Pages Function usage throttling and listing detail UX cleanup.
+- `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: Added the listing-detail UX and Worker usage audit with Cloudflare official references, likely public Function request drivers, implemented fixes, and remaining traffic-readiness checklist.
+
+### Changed
+- `js/product-events.js`: Added sampling, dedupe windows, and a per-browser daily public-event budget so listing detail views/contact clicks do not invoke `/product-event` on every page load.
+- `js/site-promo-bar.js`: Added browser-side promo response caching and 24-hour promo event dedupe before calling `/premium-promo` and `/premium-event`.
+- `js/premium-page.js`: Added Premium page-view and CTA-click dedupe before calling `/premium-event`.
+- `functions/premium-promo.js`: Increased public promo cache headers to 15 minutes with stale revalidation.
+- `src/lib/franchise-detail-assets.ts`: Tightened generated detail-page spacing, made breadcrumbs subtler, capped detail image height, and converted detail save/compare controls to compact icon buttons with shared tooltip text.
+- `src/lib/franchise-contact.ts`, `src/lib/franchise-static.ts`, `scripts/d1-page-renderer.ts`, and `js/build-details.js`: Removed duplicate inline claim CTAs from generated detail disclaimer/contact copy so unclaimed listings use the floating claim bar as the single claim action.
+- `templates/detail-franchise-tpl.html`: Removed the requested Maxim GIF block from the generated detail template.
+- `peluang-usaha/*.html`, `json/d1-generated-pages-manifest.json`: Regenerated D1-backed flat listing detail pages after template, disclaimer, and compact detail UX updates.
+- `peluang-usaha/english-study-centre/index.html`, `peluang-usaha/kfc/index.html`, and `peluang-usaha/pisang-molen-m-a/index.html`: Removed remaining legacy nested references to the requested Maxim GIF.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/README.md`, and `SUGGESTION.md`: Documented the public Function throttling, listing detail UX audit, single-claim-CTA behavior, and added the Cloudflare usage review follow-up suggestion.
+
 ## 2026-07-05 23:55 (Asia/Jakarta)
 ### Added
 - `.context/session-20260705-2355.md`: Added this session snapshot for suggestion 60 country metadata centralization.

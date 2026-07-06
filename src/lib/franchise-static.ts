@@ -643,7 +643,7 @@ function generateDisclaimer(row: FranchiseStaticRow) {
   return `
                 <div class="disclaimer-box">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Halaman Belum Diklaim:</strong> Informasi ini dikumpulkan dari sumber publik. Jika Anda pemilik brand ini, silakan <a href="/daftar?claim=${escapeAttr(row.slug)}">klaim halaman ini</a> untuk memperbarui data.
+                    <strong>Halaman Belum Diklaim:</strong> Informasi ini dikumpulkan dari sumber publik dan belum dikelola langsung oleh pemilik brand.
                 </div>`;
 }
 

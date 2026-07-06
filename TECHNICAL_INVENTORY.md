@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-05 23:55 (Asia/Jakarta)
+Last updated: 2026-07-06 10:39 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -448,10 +448,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/lib/franchise-contact.ts`
 *Detail contact renderer for D1-backed franchise static pages.*
-- `generateContactBlock(row, isUnclaimed)`: Renders D1 contact/social links into the detail page contact tab, including imported public phone/address data for unclaimed listings with a claim CTA.
+- `generateContactBlock(row, isUnclaimed)`: Renders D1 contact/social links into the detail page contact tab, including imported public phone/address data for unclaimed listings without adding duplicate claim CTAs; unclaimed detail pages use the floating claim bar as the single claim action.
 - `parsePhoneContacts(value, defaultLabel, source)`: Splits messy imported phone text into contact rows, including Indonesian mobile pairs, supported SEA/nearby Asia mobile numbers matched through `src/lib/country-metadata.ts`, Indonesian landlines, and call-center short numbers while preserving nearby labels such as Marketing, WhatsApp, Kantor, Office, Call Center, and Owner.
 - `findPhoneStarts(text)`, `isGroupedNonMobileStart(text, start)`, `matchPhoneCandidate(value)`, `inferPhoneLabel(text, start, end, fallback)`, `classifyPhone(parsed, label, source)`, `normalizePhoneDigits(value)`, `normalizeInternationalMobile(digits, countryCode, nationalPattern)`, `formatPhoneDisplay(parsed, type)`, and `formatInternationalPhone(countryCode, localDigits)`: Infer safe phone starts, avoid treating middle number groups as new contacts, classify mobile/international-mobile/landline/call-center numbers, and format public display values.
-- `generatePhoneContactRow(contact, row, isUnclaimed)`: Renders parsed phone contacts as styled `tel:` rows and adds a WhatsApp claim-notification link for unclaimed mobile/WhatsApp-capable numbers.
+- `generatePhoneContactRow(contact)`: Renders parsed phone contacts as styled `tel:` rows without inserting extra claim-notification links.
 
 ### File: `src/lib/franchise-ranking.ts`
 *Deterministic directory ranking helper.*
@@ -510,13 +510,15 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/lib/franchise-detail-assets.ts`
 *Generated detail-page CSS/JS helper for D1-backed Astro pages.*
-- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts, including owner CTA styling below the detail tabs.
+- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts, including compact detail spacing, subtler breadcrumbs, icon-only detail save/compare actions, and owner CTA styling below the detail tabs.
 - `downloadProposalPdf(button)` / `buildPdfFromJpegs(pages)`: Browser-side proposal image to PDF flow used only inside the Proposal tab; loads R2 image pages, builds a local PDF Blob in memory, triggers browser download, stores no duplicate PDF in R2, shows inline status, and avoids browser alerts.
 - Owns Premium detail CTA/gallery/proposal/FAQ styling and franchisor owner CTA styling outside the directory asset helper.
 
 ### File: `js/product-events.js`
 *Public privacy-safe listing interaction tracker.*
 - Records detail page views and contact clicks through `/product-event`.
+- `listing_view` events are sampled at 3%, deduped per listing for 6 hours, and guarded by a per-browser daily public-event budget to reduce Pages Function request pressure.
+- Contact-click events are deduped per listing/channel for 1 hour.
 - Exposes `window.FranchiseProductEvents.record()` so `js/opportunity-save.js` can record successful save/remove actions.
 
 ### File: `js/profile-page.js`
@@ -741,7 +743,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/premium-promo.js`
 *Public Premium promo endpoint.*
-- `onRequestGet()`: Reads active promo settings through `_premium-ops.js`, returns safe JSON for the public top ribbon, and caches for 60 seconds.
+- `onRequestGet()`: Reads active promo settings through `_premium-ops.js`, returns safe JSON for the public top ribbon, and sends public cache headers for 15 minutes plus stale revalidation.
 
 ### File: `functions/premium-email-worker.js`
 *Protected Premium email worker route.*
@@ -770,8 +772,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/site-promo-bar.js`
 *Shared public Premium promo bar.*
-- Fetches `/premium-promo` and injects a top ribbon only when an admin-managed campaign is active.
-- Records ribbon impressions and CTA clicks through `/premium-event` with safe campaign metadata.
+- Fetches `/premium-promo` with a 30-minute browser cache and injects a top ribbon only when an admin-managed campaign is active.
+- Records ribbon impressions and CTA clicks through `/premium-event` with safe campaign metadata, deduped per promo label for 24 hours.
 - Used by generated listing/detail pages, `/premium`, `/bandingkan`, and `/alat-franchise`.
 
 ### File: `functions/profile-upload.js`

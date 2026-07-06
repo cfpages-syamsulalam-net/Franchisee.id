@@ -200,13 +200,13 @@ function generateDisclaimer(row: D1FranchiseRow) {
   return `
                 <div class="disclaimer-box">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>Halaman Belum Diklaim:</strong> Informasi ini dikumpulkan dari sumber publik. Jika Anda pemilik brand ini, silakan <a href="/daftar?claim=${escapeAttr(row.slug)}">klaim halaman ini</a> untuk memperbarui data.
+                    <strong>Halaman Belum Diklaim:</strong> Informasi ini dikumpulkan dari sumber publik dan belum dikelola langsung oleh pemilik brand.
                 </div>`;
 }
 
 function generateTabs(row: D1FranchiseRow, description: string, isUnclaimed: boolean) {
   const contact = isUnclaimed
-    ? "<p>Kontak belum tersedia. Silakan gunakan tombol Klaim untuk memverifikasi kepemilikan.</p>"
+    ? "<p>Kontak publik belum tersedia.</p>"
     : generateContactBlock(row);
   const support = normalizeText(row.support_system);
 

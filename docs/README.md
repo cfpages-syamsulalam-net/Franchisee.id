@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-07-05 23:55 (Asia/Jakarta)
+Last updated: 2026-07-06 10:39 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -15,6 +15,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: low-friction defaults and public-display rules for Indonesian vs overseas franchisor origin/target-market metadata.
 - `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
+- `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: listing detail page compactness, claim CTA, and Cloudflare Pages Function request-limit tracker.
 - `FORM_SCHEMA.md`: canonical form field inventory.
 - `FORM_PRESERVATION_MANDATE.md`: binding rule set for preserving existing form fields and payloads.
 - `TECHNICAL_INVENTORY.md`: function/module inventory for runtime and migration code.
@@ -46,6 +47,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 
 ## UX And Conversion
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: readiness verdict, code-path evidence, visual critique, and implementation tracker for the homepage, free member, `/profil`, and Premium funnel.
+- `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: official Cloudflare limit references, likely public Function request drivers, implemented throttling, and listing detail UX improvement tracker.
 
 ## Compatibility Pointer Files
 `GEMINI.md`, `KNOWLEDGE.md`, `QWEN.md`, and `PRD.md` may remain as compatibility entry points for other tools or older workflows. Do not let them become independent sources of truth. They should point back to the canonical files above when project direction changes.

@@ -35,8 +35,8 @@ export function generateContactBlock(row: FranchiseStaticRow, isUnclaimed = fals
 
   const lead = isUnclaimed
     ? hasPublicContact
-      ? "Data kontak publik di bawah ini belum diklaim pemilik brand. Klaim listing untuk memperbarui atau mengoreksi data."
-      : "Kontak publik belum tersedia. Pemilik brand dapat klaim listing untuk melengkapi data resmi."
+      ? "Data kontak publik di bawah ini belum dikelola langsung oleh pemilik brand."
+      : "Kontak publik belum tersedia."
     : hasPublicContact
       ? "Gunakan kontak resmi brand untuk informasi kemitraan lebih lanjut."
       : "Silakan hubungi tim acquisition untuk informasi lebih lanjut.";
@@ -44,7 +44,7 @@ export function generateContactBlock(row: FranchiseStaticRow, isUnclaimed = fals
   const contactRows = [
     row.pic_name ? `<li>PIC: ${escapeHtml(row.pic_name)}</li>` : "",
     row.email_contact ? `<li>Email: <a href="mailto:${escapeAttr(row.email_contact)}">${escapeHtml(row.email_contact)}</a></li>` : "",
-    ...phoneContacts.map((contact) => generatePhoneContactRow(contact, row, isUnclaimed)),
+    ...phoneContacts.map((contact) => generatePhoneContactRow(contact)),
     row.office_address ? generateOfficeAddressRow(row.office_address) : "",
   ].filter(Boolean);
 
@@ -52,11 +52,7 @@ export function generateContactBlock(row: FranchiseStaticRow, isUnclaimed = fals
   const linkList = links.length
     ? `<ul>${links.map((item) => `<li><a href="${escapeAttr(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.label)}</a></li>`).join("")}</ul>`
     : "";
-  const claimNote = isUnclaimed
-    ? `<p class="franchise-contact-note"><strong>Pemilik brand?</strong> <a href="/daftar?claim=${escapeAttr(row.slug)}">Klaim listing ini</a> untuk mengelola nomor, alamat, dan informasi resmi.</p>`
-    : "";
-
-  return `<div class="franchise-contact-block"><p>${escapeHtml(lead)}</p>${contactList}${linkList}${claimNote}</div>`;
+  return `<div class="franchise-contact-block"><p>${escapeHtml(lead)}</p>${contactList}${linkList}</div>`;
 }
 
 function parsePhoneContacts(value: unknown, defaultLabel: string, source: "whatsapp" | "phone"): ParsedPhoneContact[] {
@@ -333,28 +329,11 @@ function titleCaseLabel(label: string) {
     .join(" ");
 }
 
-function generatePhoneContactRow(contact: ParsedPhoneContact, row: FranchiseStaticRow, isUnclaimed: boolean) {
+function generatePhoneContactRow(contact: ParsedPhoneContact) {
   const icon = contact.type === "whatsapp" ? "fab fa-whatsapp" : contact.type === "mobile" ? "fas fa-mobile-alt" : "fas fa-phone-alt";
-  const claimMessageHref = isUnclaimed && contact.whatsappHref ? generateWhatsAppClaimHref(contact.whatsappHref, row) : "";
-  const claimMessageLink = claimMessageHref
-    ? ` <a class="franchise-whatsapp-claim-link" href="${escapeAttr(claimMessageHref)}" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp" aria-hidden="true"></i> Kirim info klaim</a>`
-    : "";
-  return `<li class="franchise-phone-contact franchise-phone-${escapeAttr(contact.type)}"><span><i class="${icon}" aria-hidden="true"></i>${escapeHtml(contact.label)}:</span> <a href="${escapeAttr(contact.href)}">${escapeHtml(contact.display)}</a>${claimMessageLink}</li>`;
+  return `<li class="franchise-phone-contact franchise-phone-${escapeAttr(contact.type)}"><span><i class="${icon}" aria-hidden="true"></i>${escapeHtml(contact.label)}:</span> <a href="${escapeAttr(contact.href)}">${escapeHtml(contact.display)}</a></li>`;
 }
 
 function generateOfficeAddressRow(address: string) {
   return `<li class="franchise-office-address"><span><i class="fas fa-map-marker-alt" aria-hidden="true"></i>Alamat kantor:</span> ${escapeHtml(address)}</li>`;
-}
-
-function generateWhatsAppClaimHref(baseHref: string, row: FranchiseStaticRow) {
-  const brandName = normalizeText(row.brand_name);
-  const category = normalizeText(row.category) || "franchise";
-  const listingUrl = `https://franchisee.id/peluang-usaha/${row.slug}`;
-  const claimUrl = `https://franchisee.id/daftar?claim=${row.slug}`;
-  const message = [
-    `Halo, saya menemukan listing ${brandName} (${category}) di Franchisee.id: ${listingUrl}.`,
-    `Status listing ini belum diklaim, jadi data franchise, kontak, dan alamatnya belum dikelola langsung oleh pemilik brand.`,
-    `Mohon tim/pemilik ${brandName} klaim listing ini agar informasi publiknya bisa diperbarui resmi: ${claimUrl}`,
-  ].join(" ");
-  return `${baseHref}?text=${encodeURIComponent(message)}`;
 }
