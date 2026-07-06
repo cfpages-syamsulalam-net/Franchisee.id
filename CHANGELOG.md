@@ -4,6 +4,29 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-06 15:19 (Asia/Jakarta)
+### Added
+- `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: Added the Cloudflare pre-campaign Function analytics review checklist with required access, review sequence, route priorities, and daily trigger points.
+- `src/pages/dashboard/index.astro`, `functions/_dashboard-schemas.js`, `functions/_premium-settings.js`, and `js/dashboard-premium-operations.js`: Added admin-managed Premium promo display frequency control, defaulting to one display per visitor/device/day during the configured promo period.
+
+### Changed
+- `js/site-promo-bar.js`: Changed promo ribbon suppression to reset by UTC day, added the “sekali hari ini” note when the cap is one, and kept event dedupe tied to promo identity.
+- `src/lib/franchise-static-assets.ts`, `src/lib/franchise-detail-assets.ts`, `src/lib/franchise-buyer-tools.ts`, and `src/pages/profil/index.astro`: Removed promo ribbon loading from generated low-intent SEO/buyer-tool pages and kept it on `/premium` plus `/profil`.
+- `functions/_dashboard-queries.js`: Updated Traffic Guardrail control copy to describe the once-per-visitor/device/day promo behavior.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the pre-campaign review checklist, high-intent-only promo surfaces, and daily promo display cap.
+- `peluang-usaha/*.html` and `json/d1-generated-pages-manifest.json`: Regenerated D1-backed static output after removing promo loading from generated listing/detail pages.
+
+## 2026-07-06 13:05 (Asia/Jakarta)
+### Added
+- `.context/session-20260706-1305.md`: Added this session snapshot for compact listing detail UX implementation and dashboard traffic guardrail visibility.
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-operations.js`, `functions/dashboard-data.js`, and `functions/_dashboard-queries.js`: Added a `/dashboard` Traffic Guardrail panel that surfaces the Cloudflare Workers/Pages Functions Free daily limit, warning threshold, reset time, active public-page throttles/caches, and the optional credentials needed for future live analytics.
+
+### Changed
+- `templates/detail-franchise-tpl.html`, `src/lib/franchise-static.ts`, `scripts/d1-page-renderer.ts`, and `src/lib/franchise-detail-assets.ts`: Moved detail save/compare controls into the title row, added compact quick-fact chips near the brand title, tightened hero/detail spacing, and switched the floating claim CTA to reusable class-based styling.
+- `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: Marked the title-row actions, quick-fact chips, class-based sticky claim CTA, and dashboard local traffic guardrail items as implemented.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the compact listing detail UI, dashboard traffic guardrail response model, and remaining post-deploy Cloudflare route-metric review.
+- `peluang-usaha/*.html` and `json/d1-generated-pages-manifest.json`: Regenerated D1-backed flat listing detail pages after detail template and renderer updates.
+
 ## 2026-07-06 10:55 (Asia/Jakarta)
 ### Added
 - `.context/session-20260706-1055.md`: Added this session snapshot for Cloudflare Pages Function usage throttling and listing detail UX cleanup.

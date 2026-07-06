@@ -78,6 +78,56 @@ export function injectDetailAssets(html: string) {
 .trail-item span {
   color: #6b6256;
 }
+.elementor-element-19b8c8c {
+  min-height: 260px !important;
+}
+.elementor-element-19b8c8c > .e-con-inner {
+  min-height: 260px !important;
+  padding-top: clamp(26px, 4vw, 48px) !important;
+  padding-bottom: clamp(22px, 3vw, 38px) !important;
+}
+.franchise-detail-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 100%;
+}
+.franchise-detail-title-row h1 {
+  margin: 0 !important;
+  font-size: clamp(32px, 7vw, 68px) !important;
+  line-height: 1.03 !important;
+}
+.franchise-detail-quickfacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+  margin-top: 12px;
+}
+.franchise-detail-quickfact {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 92px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(17, 17, 17, 0.56);
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+}
+.franchise-detail-quickfact small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.franchise-detail-quickfact strong {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.25;
+}
 .entry-content > .elementor,
 .entry-content > .elementor > .e-con,
 .elementor-element.e-con-boxed {
@@ -98,7 +148,7 @@ export function injectDetailAssets(html: string) {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  margin: 4px 0 10px;
+  margin: 0;
 }
 .franchise-detail-actions .fr-save-opportunity-button--detail,
 .franchise-detail-actions .fr-compare-button--detail {
@@ -119,6 +169,56 @@ export function injectDetailAssets(html: string) {
   overflow: hidden !important;
   clip: rect(0 0 0 0) !important;
   white-space: nowrap !important;
+}
+.fr-claim-sticky {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 2px solid #f0ca00;
+  background: #fffdf4;
+  box-shadow: 0 -12px 30px rgba(17, 24, 39, 0.12);
+}
+.fr-claim-sticky__copy {
+  flex: 1;
+  min-width: 240px;
+  color: #332600;
+}
+.fr-claim-sticky__copy strong {
+  display: block;
+  color: #111111;
+  font-weight: 900;
+}
+.fr-claim-sticky__copy span {
+  display: block;
+  color: #5f5a4f;
+  font-size: 13px;
+}
+.fr-claim-sticky__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #f0ca00;
+  color: #111111 !important;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none !important;
+  box-shadow: 0 8px 18px rgba(240, 202, 0, 0.28);
+}
+.fr-claim-sticky__button:hover,
+.fr-claim-sticky__button:focus {
+  transform: translateY(-1px);
+  color: #111111 !important;
 }
 .franchise-css-placeholder {
   position: relative;
@@ -555,6 +655,35 @@ export function injectDetailAssets(html: string) {
   text-decoration: none !important;
 }
 @media (max-width: 720px) {
+  .elementor-element-19b8c8c,
+  .elementor-element-19b8c8c > .e-con-inner {
+    min-height: 210px !important;
+  }
+  .franchise-detail-title-row {
+    align-items: flex-start;
+  }
+  .franchise-detail-title-row h1 {
+    font-size: clamp(28px, 12vw, 44px) !important;
+  }
+  .franchise-detail-quickfacts {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    flex-wrap: nowrap;
+    margin: 10px -4px 0;
+    padding: 6px 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .franchise-detail-quickfact {
+    min-width: 104px;
+    flex: 0 0 auto;
+  }
+  .fr-claim-sticky {
+    justify-content: center;
+    text-align: center;
+    padding: 10px 12px;
+  }
   .fr-owner-cta,
   .fr-premium-lead-panel,
   .fr-proposal-head {
@@ -604,7 +733,6 @@ document.querySelectorAll(".e-n-tabs").forEach(function (tabs) {
   setFranchiseDetailTab(tabs, selected ? selected.getAttribute("data-tab-index") || "1" : "1");
 });
 initCompareButtons();
-initPromoBar();
 document.addEventListener("click", function (event) {
   var button = event.target && event.target.closest ? event.target.closest("[data-proposal-pdf]") : null;
   if (!button) return;
@@ -791,13 +919,6 @@ function initCompareButtons() {
     });
   });
   renderState();
-}
-function initPromoBar() {
-  if (window.__franchisePromoBarLoaded) return;
-  var script = document.createElement("script");
-  script.src = "/js/site-promo-bar.js";
-  script.defer = true;
-  document.head.appendChild(script);
 }
 </script>
 </body>`,

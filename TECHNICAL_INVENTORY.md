@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-06 10:39 (Asia/Jakarta)
+Last updated: 2026-07-06 13:42 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -289,12 +289,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-operations.js`
 *General Operations client module for `/dashboard`.*
-- `window.FranchiseDashboardOperations.createOperations(options)`: Creates the outreach, publish, Premium payment review, publication-control, lead, and health renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`.
-- `render(data)`: Fans dashboard API data into outreach, Premium payment review, publish queue, publication controls, leads, and health panels.
+- `window.FranchiseDashboardOperations.createOperations(options)`: Creates the outreach, publish, Premium payment review, publication-control, lead, health, and traffic-guardrail renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`.
+- `render(data)`: Fans dashboard API data into outreach, Premium payment review, publish queue, publication controls, leads, health, and traffic guardrail panels.
 - `renderOutreach()` / `logOutreach()`: Renders staff-personal WhatsApp outreach rows and records manually confirmed outreach through `/dashboard-data`.
 - `renderPremiumPayments()` / `reviewPremiumPayment()`: Renders icon-only admin approval/rejection controls for pending Premium confirmations.
 - `renderPublicationControls()` / `updatePublicationStatus()`: Renders network publication controls and posts admin status changes.
-- `renderLeads()` / `renderHealth()`: Renders lead rows and system health summaries.
+- `renderLeads()` / `renderHealth()` / `renderTrafficGuardrails()`: Renders lead rows, system health summaries, and Cloudflare Free-plan limit/throttle visibility.
 
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
@@ -411,14 +411,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/pages/profil/index.astro`
 *Protected profile page shell.*
 - Static Astro route at `/profil/` with `noindex,nofollow`.
-- Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, Outfit/DM Sans fonts, `css/profile.css`, `css/profile-premium.css`, `css/profile-analytics.css`, `css/profile-franchisor.css`, profile renderer modules, and `js/profile-page.js`.
+- Loads the custom Clerk debug/runtime scripts, navbar auth controller, Font Awesome, Outfit/DM Sans fonts, `css/profile.css`, `css/profile-premium.css`, `css/profile-analytics.css`, `css/profile-franchisor.css`, profile renderer modules, `js/profile-page.js`, and the high-intent Premium promo ribbon script.
 - Anonymous protection is client-side; all profile data and writes are protected again by `/profile-data`.
 
 ### File: `src/pages/premium/index.astro`
 *Public premium membership sales page.*
 - Static Astro route at `/premium/` with benefit-led public SEO copy for the Rp 3.000.000/year Premium offer after a free brand page is ready.
 - Shows editorial article and social media exposure add-on pricing alongside the yearly Premium offer.
-- Loads Font Awesome, `css/premium.css`, `js/site-promo-bar.js`, and `js/premium-page.js`.
+- Loads Font Awesome, `css/premium.css`, `js/site-promo-bar.js`, and `js/premium-page.js`; the promo ribbon respects the dashboard-configured per-day view cap.
 - CTAs point to `/login/?mode=register` and `/profil/?tab=membership` without exposing internal infrastructure terms, and include `data-premium-cta` attributes for coarse funnel tracking.
 - Public copy leads with outcomes such as trust, easier discovery, and better follow-up rather than feature-first language.
 
@@ -510,7 +510,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/lib/franchise-detail-assets.ts`
 *Generated detail-page CSS/JS helper for D1-backed Astro pages.*
-- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts, including compact detail spacing, subtler breadcrumbs, icon-only detail save/compare actions, and owner CTA styling below the detail tabs.
+- `injectDetailAssets(html)`: Injects the generated detail-page CSS plus self-contained tab initialization and proposal PDF scripts, including compact detail spacing, subtler breadcrumbs, title-row icon-only save/compare actions, quick-fact chips, class-based sticky claim CTA styling, and owner CTA styling below the detail tabs.
 - `downloadProposalPdf(button)` / `buildPdfFromJpegs(pages)`: Browser-side proposal image to PDF flow used only inside the Proposal tab; loads R2 image pages, builds a local PDF Blob in memory, triggers browser download, stores no duplicate PDF in R2, shows inline status, and avoids browser alerts.
 - Owns Premium detail CTA/gallery/proposal/FAQ styling and franchisor owner CTA styling outside the directory asset helper.
 
@@ -697,9 +697,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_premium-settings.js`
 *Premium payment/settings/pricing helper.*
 - `loadActivePaymentMethod(db)` / `loadPaymentMethods(db)` / `fallbackPaymentMethod()`: Read admin-managed payment instructions, including optional QRIS image fields, with a safe BCA fallback.
-- `loadPremiumSettings(db)` / `updatePremiumSettings(db, data, actorUserId)`: Read and update admin-managed lifecycle, discount, and promo settings.
+- `loadPremiumSettings(db)` / `updatePremiumSettings(db, data, actorUserId)`: Read and update admin-managed lifecycle, discount, and promo settings, including `promo_max_views_per_user`.
 - `premiumOrderPricing(db, actor, listing)`: Applies the current multi-brand discount rule during new Premium order creation.
-- `loadPublicPremiumPromo(db)`: Returns only active, date-gated promo ribbon fields for public pages.
+- `loadPublicPremiumPromo(db)`: Returns only active, date-gated promo ribbon fields and the per-day visitor display cap for public pages.
 
 ### File: `functions/_premium-notifications.js`
 *Premium event, notification, and email queue helper.*
@@ -743,7 +743,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/premium-promo.js`
 *Public Premium promo endpoint.*
-- `onRequestGet()`: Reads active promo settings through `_premium-ops.js`, returns safe JSON for the public top ribbon, and sends public cache headers for 15 minutes plus stale revalidation.
+- `onRequestGet()`: Reads active promo settings through `_premium-ops.js`, returns safe JSON plus the per-day view cap for the public top ribbon, and sends public cache headers for 15 minutes plus stale revalidation.
 
 ### File: `functions/premium-email-worker.js`
 *Protected Premium email worker route.*
@@ -772,9 +772,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/site-promo-bar.js`
 *Shared public Premium promo bar.*
-- Fetches `/premium-promo` with a 30-minute browser cache and injects a top ribbon only when an admin-managed campaign is active.
-- Records ribbon impressions and CTA clicks through `/premium-event` with safe campaign metadata, deduped per promo label for 24 hours.
-- Used by generated listing/detail pages, `/premium`, `/bandingkan`, and `/alat-franchise`.
+- Fetches `/premium-promo` with a 30-minute browser cache and injects a top ribbon only when an admin-managed campaign is active and the visitor has not reached the configured per-day display cap.
+- Injects its own compact ribbon CSS so high-intent pages do not depend on generated listing/detail styles.
+- Records ribbon impressions and CTA clicks through `/premium-event` with safe campaign metadata, deduped per promo identity for 24 hours.
+- Used by `/premium` and `/profil`; generated franchise directory/detail pages and buyer tools intentionally do not load it to avoid avoidable Function calls from lower-intent SEO traffic.
 
 ### File: `functions/profile-upload.js`
 *Protected owner media upload API for `/profil`.*
@@ -823,7 +824,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach queue, outreach summary, quality, review, pending premium confirmations, Premium operations, editable field definitions, lead, publish, publication controls, and health/telemetry data from `_dashboard-queries.js`.
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; existing role hierarchy also allows `admin`. Composes overview, outreach queue, outreach summary, quality, review, pending premium confirmations, Premium operations, editable field definitions, lead, publish, publication controls, health/telemetry data, and local traffic guardrails from `_dashboard-queries.js`.
 - `onRequestPost()`: Validates the discriminated action payload from `_dashboard-schemas.js`, then routes to `_dashboard-actions.js`; failures are logged to operation telemetry when possible.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
@@ -844,7 +845,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getStructuredLocationsForListings(db, franchiseIds)`: Chunks editable listing IDs before building `IN (...)` queries so `/dashboard-data` can load the full dashboard without hitting D1's SQL variable limit.
 - `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Operations tab.
 - `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, Premium settings, recent Premium notifications, upcoming expiries, annual reports, queued-email summaries, and recent queued email rows for the Operations tab.
-- `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db)`: Supplies the operations tab, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, and product-event counts.
+- `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db, env)`: Supplies the operations tab, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, product-event counts, and a local Cloudflare Free-plan traffic guardrail summary.
+- `getTrafficGuardrails(env)`: Reports the 100,000/day Free-plan guardrail, 90,000 warning threshold, reset time, active browser throttles/caches, and the env vars needed before optional Cloudflare Analytics querying is wired.
 
 ### File: `functions/_dashboard-actions.js`
 *Protected dashboard write workflows.*

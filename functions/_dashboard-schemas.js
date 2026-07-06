@@ -111,6 +111,7 @@ const UpdatePremiumSettingsSchema = z.object({
   promo_cta_url: z.string().trim().max(220).optional().default("/premium/"),
   promo_starts_at: z.string().trim().max(40).optional().default(""),
   promo_ends_at: z.string().trim().max(40).optional().default(""),
+  promo_max_views_per_user: z.coerce.number().int().min(0).max(30).default(1),
 });
 
 export const DashboardActionSchema = z.discriminatedUnion("action", [

@@ -51,7 +51,7 @@ export async function onRequestGet({ request, env }) {
       getEditSuggestions(db),
       getEditableListings(db),
       getLeadSummary(db),
-      getSystemHealth(db),
+      getSystemHealth(db, env),
     ]);
 
     return jsonResponse({

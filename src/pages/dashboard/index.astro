@@ -444,6 +444,11 @@ export const prerender = true;
                       <span>Berakhir</span>
                       <input name="promo_ends_at" type="datetime-local" />
                     </label>
+                    <label class="is-wide">
+                      <span>Batas tampil per pengunjung per hari</span>
+                      <input name="promo_max_views_per_user" type="number" min="0" max="30" step="1" placeholder="1" />
+                      <small>1 = tampil sekali per hari selama periode promo. 0 = tanpa batas.</small>
+                    </label>
                     <button class="dash-icon-button dash-action-button is-primary" type="submit" aria-label="Simpan pengaturan Premium" data-fr-tooltip="Simpan pengaturan Premium">
                       <i class="fas fa-sliders-h" aria-hidden="true"></i>
                     </button>
@@ -503,6 +508,21 @@ export const prerender = true;
                 </div>
                 <ul class="dash-list" data-system-health>
                   <li><span>Memuat health check...</span></li>
+                </ul>
+              </section>
+
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <i class="fas fa-gauge-high dash-section-icon" aria-hidden="true"></i>
+                    <div>
+                      <h2>Traffic Guardrail</h2>
+                      <p>Limit Function harian dan throttle publik yang aktif.</p>
+                    </div>
+                  </div>
+                </div>
+                <ul class="dash-list" data-traffic-guardrails>
+                  <li><span>Memuat traffic guardrail...</span></li>
                 </ul>
               </section>
 

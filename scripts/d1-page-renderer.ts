@@ -63,6 +63,8 @@ export function renderDetailPage(row: D1FranchiseRow, template: string): string 
     "{SEO_TITLE}": escapeHtml(seoTitle),
     "{SEO_DESCRIPTION}": escapeHtml(seoDescription),
     "{VERIFIED_ICON}": tier === "verified" || tier === "premium" ? '<i class="fas fa-check-circle franchise-verified-badge" title="Verified Brand"></i>' : "",
+    "{TITLE_ACTIONS}": "",
+    "{DETAIL_QUICK_FACTS}": generateDetailQuickFacts(row, category, minimumModal, tier),
     "{JSON_LD}": generateJsonLd(row, description, logoUrl),
     "{BREADCRUMBS}": generateBreadcrumbs(row),
     "{CLAIM_STICKY_BAR}": isUnclaimed ? generateStickyBar(row) : "",
@@ -180,20 +182,38 @@ function generateBreadcrumbs(row: D1FranchiseRow) {
 
 function generateStickyBar(row: D1FranchiseRow) {
   return `
-    <div id="claim-sticky-bar" style="position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 2px solid #ffc107; padding: 15px; z-index: 9999; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div style="flex: 1; min-width: 250px;">
-            <strong style="display: block; color: #333;">Apakah ini Bisnis Anda?</strong>
-            <span style="font-size: 13px; color: #666;">Klaim brand <strong>${escapeHtml(row.brand_name)}</strong> secara GRATIS untuk mengelola halaman ini.</span>
+    <div id="claim-sticky-bar" class="fr-claim-sticky">
+        <div class="fr-claim-sticky__copy">
+            <strong>Apakah ini Bisnis Anda?</strong>
+            <span>Klaim brand <strong>${escapeHtml(row.brand_name)}</strong> secara gratis untuk mengelola halaman ini.</span>
         </div>
-        <a href="/daftar?claim=${escapeAttr(row.slug)}" style="background: #ffc107; color: #000; padding: 10px 25px; border-radius: 50px; font-weight: bold; text-decoration: none; box-shadow: 0 4px 10px rgba(255,193,7,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">KLAIM SEKARANG</a>
+        <a class="fr-claim-sticky__button" href="/daftar?claim=${escapeAttr(row.slug)}">Klaim Sekarang</a>
     </div>
     <style>
         body { padding-bottom: 80px !important; }
+        .fr-claim-sticky { position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; border-top: 2px solid #f0ca00; background: #fffdf4; box-shadow: 0 -12px 30px rgba(17,24,39,.12); }
+        .fr-claim-sticky__copy { flex: 1; min-width: 250px; color: #332600; }
+        .fr-claim-sticky__copy strong { display: block; color: #111; }
+        .fr-claim-sticky__copy span { color: #5f5a4f; font-size: 13px; }
+        .fr-claim-sticky__button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 10px 18px; border-radius: 999px; background: #f0ca00; color: #111 !important; font-weight: 900; text-decoration: none !important; }
         @media (max-width: 600px) {
             #claim-sticky-bar { text-align: center; justify-content: center; }
             #claim-sticky-bar div { text-align: center; }
         }
     </style>`;
+}
+
+function generateDetailQuickFacts(row: D1FranchiseRow, category: string, modal: string, tier: string) {
+  const facts = [
+    ["Modal", modal],
+    ["Kategori", category],
+    row.estimated_bep_months ? ["BEP", `${row.estimated_bep_months} bulan`] : null,
+    [tier === "premium" ? "Status" : "Data", tier === "premium" ? "Premium" : tier === "verified" ? "Terverifikasi" : tier === "unclaimed" ? "Belum diklaim" : "Listing aktif"],
+  ].filter(Boolean) as [string, string][];
+
+  return `<div class="franchise-detail-quickfacts" aria-label="Ringkasan franchise">${facts
+    .map(([label, value]) => `<span class="franchise-detail-quickfact"><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></span>`)
+    .join("")}</div>`;
 }
 
 function generateDisclaimer(row: D1FranchiseRow) {

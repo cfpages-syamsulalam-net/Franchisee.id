@@ -20,6 +20,7 @@ export const PREMIUM_SETTINGS_DEFAULTS = {
   promo_cta_url: "/premium/",
   promo_starts_at: "",
   promo_ends_at: "",
+  promo_max_views_per_user: 1,
 };
 
 const PREMIUM_NUMERIC_SETTINGS = new Set([
@@ -31,6 +32,7 @@ const PREMIUM_NUMERIC_SETTINGS = new Set([
   "multi_brand_min_owned_brands",
   "promo_enabled",
   "promo_discount_percent",
+  "promo_max_views_per_user",
 ]);
 
 export async function loadActivePaymentMethod(db, code = "manual_bca") {
@@ -179,6 +181,7 @@ export async function loadPublicPremiumPromo(db) {
     cta_url: textOrNull(settings.promo_cta_url) || "/premium/",
     starts_at: textOrNull(settings.promo_starts_at) || "",
     ends_at: textOrNull(settings.promo_ends_at) || "",
+    max_views_per_user: clampNumber(settings.promo_max_views_per_user, 0, 30),
   };
 }
 
@@ -200,6 +203,7 @@ function normalizePremiumSettings(value) {
     promo_cta_url: textOrNull(settings.promo_cta_url) || "/premium/",
     promo_starts_at: textOrNull(settings.promo_starts_at) || "",
     promo_ends_at: textOrNull(settings.promo_ends_at) || "",
+    promo_max_views_per_user: clampNumber(settings.promo_max_views_per_user, 0, 30),
   };
 }
 

@@ -74,6 +74,7 @@
       utils.setFormValue(options.premiumSettingsForm, "promo_cta_url", settings.promo_cta_url || "/premium/");
       utils.setFormValue(options.premiumSettingsForm, "promo_starts_at", toDateTimeLocal(settings.promo_starts_at));
       utils.setFormValue(options.premiumSettingsForm, "promo_ends_at", toDateTimeLocal(settings.promo_ends_at));
+      utils.setFormValue(options.premiumSettingsForm, "promo_max_views_per_user", settings.promo_max_views_per_user == null ? 1 : settings.promo_max_views_per_user);
     }
 
     function renderNotifications(notifications) {
@@ -241,7 +242,8 @@
           promo_cta_label: String(form.get("promo_cta_label") || "Lihat Premium"),
           promo_cta_url: String(form.get("promo_cta_url") || "/premium/"),
           promo_starts_at: normalizeDateTimeLocal(form.get("promo_starts_at")),
-          promo_ends_at: normalizeDateTimeLocal(form.get("promo_ends_at"))
+          promo_ends_at: normalizeDateTimeLocal(form.get("promo_ends_at")),
+          promo_max_views_per_user: Number(form.get("promo_max_views_per_user") || 1)
         });
         options.setStatus("Pengaturan Premium tersimpan.", false);
         await options.reloadDashboard();

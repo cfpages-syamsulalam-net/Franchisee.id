@@ -1,1583 +1,1583 @@
 {
   "generator": "d1-franchise-pages",
   "site_id": "site_franchisee_id",
-  "generated_at": "2026-07-06T03:52:36.453Z",
+  "generated_at": "2026-07-06T08:18:24.109Z",
   "pages": {
     "kopi-coba": {
       "franchise_id": "franchise_f23f5cf9ebd98647",
       "slug": "kopi-coba",
       "path": "peluang-usaha/kopi-coba.html",
-      "hash": "ce7465a658b2dfbc9dff369c11f90b7dab9d6a2ee2e9a78cbaddc7a0c271b1ed",
+      "hash": "d43e73d0b04f9d9a65c5c4092ad13c177c39ddb02c485fe4ab2dcd915242c6ee",
       "data_hash": "7477132b6c9ce0c4e427215567196cab2f3865942b76749f1c74fe9ef9f358f6",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "abo-meatshop": {
       "franchise_id": "franchise_eafcb87db9acc9e9",
       "slug": "abo-meatshop",
       "path": "peluang-usaha/abo-meatshop.html",
-      "hash": "01663883f543cc0186959f72e7c0b680646ca449b907b7c3204a61415cb4e3a5",
+      "hash": "ef019d5d4a70d718f7b27f2b3e484e812adb7f310cde63804bafb5a402340632",
       "data_hash": "b5a001ccd9c221e28d08eaa0cf06dea00fa9c0acebdcd00e649f393497e0c0e5",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "aha-right-brain": {
       "franchise_id": "franchise_139bfb231fab1bad",
       "slug": "aha-right-brain",
       "path": "peluang-usaha/aha-right-brain.html",
-      "hash": "d538f893c23cced2778f5b94fb7d63c09c18de3bc80627a6f287e1469f4bd8f3",
+      "hash": "553cdda2d5bb09d84ef224cd0dc6dd8d68014ef36b074bb8fbd7d83058089f8d",
       "data_hash": "99afd729a68ed889021a1c7f6ffa609cd954a8bdbca4d03235002bc86dbb2c5b",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "al-arashy-tour-travel": {
       "franchise_id": "franchise_4aaca3204ddfbc9c",
       "slug": "al-arashy-tour-travel",
       "path": "peluang-usaha/al-arashy-tour-travel.html",
-      "hash": "327ab433832e366b0cfa0f80efb4781396049c2c3cfcb817d40a2362c8b9a596",
+      "hash": "b5483c7bd7de833d7d73cab73ba695d66bc1176f3f014ef1c1b36f363d7d6c9f",
       "data_hash": "c38bacc242464ff42b0b221ce3cc7d4d58b0a492190e2316c98ff81e069b3a20",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "al-jabr-easy-math": {
       "franchise_id": "franchise_99dfd191461002bf",
       "slug": "al-jabr-easy-math",
       "path": "peluang-usaha/al-jabr-easy-math.html",
-      "hash": "841251105b27ba72ee4e5bdcb081dd30ba10bb557e169f137b76c0d2dcf620a0",
+      "hash": "30043a1ee3bb74b7b63dc366cc82a7228a6796e46a4e3ad912a43f01617135be",
       "data_hash": "1849371c8f30aef100aeaf2894da236dcf9eab99edb6f51a23f67074517ac189",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "aloe-fresh": {
       "franchise_id": "franchise_cdd20ab5835b3f90",
       "slug": "aloe-fresh",
       "path": "peluang-usaha/aloe-fresh.html",
-      "hash": "ebc26d5f2843910216518e4037d6b9a91d39485545630a83fb5a8ca77d167bea",
+      "hash": "c5e29260ff9437356d676cb7fad3c0124fd2128952d5537e4ff1bf27b07def94",
       "data_hash": "985f63ff899db89268c46bf0c013d46566b35708a2417240c96c6328847ba665",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "ameno-ramen": {
       "franchise_id": "franchise_b8f46111f4bcbc7a",
       "slug": "ameno-ramen",
       "path": "peluang-usaha/ameno-ramen.html",
-      "hash": "796e4e97136f2e5c4e727c301d155cb7eb1098552a36d7f6927ab426f25e81e6",
+      "hash": "1d48c0727200bb10187805e19d56653968b9384ef38da0f2c17e413e0eca67ee",
       "data_hash": "e3bfdd570495964054943d1e886997a8d0904348d511ade49485c0ae7ad0b97f",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "aontea": {
       "franchise_id": "franchise_fe949d65b6a2e05b",
       "slug": "aontea",
       "path": "peluang-usaha/aontea.html",
-      "hash": "ce14044153d79f8efdfb224ccc39b09b6526b513c9a3be3fe84134b134069b5d",
+      "hash": "829dab244b34a996345164609c772b33ebe2d9f81069318078ce3495f03b7f6c",
       "data_hash": "c9d655ad668dfb39b363a8e5fa96c0720fbe0750019483d4e0b7a24b95a32223",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "apple-tree-pre-school": {
       "franchise_id": "franchise_a7d6188eedc15181",
       "slug": "apple-tree-pre-school",
       "path": "peluang-usaha/apple-tree-pre-school.html",
-      "hash": "9624820471618ba42e24416f1733ad4b1502b3e55fad76cfaea8311e18993c42",
+      "hash": "6a9de958e8dd7257da2b423469db184fa235b1576f9c19d3532e40b2456d91a8",
       "data_hash": "24734d5fe76755cba4ea2a7f0add473c19286fdaa46f80c7387810f3b165cfca",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "arhamart": {
       "franchise_id": "franchise_0a5470d49684e4ec",
       "slug": "arhamart",
       "path": "peluang-usaha/arhamart.html",
-      "hash": "9ef8c96e4b2e0759a152139860c9369773bb3db0676100c4ae02c26a59d67d80",
+      "hash": "64feb605cac71d781edceac19afe9140f1767ac3b28cbc0b87f606a0e44deacc",
       "data_hash": "1a57cdb31481500ba26f7c407dc6392ae66c12907538d3725e2108bb479c8647",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "atv-adventure-indonesia": {
       "franchise_id": "franchise_97958bcf59861829",
       "slug": "atv-adventure-indonesia",
       "path": "peluang-usaha/atv-adventure-indonesia.html",
-      "hash": "389b8abe0c43a52ef1f9cc66ddefd6dc948bdd8cf145b10c62d256b49db5cc38",
+      "hash": "da1dc35d59a38d6389804a0ca9c8996a8616806c40ce658cd0bf345a16e98545",
       "data_hash": "4fcf5ac823d0ab32a05700ba68b39b36ee6fc634a616ee66b57d469a0ea7bc21",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "authentic-coffee": {
       "franchise_id": "franchise_7519f695d991fc2e",
       "slug": "authentic-coffee",
       "path": "peluang-usaha/authentic-coffee.html",
-      "hash": "8e59de8493aa7261030c0ec22e7d83f91af3e58bef8012b118fdb1c19fd591eb",
+      "hash": "eb33d36daaec5aba951bac6db22355afeff3b42230fdd26b3704e39bc7d6b323",
       "data_hash": "5848ccd50bdf3f1fe12a8a97f2734033cc8c7b0e902dea5fef26e573e8243c53",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "autoclean-waterless": {
       "franchise_id": "franchise_25919494dce5d381",
       "slug": "autoclean-waterless",
       "path": "peluang-usaha/autoclean-waterless.html",
-      "hash": "0fc06dcb0aafbfcde2b6bf449219825fa17de73af6eb572e2a75ef1836465dfe",
+      "hash": "4aa43ef10deeba99d62bd1d201d88a28745339f124ae57c1bb1b2709fb4601a6",
       "data_hash": "83a4af7c2531b605bf026cc98826766b8bc55ae097cca9901ffc40981f2bc47f",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "ayam-dadar-bandung": {
       "franchise_id": "franchise_9b1b422f75142561",
       "slug": "ayam-dadar-bandung",
       "path": "peluang-usaha/ayam-dadar-bandung.html",
-      "hash": "e8658f02b3a1e2c496c7efff46a640184211bfa41aea0b6c9ceeee021d9c2c63",
+      "hash": "4cdc36aae5bf32821792e97a3c4f01d5792301ffc8fb7640c4cf1a8ae3a9971b",
       "data_hash": "b52cbe43e236d8c8c0749436ebb87ef90b00a2d28fe19421b78f6fc84655236a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "ayam-gebuk-bang-zoela": {
       "franchise_id": "franchise_d9641750c674fe47",
       "slug": "ayam-gebuk-bang-zoela",
       "path": "peluang-usaha/ayam-gebuk-bang-zoela.html",
-      "hash": "a180552356cd437d04e860096e1d5e6a0407d9ebd4cde245cd6f24aef115322a",
+      "hash": "c1570892c1e01c2ff89b5caf7f49d8f339b0ceb90244adc0b53b88754e0d11ad",
       "data_hash": "2d361002259c42a6549ec341cfe8930567005737af169aca4c2b45b60b419ba1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "ayam-geprek-juara": {
       "franchise_id": "franchise_8b0975d7148ef88f",
       "slug": "ayam-geprek-juara",
       "path": "peluang-usaha/ayam-geprek-juara.html",
-      "hash": "a66e07004209590102d461281b4918956e5d5b88003cd5a6493bfdd3408b2e61",
+      "hash": "1bc904f02f622af17044cc9c32b97d6b949616cacffc7ee2ebf2cbb57e21902b",
       "data_hash": "ecdc6bdd485c628685bb8f722db965d16640b473a47e1223ce761f977151bda2",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "ayam-geprek-juara-c7f572": {
       "franchise_id": "franchise_54f82cfa3e9fa927",
       "slug": "ayam-geprek-juara-c7f572",
       "path": "peluang-usaha/ayam-geprek-juara-c7f572.html",
-      "hash": "5a628000d9835e0c07f593b135a2047c57cc567d80ee5d394156fdf720d80a52",
+      "hash": "572f5d3bb4c66125415c79216ad1869cb480492f9ccd8b781383d2e4de2d88bd",
       "data_hash": "36e450549b91c2cdbd569a86075bf4498b4a0407d33b99c06ef6d0d908006503",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "ayotumbuh-by-happy-bear": {
       "franchise_id": "franchise_820e024a85420520",
       "slug": "ayotumbuh-by-happy-bear",
       "path": "peluang-usaha/ayotumbuh-by-happy-bear.html",
-      "hash": "10deb1c91f7e014c03d37af06e4dc9570bebdd26fa37800ce9ed21c8f1c8a169",
+      "hash": "d23f81a5d0dc4a1b8f615d6d2a7f868344889f426239f6171050789d7551767f",
       "data_hash": "5d7809672503c47f7e56741e254d66461bcbeecc9690c18424177f8a59e792c5",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "baker-fresh": {
       "franchise_id": "franchise_a80275669f9980fe",
       "slug": "baker-fresh",
       "path": "peluang-usaha/baker-fresh.html",
-      "hash": "15d9a89df871cd65fb415b09ee03d653a1810f8b51d8d817447677d98151907b",
+      "hash": "0001038f3879d3bca5ccdd3b1af325b450a05d64a9e03ab7ba1df53abab501d3",
       "data_hash": "02239d219197c9a9f654767f64959fed5b0fdaa18f2ac0123c626ea9efa5b202",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bakmie-cha-cha": {
       "franchise_id": "franchise_69393ffe59d4227f",
       "slug": "bakmie-cha-cha",
       "path": "peluang-usaha/bakmie-cha-cha.html",
-      "hash": "c5ed87756d5c018f22e3b2be1fc335a207de1e613bacb9fa71dc50db247deb78",
+      "hash": "818d270d1f697df8ba3637d04f70a77e0176add6bd25f16029610ae45435bba8",
       "data_hash": "d7aae245475809629e9b07c2e6a6b6325de5ed8275f6e476565cc08037d77b40",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bakso-bakar-jarjozz": {
       "franchise_id": "franchise_f9ab0ad37df51d8e",
       "slug": "bakso-bakar-jarjozz",
       "path": "peluang-usaha/bakso-bakar-jarjozz.html",
-      "hash": "ffbd346e0d82d95eb1e06ba30994915381eb3d51a7ae1478e3174893ced08307",
+      "hash": "be4f226a75b4ba02baf794c4eea1076a122ad77a4044f3ead286da7ada48fb31",
       "data_hash": "bb9574792ad58eebfa31cd215d2fbe59956ac2b96b94ae994e80f1169ea0c367",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bakso-bakar-maknyoosee": {
       "franchise_id": "franchise_6feac7fbc1c5ad7f",
       "slug": "bakso-bakar-maknyoosee",
       "path": "peluang-usaha/bakso-bakar-maknyoosee.html",
-      "hash": "c6811c182a8bfb89d3e414145e43b50996c917e53f5d25b28bcb1c211d118234",
+      "hash": "52668d9552149b4acee3be0640b6f3cc81622fdafcde4343a0767a4b54453055",
       "data_hash": "de765a5224c643c248fc8044051aeb6520c9f9f58a89e7f851349786476d5cba",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bakso-batok-bang-toyib": {
       "franchise_id": "franchise_de3e028e9305ac97",
       "slug": "bakso-batok-bang-toyib",
       "path": "peluang-usaha/bakso-batok-bang-toyib.html",
-      "hash": "4f034a0848e9f95a61667a30458733827210224458b74ee279930fdafbcfe7a8",
+      "hash": "6675f2fb62bdf2b9aedc24b6d885893ad64ec47308ca490a37b27d3133caa3fa",
       "data_hash": "935be455b39288d0bb4b6afa8928e957a5d31671dcf91592fc0400d889bd6f1e",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bakso-benhil": {
       "franchise_id": "franchise_19d90d56caba48d4",
       "slug": "bakso-benhil",
       "path": "peluang-usaha/bakso-benhil.html",
-      "hash": "7cae8582406ac24232b027b3cc921c869a67657f011eb1cc76f4014fb3e4daef",
+      "hash": "972038b2dacd77d5fb34cad5cdb02867856e379feb4ef2bb36cc7d0291c11c17",
       "data_hash": "6707dead536f79dc83189e35b65032e7090580bec695b3de81fb564a3f95fee9",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bakso-koko-gepeng": {
       "franchise_id": "franchise_def5fa95fdfc494e",
       "slug": "bakso-koko-gepeng",
       "path": "peluang-usaha/bakso-koko-gepeng.html",
-      "hash": "461795145d4d12281818c0ec930391b095eb2fae0ff7ba5b752ea0c0ec2f8359",
+      "hash": "0ba85d136e4ac9284148dd0369ba40cd1f1cf403c4ec14fa03b53fc36ea7197d",
       "data_hash": "10a70e133e722efc67878db8bcd93ccf3d116cc15fba3dc76904499284e0d261",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bamboo-laundry": {
       "franchise_id": "franchise_78ff31a2c34873b4",
       "slug": "bamboo-laundry",
       "path": "peluang-usaha/bamboo-laundry.html",
-      "hash": "3e9ce79e2b18f38d7127618f9bdcd8f0d0f1380b5bda4160f5a1fa7aebbe5715",
+      "hash": "8aba6c95074fe802cd7130fb536237d1bf0b55b21d8774e156a0b79ed4709bc9",
       "data_hash": "3c657d970e77286601ea6f5a78114bb8f28f7e956fdc100cc62cd07cc1eb871a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bapauthing-by-baimwong": {
       "franchise_id": "franchise_6ce4cab41edb7374",
       "slug": "bapauthing-by-baimwong",
       "path": "peluang-usaha/bapauthing-by-baimwong.html",
-      "hash": "1ff0fdb7a1efa0b4343897f897a70ec285c474978969d0874f5053b297078a71",
+      "hash": "07d8a676b4d3310381403485d4d1eedd487ef7a34025e12c39f35f78273c056e",
       "data_hash": "e182f182baa9fed6c61a1e2b112f20ae98d9703f9ec1348bfd2e1dbd2dfa721c",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "barokah-mulia-abdi": {
       "franchise_id": "franchise_fbd923360944ffe4",
       "slug": "barokah-mulia-abdi",
       "path": "peluang-usaha/barokah-mulia-abdi.html",
-      "hash": "9164bf0e9457dd26f25c25b78b8da29a7c690473f26eef6e992c4113009f52c5",
+      "hash": "30e868f5c38af782a44eade2e1f079ca440f0430f931fc93c7c2c25540b9accc",
       "data_hash": "887656dc4d7e5f5b81db5483f656385f0689cc8e36df2ffc8eee6afea64b52a2",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "baso-aci-akang": {
       "franchise_id": "franchise_4d7fcd8b3d0e55bc",
       "slug": "baso-aci-akang",
       "path": "peluang-usaha/baso-aci-akang.html",
-      "hash": "fa2d38b25a038041053ae5547c974b52a56d74e11e2f3b02b6479cf32271fca7",
+      "hash": "49a1a244e20c28900dae1c8ae579465c7e3c824614c8202d552cb269adeb18e2",
       "data_hash": "1cbace721c6a7f14fe2f9f00e1bfa7c1794e9fe036b50deb81c03f639094f649",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bebek-terminal": {
       "franchise_id": "franchise_2349e79a3c0ee319",
       "slug": "bebek-terminal",
       "path": "peluang-usaha/bebek-terminal.html",
-      "hash": "8bf3799a1b2c61221a0092dec4a1a8d65700e086379ac33b7211f5cf080b0664",
+      "hash": "b0a60aa888d5bde4fddfd9bfd4c4fd21053ba80c64715de95cdcaff446e6e7b3",
       "data_hash": "569b3f08c8881f2b33284d09a20d2c2e1ec87a403404f0eaf1ba67d2b17fac02",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bekel-by-kampung-burger": {
       "franchise_id": "franchise_f6d40f306145166f",
       "slug": "bekel-by-kampung-burger",
       "path": "peluang-usaha/bekel-by-kampung-burger.html",
-      "hash": "a5a067340c78fc74337bd391c48f56d601681273fe46634578a429ddbd4375b2",
+      "hash": "91ccd07ddf5b0cb845bc8aefe2a86f23719dd6f9af13ccd4c35c7aac0bd971ac",
       "data_hash": "f801caf187181ea1237ebd5c71e0045e77ebbe66da0a1d5d331f3afbb0d990d1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "best-meat-point": {
       "franchise_id": "franchise_59f3d8524ecb068c",
       "slug": "best-meat-point",
       "path": "peluang-usaha/best-meat-point.html",
-      "hash": "d978d7f427e7fd897ec3d527c1ae9309565766cde92dbe948e51086a5c8060de",
+      "hash": "419b49ec261a4ddaf56bebbc4dec0aebe36eda6b17983657dcb66c44ae5b0ebd",
       "data_hash": "2511c6262e726c29d2e8c08b97948e6302f82174a7da76927666dab59c60672f",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bimba-gembira": {
       "franchise_id": "franchise_f272601336990b4f",
       "slug": "bimba-gembira",
       "path": "peluang-usaha/bimba-gembira.html",
-      "hash": "8f8ddc22797d1b4ad32aec49a772e2470e492ae00f5c7e07b8ea0bbeaecd28b4",
+      "hash": "91f7b7e52d69b0dce51d468da14fb49f265b361686c7fca149d2956dd6fe4233",
       "data_hash": "7d98dde3bc4b479ed9fccf4e786b71c8df0b037ce423d57715555541848ca355",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bintang-baca": {
       "franchise_id": "franchise_f24183c67474bcc7",
       "slug": "bintang-baca",
       "path": "peluang-usaha/bintang-baca.html",
-      "hash": "a562a217300343b4303bd0138a036dec5ad3f081a0115a7cda61d96c636b195e",
+      "hash": "790b14e7e476f42a44315a0a05e16869247a777cb123727c239c81a570e9dab8",
       "data_hash": "6488d215d60e7bd20160bbf14198055bf44a609ba3ab34bb06e4d520964887bb",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "black-kebab": {
       "franchise_id": "franchise_bb1c0ce2bb027a2f",
       "slug": "black-kebab",
       "path": "peluang-usaha/black-kebab.html",
-      "hash": "c57aaf6b6cf099409c1b32c65a3f71a5cb75eb02145f324f348d9601ced0ee4d",
+      "hash": "fb2109c47a8d044d0b18c879d6908f8a9ce9383027b7baf670afc18059c5290c",
       "data_hash": "1a48ced6151e48c26b06877dcda787db67683eb689bab271feb2559773d3ab1a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "black-white-cleaner": {
       "franchise_id": "franchise_7f66ed09a9d0ca9f",
       "slug": "black-white-cleaner",
       "path": "peluang-usaha/black-white-cleaner.html",
-      "hash": "919e71a5f91f2a386bb7696a03300f5321568d5f9e67970e5b54f142c6f24230",
+      "hash": "9fbee185aaa88f607e32521d7d1f7aea6e19c98550f536e78631e85f2ad293d6",
       "data_hash": "663ac20b7d0cc1f72e3cf7aa03d028885b418feedd1cbc53ac76bf67b9842213",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bola-obi-raos": {
       "franchise_id": "franchise_5e5d12b7077e65e4",
       "slug": "bola-obi-raos",
       "path": "peluang-usaha/bola-obi-raos.html",
-      "hash": "8035ca575f6712462a7277b57c9d24f718111e107e47e97ee7e023d71450ec74",
+      "hash": "8e7e56afb9551e42b0efdcd76d080cc8e4e831c7b4623451b0a098ae137ef383",
       "data_hash": "2faebb2d8ab4251a00197c98b6cc88965dfa6d46fb4eee428a2fa9a7b6cebbea",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bongobong": {
       "franchise_id": "franchise_f6ecbc797876f640",
       "slug": "bongobong",
       "path": "peluang-usaha/bongobong.html",
-      "hash": "60100e9ac9adcbe75e37a6049ac5f62378aee93936664c0849e6ef79c6f78c18",
+      "hash": "e08ebd5ce925422199d9705deb14ac6c2fd5085d191776b9fbc23ba17e566ced",
       "data_hash": "f6fb442b45052a80562d5d3d5b36c968d27cb00362436be01a2d44cbea16ccfc",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "bubur-organik-aiko": {
       "franchise_id": "franchise_89418cda22a9ffc5",
       "slug": "bubur-organik-aiko",
       "path": "peluang-usaha/bubur-organik-aiko.html",
-      "hash": "7ce2f3802bf97f4780344458f8f8ce868aed01183ea630391985b3f9a5680b04",
+      "hash": "d9688ac4b97210d28648cc930fe1d6fe7ed662533f4d272419792c9ad9a23ecd",
       "data_hash": "dfd32ddf6d8b092295f595dff5fb9399494b98b1df2ac2242073ab7836064121",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "california-fried-chicken-cfc": {
       "franchise_id": "franchise_c4d4e7c6cd62a350",
       "slug": "california-fried-chicken-cfc",
       "path": "peluang-usaha/california-fried-chicken-cfc.html",
-      "hash": "f400881afb0b425bb481c02fc674ce95364c404dfa5633192ba36ed5c0878176",
+      "hash": "167340ceed88b22e45b40f71ed2504dfcb8f11f3287d5461e4c0c23b045ac9cb",
       "data_hash": "fe87dabd9c2ad87a390899b64f7dc4b62431e045281244df00a3ad2a6b35879f",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "caotea-es-pedas": {
       "franchise_id": "franchise_92540952abd6f92b",
       "slug": "caotea-es-pedas",
       "path": "peluang-usaha/caotea-es-pedas.html",
-      "hash": "3969a3f44900c6c5590483e9be22cef2039d6e5d30fe8f437a523495f82398c5",
+      "hash": "588fbaabe5516d636429192946cace4e4a856bebc011d349aa2f734e04f92322",
       "data_hash": "02dadc5ed70c49f66107ac7f23a5dec75375c4d6b5851f0c0eec277499089b37",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "cheese-cake-pop": {
       "franchise_id": "franchise_12c11ea0e481c317",
       "slug": "cheese-cake-pop",
       "path": "peluang-usaha/cheese-cake-pop.html",
-      "hash": "2ea868004c6a9d4a88cac617c9f9ae429410bb2916b727741bc37d3ea6c16590",
+      "hash": "40cdffa8b2f192e4b895d9dae62bfe99508ecaaa10c0c7701ed10f18a3b4f071",
       "data_hash": "43f653018e8021885bfcf9817f233c39cb23c9990709daca9c0a0c7dc613b2d1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "cheese-tea-inc": {
       "franchise_id": "franchise_5354547a5c34d5bc",
       "slug": "cheese-tea-inc",
       "path": "peluang-usaha/cheese-tea-inc.html",
-      "hash": "8c0c4400a87e25b53a1f0e267c03574e52649ad0fd2dc93bdf8b707d7113505e",
+      "hash": "c63379c9392d79b2828bbe2f40690b68dd94a5c3c93526b2ca16b8299913b5be",
       "data_hash": "5e858c0fc0476ad36da41474e46b0dfc41755f6aefe8e4b42f7f33c664a7e0a5",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "chicken-all": {
       "franchise_id": "franchise_884f69861b0c17b2",
       "slug": "chicken-all",
       "path": "peluang-usaha/chicken-all.html",
-      "hash": "312bf44c00eb7d6589cd6995fae318d5d74a4f057a5dbd9c988bd130ea66013c",
+      "hash": "254c7cf56bcb1075710aee8875018453a42e8a7c98ee782562d3f1a661510385",
       "data_hash": "ec24dd14f8fa506cac9f056bf9ea9883629a3cb8bd22df70f7004d73d67df5b3",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "chicken-lemon": {
       "franchise_id": "franchise_0daf92c5876697f0",
       "slug": "chicken-lemon",
       "path": "peluang-usaha/chicken-lemon.html",
-      "hash": "5aa3504093d8cc2a07fbb979b059a09a92a2961f9d39ed2417af7b05789e4916",
+      "hash": "0ffff66ec31b4355d1681c80d6983cd14737da7e4ebd8d65689a790aa6fcdb30",
       "data_hash": "5b4bb93e7a9983fe937266553dbab828afcba8f44857b267b99b367746ae79a1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "chickenin-little-shihlin": {
       "franchise_id": "franchise_bf371ad774d4f76b",
       "slug": "chickenin-little-shihlin",
       "path": "peluang-usaha/chickenin-little-shihlin.html",
-      "hash": "f42838d47575a60b4a9636e83b954de3a1cf7ea3b60f3cf455a31e1057d1a412",
+      "hash": "207db5fc766e1837b2f99686edb9d6b07dc2730d34d5e1a33f1d7d9ffc053475",
       "data_hash": "cc8788887bfb352a5e4dd7b626246d077557bf0e7ac439ca369de829a93b8015",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "clothes-laundry": {
       "franchise_id": "franchise_cf8a0c43aec9663d",
       "slug": "clothes-laundry",
       "path": "peluang-usaha/clothes-laundry.html",
-      "hash": "bb60de1d2c2709f1649f6a6528287af893cbbe3ba63bcd89c885ea750a5ef966",
+      "hash": "2b7dd2d285bd5785275c011935c9a3e07473247248ac343e18cc9621d00c0e18",
       "data_hash": "5339ae42cc8dab464b70dae443b92334ff1e594503aac451816da21080321cbb",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "codero": {
       "franchise_id": "franchise_669b4317403b4a04",
       "slug": "codero",
       "path": "peluang-usaha/codero.html",
-      "hash": "68edb751837a5af184f1f9a44371e0fde45d46d701382b00eae6889bcb53ec00",
+      "hash": "c6dccbe67bb502b9ddcce1b2a857256cab63646795da9277c2eaba9abc54c3ac",
       "data_hash": "d43609f301f24e3e511b0b16cad6c6e8e0eaf0496c6d4f7bc1dbc597820438f9",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "coffeeland-indonesia": {
       "franchise_id": "franchise_5bd4286dc4e3d250",
       "slug": "coffeeland-indonesia",
       "path": "peluang-usaha/coffeeland-indonesia.html",
-      "hash": "3d7ff8a7ef8d62307a41e07f06e82d6316a4d7258eb236e01bc7f0a8ba012e50",
+      "hash": "949b035b005fb068a641879c0979ecdbe64ef4c637fb28675469df343f457c4f",
       "data_hash": "992cf1ba14d48defca1216f15ecfeb3e9ab66958db1a63f3347e193fac0397b9",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "cokelat-kocok-kuwentel": {
       "franchise_id": "franchise_67efb974b7e6b538",
       "slug": "cokelat-kocok-kuwentel",
       "path": "peluang-usaha/cokelat-kocok-kuwentel.html",
-      "hash": "8206acb2f15704c4b7ae7ed59e75c482a641241fdaff699ab9642abf5e1f61ff",
+      "hash": "a44749fa8bd12f392f53f65cd5116e8cbb31e57ced055f94eb53acc2916c87da",
       "data_hash": "cfcaf23f8f005e4e20c08ca3db2883f860f21e1c2f2f10b19513db9c0661215a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "coolio-barbershop": {
       "franchise_id": "franchise_b1bccf5392daa3c9",
       "slug": "coolio-barbershop",
       "path": "peluang-usaha/coolio-barbershop.html",
-      "hash": "81d5d8c07ad2e6272d616bf41c7939c8767d2dff752a4386df9927e1b76ad6d4",
+      "hash": "1da9b2d54707b47d500d6fafbf7a97d49d0f8c95ab157e78d04a6d601f3d766c",
       "data_hash": "09e93389a9bf096f306486767b5cbcc52732bae28eb62900f2308d31e803429f",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "crispyku-fried-chicken": {
       "franchise_id": "franchise_3190b58ae557d89d",
       "slug": "crispyku-fried-chicken",
       "path": "peluang-usaha/crispyku-fried-chicken.html",
-      "hash": "00c3468d7008c611361a65e315651bf395391b670b743cf496e97f3e89190648",
+      "hash": "074750e04205234caadc2b6924e00567277afb92908644399cde9d7875933d62",
       "data_hash": "a5f62d143473e491a42e283ff1820bc1501fa202bea907dc88150dc6b8f9e2b7",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "delapan-ice-blend-dan-squash": {
       "franchise_id": "franchise_0d6a32399e596119",
       "slug": "delapan-ice-blend-dan-squash",
       "path": "peluang-usaha/delapan-ice-blend-dan-squash.html",
-      "hash": "10606f9f228b25e4f7ac3ce92c6b5cdc4b61e73a78db2203af0f1121007edd11",
+      "hash": "bc8aab1747cc6d82f17c91417be2827c406b97ff7278faa1e901b318e0e165b4",
       "data_hash": "79814381a4c55edbe345856cdd7435d4dc81bc8e64a8c189461a93f5c6fd56b7",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "dfsk-seres": {
       "franchise_id": "franchise_35b625218f02d788",
       "slug": "dfsk-seres",
       "path": "peluang-usaha/dfsk-seres.html",
-      "hash": "ad3f8ea1efb68f4df05d0b041965ecfb97bacdf83ec21820478e2410e72eb83a",
+      "hash": "e644b61d6a05169b15fcc5b58d33c44f720d171c8dd28cd8dec50067883cc699",
       "data_hash": "170556943aea31e906dff5bb68ba227133e7ccb4d9399ed802651f5fa0b8bbf2",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "diente-de-leon-laundry": {
       "franchise_id": "franchise_f84e116a7ad48664",
       "slug": "diente-de-leon-laundry",
       "path": "peluang-usaha/diente-de-leon-laundry.html",
-      "hash": "05cf9c530b7315629830a1d0e15ad6453da9f037f4a6025cecbe8de9cc29614c",
+      "hash": "2ea5a15d02b0933136c1d8238056775e3f02d64ee8cb8ef0e3efd18c332ce64c",
       "data_hash": "93627c68868810baa5f85ecd0ad4386acc63100e4736791a7aef018f7c8757d5",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "dokar-donat-bakar": {
       "franchise_id": "franchise_aa5e25088cf807fb",
       "slug": "dokar-donat-bakar",
       "path": "peluang-usaha/dokar-donat-bakar.html",
-      "hash": "1c02e39706015fc5a27f50d55c16f16f96858149277bcb34ca8f1b9c8d167c23",
+      "hash": "101b4a9d35c5818600e6b852b95fa2b21e1616eb0b02780291edb0f6c10f2d90",
       "data_hash": "80bf32f7c531a2bc067e582e86db8ecd2036824304c1f677741fe0ec69ec325a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "donat-missu": {
       "franchise_id": "franchise_65e28ec1c1fa5671",
       "slug": "donat-missu",
       "path": "peluang-usaha/donat-missu.html",
-      "hash": "7bb4c6c73fb491b4f559168c39d56bae4357091be1c24cc8fbbd240aad423ee4",
+      "hash": "c1fb157e396ba675fec86638f588ad7e209866dbf809a85287d0f17be41fccce",
       "data_hash": "44ba045445eaf9c3239da255cda4ca8e7e51db91a9e3c0e1c1e73d7ea4d09fba",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "dons-burger": {
       "franchise_id": "franchise_b06bdda9c56b0d12",
       "slug": "dons-burger",
       "path": "peluang-usaha/dons-burger.html",
-      "hash": "f58bae9ca01b1fb99cee84f170094574d8f62cd67a1fa2a8cd98f0e229f958a2",
+      "hash": "558b05c99ffbbbb11935eb0feaabce195909dafa5ab2de1506fc66b10c544593",
       "data_hash": "49d203e69d5ef643049fcbfc2332a11a91033b3de5258004acfdac1d6c78aac1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "doyan-ayam": {
       "franchise_id": "franchise_69296f00911a7892",
       "slug": "doyan-ayam",
       "path": "peluang-usaha/doyan-ayam.html",
-      "hash": "3687962b5ef68688a70ebaffb3903e61a25f887066d5c3f453eed87770b78d3b",
+      "hash": "ac398a11af5e05ccde86d37d4486151455b6485424c50c45575833cfab5fb771",
       "data_hash": "2935ffdad089b0903dd7b11c6f323604372da3d396e20e80877fab557494994d",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "dr-laundry": {
       "franchise_id": "franchise_4ecf2e0cebf69e44",
       "slug": "dr-laundry",
       "path": "peluang-usaha/dr-laundry.html",
-      "hash": "e77856b274668ba08228ec241d3668b3533c1a4866bb042e7b86a52db295c6ed",
+      "hash": "f0242da2e85dd8ae859a5e0b52bb71033b955a42138e73e5c5bd78585d0f57d0",
       "data_hash": "cd803d4c1850277cbf05946f84d54e57daf211f323dd536f43e3fe5abba4e838",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "dr-shoes": {
       "franchise_id": "franchise_59664b7af86c1e02",
       "slug": "dr-shoes",
       "path": "peluang-usaha/dr-shoes.html",
-      "hash": "1807ec4d7def680edaa270b45d8146bb2de625cadadbc8e04edca56d7de54e4c",
+      "hash": "589f0febc219197b219b81c8bb081aedd078b93c9300bd935578cb65b45a5bce",
       "data_hash": "d629dbd6646b35040d23f5abe7919ec4d497545f8cacaa99f51ee8bbf5636556",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "dressed-laundry": {
       "franchise_id": "franchise_94c2cf1ea4e19a0d",
       "slug": "dressed-laundry",
       "path": "peluang-usaha/dressed-laundry.html",
-      "hash": "ce2f97ab5377328b7ed3e6ae36b63beb6121f9d4b2f4b5057cb4bb518b813d89",
+      "hash": "bd5e12bb1bf94a2231e222becf39730a82b90cd03127f11b16ed3d8331add306",
       "data_hash": "b9a724dee9bff019a1d68d2414a73ad620b8f2d2bf63d6b6c31e1c4cf1490335",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "eastons-indonesia": {
       "franchise_id": "franchise_2750c4cb9d14980b",
       "slug": "eastons-indonesia",
       "path": "peluang-usaha/eastons-indonesia.html",
-      "hash": "ae0afbb24404a18657ff9f349fe192dae1a761ae3d961ea74480bbac89da0d80",
+      "hash": "852d2eead90d0c337e45df0ec7fe6136a1b5583ac8eceaf45d34310c44d14da0",
       "data_hash": "89664a46e4ec11d9046055fdcc8c807deb7779d7056018ac47f55ff28f396e6c",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "eden-everyday-english": {
       "franchise_id": "franchise_33a73983110c8523",
       "slug": "eden-everyday-english",
       "path": "peluang-usaha/eden-everyday-english.html",
-      "hash": "688a954f4a3b53796f911e61fa5bc22a1e539d806a56371c136a73eb43a55c8b",
+      "hash": "f90187f557c9be5e501433a3c845d1dca34b7f7e060e58b4262fc1cbbf630072",
       "data_hash": "316a48ebe9b6fa5720a9c9742f5a67979670e5678d630764229810bdfa59a70e",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "english-study-centre-esc": {
       "franchise_id": "franchise_8751ec99b692569b",
       "slug": "english-study-centre-esc",
       "path": "peluang-usaha/english-study-centre-esc.html",
-      "hash": "06a0078af83c4b25afe755f3aef10d7a86bea02244104c6b954829c183606ec1",
+      "hash": "5fcd88107228cba8951b31fe6882b185721565675e4faa36ebd445a7932c70b0",
       "data_hash": "b597ef9ac410020238c396653909bf83e91111d42423af519d56bd985bdc2474",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "es-teh-cendana": {
       "franchise_id": "franchise_acd4ed0c4ff496ba",
       "slug": "es-teh-cendana",
       "path": "peluang-usaha/es-teh-cendana.html",
-      "hash": "27f92004d2545718bceb580f1ea1917cc27fa2f5e2b9eb8e58dde1e827e43375",
+      "hash": "89f28597ed5acf0c25466557fb6cf1fa18a03575a96ca3bb4f4b4ec355f502a2",
       "data_hash": "fd6f9da11acd52a7d8c08672eb7d0af8a8e5fdbc715aead44be48d7914aaef98",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "es-teh-legenda": {
       "franchise_id": "franchise_324aeb6f7c904cb6",
       "slug": "es-teh-legenda",
       "path": "peluang-usaha/es-teh-legenda.html",
-      "hash": "b5b1668d343d8d53b6374c1077a42b4a1f00fc32a870023d6792cd9d39bfae08",
+      "hash": "d963bf107fd4bd56401d891634c3447c4d86d9dde39574d01a42baf2315cad4e",
       "data_hash": "b8d3781cb647d4a53398540d540567863626c999660bbf1e70746ac5c3625477",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "es-teh-saudagar": {
       "franchise_id": "franchise_f0ed881600b1f6b2",
       "slug": "es-teh-saudagar",
       "path": "peluang-usaha/es-teh-saudagar.html",
-      "hash": "5112ebf200ef0307263d81f2f1308f030567dc718ee1dda1db08460fc99db126",
+      "hash": "e5b4db62161679541b53f680c24f78b343e8d7fa6b65aac7f82276869639d7a3",
       "data_hash": "c54b994aab5ff08b50c8a781388be130ce66a863f380905f4978a5e6301d74d2",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "es-teh-sulthan": {
       "franchise_id": "franchise_a6957d0880970a87",
       "slug": "es-teh-sulthan",
       "path": "peluang-usaha/es-teh-sulthan.html",
-      "hash": "67a7c060f173c4e8a032e9ab5ad412f7f6b8357b3154feaddbcb793c05988a8a",
+      "hash": "50521dc493e9c8311c657821fbfd848d0516c4ce071a8b697d73b93f3280c24c",
       "data_hash": "902a110cc4602b80756f0f5c7ef9d6e98d7a3feca88af6eaaab1046d27a27715",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "es-teler-indonesia": {
       "franchise_id": "franchise_d9d7198b42172f98",
       "slug": "es-teler-indonesia",
       "path": "peluang-usaha/es-teler-indonesia.html",
-      "hash": "4aa8c83aaadc1feaef254dca452a75c9a8c3ee65ce6a1f5b6dee4ceef28582bb",
+      "hash": "d1a1c0f7b22bdd0bd7ed8e625ec3dcd922bee091c16a6cd077f2e7a9da85c8ec",
       "data_hash": "66d9163817d8e655e3f43b0a26d1fac0656f1a9be50960dca00a463c41a1594e",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "eye-level": {
       "franchise_id": "franchise_618c32eb2c448ac7",
       "slug": "eye-level",
       "path": "peluang-usaha/eye-level.html",
-      "hash": "a30a13159024b40e14e7b0d8a6e7315896748ecf43bc5035ff1eabd3e5a34528",
+      "hash": "ef1516eadc76cd8f7fae13afccc71484d2403b2e95957a13b76f7641471af112",
       "data_hash": "81ecc0f961885d934af905f927b6e6c4b8101437188fcbd303afde8305de292e",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "foodpedia-by-pasta-kangen": {
       "franchise_id": "franchise_91cacd02472bdd23",
       "slug": "foodpedia-by-pasta-kangen",
       "path": "peluang-usaha/foodpedia-by-pasta-kangen.html",
-      "hash": "8442da147abb149e3ff4c30c93914ccad5c48e7fc512a33e3a1da6c250fc3d09",
+      "hash": "38292b935e03266e39a90524f1882485682990807114dcec08def70054f9ae03",
       "data_hash": "3e178ae5f008e914de0446548c41ba6294064d3485ad5c6bcaf68be4012fd78c",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "fortunaclean": {
       "franchise_id": "franchise_f6e5ac5eb01d8ff3",
       "slug": "fortunaclean",
       "path": "peluang-usaha/fortunaclean.html",
-      "hash": "13f0ee1f3516e44b4bde8a263032d04d326fb210296110afb52d8b5dd566d1a8",
+      "hash": "4aa01b5595c97a92fb6b4aaa5437c9bead4a2e14addfcce165a9e058dc23d4e9",
       "data_hash": "a4b42d86469775dd019b7a40f2623cd05092629dc1b9adbe38ce97d2422e02d1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "funstory": {
       "franchise_id": "franchise_4b5e485be42a68aa",
       "slug": "funstory",
       "path": "peluang-usaha/funstory.html",
-      "hash": "fb4042c1f75f57660eedfcb7f388cff36490e1d0aa7469bbb223009ddee07706",
+      "hash": "9b8312c562f7073e64232de92d3cdd1964460d73fc4101818349c79550987ed3",
       "data_hash": "3d38e3a8f3bbb9028ab5969569ae82f6f08750d8b095b2c8f5e6591608b07e50",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "geprek-bensu": {
       "franchise_id": "franchise_aec6d6441e6a9558",
       "slug": "geprek-bensu",
       "path": "peluang-usaha/geprek-bensu.html",
-      "hash": "8ebff7344e9b377afaa03a946d4b7b0edd4bfa09c4f590f2b4cf3aa176273351",
+      "hash": "40d4ab91b3f012d8c2c0a810342deef65e1282cc6f86bbf8fdb462091ce4ca70",
       "data_hash": "256daa721587928b805eaae25b3197c6aff04d7d34b6b5010c9295c609c438b6",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "gerobak-cokelat": {
       "franchise_id": "franchise_14736d8790daf79b",
       "slug": "gerobak-cokelat",
       "path": "peluang-usaha/gerobak-cokelat.html",
-      "hash": "78ae91e9d68fc7f28ce8420c235cc47e68d4fee680eebbf556b64d7bb0d5059b",
+      "hash": "ea6f3ee6c568da7c6da3009a33f7cc4ef4d28c6ada027e84d07f6c05e3f466c7",
       "data_hash": "57356c4f435996198e0103ecad44569ed7ed71f136cdf4e4f4900f6e25d7a7bd",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "ghanisa-aesthetic-indonesia": {
       "franchise_id": "franchise_d6df92dacae6ee4b",
       "slug": "ghanisa-aesthetic-indonesia",
       "path": "peluang-usaha/ghanisa-aesthetic-indonesia.html",
-      "hash": "8b79578dfe7e5c263345935f41c74bf521186840d609f5fb9b7fa2ae7392c36e",
+      "hash": "de3ca1816f2fd69ae43c55e406bc839560494ff6e346d791fa43fe91e212b4a6",
       "data_hash": "642ed2f18f31944786a30995079eadc172887b30e74c75adbe6d288f86319afe",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "gilacoklatz": {
       "franchise_id": "franchise_7b3b2f37c4470801",
       "slug": "gilacoklatz",
       "path": "peluang-usaha/gilacoklatz.html",
-      "hash": "5935ad2cdd22cae2eafea50dfdc47ba3b49c3b7b60a9b51e99cd031bb12c7d01",
+      "hash": "652bef68e9c2269ed9a72bc324c0e07f7b1662269fdf08dd2918e5b2ff90ecac",
       "data_hash": "62035577216f51ccda2bde13b1a9ad6e4853908f788bd8a8b0b1eac84a708712",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "gorillaz": {
       "franchise_id": "franchise_cccc6426c01d09e1",
       "slug": "gorillaz",
       "path": "peluang-usaha/gorillaz.html",
-      "hash": "200f911ffa256c10a89ce224e0826957c4e525c8e87f9850f586020b53517f7a",
+      "hash": "c1ad005fb2d5b904a25b77d3fbac9b489fb63c1c2853e07318a3da1a1628b686",
       "data_hash": "1b361430ac0f6f0b12f448e9962c1f461a5cb9fcb1b54204402599c53e4a4458",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "grobbak-korea": {
       "franchise_id": "franchise_4039b0c474867f21",
       "slug": "grobbak-korea",
       "path": "peluang-usaha/grobbak-korea.html",
-      "hash": "e9ef99bb58ca274e0760c843c9445c8fa5c93f06bc4e87de4cbde32a64d8064a",
+      "hash": "04b615db430a5fc849aee41a8e5fd69782643fe6813f3643f709c46a85dd5b2f",
       "data_hash": "5bc840d6c750f37b07548caba14897cbb9c0f3f6b68002b373b8f621a9850417",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "hello-cafe": {
       "franchise_id": "franchise_6e76e3350c938c51",
       "slug": "hello-cafe",
       "path": "peluang-usaha/hello-cafe.html",
-      "hash": "796de485a3d6b948bc471bd9154dc870fd0778e03933783e3f8937629bbbe103",
+      "hash": "7c0181d73e4dc8ef645f8c8ce64045243d09e75efa79c9df16acd637adab249c",
       "data_hash": "5934f1d1975280f2ffd16765fdebf3251e454c9726d67c675ff56923cbabb4a8",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "hydrophobic-lab": {
       "franchise_id": "franchise_369d51272cfa70bc",
       "slug": "hydrophobic-lab",
       "path": "peluang-usaha/hydrophobic-lab.html",
-      "hash": "910de67bc7ec8b1c5c94ca4d8c1956d59c822209929742379694822a9ad12b39",
+      "hash": "3cacd87dbd77d9fb9ea3dab082ff6809b985b30313cd0b4fb2e6f9a5fbadb07a",
       "data_hash": "8e74ffc6dd92fdaf1cfa448b3ebe645f493b476826b9b279b463dd94b516ef9e",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "i-cocoa-indonesia": {
       "franchise_id": "franchise_e8e2c7eb0247140a",
       "slug": "i-cocoa-indonesia",
       "path": "peluang-usaha/i-cocoa-indonesia.html",
-      "hash": "48d98159a4cc07003bd90d2bed012f67c9cc5298ddd7b269a3a840eea86890b3",
+      "hash": "997d328fa61d0846ffc68e8ab99d5d80a312d6dcb6e0913e876fcfe5ba8de985",
       "data_hash": "6c748f9ad8f9f617b0765c83b57090d60c333b14968f72fcc24be34e3af8a7ba",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "i-need-eat": {
       "franchise_id": "franchise_ae517a7d45349c51",
       "slug": "i-need-eat",
       "path": "peluang-usaha/i-need-eat.html",
-      "hash": "a47c0a444a383bd7a1cb106b92d154806f3d132fc95871f939643f9add5ae622",
+      "hash": "c48359de143c5e23e6b1d3aa65252ab17897fffa3bdc0191d00c8437bfcf3b9e",
       "data_hash": "143bfe9b2fc665635efbc10ab1daad265e92a21c348c68d74caa1e02466a0f7a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "iga-bakar-gondrong-the-one-only": {
       "franchise_id": "franchise_f486308f9f5c46c1",
       "slug": "iga-bakar-gondrong-the-one-only",
       "path": "peluang-usaha/iga-bakar-gondrong-the-one-only.html",
-      "hash": "0f59ee8f91b4aac26912483149e2a7e5103123cd1ee8b3aaad9a7499598224d7",
+      "hash": "1e197290a6fb1189c4ca7ff1a97d99ffd6698b6f5597a1d233bb33dab5cd9e6f",
       "data_hash": "b730967fdaced55c14828e4444c43e50cfa0538fde38fdb47a62067a79c3d296",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "jarimatik-magic": {
       "franchise_id": "franchise_6f86c8c3d0ee7738",
       "slug": "jarimatik-magic",
       "path": "peluang-usaha/jarimatik-magic.html",
-      "hash": "280aac938f3d77225cf93b80567790329daa1ac61c35e48d4f46f1af4130d142",
+      "hash": "0985c196a5ffffde9a1d598f7694d5b90660881332d845db062159ae3980ca42",
       "data_hash": "3b7cb698f366b4df6793b660d10be27164163e8a7d4afaaa6624ee3107ff6f5f",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "jjanchi-korean-food": {
       "franchise_id": "franchise_15e57cd5da93722a",
       "slug": "jjanchi-korean-food",
       "path": "peluang-usaha/jjanchi-korean-food.html",
-      "hash": "95ac38c55f52e025552206d94de3289f978d6246a43e7fc78d07a934afb50184",
+      "hash": "9ee65f115d834059fe130a493b2902485714345aeaa123cb33f5c144e35df537",
       "data_hash": "23ca13646f1b9db8fd1ec5f1257274157371cdb7f2048b1ceb8e9275b219ea0d",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "jne-express": {
       "franchise_id": "franchise_7109ac5e04e5c6e6",
       "slug": "jne-express",
       "path": "peluang-usaha/jne-express.html",
-      "hash": "474ff5c0437e396599665faffcf5fb957b3616a7ee9443eb9e45137c94a627e6",
+      "hash": "d276f17615489130adb4024e96f15a5cf4b51e0da408c3d2fc27b31453163d80",
       "data_hash": "f05583d4484094dbad877cdd91457d51d0631b88398a2cdc7dc20bf60d71ed49",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "jus-ookii": {
       "franchise_id": "franchise_f48ad06b06a327a4",
       "slug": "jus-ookii",
       "path": "peluang-usaha/jus-ookii.html",
-      "hash": "b0afa708df9f6557f6b031c80b5c63d47533fc767322f823b84e9c955d1594e1",
+      "hash": "d12d19cac5c54dc9db67e46ca028a6c97b6d33f91a6480d54125d7fc1fafcc6e",
       "data_hash": "d32e7d3e2378a965d8b226cac0046c2e298e975ab58d196e2f7bb9f81b8eac7d",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "kako-thai-tea-indonesia": {
       "franchise_id": "franchise_99664b4d066818c4",
       "slug": "kako-thai-tea-indonesia",
       "path": "peluang-usaha/kako-thai-tea-indonesia.html",
-      "hash": "62efb44081c8e323720e12069b5f90ef858d16ec21529fae9f35c967d46a322e",
+      "hash": "3ad2b452d11bca07c9d8dad2429287719a6338ba640287c56198293a5df32206",
       "data_hash": "3d51e922e3d350b3d7e237b6fab4b2f4e78aeb6c291651b664f92121ed4ca884",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "kala-coffee": {
       "franchise_id": "franchise_b166fbf5f72d6beb",
       "slug": "kala-coffee",
       "path": "peluang-usaha/kala-coffee.html",
-      "hash": "2355dc7ad4c80cea3e2385948edcffc497e9ebe2fde7ec771dcd5370f75a454f",
+      "hash": "b3e22e3fafc4bda1129fb27a7bbd74c0931b9b7b672de433bfff14e8634814a4",
       "data_hash": "8411220cf5c14007c2c0f6b4d6c70e69d89689a05c00b0b3e13375115e81638e",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "karagengenin": {
       "franchise_id": "franchise_cec2d439176ad1ea",
       "slug": "karagengenin",
       "path": "peluang-usaha/karagengenin.html",
-      "hash": "c71935258675080062ce1a0e954380fff6aab46e4ce808653814184648adfe8e",
+      "hash": "adcff88f882d696c491d446b06fec3121382dfc13daddd68ea1eab16ad6bdb56",
       "data_hash": "937a5a65c45f8d5b0b8c09dbccfef5be37ff9b6447eac4477f7812fe4511e35b",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "kawai-cheese-tea": {
       "franchise_id": "franchise_da2d8a67df2240bf",
       "slug": "kawai-cheese-tea",
       "path": "peluang-usaha/kawai-cheese-tea.html",
-      "hash": "1abe96c9edee26c6f5eed1ce95ebccd4dca4b1dc87661477118cc785c054071c",
+      "hash": "b3096a58601575969962db7220c70962ffc1ce4720c4cd9ba6a6dc85b05ae437",
       "data_hash": "09c16b4b8b51c30a125dbc548033db776b6550f2251cda9bc5dcb62491a93794",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "keding": {
       "franchise_id": "franchise_bec7d160f4d6ef7d",
       "slug": "keding",
       "path": "peluang-usaha/keding.html",
-      "hash": "ef2c71977d99a3ce8e1c84285da7d3c7572da72f4635bd51d219e174e358c068",
+      "hash": "876d313837bec82a8b9ea3a59da56130981cbc68d4398171a2c471aac123b3ca",
       "data_hash": "f0a510f9eecabe6d293a2eb8c6c658a5d63d4e03827773cc13900a16b2b69ff1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "kepiting-kompromi": {
       "franchise_id": "franchise_72ea9fed985a49d3",
       "slug": "kepiting-kompromi",
       "path": "peluang-usaha/kepiting-kompromi.html",
-      "hash": "a7a41da55e5e8c00bce0fd0d1d326fd474d34787fcb0d18177425cc0de0097d0",
+      "hash": "dabc114cbb5fbe0a36b5afa7950b4256a737e90e4a70d66e66284b16583fae0b",
       "data_hash": "87b1ddf48b8d9637cf67987cbc312e3c503abb8b3ef8c32ab04f08ee84242f2d",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "kharisma-bahari": {
       "franchise_id": "franchise_9f7100da63030c19",
       "slug": "kharisma-bahari",
       "path": "peluang-usaha/kharisma-bahari.html",
-      "hash": "fb5c88c9606e3ff86e8ebc5c190b79189714312dea24b23706d5219ddd617238",
+      "hash": "c877ad0fe833a785d5d13793c03c58fa6c1877359744bcf8ab6af000693d9e38",
       "data_hash": "57f80472852c49fae2efc503dc79fabb83f66bb730b3e54a7814a98e851ff200",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "ko-kei-chic": {
       "franchise_id": "franchise_e59024dc62e53b29",
       "slug": "ko-kei-chic",
       "path": "peluang-usaha/ko-kei-chic.html",
-      "hash": "ffcd1b114cff7ce6c49a9ff2738c9049e6843ca1898cb3665a9f586a1427f093",
+      "hash": "c8e417db1a85b8c221d4ea9aba053ee89778d1e4c84cd09ecbff9bc2d75d843f",
       "data_hash": "9cd808686c3e32ef248f158c63cb77d810572d266d0a01c15b63d6abf5faacd8",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "kopies-sudirman-by-helmy-yahya": {
       "franchise_id": "franchise_d6b4184b78b9c0c2",
       "slug": "kopies-sudirman-by-helmy-yahya",
       "path": "peluang-usaha/kopies-sudirman-by-helmy-yahya.html",
-      "hash": "3d0c67b1731235d3c3a91a83f069b20ef017a3cde4246ab1e435610864060c5d",
+      "hash": "d1e8f13346d6b3636a981d093c1bca285b56f57da09016ace1031c29877ed095",
       "data_hash": "2035002177f09171a65d93b1ed2ffa072998dcc8218085118c07166efb1d582b",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "kreditmart": {
       "franchise_id": "franchise_a5874d0693173078",
       "slug": "kreditmart",
       "path": "peluang-usaha/kreditmart.html",
-      "hash": "3bc17176e3d8a0ef7f91f4e1ed0bab7601e424eadbf0896eabc1a9a90fc90f20",
+      "hash": "262b1b40df97827761be90c280a5548e82a147b577faf8c83d2e657cb0d0f51e",
       "data_hash": "c2d4f09487c4f4e669d521458d688103d83d88b07ad751b835f95378e5b186d3",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "kuch2hotahu": {
       "franchise_id": "franchise_001b582a1baf6caa",
       "slug": "kuch2hotahu",
       "path": "peluang-usaha/kuch2hotahu.html",
-      "hash": "bea046b0b9c74af8171c2aeca6fc64073ea5f14ce03db45b05b66c5cb88f2271",
+      "hash": "8a8e66540c7f83deb563303b50b9c52ddab2f844afc9389587d984bc64a3c4d3",
       "data_hash": "5739bb641aabc62e6fb26c00d99c2fc8b1bf23f08d09b38540016469b28c9850",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "kue-balok-lava-merapi": {
       "franchise_id": "franchise_85b97ec6c6d969d6",
       "slug": "kue-balok-lava-merapi",
       "path": "peluang-usaha/kue-balok-lava-merapi.html",
-      "hash": "2d207caabb501df5fb699b9595bc2539ca8d2f0c67fa84c1fb50ea09c4f7f71b",
+      "hash": "faede3a938bbb3c90e940564c9dee1f958a3c8981a4cad02187dba47a51276dc",
       "data_hash": "f0c4980f7339ff049551b4f77b41d20adf2180314456340940da73d6682ac16a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "laundry-hari-ini": {
       "franchise_id": "franchise_84e19bcad82246b9",
       "slug": "laundry-hari-ini",
       "path": "peluang-usaha/laundry-hari-ini.html",
-      "hash": "c44c0921b82cdc0bf09c27f9812075d4e7a69501152a2da76c2b24ac78b2399c",
+      "hash": "f64c0b55dd1c7bc5e38ee8b7548549bd65d1800c70a7e40defad5c58c479386d",
       "data_hash": "d5417b945a5b0e7cc4d02ef4cd7cd39db8e81fa8113d80eb2f42f57a24964305",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "laundryklin": {
       "franchise_id": "franchise_6b7b29bc74642d56",
       "slug": "laundryklin",
       "path": "peluang-usaha/laundryklin.html",
-      "hash": "01863438708bb3529c70a1aa2f93c9dad4f854ac8233357eb2b96649d046b0ed",
+      "hash": "b126754ef11f2cd944640b3739a4efd9a48fc5eed6329a094d0f60a100b33205",
       "data_hash": "fae4c097364ae4a3e71fc26306c047144a3eaf3690d2da7e45537cd7fda669c7",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "layar-belajar": {
       "franchise_id": "franchise_6ea3c799bf75922b",
       "slug": "layar-belajar",
       "path": "peluang-usaha/layar-belajar.html",
-      "hash": "f4b58020d3282caba0101ae0543588f244fe3abd43bc4db21872af602bf0fec3",
+      "hash": "fc080f8ddbcf2c5e2c01d9527fba12a0890e61ac32336cd5db1d72a16a2a213e",
       "data_hash": "d124bb547f84d054abe152601906dbcc27c6477c0d47a1b59c2713dc698e1777",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "lion-parcel": {
       "franchise_id": "franchise_eaaeddc04578b723",
       "slug": "lion-parcel",
       "path": "peluang-usaha/lion-parcel.html",
-      "hash": "5ea41e6ee8c756905c283cf116d331016e628dca819183143341d91beb3c11b9",
+      "hash": "f76c3e47b3eb1b58f296bda95ddd3f22601f2ece3f8b93eea1ab344460964617",
       "data_hash": "553a745ef25acff7fbde02ba62d24107e24e29e84894c5f5c8319340d058dee6",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "lp3t-nf-lp3t-nurul-fikri": {
       "franchise_id": "franchise_df392739bf1b75ed",
       "slug": "lp3t-nf-lp3t-nurul-fikri",
       "path": "peluang-usaha/lp3t-nf-lp3t-nurul-fikri.html",
-      "hash": "690a805a5e5492f5c85a6fd8d11dc0c3920e72df9a4f92bc9d8b8b6a04abe247",
+      "hash": "7ae1a4988cc0fc506e813cb5310db30e1743508257b547c711d47e69ec69afa7",
       "data_hash": "f5c258d661d29710438aec467b382c5a2ce49753103163251962e92fb4be1b3b",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "magic-bean-coffee": {
       "franchise_id": "franchise_1238e8b57ff0dd27",
       "slug": "magic-bean-coffee",
       "path": "peluang-usaha/magic-bean-coffee.html",
-      "hash": "a013f6610d7db46c5377b190476802a0f0679d849bf20b96b043f0712ee89706",
+      "hash": "89bdbf40d6580cee691108262779f468229da4a062d20c71f6cb1ece2a4ce60c",
       "data_hash": "3e8bf44be499345bd152959a747dbe96ddc9ec7856c216a416c622c471ce35a7",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "magic-water-cless": {
       "franchise_id": "franchise_4e57ec52ccafa052",
       "slug": "magic-water-cless",
       "path": "peluang-usaha/magic-water-cless.html",
-      "hash": "eb1f3ab8217d03b0aadcf77939f033b13b880d81c2bb3ccc23f2132fca3401b7",
+      "hash": "561f0e2db187520c0c4bb276d92c9982914ee6c771faee8506fa60d66851863c",
       "data_hash": "d241984260c5c731ea9d2aae068613ac848c9464b1533dc56ea413a857b46f09",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mangojack": {
       "franchise_id": "franchise_a56812531678041c",
       "slug": "mangojack",
       "path": "peluang-usaha/mangojack.html",
-      "hash": "6f4e2c62cc69d8ac8e30d9cad2aafd8c555cae11111a63aed3f40c6a0002e2f6",
+      "hash": "cf79d3a44444b04701cd1c97f091fbe24aa3bb68a4eaf71f00a9844bf0245cfd",
       "data_hash": "e1b249fef7942c56eec7a4d9b27d05cbef394a09d4c53cab0e2fe040f7932e42",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "masakan-mas-gawa": {
       "franchise_id": "franchise_03f65c9423f06d0b",
       "slug": "masakan-mas-gawa",
       "path": "peluang-usaha/masakan-mas-gawa.html",
-      "hash": "1d74ec094c48c3e2835b54f60b5fdd6cfc3fde60d154455caede4109a358c399",
+      "hash": "3b828b9752f6d3953824334108668f289d428896614e95c200bf5f18598a5387",
       "data_hash": "cc18be708eca7cc4a755bc6a4c0752ff65db9a9d27126b8b32779c0fff0650b4",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mastercheese-pizza": {
       "franchise_id": "franchise_dcfce7a63474a708",
       "slug": "mastercheese-pizza",
       "path": "peluang-usaha/mastercheese-pizza.html",
-      "hash": "d9b582f1a825c53c70565dcf70e7ca9b4cc2f9de705cdf621a5040d06113e824",
+      "hash": "9cdd0602c2fbc7d086ba416a05e2804de9b8f74f57a7aa58cf1bf6c62ba0735f",
       "data_hash": "7e76e957f04909c89a43c6f4d02669962afc472163c33db4a562348276310407",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "maxim": {
       "franchise_id": "franchise_239a35b767573a48",
       "slug": "maxim",
       "path": "peluang-usaha/maxim.html",
-      "hash": "23e7b2f285397b7c225da9c1c72d005cb6cd1db5717661f0c216bd18640a80a6",
+      "hash": "3c142dd937ac0d3fd441893a54ff095558f4eed4d3f6142b0bb3b966d2f3cf5f",
       "data_hash": "2269c31ff148fc9d74f2b91f9166ee608d1d2655f884e9b37dfc18ed2333a8a9",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mayur-fresh-mart": {
       "franchise_id": "franchise_068021d9ca95f1df",
       "slug": "mayur-fresh-mart",
       "path": "peluang-usaha/mayur-fresh-mart.html",
-      "hash": "11b98508a2ab2420746531b432c02fe9ffdfc0622784a949ddf5995d168633a8",
+      "hash": "4e065164cb38ceea687aeaa2085fd410b2c61a2437d3f9c11b488c2767fb0bdd",
       "data_hash": "ff8b229966cef616e8d8b48b9c6135bb13a1d1bb18cfab4567e0305955ca6291",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mbok-galak": {
       "franchise_id": "franchise_da334055413d4e49",
       "slug": "mbok-galak",
       "path": "peluang-usaha/mbok-galak.html",
-      "hash": "f828fe7026eb549a93686d5b94e7ec184d98cfa6c2625f564908bf1dd2054538",
+      "hash": "b94e019560e981ac4095e7da2c5314bdca49ab0299b585990925ff8771dcc74c",
       "data_hash": "13c051ec1dad7abe7f6a98b381ab52d4dcc89afe5971aa8de16750c49e8689bd",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mega-cemerlang-indonesia": {
       "franchise_id": "franchise_c30dc5c9fb34b2b4",
       "slug": "mega-cemerlang-indonesia",
       "path": "peluang-usaha/mega-cemerlang-indonesia.html",
-      "hash": "4134b0068388385c08032d70cdec9ae84394d1feeb4b1397ecaf9fa13b599fa2",
+      "hash": "a2b2d7226ca1d9bb429262cb2e8a48385db36236afba104d744ae397e8389088",
       "data_hash": "61b511ace6021a83d700f1f33e4cad7d2dedb3b1bd70b9b0ef12f7a29fdacbbc",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mi-num-dong": {
       "franchise_id": "franchise_800a2fa5d17afe92",
       "slug": "mi-num-dong",
       "path": "peluang-usaha/mi-num-dong.html",
-      "hash": "5d08e244d42f0f90cc385c94aba6fccb75e79815d2f1f4b55e42b64b106eb406",
+      "hash": "4354462f605d4237b2990c16c85ff04f1e93659ad27b4e35a7b943a582c02a18",
       "data_hash": "4b9779c08efa4d11a1e0cde9bdd6d138d904a96bb574b516fcd7845c2e1d6cd1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mie-ayam-bakso-hakiki": {
       "franchise_id": "franchise_1acea41121c3d51d",
       "slug": "mie-ayam-bakso-hakiki",
       "path": "peluang-usaha/mie-ayam-bakso-hakiki.html",
-      "hash": "fcc19d04a7fba3f15ce4f72fd3748c415c148acaacd198b2f7eab68cb8865374",
+      "hash": "1f5c9b1ce8aa20cb4b489a7709fb6f15d9e0ccaadbfc74c9af52de1ef3ecfd58",
       "data_hash": "b88b942839bf815bc3fa4d750ff08c40f1a2f0fabf2d560ae4bc93e372e904e1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mie-ayam-bang-mawar": {
       "franchise_id": "franchise_1dcee899d4cb5d5f",
       "slug": "mie-ayam-bang-mawar",
       "path": "peluang-usaha/mie-ayam-bang-mawar.html",
-      "hash": "67fa7a2d3078402a2dfb338a8b42928012a43b5de8b4e296cd2b93d6d94c6ac8",
+      "hash": "e4f766a0fb2f91838770149ff39e618620c673b50808d0404d9cf8d3580ec771",
       "data_hash": "1aa12ccf3b9d149ce536a64f0147f1546fbfb373851e2014e7ac555b9ab99bec",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mie-ayam-bangka-tjapbawang": {
       "franchise_id": "franchise_a1f357af40b0eb0a",
       "slug": "mie-ayam-bangka-tjapbawang",
       "path": "peluang-usaha/mie-ayam-bangka-tjapbawang.html",
-      "hash": "c5a165de036cc4b8a3b7cab602b7af876ab989dd82e53e31604e47f4d517dcbd",
+      "hash": "7658f80c3b71eb9d9a3c928126d319e02c325247c687af80fcd04330949e394a",
       "data_hash": "4aa0d73594f27b6ab25d77289eb8f73671133190e9a5b5ecb4a4770adf4ef690",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mie-ayam-cabe-uleg-rawamangun": {
       "franchise_id": "franchise_1ab05024213975b0",
       "slug": "mie-ayam-cabe-uleg-rawamangun",
       "path": "peluang-usaha/mie-ayam-cabe-uleg-rawamangun.html",
-      "hash": "f7dcb8f26315bbf49e2d8aa164f776e87cd19a414d042bb558ae100ddb1c813d",
+      "hash": "879aa6b7c811f2200676e11d25ef56da50c8447163fac894df17812c7d5df169",
       "data_hash": "00032c7bb385d66516a18d62b1182454c335da249df06bf3cfb34a6ac37b5199",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mie-ayam-grobakan": {
       "franchise_id": "franchise_390fc5a5980c8df3",
       "slug": "mie-ayam-grobakan",
       "path": "peluang-usaha/mie-ayam-grobakan.html",
-      "hash": "c43c94dc7a75c85d0bfe13b7e940abb284bdab3086df1ee3d45d2a97fe57fe09",
+      "hash": "2827c6ab80cf605a9f1ac4d8ffa5b2bcf2ef401d581d64b4668030031e60f0b1",
       "data_hash": "0c040c44df81036fb4f6a8f54de12fc1fa09c34c6daa8ddf482e706944b3cf21",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mie-ayam-tuman": {
       "franchise_id": "franchise_1f2a35f8a5b5c6be",
       "slug": "mie-ayam-tuman",
       "path": "peluang-usaha/mie-ayam-tuman.html",
-      "hash": "ae5b77afc038e30411da20addb2599b6d65eab4168a3d78a72dba4d6c21ac135",
+      "hash": "f69ad8d33dc0d836bfc7b7a3b688dd840685c0ea26dd27e2c8d55bc541cd01c8",
       "data_hash": "203c43cc44c5293017c83ef56afe78237d9beebcd3a1134d7f5848b4556e6333",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mie-njerit": {
       "franchise_id": "franchise_91057fcb96cf6061",
       "slug": "mie-njerit",
       "path": "peluang-usaha/mie-njerit.html",
-      "hash": "a4181fbbe8a8ccf165a5b7f54e162d5473cb8a4748eaf077d895e00ec5d3014f",
+      "hash": "4cf855a4415885204997d0c13a5a184b85b65165ef6d5da53ff9aaded71b7997",
       "data_hash": "6c4ad8d24dd71ece5131198dda31f798c7e11058fd2d1ac33e1dad874534fa24",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mienian": {
       "franchise_id": "franchise_e3a947c3b4e4eb51",
       "slug": "mienian",
       "path": "peluang-usaha/mienian.html",
-      "hash": "a2dd3c3556ba4f2628d02734c11a04e4d7888a0475ebb1f5cc8395810167ead9",
+      "hash": "dd204e46582c0161fa5ab0eb97454621a9f0ec2c58fe886a97e98ba94ebf3178",
       "data_hash": "d9b312a26fed0404eca89fdbd6dde8b7aa893f8e84cb76d84e094e3255bc280f",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "misnow": {
       "franchise_id": "franchise_8369295930112fcd",
       "slug": "misnow",
       "path": "peluang-usaha/misnow.html",
-      "hash": "b45ac184cd7a7f677028ccc81dca5689b46067a1a35d424a421fa7a51ea9b295",
+      "hash": "e9114554247b01fd627f6a2212c58705589e3908044eebd99cf0569f146d1b1e",
       "data_hash": "f12bebc72d389e1f02a899732d20369dc3ea2f9692b4891f07d3ece2db37aa1a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mitloin": {
       "franchise_id": "franchise_ac4fd6dc248d7a83",
       "slug": "mitloin",
       "path": "peluang-usaha/mitloin.html",
-      "hash": "2dbbd96859840e292b4c540c0ddb509eae3705ce5b16c78db6603a5aabb2895d",
+      "hash": "1facaea16c1f3b0ae3b577d2504c3fa572b4d25c122a91d65a2ab7635de6db2a",
       "data_hash": "839f272de0c3f7c18962c6fa0351f782d91b5cbe56194b1c2b93bd380dcd2f8d",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mitra-indonesia-cerdas": {
       "franchise_id": "franchise_1d82c2aa20a6e574",
       "slug": "mitra-indonesia-cerdas",
       "path": "peluang-usaha/mitra-indonesia-cerdas.html",
-      "hash": "8683a08e6aaaa8117e7085760c1e2e6af59a432e6e8c1823477b3bf60fd93a25",
+      "hash": "906a92282f17cdc983060f1c41ca3042140cdc758f4ac384eaefab739f520bff",
       "data_hash": "569f7b57e65111f15cfc293f8e297f3af45b08a3f7f16c58d4470126268e89a0",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mobilmint": {
       "franchise_id": "franchise_2d152b4109d57777",
       "slug": "mobilmint",
       "path": "peluang-usaha/mobilmint.html",
-      "hash": "ea9dd22a3eca0db33f14ade820ac86b0f938ead3701cdab107cdb8fd79d60931",
+      "hash": "d58c2c95758058cf12bb397a4e2219714664835e29ddf4a6034d81d0cd5b5c0a",
       "data_hash": "94255eaeb74b97fc79fb9304cf73d3ce55039fc042c98688e4566a5daad6626c",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "mogami-drawing": {
       "franchise_id": "franchise_a53dfc21d1c4e1e7",
       "slug": "mogami-drawing",
       "path": "peluang-usaha/mogami-drawing.html",
-      "hash": "760fee91613000df5fbe2ca926830e6c5e83456ad8f4d278e413a8617081d0b4",
+      "hash": "0652f14dc8200e80b701556b33d5b652db490b8b122bbb4949bbf984ff213570",
       "data_hash": "dbfc2c658e3b33be2cf0b3255e42ac43805d4838db77c82e1912e5e4d0c381fb",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "momochi-premium-mochi-ice-cream": {
       "franchise_id": "franchise_8b81e5d4fda31a46",
       "slug": "momochi-premium-mochi-ice-cream",
       "path": "peluang-usaha/momochi-premium-mochi-ice-cream.html",
-      "hash": "e10119aa8848fc6418c65a4c4f78da5feedaf9695cc2562e5724e9aaa8117b8f",
+      "hash": "b929ac45f64206c48c18d0b306e568f5ef0cd9196eb53ee7fd9c58554493c642",
       "data_hash": "dcb25266604be02593776be07971e0574b69f5d7559dc0a2d96c4c696d292009",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "multilink-indonesia": {
       "franchise_id": "franchise_a5cb0ae996b99eb8",
       "slug": "multilink-indonesia",
       "path": "peluang-usaha/multilink-indonesia.html",
-      "hash": "e82fa35da6d2c37dcecacb9c567395c845338d3b737222f34cea2420e7ea8dda",
+      "hash": "195b059c364b4691e0f6ae16e5243f070237ef43cf1caeca2cc4a36d86de4498",
       "data_hash": "a3588094e92f614bbb2163a7395f092d9049e2d3c61b0f88e17af8b19ca8258f",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "navia-kebab": {
       "franchise_id": "franchise_7cbca058a736b586",
       "slug": "navia-kebab",
       "path": "peluang-usaha/navia-kebab.html",
-      "hash": "53486440d95a94b90737cdd644ba24d4405fc30453e3e894e21523d5a457c40f",
+      "hash": "668a77ca762f02f13cc6ce3c6056df6ff6d7756c3c85d918071c355faefc66c5",
       "data_hash": "98f49b2648391cd82c51a5b22f92b39182dd760e60c887ca6b2eb8ed858ac171",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "nayz-spot": {
       "franchise_id": "franchise_6cd4226b47220390",
       "slug": "nayz-spot",
       "path": "peluang-usaha/nayz-spot.html",
-      "hash": "761da630de11c28af8f92eb279b0cb06c1ac81c64d71b2425eabe46265772dd5",
+      "hash": "a8c5e9241e3415e46964c59a1a849c43b053d5c7ef1e064b9747f62cd2c97283",
       "data_hash": "6ee8fc31fc693ee6869b104781cdfb208205bb3d1b3a21233d7c2d803ab98f9c",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "nec": {
       "franchise_id": "franchise_a593525a06522674",
       "slug": "nec",
       "path": "peluang-usaha/nec.html",
-      "hash": "ea79046b741f0d23d1114162cd1ae7fae24e1d867dec44d21968db4ff80e439c",
+      "hash": "5eb162f696fc0ebd6086bad1d2cf289393eb1fbd070ff2a1c94c9df47035a3e5",
       "data_hash": "ac8d73cf130ca063cabdcb74535a2cf703e6034c4a08fb30013192fe5ad36c8d",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "negiya-bowl": {
       "franchise_id": "franchise_b54527af09d550a8",
       "slug": "negiya-bowl",
       "path": "peluang-usaha/negiya-bowl.html",
-      "hash": "1947d043dbe7f3436549d2618446405f2003ba93b535cf6f9a0bd73fd3bc18f7",
+      "hash": "68ae23c0af22f6e4e653fcf4ba977eb44a4ca310eee184ba8fde70e80794cf4b",
       "data_hash": "807a1291f83d29efd863f5d9d591ad0a8dbff8595a9922c76203e9219c5fd234",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "netto-laundromat": {
       "franchise_id": "franchise_881867b9bcc4da03",
       "slug": "netto-laundromat",
       "path": "peluang-usaha/netto-laundromat.html",
-      "hash": "7ecf8a7d30314981ff5653d90fa61b5d2d8fc46986618efa1f9a0bd10299c0e7",
+      "hash": "dc88077281acbdbcb54e5fd21b3dd57aa2757d9932deffcbbd670df94fb1df2c",
       "data_hash": "b847cea0ad69374424585168ab62190aed9acc2f8162451fb3a8f76107c86063",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "ngecheese-indonesia": {
       "franchise_id": "franchise_cd52ed6e4a0b50fc",
       "slug": "ngecheese-indonesia",
       "path": "peluang-usaha/ngecheese-indonesia.html",
-      "hash": "0d72f896ecf98458d41782d6570142af3b89dae8a0ebe014885649f0e8177c1d",
+      "hash": "5f8508ec014e805d6f58850532927ee384b12145c3b595b2217e673ba8383057",
       "data_hash": "abcdbdb957afdb33c1867496135857c44c41c73c9eb50a02cda20d9059220353",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "nyam-yam-fwb": {
       "franchise_id": "franchise_fa07204903f63d8e",
       "slug": "nyam-yam-fwb",
       "path": "peluang-usaha/nyam-yam-fwb.html",
-      "hash": "6f227de4bf5224873d0d06933e6eae7bc90c3d26923cf2b31250a773e933d1d2",
+      "hash": "82edec4362bcb1d5429246645d19ddbfca1098b7053b6215c2af9580892a6d92",
       "data_hash": "3383a77bff2ec764ff7d29444e1608e9e989c9b39893636e5dd488ad2320a72b",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "nyc-pizza": {
       "franchise_id": "franchise_750d31f42a6bf6a4",
       "slug": "nyc-pizza",
       "path": "peluang-usaha/nyc-pizza.html",
-      "hash": "4b954210451caa4eb52f5a9c6c946554874d5351ff14d2ace14738fba4641605",
+      "hash": "3698c8e3fec64e30354a69a838411fdb5a0a414ab4ac038a71858ecaedeb7e44",
       "data_hash": "ced5d4822c8a4dce1d4b8ed5785ee9816aa243740445f6d2d22f5fc63e770a11",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "nyoklat-klasik": {
       "franchise_id": "franchise_b1877d2e928504a3",
       "slug": "nyoklat-klasik",
       "path": "peluang-usaha/nyoklat-klasik.html",
-      "hash": "4b979653825b69b28f52162f29f6d50a1334c94c50be066884bbbc0aaf85dad0",
+      "hash": "0a5e8be364beef01d875de41cb98941f510a952c3bd5d7aee358600d7a828b13",
       "data_hash": "0824b68cbc24ef5f9141047785f04039d6bf74c1c51e4ce76afe60991e3cd9fe",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "ok-bento": {
       "franchise_id": "franchise_1c325375efac535f",
       "slug": "ok-bento",
       "path": "peluang-usaha/ok-bento.html",
-      "hash": "ad7a8e507dd58a4c0891026429dba56cd06b247a73e33a8fd207d80d75dc48d5",
+      "hash": "b865701293748c76d7dedbca1091ce0a94c60b8a4a16fe6e2b95c11ec25d6e5b",
       "data_hash": "d475916986d7dbdb78a4070214597bdf4669b12e86ba37f31254dd2e8409a654",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "oma-opa-cakery": {
       "franchise_id": "franchise_3ba0370f71fe4b35",
       "slug": "oma-opa-cakery",
       "path": "peluang-usaha/oma-opa-cakery.html",
-      "hash": "f44281376c57f7159f5b203d282904dc170b98897ca0e6b93246cffbd5cdc75d",
+      "hash": "68535075b196f97bddefc812fb628d52452022fda0e9bfcaa943591bc97e13f5",
       "data_hash": "b62c35804bcca19831ce306b9841a0d04acfc9e51f97b9a2bc9c8ab16fd95e4b",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "oneprojasa": {
       "franchise_id": "franchise_b29be954031a9701",
       "slug": "oneprojasa",
       "path": "peluang-usaha/oneprojasa.html",
-      "hash": "a0689491696fc937adea26f81d7768a30f515c020b4d2df5e3c2d2b0c3998d4b",
+      "hash": "1475d5766eeabea9732404d7a68ec52a0201dbad3211123a5d931783d1d82aba",
       "data_hash": "7bc59e92ee4fd3616dd45403315d5d8f993fad40158760ba8fddd2fff0a36ea3",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "osaka-ramen-indonesia": {
       "franchise_id": "franchise_40c3d5de9e7eac03",
       "slug": "osaka-ramen-indonesia",
       "path": "peluang-usaha/osaka-ramen-indonesia.html",
-      "hash": "ff29d5ad728de7eaaae3fad8ecc44d105a84bf2bfc42affe4ead19f78f601638",
+      "hash": "01b9cec1e28ad23b197498b5d125717bf39992094605b909388dde18eedeb591",
       "data_hash": "db9f362d2978678d0b8d9ceab2d50f7821cef49547aba7c71b043670030f9bb1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "panda-art-studio": {
       "franchise_id": "franchise_80f31bac6f3e4d0c",
       "slug": "panda-art-studio",
       "path": "peluang-usaha/panda-art-studio.html",
-      "hash": "d30d4fc68fbd92d07452d60ca1ddffe097d598f570197a20aab45defa741f586",
+      "hash": "e902b0ba612e048bc7636bece80021d7d4295b99a3142833e4e99c0c67217d6f",
       "data_hash": "af4502a1d5aefb4c3b44c3cdfa013cb3204af53baa0574923ee027f529e110b6",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "pecel-lele-nusantara": {
       "franchise_id": "franchise_30270615eb8b2b3e",
       "slug": "pecel-lele-nusantara",
       "path": "peluang-usaha/pecel-lele-nusantara.html",
-      "hash": "857e02350078b6f04b87b1d9a22852fdfec48819e6b0dd923f72d9373c0940c7",
+      "hash": "a38384f5880452d83f5b2612649678f9becf5633a3ca3b65964274e149af67ef",
       "data_hash": "2d42777f43c3f5dc70b9796a5b23bd677d0b6d17df6712ebe9f27d7f9aae328d",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "pempek-farina": {
       "franchise_id": "franchise_1636c6c40af34eb9",
       "slug": "pempek-farina",
       "path": "peluang-usaha/pempek-farina.html",
-      "hash": "66f1012f2431083e718e350c8e6f65b51cf3c4d2d0a9365b451778e6fa4bfed4",
+      "hash": "4c9a6dbfefcb3316beb4255318ffb96d49c094cad581ad717a014c25ab93b352",
       "data_hash": "7316b2616ac517f6c8227e8ffbc3b585dac718904b7cb9f1bd962c6b633c67ac",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "pentol-jawara": {
       "franchise_id": "franchise_6e5afaef167a3140",
       "slug": "pentol-jawara",
       "path": "peluang-usaha/pentol-jawara.html",
-      "hash": "3a724cc5f91df44faefe933025d9091a6e79dba50c32c3091ee9517b9d05ca3b",
+      "hash": "b8df5bd4b33413e9dd248e2898e4282aea855084d636a448ef166a749047dac6",
       "data_hash": "9a9c009b997e4d5d63a03f716c78e424690a055eb0818b021d4d1fd3dbadf630",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "pentol-ngosos": {
       "franchise_id": "franchise_f52cb204ae0e5e35",
       "slug": "pentol-ngosos",
       "path": "peluang-usaha/pentol-ngosos.html",
-      "hash": "c4be93e3acce1767f73dd390d0b312575842a3bbcba893a1a30c7ea6c9d1439e",
+      "hash": "f5a3a1f1dce546ff249d510e22e3b26112ce85ee34901cca575da188ecef074a",
       "data_hash": "40d54ef7114f8c9fcf4d314ccefe6712d61a4c49078044c8caf7e0c4f70a1c7b",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "pentol-petirr": {
       "franchise_id": "franchise_5dcf0310f1b4c2a2",
       "slug": "pentol-petirr",
       "path": "peluang-usaha/pentol-petirr.html",
-      "hash": "a6c0d18d0216f662b64707a13fdea14e037c97552cdbc9fafdc771a97dd6b4e7",
+      "hash": "939fba6fa171fefc7e0b4ddb8c3927885632b8fc1bf895fc51be2b742143bce3",
       "data_hash": "e9406f5dc8de2629f3135bb657bbaf9c9a9af25098c2ed69d223bfcb7ec30727",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "pineleaf": {
       "franchise_id": "franchise_06b2e4ce2f8028dc",
       "slug": "pineleaf",
       "path": "peluang-usaha/pineleaf.html",
-      "hash": "60080a423f61ddffae80c43087e24bb40a6e1452c8c3ddd5df0191824d6ad77c",
+      "hash": "96f8e546dbb5d510b547442211f573cdca88d1cf5123de083c50980cad0b9711",
       "data_hash": "7c939e08a1990383f9a50c754099a4a80ab2c988e11c171822f2471cb961a544",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "pisang-molen-ma": {
       "franchise_id": "franchise_e0e0d7158556b97b",
       "slug": "pisang-molen-ma",
       "path": "peluang-usaha/pisang-molen-ma.html",
-      "hash": "91979e56abd1c7271ced5f7aa169471284d7798ea081b83862d12e478a5b5444",
+      "hash": "bf68d186628ae7755fa25e796b626dd5343e2fafe0607c7655e7d68114f163ee",
       "data_hash": "52d7b5949ab8e1c11efc6204350af6d3481bc5965de1efe73c221f060d6e1109",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "pisang-nana": {
       "franchise_id": "franchise_5427c7d910be293c",
       "slug": "pisang-nana",
       "path": "peluang-usaha/pisang-nana.html",
-      "hash": "7a8c0a3ebab0c893d089a7a853f6b411b05137ab0e5cc11dab676d46481086ae",
+      "hash": "d2c8eafaa64dec0cec84753add68fe62d09b4f4d3ac067c33d2cec42236dfa54",
       "data_hash": "6b9ce8f49bdbe6dc0316db733a097afdfaa06fc83a9622fc7ef644f902fe78f1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "proban": {
       "franchise_id": "franchise_73b76651d3159741",
       "slug": "proban",
       "path": "peluang-usaha/proban.html",
-      "hash": "f51ee717482baa8121c5fd13486760da05ca296fde64bc660438af5ef65462fe",
+      "hash": "d17ca2455d6892d70083db22722d5a05298ca145cee5b4517ff2bfdd0896d662",
       "data_hash": "1cb869261f39032af1e43a86c5ce6ca95ee27da74e3b7876408ed1033d3c3670",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "qais-chicken": {
       "franchise_id": "franchise_46df00821dd1b368",
       "slug": "qais-chicken",
       "path": "peluang-usaha/qais-chicken.html",
-      "hash": "83724dcb744510e6b98339d0b36b8e727a9f0c2af677edc73a0225c31e46ff3c",
+      "hash": "855dccbfe2ab2e5da82c3f9f78cf21e640e6ffff12fd5ec9a2b5f7379cca161b",
       "data_hash": "77092134854fd1e2092d4c219da8f675a3a2273457f2f8b58768d95f032731c8",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "quipper-school-premium": {
       "franchise_id": "franchise_cba85dcf33ab1ea0",
       "slug": "quipper-school-premium",
       "path": "peluang-usaha/quipper-school-premium.html",
-      "hash": "1890a4f20bf5b9a3b58fc8220a5cbd370f17f74a3ac317e3f9993de2f73bab99",
+      "hash": "28256a870789e7a6eeeb9badff912412d6bbd4b9ee9f3726132a1db74780f63e",
       "data_hash": "334032f7b345d6af8b46be4796294afefa964610bd7d90b07cd7d5f238303c22",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "rene-baby-shop": {
       "franchise_id": "franchise_7da7857c8e6e48fa",
       "slug": "rene-baby-shop",
       "path": "peluang-usaha/rene-baby-shop.html",
-      "hash": "96bfcce8d7eb585e08dd1dc6cbf4c4674efbfd5cfe8e494eb65c668230c7ea17",
+      "hash": "f57b8333151f6f6df61b31b7e9d1022b64275b86dc61565c6e902655e77e2477",
       "data_hash": "64b98d764966581d9fe13b180cf2f3dc4bbfcea06d67d9732abcff79f0d2de44",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "rice-boyz": {
       "franchise_id": "franchise_81c0d20df8e1f311",
       "slug": "rice-boyz",
       "path": "peluang-usaha/rice-boyz.html",
-      "hash": "41a88a2f1bc88f7c64321523bf229fbf3dad82a578f938d7af5e145c2619cba6",
+      "hash": "3e85307d6167ad4d7652b5606af0040754b63d0d744fb29ec9adb8656733e9b1",
       "data_hash": "7e33a5d22b8cf48f2aa7632c202857e4004c4fa9be28747992b05cb29ba34977",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "robota-robotics-school": {
       "franchise_id": "franchise_3524ab2b3ae7ec72",
       "slug": "robota-robotics-school",
       "path": "peluang-usaha/robota-robotics-school.html",
-      "hash": "bb4ea564e3b28b29dd1a6a3d9ad3a800d6a20e853493ca35ff5028858fc36b97",
+      "hash": "ed82fd4b65fd5d79168ba3420d95b8c0fbaf3b41d4992d89d0d04c8f2b8f4f06",
       "data_hash": "9f0e0e9a4869a7dc6335245af32313b85581dfad01f002d58ac3e09431376534",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "roti-bakar-ametres": {
       "franchise_id": "franchise_6f8d6ccf7b3e8d9c",
       "slug": "roti-bakar-ametres",
       "path": "peluang-usaha/roti-bakar-ametres.html",
-      "hash": "af7d7c3e4e760b6a485590e3a160dd3fdaf2e44cbae5093e6609671322db1601",
+      "hash": "7208babec8ab1e41a85c054aa53a1856cbe3bb124b1f442849d6390ee788ee10",
       "data_hash": "d69ae0744e85d42aa0c29e23d0f23e20763584195d1e2540c34ffb67604196c6",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "roti-joka": {
       "franchise_id": "franchise_fb2cb2ab5bd58102",
       "slug": "roti-joka",
       "path": "peluang-usaha/roti-joka.html",
-      "hash": "5cf1cd51b336e5f99de2a6ccef3005846423d5b81dffd7888e3c12143c7ebc6a",
+      "hash": "18ae5fb89274b2f993ec1b483dd1a236af14fbafea0967167e156d9e907e6700",
       "data_hash": "382cba36be397678aeb26e6e862328dbecaa17ebbdfb80ec076b5ada21197c5e",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "roti-kapiten": {
       "franchise_id": "franchise_f6b42a0d1d23749a",
       "slug": "roti-kapiten",
       "path": "peluang-usaha/roti-kapiten.html",
-      "hash": "7ca886ae5a6a685f56addd494a926fb2908d1a276fc6ef33e92b2f3b04979f33",
+      "hash": "2357b4f1e3343c13ee8c7f07a74d5b481e94b1a6f00af7130afb4d6b4e33c6cf",
       "data_hash": "5fbf56d71d32d3bdce4431d1217d8da426b8f69e7e060a61a8e8defd7468c58e",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "rpx-outlet": {
       "franchise_id": "franchise_d10272fecb534d85",
       "slug": "rpx-outlet",
       "path": "peluang-usaha/rpx-outlet.html",
-      "hash": "495d69a44dd2bdd165bdedf78ab22b4850cbae89b7b1ae5fc525152a7eef7a12",
+      "hash": "727b4d9f894f2f6ec49ffa851927dd6b48eb2e4a7e6153034bb21d3c09b04c2f",
       "data_hash": "3b9671029f6f9bf3d80ad69f458bf6340aed8b98d54c13b287417e3d6e99fb14",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "sate-taichan-nyot-nyot": {
       "franchise_id": "franchise_d4e703906c85d79f",
       "slug": "sate-taichan-nyot-nyot",
       "path": "peluang-usaha/sate-taichan-nyot-nyot.html",
-      "hash": "1018c5ee6eca457f9b586b9cd2f1b07f4296d8a636e85b69b13ca08f9d4f1436",
+      "hash": "086f2f87a4a8a3445f4b399b42577efed325ac8eec03e62299e39b5cebb04753",
       "data_hash": "283b6beb71e40a59936070742f36ac9aec626e9ebb6a6246e7667a4298f2b667",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "say-hello-signature-drink": {
       "franchise_id": "franchise_9bbd2cd6b8bb0f69",
       "slug": "say-hello-signature-drink",
       "path": "peluang-usaha/say-hello-signature-drink.html",
-      "hash": "88f3ea4a2f835daa49a8124cd25f800d8cca02bc6f94041d46de1dda01b4e8d7",
+      "hash": "feefa53727f6c6137574726d5fd833396bacfb98991135219411ae59c46e054c",
       "data_hash": "02eef20b0d4d154f985a6d3a50f5464544ae8a2133f10ddda23b9d06d0c77f09",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "sekolah-penerbangan-iefa-semarang": {
       "franchise_id": "franchise_2193200dfda471ae",
       "slug": "sekolah-penerbangan-iefa-semarang",
       "path": "peluang-usaha/sekolah-penerbangan-iefa-semarang.html",
-      "hash": "902c08208b01ada0b0e0ea12ce203900e58b14c2feb51818238c24e116521106",
+      "hash": "fed6ecc2473707ec64bf7bf67f3d0c5084610f7d0dba66604f4fbd77b9dd9adf",
       "data_hash": "6b3cad23af34ed5ae6d24432ad7617c74f80e05feb62118e1af4c49a88cb9203",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "serem": {
       "franchise_id": "franchise_43f8c02409f496c7",
       "slug": "serem",
       "path": "peluang-usaha/serem.html",
-      "hash": "bfdc909e8e3c0434500027fd0563680ab9ac2b609281037ae38475dab1ca3c45",
+      "hash": "d4a00caa069df2dd4a117e6ee6d4ad051ce83023196891622556f3dfad09f953",
       "data_hash": "8aab0ac681e7a218c284fa5fbc7dde2d760432535eea7e26a599bfcb8f7ea7d0",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "si-tahu-giri": {
       "franchise_id": "franchise_92869ee7b7a063e1",
       "slug": "si-tahu-giri",
       "path": "peluang-usaha/si-tahu-giri.html",
-      "hash": "b320dc98c7cb71295a96038da17c7600eed40444559b08fdcf8afb83e2b84a98",
+      "hash": "5e16e87a7a570347f08e7a128b1041568ecf10f96d4b24293170a0b30c342139",
       "data_hash": "c99c35b5a26b2d591b29d91ba684450b5e246de72eb6efa9991802bd7950c6e7",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "siomay-hore": {
       "franchise_id": "franchise_f9f08334d0b5bc68",
       "slug": "siomay-hore",
       "path": "peluang-usaha/siomay-hore.html",
-      "hash": "a019c53f9aa220ff48a2b7bcc35bc80152b97834b27e2b03b20964d818d52112",
+      "hash": "4a7f86a87f7203ecc1bf9ec9d3b225667eb3d15f51a4e25ce357a0557b2d70ca",
       "data_hash": "dd6ba761f9c8bf2c742e30267643156e3d6899484637102d94f952d85d69b6d8",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "smokey-kebab": {
       "franchise_id": "franchise_a5dcf0ad303c5297",
       "slug": "smokey-kebab",
       "path": "peluang-usaha/smokey-kebab.html",
-      "hash": "da46b11356e947ba754d1a8c5a09af3235afb3335b62365c77e0904ad2bc8f16",
+      "hash": "3669d865ec091907f3eb8be86973f56f8a674920f2aca822cb549e840c1be725",
       "data_hash": "5c8e78222c7b9efb1625600b8fce74f9898a592e9ef50228d91f8fbaa7dd9102",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "socclean": {
       "franchise_id": "franchise_bcdbc3b85dd6a5fb",
       "slug": "socclean",
       "path": "peluang-usaha/socclean.html",
-      "hash": "7f58ad2e48db2959bb8104423f646b9fb6f7cf585a6be25016d4fd801fd5e117",
+      "hash": "8ebd948ee703d2028a4c42ccca3237a2ca0045009b987097fc937816fda5bf8e",
       "data_hash": "540ec95491217ea8dd85c8908b82df80ab4dfb102b3951162a5eccf74f59eee1",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "solophoto": {
       "franchise_id": "franchise_881c18783c45f4cf",
       "slug": "solophoto",
       "path": "peluang-usaha/solophoto.html",
-      "hash": "b68f458a41d593a8325e1f574a41b0d220b76dd4569374ec8912593b3a1e932c",
+      "hash": "341c13e656e53fd4d8049c171dc835e2ff2454488d116c7cda6d9cf8af3685fa",
       "data_hash": "25256edc62c188f21ccb818b9c9d0ef81da630aac513e26e2f6b4361694ff5da",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "sorcha-laundry": {
       "franchise_id": "franchise_9b618288cb068db9",
       "slug": "sorcha-laundry",
       "path": "peluang-usaha/sorcha-laundry.html",
-      "hash": "8dbdce938c7dcecd0c4d660f891779cb172428a307f3327aac35adc9dee8ede8",
+      "hash": "cec726d5dc5cac24eaa9bab05c3b0b74da6dca172edb9beb20c76f6ff8785951",
       "data_hash": "becb5e6b13ebe2d5397ff634cb47a5f180ad8da429e93531188417425a193c93",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "soto-kudus-pak-minto": {
       "franchise_id": "franchise_fd440f679e11bf12",
       "slug": "soto-kudus-pak-minto",
       "path": "peluang-usaha/soto-kudus-pak-minto.html",
-      "hash": "93afae115be48f4d2b4e0260fe464b94fe04e2f27a408f13cfceffff28bb5d25",
+      "hash": "74af3dfc52d03e074426b8ef9d5df04f655de4948060d425de1e59c070805098",
       "data_hash": "78de6eba9caa7c3ce301358c151427ee7ee33ea206cf2d8488bfe7875c30c112",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "sour-sally-yogulato": {
       "franchise_id": "franchise_99dcc26db51500be",
       "slug": "sour-sally-yogulato",
       "path": "peluang-usaha/sour-sally-yogulato.html",
-      "hash": "d2031a25ba75757eb575121a8e6c84fa8d5c042facf1e8ef31de8e5ebd794a96",
+      "hash": "5ce45ce42a4244121b7dd236f67779e5aa119ce954ed93e51e8c334a1074d87a",
       "data_hash": "325afd7f0bdf581ab2258c08d6334d95b8d8586ba8994fb188489ef3e0eaee1c",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "steak-and-cheese": {
       "franchise_id": "franchise_eef7dc2a995a2159",
       "slug": "steak-and-cheese",
       "path": "peluang-usaha/steak-and-cheese.html",
-      "hash": "20c70192790a3145318dc1f250110504ecc38bdfedd6ac4c5a77695246971e12",
+      "hash": "ee816ca062aba4c0887ddfdd8f7009e8341793fd496de39aec8ecbfe0da56db3",
       "data_hash": "d67856552f9923eefae3858dab0029297945afc0eb9740fe2e59527c231128f3",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "stella-maris": {
       "franchise_id": "franchise_f26899a73e13c072",
       "slug": "stella-maris",
       "path": "peluang-usaha/stella-maris.html",
-      "hash": "5ed3d18b4bda561b227550afdcedbe10b05b8c6ea7383ef7d21f3316131d6185",
+      "hash": "c7b745a38176eb55aff1713db5140c107ddd964474af1fb4fa95b0e9fc7bc257",
       "data_hash": "1a28ea7328173be852264252680d83f2bb098655aca5e54db7b5f518af81fc88",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "suga-boba-indonesia": {
       "franchise_id": "franchise_b76e77b9f1e37e34",
       "slug": "suga-boba-indonesia",
       "path": "peluang-usaha/suga-boba-indonesia.html",
-      "hash": "b20e39a22c3e50cc685d41cde31065f8cfd761fd9f3e6271748af678ef094b61",
+      "hash": "10bacd13781531be7836f283993efe6c5315ff25498defd4911be6c539348cbe",
       "data_hash": "79eb7960be379cfa1e12ed45955c396a3b45044492fd74f5735c61eeac504bd3",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "sumoden": {
       "franchise_id": "franchise_684f97af5a3d0ccc",
       "slug": "sumoden",
       "path": "peluang-usaha/sumoden.html",
-      "hash": "7ea2e17faca1a1cbb9d2c88a3ba5a38ff9961460788347fd1fbeadc3d2c3bc59",
+      "hash": "22c3a9fe593ed8b964e89f3fe12f41a943086b21e93897fb362fc65f058056d0",
       "data_hash": "c08f7c96368cb40bb5ad0ea4d2de1610b03f58172be8ebfcbb4970552f11907a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "sunday-morning-express": {
       "franchise_id": "franchise_05f9c81c2df1e35d",
       "slug": "sunday-morning-express",
       "path": "peluang-usaha/sunday-morning-express.html",
-      "hash": "aa222dce343aaf5caf0e3b52f85f37f63b0c98343c84435986f1b049a02eeb06",
+      "hash": "70b33f83f7e4ebff128c2e0b0873c01083ac2a7b4a7f542759cefff3057b1133",
       "data_hash": "6a6cdb575f078e179b783d8095833849fa03c57b90950bf4835846d01a2fac80",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "tahu-go": {
       "franchise_id": "franchise_6ff09719809eeade",
       "slug": "tahu-go",
       "path": "peluang-usaha/tahu-go.html",
-      "hash": "4c4fdefee4717c64c2f4f3294eb944485eeae595be3d78c433d422a4c20b22d7",
+      "hash": "bab7e90c5c4aa16cc3733dd9e97dc700d93c377f268c8563c0302a02e3fa7645",
       "data_hash": "59c7f9eae36df75df8ba6b048e60c5eccad1be03651ca56b6939984cf1df78db",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "tahu-jeletot-taisi": {
       "franchise_id": "franchise_8926e0174f0948c9",
       "slug": "tahu-jeletot-taisi",
       "path": "peluang-usaha/tahu-jeletot-taisi.html",
-      "hash": "8cc66163f2961c96efdcdfc1677972cc659c51dcb87fffe5854dcba566234f95",
+      "hash": "49e1d9867e0e3b4ba79aded3845a816b615ab15f2dbfdd3ee08f5fdbc1d8d8da",
       "data_hash": "8acdc44c88e9eff2b9c19bad6383001586dca13c4949aadd36056d4969776f9a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "tahu-josjos": {
       "franchise_id": "franchise_3d3d029e3248b72d",
       "slug": "tahu-josjos",
       "path": "peluang-usaha/tahu-josjos.html",
-      "hash": "aff140b3af8c1e94555f978b6b9f05fb13493898c1e2572f04b1d0053f9a1e99",
+      "hash": "37645356c1e7d1729e0e55b5de0efe081da78a23e18fde97383c8b02bf42fc4b",
       "data_hash": "23f513a6f4a0de0e4bf82a8e40274c526f488c17c905d66f9ea6ca8f02bc8409",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "tahu-kriuk-boss": {
       "franchise_id": "franchise_eb8d020ab74ae4aa",
       "slug": "tahu-kriuk-boss",
       "path": "peluang-usaha/tahu-kriuk-boss.html",
-      "hash": "97ee5ff7fb25b5b57eb7ad14d997429c896de9d99da2bae29b23639846a0d4f9",
+      "hash": "4b342132b30432d9094db2c3a9d6c00bc0c67f2794008c730d1504727ea69ae1",
       "data_hash": "ae7e9d5a9a51dd4cc408ff36e9bb7d1ac5a438e8702588641a95ab4a07680fcd",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "teh-farah-steak": {
       "franchise_id": "franchise_2c7520066b2cbb29",
       "slug": "teh-farah-steak",
       "path": "peluang-usaha/teh-farah-steak.html",
-      "hash": "091e2f074946a2055514e853604d5157234c922c192599d9036519ee6bca62f7",
+      "hash": "aeffb1aeeb49561dd935c277206dbb18d5b191a536760a47b225194b91cbb107",
       "data_hash": "d62a815c4a371ec0a3c3add037073aee41885f523ffeb40ba55926fdae1f53be",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "teh-kenanga": {
       "franchise_id": "franchise_26920dcbe309e371",
       "slug": "teh-kenanga",
       "path": "peluang-usaha/teh-kenanga.html",
-      "hash": "ffa26709a55751fa02007c8dd2803c24c1ea5bee873f4d83429e637c6e24a893",
+      "hash": "434830afa7f89a478f4810165eeacd812d3a66f633ee00c3fc2d89b614f5d069",
       "data_hash": "2061de5e1287a81deb314c9784ab3d02ce94d8c159f693471ea32937fe892817",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "tekokabe-nyoklat": {
       "franchise_id": "franchise_c61488b476c37e69",
       "slug": "tekokabe-nyoklat",
       "path": "peluang-usaha/tekokabe-nyoklat.html",
-      "hash": "4719c4052e8e24709a6d0b87acd628849abfef7d3be48bd07033be2ebc7d01ee",
+      "hash": "7c8014df9f699d7759afd7cc62a7ac4fa9b1967f090c6f9891c57da5a3cf9649",
       "data_hash": "c381ca47ba6e1ed0ab970f3fdb136ffbe279badeeab76cc95c9e1911df56f150",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "the-bananas": {
       "franchise_id": "franchise_468eb30dfb88a10e",
       "slug": "the-bananas",
       "path": "peluang-usaha/the-bananas.html",
-      "hash": "b4a1dd521c77d50257c8aabcdd59dc582797f449e848dca870ce1ed0cb540074",
+      "hash": "4e5ed42e540685a164483175cddb8e04da26a62574f4be892f74133cb74713a5",
       "data_hash": "e9f490de0fd5e59c4cc65376e4ac77176c9b44cfbcb9321bf2ed5e5c03a34743",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "the-kings-chicken": {
       "franchise_id": "franchise_9fd0e394d931a9af",
       "slug": "the-kings-chicken",
       "path": "peluang-usaha/the-kings-chicken.html",
-      "hash": "1cc22e40b061b53bc284aea48865e6c9db596cb7067809847674ad7a268e53a0",
+      "hash": "28a79985cf459d7056a810c4a0908f5462bc9ed603fc72eca5063efe80b8e151",
       "data_hash": "5bcd5ba76cba7d7097da7edbf50f6090abb88ac72eafcf5f22c7d5415a11dc93",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "topcoat": {
       "franchise_id": "franchise_5ccb895a86d99950",
       "slug": "topcoat",
       "path": "peluang-usaha/topcoat.html",
-      "hash": "415b79465411a915982d32314dbee5851152212998a391e9e7ab3d57b21ae226",
+      "hash": "c8b9759166480e61a4fe685d48f69bc3e72a092d587f9cc9a5b12ec5535bbf7a",
       "data_hash": "cd196440922fd15e728486c43079137dd42cad05895e94a7e4a0a4c16b066336",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "tunisia-kebab": {
       "franchise_id": "franchise_db0eb7bb75781012",
       "slug": "tunisia-kebab",
       "path": "peluang-usaha/tunisia-kebab.html",
-      "hash": "0f4d7e7e225a1e9106ae09f1253663767060e21428fa4e457ce19a848cfc69dc",
+      "hash": "661796d14203787dca425a3835d6f4b7de16704752d243601cf73ac441cb0c1b",
       "data_hash": "49cb6674df6748644710c652f8fa51cb80c0ba8d7e9fb4577d48bcb449e267d9",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "v-tee-waffle": {
       "franchise_id": "franchise_fc1354f85a198b0c",
       "slug": "v-tee-waffle",
       "path": "peluang-usaha/v-tee-waffle.html",
-      "hash": "e794c6fc5bb847f6a01c6b60fedbbe47b257d0268adcc8a9511ba5d1f21f16fd",
+      "hash": "8ccf156889218dbc6eb366ce35ea0cbce5b5ecaa86afe911d8e114588453dd33",
       "data_hash": "982d5bbaded20ce14c5d458d1899977e25acb7ea5d1b7763893e0ec0bae8e869",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "voss-air-minum": {
       "franchise_id": "franchise_f52e6907f5802c00",
       "slug": "voss-air-minum",
       "path": "peluang-usaha/voss-air-minum.html",
-      "hash": "30ff4b678299c9afcab9e1bc504c3647dd66ab2e3e8dee137d7cdf074ef14c79",
+      "hash": "430e81fe16594c80980397065cacf8f9b472b11f970c8b3999010357df514e46",
       "data_hash": "89833bc1b4e73b2712b3aa22b23f31d3e9b17c9962d85478c5f74a7a8444bf65",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "warminspi-rodjo": {
       "franchise_id": "franchise_cde546057216efbf",
       "slug": "warminspi-rodjo",
       "path": "peluang-usaha/warminspi-rodjo.html",
-      "hash": "daa95aed4f50ce6f765d6c9dab03da606de14a10bfd9fb32eb72b24be468e100",
+      "hash": "78dc9431845344a40e70f35ad46dfe1adc537337e0ddeaef7d99f8f06d66e6b0",
       "data_hash": "2fdfd0d454792f4792cd4a08aa429282ecd3a96b5c818eb8eeb5c2cf19415852",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "wisco": {
       "franchise_id": "franchise_f317e8c478b2b578",
       "slug": "wisco",
       "path": "peluang-usaha/wisco.html",
-      "hash": "1a8960470561c84831139a8034122195f359368b3b8d927bfdb5e84ddb79f3a6",
+      "hash": "fbf2ef90c225a347777fa7bb5fbc84ba25b169643fb87f830a72c53da4353519",
       "data_hash": "f960f4ad53d5f032bee636910460f01740f2e21dd82b430bddac92fe8af6efb8",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "xoxo": {
       "franchise_id": "franchise_41a96fea436e7d0b",
       "slug": "xoxo",
       "path": "peluang-usaha/xoxo.html",
-      "hash": "f05a1df2f15060113b02f73d73a3ee6ecf54cdaa48dfdc0748a5ac99f5a8afc8",
+      "hash": "617d96adb18c95905f0a3a079084e7035bd5b24073a18a0db25861990db126eb",
       "data_hash": "927ad8e0000ee8ff354acc201ec3ae6e9b0215afa1c1a45e940861c54cf3df0a",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     },
     "xto-car-care": {
       "franchise_id": "franchise_303670d0919ccfdf",
       "slug": "xto-car-care",
       "path": "peluang-usaha/xto-car-care.html",
-      "hash": "504c46f464800c3448ab29dc93e40da919c91044ec816d936b9c70c2fb76ff04",
+      "hash": "9c192d7e3ec0597da16f27172e529970e64989f985c63395ddfd668d177e93c5",
       "data_hash": "737512b68ba5ee203db9be3c8497a0963ffdeefb02591de74cd496e936d7ed63",
-      "generated_at": "2026-07-06T03:52:36.453Z"
+      "generated_at": "2026-07-06T08:18:24.109Z"
     }
   },
   "index": {

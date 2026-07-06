@@ -14,6 +14,7 @@
     var publicationRows = options.publicationRows;
     var leadSummary = options.leadSummary;
     var systemHealth = options.systemHealth;
+    var trafficGuardrails = options.trafficGuardrails;
 
     function render(data) {
       renderOutreach(data.outreach_queue || [], data.outreach_summary || {});
@@ -22,6 +23,7 @@
       renderPublicationControls(data.publication_controls || { sites: [], listings: [] });
       renderLeads(data.lead_summary || { by_status: {}, recent: [] });
       renderHealth(data.system_health || {});
+      renderTrafficGuardrails(data.system_health && data.system_health.traffic_guardrails ? data.system_health.traffic_guardrails : {});
     }
 
     function renderOutreach(rows, summary) {
@@ -192,6 +194,31 @@
       ].concat(recentOps.slice(0, 3).map(function (row) {
         return '<li><strong>' + escapeHtml(row.event_type || "Event") + '</strong><span>' + escapeHtml((row.severity || "") + " - " + (row.message || row.route || "")) + '</span></li>';
       })).join("");
+    }
+
+    function renderTrafficGuardrails(data) {
+      if (!trafficGuardrails) return;
+      var dailyLimit = Number(data.daily_limit || 100000);
+      var warning = Number(data.warning_threshold || 90000);
+      var actual = data.actual_usage || {};
+      var controls = data.active_controls || [];
+      var usageText = actual.configured
+        ? "Credential tersedia, query aktual sengaja tidak otomatis."
+        : "Usage aktual belum disambungkan; guardrail ini berbasis limit dan throttle lokal.";
+      trafficGuardrails.innerHTML = [
+        '<li><strong>' + escapeHtml(data.plan || "Cloudflare Workers / Pages Functions Free") + '</strong><span>' + escapeHtml("Limit " + formatNumber(dailyLimit) + " request/hari, warning " + formatNumber(warning) + ", reset " + (data.reset_utc || "00:00") + " UTC") + '</span></li>',
+        '<li><strong>Status usage aktual</strong><span>' + escapeHtml(usageText) + '</span></li>',
+      ].concat(controls.map(function (item) {
+        return '<li><strong>' + escapeHtml(item.label || "Guardrail") + '</strong><span>' + escapeHtml(item.value || "-") + '</span></li>';
+      })).join("");
+    }
+
+    function formatNumber(value) {
+      try {
+        return new Intl.NumberFormat("id-ID").format(value);
+      } catch (_error) {
+        return String(value);
+      }
     }
 
     function publicationStatusOptions(selected) {

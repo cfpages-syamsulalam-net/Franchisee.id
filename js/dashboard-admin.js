@@ -28,6 +28,7 @@
     publicationRows: document.querySelector("[data-publication-rows]"),
     leadSummary: document.querySelector("[data-lead-summary]"),
     systemHealth: document.querySelector("[data-system-health]"),
+    trafficGuardrails: document.querySelector("[data-traffic-guardrails]"),
     isAdmin: function () { return currentUserIsAdmin; },
     postDashboardAction: postDashboardAction,
     reloadDashboard: reloadDashboard,

@@ -475,7 +475,6 @@ export function injectDirectoryAssets(html: string) {
   var form = document.querySelector("[data-directory-controls]");
   var grid = document.querySelector("#uc_post_grid_elementor_d0f4a5f .uc-items-wrapper");
   initCompareButtons();
-  initPromoBar();
   if (!form || !grid) return;
 
   var cards = Array.prototype.slice.call(grid.querySelectorAll("[data-franchise-card]"));
@@ -614,14 +613,6 @@ export function injectDirectoryAssets(html: string) {
       });
     });
     renderState();
-  }
-
-  function initPromoBar() {
-    if (window.__franchisePromoBarLoaded) return;
-    var script = document.createElement("script");
-    script.src = "/js/site-promo-bar.js";
-    script.defer = true;
-    document.head.appendChild(script);
   }
 }());
 </script>

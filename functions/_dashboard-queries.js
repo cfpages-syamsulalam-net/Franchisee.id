@@ -576,7 +576,7 @@ export async function getLeadSummary(db) {
   };
 }
 
-export async function getSystemHealth(db) {
+export async function getSystemHealth(db, env = {}) {
   const [latestMigration, recentRebuild, qualityOpen, operationSummary, recentOperations, recentAudit, webhookSummary, analyticsSummary] = await Promise.all([
     safeFirst(db, "SELECT name, applied_at FROM d1_migrations ORDER BY applied_at DESC LIMIT 1"),
     safeFirst(
@@ -657,6 +657,44 @@ export async function getSystemHealth(db) {
     analytics: {
       last_30d_by_type: normalizeGroupedCounts(Array.isArray(analyticsSummary) ? analyticsSummary : [], "event_type"),
     },
+    traffic_guardrails: getTrafficGuardrails(env),
+  };
+}
+
+function getTrafficGuardrails(env = {}) {
+  const analyticsConfigured = Boolean(
+    env.CLOUDFLARE_API_TOKEN &&
+      env.CLOUDFLARE_ACCOUNT_ID &&
+      (env.CLOUDFLARE_PAGES_PROJECT_NAME || env.CLOUDFLARE_WORKER_SCRIPT_NAME),
+  );
+
+  return {
+    plan: "Cloudflare Workers / Pages Functions Free",
+    daily_limit: 100000,
+    warning_threshold: 90000,
+    reset_utc: "00:00",
+    actual_usage: {
+      configured: analyticsConfigured,
+      status: analyticsConfigured ? "Cloudflare analytics credentials are present, but automatic querying is intentionally disabled." : "Actual Cloudflare usage is not connected.",
+      requirements: [
+        "CLOUDFLARE_API_TOKEN with read-only analytics permission",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_PAGES_PROJECT_NAME or CLOUDFLARE_WORKER_SCRIPT_NAME",
+      ],
+    },
+    active_controls: [
+      { label: "Listing detail view events", value: "3% sample + 6-hour per-listing dedupe" },
+      { label: "Listing contact events", value: "1-hour per-listing/channel dedupe" },
+      { label: "Browser event budget", value: "16 public product events per browser per day" },
+      { label: "Premium promo config", value: "Only loaded on Premium/Profile surfaces, 30-minute browser cache, 15-minute response cache" },
+      { label: "Premium promo visibility", value: "Dashboard-configured per-day view cap, default once per visitor/device/day" },
+      { label: "Premium promo events", value: "24-hour per-promo dedupe" },
+      { label: "Premium page events", value: "6-hour page-view dedupe + 10-minute CTA dedupe" },
+    ],
+    docs: [
+      "https://developers.cloudflare.com/pages/functions/pricing/",
+      "https://developers.cloudflare.com/pages/functions/metrics/",
+    ],
   };
 }
 

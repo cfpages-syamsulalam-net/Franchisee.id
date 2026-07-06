@@ -9,11 +9,15 @@
   loadPromo()
     .then(function (promo) {
       if (!promo || !promo.enabled || !promo.message) return;
+      if (hasReachedViewLimit(promo)) return;
+      injectPromoStyles();
       var bar = document.createElement("div");
       bar.className = "fr-site-promo-bar";
       bar.innerHTML = '<span>' + escapeHtml(promo.message) + '</span>' +
-        (promo.cta_url ? '<a href="' + escapeAttr(promo.cta_url) + '" data-promo-ribbon-cta>' + escapeHtml(promo.cta_label || "Lihat Premium") + '</a>' : '');
+        (promo.cta_url ? '<a href="' + escapeAttr(promo.cta_url) + '" data-promo-ribbon-cta>' + escapeHtml(promo.cta_label || "Lihat Premium") + '</a>' : '') +
+        limitNote(promo);
       document.body.insertBefore(bar, document.body.firstChild);
+      rememberPromoView(promo);
       recordPromoEvent("promo_ribbon_view", promo);
       var cta = bar.querySelector("[data-promo-ribbon-cta]");
       if (cta) {
@@ -69,6 +73,59 @@
     return escapeHtml(value);
   }
 
+  function injectPromoStyles() {
+    if (document.getElementById("fr-site-promo-bar-css")) return;
+    var style = document.createElement("style");
+    style.id = "fr-site-promo-bar-css";
+    style.textContent = [
+      ".fr-site-promo-bar{position:sticky;top:0;z-index:80;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;padding:9px 16px;background:#111;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;font-weight:800;text-align:center}",
+      ".fr-site-promo-bar a{color:#111!important;background:#f0ca00;padding:5px 9px;text-decoration:none!important}",
+      ".fr-site-promo-note{font-size:12px;font-weight:700;color:rgba(255,255,255,.76)}"
+    ].join("");
+    document.head.appendChild(style);
+  }
+
+  function limitNote(promo) {
+    var limit = normalizedViewLimit(promo);
+    if (limit !== 1) return "";
+    return '<small class="fr-site-promo-note">Anda hanya akan melihat promo ini sekali hari ini.</small>';
+  }
+
+  function hasReachedViewLimit(promo) {
+    var limit = normalizedViewLimit(promo);
+    if (!limit) return false;
+    try {
+      var count = parseInt(window.localStorage.getItem(promoViewKey(promo)) || "0", 10) || 0;
+      return count >= limit;
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function rememberPromoView(promo) {
+    var limit = normalizedViewLimit(promo);
+    if (!limit) return;
+    try {
+      var key = promoViewKey(promo);
+      var count = parseInt(window.localStorage.getItem(key) || "0", 10) || 0;
+      window.localStorage.setItem(key, String(Math.min(count + 1, limit)));
+    } catch (_error) {}
+  }
+
+  function normalizedViewLimit(promo) {
+    var value = Number(promo && promo.max_views_per_user);
+    if (!Number.isFinite(value)) return 1;
+    return Math.max(0, Math.min(30, Math.floor(value)));
+  }
+
+  function promoViewKey(promo) {
+    return "franchise_premium_promo_views:" + utcDayKey() + ":" + promoIdentity(promo);
+  }
+
+  function utcDayKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
   function recordPromoEvent(eventType, promo) {
     try {
       if (hasRecentPromoEvent(eventType, promo)) return;
@@ -105,7 +162,16 @@
   }
 
   function promoEventKey(eventType, promo) {
-    return "franchise_premium_event:" + eventType + ":" + (promo && promo.label ? promo.label : "default");
+    return "franchise_premium_event:" + eventType + ":" + promoIdentity(promo);
+  }
+
+  function promoIdentity(promo) {
+    return [
+      promo && promo.label ? promo.label : "default",
+      promo && promo.starts_at ? promo.starts_at : "",
+      promo && promo.ends_at ? promo.ends_at : "",
+      promo && promo.message ? promo.message : ""
+    ].join(":");
   }
 
   function promoPayload(eventType, promo) {

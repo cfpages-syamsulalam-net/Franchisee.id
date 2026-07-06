@@ -158,7 +158,6 @@ function basePage(options: { title: string; description: string; canonicalPath: 
       </nav>
     </header>
     ${options.body}
-    <script src="/js/site-promo-bar.js" is:inline></script>
   </body>
 </html>`;
 }

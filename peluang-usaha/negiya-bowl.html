@@ -317,7 +317,11 @@
 													<div class="elementor-element elementor-element-372848a e-con-full e-flex e-con e-child" data-id="372848a" data-element_type="container">
 														<div class="elementor-element elementor-element-0ccf104 elementor-widget elementor-widget-heading" data-id="0ccf104" data-element_type="widget" data-widget_type="heading.default">
 															<div class="elementor-widget-container">
-																<h1 class="elementor-heading-title elementor-size-default">Negiya Bowl </h1>
+																<div class="franchise-detail-title-row">
+																	<h1 class="elementor-heading-title elementor-size-default">Negiya Bowl </h1>
+
+																</div>
+																<div class="franchise-detail-quickfacts" aria-label="Ringkasan franchise"><span class="franchise-detail-quickfact"><small>Modal</small><strong>49 Juta</strong></span><span class="franchise-detail-quickfact"><small>Kategori</small><strong>Makanan &amp; Minuman</strong></span><span class="franchise-detail-quickfact"><small>Data</small><strong>Belum diklaim</strong></span></div>
 															</div>
 														</div>
 														<div class="elementor-element elementor-element-102596f hfe-post-info-layout-inline elementor-widget elementor-widget-post-info-widget" data-id="102596f" data-element_type="widget" data-widget_type="post-info-widget.default">
@@ -1284,15 +1288,20 @@
 			/(trident|msie)/i.test(navigator.userAgent)&&document.getElementById&&window.addEventListener&&window.addEventListener("hashchange",function(){var t,e=location.hash.substring(1);/^[A-z0-9_-]+$/.test(e)&&(t=document.getElementById(e))&&(/^(?:a|select|input|button|textarea)$/i.test(t.tagName)||(t.tabIndex=-1),t.focus())},!1);
 		</script>
 
-    <div id="claim-sticky-bar" style="position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 2px solid #ffc107; padding: 15px; z-index: 9999; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div style="flex: 1; min-width: 250px;">
-            <strong style="display: block; color: #333;">Apakah ini Bisnis Anda?</strong>
-            <span style="font-size: 13px; color: #666;">Klaim brand <strong>Negiya Bowl</strong> secara GRATIS untuk mengelola halaman ini.</span>
+    <div id="claim-sticky-bar" class="fr-claim-sticky">
+        <div class="fr-claim-sticky__copy">
+            <strong>Apakah ini Bisnis Anda?</strong>
+            <span>Klaim brand <strong>Negiya Bowl</strong> secara gratis untuk mengelola halaman ini.</span>
         </div>
-        <a href="/daftar?claim=negiya-bowl" style="background: #ffc107; color: #000; padding: 10px 25px; border-radius: 50px; font-weight: bold; text-decoration: none; box-shadow: 0 4px 10px rgba(255,193,7,0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">KLAIM SEKARANG</a>
+        <a class="fr-claim-sticky__button" href="/daftar?claim=negiya-bowl">Klaim Sekarang</a>
     </div>
     <style>
         body { padding-bottom: 80px !important; }
+        .fr-claim-sticky { position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; border-top: 2px solid #f0ca00; background: #fffdf4; box-shadow: 0 -12px 30px rgba(17,24,39,.12); }
+        .fr-claim-sticky__copy { flex: 1; min-width: 250px; color: #332600; }
+        .fr-claim-sticky__copy strong { display: block; color: #111; }
+        .fr-claim-sticky__copy span { color: #5f5a4f; font-size: 13px; }
+        .fr-claim-sticky__button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 10px 18px; border-radius: 999px; background: #f0ca00; color: #111 !important; font-weight: 900; text-decoration: none !important; }
         @media (max-width: 600px) {
             #claim-sticky-bar { text-align: center; justify-content: center; }
             #claim-sticky-bar div { text-align: center; }
