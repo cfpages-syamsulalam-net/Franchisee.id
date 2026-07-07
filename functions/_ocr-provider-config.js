@@ -1,4 +1,5 @@
 import { auditStatement, assertAdmin, jsonResponse } from "./_dashboard-utils.js";
+import { credentialAad, hasStoredCredential, prepareStoredCredential } from "./_ocr-credential-crypto.js";
 
 export async function getOcrProviderConfigs(db, auth) {
   if (!isAdmin(auth)) return { admin_only: true, providers: [] };
@@ -28,7 +29,7 @@ export async function getOcrProviderConfigs(db, auth) {
   }
 }
 
-export async function handleUpdateOcrProviderConfig(db, auth, data) {
+export async function handleUpdateOcrProviderConfig(db, auth, data, env = {}) {
   assertAdmin(auth);
   const current = await db
     .prepare("SELECT * FROM ocr_provider_configs WHERE provider_key = ? LIMIT 1")
@@ -36,14 +37,50 @@ export async function handleUpdateOcrProviderConfig(db, auth, data) {
     .first();
   if (!current) return jsonResponse({ success: false, error: "OCR_PROVIDER_NOT_FOUND", message: "Provider OCR tidak ditemukan." }, { status: 404 });
 
-  const apiKey = data.clear_api_key ? null : data.api_key || current.api_key || null;
-  const apiSecret = data.clear_api_secret ? null : data.api_secret || current.api_secret || null;
-  const missingRequirement = data.is_enabled ? providerRequirementError(data.provider_key, { ...data, apiKey, apiSecret }) : "";
+  let apiKey = null;
+  let apiSecret = null;
+  try {
+    apiKey = await prepareStoredCredential({
+      currentValue: current.api_key,
+      newValue: data.api_key,
+      clear: data.clear_api_key,
+      rootSecret: env.OCR_KEY,
+      aad: credentialAad(data.provider_key, "api_key"),
+    });
+    apiSecret = await prepareStoredCredential({
+      currentValue: current.api_secret,
+      newValue: data.api_secret,
+      clear: data.clear_api_secret,
+      rootSecret: env.OCR_KEY,
+      aad: credentialAad(data.provider_key, "api_secret"),
+    });
+  } catch (error) {
+    if (error?.message === "OCR_KEY_REQUIRED" || error?.message === "OCR_KEY_REQUIRED_FOR_PLAINTEXT_CREDENTIAL") {
+      return jsonResponse({
+        success: false,
+        error: "OCR_KEY_REQUIRED",
+        message: "Tambahkan Cloudflare Pages secret OCR_KEY sebelum menyimpan credential OCR.",
+      }, { status: 400 });
+    }
+    throw error;
+  }
+
+  if (data.is_enabled && !textOrNull(env.OCR_KEY)) {
+    return jsonResponse({
+      success: false,
+      error: "OCR_KEY_REQUIRED",
+      message: "Tambahkan Cloudflare Pages secret OCR_KEY sebelum mengaktifkan provider OCR.",
+    }, { status: 400 });
+  }
+
+  const apiKeyPresent = hasStoredCredential(apiKey);
+  const apiSecretPresent = hasStoredCredential(apiSecret);
+  const missingRequirement = data.is_enabled ? providerRequirementError(data.provider_key, { ...data, apiKeyPresent, apiSecretPresent }) : "";
   if (missingRequirement) {
     return jsonResponse({ success: false, error: "OCR_PROVIDER_CONFIG_INCOMPLETE", message: missingRequirement }, { status: 400 });
   }
 
-  const healthStatus = data.is_enabled ? "ready" : apiKey ? "disabled" : "unconfigured";
+  const healthStatus = data.is_enabled ? "ready" : apiKeyPresent ? "disabled" : "unconfigured";
   await db.batch([
     db
       .prepare(
@@ -79,6 +116,7 @@ export async function handleUpdateOcrProviderConfig(db, auth, data) {
       has_api_secret: Boolean(apiSecret),
       api_key_changed: Boolean(data.api_key || data.clear_api_key),
       api_secret_changed: Boolean(data.api_secret || data.clear_api_secret),
+      credentials_encrypted: Boolean(apiKeyPresent || apiSecretPresent),
       free_quota_limit: data.free_quota_limit || null,
       free_quota_period: data.free_quota_period,
       quota_unit: data.quota_unit,
@@ -133,10 +171,10 @@ function textOrNull(value) {
 }
 
 function providerRequirementError(providerKey, config) {
-  if (!config.apiKey) return "Masukkan API key sebelum mengaktifkan provider ini.";
+  if (!config.apiKeyPresent) return "Masukkan API key sebelum mengaktifkan provider ini.";
   if (providerKey === "azure_vision" && !config.endpoint_url) return "Masukkan endpoint resource Azure sebelum mengaktifkan provider ini.";
   if (providerKey === "cloudflare_workers_ai" && !config.account_id) return "Masukkan Cloudflare account ID sebelum mengaktifkan provider ini.";
-  if (providerKey === "aws_textract" && (!config.apiSecret || !config.region)) return "Masukkan AWS secret access key dan region sebelum mengaktifkan Textract.";
-  if (providerKey === "veryfi" && (!config.apiSecret || !config.account_id)) return "Masukkan Veryfi client ID dan username/secret sebelum mengaktifkan provider ini.";
+  if (providerKey === "aws_textract" && (!config.apiSecretPresent || !config.region)) return "Masukkan AWS secret access key dan region sebelum mengaktifkan Textract.";
+  if (providerKey === "veryfi" && (!config.apiSecretPresent || !config.account_id)) return "Masukkan Veryfi client ID dan username/secret sebelum mengaktifkan provider ini.";
   return "";
 }

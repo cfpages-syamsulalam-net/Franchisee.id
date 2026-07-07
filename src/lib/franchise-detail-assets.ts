@@ -804,7 +804,7 @@ export function injectDetailAssets(html: string) {
 .fr-premium-gallery,
 .fr-proposal-pages {
   display: grid;
-  gap: 14px;
+  gap: 0;
 }
 .fr-premium-gallery {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -812,7 +812,6 @@ export function injectDetailAssets(html: string) {
 .fr-premium-gallery figure,
 .fr-proposal-page {
   margin: 0;
-  border: 1px solid #eeeeee;
   background: #ffffff;
 }
 .fr-premium-gallery img,
@@ -843,28 +842,82 @@ export function injectDetailAssets(html: string) {
   justify-content: space-between;
   margin-bottom: 14px;
 }
+.fr-proposal-stage {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #eeeeee;
+  background: #ffffff;
+}
+.fr-proposal-reader {
+  display: grid;
+  gap: 8px;
+}
+.fr-proposal-overlaybar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  left: 10px;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.fr-proposal-stage:hover .fr-proposal-overlaybar,
+.fr-proposal-stage:focus-within .fr-proposal-overlaybar,
+.fr-proposal-reader.is-downloading .fr-proposal-overlaybar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
 .fr-proposal-download {
-  position: sticky;
-  top: 84px;
-  z-index: 5;
+  position: relative;
+  overflow: hidden;
   border: 1px solid #b42318;
   background: #b42318;
   color: #ffffff;
   cursor: pointer;
   white-space: nowrap;
 }
+.fr-proposal-download > i,
+.fr-proposal-download > span:not(.fr-proposal-download-progress) {
+  position: relative;
+  z-index: 1;
+}
 .fr-proposal-download:disabled {
   cursor: wait;
-  opacity: 0.76;
+}
+.fr-proposal-download-progress {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  width: var(--proposal-progress, 0%);
+  background: rgba(255, 255, 255, 0.24);
+  transition: width 0.2s ease;
+}
+.fr-proposal-download.is-loading .fr-proposal-download-progress {
+  animation: frProposalProgress 1.1s ease-in-out infinite;
 }
 .fr-proposal-status {
-  min-height: 24px;
-  margin: 0 0 10px;
+  max-width: min(360px, 100%);
+  padding: 8px 10px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  background: rgba(255, 255, 255, 0.92);
   color: #374151;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
+.fr-proposal-status[hidden] {
+  display: none !important;
+}
 .fr-proposal-status.is-error {
+  border-color: rgba(180, 35, 24, 0.28);
+  background: #fff5f5;
   color: #b42318;
 }
 .fr-proposal-page {
@@ -874,35 +927,70 @@ export function injectDetailAssets(html: string) {
   display: none;
 }
 .fr-proposal-navigation {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  margin-top: 12px;
+  position: absolute;
+  inset: 52px 0 0;
+  z-index: 3;
+  pointer-events: none;
 }
-.fr-proposal-navigation button {
-  display: inline-flex;
+.fr-proposal-hit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
   gap: 8px;
   align-items: center;
-  justify-content: center;
-  min-height: 42px;
+  width: 50%;
   border: 0;
-  border-radius: 4px;
-  padding: 10px 14px;
-  background: #111111;
-  color: #ffffff;
+  background: transparent;
+  color: transparent;
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+  pointer-events: auto;
 }
-.fr-proposal-navigation button:last-child {
-  justify-self: end;
+.fr-proposal-hit-prev {
+  left: 0;
+  justify-content: flex-start;
+  padding-left: 18px;
 }
-.fr-proposal-navigation button:disabled {
+.fr-proposal-hit-next {
+  right: 0;
+  justify-content: flex-end;
+  padding-right: 18px;
+}
+.fr-proposal-hit i,
+.fr-proposal-hit span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(17, 17, 17, 0.82);
+  color: #ffffff;
+  opacity: 0;
+  transform: translateX(0);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+.fr-proposal-hit:hover i,
+.fr-proposal-hit:hover span,
+.fr-proposal-hit:focus i,
+.fr-proposal-hit:focus span {
+  opacity: 1;
+}
+.fr-proposal-hit-prev:hover i,
+.fr-proposal-hit-prev:focus i {
+  transform: translateX(-2px);
+}
+.fr-proposal-hit-next:hover i,
+.fr-proposal-hit-next:focus i {
+  transform: translateX(2px);
+}
+.fr-proposal-hit:disabled {
   cursor: not-allowed;
-  opacity: 0.42;
+  pointer-events: none;
 }
 .fr-proposal-counter {
+  justify-self: center;
   color: #5f574c;
   font-size: 13px;
   font-weight: 900;
@@ -914,6 +1002,17 @@ export function injectDetailAssets(html: string) {
   font-size: 12px;
   font-weight: 700;
   text-align: center;
+}
+@keyframes frProposalProgress {
+  0% {
+    width: 18%;
+  }
+  50% {
+    width: 74%;
+  }
+  100% {
+    width: 96%;
+  }
 }
 .fr-premium-faq {
   display: grid;
@@ -1098,9 +1197,6 @@ export function injectDetailAssets(html: string) {
   .fr-proposal-download {
     width: 100%;
   }
-  .fr-proposal-download {
-    top: 12px;
-  }
 }
 </style>
 </head>`,
@@ -1160,7 +1256,8 @@ document.addEventListener("click", function (event) {
   downloadProposalPdf(button);
 });
 async function downloadProposalPdf(button) {
-  var status = button.closest(".fr-proposal-tab")?.querySelector("[data-proposal-status]");
+  var reader = button.closest("[data-proposal-reader]");
+  var status = reader ? reader.querySelector("[data-proposal-status]") : button.closest(".fr-proposal-tab")?.querySelector("[data-proposal-status]");
   var images = [];
   try {
     images = JSON.parse(button.getAttribute("data-proposal-images") || "[]");
@@ -1172,22 +1269,34 @@ async function downloadProposalPdf(button) {
     return;
   }
   button.disabled = true;
+  button.classList.add("is-loading");
+  if (reader) reader.classList.add("is-downloading");
+  button.style.setProperty("--proposal-progress", "18%");
   var original = button.innerHTML;
-  button.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Membuat PDF</span>';
-  setProposalStatus(status, "Menyiapkan PDF proposal di browser...");
+  button.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Menyiapkan PDF</span><span class="fr-proposal-download-progress" aria-hidden="true"></span>';
+  setProposalStatus(status, "Menyiapkan PDF brosur...");
   try {
-    var pages = [];
-    var watermark = null;
-    try {
-      watermark = await loadCanvasImage(button.getAttribute("data-proposal-watermark") || "");
-    } catch (_watermarkError) {
-      watermark = null;
+    button.style.setProperty("--proposal-progress", "45%");
+    var response = await fetch("/proposal-download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/pdf, application/json" },
+      body: JSON.stringify({
+        images: images,
+        brand: button.getAttribute("data-proposal-brand") || "proposal",
+        franchise_id: button.getAttribute("data-franchise-id") || ""
+      })
+    });
+    button.style.setProperty("--proposal-progress", "76%");
+    if (!response.ok) {
+      var message = "PDF belum bisa dibuat. Coba ulangi beberapa saat lagi.";
+      try {
+        var payload = await response.json();
+        if (payload && payload.message) message = payload.message;
+      } catch (_jsonError) {}
+      throw new Error(message);
     }
-    for (var index = 0; index < images.length; index += 1) {
-      setProposalStatus(status, "Memproses halaman " + (index + 1) + " dari " + images.length + "...");
-      pages.push(await imageToJpegPage(images[index], watermark));
-    }
-    var pdfBlob = buildPdfFromJpegs(pages);
+    var pdfBlob = await response.blob();
+    button.style.setProperty("--proposal-progress", "96%");
     var filename = (button.getAttribute("data-proposal-brand") || "proposal") + ".pdf";
     triggerDownload(pdfBlob, filename);
     setProposalStatus(status, "PDF proposal mulai diunduh.");
@@ -1195,9 +1304,12 @@ async function downloadProposalPdf(button) {
       window.FranchiseProductEvents.record(button.getAttribute("data-franchise-id") || "", "contact_click", "proposal_pdf");
     }
   } catch (error) {
-    setProposalStatus(status, error.message || "PDF belum bisa dibuat. Coba buka gambar proposal lalu simpan manual.", true);
+    setProposalStatus(status, error.message || "PDF belum bisa dibuat. Coba ulangi atau buka gambar proposal.", true);
   } finally {
     button.disabled = false;
+    button.classList.remove("is-loading");
+    if (reader) reader.classList.remove("is-downloading");
+    button.style.removeProperty("--proposal-progress");
     button.innerHTML = original;
   }
 }
@@ -1205,66 +1317,8 @@ function setProposalStatus(node, text, isError) {
   if (!node) return;
   node.textContent = text || "";
   node.className = "fr-proposal-status" + (isError ? " is-error" : "");
-}
-function imageToJpegPage(url, watermark) {
-  return new Promise(function (resolve, reject) {
-    var image = new Image();
-    image.crossOrigin = "anonymous";
-    image.onload = function () {
-      try {
-        var pageWidth = 1240;
-        var pageHeight = 1754;
-        var canvas = document.createElement("canvas");
-        canvas.width = pageWidth;
-        canvas.height = pageHeight;
-        var context = canvas.getContext("2d");
-        context.fillStyle = "#ffffff";
-        context.fillRect(0, 0, pageWidth, pageHeight);
-        var scale = Math.min(pageWidth / image.naturalWidth, pageHeight / image.naturalHeight);
-        var drawWidth = image.naturalWidth * scale;
-        var drawHeight = image.naturalHeight * scale;
-        context.drawImage(image, (pageWidth - drawWidth) / 2, (pageHeight - drawHeight) / 2, drawWidth, drawHeight);
-        drawProposalWatermark(context, watermark, pageWidth, pageHeight);
-        resolve({ dataUrl: canvas.toDataURL("image/jpeg", 0.92), width: pageWidth, height: pageHeight });
-      } catch (_error) {
-        reject(new Error("Browser belum bisa membuat PDF dari gambar ini. Buka gambar proposal atau coba ulangi download."));
-      }
-    };
-    image.onerror = function () {
-      reject(new Error("Salah satu gambar proposal belum bisa dimuat."));
-    };
-    image.src = url;
-  });
-}
-function loadCanvasImage(url) {
-  return new Promise(function (resolve, reject) {
-    if (!url) return reject(new Error("Watermark belum tersedia."));
-    var image = new Image();
-    image.crossOrigin = "anonymous";
-    image.onload = function () { resolve(image); };
-    image.onerror = function () { reject(new Error("Logo watermark belum bisa dimuat.")); };
-    image.src = url;
-  });
-}
-function drawProposalWatermark(context, watermark, pageWidth, pageHeight) {
-  var padding = 34;
-  var logoSize = 64;
-  var label = "FRANCHISEE.ID";
-  context.save();
-  context.globalAlpha = 0.78;
-  context.font = "700 28px Arial, sans-serif";
-  var textWidth = context.measureText(label).width;
-  var boxWidth = textWidth + (watermark ? logoSize + 22 : 24);
-  var boxHeight = 82;
-  var x = pageWidth - boxWidth - padding;
-  var y = pageHeight - boxHeight - padding;
-  context.fillStyle = "rgba(255,255,255,0.88)";
-  context.fillRect(x, y, boxWidth, boxHeight);
-  if (watermark) context.drawImage(watermark, x + 9, y + 9, logoSize, logoSize);
-  context.fillStyle = "#111111";
-  context.textBaseline = "middle";
-  context.fillText(label, x + (watermark ? logoSize + 16 : 12), y + boxHeight / 2);
-  context.restore();
+  if (text) node.removeAttribute("hidden");
+  else node.setAttribute("hidden", "");
 }
 function initProposalReaders() {
   document.querySelectorAll("[data-proposal-reader]").forEach(function (reader) {
@@ -1293,46 +1347,6 @@ function setProposalPage(reader, requestedPage) {
   var next = reader.querySelector("[data-proposal-next]");
   if (previous) previous.disabled = page === 1;
   if (next) next.disabled = page === pages.length;
-}
-function buildPdfFromJpegs(pages) {
-  var objects = [""];
-  var kids = [];
-  objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
-  objects[2] = "";
-  pages.forEach(function (page, index) {
-    var imageNumber = objects.length;
-    var imageHex = dataUrlToHex(page.dataUrl);
-    objects.push("<< /Type /XObject /Subtype /Image /Width " + page.width + " /Height " + page.height + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/ASCIIHexDecode /DCTDecode] /Length " + (imageHex.length + 1) + " >>\\nstream\\n" + imageHex + ">\\nendstream");
-    var content = "q\\n595.28 0 0 841.89 0 0 cm\\n/Im" + index + " Do\\nQ";
-    var contentNumber = objects.length;
-    objects.push("<< /Length " + content.length + " >>\\nstream\\n" + content + "\\nendstream");
-    var pageNumber = objects.length;
-    kids.push(pageNumber + " 0 R");
-    objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im" + index + " " + imageNumber + " 0 R >> >> >> /Contents " + contentNumber + " 0 R >>");
-  });
-  objects[2] = "<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + pages.length + " >>";
-  var pdf = "%PDF-1.4\\n";
-  var offsets = [0];
-  for (var i = 1; i < objects.length; i += 1) {
-    offsets[i] = pdf.length;
-    pdf += i + " 0 obj\\n" + objects[i] + "\\nendobj\\n";
-  }
-  var xrefAt = pdf.length;
-  pdf += "xref\\n0 " + objects.length + "\\n0000000000 65535 f \\n";
-  for (var j = 1; j < objects.length; j += 1) {
-    pdf += String(offsets[j]).padStart(10, "0") + " 00000 n \\n";
-  }
-  pdf += "trailer\\n<< /Size " + objects.length + " /Root 1 0 R >>\\nstartxref\\n" + xrefAt + "\\n%%EOF";
-  return new Blob([pdf], { type: "application/pdf" });
-}
-function dataUrlToHex(dataUrl) {
-  var base64 = String(dataUrl).split(",")[1] || "";
-  var binary = atob(base64);
-  var hex = "";
-  for (var i = 0; i < binary.length; i += 1) {
-    hex += binary.charCodeAt(i).toString(16).padStart(2, "0");
-  }
-  return hex;
 }
 function triggerDownload(blob, filename) {
   var url = URL.createObjectURL(blob);

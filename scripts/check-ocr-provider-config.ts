@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { DashboardActionSchema } from "../functions/_dashboard-schemas.js";
 // @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
 import { getOcrProviderConfigs } from "../functions/_ocr-provider-config.js";
+// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+import { credentialAad, credentialLooksEncrypted, decryptCredentialValue, encryptCredentialValue } from "../functions/_ocr-credential-crypto.js";
 
 const secretKey = "ocr-secret-key-value";
 const secretSecondary = "ocr-secret-secondary-value";
@@ -60,6 +62,11 @@ async function main() {
     quota_unit: "requests",
   });
   assert.equal(parsed.success, true);
+
+  const encrypted = await encryptCredentialValue("root-key-outside-d1", secretKey, credentialAad("ocr_space", "api_key"));
+  assert.equal(credentialLooksEncrypted(encrypted), true);
+  assert.ok(!encrypted.includes(secretKey), "Encrypted credential envelope must not contain plaintext");
+  assert.equal(await decryptCredentialValue("root-key-outside-d1", encrypted, credentialAad("ocr_space", "api_key")), secretKey);
 
   console.log("OCR provider configuration check passed.");
 }

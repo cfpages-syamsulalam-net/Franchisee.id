@@ -6,7 +6,7 @@ Last updated: 2026-07-07 (Asia/Jakarta)
 
 Use local selectable-text extraction first. Send only image-only/scanned brochure pages to external OCR. Provider failover must use one legitimate account per provider, stop on quota/rate errors, and continue with the next enabled provider. Do not create extra accounts or projects to evade a provider's limits.
 
-Provider credentials are stored in D1 because the admin explicitly requested dashboard-managed configuration. This is operationally convenient but weaker than a dedicated secret store: the application must be able to read the original credential, so hashing is impossible and D1/database access can recover it. The dashboard must therefore never return stored credential values, must use blank password fields to preserve existing values, and must audit only configuration metadata.
+Provider credential metadata is still managed from D1 because the admin explicitly requested dashboard-managed configuration, but credential values must be encrypted before storage with a root key held outside D1. The root key is the Cloudflare Pages secret `OCR_KEY`. The dashboard must never return stored credential values, must use blank password fields to preserve existing values, and must audit only configuration metadata. Without `OCR_KEY`, new credential saves and provider enablement must fail closed so plaintext is not written to D1.
 
 ## Ranked provider shortlist
 
@@ -43,10 +43,11 @@ Free limits change frequently. Verify the provider console before enabling produ
 - [x] Research and rank ten providers with official source links and free-limit caveats.
 - [x] Add committed D1 storage for provider metadata, masked credential state, priority, enablement, quota, reset period, trial expiry, and health status. Migration `0020_ocr_provider_configs.sql` was applied remotely on 2026-07-07 and seeded ten disabled providers with no credentials.
 - [x] Add admin-only read/update helpers that never return stored key/secret values.
+- [x] Encrypt saved credential values with AES-GCM envelopes using Cloudflare Pages secret `OCR_KEY` as the external root secret. Existing plaintext values, if any, are re-encrypted on the next save instead of being returned to the browser.
 - [x] Add a dedicated `/dashboard` OCR tab with provider selector, password-style key/secret inputs, endpoint/account/region/model fields, priority, quota metadata, enable toggle, and explicit credential-clear controls.
 - [x] Add Zod validation, audit events without secret values, regression checks, documentation maps, changelog, and session context.
 - [ ] Later integration: provider adapters, quota counters, OCR job queue, content-hash cache, and bounded failover. This session configures providers/credentials only; it does not send brochure data externally.
 
-## Security follow-up
+## Required production setup
 
-Recommended future upgrade: encrypt credential values with a key held outside D1 (for example, a Cloudflare secret or secrets service). Without an external root key, application-readable D1 credentials cannot be meaningfully encrypted against database disclosure.
+Set the Cloudflare Pages secret `OCR_KEY` before saving or enabling OCR providers. Use a long random value and rotate it only with a planned re-encryption pass, because existing encrypted D1 envelopes depend on this root key.

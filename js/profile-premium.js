@@ -47,7 +47,22 @@
           ${premiumNotificationsBlock(membership.notifications || [])}
           ${premiumReadinessBlock(selected, membership.readiness || {})}
           ${activeSub ? activePremiumBlock(activeSub, order, selected) + (order ? premiumPaymentBlock(order) : "") : order ? premiumPaymentBlock(order) : premiumUpgradeBlock(selected, membership.plan)}
-        ` : emptyInline("Belum ada listing yang bisa di-upgrade. Lengkapi data brand atau klaim listing terlebih dahulu.")}
+        ` : premiumEmptyState()}
+      `;
+    }
+
+    function premiumEmptyState() {
+      return `
+        <div class="fr-profile-empty-inline fr-profile-empty-inline--action">
+          <i class="fas fa-circle-info" aria-hidden="true"></i>
+          <div>
+            <span>Belum ada listing yang bisa di-upgrade. Tambahkan brand baru atau klaim listing yang sudah ada terlebih dahulu.</span>
+            <div class="fr-profile-empty-actions">
+              <a class="fr-profile-text-link" href="/daftar/?role=franchisor&continue=1&next=%2Fprofil%2F%3Ftab%3Dmembership">Tambah brand</a>
+              <a class="fr-profile-text-link" href="/peluang-usaha/">Cari listing untuk diklaim</a>
+            </div>
+          </div>
+        </div>
       `;
     }
 

@@ -95,9 +95,21 @@ function generateProposalTab(row: D1FranchiseRow): DetailTabEntry | null {
 
   const encodedImages = escapeAttr(JSON.stringify(imageUrls));
   const directPdf = pdfUrls[0] || "";
+  const directLink = directPdf
+    ? `<a class="fr-proposal-direct-link" href="${escapeAttr(directPdf)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-file-pdf" aria-hidden="true"></i> Buka PDF asli</a>`
+    : "";
+  const downloadButton = imageUrls.length
+    ? `<button class="fr-proposal-download" type="button" data-proposal-pdf data-proposal-images="${encodedImages}" data-proposal-brand="${escapeAttr(slugify(brandName) || "proposal")}" data-franchise-id="${escapeAttr(row.id)}"><i class="fas fa-download" aria-hidden="true"></i><span>Download PDF</span><span class="fr-proposal-download-progress" aria-hidden="true"></span></button>`
+    : "";
   const pages = imageUrls.length
     ? `<div class="fr-proposal-reader" data-proposal-reader>
-        <div class="fr-proposal-pages">${imageUrls
+        <div class="fr-proposal-stage">
+          <div class="fr-proposal-overlaybar">
+            ${downloadButton}
+            ${directLink}
+            <span class="fr-proposal-status" data-proposal-status aria-live="polite" hidden></span>
+          </div>
+          <div class="fr-proposal-pages">${imageUrls
         .map(
           (url, index) => `
             <figure class="fr-proposal-page${index === 0 ? " is-active" : ""}" data-proposal-page="${index + 1}" aria-hidden="${index === 0 ? "false" : "true"}">
@@ -106,14 +118,10 @@ function generateProposalTab(row: D1FranchiseRow): DetailTabEntry | null {
             </figure>`,
         )
         .join("")}</div>
-        ${imageUrls.length > 1 ? `<div class="fr-proposal-navigation" aria-label="Navigasi halaman brosur"><button type="button" data-proposal-previous><i class="fas fa-chevron-left" aria-hidden="true"></i><span>Sebelumnya</span></button><span class="fr-proposal-counter" data-proposal-counter>1 / ${imageUrls.length}</span><button type="button" data-proposal-next><span>Berikutnya</span><i class="fas fa-chevron-right" aria-hidden="true"></i></button></div>` : ""}
+          ${imageUrls.length > 1 ? `<div class="fr-proposal-navigation" aria-label="Navigasi halaman brosur"><button class="fr-proposal-hit fr-proposal-hit-prev" type="button" data-proposal-previous aria-label="Halaman sebelumnya"><i class="fas fa-chevron-left" aria-hidden="true"></i><span>Sebelumnya</span></button><button class="fr-proposal-hit fr-proposal-hit-next" type="button" data-proposal-next aria-label="Halaman berikutnya"><span>Berikutnya</span><i class="fas fa-chevron-right" aria-hidden="true"></i></button></div>` : ""}
+        </div>
+        <span class="fr-proposal-counter" data-proposal-counter>1 / ${imageUrls.length}</span>
       </div>`
-    : "";
-  const directLink = directPdf
-    ? `<a class="fr-proposal-direct-link" href="${escapeAttr(directPdf)}" target="_blank" rel="noopener noreferrer"><i class="fas fa-file-pdf" aria-hidden="true"></i> Buka PDF asli</a>`
-    : "";
-  const downloadButton = imageUrls.length
-    ? `<button class="fr-proposal-download" type="button" data-proposal-pdf data-proposal-images="${encodedImages}" data-proposal-brand="${escapeAttr(slugify(brandName) || "proposal")}" data-proposal-watermark="/wp-content/uploads/2025/09/franchise.id-favicon-logo.png" data-franchise-id="${escapeAttr(row.id)}"><i class="fas fa-download" aria-hidden="true"></i><span>Download PDF</span></button>`
     : "";
 
   return {
@@ -126,11 +134,8 @@ function generateProposalTab(row: D1FranchiseRow): DetailTabEntry | null {
             <h3><i class="fas fa-file-alt" aria-hidden="true"></i> Brosur ${escapeHtml(brandName)}</h3>
             <p>Baca materi kemitraan, lalu download sebagai PDF bila ingin disimpan.</p>
           </div>
-          ${downloadButton}
         </div>
-        <div class="fr-proposal-status" data-proposal-status aria-live="polite"></div>
-        ${directLink}
-        ${pages || `<p class="fr-premium-muted">Proposal tersedia sebagai file PDF.</p>`}
+        ${pages || `${directLink}<p class="fr-premium-muted">Proposal tersedia sebagai file PDF.</p>`}
       </div>`,
   };
 }

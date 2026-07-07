@@ -60,6 +60,21 @@
   margin-bottom: 16px;
 }
 
+.fr-profile-empty-inline--action {
+  align-items: flex-start;
+}
+
+.fr-profile-empty-inline--action > div {
+  display: grid;
+  gap: 8px;
+}
+
+.fr-profile-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .fr-profile-readiness {
   display: grid;
   gap: 12px;

@@ -110,6 +110,16 @@ Official references:
 | Dynamic contact buttons | Replace the legacy hard-coded Alam WhatsApp/phone floats on generated detail pages with the listing's parsed WhatsApp/phone and PIC label. Hide unavailable channels. | A listing never presents Alam as its brand contact unless Alam is actually its saved PIC. |
 | Brochure knowledge | Extract selectable PDF text after owner upload, store source text plus deterministic structured candidates, and create a reviewable listing-edit suggestion for missing facts rather than silently overwriting owner data. | Digital PDFs produce auditable knowledge; scanned/image-only brochures remain marked for OCR/backfill. |
 
+## 2026-07-07 brochure download and legacy-runtime cleanup plan
+
+| Workstream | Implementation decision | Acceptance check |
+| --- | --- | --- |
+| Brochure PDF download failure | Move image-to-PDF generation from browser canvas to `/proposal-download`, a Pages Function that fetches allowlisted proposal image hosts server-side and adds the Franchisee.id watermark only to the returned PDF. | R2 image CORS no longer blocks PDF download, originals remain unchanged, and the route cannot fetch arbitrary hosts. |
+| Download progress | Convert the download button into an in-button status/progress state while the PDF Function prepares the file. | Users see “Menyiapkan PDF” and a progress fill instead of a silent wait. |
+| Brochure controls | Put previous/next hit areas over the left/right 50% of the image, and show the download/top bar inside the image on hover/focus. | Page controls do not consume extra vertical space and remain keyboard/click accessible. |
+| Proposal status layout | Keep `fr-proposal-status` hidden when empty and show it inside the image top bar next to the download control when there is a message. | Empty status text does not create blank spacing. |
+| WordPress runtime cleanup | Strip unused `analyticswp`, `wp-emoji-release`, LatePoint front runtime, and `/wp-admin/admin-ajax.php` references during static HTML generation/copy. | Generated/copy output no longer triggers irrelevant WordPress AJAX/MIME console errors. |
+
 ## Next implementation ideas
 
 | Priority | Idea | Notes |

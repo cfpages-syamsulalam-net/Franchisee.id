@@ -28,7 +28,8 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 - Legacy Google Sheets/CSV and WordPress-exported HTML remain in the transition layer. They should stay readable/importable but not regain write ownership.
 - Several blocked states are now CTA-backed, but every new public-facing error/empty/warning state should keep following the “clear next action” rule.
 - Proposal uploads now preserve extracted text and reviewable missing-field candidates separately from canonical listing data. Image-only brochure OCR remains a bounded follow-up because synchronous OCR would increase upload latency and Worker CPU risk.
-- OCR provider configuration is now an admin-only `/dashboard` surface backed by D1 migration 0020. Ten providers are seeded disabled with masked key state and no credentials; external OCR calls, usage counters, and automatic failover remain a later job-queue implementation.
+- OCR provider configuration is now an admin-only `/dashboard` surface backed by D1 migration 0020. Ten providers are seeded disabled with masked key state and encrypted credential storage using the external Cloudflare Pages secret `OCR_KEY`; external OCR calls, usage counters, and automatic failover remain a later job-queue implementation.
+- `src/lib/franchise-detail-assets.ts` has grown into a large mixed CSS/JS injection module. It is stable enough for the current production fixes, but should be split before the next major listing-detail feature pass.
 
 ## UX Actionability Audit - 2026-06-28
 
@@ -96,6 +97,18 @@ Principle: every blocked action should answer three questions in the UI: what ha
 | Location data quality | Added `0016_franchise_location_metadata.sql`, `src/lib/franchise-location-normalization.ts`, and `scripts/sync-franchise-locations.ts`; remote D1 now has 45 normalized `locations` and 715 generated `franchise_locations` rows. Static city pages read `structured_locations` from D1 first and fall back to text inference. | Done |
 | Location management UX | Added owner and admin Area Listing editors backed by `locations` and `franchise_locations`; manually managed rows use `source_field='owner_profile'`, override generated rows during static builds, write audit events, and enqueue public rebuilds. | Done |
 | Location write maintainability | Extracted shared manual location normalization, deterministic id generation, D1 statement creation, and audit summary helpers into `functions/_location-writes.js`; profile and dashboard location actions now share the same write contract. | Done |
+
+## Listing Detail Assets Refactor Plan - 2026-07-07
+
+`src/lib/franchise-detail-assets.ts` now owns generated detail CSS, tab/bootstrap JavaScript, brochure reader behavior, comparison button behavior, and several unrelated layout concerns. This makes small brochure/UI changes harder to review and increases truncation/merge risk.
+
+| Step | Target files | Scope | Status |
+| --- | --- | --- | --- |
+| 1 | `src/lib/franchise-detail-assets.ts` | Keep current behavior stable; only apply urgent production fixes in place. | In progress |
+| 2 | `src/lib/franchise-detail-styles.ts` | Move the generated `<style>` string into a purpose-owned style module with named sections for tabs, facts, proposal reader, contact floats, and responsive rules. | Planned |
+| 3 | `src/lib/franchise-detail-scripts.ts` | Move injected browser JavaScript into a purpose-owned script module with focused functions for tabs, proposal reader/download, contact-tab opening, and compare buttons. | Planned |
+| 4 | `src/lib/franchise-proposal-reader.ts` | Extract proposal-reader markup/CSS/JS coordination once the server-side PDF route is production-verified. | Planned |
+| 5 | Validation | Add a targeted static assertion that generated detail HTML still includes tabs, proposal controls, contact floats, and no legacy `analyticswp`/`admin-ajax` references. | Planned |
 
 Actionability checklist for future edits:
 - [x] Public save card uses icon-only UI with shared tooltip.

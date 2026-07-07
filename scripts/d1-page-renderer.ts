@@ -342,13 +342,24 @@ export function stableJson(value: unknown) {
 }
 
 function normalizeGeneratedHtml(html: string) {
-  return html
+  return sanitizeLegacyWordPressRuntime(html)
     .replace(/^[\t ]+/gm, (indent) => {
       let normalized = indent;
       while (normalized.includes(" \t")) normalized = normalized.replace(/ \t/g, "\t");
       return normalized;
     })
     .replace(/[ \t]+$/gm, "");
+}
+
+function sanitizeLegacyWordPressRuntime(html: string) {
+  return html
+    .replace(/<script\b[^>]*>\s*window\._wpemojiSettings[\s\S]*?<\/script>/gi, "")
+    .replace(/<script\b[^>]*\bsrc=(["'])[^"']*wp-emoji-release\.min\.js[^"']*\1[^>]*>\s*<\/script>/gi, "")
+    .replace(/<script\b[^>]*\bid=(["'])latepoint-main-front-js-extra\1[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<script\b[^>]*\bsrc=(["'])[^"']*latepoint\/public\/javascripts\/(?:vendor-front|front)\.js[^"']*\1[^>]*>\s*<\/script>/gi, "")
+    .replace(/<script\b[^>]*\bid=(["'])analyticswp-js-extra\1[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<script\b[^>]*\bsrc=(["'])[^"']*analyticswp\.min\.js[^"']*\1[^>]*>\s*<\/script>/gi, "")
+    .replace(/\\?\/wp-admin\\?\/admin-ajax\.php/g, "");
 }
 
 function canonicalizeLegacyLinks(html: string) {

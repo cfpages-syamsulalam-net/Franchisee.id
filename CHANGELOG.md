@@ -4,6 +4,28 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-07 09:30 (Asia/Jakarta)
+### Added
+- `functions/_ocr-credential-crypto.js`: Added OCR credential envelope encryption helpers using AES-GCM, provider/field AAD, and the external Cloudflare Pages secret `OCR_KEY`.
+- `functions/_proposal-pdf.js`: Added a server-side proposal PDF builder that fetches allowlisted JPEG proposal pages, applies a bottom-right Franchisee.id watermark to the returned PDF only, and leaves R2 originals unchanged.
+- `functions/proposal-download.js`: Added the public proposal PDF download endpoint; POST creates the watermarked PDF and GET returns a 405 JSON message.
+- `scripts/check-proposal-download.ts` and `package.json`: Added `pnpm run proposal-download:check` regression coverage for PDF generation and legacy WordPress runtime cleanup.
+- `.context/session-20260707-0930.md`: Added this session continuity snapshot.
+
+### Changed
+- `functions/_ocr-provider-config.js`, `functions/dashboard-data.js`, and `scripts/check-ocr-provider-config.ts`: Changed OCR credential saves to encrypt values with `OCR_KEY`, fail closed without the external key when credentials are saved/enabled, re-encrypt legacy plaintext on next save, and validate encryption/decryption behavior.
+- `src/lib/franchise-premium-detail.ts` and `src/lib/franchise-detail-assets.ts`: Moved brochure controls into the image surface, added left/right 50% overlay navigation, moved download/status into a hover/focus top bar, hid empty proposal status spacing, and changed PDF download to call `/proposal-download` with in-button progress.
+- `src/lib/franchise-text.ts`, `scripts/copy-legacy-static.mjs`, and `scripts/d1-page-renderer.ts`: Added generated/copied HTML sanitization for unused WordPress runtime snippets: AnalyticsWP, WordPress emoji loading, LatePoint front scripts, and `/wp-admin/admin-ajax.php` references.
+- `js/profile-premium.js` and `css/profile-premium.css`: Replaced the Membership empty state with CTA links to add a brand or find a listing to claim.
+- `src/pages/premium/index.astro`: Reworked Indonesian Premium copy to read more naturally while preserving the no-lead-guarantee positioning.
+- `AUDIT.md`: Documented the production fix set and added the requested refactor plan for large `src/lib/franchise-detail-assets.ts`.
+- `docs/architecture/OCR_PROVIDER_STRATEGY.md` and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the `OCR_KEY` external-root-key requirement and server-side proposal PDF download decision.
+- `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: Added the 2026-07-07 brochure download/controls and WordPress-runtime cleanup plan.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Updated module maps/backlog to reflect encrypted OCR credentials, server-side proposal downloads, sanitizer behavior, and the planned detail-assets refactor.
+- `json/d1-franchise-static-data.json`, `json/d1-generated-pages-manifest.json`, and `peluang-usaha/*.html`: Regenerated tracked D1 static franchise output with the new brochure overlay/download behavior and legacy WordPress runtime cleanup.
+- `dist/**`: Regenerated ignored Astro build output during validation.
+- `.context/proposal-functions-check/index.js`: Created temporarily for Pages Functions bundle validation, then removed after successful compilation.
+
 ## 2026-07-07 01:07 (Asia/Jakarta)
 ### Added
 - `docs/architecture/OCR_PROVIDER_STRATEGY.md`: Ranked ten OCR providers using their official free-tier terms, documented provider-specific caveats, and defined a compliant quota-aware rotation, caching, retry, and rollout plan.

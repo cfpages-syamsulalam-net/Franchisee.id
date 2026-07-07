@@ -123,7 +123,7 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "refresh_quality_checks") return handleRefreshQualityChecks(env.franchise_db, auth);
     if (data.action === "update_publication") return handleUpdatePublication(env.franchise_db, auth, data);
     if (data.action === "update_listing_locations") return handleUpdateListingLocations(env.franchise_db, auth, data);
-    if (data.action === "update_ocr_provider_config") return handleUpdateOcrProviderConfig(env.franchise_db, auth, data);
+    if (data.action === "update_ocr_provider_config") return handleUpdateOcrProviderConfig(env.franchise_db, auth, data, env);
 
     return jsonResponse({ success: false, error: "UNKNOWN_DASHBOARD_ACTION" }, { status: 400 });
   } catch (error) {

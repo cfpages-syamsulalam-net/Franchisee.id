@@ -16,10 +16,11 @@ This document records stack decisions for the migration from a static WordPress 
 | Auth | Clerk for login/register and identity. | Clerk user ids map into D1 `users.clerk_user_id`. |
 | Roles | D1-authoritative roles: `franchisee`, `franchisor`, `admin`, `staff`. | Clerk metadata/session claims may cache small UI hints only; server authorization must verify D1 role/permission state. |
 | Public onboarding | Lightweight account creation happens in the custom Clerk auth UI; business/profile completion happens in `/daftar`. | Role must be selected before public registration, including Google SSO. `/daftar` keeps its URL but should be presented as profile/listing completion after login. See `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`. |
-| Assets | Cloudflare R2 for logos, covers, gallery images, proposal PDFs, and imported legacy assets. | D1 stores metadata and R2 object keys; R2 stores binary files. |
+| Assets | Cloudflare R2 for logos, covers, gallery images, proposal PDFs, and imported legacy assets. | D1 stores metadata and R2 object keys; R2 stores binary files. Proposal image downloads are composed server-side through `/proposal-download` so R2 browser CORS does not block watermarked PDFs. |
 | Framework | Astro on Cloudflare by default. | Current workspace uses Astro 5.x because local Node is 20.19.4. Astro 6 requires Node >=22.12.0. Next.js remains an option only if dashboard complexity becomes strongly React-heavy. |
 | Styling | Existing CSS only unless explicitly approved. | Do not add a styling framework for the migration. |
 | Package manager | pnpm only. | Use `pnpm install`, `pnpm run`, and `pnpm exec`. |
+| Secrets | Keep root secrets outside D1. | Dashboard-managed OCR credential values are encrypted before D1 storage with Cloudflare Pages secret `OCR_KEY`; D1 may store ciphertext envelopes, not plaintext credentials. |
 
 ## Shared Network Database
 `franchise_db` is designed to be shared by the owned franchise network, including:

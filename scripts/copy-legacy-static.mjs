@@ -160,7 +160,7 @@ function copyFileNoOverwrite(sourcePath, targetPath) {
 
   mkdirSync(dirname(targetPath), { recursive: true });
   if (sourcePath.toLowerCase().endsWith(".html")) {
-    writeFileSync(targetPath, rewriteLegacyHtmlLinks(readFileSync(sourcePath, "utf8")));
+    writeFileSync(targetPath, sanitizeLegacyWordPressRuntime(rewriteLegacyHtmlLinks(readFileSync(sourcePath, "utf8"))));
   } else {
     copyFileSync(sourcePath, targetPath);
   }
@@ -193,6 +193,17 @@ function rewriteLegacyHtmlLinks(html) {
     if (!mapped) return match;
     return `href=${quote}${mapped}${hash}${quote}`;
   });
+}
+
+function sanitizeLegacyWordPressRuntime(html) {
+  return html
+    .replace(/<script\b[^>]*>\s*window\._wpemojiSettings[\s\S]*?<\/script>/gi, "")
+    .replace(/<script\b[^>]*\bsrc=(["'])[^"']*wp-emoji-release\.min\.js[^"']*\1[^>]*>\s*<\/script>/gi, "")
+    .replace(/<script\b[^>]*\bid=(["'])latepoint-main-front-js-extra\1[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<script\b[^>]*\bsrc=(["'])[^"']*latepoint\/public\/javascripts\/(?:vendor-front|front)\.js[^"']*\1[^>]*>\s*<\/script>/gi, "")
+    .replace(/<script\b[^>]*\bid=(["'])analyticswp-js-extra\1[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<script\b[^>]*\bsrc=(["'])[^"']*analyticswp\.min\.js[^"']*\1[^>]*>\s*<\/script>/gi, "")
+    .replace(/\\?\/wp-admin\\?\/admin-ajax\.php/g, "");
 }
 
 function normalizePath(path, slash = "") {

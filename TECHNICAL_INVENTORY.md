@@ -510,7 +510,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `normalizeText()` / `normalizeBrandName()` / `normalizeCompanyName()` / `normalizeDescriptionText()`: Presentation-normalize imported brand/company/description text without changing raw D1 data.
 - `formatRupiah()` / `getThumb()` / `paragraphs()` / `truncate()` / `slugify()`: Shared display helpers used by directory/detail rendering.
 - `normalizeUrl()` / `normalizeExternalUrl()` / `escapeHtml()` / `escapeAttr()`: Shared URL and HTML output safety helpers.
-- `normalizeGeneratedHtml()` / `applyCanonicalLegacyLinks()`: Cleanup generated template output and rewrite legacy directory/category links to canonical `/peluang-usaha` query URLs.
+- `sanitizeLegacyWordPressRuntime()` / `normalizeGeneratedHtml()` / `applyCanonicalLegacyLinks()`: Remove unused WordPress runtime snippets (`analyticswp`, emoji, LatePoint, and `admin-ajax`) from generated output, cleanup template whitespace, and rewrite legacy directory/category links to canonical `/peluang-usaha` query URLs.
 
 ### File: `src/lib/franchise-premium-detail.ts`
 *Premium detail-page renderer helper for D1-backed franchise static pages.*
@@ -518,7 +518,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `generatePremiumLeadPanel(row)`: Renders the prominent Premium CTA panel with WhatsApp, inline inquiry, and proposal shortcut when proposal assets exist.
 - `generatePremiumTabs(row)`: Returns dynamic Galeri, Brosur, and FAQ tab entries for `src/lib/franchise-detail-tabs.ts`.
 - `extractUrls(value)`: Parses proposal/gallery values from JSON arrays, raw URL lists, HTML `src` attributes, legacy Blogspot/Blogger text, and comma/newline-separated values.
-- Proposal tab output stores image URLs, removable watermark metadata, and one-page-at-a-time previous/next controls for the detail asset script.
+- Proposal tab output stores image URLs and renders one-page-at-a-time brochure controls with in-image top bar download/status controls plus left/right overlay hit areas.
 
 ### File: `src/lib/franchise-static-assets.ts`
 *Generated directory CSS/JS and placeholder helper for D1-backed Astro pages.*
@@ -531,7 +531,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Generated detail-page CSS/JS helper for D1-backed Astro pages.*
 - `injectDetailAssets(html)`: Injects generated detail CSS/JS with border-light profile/tab presentation, tab activation, dynamic contact floats, and brochure reader/download behavior.
 - `initProposalReaders()` / `setProposalPage(reader, requestedPage)`: Initialize one-page-at-a-time brochure navigation, count, disabled boundary buttons, and left/right keyboard navigation.
-- `downloadProposalPdf(button)` / `imageToJpegPage(url, watermark)` / `drawProposalWatermark(...)` / `buildPdfFromJpegs(pages)`: Loads R2 image pages, composites the current bottom-right Franchisee.id watermark only during download rendering, builds a local PDF Blob, and leaves source objects unchanged.
+- `downloadProposalPdf(button)`: Posts proposal image URLs to `/proposal-download`, shows in-button progress/status, downloads the returned PDF Blob, and avoids browser canvas CORS failures.
+- The actual proposal image fetch/PDF/watermark work now lives in `functions/_proposal-pdf.js`; `src/lib/franchise-detail-assets.ts` keeps only the public-page interaction layer.
 - Owns Premium detail CTA/gallery/brochure/FAQ styling and franchisor owner CTA styling outside the directory asset helper.
 
 ### File: `js/product-events.js`
@@ -851,7 +852,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
 - `onRequestGet()`: Requires Clerk auth plus D1 `staff`; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`. Stored key/secret values are never selected by the read query.
-- `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js` plus OCR configuration to `_ocr-provider-config.js`.
+- `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js` plus OCR configuration to `_ocr-provider-config.js`, passing `env.OCR_KEY` for credential encryption.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
 ### File: `functions/_dashboard-schemas.js`
@@ -864,7 +865,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_ocr-provider-config.js`
 *Admin-only OCR provider configuration and credential boundary.*
 - `getOcrProviderConfigs(db, auth)`: Returns provider metadata only to admin; SQL derives `has_api_key` / `has_api_secret` booleans and does not select credential values.
-- `handleUpdateOcrProviderConfig(db, auth, data)`: Preserves blank credential inputs, applies explicit clear flags, enforces provider-specific activation prerequisites, updates D1 state, and audits only non-secret metadata.
+- `handleUpdateOcrProviderConfig(db, auth, data, env)`: Preserves blank credential inputs, applies explicit clear flags, encrypts saved credentials with external `OCR_KEY`, re-encrypts legacy plaintext values on next save, enforces provider-specific activation prerequisites, updates D1 state, and audits only non-secret metadata.
 - `maskProviderConfig(row)`: Produces the stable browser response contract without `api_key` or `api_secret` properties.
 
 ### File: `functions/_dashboard-queries.js`
@@ -907,6 +908,22 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/product-event.js`
 *Public product-event endpoint.*
 - `onRequestPost()`: Accepts coarse listing interaction events from public pages and returns success even when analytics storage is unavailable.
+
+### File: `functions/_proposal-pdf.js`
+*Server-side proposal PDF builder.*
+- `buildProposalPdfResponse(input, env)`: Validates an allowlisted proposal image URL list, fetches JPEG pages server-side, builds a PDF, applies the bottom-right Franchisee.id watermark to the returned PDF only, and returns an attachment response.
+- `buildPdfFromJpegs(pages, options)`: Pure PDF assembly helper used by the Pages Function and regression check.
+
+### File: `functions/proposal-download.js`
+*Public proposal PDF download endpoint.*
+- `onRequestPost()`: Creates a watermarked proposal PDF from posted image URLs through `_proposal-pdf.js`.
+- `onRequestGet()`: Returns a 405 JSON message so the route is only used by the brochure download button.
+
+### File: `functions/_ocr-credential-crypto.js`
+*OCR credential envelope encryption helper.*
+- `prepareStoredCredential()`: Preserves blank dashboard fields, clears explicit removals, encrypts new credentials, and re-encrypts existing plaintext values on next save.
+- `encryptCredentialValue()` / `decryptCredentialValue()`: AES-GCM helpers using an external root secret such as Cloudflare Pages `OCR_KEY`.
+- `credentialAad(providerKey, fieldName)`: Binds encrypted values to their provider/field context.
 
 ### File: `functions/_shared-schemas.js`
 *Shared validation/schema constants for Pages Functions.*
