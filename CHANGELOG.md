@@ -4,6 +4,26 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-07 16:44 (Asia/Jakarta)
+### Added
+- `src/lib/ocr-provider-metadata.js`: Added the shared OCR provider metadata contract for visible dashboard fields, labels/help copy, and activation requirements.
+- `.context/session-20260707-1644.md`: Added this session continuity snapshot.
+
+### Changed
+- `js/dashboard-ocr.js`, `src/pages/dashboard/index.astro`, and `functions/_ocr-provider-config.js`: Changed OCR provider field visibility and activation validation to use the shared metadata contract instead of duplicated UI/backend provider rules.
+- `scripts/check-ocr-provider-config.ts`: Added assertions for shared OCR metadata coverage and provider requirement behavior.
+- `AGENTS.md`: Clarified that closely-related low-risk contract centralization should be completed in the same implementation session instead of left as backlog.
+- `docs/architecture/OCR_PROVIDER_STRATEGY.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Marked suggestion 65 complete and documented the shared OCR metadata source of truth.
+
+## 2026-07-07 15:16 (Asia/Jakarta)
+### Added
+- `.context/session-20260707-1516.md`: Added this session continuity snapshot.
+
+### Changed
+- `src/pages/dashboard/index.astro`, `js/dashboard-ocr.js`, and `css/dashboard.css`: Changed the OCR provider form to show only provider-specific credential/config fields, display stored-key badges, move quota/free-limit/trial data into read-only metadata, and improve spacing/containment for OCR fields and warning boxes.
+- `functions/_ocr-provider-config.js` and `scripts/check-ocr-provider-config.ts`: Changed OCR provider saves to preserve seeded quota/free-limit metadata when the dashboard no longer submits those fields, and added regression coverage for that behavior.
+- `docs/architecture/OCR_PROVIDER_STRATEGY.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the provider-specific OCR field matrix, read-only quota rule, and follow-up to centralize provider requirements before adapter work.
+
 ## 2026-07-07 09:45 (Asia/Jakarta)
 ### Added
 - `src/lib/franchise-detail-styles.ts`: Added the generated detail-page CSS module extracted from the former mixed detail asset injector.

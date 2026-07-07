@@ -1,5 +1,6 @@
 import { auditStatement, assertAdmin, jsonResponse } from "./_dashboard-utils.js";
 import { credentialAad, hasStoredCredential, prepareStoredCredential } from "./_ocr-credential-crypto.js";
+import { getOcrProviderRequirementError } from "../src/lib/ocr-provider-metadata.js";
 
 export async function getOcrProviderConfigs(db, auth) {
   if (!isAdmin(auth)) return { admin_only: true, providers: [] };
@@ -75,7 +76,9 @@ export async function handleUpdateOcrProviderConfig(db, auth, data, env = {}) {
 
   const apiKeyPresent = hasStoredCredential(apiKey);
   const apiSecretPresent = hasStoredCredential(apiSecret);
-  const missingRequirement = data.is_enabled ? providerRequirementError(data.provider_key, { ...data, apiKeyPresent, apiSecretPresent }) : "";
+  const missingRequirement = data.is_enabled
+    ? getOcrProviderRequirementError(data.provider_key, { ...data, apiKeyPresent, apiSecretPresent })
+    : "";
   if (missingRequirement) {
     return jsonResponse({ success: false, error: "OCR_PROVIDER_CONFIG_INCOMPLETE", message: missingRequirement }, { status: 400 });
   }
@@ -101,10 +104,10 @@ export async function handleUpdateOcrProviderConfig(db, auth, data, env = {}) {
         textOrNull(data.model),
         data.priority,
         data.is_enabled ? 1 : 0,
-        data.free_quota_limit || null,
-        data.free_quota_period,
-        data.quota_unit,
-        textOrNull(data.trial_ends_at),
+        current.free_quota_limit || null,
+        current.free_quota_period || "account_specific",
+        current.quota_unit || "requests",
+        current.trial_ends_at || null,
         healthStatus,
         auth.id,
         data.provider_key,
@@ -117,9 +120,9 @@ export async function handleUpdateOcrProviderConfig(db, auth, data, env = {}) {
       api_key_changed: Boolean(data.api_key || data.clear_api_key),
       api_secret_changed: Boolean(data.api_secret || data.clear_api_secret),
       credentials_encrypted: Boolean(apiKeyPresent || apiSecretPresent),
-      free_quota_limit: data.free_quota_limit || null,
-      free_quota_period: data.free_quota_period,
-      quota_unit: data.quota_unit,
+      free_quota_limit: current.free_quota_limit || null,
+      free_quota_period: current.free_quota_period || "account_specific",
+      quota_unit: current.quota_unit || "requests",
     }, auth.id),
   ]);
 
@@ -128,6 +131,12 @@ export async function handleUpdateOcrProviderConfig(db, auth, data, env = {}) {
     provider: maskProviderConfig({
       ...current,
       ...data,
+      free_quota_limit: current.free_quota_limit,
+      free_quota_period: current.free_quota_period,
+      quota_unit: current.quota_unit,
+      quota_used: current.quota_used,
+      quota_reset_at: current.quota_reset_at,
+      trial_ends_at: current.trial_ends_at,
       api_key: apiKey,
       api_secret: apiSecret,
       health_status: healthStatus,
@@ -168,13 +177,4 @@ function isAdmin(auth) {
 function textOrNull(value) {
   const normalized = (value ?? "").toString().trim();
   return normalized || null;
-}
-
-function providerRequirementError(providerKey, config) {
-  if (!config.apiKeyPresent) return "Masukkan API key sebelum mengaktifkan provider ini.";
-  if (providerKey === "azure_vision" && !config.endpoint_url) return "Masukkan endpoint resource Azure sebelum mengaktifkan provider ini.";
-  if (providerKey === "cloudflare_workers_ai" && !config.account_id) return "Masukkan Cloudflare account ID sebelum mengaktifkan provider ini.";
-  if (providerKey === "aws_textract" && (!config.apiSecretPresent || !config.region)) return "Masukkan AWS secret access key dan region sebelum mengaktifkan Textract.";
-  if (providerKey === "veryfi" && (!config.apiSecretPresent || !config.account_id)) return "Masukkan Veryfi client ID dan username/secret sebelum mengaktifkan provider ini.";
-  return "";
 }

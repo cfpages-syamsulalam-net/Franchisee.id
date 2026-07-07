@@ -1,5 +1,12 @@
 ---
+import { OCR_PROVIDER_FIELD_NAMES, OCR_PROVIDER_METADATA } from "../../lib/ocr-provider-metadata.js";
+
 export const prerender = true;
+
+const ocrProviderMetadataJson = JSON.stringify({
+  providers: OCR_PROVIDER_METADATA,
+  field_names: OCR_PROVIDER_FIELD_NAMES,
+}).replace(/</g, "\\u003c");
 ---
 <!doctype html>
 <html lang="id">
@@ -577,7 +584,7 @@ export const prerender = true;
                     </div>
                   </div>
                 </div>
-                <div class="dash-warning-box">
+                <div class="dash-warning-box dash-ocr-warning">
                   Credential yang tersimpan tidak pernah ditampilkan kembali di browser. Kolom kosong mempertahankan nilai lama; gunakan pilihan hapus untuk mencabutnya.
                 </div>
                 <form class="dash-form dash-ocr-form" data-ocr-config-form>
@@ -587,62 +594,51 @@ export const prerender = true;
                       <option value="">Pilih provider...</option>
                     </select>
                   </label>
-                  <label>
-                    API key / token
+                  <div class="dash-form-wide dash-ocr-provider-meta" data-ocr-provider-meta>
+                    Pilih provider untuk melihat kebutuhan credential dan limit gratisnya.
+                  </div>
+                  <div class="dash-form-wide dash-credential-summary" data-ocr-credential-summary>
+                    Belum ada provider dipilih.
+                  </div>
+                  <label data-ocr-field="api_key">
+                    <span class="dash-field-label-row">
+                      <span data-ocr-label="api_key">API key / token</span>
+                      <span class="dash-credential-badge" data-ocr-key-state="api_key"></span>
+                    </span>
                     <input name="api_key" type="password" maxlength="2000" autocomplete="new-password" placeholder="Kosongkan untuk mempertahankan" />
+                    <small data-ocr-help="api_key">Kolom kosong mempertahankan key lama.</small>
                   </label>
-                  <label>
-                    API secret
+                  <label data-ocr-field="api_secret">
+                    <span class="dash-field-label-row">
+                      <span data-ocr-label="api_secret">API secret</span>
+                      <span class="dash-credential-badge" data-ocr-key-state="api_secret"></span>
+                    </span>
                     <input name="api_secret" type="password" maxlength="4000" autocomplete="new-password" placeholder="Hanya untuk provider yang memerlukan" />
+                    <small data-ocr-help="api_secret">Kolom kosong mempertahankan secret lama.</small>
                   </label>
-                  <label>
-                    Account / project / client ID
+                  <label data-ocr-field="account_id">
+                    <span data-ocr-label="account_id">Account / project / client ID</span>
                     <input name="account_id" type="text" maxlength="240" />
+                    <small data-ocr-help="account_id">Isi hanya jika provider membutuhkannya.</small>
                   </label>
-                  <label>
-                    Region
+                  <label data-ocr-field="region">
+                    <span data-ocr-label="region">Region</span>
                     <input name="region" type="text" maxlength="120" placeholder="Contoh: ap-southeast-1" />
+                    <small data-ocr-help="region">Contoh: ap-southeast-1.</small>
                   </label>
-                  <label class="dash-form-wide">
-                    Endpoint HTTPS
+                  <label class="dash-form-wide" data-ocr-field="endpoint_url">
+                    <span data-ocr-label="endpoint_url">Endpoint HTTPS</span>
                     <input name="endpoint_url" type="text" maxlength="500" placeholder="https://..." />
+                    <small data-ocr-help="endpoint_url">Gunakan endpoint resource dari provider.</small>
                   </label>
-                  <label>
-                    Model / operasi
+                  <label data-ocr-field="model">
+                    <span data-ocr-label="model">Model / operasi</span>
                     <input name="model" type="text" maxlength="240" />
+                    <small data-ocr-help="model">Gunakan default jika tidak yakin.</small>
                   </label>
                   <label>
                     Prioritas
                     <input name="priority" type="number" min="1" max="1000" step="1" value="100" />
-                  </label>
-                  <label>
-                    Limit gratis
-                    <input name="free_quota_limit" type="number" min="0" max="100000000" step="1" />
-                  </label>
-                  <label>
-                    Periode limit
-                    <select name="free_quota_period">
-                      <option value="daily">Harian</option>
-                      <option value="monthly">Bulanan</option>
-                      <option value="trial">Trial</option>
-                      <option value="compute_daily">Compute harian</option>
-                      <option value="account_specific">Cek akun provider</option>
-                    </select>
-                  </label>
-                  <label>
-                    Satuan limit
-                    <select name="quota_unit">
-                      <option value="requests">Request</option>
-                      <option value="transactions">Transaksi</option>
-                      <option value="pages">Halaman</option>
-                      <option value="neurons">Neuron</option>
-                      <option value="documents">Dokumen</option>
-                      <option value="credits">Kredit</option>
-                    </select>
-                  </label>
-                  <label>
-                    Trial berakhir
-                    <input name="trial_ends_at" type="date" />
                   </label>
                   <label>
                     Status
@@ -651,11 +647,11 @@ export const prerender = true;
                       <option value="1">Aktif</option>
                     </select>
                   </label>
-                  <label class="dash-check-row">
+                  <label class="dash-check-row" data-ocr-field="clear_api_key">
                     <input name="clear_api_key" type="checkbox" />
                     Hapus API key tersimpan
                   </label>
-                  <label class="dash-check-row">
+                  <label class="dash-check-row" data-ocr-field="clear_api_secret">
                     <input name="clear_api_secret" type="checkbox" />
                     Hapus API secret tersimpan
                   </label>
@@ -682,6 +678,7 @@ export const prerender = true;
     <script src="/js/dashboard-premium-operations.js" is:inline></script>
     <script src="/js/dashboard-review.js" is:inline></script>
     <script src="/js/dashboard-operations.js" is:inline></script>
+    <script is:inline set:html={`window.FranchiseOcrProviderMetadata = ${ocrProviderMetadataJson};`}></script>
     <script src="/js/dashboard-ocr.js" is:inline></script>
     <script src="/js/dashboard-admin.js" is:inline></script>
   </body>

@@ -299,8 +299,15 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-ocr.js`
 *Admin OCR provider configuration module for `/dashboard`.*
 - `window.FranchiseDashboardOcr.createOperations(options)`: Creates the OCR tab controller from provider-list/select/form/status DOM references and shared dashboard callbacks.
-- `render(payload)` / `renderList(payload)` / `fillForm(provider)`: Shows ranked provider state, key/secret presence booleans, quota metadata, and non-secret configuration without receiving stored credentials.
+- `render(payload)` / `renderList(payload)` / `fillForm(provider)`: Shows ranked provider state, key/secret presence booleans, read-only quota/free-limit metadata, and non-secret configuration without receiving stored credentials.
+- Provider-specific field rules come from `window.FranchiseOcrProviderMetadata`, which is injected from `src/lib/ocr-provider-metadata.js`; simple-key providers show only API key, Azure shows key plus endpoint, Cloudflare/Groq show model where relevant, AWS shows access key/secret/region, and Veryfi shows API key plus client ID plus username/auth secret.
 - `submit(event)`: Posts validated provider metadata plus optional replacement credentials or explicit clear flags; blank password inputs preserve existing D1 values.
+
+### File: `src/lib/ocr-provider-metadata.js`
+*Shared OCR provider requirements contract.*
+- `OCR_PROVIDER_METADATA`: Defines visible dashboard fields, labels/help copy, and activation requirements for OCR.Space, Azure AI Vision, Cloudflare Workers AI, Google Vision, Groq Vision, Amazon Textract, Veryfi, Mindee, PDF.co, and API4AI.
+- `OCR_PROVIDER_FIELD_NAMES`: Shared field list used by the dashboard browser module for visibility toggling.
+- `getOcrProviderRequirementError(providerKey, config)`: Server-side activation prerequisite helper used by `functions/_ocr-provider-config.js`.
 
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
@@ -617,7 +624,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads the dashboard auth/tooltips/utilities plus Premium, Review, Operations, OCR, and controller client modules; shows a login-only staff/admin form when no Clerk session exists.
-- Renders the branded dashboard shell and an OCR tab with provider selector, password-style credential fields, endpoint/account/region/model, priority, quota metadata, trial expiry, enablement, and explicit credential clear controls. Runtime authorization remains server-side.
+- Renders the branded dashboard shell and an OCR tab with provider selector, provider-specific password credential fields, read-only quota/free-limit metadata, priority, enablement, and explicit credential clear controls. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` for the browser module. Runtime authorization remains server-side.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
@@ -877,7 +884,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_ocr-provider-config.js`
 *Admin-only OCR provider configuration and credential boundary.*
 - `getOcrProviderConfigs(db, auth)`: Returns provider metadata only to admin; SQL derives `has_api_key` / `has_api_secret` booleans and does not select credential values.
-- `handleUpdateOcrProviderConfig(db, auth, data, env)`: Preserves blank credential inputs, applies explicit clear flags, encrypts saved credentials with external `OCR_KEY`, re-encrypts legacy plaintext values on next save, enforces provider-specific activation prerequisites, updates D1 state, and audits only non-secret metadata.
+- `handleUpdateOcrProviderConfig(db, auth, data, env)`: Preserves blank credential inputs, applies explicit clear flags, encrypts saved credentials with external `OCR_KEY`, re-encrypts legacy plaintext values on next save, enforces provider-specific activation prerequisites through `src/lib/ocr-provider-metadata.js`, preserves seeded quota/free-limit metadata on dashboard saves, updates D1 state, and audits only non-secret metadata.
 - `maskProviderConfig(row)`: Produces the stable browser response contract without `api_key` or `api_secret` properties.
 
 ### File: `functions/_dashboard-queries.js`

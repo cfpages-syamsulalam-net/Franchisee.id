@@ -44,9 +44,28 @@ Free limits change frequently. Verify the provider console before enabling produ
 - [x] Add committed D1 storage for provider metadata, masked credential state, priority, enablement, quota, reset period, trial expiry, and health status. Migration `0020_ocr_provider_configs.sql` was applied remotely on 2026-07-07 and seeded ten disabled providers with no credentials.
 - [x] Add admin-only read/update helpers that never return stored key/secret values.
 - [x] Encrypt saved credential values with AES-GCM envelopes using Cloudflare Pages secret `OCR_KEY` as the external root secret. Existing plaintext values, if any, are re-encrypted on the next save instead of being returned to the browser.
-- [x] Add a dedicated `/dashboard` OCR tab with provider selector, password-style key/secret inputs, endpoint/account/region/model fields, priority, quota metadata, enable toggle, and explicit credential-clear controls.
+- [x] Add a dedicated `/dashboard` OCR tab with provider selector, provider-specific password credential fields, only the endpoint/account/region/model fields required by the selected provider, read-only quota/free-limit metadata, priority, enable toggle, and explicit credential-clear controls only when a stored credential exists.
 - [x] Add Zod validation, audit events without secret values, regression checks, documentation maps, changelog, and session context.
 - [ ] Later integration: provider adapters, quota counters, OCR job queue, content-hash cache, and bounded failover. This session configures providers/credentials only; it does not send brochure data externally.
+
+## Dashboard credential field rules
+
+The admin form intentionally hides fields that do not apply to the selected provider. Free allowances, reset period, quota unit, endpoint defaults, and trial status are displayed as provider metadata instead of editable admin inputs because those values come from the provider/account terms, not from Franchisee.id.
+
+The provider field/requirement contract lives in `src/lib/ocr-provider-metadata.js`. Dashboard field visibility, server-side activation validation, and OCR regression checks must use that shared module so browser and backend behavior do not drift when provider adapters are added.
+
+| Provider | Visible credential/config fields |
+| --- | --- |
+| OCR.Space | API key only |
+| Azure AI Vision | Azure Vision key, Azure Vision endpoint |
+| Cloudflare Workers AI | Cloudflare API token, account ID, vision model |
+| Google Cloud Vision | API key only for the initial simple image OCR path |
+| Groq Vision | Groq API key, vision model |
+| Amazon Textract | AWS access key ID, AWS secret access key, AWS region |
+| Veryfi | Veryfi API key, Veryfi username/auth secret, client ID |
+| Mindee | API key only |
+| PDF.co | API key only |
+| API4AI OCR | API4AI/RapidAPI key only |
 
 ## Required production setup
 
