@@ -1,0 +1,644 @@
+import { proposalKnowledgeStatements, extractProposalCandidatesFromText } from "./_proposal-knowledge.js";
+import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
+import { auditStatement, assertAdmin, isAdmin, jsonResponse, randomId } from "./_dashboard-utils.js";
+import { callOcrProvider, normalizeOcrText } from "./_ocr-provider-adapters.js";
+
+const MAX_ENQUEUE_LIMIT = 200;
+const MAX_RUN_LIMIT = 5;
+const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
+const MIN_OCR_TEXT_CHARS = 20;
+const CACHE_TEXT_CHARS = 60_000;
+const JOB_TABLE_ERROR = /ocr_jobs|ocr_attempts|ocr_content_cache|ocr_provider_usage_events|no such table/i;
+
+export async function getOcrJobState(db, auth) {
+  if (!isAdmin(auth)) return { admin_only: true, counts: {}, recent: [], migration_required: false };
+  try {
+    const [counts, recent, candidates] = await Promise.all([
+      db.prepare("SELECT status, COUNT(*) count FROM ocr_jobs GROUP BY status").all(),
+      db
+        .prepare(
+          `SELECT j.id, j.asset_id, j.franchise_id, j.status, j.provider_key, j.attempt_count,
+                  j.error_message, j.created_at, j.updated_at, f.brand_name
+           FROM ocr_jobs j
+           LEFT JOIN franchises f ON f.id = j.franchise_id
+           ORDER BY j.updated_at DESC
+           LIMIT 12`,
+        )
+        .all(),
+      db
+        .prepare(
+          `SELECT COUNT(*) count
+           FROM franchise_assets a
+           LEFT JOIN ocr_jobs j ON j.asset_id = a.id
+           LEFT JOIN franchise_asset_knowledge k ON k.asset_id = a.id
+           WHERE a.asset_type = 'proposal'
+             AND a.status = 'active'
+             AND COALESCE(a.public_url, '') <> ''
+             AND LOWER(COALESCE(a.mime_type, '')) LIKE 'image/%'
+             AND j.id IS NULL
+             AND COALESCE(k.extraction_status, '') NOT IN ('extracted')`,
+        )
+        .first(),
+    ]);
+    return {
+      admin_only: false,
+      migration_required: false,
+      counts: Object.fromEntries((counts.results || []).map((row) => [row.status, Number(row.count || 0)])),
+      recent: (recent.results || []).map(maskJobRow),
+      enqueue_candidates: Number(candidates?.count || 0),
+    };
+  } catch (error) {
+    if (JOB_TABLE_ERROR.test(error?.message || "")) {
+      return { admin_only: false, migration_required: true, counts: {}, recent: [], enqueue_candidates: 0 };
+    }
+    throw error;
+  }
+}
+
+export async function handleEnqueueOcrJobs(db, auth, data) {
+  assertAdmin(auth);
+  const limit = Math.min(Math.max(Number(data.limit || 50), 1), MAX_ENQUEUE_LIMIT);
+  const rows = await db
+    .prepare(
+      `SELECT a.id asset_id, a.franchise_id, COALESCE(a.public_url, a.legacy_url) source_url,
+              a.mime_type, COALESCE(a.display_order, 0) display_order
+       FROM franchise_assets a
+       LEFT JOIN ocr_jobs j ON j.asset_id = a.id
+       LEFT JOIN franchise_asset_knowledge k ON k.asset_id = a.id
+       WHERE a.asset_type = 'proposal'
+         AND a.status = 'active'
+         AND COALESCE(a.public_url, a.legacy_url, '') <> ''
+         AND LOWER(COALESCE(a.mime_type, '')) LIKE 'image/%'
+         AND (? IS NULL OR a.franchise_id = ?)
+         AND (? = 1 OR j.id IS NULL)
+         AND (? = 1 OR COALESCE(k.extraction_status, '') NOT IN ('extracted'))
+       ORDER BY a.franchise_id, COALESCE(a.display_order, 0), a.created_at
+       LIMIT ?`,
+    )
+    .bind(textOrNull(data.franchise_id), textOrNull(data.franchise_id), data.force ? 1 : 0, data.force ? 1 : 0, limit)
+    .all();
+
+  const statements = [];
+  const nowPriority = Number(data.priority || 100);
+  for (const row of rows.results || []) {
+    if (!isSafeExternalUrl(row.source_url)) continue;
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO ocr_jobs (
+             id, asset_id, franchise_id, status, priority, source_url, mime_type, requested_by_user_id
+           ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?)
+           ON CONFLICT(asset_id) DO UPDATE SET
+             status = CASE WHEN ? = 1 THEN 'pending' ELSE ocr_jobs.status END,
+             priority = excluded.priority,
+             source_url = excluded.source_url,
+             mime_type = excluded.mime_type,
+             error_message = CASE WHEN ? = 1 THEN NULL ELSE ocr_jobs.error_message END,
+             requested_by_user_id = excluded.requested_by_user_id,
+             updated_at = CURRENT_TIMESTAMP`,
+        )
+        .bind(
+          `ocrjob_${randomId()}`,
+          row.asset_id,
+          row.franchise_id,
+          nowPriority + Number(row.display_order || 0),
+          row.source_url,
+          row.mime_type || null,
+          auth.id,
+          data.force ? 1 : 0,
+          data.force ? 1 : 0,
+        ),
+    );
+  }
+
+  statements.push(auditStatement(db, "dashboard.ocr_jobs.enqueue", "ocr_jobs", null, {
+    requested: (rows.results || []).length,
+    inserted_or_refreshed: statements.length,
+    franchise_id: textOrNull(data.franchise_id),
+    force: Boolean(data.force),
+  }, auth.id));
+  if (statements.length) await db.batch(statements);
+  return jsonResponse({ success: true, enqueued: Math.max(0, statements.length - 1) });
+}
+
+export async function handleRunOcrJobs(db, auth, data, env, options = {}) {
+  assertAdmin(auth);
+  const maxJobs = Math.min(Math.max(Number(data.max_jobs || 1), 1), MAX_RUN_LIMIT);
+  const result = await runOcrJobs(db, env, auth, { ...options, maxJobs });
+  return jsonResponse({ success: true, ...result });
+}
+
+export async function handleRunOcrDryRun(db, auth, data, env, options = {}) {
+  assertAdmin(auth);
+  if (!textOrNull(env.OCR_KEY)) {
+    return jsonResponse({
+      success: false,
+      error: "OCR_KEY_REQUIRED",
+      message: "Tambahkan Cloudflare Pages secret OCR_KEY sebelum menjalankan dry-run OCR.",
+    }, { status: 400 });
+  }
+
+  const providers = await loadRunnableProviders(db);
+  if (!providers.length) {
+    return jsonResponse({
+      success: false,
+      error: "OCR_PROVIDER_REQUIRED",
+      message: "Aktifkan minimal satu provider OCR yang sudah memiliki credential sebelum menjalankan dry-run.",
+    }, { status: 400 });
+  }
+
+  const prepared = await prepareOneDryRunJob(db, auth, data);
+  if (!prepared.job) {
+    return jsonResponse({
+      success: false,
+      error: "OCR_DRY_RUN_NO_CANDIDATE",
+      message: "Belum ada proposal gambar yang bisa dipakai untuk dry-run OCR.",
+    }, { status: 404 });
+  }
+
+  const result = await runOcrJobs(db, env, auth, { ...options, maxJobs: 1, jobId: prepared.job.id });
+  return jsonResponse({
+    success: true,
+    dry_run: true,
+    enqueued: prepared.enqueued ? 1 : 0,
+    target_job: maskJobRow(prepared.job),
+    ...result,
+  });
+}
+
+export async function runOcrJobs(db, env, auth, options = {}) {
+  if (!textOrNull(env.OCR_KEY)) throw new Error("Tambahkan Cloudflare Pages secret OCR_KEY sebelum menjalankan OCR.");
+  const maxJobs = Math.min(Math.max(Number(options.maxJobs || 1), 1), MAX_RUN_LIMIT);
+  const jobs = await claimPendingJobs(db, maxJobs, options.jobId);
+  const providers = await loadRunnableProviders(db);
+  const processed = [];
+  for (const job of jobs) {
+    processed.push(await processJob(db, env, auth, job, providers, options));
+  }
+  return {
+    processed_count: processed.length,
+    processed,
+    provider_count: providers.length,
+  };
+}
+
+async function claimPendingJobs(db, maxJobs, jobId = "") {
+  const scopedJobId = textOrNull(jobId);
+  const result = await db
+    .prepare(
+      `SELECT id, asset_id, franchise_id, source_url, mime_type, attempt_count
+       FROM ocr_jobs
+       WHERE status = 'pending'
+         AND (? IS NULL OR id = ?)
+       ORDER BY priority, created_at
+       LIMIT ?`,
+    )
+    .bind(scopedJobId, scopedJobId, maxJobs)
+    .all();
+  const jobs = result.results || [];
+  if (!jobs.length) return [];
+  await db.batch(jobs.map((job) => db
+    .prepare(
+      `UPDATE ocr_jobs
+       SET status = 'running', started_at = COALESCE(started_at, CURRENT_TIMESTAMP),
+           updated_at = CURRENT_TIMESTAMP, error_message = NULL
+       WHERE id = ? AND status = 'pending'`,
+    )
+    .bind(job.id)));
+  return jobs;
+}
+
+async function loadRunnableProviders(db) {
+  const result = await db
+    .prepare(
+      `SELECT *
+       FROM ocr_provider_configs
+       WHERE is_enabled = 1
+         AND COALESCE(api_key, '') <> ''
+         AND COALESCE(health_status, 'ready') IN ('ready', 'disabled')
+       ORDER BY priority, display_name`,
+    )
+    .all();
+  return (result.results || []).filter((provider) => provider.health_status !== "disabled");
+}
+
+async function prepareOneDryRunJob(db, auth, data) {
+  const scopedFranchiseId = textOrNull(data.franchise_id);
+  const candidate = await db
+    .prepare(
+      `SELECT a.id asset_id, a.franchise_id, COALESCE(a.public_url, a.legacy_url) source_url,
+              a.mime_type, COALESCE(a.display_order, 0) display_order
+       FROM franchise_assets a
+       LEFT JOIN franchise_asset_knowledge k ON k.asset_id = a.id
+       WHERE a.asset_type = 'proposal'
+         AND a.status = 'active'
+         AND COALESCE(a.public_url, a.legacy_url, '') <> ''
+         AND LOWER(COALESCE(a.mime_type, '')) LIKE 'image/%'
+         AND (? IS NULL OR a.franchise_id = ?)
+         AND COALESCE(k.extraction_status, '') NOT IN ('extracted')
+       ORDER BY a.franchise_id, COALESCE(a.display_order, 0), a.created_at
+       LIMIT 1`,
+    )
+    .bind(scopedFranchiseId, scopedFranchiseId)
+    .first();
+
+  if (!candidate || !isSafeExternalUrl(candidate.source_url)) {
+    const pending = await db
+      .prepare(
+        `SELECT j.id, j.asset_id, j.franchise_id, j.source_url, j.mime_type, j.status,
+                j.provider_key, j.attempt_count, j.error_message, j.created_at, j.updated_at,
+                f.brand_name
+         FROM ocr_jobs j
+         LEFT JOIN franchises f ON f.id = j.franchise_id
+         WHERE j.status = 'pending'
+           AND (? IS NULL OR j.franchise_id = ?)
+         ORDER BY j.priority, j.created_at
+         LIMIT 1`,
+      )
+      .bind(scopedFranchiseId, scopedFranchiseId)
+      .first();
+    return { job: pending || null, enqueued: false };
+  }
+
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO ocr_jobs (
+           id, asset_id, franchise_id, status, priority, source_url, mime_type, requested_by_user_id
+         ) VALUES (?, ?, ?, 'pending', 1, ?, ?, ?)
+         ON CONFLICT(asset_id) DO UPDATE SET
+           status = 'pending',
+           priority = 1,
+           source_url = excluded.source_url,
+           mime_type = excluded.mime_type,
+           error_message = NULL,
+           requested_by_user_id = excluded.requested_by_user_id,
+           updated_at = CURRENT_TIMESTAMP`,
+      )
+      .bind(`ocrdry_${randomId()}`, candidate.asset_id, candidate.franchise_id, candidate.source_url, candidate.mime_type || null, auth.id),
+    auditStatement(db, "dashboard.ocr_jobs.dry_run_prepare", "franchise_assets", candidate.asset_id, {
+      franchise_id: candidate.franchise_id,
+      source_url: candidate.source_url,
+    }, auth.id),
+  ]);
+
+  const job = await db
+    .prepare(
+      `SELECT j.id, j.asset_id, j.franchise_id, j.source_url, j.mime_type, j.status,
+              j.provider_key, j.attempt_count, j.error_message, j.created_at, j.updated_at,
+              f.brand_name
+       FROM ocr_jobs j
+       LEFT JOIN franchises f ON f.id = j.franchise_id
+       WHERE j.asset_id = ?
+       LIMIT 1`,
+    )
+    .bind(candidate.asset_id)
+    .first();
+  return { job, enqueued: true };
+}
+
+async function processJob(db, env, auth, job, providers, options) {
+  try {
+    const image = await loadImage(job, options.fetchImpl || fetch);
+    const contentHash = await sha256Base64Url(image.bytes);
+    const cacheHit = await db.prepare("SELECT * FROM ocr_content_cache WHERE content_hash = ? LIMIT 1").bind(contentHash).first();
+    if (cacheHit) {
+      await db.batch([
+        db.prepare("UPDATE ocr_content_cache SET last_used_at = CURRENT_TIMESTAMP WHERE content_hash = ?").bind(contentHash),
+        attemptStatement(db, job.id, cacheHit.provider_key, "cache_hit", null, null, Number(cacheHit.text_length || 0), null, null),
+        ...await successStatements(db, auth, job, {
+          contentHash,
+          providerKey: cacheHit.provider_key,
+          text: cacheHit.text,
+          textLength: Number(cacheHit.text_length || 0),
+          method: `ocr_cache_${cacheHit.provider_key}`,
+        }),
+      ]);
+      return processedResult(job, "succeeded", cacheHit.provider_key, Number(cacheHit.text_length || 0), "cache_hit");
+    }
+
+    if (!providers.length) {
+      await failJob(db, job, "Belum ada provider OCR aktif yang siap dipakai.");
+      return processedResult(job, "failed", "", 0, "NO_PROVIDER");
+    }
+
+    let lastError = null;
+    for (const provider of providers) {
+      const quota = await prepareQuota(db, provider);
+      if (!quota.allowed) {
+        await db.batch([
+          attemptStatement(db, job.id, provider.provider_key, "quota_exhausted", null, null, 0, "OCR_PROVIDER_QUOTA_EXHAUSTED", quota.reason),
+          providerHealthStatement(db, provider.provider_key, "exhausted", quota.reason),
+        ]);
+        continue;
+      }
+
+      const started = Date.now();
+      try {
+        const result = await callOcrProvider(provider, image, env, options);
+        const latency = Date.now() - started;
+        if (result.textLength < MIN_OCR_TEXT_CHARS) {
+          throw providerAttemptError("OCR_TEXT_TOO_SHORT", "Provider tidak mengembalikan teks yang cukup untuk dipakai.", result.httpStatus);
+        }
+        const text = result.text.slice(0, CACHE_TEXT_CHARS);
+        await db.batch([
+          db
+            .prepare(
+              `INSERT INTO ocr_content_cache (
+                 content_hash, source_url, mime_type, text, provider_key, confidence, text_length
+               ) VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(content_hash) DO UPDATE SET
+                 source_url = excluded.source_url,
+                 mime_type = excluded.mime_type,
+                 text = excluded.text,
+                 provider_key = excluded.provider_key,
+                 confidence = excluded.confidence,
+                 text_length = excluded.text_length,
+                 last_used_at = CURRENT_TIMESTAMP`,
+            )
+            .bind(contentHash, job.source_url, image.mimeType, text, provider.provider_key, null, text.length),
+          attemptStatement(db, job.id, provider.provider_key, "succeeded", result.httpStatus || null, latency, text.length, null, null),
+          usageStatement(db, provider.provider_key, job.id, contentHash, 1, "counted"),
+          quotaIncrementStatement(db, provider.provider_key),
+          providerHealthStatement(db, provider.provider_key, "ready", null),
+          ...await successStatements(db, auth, job, {
+            contentHash,
+            providerKey: provider.provider_key,
+            text,
+            textLength: text.length,
+            method: `ocr_${provider.provider_key}_v1`,
+          }),
+        ]);
+        return processedResult(job, "succeeded", provider.provider_key, text.length, "provider");
+      } catch (error) {
+        lastError = error;
+        const latency = Date.now() - started;
+        const quotaFailure = isQuotaFailure(error);
+        await db.batch([
+          attemptStatement(
+            db,
+            job.id,
+            provider.provider_key,
+            quotaFailure ? "quota_exhausted" : "failed",
+            error.httpStatus || null,
+            latency,
+            0,
+            error.code || "OCR_PROVIDER_FAILED",
+            cleanError(error.message),
+          ),
+          providerHealthStatement(db, provider.provider_key, quotaFailure ? "exhausted" : "ready", cleanError(error.message)),
+        ]);
+      }
+    }
+
+    await failJob(db, job, lastError?.message || "Semua provider OCR gagal atau sudah mencapai limit.");
+    return processedResult(job, "failed", "", 0, cleanError(lastError?.message || "FAILED"));
+  } catch (error) {
+    await failJob(db, job, error.message);
+    return processedResult(job, "failed", "", 0, cleanError(error.message));
+  }
+}
+
+async function successStatements(db, auth, job, result) {
+  const listing = await loadListing(db, job.franchise_id);
+  const candidates = extractProposalCandidatesFromText(result.text);
+  return [
+    ...proposalKnowledgeStatements(db, {
+      assetId: job.asset_id,
+      listing,
+      result: {
+        method: result.method,
+        status: "extracted",
+        sourceText: result.text,
+        pageCount: 1,
+        candidates: onlyMissingCandidates(candidates, listing),
+      },
+      actorUserId: auth.id,
+      siteId: SITE_FRANCHISEE_ID,
+    }),
+    db
+      .prepare(
+        `UPDATE ocr_jobs
+         SET status = 'succeeded', provider_key = ?, content_hash = ?, attempt_count = attempt_count + 1,
+             completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP, error_message = NULL
+         WHERE id = ?`,
+      )
+      .bind(result.providerKey, result.contentHash, job.id),
+    auditStatement(db, "dashboard.ocr_jobs.succeeded", "ocr_jobs", job.id, {
+      asset_id: job.asset_id,
+      franchise_id: job.franchise_id,
+      provider_key: result.providerKey,
+      text_length: result.textLength,
+    }, auth.id),
+  ];
+}
+
+async function loadListing(db, franchiseId) {
+  const row = await db
+    .prepare(
+      `SELECT id, brand_name, slug,
+              outlet_type, location_requirement, total_investment_idr, fee_license_idr,
+              estimated_bep_months, royalty_percent, net_profit_percent, support_system
+       FROM franchises
+       WHERE id = ?
+       LIMIT 1`,
+    )
+    .bind(franchiseId)
+    .first();
+  if (!row) throw new Error("Listing untuk job OCR tidak ditemukan.");
+  return row;
+}
+
+async function loadImage(job, fetchImpl) {
+  if (!isSafeExternalUrl(job.source_url)) throw new Error("URL aset proposal tidak valid untuk OCR.");
+  const response = await fetchImpl(job.source_url, { cf: { cacheTtl: 300 } });
+  if (!response.ok) throw new Error(`Aset proposal gagal diambil untuk OCR (${response.status}).`);
+  const bytes = await response.arrayBuffer();
+  if (bytes.byteLength > MAX_IMAGE_BYTES) throw new Error("Aset proposal terlalu besar untuk OCR batch.");
+  const mimeType = response.headers.get("content-type")?.split(";")[0] || job.mime_type || "application/octet-stream";
+  if (!String(mimeType).toLowerCase().startsWith("image/")) throw new Error("OCR batch saat ini hanya untuk gambar proposal.");
+  return {
+    sourceUrl: job.source_url,
+    bytes,
+    base64: arrayBufferToBase64(bytes),
+    mimeType,
+  };
+}
+
+async function prepareQuota(db, provider) {
+  const limit = Number(provider.free_quota_limit || 0);
+  const period = provider.free_quota_period || "account_specific";
+  if (!limit) return { allowed: true };
+
+  const now = new Date();
+  if (provider.trial_ends_at && new Date(provider.trial_ends_at) < now) {
+    return { allowed: false, reason: "Trial provider sudah berakhir." };
+  }
+
+  const resetAt = provider.quota_reset_at ? new Date(provider.quota_reset_at) : null;
+  if (resetAt && resetAt <= now && ["daily", "monthly", "compute_daily"].includes(period)) {
+    await db
+      .prepare("UPDATE ocr_provider_configs SET quota_used = 0, quota_reset_at = ?, health_status = 'ready', updated_at = CURRENT_TIMESTAMP WHERE provider_key = ?")
+      .bind(nextQuotaReset(period, now), provider.provider_key)
+      .run();
+    provider.quota_used = 0;
+    provider.quota_reset_at = nextQuotaReset(period, now);
+  } else if (!resetAt && ["daily", "monthly", "compute_daily"].includes(period)) {
+    await db
+      .prepare("UPDATE ocr_provider_configs SET quota_reset_at = ?, updated_at = CURRENT_TIMESTAMP WHERE provider_key = ?")
+      .bind(nextQuotaReset(period, now), provider.provider_key)
+      .run();
+  }
+
+  return Number(provider.quota_used || 0) < limit
+    ? { allowed: true }
+    : { allowed: false, reason: "Limit gratis provider sudah tercapai di sistem." };
+}
+
+function nextQuotaReset(period, now) {
+  const next = new Date(now);
+  if (period === "monthly") {
+    next.setUTCMonth(next.getUTCMonth() + 1, 1);
+    next.setUTCHours(0, 0, 0, 0);
+    return next.toISOString();
+  }
+  next.setUTCDate(next.getUTCDate() + 1);
+  next.setUTCHours(0, 0, 0, 0);
+  return next.toISOString();
+}
+
+function attemptStatement(db, jobId, providerKey, status, httpStatus, latencyMs, textLength, errorCode, errorMessage) {
+  return db
+    .prepare(
+      `INSERT INTO ocr_attempts (
+         id, job_id, provider_key, status, http_status, latency_ms, text_length, error_code, error_message
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(`ocrattempt_${randomId()}`, jobId, providerKey || null, status, httpStatus, latencyMs, textLength || 0, errorCode, errorMessage);
+}
+
+function usageStatement(db, providerKey, jobId, contentHash, units, status) {
+  return db
+    .prepare(
+      `INSERT INTO ocr_provider_usage_events (id, provider_key, job_id, content_hash, units, status)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(`ocrusage_${randomId()}`, providerKey, jobId, contentHash, units, status);
+}
+
+function quotaIncrementStatement(db, providerKey) {
+  return db
+    .prepare(
+      `UPDATE ocr_provider_configs
+       SET quota_used = COALESCE(quota_used, 0) + 1,
+           last_checked_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE provider_key = ?`,
+    )
+    .bind(providerKey);
+}
+
+function providerHealthStatement(db, providerKey, healthStatus, errorMessage) {
+  return db
+    .prepare(
+      `UPDATE ocr_provider_configs
+       SET health_status = ?, last_error = ?, last_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+       WHERE provider_key = ?`,
+    )
+    .bind(healthStatus, errorMessage || null, providerKey);
+}
+
+async function failJob(db, job, message) {
+  await db
+    .prepare(
+      `UPDATE ocr_jobs
+       SET status = 'failed', error_message = ?, attempt_count = attempt_count + 1,
+           completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+    )
+    .bind(cleanError(message), job.id)
+    .run();
+}
+
+function onlyMissingCandidates(candidates, listing) {
+  return Object.fromEntries(Object.entries(candidates || {}).filter(([field]) => !hasValue(listing?.[field])));
+}
+
+function hasValue(value) {
+  return value !== null && value !== undefined && String(value).trim() !== "";
+}
+
+function maskJobRow(row) {
+  return {
+    id: row.id,
+    asset_id: row.asset_id,
+    franchise_id: row.franchise_id,
+    brand_name: row.brand_name || "",
+    status: row.status,
+    provider_key: row.provider_key || "",
+    attempt_count: Number(row.attempt_count || 0),
+    error_message: row.error_message || "",
+    created_at: row.created_at || null,
+    updated_at: row.updated_at || null,
+  };
+}
+
+function processedResult(job, status, providerKey, textLength, note) {
+  return {
+    job_id: job.id,
+    asset_id: job.asset_id,
+    franchise_id: job.franchise_id,
+    status,
+    provider_key: providerKey || "",
+    text_length: Number(textLength || 0),
+    note: note || "",
+  };
+}
+
+function providerAttemptError(code, message, httpStatus) {
+  const error = new Error(message);
+  error.code = code;
+  error.httpStatus = httpStatus || null;
+  return error;
+}
+
+function isQuotaFailure(error) {
+  return error?.httpStatus === 429 || /quota|limit|rate/i.test(error?.message || "") || /QUOTA|LIMIT|RATE/i.test(error?.code || "");
+}
+
+function cleanError(value) {
+  return normalizeOcrText(value).slice(0, 500);
+}
+
+function textOrNull(value) {
+  const normalized = (value ?? "").toString().trim();
+  return normalized || null;
+}
+
+function isSafeExternalUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return false;
+    const host = url.hostname.toLowerCase();
+    return host !== "localhost" && !host.endsWith(".localhost") && !/^\d+\.\d+\.\d+\.\d+$/.test(host);
+  } catch (_error) {
+    return false;
+  }
+}
+
+async function sha256Base64Url(buffer) {
+  const digest = await crypto.subtle.digest("SHA-256", buffer);
+  return arrayBufferToBase64Url(digest);
+}
+
+function arrayBufferToBase64(buffer) {
+  let binary = "";
+  new Uint8Array(buffer).forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+function arrayBufferToBase64Url(buffer) {
+  return arrayBufferToBase64(buffer).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}

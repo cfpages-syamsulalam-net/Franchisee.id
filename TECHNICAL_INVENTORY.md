@@ -870,13 +870,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`. Stored key/secret values are never selected by the read query.
-- `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js` plus OCR configuration to `_ocr-provider-config.js`, passing `env.OCR_KEY` for credential encryption.
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js` and OCR queue state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
+- `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js`, OCR configuration to `_ocr-provider-config.js`, and admin-triggered OCR dry-run/enqueue/run actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution or credential encryption needs it.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions plus `update_ocr_provider_config`, with fixed provider IDs, credential size limits, HTTPS endpoint checks, quota enums, and bounded priority.
+- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions plus `update_ocr_provider_config`, `run_ocr_dry_run`, `enqueue_ocr_jobs`, and `run_ocr_jobs`, with fixed provider IDs, credential size limits, HTTPS endpoint checks, bounded priority, and OCR batch-size limits.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
@@ -886,6 +886,20 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getOcrProviderConfigs(db, auth)`: Returns provider metadata only to admin; SQL derives `has_api_key` / `has_api_secret` booleans and does not select credential values.
 - `handleUpdateOcrProviderConfig(db, auth, data, env)`: Preserves blank credential inputs, applies explicit clear flags, encrypts saved credentials with external `OCR_KEY`, re-encrypts legacy plaintext values on next save, enforces provider-specific activation prerequisites through `src/lib/ocr-provider-metadata.js`, preserves seeded quota/free-limit metadata on dashboard saves, updates D1 state, and audits only non-secret metadata.
 - `maskProviderConfig(row)`: Produces the stable browser response contract without `api_key` or `api_secret` properties.
+
+### File: `functions/_ocr-provider-adapters.js`
+*External OCR provider adapter boundary.*
+- `callOcrProvider(provider, image, env, options)`: Decrypts the selected provider credential values with `OCR_KEY` and dispatches to the provider-specific adapter for OCR.Space, Azure Vision, Cloudflare Workers AI, Google Vision, Groq Vision, AWS Textract, Veryfi, Mindee, PDF.co, or API4AI.
+- `normalizeOcrText(value)`: Converts heterogeneous provider output into trimmed plain text with bounded whitespace before cache/storage.
+- `awsSigV4Headers(input)`: Worker-compatible AWS Signature V4 helper for Textract `DetectDocumentText`.
+
+### File: `functions/_ocr-job-runner.js`
+*Admin-triggered OCR queue/cache/failover orchestrator.*
+- `getOcrJobState(db, auth)`: Returns admin-only OCR queue counts, recent jobs, enqueue-candidate count, and a `migration_required` fallback when `0021_ocr_job_queue.sql` is not applied.
+- `handleEnqueueOcrJobs(db, auth, data)`: Admin-only action that queues active image proposal assets into `ocr_jobs`; it does not call external OCR providers.
+- `handleRunOcrDryRun(db, auth, data, env, options)`: Admin-only action that requires `OCR_KEY` and one enabled provider, prepares at most one candidate proposal-image job, and processes only that job before broad backfills.
+- `handleRunOcrJobs(db, auth, data, env, options)`: Admin-only action that runs a bounded batch and requires `OCR_KEY` before any provider call can happen.
+- `runOcrJobs(db, env, auth, options)`: Claims pending jobs, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` when available, checks local quota/trial state, tries enabled providers in priority order, logs attempts and usage, and writes successful OCR text through `proposalKnowledgeStatements()`.
 
 ### File: `functions/_dashboard-queries.js`
 *Read-only D1 data model for `/dashboard-data`.*

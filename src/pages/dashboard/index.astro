@@ -577,6 +577,36 @@ const ocrProviderMetadataJson = JSON.stringify({
               <section class="dash-panel">
                 <div class="dash-panel-header">
                   <div class="dash-panel-title">
+                    <i class="fas fa-file-lines dash-section-icon" aria-hidden="true"></i>
+                    <div>
+                      <h2>Job OCR Proposal</h2>
+                      <p>OCR hanya berjalan saat admin menekan tombol batch; proposal tidak otomatis dikirim ke provider eksternal.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="dash-toolbar dash-ocr-toolbar" role="toolbar" aria-label="Aksi OCR proposal">
+                  <button class="dash-icon-button dash-action-button is-primary" type="button" data-ocr-dry-run data-fr-tooltip="Kirim satu proposal gambar ke provider aktif untuk cek provider, quota, cache, dan hasil review">
+                    <i class="fas fa-vial-circle-check" aria-hidden="true"></i>
+                    <span>Dry run 1 aset</span>
+                  </button>
+                  <button class="dash-icon-button dash-action-button is-primary" type="button" data-ocr-enqueue data-fr-tooltip="Antrekan proposal gambar yang belum punya teks OCR">
+                    <i class="fas fa-list-check" aria-hidden="true"></i>
+                    <span>Antrekan</span>
+                  </button>
+                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Jalankan batch kecil OCR dengan failover provider setelah dry-run terlihat benar">
+                    <i class="fas fa-play" aria-hidden="true"></i>
+                    <span>Jalankan batch</span>
+                  </button>
+                </div>
+                <p class="dash-muted dash-ocr-job-status" data-ocr-job-status>Memuat status job OCR...</p>
+                <ul class="dash-list" data-ocr-job-rows>
+                  <li><span>Memuat job OCR...</span></li>
+                </ul>
+              </section>
+
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
                     <i class="fas fa-key dash-section-icon" aria-hidden="true"></i>
                     <div>
                       <h2>Credential OCR</h2>

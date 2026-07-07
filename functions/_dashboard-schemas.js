@@ -144,6 +144,24 @@ const UpdateOcrProviderConfigSchema = z.object({
   trial_ends_at: z.string().trim().max(40).optional().default(""),
 });
 
+const EnqueueOcrJobsSchema = z.object({
+  action: z.literal("enqueue_ocr_jobs"),
+  franchise_id: z.string().trim().max(120).optional().default(""),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+  priority: z.coerce.number().int().min(1).max(1000).optional().default(100),
+  force: z.boolean().optional().default(false),
+});
+
+const RunOcrJobsSchema = z.object({
+  action: z.literal("run_ocr_jobs"),
+  max_jobs: z.coerce.number().int().min(1).max(5).optional().default(1),
+});
+
+const RunOcrDryRunSchema = z.object({
+  action: z.literal("run_ocr_dry_run"),
+  franchise_id: z.string().trim().max(120).optional().default(""),
+});
+
 export const DashboardActionSchema = z.discriminatedUnion("action", [
   OutreachEventSchema,
   SuggestEditSchema,
@@ -157,6 +175,9 @@ export const DashboardActionSchema = z.discriminatedUnion("action", [
   ManageNotificationEmailSchema,
   UpdatePremiumSettingsSchema,
   UpdateOcrProviderConfigSchema,
+  EnqueueOcrJobsSchema,
+  RunOcrJobsSchema,
+  RunOcrDryRunSchema,
 ]);
 
 export function sanitizeChanges(changes) {

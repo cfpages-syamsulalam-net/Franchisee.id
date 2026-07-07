@@ -24,6 +24,7 @@
     "proposal-download:check": "tsx scripts/check-proposal-download.ts",
     "detail-assets:check": "tsx scripts/check-franchise-detail-assets.ts",
     "ocr:check": "tsx scripts/check-ocr-provider-config.ts",
+    "ocr:runner:check": "tsx scripts/check-ocr-job-runner.ts",
     "dev:astro": "pnpm run astro:sync && astro dev --host 127.0.0.1",
     "preview:astro": "astro preview --host 127.0.0.1"
   },

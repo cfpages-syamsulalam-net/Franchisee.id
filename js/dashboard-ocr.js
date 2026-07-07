@@ -17,22 +17,29 @@
         });
       }
       if (options.form) options.form.addEventListener("submit", submit);
+      if (options.dryRunButton) options.dryRunButton.addEventListener("click", runDryRun);
+      if (options.enqueueButton) options.enqueueButton.addEventListener("click", enqueueJobs);
+      if (options.runButton) options.runButton.addEventListener("click", runJobs);
     }
 
-    function render(payload) {
+    function render(payload, jobsPayload) {
       payload = payload || {};
+      jobsPayload = jobsPayload || {};
       state.providers = payload.providers || [];
       state.adminOnly = Boolean(payload.admin_only);
       renderList(payload);
+      renderJobs(jobsPayload);
       renderSelect();
       if (state.adminOnly) {
         setFormDisabled(true);
+        setJobButtonsDisabled(true);
         setInlineStatus("Hanya admin yang dapat melihat dan mengubah konfigurasi OCR.");
         renderProviderMeta(null);
         renderCredentialSummary(null);
         return;
       }
       setFormDisabled(false);
+      setJobButtonsDisabled(Boolean(jobsPayload.migration_required));
       var selectedKey = options.providerSelect && options.providerSelect.value;
       var selected = findProvider(selectedKey) || state.providers[0] || null;
       if (selected && options.providerSelect) options.providerSelect.value = selected.provider_key;
@@ -58,6 +65,38 @@
           utils.escapeHtml(configured + " · " + (provider.is_enabled ? "Aktif" : "Nonaktif") + " · " + provider.health_status) +
           '<br>' + quota + '</span></li>';
       }).join("") : '<li><span>Belum ada provider OCR.</span></li>';
+    }
+
+    function renderJobs(payload) {
+      payload = payload || {};
+      if (options.jobStatus) {
+        if (payload.admin_only) {
+          options.jobStatus.textContent = "Hanya admin yang dapat mengelola job OCR.";
+        } else if (payload.migration_required) {
+          options.jobStatus.textContent = "Queue OCR belum siap. Jalankan migration OCR terlebih dahulu.";
+        } else {
+          var counts = payload.counts || {};
+          options.jobStatus.textContent = [
+            "Belum antre: " + Number(payload.enqueue_candidates || 0).toLocaleString("id-ID"),
+            "Pending: " + Number(counts.pending || 0).toLocaleString("id-ID"),
+            "Running: " + Number(counts.running || 0).toLocaleString("id-ID"),
+            "Sukses: " + Number(counts.succeeded || 0).toLocaleString("id-ID"),
+            "Gagal: " + Number(counts.failed || 0).toLocaleString("id-ID")
+          ].join(" · ");
+        }
+      }
+      if (!options.jobRows) return;
+      if (payload.migration_required) {
+        options.jobRows.innerHTML = '<li><strong>Queue belum aktif</strong><span>Migration OCR job queue perlu dijalankan sebelum batch OCR dipakai.</span></li>';
+        return;
+      }
+      var recent = payload.recent || [];
+      options.jobRows.innerHTML = recent.length ? recent.map(function (job) {
+        var brand = job.brand_name || job.franchise_id || "Listing";
+        var detail = utils.escapeHtml([job.status, job.provider_key || "belum ada provider", job.attempt_count + " attempt"].join(" · "));
+        if (job.error_message) detail += "<br>" + utils.escapeHtml(job.error_message);
+        return '<li><strong>' + utils.escapeHtml(brand) + '</strong><span>' + detail + '</span></li>';
+      }).join("") : '<li><span>Belum ada job OCR. Antrekan proposal gambar terlebih dahulu.</span></li>';
     }
 
     function renderSelect() {
@@ -119,6 +158,42 @@
       } finally {
         if (button) button.disabled = false;
       }
+    }
+
+    async function enqueueJobs() {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa mengantrekan OCR.", true);
+        return;
+      }
+      await buttonAction(options.enqueueButton, "Mengantrekan...", async function () {
+        var result = await options.postDashboardAction({ action: "enqueue_ocr_jobs", limit: 100 });
+        options.setStatus("OCR proposal diantrekan: " + Number(result.enqueued || 0).toLocaleString("id-ID") + " aset.", false);
+        await options.reloadDashboard();
+      }, options.setStatus);
+    }
+
+    async function runDryRun() {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa menjalankan dry-run OCR.", true);
+        return;
+      }
+      await buttonAction(options.dryRunButton, "Dry-run...", async function () {
+        var result = await options.postDashboardAction({ action: "run_ocr_dry_run" });
+        options.setStatus("Dry-run OCR selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " job diproses.", false);
+        await options.reloadDashboard();
+      }, options.setStatus);
+    }
+
+    async function runJobs() {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa menjalankan OCR.", true);
+        return;
+      }
+      await buttonAction(options.runButton, "Menjalankan...", async function () {
+        var result = await options.postDashboardAction({ action: "run_ocr_jobs", max_jobs: 2 });
+        options.setStatus("OCR batch selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " job diproses.", false);
+        await options.reloadDashboard();
+      }, options.setStatus);
     }
 
     function findProvider(key) {
@@ -221,6 +296,12 @@
       Array.from(options.form.elements).forEach(function (input) { input.disabled = Boolean(disabled); });
     }
 
+    function setJobButtonsDisabled(disabled) {
+      if (options.dryRunButton) options.dryRunButton.disabled = Boolean(disabled);
+      if (options.enqueueButton) options.enqueueButton.disabled = Boolean(disabled);
+      if (options.runButton) options.runButton.disabled = Boolean(disabled);
+    }
+
     function setInlineStatus(message) {
       if (options.status) options.status.textContent = message || "";
     }
@@ -256,6 +337,24 @@
       region: "Region",
       model: "Model / operasi"
     }[name] || name;
+  }
+
+  async function buttonAction(button, workingLabel, callback, setStatus) {
+    var original = button ? button.innerHTML : "";
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>' + utils.escapeHtml(workingLabel) + '</span>';
+    }
+    try {
+      await callback();
+    } catch (error) {
+      if (setStatus) setStatus(error.message || "Aksi OCR gagal.", true);
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.innerHTML = original;
+      }
+    }
   }
 
   window.FranchiseDashboardOcr = { createOperations: createOperations };

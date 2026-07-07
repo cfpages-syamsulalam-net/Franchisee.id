@@ -46,7 +46,11 @@ Free limits change frequently. Verify the provider console before enabling produ
 - [x] Encrypt saved credential values with AES-GCM envelopes using Cloudflare Pages secret `OCR_KEY` as the external root secret. Existing plaintext values, if any, are re-encrypted on the next save instead of being returned to the browser.
 - [x] Add a dedicated `/dashboard` OCR tab with provider selector, provider-specific password credential fields, only the endpoint/account/region/model fields required by the selected provider, read-only quota/free-limit metadata, priority, enable toggle, and explicit credential-clear controls only when a stored credential exists.
 - [x] Add Zod validation, audit events without secret values, regression checks, documentation maps, changelog, and session context.
-- [ ] Later integration: provider adapters, quota counters, OCR job queue, content-hash cache, and bounded failover. This session configures providers/credentials only; it does not send brochure data externally.
+- [x] Add provider adapters, quota counters, OCR job queue, content-hash cache, and bounded failover. OCR execution remains admin-triggered from `/dashboard`; provider credentials/configuration alone does not send brochure data externally.
+- [x] Store OCR job state in committed migration `0021_ocr_job_queue.sql`: `ocr_jobs`, `ocr_attempts`, `ocr_content_cache`, and `ocr_provider_usage_events`.
+- [x] Add `/dashboard-data` actions `enqueue_ocr_jobs` and `run_ocr_jobs`. Enqueue only creates local D1 jobs for active proposal image assets; `run_ocr_jobs` is the explicit action that fetches the image and sends it to enabled providers.
+- [x] Add `/dashboard-data` action `run_ocr_dry_run` and a `/dashboard` button for a one-asset production dry-run before broad backfills. The action requires `OCR_KEY` and at least one enabled provider, prepares at most one candidate job, and runs only that job.
+- [x] Normalize successful OCR output into `franchise_asset_knowledge` plus pending `proposal_extraction` suggestions, preserving the human review requirement before canonical listing fields change.
 
 ## Dashboard credential field rules
 

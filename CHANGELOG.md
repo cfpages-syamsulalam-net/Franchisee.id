@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-07 17:39 (Asia/Jakarta)
+### Added
+- `migrations/0021_ocr_job_queue.sql`: Added OCR content-hash cache, job queue, provider-attempt log, and provider-usage event tables for resumable proposal OCR.
+- `functions/_ocr-provider-adapters.js`: Added provider adapters and normalized OCR text handling for OCR.Space, Azure Vision, Cloudflare Workers AI, Google Vision, Groq Vision, AWS Textract, Veryfi, Mindee, PDF.co, and API4AI using encrypted D1 credentials decrypted with `OCR_KEY`.
+- `functions/_ocr-job-runner.js`: Added admin-triggered OCR dry-run/enqueue/run orchestration with bounded batch size, cache reuse, local quota checks, provider failover, attempt/usage logging, and proposal-knowledge persistence through pending review suggestions.
+- `scripts/check-ocr-job-runner.ts` and `package.json`: Added `pnpm run ocr:runner:check` coverage for OCR job action validation, batch bounds, migration fallback, and text normalization.
+- `.context/session-20260707-1739.md`: Added this session continuity snapshot.
+
+### Changed
+- `functions/_dashboard-schemas.js` and `functions/dashboard-data.js`: Added validated `run_ocr_dry_run`, `enqueue_ocr_jobs`, and `run_ocr_jobs` dashboard actions plus admin OCR job status in `/dashboard-data`.
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, and `css/dashboard.css`: Added admin OCR dry-run/job controls, status counts, recent job rows, and explicit copy that OCR only sends proposal data externally when an admin runs a dry-run or batch.
+- `docs/architecture/OCR_PROVIDER_STRATEGY.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, `docs/README.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the OCR job/cache/failover/dry-run implementation and marked brochure OCR suggestions 62 and 66 complete.
+- Remote D1 `franchise_db`: Applied migration `0021_ocr_job_queue.sql` and verified `ocr_jobs`, `ocr_attempts`, `ocr_content_cache`, and `ocr_provider_usage_events` exist.
+
 ## 2026-07-07 16:44 (Asia/Jakarta)
 ### Added
 - `src/lib/ocr-provider-metadata.js`: Added the shared OCR provider metadata contract for visible dashboard fields, labels/help copy, and activation requirements.

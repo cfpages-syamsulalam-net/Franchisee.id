@@ -31,6 +31,7 @@ import {
 import { DashboardActionSchema, EDITABLE_LISTING_FIELD_DEFS, SITE_ID } from "./_dashboard-schemas.js";
 import { jsonResponse } from "./_dashboard-utils.js";
 import { getOcrProviderConfigs, handleUpdateOcrProviderConfig } from "./_ocr-provider-config.js";
+import { getOcrJobState, handleEnqueueOcrJobs, handleRunOcrDryRun, handleRunOcrJobs } from "./_ocr-job-runner.js";
 import { logOperationEvent } from "./_telemetry.js";
 
 export async function onRequestGet({ request, env }) {
@@ -38,7 +39,7 @@ export async function onRequestGet({ request, env }) {
     const auth = await requireDashboardAccess(request, env);
     const db = env.franchise_db;
 
-    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, pendingPremiumPayments, premiumOperations, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth, ocrProviders] = await Promise.all([
+    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, pendingPremiumPayments, premiumOperations, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth, ocrProviders, ocrJobs] = await Promise.all([
       getOverview(db),
       getDataQuality(db),
       getPublishState(db),
@@ -54,6 +55,7 @@ export async function onRequestGet({ request, env }) {
       getLeadSummary(db),
       getSystemHealth(db, env),
       getOcrProviderConfigs(db, auth),
+      getOcrJobState(db, auth),
     ]);
 
     return jsonResponse({
@@ -85,6 +87,7 @@ export async function onRequestGet({ request, env }) {
       lead_summary: leadSummary,
       system_health: systemHealth,
       ocr_providers: ocrProviders,
+      ocr_jobs: ocrJobs,
       generated_at: new Date().toISOString(),
     });
   } catch (error) {
@@ -124,6 +127,9 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "update_publication") return handleUpdatePublication(env.franchise_db, auth, data);
     if (data.action === "update_listing_locations") return handleUpdateListingLocations(env.franchise_db, auth, data);
     if (data.action === "update_ocr_provider_config") return handleUpdateOcrProviderConfig(env.franchise_db, auth, data, env);
+    if (data.action === "enqueue_ocr_jobs") return handleEnqueueOcrJobs(env.franchise_db, auth, data);
+    if (data.action === "run_ocr_dry_run") return handleRunOcrDryRun(env.franchise_db, auth, data, env);
+    if (data.action === "run_ocr_jobs") return handleRunOcrJobs(env.franchise_db, auth, data, env);
 
     return jsonResponse({ success: false, error: "UNKNOWN_DASHBOARD_ACTION" }, { status: 400 });
   } catch (error) {

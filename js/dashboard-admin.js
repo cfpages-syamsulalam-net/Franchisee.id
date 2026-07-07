@@ -77,6 +77,11 @@
   });
   var ocrOperations = ocrClient.createOperations({
     providerList: document.querySelector("[data-ocr-provider-list]"),
+    jobStatus: document.querySelector("[data-ocr-job-status]"),
+    jobRows: document.querySelector("[data-ocr-job-rows]"),
+    dryRunButton: document.querySelector("[data-ocr-dry-run]"),
+    enqueueButton: document.querySelector("[data-ocr-enqueue]"),
+    runButton: document.querySelector("[data-ocr-run]"),
     providerSelect: document.querySelector("[data-ocr-provider-select]"),
     form: document.querySelector("[data-ocr-config-form]"),
     status: document.querySelector("[data-ocr-config-status]"),
@@ -193,7 +198,7 @@
     dashboardOperations.render(data);
     reviewOperations.render(data);
     premiumOperations.render(data.premium_operations || {});
-    ocrOperations.render(data.ocr_providers || {});
+    ocrOperations.render(data.ocr_providers || {}, data.ocr_jobs || {});
     if (window.FranchiseTooltip && typeof window.FranchiseTooltip.refresh === "function") {
       window.FranchiseTooltip.refresh();
     }
