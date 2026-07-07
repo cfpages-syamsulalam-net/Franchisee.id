@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-07 09:45 (Asia/Jakarta)
+### Added
+- `src/lib/franchise-detail-styles.ts`: Added the generated detail-page CSS module extracted from the former mixed detail asset injector.
+- `src/lib/franchise-detail-scripts.ts`: Added the generated detail-page browser script module for tabs, brochure navigation/download behavior, contact-tab shortcuts, and compare buttons.
+- `scripts/check-franchise-detail-assets.ts` and `package.json`: Added `pnpm run detail-assets:check` coverage for generated detail asset injection, idempotency, proposal controls, contact floats, compare behavior, and legacy WordPress runtime cleanup.
+- `.context/session-20260707-0945.md`: Added this session continuity snapshot.
+
+### Changed
+- `src/lib/franchise-detail-assets.ts`: Reduced the large mixed CSS/JS module to a small injector facade that delegates to focused generated style and script modules.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Marked suggestion 64 as implemented and updated the module map/refactor plan for the detail asset split.
+- Cloudflare Pages project `franchisee-id`: Set the production `OCR_KEY` secret through the `franchise-network` cfman account alias without printing the generated value.
+
 ## 2026-07-07 09:30 (Asia/Jakarta)
 ### Added
 - `functions/_ocr-credential-crypto.js`: Added OCR credential envelope encryption helpers using AES-GCM, provider/field AAD, and the external Cloudflare Pages secret `OCR_KEY`.

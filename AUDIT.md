@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-06 23:20 (Asia/Jakarta)
+Last updated: 2026-07-07 09:45 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -104,11 +104,11 @@ Principle: every blocked action should answer three questions in the UI: what ha
 
 | Step | Target files | Scope | Status |
 | --- | --- | --- | --- |
-| 1 | `src/lib/franchise-detail-assets.ts` | Keep current behavior stable; only apply urgent production fixes in place. | In progress |
-| 2 | `src/lib/franchise-detail-styles.ts` | Move the generated `<style>` string into a purpose-owned style module with named sections for tabs, facts, proposal reader, contact floats, and responsive rules. | Planned |
-| 3 | `src/lib/franchise-detail-scripts.ts` | Move injected browser JavaScript into a purpose-owned script module with focused functions for tabs, proposal reader/download, contact-tab opening, and compare buttons. | Planned |
+| 1 | `src/lib/franchise-detail-assets.ts` | Keep current behavior stable while reducing the injector to a small facade. | Done |
+| 2 | `src/lib/franchise-detail-styles.ts` | Move the generated `<style>` string into a purpose-owned style module with named sections for tabs, facts, proposal reader, contact floats, and responsive rules. | Done |
+| 3 | `src/lib/franchise-detail-scripts.ts` | Move injected browser JavaScript into a purpose-owned script module with focused functions for tabs, proposal reader/download, contact-tab opening, and compare buttons. | Done |
 | 4 | `src/lib/franchise-proposal-reader.ts` | Extract proposal-reader markup/CSS/JS coordination once the server-side PDF route is production-verified. | Planned |
-| 5 | Validation | Add a targeted static assertion that generated detail HTML still includes tabs, proposal controls, contact floats, and no legacy `analyticswp`/`admin-ajax` references. | Planned |
+| 5 | Validation | Add a targeted static assertion that generated detail HTML still includes tabs, proposal controls, contact floats, and no legacy `analyticswp`/`admin-ajax` references. | Done |
 
 Actionability checklist for future edits:
 - [x] Public save card uses icon-only UI with shared tooltip.

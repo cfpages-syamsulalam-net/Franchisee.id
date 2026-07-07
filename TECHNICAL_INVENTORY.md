@@ -528,12 +528,24 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Extracted from `src/lib/franchise-static.ts` on 2026-06-22, then split again on 2026-07-03 so directory and detail generated assets can evolve independently.
 
 ### File: `src/lib/franchise-detail-assets.ts`
-*Generated detail-page CSS/JS helper for D1-backed Astro pages.*
-- `injectDetailAssets(html)`: Injects generated detail CSS/JS with border-light profile/tab presentation, tab activation, dynamic contact floats, and brochure reader/download behavior.
-- `initProposalReaders()` / `setProposalPage(reader, requestedPage)`: Initialize one-page-at-a-time brochure navigation, count, disabled boundary buttons, and left/right keyboard navigation.
-- `downloadProposalPdf(button)`: Posts proposal image URLs to `/proposal-download`, shows in-button progress/status, downloads the returned PDF Blob, and avoids browser canvas CORS failures.
-- The actual proposal image fetch/PDF/watermark work now lives in `functions/_proposal-pdf.js`; `src/lib/franchise-detail-assets.ts` keeps only the public-page interaction layer.
-- Owns Premium detail CTA/gallery/brochure/FAQ styling and franchisor owner CTA styling outside the directory asset helper.
+*Generated detail-page asset injector facade for D1-backed Astro pages.*
+- `injectDetailAssets(html)`: Keeps the historical injection contract stable, injects detail styles before `</head>`, injects detail scripts before `</body>`, and stays idempotent by checking the shared style id.
+- Delegates generated CSS to `src/lib/franchise-detail-styles.ts` and generated browser JavaScript to `src/lib/franchise-detail-scripts.ts` to reduce truncation and merge risk.
+
+### File: `src/lib/franchise-detail-styles.ts`
+*Generated detail-page CSS module for D1-backed Astro pages.*
+- `FRANCHISE_DETAIL_STYLE_ID`: Stable DOM id used by the injector and smoke check.
+- `renderFranchiseDetailStyles()`: Returns the generated detail `<style>` block for border-light profile/tab presentation, Premium gallery/brochure/FAQ styling, dynamic contact floats, brochure overlay top bar, left/right hover hit areas, and responsive rules.
+
+### File: `src/lib/franchise-detail-scripts.ts`
+*Generated detail-page browser script module for D1-backed Astro pages.*
+- `FRANCHISE_DETAIL_SCRIPT_ID`: Stable DOM id used by the injected browser script.
+- `renderFranchiseDetailScripts()`: Returns the generated detail `<script>` block for tab activation, `initProposalReaders()`, `setProposalPage(reader, requestedPage)`, keyboard page navigation, contact-tab shortcuts, compare button behavior, and `/proposal-download` PDF requests with in-button progress/status.
+- The actual proposal image fetch/PDF/watermark work remains in `functions/_proposal-pdf.js`; the browser script only sends first-party proposal image URLs and downloads the returned Blob.
+
+### File: `scripts/check-franchise-detail-assets.ts`
+*Focused generated-detail asset regression check.*
+- `pnpm run detail-assets:check`: Verifies `injectDetailAssets()` is idempotent and injects the expected detail CSS/JS hooks for tabs, proposal overlay/download/navigation, contact floats, compare actions, and WordPress-runtime cleanup.
 
 ### File: `js/product-events.js`
 *Public privacy-safe listing interaction tracker.*
