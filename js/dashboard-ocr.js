@@ -8,15 +8,24 @@
 
   function createOperations(options) {
     options = options || {};
-    var state = { providers: [], adminOnly: true };
+    var state = { providers: [], adminOnly: true, filling: false, autosaveTimer: null, saving: false };
 
     function bind() {
+      (options.subtabs || []).forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          activateSubtab(tab.getAttribute("data-ocr-subtab"));
+        });
+      });
       if (options.providerSelect) {
         options.providerSelect.addEventListener("change", function () {
           fillForm(findProvider(options.providerSelect.value));
         });
       }
       if (options.form) options.form.addEventListener("submit", submit);
+      if (options.form) options.form.addEventListener("input", handleFormChange);
+      if (options.form) options.form.addEventListener("change", handleFormChange);
+      if (options.providerList) options.providerList.addEventListener("click", handleProviderListClick);
+      if (options.resultRows) options.resultRows.addEventListener("click", handleResultClick);
       if (options.dryRunButton) options.dryRunButton.addEventListener("click", runDryRun);
       if (options.enqueueButton) options.enqueueButton.addEventListener("click", enqueueJobs);
       if (options.runButton) options.runButton.addEventListener("click", runJobs);
@@ -29,6 +38,7 @@
       state.adminOnly = Boolean(payload.admin_only);
       renderList(payload);
       renderJobs(jobsPayload);
+      renderResults(jobsPayload);
       renderSelect();
       if (state.adminOnly) {
         setFormDisabled(true);
@@ -46,6 +56,44 @@
       fillForm(selected);
     }
 
+    function activateSubtab(name) {
+      name = name || "settings";
+      (options.subtabs || []).forEach(function (tab) {
+        var active = tab.getAttribute("data-ocr-subtab") === name;
+        tab.classList.toggle("is-active", active);
+        tab.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      (options.subpanels || []).forEach(function (panel) {
+        var active = panel.getAttribute("data-ocr-subpanel") === name;
+        panel.hidden = !active;
+        panel.classList.toggle("is-active", active);
+      });
+    }
+
+    function handleResultClick(event) {
+      var link = event.target && event.target.closest && event.target.closest("[data-ocr-open-review]");
+      if (!link) return;
+      event.preventDefault();
+      var reviewTab = document.querySelector('[data-dashboard-tab="review"]');
+      if (reviewTab) reviewTab.click();
+      options.setStatus("Buka tab Review untuk meninjau kandidat data dari hasil OCR sebelum disetujui ke listing.", false);
+    }
+
+    async function handleProviderListClick(event) {
+      var button = event.target && event.target.closest && event.target.closest("[data-ocr-copy-provider-error]");
+      if (!button) return;
+      event.preventDefault();
+      var provider = findProvider(button.getAttribute("data-ocr-copy-provider-error"));
+      if (!provider) return;
+      var text = buildProviderErrorText(provider);
+      try {
+        await copyText(text);
+        options.setStatus("Error OCR provider sudah disalin. Paste ke chat kalau perlu troubleshooting.", false);
+      } catch (error) {
+        options.setStatus("Browser belum mengizinkan copy otomatis. Seleksi teks error provider lalu copy manual.", true);
+      }
+    }
+
     function renderList(payload) {
       if (!options.providerList) return;
       if (payload.migration_required) {
@@ -61,10 +109,21 @@
         var quota = provider.free_quota_limit
           ? Number(provider.free_quota_limit).toLocaleString("id-ID") + " " + utils.escapeHtml(provider.quota_unit || "request") + " / " + quotaPeriodLabel(provider.free_quota_period)
           : "Limit mengikuti akun provider";
-        return '<li><strong>#' + Number(provider.priority || 100) + ' · ' + utils.escapeHtml(provider.display_name) + '</strong><span>' +
+        var rowClass = provider.is_enabled ? "" : ' class="is-muted"';
+        var providerError = renderProviderError(provider);
+        return '<li' + rowClass + '><strong>#' + Number(provider.priority || 100) + ' · ' + utils.escapeHtml(provider.display_name) + '</strong><span>' +
           utils.escapeHtml(configured + " · " + (provider.is_enabled ? "Aktif" : "Nonaktif") + " · " + provider.health_status) +
-          '<br>' + quota + '</span></li>';
+          '<br>' + quota + '</span>' + providerError + '</li>';
       }).join("") : '<li><span>Belum ada provider OCR.</span></li>';
+    }
+
+    function renderProviderError(provider) {
+      if (!provider || !provider.last_error) return "";
+      return '<div class="dash-ocr-provider-error">' +
+        '<div><strong>Error terakhir provider</strong><code>' + utils.escapeHtml(provider.last_error) + '</code></div>' +
+        '<button type="button" class="dash-icon-button dash-ocr-copy-error" data-ocr-copy-provider-error="' + utils.escapeAttr(provider.provider_key) + '" data-fr-tooltip="Copy detail error provider untuk troubleshooting">' +
+        '<i class="fas fa-copy" aria-hidden="true"></i><span>Copy error</span></button>' +
+        '</div>';
     }
 
     function renderJobs(payload) {
@@ -95,8 +154,35 @@
         var brand = job.brand_name || job.franchise_id || "Listing";
         var detail = utils.escapeHtml([job.status, job.provider_key || "belum ada provider", job.attempt_count + " attempt"].join(" · "));
         if (job.error_message) detail += "<br>" + utils.escapeHtml(job.error_message);
-        return '<li><strong>' + utils.escapeHtml(brand) + '</strong><span>' + detail + '</span></li>';
+        var link = job.slug ? ' <a href="/peluang-usaha/' + utils.escapeAttr(job.slug) + '" target="_blank" rel="noopener">Lihat listing</a>' : "";
+        return '<li><strong>' + utils.escapeHtml(brand) + '</strong><span>' + detail + link + '</span></li>';
       }).join("") : '<li><span>Belum ada job OCR. Antrekan proposal gambar terlebih dahulu.</span></li>';
+    }
+
+    function renderResults(payload) {
+      if (!options.resultRows) return;
+      payload = payload || {};
+      if (payload.migration_required) {
+        options.resultRows.innerHTML = '<li><strong>Hasil belum siap</strong><span>Migration OCR job queue perlu dijalankan sebelum hasil OCR bisa dibaca.</span></li>';
+        return;
+      }
+      var results = payload.results || [];
+      options.resultRows.innerHTML = results.length ? results.map(function (item) {
+        var fields = (item.candidate_fields || []).length
+          ? "Kandidat data: " + item.candidate_fields.map(fieldLabel).join(", ")
+          : "Belum ada kandidat field baru dari teks ini.";
+        var listingLink = item.slug
+          ? '<a href="/peluang-usaha/' + utils.escapeAttr(item.slug) + '" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i><span>Lihat listing</span></a>'
+          : "";
+        var reviewLink = '<a href="#review" data-ocr-open-review><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Buka Review</span></a>';
+        return '<li class="dash-ocr-result-item">' +
+          '<strong>' + utils.escapeHtml(item.brand_name || item.franchise_id || "Listing") + '</strong>' +
+          '<span>' + utils.escapeHtml([statusLabel(item.extraction_status), item.extraction_method || "ocr", Number(item.text_length || 0).toLocaleString("id-ID") + " karakter"].join(" · ")) + '</span>' +
+          '<span>' + utils.escapeHtml(fields) + '</span>' +
+          '<p>' + utils.escapeHtml(item.source_text_preview || "Tidak ada preview teks.") + '</p>' +
+          '<div class="dash-ocr-result-actions">' + listingLink + reviewLink + '</div>' +
+          '</li>';
+      }).join("") : '<li><strong>Belum ada hasil OCR</strong><span>Jalankan Dry run atau batch untuk menghasilkan teks. Setelah sukses, hasilnya muncul di sini.</span></li>';
     }
 
     function renderSelect() {
@@ -110,6 +196,7 @@
 
     function fillForm(provider) {
       if (!options.form || !provider) return;
+      state.filling = true;
       setValue("provider_key", provider.provider_key);
       setValue("api_key", "");
       setValue("api_secret", "");
@@ -118,25 +205,55 @@
       setValue("region", provider.region || "");
       setValue("model", provider.model || "");
       setValue("priority", provider.priority || 100);
-      setValue("is_enabled", provider.is_enabled ? "1" : "0");
+      setChecked("is_enabled", provider.is_enabled || provider.has_api_key);
       setChecked("clear_api_key", false);
       setChecked("clear_api_secret", false);
+      options.form.classList.toggle("is-provider-disabled", Boolean(provider.has_api_key && !provider.is_enabled));
       renderProviderFields(provider);
       renderProviderMeta(provider);
       renderCredentialSummary(provider);
       setInlineStatus(credentialStatusText(provider));
+      state.filling = false;
     }
 
     async function submit(event) {
       event.preventDefault();
+      await saveConfig("Konfigurasi OCR tersimpan.");
+    }
+
+    function handleFormChange(event) {
+      if (state.filling || state.adminOnly || !options.form) return;
+      var target = event.target;
+      if (!target || target.name === "provider_key") return;
+      if ((target.name === "api_key" || target.name === "api_secret") && String(target.value || "").trim()) {
+        setChecked("is_enabled", true);
+      }
+      if (target.name === "clear_api_key" && target.checked) {
+        setChecked("is_enabled", false);
+      }
+      scheduleAutosave();
+    }
+
+    function scheduleAutosave() {
+      window.clearTimeout(state.autosaveTimer);
+      setInlineStatus("Perubahan akan disimpan otomatis...");
+      state.autosaveTimer = window.setTimeout(function () {
+        saveConfig("Perubahan OCR tersimpan otomatis.").catch(function (error) {
+          options.setStatus(error.message || "Konfigurasi OCR belum bisa disimpan.", true);
+        });
+      }, 900);
+    }
+
+    async function saveConfig(successMessage) {
       if (!options.isAdmin || !options.isAdmin()) {
         options.setStatus("Hanya admin yang bisa mengubah konfigurasi OCR.", true);
         return;
       }
-      var button = options.form.querySelector("button[type='submit']");
-      if (button) button.disabled = true;
+      if (state.saving) return;
+      state.saving = true;
       try {
         var form = new FormData(options.form);
+        setFormDisabled(true);
         await options.postDashboardAction({
           action: "update_ocr_provider_config",
           provider_key: String(form.get("provider_key") || ""),
@@ -149,14 +266,17 @@
           region: String(form.get("region") || ""),
           model: String(form.get("model") || ""),
           priority: Number(form.get("priority") || 100),
-          is_enabled: String(form.get("is_enabled") || "0") === "1"
+          is_enabled: form.get("is_enabled") === "1"
         });
-        options.setStatus("Konfigurasi OCR tersimpan tanpa menampilkan ulang credential.", false);
+        setInlineStatus(successMessage || "Konfigurasi OCR tersimpan otomatis.");
+        options.setStatus(successMessage || "Konfigurasi OCR tersimpan otomatis.", false);
         await options.reloadDashboard();
       } catch (error) {
         options.setStatus(error.message || "Konfigurasi OCR belum bisa disimpan.", true);
+        throw error;
       } finally {
-        if (button) button.disabled = false;
+        state.saving = false;
+        setFormDisabled(false);
       }
     }
 
@@ -190,8 +310,8 @@
         return;
       }
       await buttonAction(options.runButton, "Menjalankan...", async function () {
-        var result = await options.postDashboardAction({ action: "run_ocr_jobs", max_jobs: 2 });
-        options.setStatus("OCR batch selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " job diproses.", false);
+        var result = await options.postDashboardAction({ action: "run_ocr_jobs", max_jobs: 5 });
+        options.setStatus("Batch OCR selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " dari maksimal 5 job diproses. Klik lagi untuk batch berikutnya.", false);
         await options.reloadDashboard();
       }, options.setStatus);
     }
@@ -337,6 +457,57 @@
       region: "Region",
       model: "Model / operasi"
     }[name] || name;
+  }
+
+  function fieldLabel(name) {
+    return {
+      outlet_type: "Tipe outlet",
+      location_requirement: "Kebutuhan lokasi",
+      total_investment_idr: "Total investasi",
+      fee_license_idr: "Franchise fee",
+      estimated_bep_months: "Estimasi BEP",
+      royalty_percent: "Royalti",
+      net_profit_percent: "Estimasi laba bersih",
+      support_system: "Dukungan franchisor"
+    }[name] || name;
+  }
+
+  function statusLabel(value) {
+    return {
+      extracted: "Berhasil dibaca",
+      needs_ocr: "Perlu OCR",
+      failed: "Gagal",
+      pending: "Menunggu"
+    }[value] || value || "Status tidak diketahui";
+  }
+
+  function buildProviderErrorText(provider) {
+    return [
+      "OCR provider error",
+      "Provider: " + (provider.display_name || "-") + " (" + (provider.provider_key || "-") + ")",
+      "Status: " + (provider.health_status || "-"),
+      "Aktif: " + (provider.is_enabled ? "ya" : "tidak"),
+      "Credential: " + (provider.has_api_key ? "api key tersimpan" : "api key belum ada"),
+      "Terakhir dicek: " + (provider.last_checked_at || "-"),
+      "Error: " + (provider.last_error || "-")
+    ].join("\n");
+  }
+
+  async function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    var textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "readonly");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    textarea.style.top = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
   }
 
   async function buttonAction(button, workingLabel, callback, setStatus) {

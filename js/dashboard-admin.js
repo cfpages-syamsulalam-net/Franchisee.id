@@ -76,9 +76,12 @@
     setStatus: setStatus
   });
   var ocrOperations = ocrClient.createOperations({
+    subtabs: Array.from(document.querySelectorAll("[data-ocr-subtab]")),
+    subpanels: Array.from(document.querySelectorAll("[data-ocr-subpanel]")),
     providerList: document.querySelector("[data-ocr-provider-list]"),
     jobStatus: document.querySelector("[data-ocr-job-status]"),
     jobRows: document.querySelector("[data-ocr-job-rows]"),
+    resultRows: document.querySelector("[data-ocr-result-rows]"),
     dryRunButton: document.querySelector("[data-ocr-dry-run]"),
     enqueueButton: document.querySelector("[data-ocr-enqueue]"),
     runButton: document.querySelector("[data-ocr-run]"),

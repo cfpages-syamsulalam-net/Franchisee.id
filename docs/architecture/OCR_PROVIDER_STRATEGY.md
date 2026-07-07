@@ -1,6 +1,6 @@
 # OCR Provider Strategy
 
-Last updated: 2026-07-07 (Asia/Jakarta)
+Last updated: 2026-07-08 (Asia/Jakarta)
 
 ## Decision
 
@@ -51,6 +51,9 @@ Free limits change frequently. Verify the provider console before enabling produ
 - [x] Add `/dashboard-data` actions `enqueue_ocr_jobs` and `run_ocr_jobs`. Enqueue only creates local D1 jobs for active proposal image assets; `run_ocr_jobs` is the explicit action that fetches the image and sends it to enabled providers.
 - [x] Add `/dashboard-data` action `run_ocr_dry_run` and a `/dashboard` button for a one-asset production dry-run before broad backfills. The action requires `OCR_KEY` and at least one enabled provider, prepares at most one candidate job, and runs only that job.
 - [x] Normalize successful OCR output into `franchise_asset_knowledge` plus pending `proposal_extraction` suggestions, preserving the human review requirement before canonical listing fields change.
+- [x] Clarify dashboard execution semantics: Dry run is a real OCR call for one asset, while “Jalankan batch berikutnya” processes a bounded batch of up to five jobs per click to avoid request timeout and uncontrolled provider quota usage.
+- [x] Add copyable provider error status in `/dashboard` so an admin can paste provider health/error context into troubleshooting without exposing stored credentials.
+- [x] Add protected `/ocr-worker` and optional GitHub Actions cron for larger queued backfills. The route requires `OCR_SECRET`, processes at most ten jobs per request, defaults to five jobs, enforces a daily counted-usage cap, logs summaries to `operation_events`, and reuses the same queue/cache/failover runner as the dashboard.
 
 ## Dashboard credential field rules
 
@@ -74,3 +77,24 @@ The provider field/requirement contract lives in `src/lib/ocr-provider-metadata.
 ## Required production setup
 
 Set the Cloudflare Pages secret `OCR_KEY` before saving or enabling OCR providers. Use a long random value and rotate it only with a planned re-encryption pass, because existing encrypted D1 envelopes depend on this root key.
+
+Set the shared worker trigger secret as `OCR_SECRET` in both Cloudflare Pages and GitHub Actions before using the OCR worker. The current project has this secret installed without exposing its value.
+
+Manual workflow runs are allowed without the enable variable so one-off testing stays easy. Scheduled cron runs remain inert until repository variable `OCR_WORKER_ENABLED=true` is set, because cron can spend OCR quota without an admin watching it. Optional controls:
+
+- `OCR_WORKER_SITE_URL`: GitHub repository variable; defaults to `https://franchisee.id`.
+- `OCR_WORKER_DAILY_CAP`: Cloudflare Pages environment value; defaults to 25 counted OCR units/day.
+
+The scheduled worker does not enqueue new work by itself. Admins still enqueue proposal assets from `/dashboard`; the worker only drains pending `ocr_jobs` in small quota-aware batches.
+
+To enable scheduled runs from PowerShell:
+
+```powershell
+gh variable set OCR_WORKER_ENABLED --body true -R cfpages-syamsulalam-net/Franchisee.id
+```
+
+To disable scheduled runs:
+
+```powershell
+gh variable set OCR_WORKER_ENABLED --body false -R cfpages-syamsulalam-net/Franchisee.id
+```

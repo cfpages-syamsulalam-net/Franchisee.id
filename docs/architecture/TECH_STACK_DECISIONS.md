@@ -20,7 +20,7 @@ This document records stack decisions for the migration from a static WordPress 
 | Framework | Astro on Cloudflare by default. | Current workspace uses Astro 5.x because local Node is 20.19.4. Astro 6 requires Node >=22.12.0. Next.js remains an option only if dashboard complexity becomes strongly React-heavy. |
 | Styling | Existing CSS only unless explicitly approved. | Do not add a styling framework for the migration. |
 | Package manager | pnpm only. | Use `pnpm install`, `pnpm run`, and `pnpm exec`. |
-| Secrets | Keep root secrets outside D1. | Dashboard-managed OCR credential values are encrypted before D1 storage with Cloudflare Pages secret `OCR_KEY`; D1 may store ciphertext envelopes, not plaintext credentials. |
+| Secrets | Keep root secrets outside D1. | Dashboard-managed OCR credential values are encrypted before D1 storage with Cloudflare Pages secret `OCR_KEY`; D1 may store ciphertext envelopes, not plaintext credentials. Protected OCR worker triggers use separate shared secret `OCR_SECRET`. |
 
 ## Shared Network Database
 `franchise_db` is designed to be shared by the owned franchise network, including:
@@ -198,7 +198,7 @@ Dashboard scaffold:
 - The old Google Sheets auto-update workflow was removed. D1/Astro generation plus the D1 publish poller is the active public directory update path.
 - `migrations/0019_proposal_knowledge.sql` adds auditable proposal text/structured-candidate storage and was applied remotely on 2026-07-06. Owner-uploaded digital PDFs are parsed after upload; only missing-field candidates enter the existing review workflow, while image-only documents remain explicitly marked for a separate OCR backfill. Canonical listing fields stay human-reviewed.
 - `migrations/0020_ocr_provider_configs.sql` adds ten disabled OCR provider configurations and was applied remotely on 2026-07-07. Admins manage masked credential state, endpoints, provider priority, quota metadata, and trial expiry from `/dashboard`; dashboard reads never select or return stored key/secret values. Credential values are encrypted before D1 storage with the external Cloudflare Pages secret `OCR_KEY`.
-- `migrations/0021_ocr_job_queue.sql` adds admin-triggered OCR jobs, provider attempts, content-hash cache rows, and usage events for image-based proposal pages, and was applied remotely on 2026-07-07. OCR execution is bounded by dashboard action limits and local quota counters, includes a one-asset dry-run action before broad backfills, and successful text flows through `franchise_asset_knowledge` plus pending admin-review suggestions instead of directly mutating canonical listing fields.
+- `migrations/0021_ocr_job_queue.sql` adds admin-triggered OCR jobs, provider attempts, content-hash cache rows, and usage events for image-based proposal pages, and was applied remotely on 2026-07-07. OCR execution is bounded by dashboard action limits and local quota counters, includes a one-asset dry-run action before broad backfills, can be drained by protected `/ocr-worker` when `OCR_SECRET`/workflow enablement are configured, and successful text flows through `franchise_asset_knowledge` plus pending admin-review suggestions instead of directly mutating canonical listing fields.
 
 ### D1 Change To Static Publish Mechanism
 Target mechanism for franchisor edits, admin edits, claims, listing deletes, and publication-status changes:

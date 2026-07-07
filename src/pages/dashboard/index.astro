@@ -558,14 +558,51 @@ const ocrProviderMetadataJson = JSON.stringify({
           </section>
 
           <section class="dash-tab-panel" id="dash-panel-ocr" role="tabpanel" aria-labelledby="dash-tab-ocr" data-dashboard-panel="ocr" hidden>
-            <div class="dash-panel-grid two">
-              <section class="dash-panel">
+            <div class="dash-ocr-guide-grid" aria-label="Ringkasan alur OCR">
+              <article class="dash-ocr-guide-card">
+                <i class="fas fa-sliders-h" aria-hidden="true"></i>
+                <strong>1. Pengaturan</strong>
+                <span>Pilih provider OCR dan isi key. Provider dengan key akan aktif kecuali admin menonaktifkannya.</span>
+              </article>
+              <article class="dash-ocr-guide-card">
+                <i class="fas fa-tasks" aria-hidden="true"></i>
+                <strong>2. Eksekusi</strong>
+                <span>Antrekan brosur gambar, coba Dry run untuk 1 aset, lalu jalankan batch kecil per klik.</span>
+              </article>
+              <article class="dash-ocr-guide-card">
+                <i class="fas fa-clipboard-check" aria-hidden="true"></i>
+                <strong>3. Hasil</strong>
+                <span>Lihat teks OCR dan lanjutkan ke Review sebelum data masuk ke listing publik.</span>
+              </article>
+            </div>
+
+            <div class="dash-subtabs dash-ocr-subtabs" role="tablist" aria-label="Menu OCR">
+              <button class="dash-subtab is-active" type="button" role="tab" aria-selected="true" data-ocr-subtab="settings">
+                <i class="fas fa-sliders-h" aria-hidden="true"></i>
+                <span>Pengaturan</span>
+              </button>
+              <button class="dash-subtab" type="button" role="tab" aria-selected="false" data-ocr-subtab="jobs">
+                <i class="fas fa-tasks" aria-hidden="true"></i>
+                <span>Eksekusi Job</span>
+              </button>
+              <button class="dash-subtab" type="button" role="tab" aria-selected="false" data-ocr-subtab="results">
+                <i class="fas fa-clipboard-check" aria-hidden="true"></i>
+                <span>Hasil OCR</span>
+              </button>
+            </div>
+
+            <div class="dash-ocr-subpanel is-active" data-ocr-subpanel="settings">
+              <div class="dash-panel-grid ocr-settings-grid">
+                <section class="dash-panel">
                 <div class="dash-panel-header">
                   <div class="dash-panel-title">
                     <i class="fas fa-list-ol dash-section-icon" aria-hidden="true"></i>
                     <div>
-                      <h2>Prioritas Provider OCR</h2>
-                      <p>Provider aktif akan dicoba menurut urutan prioritas setelah pembacaan teks bawaan gagal.</p>
+                      <h2>
+                        Prioritas Provider OCR
+                        <span class="dash-help-dot" data-fr-tooltip="Provider aktif dicoba dari angka prioritas terkecil. Jika provider pertama gagal atau kuotanya habis, sistem lanjut ke provider aktif berikutnya.">?</span>
+                      </h2>
+                      <p>Urutan provider yang akan dipakai saat membaca brosur gambar.</p>
                     </div>
                   </div>
                 </div>
@@ -577,59 +614,41 @@ const ocrProviderMetadataJson = JSON.stringify({
               <section class="dash-panel">
                 <div class="dash-panel-header">
                   <div class="dash-panel-title">
-                    <i class="fas fa-file-lines dash-section-icon" aria-hidden="true"></i>
-                    <div>
-                      <h2>Job OCR Proposal</h2>
-                      <p>OCR hanya berjalan saat admin menekan tombol batch; proposal tidak otomatis dikirim ke provider eksternal.</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="dash-toolbar dash-ocr-toolbar" role="toolbar" aria-label="Aksi OCR proposal">
-                  <button class="dash-icon-button dash-action-button is-primary" type="button" data-ocr-dry-run data-fr-tooltip="Kirim satu proposal gambar ke provider aktif untuk cek provider, quota, cache, dan hasil review">
-                    <i class="fas fa-vial-circle-check" aria-hidden="true"></i>
-                    <span>Dry run 1 aset</span>
-                  </button>
-                  <button class="dash-icon-button dash-action-button is-primary" type="button" data-ocr-enqueue data-fr-tooltip="Antrekan proposal gambar yang belum punya teks OCR">
-                    <i class="fas fa-list-check" aria-hidden="true"></i>
-                    <span>Antrekan</span>
-                  </button>
-                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Jalankan batch kecil OCR dengan failover provider setelah dry-run terlihat benar">
-                    <i class="fas fa-play" aria-hidden="true"></i>
-                    <span>Jalankan batch</span>
-                  </button>
-                </div>
-                <p class="dash-muted dash-ocr-job-status" data-ocr-job-status>Memuat status job OCR...</p>
-                <ul class="dash-list" data-ocr-job-rows>
-                  <li><span>Memuat job OCR...</span></li>
-                </ul>
-              </section>
-
-              <section class="dash-panel">
-                <div class="dash-panel-header">
-                  <div class="dash-panel-title">
                     <i class="fas fa-key dash-section-icon" aria-hidden="true"></i>
                     <div>
-                      <h2>Credential OCR</h2>
-                      <p>Hanya admin yang dapat menyimpan atau mengganti credential provider.</p>
+                      <h2>
+                        Credential OCR
+                        <span class="dash-help-dot" data-fr-tooltip="Credential adalah key dari provider OCR. Key disimpan terenkripsi dan tidak ditampilkan lagi. Perubahan di form ini tersimpan otomatis.">?</span>
+                      </h2>
+                      <p>Isi key provider. Perubahan disimpan otomatis setelah admin berhenti mengetik.</p>
                     </div>
                   </div>
                 </div>
                 <div class="dash-warning-box dash-ocr-warning">
-                  Credential yang tersimpan tidak pernah ditampilkan kembali di browser. Kolom kosong mempertahankan nilai lama; gunakan pilihan hapus untuk mencabutnya.
+                  Credential yang tersimpan tidak pernah ditampilkan kembali di browser. Kolom kosong mempertahankan nilai lama. Jika memasukkan key baru, provider otomatis aktif kecuali checkbox Provider aktif dimatikan.
                 </div>
                 <form class="dash-form dash-ocr-form" data-ocr-config-form>
                   <label class="dash-form-wide">
-                    Provider
+                    <span>
+                      Provider
+                      <span class="dash-help-dot" data-fr-tooltip="Pilih layanan OCR yang key-nya ingin diisi atau diubah. Field yang muncul akan menyesuaikan provider.">?</span>
+                    </span>
                     <select name="provider_key" data-ocr-provider-select required>
                       <option value="">Pilih provider...</option>
                     </select>
                   </label>
-                  <div class="dash-form-wide dash-ocr-provider-meta" data-ocr-provider-meta>
-                    Pilih provider untuk melihat kebutuhan credential dan limit gratisnya.
-                  </div>
-                  <div class="dash-form-wide dash-credential-summary" data-ocr-credential-summary>
-                    Belum ada provider dipilih.
-                  </div>
+                  <label>
+                    Prioritas
+                    <input name="priority" type="number" min="1" max="1000" step="1" value="100" />
+                    <small>Angka kecil dicoba lebih dulu.</small>
+                  </label>
+                  <label class="dash-check-row dash-ocr-active-row">
+                    <input name="is_enabled" type="checkbox" value="1" />
+                    <span>
+                      <strong>Provider aktif</strong>
+                      <small>Matikan jika key masih tersimpan tetapi tidak ingin dipakai.</small>
+                    </span>
+                  </label>
                   <label data-ocr-field="api_key">
                     <span class="dash-field-label-row">
                       <span data-ocr-label="api_key">API key / token</span>
@@ -666,17 +685,6 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <input name="model" type="text" maxlength="240" />
                     <small data-ocr-help="model">Gunakan default jika tidak yakin.</small>
                   </label>
-                  <label>
-                    Prioritas
-                    <input name="priority" type="number" min="1" max="1000" step="1" value="100" />
-                  </label>
-                  <label>
-                    Status
-                    <select name="is_enabled">
-                      <option value="0">Nonaktif</option>
-                      <option value="1">Aktif</option>
-                    </select>
-                  </label>
                   <label class="dash-check-row" data-ocr-field="clear_api_key">
                     <input name="clear_api_key" type="checkbox" />
                     Hapus API key tersimpan
@@ -685,13 +693,78 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <input name="clear_api_secret" type="checkbox" />
                     Hapus API secret tersimpan
                   </label>
-                  <div class="dash-form-wide dash-actions dash-toolbar" role="toolbar" aria-label="Aksi konfigurasi OCR">
-                    <button class="dash-icon-button dash-action-button is-primary" type="submit" aria-label="Simpan konfigurasi OCR" data-fr-tooltip="Simpan konfigurasi OCR">
-                      <i class="fas fa-save" aria-hidden="true"></i>
-                    </button>
-                    <span class="dash-muted" data-ocr-config-status>Pilih provider untuk melihat konfigurasi.</span>
+                  <div class="dash-form-wide dash-ocr-provider-meta" data-ocr-provider-meta>
+                    Pilih provider untuk melihat kebutuhan credential dan limit gratisnya.
+                  </div>
+                  <div class="dash-form-wide dash-credential-summary" data-ocr-credential-summary>
+                    Belum ada provider dipilih.
+                  </div>
+                  <div class="dash-form-wide dash-ocr-autosave-status">
+                    <i class="fas fa-save" aria-hidden="true"></i>
+                    <span class="dash-muted" data-ocr-config-status>Pilih provider untuk melihat konfigurasi. Perubahan tersimpan otomatis.</span>
                   </div>
                 </form>
+              </section>
+              </div>
+            </div>
+
+            <div class="dash-ocr-subpanel" data-ocr-subpanel="jobs" hidden>
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <i class="fas fa-tasks dash-section-icon" aria-hidden="true"></i>
+                    <div>
+                      <h2>
+                        Job OCR Proposal
+                        <span class="dash-help-dot" data-fr-tooltip="Job OCR adalah tugas membaca teks dari gambar brosur. Antrekan hanya membuat daftar tugas. Dry run dan Jalankan batch baru mengirim gambar ke provider.">?</span>
+                      </h2>
+                      <p>Dry run adalah OCR sungguhan untuk 1 aset sebagai tes aman. Batch memproses maksimal 5 job per klik.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="dash-ocr-step-box">
+                  <strong>Langkah aman:</strong>
+                  <span>1) Antrekan brosur gambar. 2) Klik Dry run untuk cek provider dan hasil. 3) Jika hasil masuk akal, klik Jalankan batch berikutnya sampai antrean habis. 4) Buka tab Hasil OCR lalu lanjut Review.</span>
+                  <span>Untuk backfill besar, gunakan workflow GitHub Actions "OCR Worker". Manual run bisa langsung dipakai; cron otomatis baru aktif kalau repository variable <code>OCR_WORKER_ENABLED=true</code> diset.</span>
+                </div>
+                <div class="dash-toolbar dash-ocr-toolbar" role="toolbar" aria-label="Aksi OCR proposal">
+                  <button class="dash-icon-button dash-action-button is-primary" type="button" data-ocr-dry-run data-fr-tooltip="Dry run adalah OCR sungguhan untuk satu aset saja. Dipakai untuk memastikan key provider, kuota, cache, dan hasil review bekerja sebelum batch besar.">
+                    <i class="fas fa-vial" aria-hidden="true"></i>
+                    <span>Dry run</span>
+                  </button>
+                  <button class="dash-icon-button dash-action-button is-primary" type="button" data-ocr-enqueue data-fr-tooltip="Masukkan maksimal 100 proposal gambar yang belum punya hasil OCR ke antrean lokal. Ini belum mengirim gambar ke provider.">
+                    <i class="fas fa-list-check" aria-hidden="true"></i>
+                    <span>Antrekan 100</span>
+                  </button>
+                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Memproses maksimal 5 job per klik supaya tidak timeout dan kuota provider tetap terkendali. Klik lagi untuk batch berikutnya.">
+                    <i class="fas fa-play" aria-hidden="true"></i>
+                    <span>Jalankan batch berikutnya</span>
+                  </button>
+                </div>
+                <p class="dash-muted dash-ocr-job-status" data-ocr-job-status>Memuat status job OCR...</p>
+                <ul class="dash-list" data-ocr-job-rows>
+                  <li><span>Memuat job OCR...</span></li>
+                </ul>
+              </section>
+            </div>
+
+            <div class="dash-ocr-subpanel" data-ocr-subpanel="results" hidden>
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <i class="fas fa-clipboard-check dash-section-icon" aria-hidden="true"></i>
+                    <div>
+                      <h2>
+                        Hasil OCR
+                        <span class="dash-help-dot" data-fr-tooltip="Hasil OCR adalah teks yang berhasil dibaca dari brosur. Data ini belum otomatis mengubah listing; admin tetap perlu meninjau di Review.">?</span>
+                      </h2>
+                      <p>Lihat hasil terbaru, buka listing, lalu lanjutkan review kandidat data dari brosur.</p>
+                    </div>
+                  </div>
+                </div>
+                <ul class="dash-list dash-ocr-results" data-ocr-result-rows>
+                  <li><span>Belum ada hasil OCR yang bisa ditampilkan.</span></li>
+                </ul>
               </section>
             </div>
           </section>

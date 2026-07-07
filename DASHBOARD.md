@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-06-24 22:55 (Asia/Jakarta)
+Last updated: 2026-07-08 02:10 (Asia/Jakarta)
 
 ## Purpose
 
@@ -45,7 +45,9 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 | Remote D1 migration | Implemented | `0004_dashboard_operations.sql` validates locally and was applied remotely after setting `CLOUDFLARE_ACCOUNT_ID=0ba63b7f0096bc267a93fe5c80b1f571` for Wrangler account context. |
 | Admin approvals | Implemented | `/dashboard-data` supports admin-only approve/reject for claim reviews and edit suggestions. |
 | Dashboard API modularization | Implemented | `/dashboard-data` is now a thin router; schemas, queries, actions, and shared utilities live in dedicated `_dashboard-*` modules. |
-| OCR provider configuration | Implemented | Admin-only OCR tab manages ten provider records, masked key/secret state, endpoint/account/region/model, priority, free quota metadata, trial expiry, and enablement through D1 migration 0020. No external OCR call is made yet. |
+| OCR provider configuration | Implemented | Admin-only OCR tab manages ten provider records, masked key/secret state, endpoint/account/region/model, priority, free quota metadata, trial expiry, and enablement through D1 migration 0020. External OCR calls only happen through explicit dry-run, bounded batch job actions, or the protected worker when explicitly enabled. |
+| OCR job execution UX | Implemented | 2026-07-08 request tracker completed: added non-technical tooltips/copy, made dry-run semantics clear, added OCR subtabs and Hasil OCR rows with listing/review links, aligned icon+text buttons, improved desktop/mobile layout, auto-saves provider credentials/settings, greys disabled configured providers, shows provider error status with copyable troubleshooting text, and clarifies that batch execution is intentionally bounded to 5 jobs per click. |
+| OCR controlled worker | Implemented | Added protected `/ocr-worker` plus optional GitHub Actions workflow for large queued backfills. It requires shared `OCR_SECRET`, allows manual workflow runs without the cron gate, keeps scheduled cron disabled until `OCR_WORKER_ENABLED=true`, runs small batches, and enforces a daily OCR usage cap before sending jobs. |
 | Listing operations editor | Implemented MVP | Listing selector plus structured JSON diff form covers all whitelisted public listing fields. A richer field-by-field drawer can be added later. |
 | Leads/commercial view | Implemented read-only MVP | Reads `franchise_leads` status counts and recent leads. Payment/subscription revenue metrics remain pending. |
 | System health | Implemented read-only MVP | Shows D1 connectivity/migration probe, Clerk session verification note, and recent publish queue status. R2 and webhook failure telemetry remain pending. |
@@ -161,7 +163,10 @@ Existing tables to reuse:
 6. Add claim review workflow. Done.
 7. Add publish queue controls and system health. System health read-only MVP done; manual publish controls pending.
 8. Add data quality checks and commercial metrics. Partially done; read-only quality warnings and lead status counts exist.
-9. Add OCR provider research/configuration. Done; adapter execution, usage accounting, content-hash cache, and resumable failover jobs remain pending.
+9. Add OCR provider research/configuration. Done.
+10. Add OCR execution queue/cache/failover and one-asset dry run. Done.
+11. Improve OCR admin UX for non-technical operators. Done; tracked under "OCR job execution UX" above.
+12. Add controlled OCR worker for larger queued backfills. Done; protected by `OCR_SECRET` and disabled by default in GitHub Actions.
 
 ## Open Decisions
 

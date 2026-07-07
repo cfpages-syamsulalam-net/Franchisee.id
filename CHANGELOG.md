@@ -4,6 +4,19 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-08 01:36 (Asia/Jakarta)
+### Added
+- `.context/session-20260708-0136.md`: Added this session continuity snapshot.
+- `functions/ocr-worker.js`: Added a protected OCR queue worker endpoint that uses `OCR_SECRET`, small bounded batches, daily counted-usage caps, and operation-event summaries for larger queued backfills.
+- `.github/workflows/ocr-worker.yaml`: Added a manual/scheduled OCR worker trigger. Manual runs can be used without the cron gate; scheduled runs require repository variable `OCR_WORKER_ENABLED=true`.
+
+### Changed
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, and `css/dashboard.css`: Reworked the OCR tab for non-technical admins with guide cards, OCR subtabs for Pengaturan/Eksekusi Job/Hasil OCR, clearer tooltips, icon+text action buttons, better desktop/mobile layout, auto-saving provider configuration, disabled-provider greying, and explicit dry-run/batch copy.
+- `js/dashboard-ocr.js` and `css/dashboard.css`: Added visible provider error panels and a `Copy error` button that copies provider health/error context for troubleshooting without exposing credentials.
+- `functions/_ocr-job-runner.js`: Added OCR result rows to `/dashboard-data`, including listing slug, source-text preview, candidate field summary, and latest proposal-extraction suggestion status so the dashboard can show where to review OCR output.
+- `DASHBOARD.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/OCR_PROVIDER_STRATEGY.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, `docs/README.md`, and `SUGGESTION.md`: Documented the OCR admin UX improvements, bounded batch behavior, result-review path, worker setup, and marked suggestion 67 complete.
+- Cloudflare Pages project `franchisee-id` and GitHub repository `cfpages-syamsulalam-net/Franchisee.id`: Set matching `OCR_SECRET` secrets without printing the generated value.
+
 ## 2026-07-07 17:39 (Asia/Jakarta)
 ### Added
 - `migrations/0021_ocr_job_queue.sql`: Added OCR content-hash cache, job queue, provider-attempt log, and provider-usage event tables for resumable proposal OCR.

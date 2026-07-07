@@ -1,0 +1,50 @@
+name: OCR Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Maximum OCR jobs to process in this run (1-10)"
+        required: false
+        default: "5"
+      source:
+        description: "Worker source label"
+        required: false
+        default: "github-actions-manual"
+  schedule:
+    - cron: "17,47 * * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  run-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Trigger protected OCR worker
+        env:
+          SITE_URL: ${{ vars.OCR_WORKER_SITE_URL || 'https://franchisee.id' }}
+          OCR_WORKER_ENABLED: ${{ vars.OCR_WORKER_ENABLED }}
+          OCR_SECRET: ${{ secrets.OCR_SECRET }}
+          OCR_WORKER_LIMIT: ${{ github.event.inputs.limit || '5' }}
+          OCR_WORKER_SOURCE: ${{ github.event.inputs.source || 'github-actions-scheduled' }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ] && [ "$OCR_WORKER_ENABLED" != "true" ]; then
+            echo "Scheduled OCR worker is disabled. Set repository variable OCR_WORKER_ENABLED=true to allow cron runs."
+            exit 0
+          fi
+          if [ -z "$OCR_SECRET" ]; then
+            echo "OCR_SECRET is not set."
+            exit 1
+          fi
+          case "$OCR_WORKER_LIMIT" in
+            ''|*[!0-9]*) OCR_WORKER_LIMIT=5 ;;
+          esac
+          if [ "$OCR_WORKER_LIMIT" -lt 1 ]; then OCR_WORKER_LIMIT=1; fi
+          if [ "$OCR_WORKER_LIMIT" -gt 10 ]; then OCR_WORKER_LIMIT=10; fi
+          curl -fsS -X POST "$SITE_URL/ocr-worker" \
+            -H "Authorization: Bearer $OCR_SECRET" \
+            -H "Content-Type: application/json" \
+            --data "{\"source\":\"$OCR_WORKER_SOURCE\",\"limit\":$OCR_WORKER_LIMIT}"

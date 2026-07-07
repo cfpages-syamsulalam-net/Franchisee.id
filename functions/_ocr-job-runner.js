@@ -11,14 +11,14 @@ const CACHE_TEXT_CHARS = 60_000;
 const JOB_TABLE_ERROR = /ocr_jobs|ocr_attempts|ocr_content_cache|ocr_provider_usage_events|no such table/i;
 
 export async function getOcrJobState(db, auth) {
-  if (!isAdmin(auth)) return { admin_only: true, counts: {}, recent: [], migration_required: false };
+  if (!isAdmin(auth)) return { admin_only: true, counts: {}, recent: [], results: [], migration_required: false };
   try {
-    const [counts, recent, candidates] = await Promise.all([
+    const [counts, recent, candidates, results] = await Promise.all([
       db.prepare("SELECT status, COUNT(*) count FROM ocr_jobs GROUP BY status").all(),
       db
         .prepare(
           `SELECT j.id, j.asset_id, j.franchise_id, j.status, j.provider_key, j.attempt_count,
-                  j.error_message, j.created_at, j.updated_at, f.brand_name
+                  j.error_message, j.created_at, j.updated_at, f.brand_name, f.slug
            FROM ocr_jobs j
            LEFT JOIN franchises f ON f.id = j.franchise_id
            ORDER BY j.updated_at DESC
@@ -39,17 +39,47 @@ export async function getOcrJobState(db, auth) {
              AND COALESCE(k.extraction_status, '') NOT IN ('extracted')`,
         )
         .first(),
+      db
+        .prepare(
+          `SELECT k.id, k.asset_id, k.franchise_id, k.extraction_method, k.extraction_status,
+                  SUBSTR(COALESCE(k.source_text, ''), 1, 900) source_text_preview,
+                  LENGTH(COALESCE(k.source_text, '')) text_length,
+                  k.structured_data, k.updated_at, f.brand_name, f.slug,
+                  (
+                    SELECT s.id
+                    FROM listing_edit_suggestions s
+                    WHERE s.franchise_id = k.franchise_id
+                      AND s.field_name = 'proposal_extraction'
+                    ORDER BY s.created_at DESC
+                    LIMIT 1
+                  ) suggestion_id,
+                  (
+                    SELECT s.status
+                    FROM listing_edit_suggestions s
+                    WHERE s.franchise_id = k.franchise_id
+                      AND s.field_name = 'proposal_extraction'
+                    ORDER BY s.created_at DESC
+                    LIMIT 1
+                  ) suggestion_status
+           FROM franchise_asset_knowledge k
+           LEFT JOIN franchises f ON f.id = k.franchise_id
+           WHERE k.extraction_status IN ('extracted', 'needs_ocr', 'failed')
+           ORDER BY k.updated_at DESC
+           LIMIT 20`,
+        )
+        .all(),
     ]);
     return {
       admin_only: false,
       migration_required: false,
       counts: Object.fromEntries((counts.results || []).map((row) => [row.status, Number(row.count || 0)])),
       recent: (recent.results || []).map(maskJobRow),
+      results: (results.results || []).map(maskResultRow),
       enqueue_candidates: Number(candidates?.count || 0),
     };
   } catch (error) {
     if (JOB_TABLE_ERROR.test(error?.message || "")) {
-      return { admin_only: false, migration_required: true, counts: {}, recent: [], enqueue_candidates: 0 };
+      return { admin_only: false, migration_required: true, counts: {}, recent: [], results: [], enqueue_candidates: 0 };
     }
     throw error;
   }
@@ -574,6 +604,7 @@ function maskJobRow(row) {
     asset_id: row.asset_id,
     franchise_id: row.franchise_id,
     brand_name: row.brand_name || "",
+    slug: row.slug || "",
     status: row.status,
     provider_key: row.provider_key || "",
     attempt_count: Number(row.attempt_count || 0),
@@ -581,6 +612,35 @@ function maskJobRow(row) {
     created_at: row.created_at || null,
     updated_at: row.updated_at || null,
   };
+}
+
+function maskResultRow(row) {
+  const structuredData = parseJsonObject(row.structured_data);
+  return {
+    id: row.id,
+    asset_id: row.asset_id,
+    franchise_id: row.franchise_id,
+    brand_name: row.brand_name || "",
+    slug: row.slug || "",
+    extraction_method: row.extraction_method || "",
+    extraction_status: row.extraction_status || "",
+    source_text_preview: row.source_text_preview || "",
+    text_length: Number(row.text_length || 0),
+    candidate_count: Object.keys(structuredData).length,
+    candidate_fields: Object.keys(structuredData),
+    suggestion_id: row.suggestion_id || "",
+    suggestion_status: row.suggestion_status || "",
+    updated_at: row.updated_at || null,
+  };
+}
+
+function parseJsonObject(value) {
+  try {
+    const parsed = JSON.parse(value || "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
 }
 
 function processedResult(job, status, providerKey, textLength, note) {
