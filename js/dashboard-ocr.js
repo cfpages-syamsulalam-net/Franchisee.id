@@ -71,6 +71,13 @@
     }
 
     function handleResultClick(event) {
+      var resultLink = event.target && event.target.closest && event.target.closest("[data-ocr-open-result]");
+      if (resultLink) {
+        event.preventDefault();
+        activateSubtab("results");
+        focusResultRow(resultLink.getAttribute("data-ocr-open-result"));
+        return;
+      }
       var link = event.target && event.target.closest && event.target.closest("[data-ocr-open-review]");
       if (!link) return;
       event.preventDefault();
@@ -152,10 +159,14 @@
       var recent = payload.recent || [];
       options.jobRows.innerHTML = recent.length ? recent.map(function (job) {
         var brand = job.brand_name || job.franchise_id || "Listing";
-        var detail = utils.escapeHtml([job.status, job.provider_key || "belum ada provider", job.attempt_count + " attempt"].join(" · "));
+        var page = job.page_number ? "Halaman " + Number(job.page_number).toLocaleString("id-ID") : "Halaman proposal";
+        var detail = utils.escapeHtml([page, job.status, job.provider_key || "belum ada provider", job.attempt_count + " attempt"].join(" · "));
         if (job.error_message) detail += "<br>" + utils.escapeHtml(job.error_message);
         var link = job.slug ? ' <a href="/peluang-usaha/' + utils.escapeAttr(job.slug) + '" target="_blank" rel="noopener">Lihat listing</a>' : "";
-        return '<li><strong>' + utils.escapeHtml(brand) + '</strong><span>' + detail + link + '</span></li>';
+        var resultLink = job.status === "succeeded"
+          ? ' <a href="#ocr-results" data-ocr-open-result="' + utils.escapeAttr(job.asset_id) + '">Lihat hasil OCR</a>'
+          : "";
+        return '<li><strong>' + utils.escapeHtml(brand) + '</strong><span>' + detail + link + resultLink + '</span></li>';
       }).join("") : '<li><span>Belum ada job OCR. Antrekan proposal gambar terlebih dahulu.</span></li>';
     }
 
@@ -168,21 +179,46 @@
       }
       var results = payload.results || [];
       options.resultRows.innerHTML = results.length ? results.map(function (item) {
+        var page = item.page_number ? "Halaman " + Number(item.page_number).toLocaleString("id-ID") : "Halaman proposal";
         var fields = (item.candidate_fields || []).length
           ? "Kandidat data: " + item.candidate_fields.map(fieldLabel).join(", ")
           : "Belum ada kandidat field baru dari teks ini.";
         var listingLink = item.slug
           ? '<a href="/peluang-usaha/' + utils.escapeAttr(item.slug) + '" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i><span>Lihat listing</span></a>'
           : "";
+        var assetLink = item.source_url
+          ? '<a href="' + utils.escapeAttr(item.source_url) + '" target="_blank" rel="noopener"><i class="fas fa-image" aria-hidden="true"></i><span>Buka halaman brosur</span></a>'
+          : "";
         var reviewLink = '<a href="#review" data-ocr-open-review><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Buka Review</span></a>';
-        return '<li class="dash-ocr-result-item">' +
+        return '<li class="dash-ocr-result-item" data-ocr-result-asset-id="' + utils.escapeAttr(item.asset_id || "") + '">' +
           '<strong>' + utils.escapeHtml(item.brand_name || item.franchise_id || "Listing") + '</strong>' +
-          '<span>' + utils.escapeHtml([statusLabel(item.extraction_status), item.extraction_method || "ocr", Number(item.text_length || 0).toLocaleString("id-ID") + " karakter"].join(" · ")) + '</span>' +
+          '<span>' + utils.escapeHtml([page, statusLabel(item.extraction_status), item.extraction_method || "ocr", Number(item.text_length || 0).toLocaleString("id-ID") + " karakter"].join(" · ")) + '</span>' +
           '<span>' + utils.escapeHtml(fields) + '</span>' +
           '<p>' + utils.escapeHtml(item.source_text_preview || "Tidak ada preview teks.") + '</p>' +
-          '<div class="dash-ocr-result-actions">' + listingLink + reviewLink + '</div>' +
+          '<div class="dash-ocr-result-actions">' + listingLink + assetLink + reviewLink + '</div>' +
           '</li>';
       }).join("") : '<li><strong>Belum ada hasil OCR</strong><span>Jalankan Dry run atau batch untuk menghasilkan teks. Setelah sukses, hasilnya muncul di sini.</span></li>';
+    }
+
+    function focusResultRow(assetId) {
+      if (!assetId || !options.resultRows) {
+        options.setStatus("Buka subtab Hasil OCR untuk melihat teks yang berhasil diekstrak.", false);
+        return;
+      }
+      var row = options.resultRows.querySelector('[data-ocr-result-asset-id="' + cssEscape(assetId) + '"]');
+      if (!row) {
+        options.setStatus("Subtab Hasil OCR dibuka. Jika hasil belum terlihat, muat ulang dashboard setelah job selesai tersimpan.", false);
+        return;
+      }
+      options.resultRows.querySelectorAll(".is-highlighted").forEach(function (item) {
+        item.classList.remove("is-highlighted");
+      });
+      row.classList.add("is-highlighted");
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(function () {
+        row.classList.remove("is-highlighted");
+      }, 2600);
+      options.setStatus("Ini teks OCR yang berhasil diekstrak dari halaman brosur tersebut.", false);
     }
 
     function renderSelect() {
@@ -311,7 +347,7 @@
       }
       await buttonAction(options.runButton, "Menjalankan...", async function () {
         var result = await options.postDashboardAction({ action: "run_ocr_jobs", max_jobs: 5 });
-        options.setStatus("Batch OCR selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " dari maksimal 5 job diproses. Klik lagi untuk batch berikutnya.", false);
+        options.setStatus("Batch OCR selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " dari maksimal 5 job diproses untuk satu franchise terlebih dahulu. Klik lagi untuk batch berikutnya.", false);
         await options.reloadDashboard();
       }, options.setStatus);
     }
@@ -368,6 +404,8 @@
         ["Limit gratis", quotaLabel(provider)],
         ["Dipakai", Number(provider.quota_used || 0).toLocaleString("id-ID") + " " + utils.escapeHtml(provider.quota_unit || "request")],
         ["Reset", provider.quota_reset_at ? formatDate(provider.quota_reset_at) : "Mengikuti provider"],
+        ["Rate limit lokal", rateLimitLabel(provider)],
+        ["Cooldown", provider.cooldown_until ? formatDateTime(provider.cooldown_until) : "Tidak aktif"],
         ["Trial", provider.trial_ends_at ? "Berakhir " + formatDate(provider.trial_ends_at) : "Tidak ada tanggal di sistem"],
         ["Endpoint", provider.endpoint_url || "Default provider"],
       ];
@@ -448,6 +486,17 @@
     return String(value || "").slice(0, 10) || "-";
   }
 
+  function formatDateTime(value) {
+    return String(value || "").replace("T", " ").slice(0, 16) || "-";
+  }
+
+  function rateLimitLabel(provider) {
+    var max = Number(provider && provider.rate_limit_max_requests || 0);
+    var windowSeconds = Number(provider && provider.rate_limit_window_seconds || 0);
+    if (!max || !windowSeconds) return "Belum diatur";
+    return max.toLocaleString("id-ID") + " request / " + windowSeconds.toLocaleString("id-ID") + " detik";
+  }
+
   function fieldFallbackLabel(name) {
     return {
       api_key: "API key / token",
@@ -508,6 +557,11 @@
     textarea.select();
     document.execCommand("copy");
     textarea.remove();
+  }
+
+  function cssEscape(value) {
+    if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(value);
+    return String(value || "").replace(/["\\]/g, "\\$&");
   }
 
   async function buttonAction(button, workingLabel, callback, setStatus) {

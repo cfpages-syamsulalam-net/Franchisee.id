@@ -867,7 +867,7 @@ export function renderFranchiseDetailStyles() {
   pointer-events: none;
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
-.fr-proposal-stage:hover .fr-proposal-overlaybar,
+.fr-proposal-reader.is-pointer-active .fr-proposal-overlaybar,
 .fr-proposal-stage:focus-within .fr-proposal-overlaybar,
 .fr-proposal-reader.is-downloading .fr-proposal-overlaybar {
   opacity: 1;
@@ -945,7 +945,9 @@ export function renderFranchiseDetailStyles() {
   font: inherit;
   font-weight: 800;
   cursor: pointer;
-  pointer-events: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, background 0.18s ease;
 }
 .fr-proposal-hit-prev {
   left: 0;
@@ -956,6 +958,19 @@ export function renderFranchiseDetailStyles() {
   right: 0;
   justify-content: flex-end;
   padding-right: 18px;
+}
+.fr-proposal-reader.is-pointer-active .fr-proposal-hit,
+.fr-proposal-hit:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.fr-proposal-reader.is-pointer-active .fr-proposal-hit-prev,
+.fr-proposal-hit-prev:focus-visible {
+  background: linear-gradient(90deg, rgba(17, 17, 17, 0.28), rgba(17, 17, 17, 0));
+}
+.fr-proposal-reader.is-pointer-active .fr-proposal-hit-next,
+.fr-proposal-hit-next:focus-visible {
+  background: linear-gradient(270deg, rgba(17, 17, 17, 0.28), rgba(17, 17, 17, 0));
 }
 .fr-proposal-hit i,
 .fr-proposal-hit span {
@@ -970,8 +985,8 @@ export function renderFranchiseDetailStyles() {
   transform: translateX(0);
   transition: opacity 0.16s ease, transform 0.16s ease;
 }
-.fr-proposal-hit:hover i,
-.fr-proposal-hit:hover span,
+.fr-proposal-reader.is-pointer-active .fr-proposal-hit i,
+.fr-proposal-reader.is-pointer-active .fr-proposal-hit span,
 .fr-proposal-hit:focus i,
 .fr-proposal-hit:focus span {
   opacity: 1;

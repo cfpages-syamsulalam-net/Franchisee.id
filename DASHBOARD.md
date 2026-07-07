@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-08 02:10 (Asia/Jakarta)
+Last updated: 2026-07-08 02:45 (Asia/Jakarta)
 
 ## Purpose
 
@@ -48,6 +48,9 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 | OCR provider configuration | Implemented | Admin-only OCR tab manages ten provider records, masked key/secret state, endpoint/account/region/model, priority, free quota metadata, trial expiry, and enablement through D1 migration 0020. External OCR calls only happen through explicit dry-run, bounded batch job actions, or the protected worker when explicitly enabled. |
 | OCR job execution UX | Implemented | 2026-07-08 request tracker completed: added non-technical tooltips/copy, made dry-run semantics clear, added OCR subtabs and Hasil OCR rows with listing/review links, aligned icon+text buttons, improved desktop/mobile layout, auto-saves provider credentials/settings, greys disabled configured providers, shows provider error status with copyable troubleshooting text, and clarifies that batch execution is intentionally bounded to 5 jobs per click. |
 | OCR controlled worker | Implemented | Added protected `/ocr-worker` plus optional GitHub Actions workflow for large queued backfills. It requires shared `OCR_SECRET`, allows manual workflow runs without the cron gate, keeps scheduled cron disabled until `OCR_WORKER_ENABLED=true`, runs small batches, and enforces a daily OCR usage cap before sending jobs. |
+| OCR franchise-context batching | Implemented | 2026-07-08 request tracker completed: OCR queue/run ordering now completes proposal pages for one franchise before moving to the next franchise, because proposal meaning depends on full-franchise context rather than first-page-only snippets from many franchises. Hasil OCR rows show franchise/page/source context, and recent successful jobs link directly to the matching Hasil OCR row. |
+| OCR provider rate limits | Implemented | Suggestion 68 completed: added provider short-window rate metadata, local cooldown state, runner skip behavior for rate-limited providers, and dashboard visibility for rate/cooldown status. |
+| Brochure overlay navigation polish | Implemented | 2026-07-08 request tracker completed: proposal previous/next hit areas are transparent gradient overlays that appear only while the cursor is moving over the image, then auto-hide after 1 second of no pointer movement even if still hovering. OCR enqueue button alignment/icon was fixed at the same time. |
 | Listing operations editor | Implemented MVP | Listing selector plus structured JSON diff form covers all whitelisted public listing fields. A richer field-by-field drawer can be added later. |
 | Leads/commercial view | Implemented read-only MVP | Reads `franchise_leads` status counts and recent leads. Payment/subscription revenue metrics remain pending. |
 | System health | Implemented read-only MVP | Shows D1 connectivity/migration probe, Clerk session verification note, and recent publish queue status. R2 and webhook failure telemetry remain pending. |
@@ -167,6 +170,9 @@ Existing tables to reuse:
 10. Add OCR execution queue/cache/failover and one-asset dry run. Done.
 11. Improve OCR admin UX for non-technical operators. Done; tracked under "OCR job execution UX" above.
 12. Add controlled OCR worker for larger queued backfills. Done; protected by `OCR_SECRET` and disabled by default in GitHub Actions.
+13. Polish brochure image overlay controls. Done; tracked above.
+14. Change OCR queue processing to franchise-context-first batches. Done; tracked above.
+15. Add provider short-window rate-limit/cooldown guardrails. Done; tracked above.
 
 ## Open Decisions
 

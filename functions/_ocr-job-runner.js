@@ -18,9 +18,11 @@ export async function getOcrJobState(db, auth) {
       db
         .prepare(
           `SELECT j.id, j.asset_id, j.franchise_id, j.status, j.provider_key, j.attempt_count,
-                  j.error_message, j.created_at, j.updated_at, f.brand_name, f.slug
+                  j.error_message, j.created_at, j.updated_at, f.brand_name, f.slug,
+                  COALESCE(a.display_order, 0) display_order, a.public_url, a.legacy_url
            FROM ocr_jobs j
            LEFT JOIN franchises f ON f.id = j.franchise_id
+           LEFT JOIN franchise_assets a ON a.id = j.asset_id
            ORDER BY j.updated_at DESC
            LIMIT 12`,
         )
@@ -45,6 +47,7 @@ export async function getOcrJobState(db, auth) {
                   SUBSTR(COALESCE(k.source_text, ''), 1, 900) source_text_preview,
                   LENGTH(COALESCE(k.source_text, '')) text_length,
                   k.structured_data, k.updated_at, f.brand_name, f.slug,
+                  COALESCE(a.display_order, 0) display_order, a.public_url, a.legacy_url,
                   (
                     SELECT s.id
                     FROM listing_edit_suggestions s
@@ -63,6 +66,7 @@ export async function getOcrJobState(db, auth) {
                   ) suggestion_status
            FROM franchise_asset_knowledge k
            LEFT JOIN franchises f ON f.id = k.franchise_id
+           LEFT JOIN franchise_assets a ON a.id = k.asset_id
            WHERE k.extraction_status IN ('extracted', 'needs_ocr', 'failed')
            ORDER BY k.updated_at DESC
            LIMIT 20`,
@@ -110,8 +114,14 @@ export async function handleEnqueueOcrJobs(db, auth, data) {
 
   const statements = [];
   const nowPriority = Number(data.priority || 100);
+  let currentFranchiseId = "";
+  let franchiseIndex = -1;
   for (const row of rows.results || []) {
     if (!isSafeExternalUrl(row.source_url)) continue;
+    if (row.franchise_id !== currentFranchiseId) {
+      currentFranchiseId = row.franchise_id;
+      franchiseIndex += 1;
+    }
     statements.push(
       db
         .prepare(
@@ -131,7 +141,7 @@ export async function handleEnqueueOcrJobs(db, auth, data) {
           `ocrjob_${randomId()}`,
           row.asset_id,
           row.franchise_id,
-          nowPriority + Number(row.display_order || 0),
+          nowPriority + (franchiseIndex * 1000) + Number(row.display_order || 0),
           row.source_url,
           row.mime_type || null,
           auth.id,
@@ -214,19 +224,57 @@ export async function runOcrJobs(db, env, auth, options = {}) {
 
 async function claimPendingJobs(db, maxJobs, jobId = "") {
   const scopedJobId = textOrNull(jobId);
+  if (scopedJobId) {
+    const exact = await db
+      .prepare(
+        `SELECT j.id, j.asset_id, j.franchise_id, j.source_url, j.mime_type, j.attempt_count,
+                COALESCE(a.display_order, 0) display_order
+         FROM ocr_jobs j
+         LEFT JOIN franchise_assets a ON a.id = j.asset_id
+         WHERE j.status = 'pending'
+           AND j.id = ?
+         LIMIT 1`,
+      )
+      .bind(scopedJobId)
+      .all();
+    const jobs = exact.results || [];
+    if (!jobs.length) return [];
+    await markJobsRunning(db, jobs);
+    return jobs;
+  }
+
+  const target = await db
+    .prepare(
+      `SELECT j.franchise_id, MIN(j.created_at) first_created, MIN(j.priority) min_priority
+       FROM ocr_jobs j
+       WHERE j.status = 'pending'
+       GROUP BY j.franchise_id
+       ORDER BY first_created, min_priority, j.franchise_id
+       LIMIT 1`,
+    )
+    .first();
+  if (!target?.franchise_id) return [];
+
   const result = await db
     .prepare(
-      `SELECT id, asset_id, franchise_id, source_url, mime_type, attempt_count
-       FROM ocr_jobs
-       WHERE status = 'pending'
-         AND (? IS NULL OR id = ?)
-       ORDER BY priority, created_at
+      `SELECT j.id, j.asset_id, j.franchise_id, j.source_url, j.mime_type, j.attempt_count,
+              COALESCE(a.display_order, 0) display_order
+       FROM ocr_jobs j
+       LEFT JOIN franchise_assets a ON a.id = j.asset_id
+       WHERE j.status = 'pending'
+         AND j.franchise_id = ?
+       ORDER BY COALESCE(a.display_order, 0), j.priority, j.created_at
        LIMIT ?`,
     )
-    .bind(scopedJobId, scopedJobId, maxJobs)
+    .bind(target.franchise_id, maxJobs)
     .all();
   const jobs = result.results || [];
   if (!jobs.length) return [];
+  await markJobsRunning(db, jobs);
+  return jobs;
+}
+
+async function markJobsRunning(db, jobs) {
   await db.batch(jobs.map((job) => db
     .prepare(
       `UPDATE ocr_jobs
@@ -235,7 +283,6 @@ async function claimPendingJobs(db, maxJobs, jobId = "") {
        WHERE id = ? AND status = 'pending'`,
     )
     .bind(job.id)));
-  return jobs;
 }
 
 async function loadRunnableProviders(db) {
@@ -245,7 +292,7 @@ async function loadRunnableProviders(db) {
        FROM ocr_provider_configs
        WHERE is_enabled = 1
          AND COALESCE(api_key, '') <> ''
-         AND COALESCE(health_status, 'ready') IN ('ready', 'disabled')
+         AND COALESCE(health_status, 'ready') IN ('ready', 'cooldown', 'disabled')
        ORDER BY priority, display_name`,
     )
     .all();
@@ -362,6 +409,14 @@ async function processJob(db, env, auth, job, providers, options) {
         ]);
         continue;
       }
+      const rateLimit = await prepareRateLimit(db, provider);
+      if (!rateLimit.allowed) {
+        await db.batch([
+          attemptStatement(db, job.id, provider.provider_key, "skipped", null, null, 0, "OCR_PROVIDER_RATE_LIMITED", rateLimit.reason),
+          providerCooldownStatement(db, provider.provider_key, rateLimit.cooldownUntil, rateLimit.reason),
+        ]);
+        continue;
+      }
 
       const started = Date.now();
       try {
@@ -404,7 +459,8 @@ async function processJob(db, env, auth, job, providers, options) {
         lastError = error;
         const latency = Date.now() - started;
         const quotaFailure = isQuotaFailure(error);
-        await db.batch([
+        const rateLimitFailure = isRateLimitFailure(error);
+        const failureStatements = [
           attemptStatement(
             db,
             job.id,
@@ -416,8 +472,11 @@ async function processJob(db, env, auth, job, providers, options) {
             error.code || "OCR_PROVIDER_FAILED",
             cleanError(error.message),
           ),
-          providerHealthStatement(db, provider.provider_key, quotaFailure ? "exhausted" : "ready", cleanError(error.message)),
-        ]);
+        ];
+        failureStatements.push(rateLimitFailure
+          ? providerCooldownStatement(db, provider.provider_key, nextRateCooldown(provider), cleanError(error.message))
+          : providerHealthStatement(db, provider.provider_key, quotaFailure ? "exhausted" : "ready", cleanError(error.message)));
+        await db.batch(failureStatements);
       }
     }
 
@@ -492,6 +551,41 @@ async function loadImage(job, fetchImpl) {
     bytes,
     base64: arrayBufferToBase64(bytes),
     mimeType,
+  };
+}
+
+async function prepareRateLimit(db, provider) {
+  const windowSeconds = Number(provider.rate_limit_window_seconds || 0);
+  const maxRequests = Number(provider.rate_limit_max_requests || 0);
+  const now = new Date();
+  const cooldownUntil = provider.cooldown_until ? new Date(provider.cooldown_until) : null;
+  if (cooldownUntil && cooldownUntil > now) {
+    return {
+      allowed: false,
+      cooldownUntil: cooldownUntil.toISOString(),
+      reason: `Provider cooldown sampai ${cooldownUntil.toISOString()}.`,
+    };
+  }
+  if (!windowSeconds || !maxRequests) return { allowed: true };
+
+  const windowStart = new Date(now.getTime() - (windowSeconds * 1000)).toISOString();
+  const row = await db
+    .prepare(
+      `SELECT COALESCE(SUM(units), 0) used
+       FROM ocr_provider_usage_events
+       WHERE provider_key = ?
+         AND status = 'counted'
+         AND created_at >= ?`,
+    )
+    .bind(provider.provider_key, windowStart)
+    .first();
+  const used = Number(row?.used || 0);
+  if (used < maxRequests) return { allowed: true };
+  const nextWindow = new Date(now.getTime() + (windowSeconds * 1000)).toISOString();
+  return {
+    allowed: false,
+    cooldownUntil: nextWindow,
+    reason: `Rate limit lokal provider tercapai (${used}/${maxRequests} dalam ${windowSeconds} detik).`,
   };
 }
 
@@ -572,10 +666,22 @@ function providerHealthStatement(db, providerKey, healthStatus, errorMessage) {
   return db
     .prepare(
       `UPDATE ocr_provider_configs
-       SET health_status = ?, last_error = ?, last_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+       SET health_status = ?, last_error = ?, cooldown_until = NULL,
+           last_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
        WHERE provider_key = ?`,
     )
     .bind(healthStatus, errorMessage || null, providerKey);
+}
+
+function providerCooldownStatement(db, providerKey, cooldownUntil, errorMessage) {
+  return db
+    .prepare(
+      `UPDATE ocr_provider_configs
+       SET health_status = 'cooldown', cooldown_until = ?, last_error = ?,
+           last_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+       WHERE provider_key = ?`,
+    )
+    .bind(cooldownUntil || null, errorMessage || null, providerKey);
 }
 
 async function failJob(db, job, message) {
@@ -605,6 +711,8 @@ function maskJobRow(row) {
     franchise_id: row.franchise_id,
     brand_name: row.brand_name || "",
     slug: row.slug || "",
+    page_number: Number(row.display_order || 0) > 0 ? Number(row.display_order || 0) : null,
+    source_url: row.public_url || row.legacy_url || "",
     status: row.status,
     provider_key: row.provider_key || "",
     attempt_count: Number(row.attempt_count || 0),
@@ -622,6 +730,8 @@ function maskResultRow(row) {
     franchise_id: row.franchise_id,
     brand_name: row.brand_name || "",
     slug: row.slug || "",
+    page_number: Number(row.display_order || 0) > 0 ? Number(row.display_order || 0) : null,
+    source_url: row.public_url || row.legacy_url || "",
     extraction_method: row.extraction_method || "",
     extraction_status: row.extraction_status || "",
     source_text_preview: row.source_text_preview || "",
@@ -664,6 +774,15 @@ function providerAttemptError(code, message, httpStatus) {
 
 function isQuotaFailure(error) {
   return error?.httpStatus === 429 || /quota|limit|rate/i.test(error?.message || "") || /QUOTA|LIMIT|RATE/i.test(error?.code || "");
+}
+
+function isRateLimitFailure(error) {
+  return error?.httpStatus === 429 || /rate/i.test(error?.message || "") || /RATE/i.test(error?.code || "");
+}
+
+function nextRateCooldown(provider) {
+  const windowSeconds = Math.max(Number(provider?.rate_limit_window_seconds || 60), 30);
+  return new Date(Date.now() + (windowSeconds * 1000)).toISOString();
 }
 
 function cleanError(value) {

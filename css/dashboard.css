@@ -841,6 +841,10 @@ body {
   gap: 8px;
 }
 .dash-ocr-toolbar .dash-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   width: auto;
   min-width: 0;
   height: auto;
@@ -1014,6 +1018,10 @@ body {
 .dash-ocr-results .dash-ocr-result-item {
   display: grid;
   gap: 5px;
+}
+.dash-ocr-results .dash-ocr-result-item.is-highlighted {
+  background: #fff8dc;
+  box-shadow: inset 4px 0 0 var(--dash-accent);
 }
 .dash-ocr-results p {
   max-height: 98px;

@@ -122,6 +122,24 @@ function initProposalReaders() {
   document.querySelectorAll("[data-proposal-reader]").forEach(function (reader) {
     setProposalPage(reader, 1);
     reader.setAttribute("tabindex", "0");
+    var stage = reader.querySelector(".fr-proposal-stage");
+    var hidePointerTimer = null;
+    function showPointerControls() {
+      reader.classList.add("is-pointer-active");
+      window.clearTimeout(hidePointerTimer);
+      hidePointerTimer = window.setTimeout(function () {
+        reader.classList.remove("is-pointer-active");
+      }, 1000);
+    }
+    function hidePointerControls() {
+      window.clearTimeout(hidePointerTimer);
+      reader.classList.remove("is-pointer-active");
+    }
+    if (stage) {
+      stage.addEventListener("pointermove", showPointerControls);
+      stage.addEventListener("pointerdown", showPointerControls);
+      stage.addEventListener("pointerleave", hidePointerControls);
+    }
     reader.addEventListener("keydown", function (event) {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       event.preventDefault();

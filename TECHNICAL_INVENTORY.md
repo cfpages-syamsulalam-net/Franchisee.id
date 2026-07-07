@@ -299,11 +299,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-ocr.js`
 *Admin OCR provider/job/results module for `/dashboard`.*
 - `window.FranchiseDashboardOcr.createOperations(options)`: Creates the OCR tab controller from subtab, provider-list/select/form/status/job/result DOM references and shared dashboard callbacks.
-- `render(payload, jobsPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderResults(payload)` / `fillForm(provider)`: Shows ranked provider state, key/secret presence booleans, read-only quota/free-limit metadata, visible provider health/error status, job counts/recent jobs, OCR result previews, listing/review links, and non-secret configuration without receiving stored credentials.
+- `render(payload, jobsPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderResults(payload)` / `fillForm(provider)`: Shows ranked provider state, key/secret presence booleans, read-only quota/free-limit metadata, visible provider health/error status, job counts/recent jobs, OCR result previews, franchise/page/source/listing/review links, and non-secret configuration without receiving stored credentials. Successful recent jobs link to the matching Hasil OCR row by `asset_id`.
 - `handleProviderListClick(event)`: Copies provider troubleshooting context, including provider key, health status, credential presence, last check timestamp, and last error, without exposing stored credential values.
 - Provider-specific field rules come from `window.FranchiseOcrProviderMetadata`, which is injected from `src/lib/ocr-provider-metadata.js`; simple-key providers show only API key, Azure shows key plus endpoint, Cloudflare/Groq show model where relevant, AWS shows access key/secret/region, and Veryfi shows API key plus client ID plus username/auth secret.
 - `handleFormChange(event)` / `saveConfig(successMessage)`: Auto-saves provider metadata plus optional replacement credentials or explicit clear flags; blank password inputs preserve existing D1 values, new credentials check the active-provider toggle automatically, and clearing the API key disables the provider.
-- `runDryRun()` / `enqueueJobs()` / `runJobs()`: Calls the admin-only OCR actions with explicit copy that dry-run is a real one-asset OCR run and batch processing is bounded per click.
+- `runDryRun()` / `enqueueJobs()` / `runJobs()`: Calls the admin-only OCR actions with explicit copy that dry-run is a real one-asset OCR run and manual batch processing is bounded per click while the backend completes one franchise's proposal pages before moving to another franchise.
 
 ### File: `src/lib/ocr-provider-metadata.js`
 *Shared OCR provider requirements contract.*
@@ -544,12 +544,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/franchise-detail-styles.ts`
 *Generated detail-page CSS module for D1-backed Astro pages.*
 - `FRANCHISE_DETAIL_STYLE_ID`: Stable DOM id used by the injector and smoke check.
-- `renderFranchiseDetailStyles()`: Returns the generated detail `<style>` block for border-light profile/tab presentation, Premium gallery/brochure/FAQ styling, dynamic contact floats, brochure overlay top bar, left/right hover hit areas, and responsive rules.
+- `renderFranchiseDetailStyles()`: Returns the generated detail `<style>` block for border-light profile/tab presentation, Premium gallery/brochure/FAQ styling, dynamic contact floats, brochure overlay top bar, transparent-gradient left/right hit areas, pointer-motion visibility states, and responsive rules.
 
 ### File: `src/lib/franchise-detail-scripts.ts`
 *Generated detail-page browser script module for D1-backed Astro pages.*
 - `FRANCHISE_DETAIL_SCRIPT_ID`: Stable DOM id used by the injected browser script.
-- `renderFranchiseDetailScripts()`: Returns the generated detail `<script>` block for tab activation, `initProposalReaders()`, `setProposalPage(reader, requestedPage)`, keyboard page navigation, contact-tab shortcuts, compare button behavior, and `/proposal-download` PDF requests with in-button progress/status.
+- `renderFranchiseDetailScripts()`: Returns the generated detail `<script>` block for tab activation, `initProposalReaders()`, `setProposalPage(reader, requestedPage)`, pointer-motion auto-hide for proposal overlay controls, keyboard page navigation, contact-tab shortcuts, compare button behavior, and `/proposal-download` PDF requests with in-button progress/status.
 - The actual proposal image fetch/PDF/watermark work remains in `functions/_proposal-pdf.js`; the browser script only sends first-party proposal image URLs and downloads the returned Blob.
 
 ### File: `scripts/check-franchise-detail-assets.ts`
@@ -886,7 +886,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_ocr-provider-config.js`
 *Admin-only OCR provider configuration and credential boundary.*
 - `getOcrProviderConfigs(db, auth)`: Returns provider metadata only to admin; SQL derives `has_api_key` / `has_api_secret` booleans and does not select credential values.
-- `handleUpdateOcrProviderConfig(db, auth, data, env)`: Preserves blank credential inputs, applies explicit clear flags, encrypts saved credentials with external `OCR_KEY`, re-encrypts legacy plaintext values on next save, enforces provider-specific activation prerequisites through `src/lib/ocr-provider-metadata.js`, preserves seeded quota/free-limit metadata on dashboard saves, updates D1 state, and audits only non-secret metadata.
+- `handleUpdateOcrProviderConfig(db, auth, data, env)`: Preserves blank credential inputs, applies explicit clear flags, encrypts saved credentials with external `OCR_KEY`, re-encrypts legacy plaintext values on next save, enforces provider-specific activation prerequisites through `src/lib/ocr-provider-metadata.js`, preserves seeded quota/free-limit/rate-limit metadata on dashboard saves, clears stale cooldown on config save, updates D1 state, and audits only non-secret metadata.
 - `maskProviderConfig(row)`: Produces the stable browser response contract without `api_key` or `api_secret` properties.
 
 ### File: `functions/_ocr-provider-adapters.js`
@@ -902,6 +902,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleRunOcrDryRun(db, auth, data, env, options)`: Admin-only action that requires `OCR_KEY` and one enabled provider, prepares at most one candidate proposal-image job, and processes only that job before broad backfills.
 - `handleRunOcrJobs(db, auth, data, env, options)`: Admin-only action that runs a bounded batch and requires `OCR_KEY` before any provider call can happen.
 - `runOcrJobs(db, env, auth, options)`: Claims pending jobs, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` when available, checks local quota/trial state, tries enabled providers in priority order, logs attempts and usage, and writes successful OCR text through `proposalKnowledgeStatements()`.
+- `claimPendingJobs(db, maxJobs, jobId)`: Selects one pending franchise group first, then claims proposal pages from that franchise by asset display order so manual/worker batches build fuller per-franchise brochure context instead of sampling the first page from many franchises.
+- `prepareRateLimit(db, provider)`: Checks provider `cooldown_until` and local request-window metadata before each external call; if the window is exhausted, the runner records a skipped attempt and updates provider cooldown instead of sending another request.
 
 ### File: `functions/ocr-worker.js`
 *Protected OCR queue worker endpoint for scheduled/manual backfills.*

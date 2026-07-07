@@ -37,6 +37,7 @@ Free limits change frequently. Verify the provider console before enabling produ
 8. Never spread one brochure across providers unless failover is required; this reduces privacy exposure and inconsistent OCR output.
 9. Normalize every provider response into the existing proposal-knowledge text/candidate contract before admin review.
 10. Keep human approval mandatory before OCR-derived values update canonical listing fields.
+11. Apply local short-window provider rate guards before each external call. If a provider reaches its configured request window, mark it `cooldown`, set `cooldown_until`, and try the next eligible provider instead of firing another request immediately.
 
 ## D1 and dashboard implementation plan
 
@@ -54,6 +55,9 @@ Free limits change frequently. Verify the provider console before enabling produ
 - [x] Clarify dashboard execution semantics: Dry run is a real OCR call for one asset, while “Jalankan batch berikutnya” processes a bounded batch of up to five jobs per click to avoid request timeout and uncontrolled provider quota usage.
 - [x] Add copyable provider error status in `/dashboard` so an admin can paste provider health/error context into troubleshooting without exposing stored credentials.
 - [x] Add protected `/ocr-worker` and optional GitHub Actions cron for larger queued backfills. The route requires `OCR_SECRET`, processes at most ten jobs per request, defaults to five jobs, enforces a daily counted-usage cap, logs summaries to `operation_events`, and reuses the same queue/cache/failover runner as the dashboard.
+- [x] Change manual batch selection to franchise-context-first ordering: queued proposal pages for one franchise are processed by page order before the runner moves to another franchise, while content-hash cache still prevents duplicate OCR for images that were already processed.
+- [x] Surface page/source context in `/dashboard` OCR results so each OCR text preview clearly shows which franchise and proposal page it came from.
+- [x] Add migration `0022_ocr_provider_rate_limits.sql` with local provider request-window metadata and `cooldown_until`; manual dashboard batches and the protected worker now skip providers during cooldown and expose rate/cooldown metadata in the OCR provider panel.
 
 ## Dashboard credential field rules
 

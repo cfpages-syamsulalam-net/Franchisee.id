@@ -718,13 +718,13 @@ const ocrProviderMetadataJson = JSON.stringify({
                         Job OCR Proposal
                         <span class="dash-help-dot" data-fr-tooltip="Job OCR adalah tugas membaca teks dari gambar brosur. Antrekan hanya membuat daftar tugas. Dry run dan Jalankan batch baru mengirim gambar ke provider.">?</span>
                       </h2>
-                      <p>Dry run adalah OCR sungguhan untuk 1 aset sebagai tes aman. Batch memproses maksimal 5 job per klik.</p>
+                      <p>Dry run adalah OCR sungguhan untuk 1 aset sebagai tes aman. Batch manual memproses franchise yang sama terlebih dahulu agar konteks brosur lebih utuh.</p>
                     </div>
                   </div>
                 </div>
                 <div class="dash-ocr-step-box">
                   <strong>Langkah aman:</strong>
-                  <span>1) Antrekan brosur gambar. 2) Klik Dry run untuk cek provider dan hasil. 3) Jika hasil masuk akal, klik Jalankan batch berikutnya sampai antrean habis. 4) Buka tab Hasil OCR lalu lanjut Review.</span>
+                  <span>1) Antrekan brosur gambar. 2) Klik Dry run untuk cek provider dan hasil. 3) Jika hasil masuk akal, klik Jalankan batch berikutnya. Sistem akan menyelesaikan halaman brosur satu franchise dulu sebelum pindah ke franchise lain. 4) Buka tab Hasil OCR lalu lanjut Review.</span>
                   <span>Untuk backfill besar, gunakan workflow GitHub Actions "OCR Worker". Manual run bisa langsung dipakai; cron otomatis baru aktif kalau repository variable <code>OCR_WORKER_ENABLED=true</code> diset.</span>
                 </div>
                 <div class="dash-toolbar dash-ocr-toolbar" role="toolbar" aria-label="Aksi OCR proposal">
@@ -733,10 +733,10 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <span>Dry run</span>
                   </button>
                   <button class="dash-icon-button dash-action-button is-primary" type="button" data-ocr-enqueue data-fr-tooltip="Masukkan maksimal 100 proposal gambar yang belum punya hasil OCR ke antrean lokal. Ini belum mengirim gambar ke provider.">
-                    <i class="fas fa-list-check" aria-hidden="true"></i>
+                    <i class="fas fa-list-ul" aria-hidden="true"></i>
                     <span>Antrekan 100</span>
                   </button>
-                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Memproses maksimal 5 job per klik supaya tidak timeout dan kuota provider tetap terkendali. Klik lagi untuk batch berikutnya.">
+                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Memproses maksimal 5 job per klik dari satu franchise terlebih dahulu supaya konteks proposal tetap utuh, tidak timeout, dan kuota provider tetap terkendali. Klik lagi untuk batch berikutnya.">
                     <i class="fas fa-play" aria-hidden="true"></i>
                     <span>Jalankan batch berikutnya</span>
                   </button>

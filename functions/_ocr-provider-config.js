@@ -12,7 +12,8 @@ export async function getOcrProviderConfigs(db, auth) {
                 CASE WHEN COALESCE(api_secret, '') <> '' THEN 1 ELSE 0 END AS has_api_secret,
                 account_id, endpoint_url, region, model, priority, is_enabled,
                 free_quota_limit, free_quota_period, quota_unit, quota_used,
-                quota_reset_at, trial_ends_at, health_status, last_error,
+                quota_reset_at, trial_ends_at, rate_limit_window_seconds,
+                rate_limit_max_requests, cooldown_until, health_status, last_error,
                 last_checked_at, updated_at
          FROM ocr_provider_configs
          ORDER BY priority, display_name`,
@@ -91,7 +92,7 @@ export async function handleUpdateOcrProviderConfig(db, auth, data, env = {}) {
          SET api_key = ?, api_secret = ?, account_id = ?, endpoint_url = ?,
              region = ?, model = ?, priority = ?, is_enabled = ?,
              free_quota_limit = ?, free_quota_period = ?, quota_unit = ?,
-             trial_ends_at = ?, health_status = ?, last_error = NULL,
+             trial_ends_at = ?, health_status = ?, last_error = NULL, cooldown_until = NULL,
              updated_by_user_id = ?, updated_at = CURRENT_TIMESTAMP
          WHERE provider_key = ?`,
       )
@@ -162,7 +163,10 @@ function maskProviderConfig(row) {
     quota_unit: row.quota_unit || "requests",
     quota_used: Number(row.quota_used || 0),
     quota_reset_at: row.quota_reset_at || null,
-    trial_ends_at: row.trial_ends_at || "",
+      trial_ends_at: row.trial_ends_at || "",
+    rate_limit_window_seconds: Number(row.rate_limit_window_seconds || 0),
+    rate_limit_max_requests: Number(row.rate_limit_max_requests || 0),
+    cooldown_until: row.cooldown_until || null,
     health_status: row.health_status || "unconfigured",
     last_error: row.last_error || "",
     last_checked_at: row.last_checked_at || null,
