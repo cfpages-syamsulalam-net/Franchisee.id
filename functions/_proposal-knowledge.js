@@ -59,7 +59,7 @@ export function proposalKnowledgeStatements(db, input) {
   ];
 
   const fields = Object.keys(input.result.candidates || {});
-  if (fields.length) {
+  if (fields.length && input.actorUserId) {
     statements.push(
       db
         .prepare(

@@ -846,6 +846,44 @@ const ocrProviderMetadataJson = JSON.stringify({
                     </div>
                   </div>
                 </div>
+                <form class="dash-ocr-result-filter" data-ocr-result-filter-form>
+                  <label>
+                    <span>Cari hasil</span>
+                    <input type="search" name="query" placeholder="Nama franchise atau teks brosur" autocomplete="off" data-ocr-result-search />
+                  </label>
+                  <label>
+                    <span>Status</span>
+                    <select name="status" data-ocr-result-status>
+                      <option value="all">Semua status</option>
+                      <option value="extracted">Berhasil dibaca</option>
+                      <option value="needs_ocr">Perlu OCR</option>
+                      <option value="failed">Gagal</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Jumlah</span>
+                    <select name="limit" data-ocr-result-limit>
+                      <option value="40">40 hasil</option>
+                      <option value="80">80 hasil</option>
+                      <option value="100">100 hasil</option>
+                    </select>
+                  </label>
+                  <div class="dash-ocr-result-filter-actions">
+                    <button class="dash-icon-button dash-action-button is-primary" type="submit" data-fr-tooltip="Cari hasil OCR di server berdasarkan franchise, status, atau isi teks brosur.">
+                      <i class="fas fa-search" aria-hidden="true"></i>
+                      <span>Cari</span>
+                    </button>
+                    <button class="dash-icon-button dash-action-button" type="button" data-ocr-result-reset data-fr-tooltip="Kembali ke hasil OCR terbaru dari dashboard.">
+                      <i class="fas fa-undo" aria-hidden="true"></i>
+                      <span>Reset</span>
+                    </button>
+                    <button class="dash-icon-button dash-action-button" type="button" data-ocr-result-load-more data-fr-tooltip="Muat hasil berikutnya dari server." hidden>
+                      <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                      <span>Muat lagi</span>
+                    </button>
+                  </div>
+                </form>
+                <p class="dash-muted dash-ocr-result-filter-status" data-ocr-result-filter-status>Menampilkan hasil OCR terbaru.</p>
                 <ul class="dash-list dash-ocr-results" data-ocr-result-rows>
                   <li><span>Belum ada hasil OCR yang bisa ditampilkan.</span></li>
                 </ul>

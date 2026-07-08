@@ -33,7 +33,7 @@ import { jsonResponse } from "./_dashboard-utils.js";
 import { getOcrProviderConfigs, handleToggleOcrProviderEnabled, handleUpdateOcrProviderConfig } from "./_ocr-provider-config.js";
 import { getOcrSchedulerState, handleToggleOcrSchedulerEnabled, handleUpdateOcrSchedulerConfig } from "./_ocr-scheduler-config.js";
 import { handleRetryOcrBatchRun, handleStartOcrBatchRun } from "./_ocr-batch-runs.js";
-import { getOcrJobState, handleEnqueueOcrJobs, handleMarkOcrJobNoText, handleRetryFailedOcrJobs, handleRetryOcrJob, handleRunOcrDryRun, handleRunOcrJobs } from "./_ocr-job-runner.js";
+import { getOcrJobState, handleEnqueueOcrJobs, handleMarkOcrJobNoText, handleRetryFailedOcrJobs, handleRetryOcrJob, handleRunOcrDryRun, handleRunOcrJobs, handleSearchOcrResults } from "./_ocr-job-runner.js";
 import { logOperationEvent } from "./_telemetry.js";
 
 export async function onRequestGet({ request, env }) {
@@ -142,6 +142,7 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "toggle_ocr_scheduler_enabled") return handleToggleOcrSchedulerEnabled(env.franchise_db, auth, data);
     if (data.action === "start_ocr_batch_run") return handleStartOcrBatchRun(env.franchise_db, auth, data, env);
     if (data.action === "retry_ocr_batch_run") return handleRetryOcrBatchRun(env.franchise_db, auth, data, env);
+    if (data.action === "search_ocr_results") return handleSearchOcrResults(env.franchise_db, auth, data);
 
     return jsonResponse({ success: false, error: "UNKNOWN_DASHBOARD_ACTION" }, { status: 400 });
   } catch (error) {

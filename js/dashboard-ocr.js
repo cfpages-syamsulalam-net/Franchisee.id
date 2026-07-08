@@ -21,7 +21,15 @@
       autosaveTimer: null,
       schedulerAutosaveTimer: null,
       saving: false,
-      savingScheduler: false
+      savingScheduler: false,
+      lastJobsPayload: null,
+      resultPageByFranchise: {},
+      resultSearchActive: false,
+      resultSearchResults: [],
+      resultSearchMeta: null,
+      resultSearchLoading: false,
+      pollTimer: null,
+      polling: false
     };
 
     function bind() {
@@ -50,6 +58,9 @@
       if (options.jobRows) options.jobRows.addEventListener("click", handleJobRowsClick);
       if (options.batchRows) options.batchRows.addEventListener("click", handleBatchRowsClick);
       if (options.resultRows) options.resultRows.addEventListener("click", handleResultClick);
+      if (options.resultFilterForm) options.resultFilterForm.addEventListener("submit", submitResultSearch);
+      if (options.resultResetButton) options.resultResetButton.addEventListener("click", resetResultSearch);
+      if (options.resultLoadMoreButton) options.resultLoadMoreButton.addEventListener("click", loadMoreResultSearch);
       if (options.dryRunButton) options.dryRunButton.addEventListener("click", runDryRun);
       if (options.enqueueButton) options.enqueueButton.addEventListener("click", enqueueJobs);
       if (options.runButton) options.runButton.addEventListener("click", runJobs);
@@ -66,10 +77,14 @@
       state.schedulerAdminOnly = Boolean(schedulerPayload.admin_only);
       state.activeProviderCount = countActiveProviders(state.providers);
       state.activeSchedulerCount = countActiveSchedulers(state.schedulers);
+      state.lastJobsPayload = jobsPayload;
+      var resultsPayload = state.resultSearchActive ? buildSearchResultsPayload(jobsPayload) : jobsPayload;
       renderList(payload);
       renderJobs(jobsPayload);
-      renderResults(jobsPayload);
+      renderResults(resultsPayload);
+      renderResultSearchStatus(resultsPayload);
       renderBatches(jobsPayload);
+      syncBatchPolling(jobsPayload);
       renderSelect();
       renderSchedulerSelect();
       if (state.adminOnly) {
@@ -110,9 +125,28 @@
         panel.hidden = !active;
         panel.classList.toggle("is-active", active);
       });
+      syncBatchPolling(state.lastJobsPayload || {});
     }
 
     function handleResultClick(event) {
+      var pageButton = event.target && event.target.closest && event.target.closest("[data-ocr-result-page]");
+      if (pageButton) {
+        event.preventDefault();
+        setResultGroupPage(pageButton.getAttribute("data-ocr-result-page"), Number(pageButton.getAttribute("data-ocr-result-page-index") || 0));
+        return;
+      }
+      var prevButton = event.target && event.target.closest && event.target.closest("[data-ocr-result-prev]");
+      if (prevButton) {
+        event.preventDefault();
+        moveResultGroupPage(prevButton.getAttribute("data-ocr-result-prev"), -1);
+        return;
+      }
+      var nextButton = event.target && event.target.closest && event.target.closest("[data-ocr-result-next]");
+      if (nextButton) {
+        event.preventDefault();
+        moveResultGroupPage(nextButton.getAttribute("data-ocr-result-next"), 1);
+        return;
+      }
       var resultLink = event.target && event.target.closest && event.target.closest("[data-ocr-open-result]");
       if (resultLink) {
         event.preventDefault();
@@ -126,6 +160,69 @@
       var reviewTab = document.querySelector('[data-dashboard-tab="review"]');
       if (reviewTab) reviewTab.click();
       options.setStatus("Buka tab Review untuk meninjau kandidat data dari hasil OCR sebelum disetujui ke listing.", false);
+    }
+
+    async function submitResultSearch(event) {
+      event.preventDefault();
+      await searchOcrResults(false);
+    }
+
+    async function loadMoreResultSearch() {
+      if (!state.resultSearchActive) return;
+      await searchOcrResults(true);
+    }
+
+    async function resetResultSearch() {
+      state.resultSearchActive = false;
+      state.resultSearchResults = [];
+      state.resultSearchMeta = null;
+      state.resultPageByFranchise = {};
+      if (options.resultFilterForm) options.resultFilterForm.reset();
+      renderResults(state.lastJobsPayload || {});
+      renderResultSearchStatus(state.lastJobsPayload || {});
+      refreshTooltips();
+      options.setStatus("Hasil OCR kembali ke daftar terbaru.", false);
+    }
+
+    async function searchOcrResults(append) {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa mencari histori OCR lengkap.", true);
+        return;
+      }
+      if (state.resultSearchLoading) return;
+      state.resultSearchLoading = true;
+      setResultSearchBusy(true, append ? "Memuat..." : "Mencari...");
+      try {
+        var filters = readResultSearchFilters();
+        var offset = append && state.resultSearchMeta ? Number(state.resultSearchMeta.offset || 0) + state.resultSearchResults.length : 0;
+        var result = await options.postDashboardAction({
+          action: "search_ocr_results",
+          query: filters.query,
+          status: filters.status,
+          limit: filters.limit,
+          offset: offset
+        });
+        state.resultSearchActive = true;
+        state.resultSearchResults = append ? mergeResultRows(state.resultSearchResults, result.results || []) : (result.results || []);
+        state.resultSearchMeta = {
+          total: Number(result.total || 0),
+          limit: Number(result.limit || filters.limit),
+          offset: 0,
+          has_more: Boolean(result.has_more),
+          filters: result.filters || filters
+        };
+        state.resultPageByFranchise = append ? state.resultPageByFranchise : {};
+        var payload = buildSearchResultsPayload(state.lastJobsPayload || {});
+        renderResults(payload);
+        renderResultSearchStatus(payload);
+        refreshTooltips();
+        options.setStatus("Hasil OCR difilter dari server: " + state.resultSearchResults.length.toLocaleString("id-ID") + " dari " + Number(result.total || 0).toLocaleString("id-ID") + " hasil.", false);
+      } catch (error) {
+        options.setStatus(error.message || "Pencarian hasil OCR gagal.", true);
+      } finally {
+        state.resultSearchLoading = false;
+        setResultSearchBusy(false);
+      }
     }
 
     async function handleProviderListClick(event) {
@@ -333,6 +430,35 @@
       }).join("") : '<li><span>Belum ada batch OCR besar. Klik Jalankan 100 setelah provider OCR dan scheduler siap.</span></li>';
     }
 
+    function syncBatchPolling(payload) {
+      window.clearTimeout(state.pollTimer);
+      state.pollTimer = null;
+      if (!hasActiveBatch(payload) || !isOcrPanelVisible() || typeof options.reloadDashboard !== "function") return;
+      state.pollTimer = window.setTimeout(async function () {
+        if (state.polling) return;
+        state.polling = true;
+        try {
+          await options.reloadDashboard();
+        } catch (_error) {
+          options.setStatus("Auto-refresh status batch OCR gagal. Pakai tombol Refresh kalau perlu cek manual.", true);
+        } finally {
+          state.polling = false;
+        }
+      }, 7000);
+    }
+
+    function hasActiveBatch(payload) {
+      return ((payload && payload.batches) || []).some(function (batch) {
+        return ["queued", "running"].indexOf(batch.status) !== -1;
+      });
+    }
+
+    function isOcrPanelVisible() {
+      var panel = document.querySelector('[data-dashboard-panel="ocr"]');
+      if (!panel) return true;
+      return !panel.hidden && panel.offsetParent !== null;
+    }
+
     function renderJobStatus(status) {
       var map = {
         succeeded: ["fa-check-circle", "success", "Sukses"],
@@ -371,32 +497,106 @@
         return;
       }
       var results = payload.results || [];
-      options.resultRows.innerHTML = results.length ? results.map(function (item) {
-        var page = item.page_number ? "Halaman " + Number(item.page_number).toLocaleString("id-ID") : "Halaman proposal";
-        var fields = (item.candidate_fields || []).length
-          ? "Kandidat data: " + item.candidate_fields.map(fieldLabel).join(", ")
-          : "Belum ada kandidat field baru dari teks ini.";
-        var listingLink = item.slug
-          ? '<a href="/peluang-usaha/' + utils.escapeAttr(item.slug) + '" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i><span>Lihat listing</span></a>'
-          : "";
-        var assetLink = item.source_url
-          ? '<a href="' + utils.escapeAttr(item.source_url) + '" target="_blank" rel="noopener"><i class="fas fa-image" aria-hidden="true"></i><span>Buka halaman brosur</span></a>'
-          : "";
-        var reviewLink = '<a href="#review" data-ocr-open-review><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Buka Review</span></a>';
-        return '<li class="dash-ocr-result-item" data-ocr-result-asset-id="' + utils.escapeAttr(item.asset_id || "") + '">' +
-          '<strong>' + utils.escapeHtml(item.brand_name || item.franchise_id || "Listing") + '</strong>' +
-          '<span>' + utils.escapeHtml([page, statusLabel(item.extraction_status), item.extraction_method || "ocr", Number(item.text_length || 0).toLocaleString("id-ID") + " karakter"].join(" · ")) + '</span>' +
-          '<span>' + utils.escapeHtml(fields) + '</span>' +
-          '<p>' + utils.escapeHtml(item.source_text_preview || "Tidak ada preview teks.") + '</p>' +
-          '<div class="dash-ocr-result-actions">' + listingLink + assetLink + reviewLink + '</div>' +
-          '</li>';
-      }).join("") : '<li><strong>Belum ada hasil OCR</strong><span>Jalankan Dry run atau batch untuk menghasilkan teks. Setelah sukses, hasilnya muncul di sini.</span></li>';
+      var groups = groupResultsByFranchise(results);
+      options.resultRows.innerHTML = groups.length
+        ? groups.map(renderResultGroup).join("")
+        : '<li><strong>Belum ada hasil OCR</strong><span>Jalankan Dry run atau batch untuk menghasilkan teks. Setelah sukses, hasilnya muncul di sini.</span></li>';
+    }
+
+    function buildSearchResultsPayload(basePayload) {
+      return Object.assign({}, basePayload || {}, {
+        results: state.resultSearchResults || [],
+        search: state.resultSearchMeta || null,
+        migration_required: false
+      });
+    }
+
+    function renderResultSearchStatus(payload) {
+      if (!options.resultFilterStatus) return;
+      payload = payload || {};
+      if (state.resultSearchActive && state.resultSearchMeta) {
+        var total = Number(state.resultSearchMeta.total || 0);
+        var shown = (state.resultSearchResults || []).length;
+        var filters = state.resultSearchMeta.filters || {};
+        var parts = [
+          "Menampilkan " + shown.toLocaleString("id-ID") + " dari " + total.toLocaleString("id-ID") + " hasil OCR",
+          filters.query ? "cari: " + filters.query : "",
+          filters.status && filters.status !== "all" ? "status: " + statusLabel(filters.status) : ""
+        ].filter(Boolean);
+        options.resultFilterStatus.innerHTML = '<i class="fas fa-filter" aria-hidden="true"></i> ' + utils.escapeHtml(parts.join(" · "));
+      } else {
+        var count = ((payload && payload.results) || []).length;
+        options.resultFilterStatus.innerHTML = '<i class="fas fa-clock" aria-hidden="true"></i> ' + utils.escapeHtml("Menampilkan " + count.toLocaleString("id-ID") + " hasil OCR terbaru.");
+      }
+      if (options.resultLoadMoreButton) {
+        options.resultLoadMoreButton.hidden = !(state.resultSearchActive && state.resultSearchMeta && state.resultSearchMeta.has_more);
+      }
+    }
+
+    function readResultSearchFilters() {
+      var form = options.resultFilterForm;
+      var data = form ? new FormData(form) : new FormData();
+      return {
+        query: String(data.get("query") || "").trim(),
+        status: String(data.get("status") || "all"),
+        limit: Math.min(Math.max(Number(data.get("limit") || 40), 1), 100)
+      };
+    }
+
+    function mergeResultRows(current, incoming) {
+      var seen = {};
+      var merged = [];
+      (current || []).concat(incoming || []).forEach(function (item) {
+        var key = item.asset_id || item.id || JSON.stringify(item);
+        if (seen[key]) return;
+        seen[key] = true;
+        merged.push(item);
+      });
+      return merged;
+    }
+
+    function setResultSearchBusy(busy, label) {
+      if (options.resultFilterForm) {
+        Array.from(options.resultFilterForm.elements).forEach(function (input) {
+          input.disabled = Boolean(busy);
+        });
+      }
+      if (options.resultLoadMoreButton) options.resultLoadMoreButton.disabled = Boolean(busy);
+      if (options.resultFilterStatus && busy) {
+        options.resultFilterStatus.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> ' + utils.escapeHtml(label || "Memuat hasil OCR...");
+      }
     }
 
     function focusResultRow(assetId) {
       if (!assetId || !options.resultRows) {
         options.setStatus("Buka subtab Hasil OCR untuk melihat teks yang berhasil diekstrak.", false);
         return;
+      }
+      var sourceResults = state.resultSearchActive ? state.resultSearchResults : ((state.lastJobsPayload && state.lastJobsPayload.results) || []);
+      var groups = groupResultsByFranchise(sourceResults);
+      var found = groups.some(function (group) {
+        var index = group.items.findIndex(function (item) { return item.asset_id === assetId; });
+        if (index === -1) return false;
+        state.resultPageByFranchise[group.key] = index;
+        renderResults(state.resultSearchActive ? buildSearchResultsPayload(state.lastJobsPayload || {}) : (state.lastJobsPayload || {}));
+        refreshTooltips();
+        return true;
+      });
+      if (!found && state.resultSearchActive) {
+        state.resultSearchActive = false;
+        state.resultSearchResults = [];
+        state.resultSearchMeta = null;
+        renderResults(state.lastJobsPayload || {});
+        renderResultSearchStatus(state.lastJobsPayload || {});
+        groups = groupResultsByFranchise((state.lastJobsPayload && state.lastJobsPayload.results) || []);
+        groups.some(function (group) {
+          var index = group.items.findIndex(function (item) { return item.asset_id === assetId; });
+          if (index === -1) return false;
+          state.resultPageByFranchise[group.key] = index;
+          renderResults(state.lastJobsPayload || {});
+          refreshTooltips();
+          return true;
+        });
       }
       var row = options.resultRows.querySelector('[data-ocr-result-asset-id="' + cssEscape(assetId) + '"]');
       if (!row) {
@@ -412,6 +612,125 @@
         row.classList.remove("is-highlighted");
       }, 2600);
       options.setStatus("Ini teks OCR yang berhasil diekstrak dari halaman brosur tersebut.", false);
+    }
+
+    function groupResultsByFranchise(results) {
+      var map = {};
+      (results || []).forEach(function (item) {
+        var key = resultGroupKey(item);
+        if (!map[key]) {
+          map[key] = {
+            key: key,
+            brandName: item.brand_name || item.franchise_id || "Listing",
+            franchiseId: item.franchise_id || "",
+            slug: item.slug || "",
+            items: []
+          };
+        }
+        if (!map[key].slug && item.slug) map[key].slug = item.slug;
+        map[key].items.push(item);
+      });
+      return Object.keys(map).map(function (key) {
+        map[key].items.sort(function (a, b) {
+          return Number(a.page_number || 0) - Number(b.page_number || 0) || String(a.updated_at || "").localeCompare(String(b.updated_at || ""));
+        });
+        return map[key];
+      });
+    }
+
+    function renderResultGroup(group) {
+      var activeIndex = clampResultPage(group.key, group.items.length);
+      var item = group.items[activeIndex] || group.items[0] || {};
+      var extracted = group.items.filter(function (row) { return row.extraction_status === "extracted"; }).length;
+      var needsCheck = group.items.filter(function (row) { return row.extraction_status !== "extracted"; }).length;
+      var listingLink = group.slug
+        ? '<a class="dash-ocr-row-action" href="/peluang-usaha/' + utils.escapeAttr(group.slug) + '" target="_blank" rel="noopener" data-fr-tooltip="Buka listing publik franchise ini."><i class="fas fa-external-link-alt" aria-hidden="true"></i><span>Listing</span></a>'
+        : "";
+      return '<li class="dash-ocr-result-card" data-ocr-result-group="' + utils.escapeAttr(group.key) + '">' +
+        '<div class="dash-ocr-result-card-head">' +
+          '<div><strong><i class="fas fa-store" aria-hidden="true"></i> ' + utils.escapeHtml(group.brandName) + '</strong>' +
+          '<span>' + utils.escapeHtml(group.items.length.toLocaleString("id-ID") + " halaman · " + extracted.toLocaleString("id-ID") + " berhasil" + (needsCheck ? " · " + needsCheck.toLocaleString("id-ID") + " perlu cek" : "")) + '</span></div>' +
+          '<div class="dash-ocr-result-actions">' + listingLink + '</div>' +
+        '</div>' +
+        renderResultPager(group, activeIndex) +
+        renderResultPageBody(group, item, activeIndex) +
+        '</li>';
+    }
+
+    function renderResultPager(group, activeIndex) {
+      if (group.items.length <= 1) {
+        return '<div class="dash-ocr-result-pager is-single"><span><i class="fas fa-file-alt" aria-hidden="true"></i> ' + utils.escapeHtml(resultPageTitle(group.items[0] || {}, 0)) + '</span></div>';
+      }
+      var buttons = group.items.map(function (item, index) {
+        var active = index === activeIndex;
+        var label = item.page_number ? Number(item.page_number).toLocaleString("id-ID") : String(index + 1);
+        return '<button type="button" class="dash-ocr-page-button' + (active ? ' is-active' : '') + '" data-ocr-result-page="' + utils.escapeAttr(group.key) + '" data-ocr-result-page-index="' + index + '" data-fr-tooltip="' + utils.escapeAttr("Baca hasil OCR " + resultPageTitle(item, index)) + '">' +
+          '<i class="fas ' + resultStatusIcon(item.extraction_status) + '" aria-hidden="true"></i><span>' + utils.escapeHtml(label) + '</span></button>';
+      }).join("");
+      return '<div class="dash-ocr-result-pager">' +
+        '<button type="button" class="dash-ocr-page-nav" data-ocr-result-prev="' + utils.escapeAttr(group.key) + '"' + (activeIndex <= 0 ? " disabled" : "") + ' data-fr-tooltip="Halaman sebelumnya"><i class="fas fa-chevron-left" aria-hidden="true"></i><span>Prev</span></button>' +
+        '<div class="dash-ocr-page-strip" aria-label="Halaman hasil OCR">' + buttons + '</div>' +
+        '<button type="button" class="dash-ocr-page-nav" data-ocr-result-next="' + utils.escapeAttr(group.key) + '"' + (activeIndex >= group.items.length - 1 ? " disabled" : "") + ' data-fr-tooltip="Halaman berikutnya"><span>Next</span><i class="fas fa-chevron-right" aria-hidden="true"></i></button>' +
+        '</div>';
+    }
+
+    function renderResultPageBody(group, item, activeIndex) {
+      var page = resultPageTitle(item, activeIndex);
+      var fields = (item.candidate_fields || []).length
+        ? item.candidate_fields.map(fieldLabel).join(", ")
+        : "Belum ada kandidat field baru dari teks ini.";
+      var assetLink = item.source_url
+        ? '<a href="' + utils.escapeAttr(item.source_url) + '" target="_blank" rel="noopener" data-fr-tooltip="Buka gambar brosur yang dikirim ke OCR."><i class="fas fa-image" aria-hidden="true"></i><span>Gambar</span></a>'
+        : "";
+      var reviewLink = '<a href="#review" data-ocr-open-review data-fr-tooltip="Buka tab Review untuk meninjau kandidat data."><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Review</span></a>';
+      return '<div class="dash-ocr-result-item dash-ocr-result-page-body is-' + utils.escapeAttr(extractionStatusClass(item.extraction_status)) + '" data-ocr-result-asset-id="' + utils.escapeAttr(item.asset_id || "") + '">' +
+        '<div class="dash-ocr-result-meta">' +
+          '<span><i class="fas fa-file-alt" aria-hidden="true"></i> ' + utils.escapeHtml(page) + '</span>' +
+          '<span><i class="fas ' + resultStatusIcon(item.extraction_status) + '" aria-hidden="true"></i> ' + utils.escapeHtml(statusLabel(item.extraction_status)) + '</span>' +
+          '<span><i class="fas fa-robot" aria-hidden="true"></i> ' + utils.escapeHtml(item.extraction_method || "ocr") + '</span>' +
+          '<span><i class="fas fa-align-left" aria-hidden="true"></i> ' + utils.escapeHtml(Number(item.text_length || 0).toLocaleString("id-ID") + " karakter") + '</span>' +
+        '</div>' +
+        '<span class="dash-ocr-result-fields"><i class="fas fa-tags" aria-hidden="true"></i> ' + utils.escapeHtml(fields) + '</span>' +
+        '<p class="dash-ocr-result-text">' + utils.escapeHtml(item.source_text_preview || "Tidak ada preview teks.") + '</p>' +
+        '<div class="dash-ocr-result-actions">' + assetLink + reviewLink + '</div>' +
+        '</div>';
+    }
+
+    function resultGroupKey(item) {
+      return item.franchise_id || item.slug || item.brand_name || "unknown";
+    }
+
+    function resultPageTitle(item, fallbackIndex) {
+      return item && item.page_number ? "Halaman " + Number(item.page_number).toLocaleString("id-ID") : "Halaman " + (Number(fallbackIndex || 0) + 1).toLocaleString("id-ID");
+    }
+
+    function setResultGroupPage(groupKey, pageIndex) {
+      state.resultPageByFranchise[groupKey] = Math.max(0, Number(pageIndex || 0));
+      renderResults(state.lastJobsPayload || {});
+      refreshTooltips();
+    }
+
+    function moveResultGroupPage(groupKey, delta) {
+      var groups = groupResultsByFranchise((state.lastJobsPayload && state.lastJobsPayload.results) || []);
+      var group = groups.find(function (item) { return item.key === groupKey; });
+      if (!group) return;
+      setResultGroupPage(groupKey, clampResultPage(groupKey, group.items.length) + Number(delta || 0));
+    }
+
+    function clampResultPage(groupKey, total) {
+      var max = Math.max(0, Number(total || 0) - 1);
+      var current = Math.max(0, Number(state.resultPageByFranchise[groupKey] || 0));
+      if (current > max) current = max;
+      state.resultPageByFranchise[groupKey] = current;
+      return current;
+    }
+
+    function resultStatusIcon(status) {
+      return status === "extracted" ? "fa-check-circle" : status === "failed" ? "fa-times-circle" : "fa-exclamation-circle";
+    }
+
+    function extractionStatusClass(status) {
+      return status === "extracted" ? "extracted" : status === "failed" ? "failed" : "review";
     }
 
     function renderSelect() {
@@ -661,7 +980,9 @@
           batch_id: batchId,
           scheduler_provider_key: scheduler ? scheduler.provider_key : "upstash_qstash"
         });
-        var message = result.scheduler && result.scheduler.message ? result.scheduler.message : "Batch dijadwalkan ulang.";
+        var reset = Number(result.reset_failed_jobs || 0);
+        var message = (reset ? reset.toLocaleString("id-ID") + " job gagal dikembalikan ke antrean. " : "") +
+          (result.scheduler && result.scheduler.message ? result.scheduler.message : "Batch dijadwalkan ulang.");
         options.setStatus(message, !(result.scheduler && result.scheduler.triggered));
         await options.reloadDashboard();
       }, options.setStatus);
@@ -968,6 +1289,12 @@
   function cssEscape(value) {
     if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(value);
     return String(value || "").replace(/["\\]/g, "\\$&");
+  }
+
+  function refreshTooltips() {
+    if (window.FranchiseTooltip && typeof window.FranchiseTooltip.refresh === "function") {
+      window.FranchiseTooltip.refresh();
+    }
   }
 
   async function buttonAction(button, workingLabel, callback, setStatus) {

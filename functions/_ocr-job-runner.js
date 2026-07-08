@@ -71,7 +71,7 @@ export async function getOcrJobState(db, auth) {
            LEFT JOIN franchise_assets a ON a.id = k.asset_id
            WHERE k.extraction_status IN ('extracted', 'needs_ocr', 'failed')
            ORDER BY k.updated_at DESC
-           LIMIT 20`,
+           LIMIT 120`,
         )
         .all(),
       db
@@ -304,6 +304,88 @@ export async function handleRetryFailedOcrJobs(db, auth, data) {
   return jsonResponse({ success: true, retried: jobs.length });
 }
 
+export async function handleSearchOcrResults(db, auth, data) {
+  assertAdmin(auth);
+  const limit = Math.min(Math.max(Number(data.limit || 40), 1), 100);
+  const offset = Math.min(Math.max(Number(data.offset || 0), 0), 5000);
+  const status = textOrNull(data.status) || "all";
+  const franchiseId = textOrNull(data.franchise_id);
+  const query = textOrNull(data.query);
+  const where = ["k.extraction_status IN ('extracted', 'needs_ocr', 'failed')"];
+  const binds = [];
+
+  if (status !== "all") {
+    where.push("k.extraction_status = ?");
+    binds.push(status);
+  }
+  if (franchiseId) {
+    where.push("k.franchise_id = ?");
+    binds.push(franchiseId);
+  }
+  if (query) {
+    const like = `%${query.toLowerCase()}%`;
+    where.push(`(
+      LOWER(COALESCE(f.brand_name, '')) LIKE ?
+      OR LOWER(COALESCE(f.slug, '')) LIKE ?
+      OR LOWER(COALESCE(k.source_text, '')) LIKE ?
+    )`);
+    binds.push(like, like, like);
+  }
+
+  const whereSql = where.join(" AND ");
+  const count = await bindStatement(db
+    .prepare(
+      `SELECT COUNT(*) count
+       FROM franchise_asset_knowledge k
+       LEFT JOIN franchises f ON f.id = k.franchise_id
+       LEFT JOIN franchise_assets a ON a.id = k.asset_id
+       WHERE ${whereSql}`,
+    ), binds)
+    .first();
+  const rows = await bindStatement(db
+    .prepare(
+      `SELECT k.id, k.asset_id, k.franchise_id, k.extraction_method, k.extraction_status,
+              SUBSTR(COALESCE(k.source_text, ''), 1, 900) source_text_preview,
+              LENGTH(COALESCE(k.source_text, '')) text_length,
+              k.structured_data, k.updated_at, f.brand_name, f.slug,
+              COALESCE(a.display_order, 0) display_order, a.public_url, a.legacy_url,
+              (
+                SELECT s.id
+                FROM listing_edit_suggestions s
+                WHERE s.franchise_id = k.franchise_id
+                  AND s.field_name = 'proposal_extraction'
+                ORDER BY s.created_at DESC
+                LIMIT 1
+              ) suggestion_id,
+              (
+                SELECT s.status
+                FROM listing_edit_suggestions s
+                WHERE s.franchise_id = k.franchise_id
+                  AND s.field_name = 'proposal_extraction'
+                ORDER BY s.created_at DESC
+                LIMIT 1
+              ) suggestion_status
+       FROM franchise_asset_knowledge k
+       LEFT JOIN franchises f ON f.id = k.franchise_id
+       LEFT JOIN franchise_assets a ON a.id = k.asset_id
+       WHERE ${whereSql}
+       ORDER BY COALESCE(f.brand_name, k.franchise_id), COALESCE(a.display_order, 0), k.updated_at DESC
+       LIMIT ? OFFSET ?`,
+    ), [...binds, limit, offset])
+    .all();
+  const total = Number(count?.count || 0);
+  const results = (rows.results || []).map(maskResultRow);
+  return jsonResponse({
+    success: true,
+    results,
+    total,
+    limit,
+    offset,
+    has_more: offset + results.length < total,
+    filters: { query: query || "", status, franchise_id: franchiseId || "" },
+  });
+}
+
 export async function runOcrJobs(db, env, auth, options = {}) {
   if (!textOrNull(env.OCR_KEY)) throw new Error("Tambahkan Cloudflare Pages secret OCR_KEY sebelum menjalankan OCR.");
   const maxJobs = Math.min(Math.max(Number(options.maxJobs || 1), 1), MAX_RUN_LIMIT);
@@ -331,6 +413,7 @@ async function claimPendingJobs(db, maxJobs, jobId = "", batchId = "") {
     const exact = await db
       .prepare(
         `SELECT j.id, j.asset_id, j.franchise_id, j.source_url, j.mime_type, j.attempt_count,
+                j.requested_by_user_id,
                 COALESCE(a.display_order, 0) display_order
          FROM ocr_jobs j
          LEFT JOIN franchise_assets a ON a.id = j.asset_id
@@ -364,6 +447,7 @@ async function claimPendingJobs(db, maxJobs, jobId = "", batchId = "") {
   const result = await db
     .prepare(
       `SELECT j.id, j.asset_id, j.franchise_id, j.source_url, j.mime_type, j.attempt_count,
+              j.requested_by_user_id,
               COALESCE(a.display_order, 0) display_order
        FROM ocr_jobs j
        LEFT JOIN franchise_assets a ON a.id = j.asset_id
@@ -613,6 +697,7 @@ async function processJob(db, env, auth, job, providers, options) {
 async function successStatements(db, auth, job, result) {
   const listing = await loadListing(db, job.franchise_id);
   const candidates = extractProposalCandidatesFromText(result.text);
+  const actorUserId = effectiveActorUserId(auth, job);
   return [
     ...proposalKnowledgeStatements(db, {
       assetId: job.asset_id,
@@ -624,7 +709,7 @@ async function successStatements(db, auth, job, result) {
         pageCount: 1,
         candidates: onlyMissingCandidates(candidates, listing),
       },
-      actorUserId: auth.id,
+      actorUserId,
       siteId: SITE_FRANCHISEE_ID,
     }),
     db
@@ -640,7 +725,7 @@ async function successStatements(db, auth, job, result) {
       franchise_id: job.franchise_id,
       provider_key: result.providerKey,
       text_length: result.textLength,
-    }, auth.id),
+    }, actorUserId),
   ];
 }
 
@@ -819,13 +904,14 @@ async function failJob(db, job, message) {
 }
 
 async function markJobNeedsReview(db, auth, job, message) {
+  const actorUserId = effectiveActorUserId(auth, job);
   await db.batch([
-    markJobNeedsReviewStatement(db, job.id, message, auth.id),
+    markJobNeedsReviewStatement(db, job.id, message, actorUserId),
     auditStatement(db, "dashboard.ocr_jobs.needs_review", "ocr_jobs", job.id, {
       asset_id: job.asset_id,
       franchise_id: job.franchise_id,
       reason: message,
-    }, auth.id),
+    }, actorUserId),
   ]);
 }
 
@@ -854,6 +940,16 @@ function retryJobStatement(db, jobId, userId) {
 
 function onlyMissingCandidates(candidates, listing) {
   return Object.fromEntries(Object.entries(candidates || {}).filter(([field]) => !hasValue(listing?.[field])));
+}
+
+function effectiveActorUserId(auth, job) {
+  const authId = textOrNull(auth?.id);
+  if (authId && authId !== "ocr_worker") return authId;
+  return textOrNull(job?.requested_by_user_id);
+}
+
+function bindStatement(statement, values) {
+  return values && values.length ? statement.bind(...values) : statement;
 }
 
 function hasValue(value) {

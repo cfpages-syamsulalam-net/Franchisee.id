@@ -20,6 +20,11 @@ Format:
 - `functions/_ocr-scheduler-config.js`: Fixed Upstash QStash publish URL formatting, validates scheduler worker URLs before dispatch, strips a pasted `Bearer ` prefix from stored QStash tokens, and returns a clearer invalid-token hint when QStash responds with 401.
 - `functions/dashboard-data.js` and `functions/_dashboard-ocr-schemas.js`: Added `retry_ocr_batch_run` so an existing failed/running OCR batch can be rescheduled after scheduler credential or URL fixes.
 - `functions/_ocr-scheduler-config.js`, `functions/_ocr-batch-runs.js`, `functions/ocr-worker.js`, and `js/dashboard-ocr.js`: Added automatic Upstash QStash scheduler preflight before `Jalankan 100`; failed preflight now blocks batch creation instead of producing a confusing `Running 0/100` batch row.
+- `functions/_ocr-job-runner.js` and `functions/_proposal-knowledge.js`: Fixed scheduled OCR worker foreign-key failures by resolving suggestion/audit actors from the original job requester and skipping suggestion creation when no valid D1 user actor exists.
+- `functions/_ocr-batch-runs.js` and `js/dashboard-ocr.js`: Changed batch Retry to reset failed jobs in that batch back to pending before rescheduling the third-party trigger, so already-failed FK batches can be retried from the batch row.
+- `js/dashboard-ocr.js` and `css/dashboard-ocr.css`: Reworked Hasil OCR into compact franchise-grouped cards with per-franchise page prev/next controls, page chips, icons, source-image/review actions, and auto-refresh polling while queued/running OCR batches are visible.
+- `functions/_dashboard-ocr-schemas.js`, `functions/_ocr-job-runner.js`, `functions/dashboard-data.js`, `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, and `css/dashboard-ocr.css`: Added server-side Hasil OCR history search/filter by text/franchise/status with paged "Muat lagi" loading while keeping the default dashboard payload compact.
+- `functions/_ocr-job-runner.js`: Increased dashboard OCR result preview output so grouped franchise result cards can show more proposal pages per franchise.
 - `functions/_ocr-job-runner.js`: Refactored persisted batch-run creation/progress out to `_ocr-batch-runs.js` while keeping OCR job processing, provider failover, and proposal knowledge persistence in the runner.
 - `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, `js/dashboard-ocr-schedulers.js`, and `css/dashboard-ocr.css`: Added the OCR Scheduler panel, encrypted scheduler credential autosave UI, `Jalankan 100` persisted-batch action, visible OCR batch progress rows, and per-batch Retry/Refresh controls.
 - `docs/architecture/OCR_BATCH_SCHEDULING.md`: Updated the OCR batch strategy from GitHub/Cloudflare scheduling to third-party scheduler/queue integration, with Upstash QStash as the implemented automatic path.
@@ -28,6 +33,7 @@ Format:
 - `SUGGESTION.md`: Marked suggestion 72 done and added suggestion 73 for follow-up OCR maintainability refactors.
 - `SUGGESTION.md` and `AUDIT.md`: Marked suggestion 73 done for the first OCR maintainability split and kept remaining deeper split candidates as future follow-up.
 - `SUGGESTION.md`: Marked suggestion 74 done by implementing automatic scheduler preflight before large batch starts.
+- `SUGGESTION.md`: Marked suggestion 75 done by adding server-side OCR result history search/filter controls.
 - Remote D1 `franchise_db`: Applied migration `0023_ocr_batch_scheduler.sql` for OCR batch/scheduler state.
 
 ### Removed

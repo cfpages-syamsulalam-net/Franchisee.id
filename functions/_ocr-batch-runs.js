@@ -95,6 +95,7 @@ export async function handleRetryOcrBatchRun(db, auth, data, env, options = {}) 
     }, { status: 400 });
   }
 
+  const reset = await resetFailedJobsInBatch(db, batch.id, auth.id);
   const trigger = await triggerOcrScheduler(db, env, batch, {
     providerKey: data.scheduler_provider_key,
     delay: options.delay || "10s",
@@ -112,9 +113,10 @@ export async function handleRetryOcrBatchRun(db, auth, data, env, options = {}) 
       scheduler_provider_key: trigger.provider_key || data.scheduler_provider_key || "",
       triggered: Boolean(trigger.triggered),
       message: trigger.message || "",
+      reset_failed_jobs: reset,
     }, auth.id),
   ]);
-  return jsonResponse({ success: true, batch_id: batch.id, scheduler: trigger });
+  return jsonResponse({ success: true, batch_id: batch.id, reset_failed_jobs: reset, scheduler: trigger });
 }
 
 export async function refreshBatchProgress(db, batchId, options = {}) {
@@ -192,6 +194,21 @@ async function updateBatchAfterTrigger(db, batchId, trigger, fallbackStatus) {
     .prepare("UPDATE ocr_batch_runs SET status = ?, last_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
     .bind(fallbackStatus, trigger.message || "Batch siap. Jalankan manual atau aktifkan scheduler pihak ketiga.", batchId)
     .run();
+}
+
+async function resetFailedJobsInBatch(db, batchId, userId) {
+  const result = await db
+    .prepare(
+      `UPDATE ocr_jobs
+       SET status = 'pending', provider_key = NULL, error_message = NULL,
+           started_at = NULL, completed_at = NULL, requested_by_user_id = ?,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE batch_id = ?
+         AND status = 'failed'`,
+    )
+    .bind(userId, batchId)
+    .run();
+  return Number(result?.meta?.changes || 0);
 }
 
 async function hasRunnableOcrProvider(db) {

@@ -289,7 +289,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-ocr.css`
 *Dashboard OCR stylesheet module.*
-- Owns OCR guide cards, provider credential/status UI, scheduler credential UI, provider toggle/error/copy controls, job toolbar, persisted batch progress rows, icon-led job rows including needs-review/no-text status styling, OCR result previews/actions, and OCR-specific responsive rules.
+- Owns OCR guide cards, provider credential/status UI, scheduler credential UI, provider toggle/error/copy controls, job toolbar, persisted batch progress rows, icon-led job rows including needs-review/no-text status styling, OCR result search controls, compact franchise-grouped OCR result cards with page controls/actions, and OCR-specific responsive rules.
 
 ### File: `js/dashboard-premium-operations.js`
 *Premium Operations client module for `/dashboard`.*
@@ -319,13 +319,15 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-ocr.js`
 *Admin OCR provider/scheduler/job/results module for `/dashboard`.*
 - `window.FranchiseDashboardOcr.createOperations(options)`: Creates the OCR tab controller from subtab, provider-list/select/form/status, scheduler-select/form/status, job/batch/result DOM references, and shared dashboard callbacks.
-- `render(payload, jobsPayload, schedulerPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderBatches(payload)` / `renderResults(payload)` / `fillForm(provider)` / `fillSchedulerForm(provider)`: Shows ranked provider state, scheduler provider state, key/secret presence booleans, read-only quota/free-limit metadata, visible provider health/error status, provider-priority enable/disable controls, scheduler credential status, job counts, persisted batch progress, icon-led recent job rows with status/action chips, source-image links, manual no-text review actions, OCR result previews, franchise/page/source/listing/review links, and non-secret configuration without receiving stored credentials. Successful recent jobs link to the matching Hasil OCR row by `asset_id`.
+- `render(payload, jobsPayload, schedulerPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderBatches(payload)` / `renderResults(payload)` / `fillForm(provider)` / `fillSchedulerForm(provider)`: Shows ranked provider state, scheduler provider state, key/secret presence booleans, read-only quota/free-limit metadata, visible provider health/error status, provider-priority enable/disable controls, scheduler credential status, job counts, persisted batch progress, icon-led recent job rows with status/action chips, source-image links, manual no-text review actions, server-searched OCR result status, and compact OCR result cards grouped by franchise with per-franchise page prev/next controls, source/listing/review actions, and non-secret configuration without receiving stored credentials. Successful recent jobs link to the matching Hasil OCR card/page by `asset_id`.
+- `searchOcrResults(append)` / `resetResultSearch()` / `loadMoreResultSearch()`: Calls `search_ocr_results` to fetch filtered OCR result history by text/status from the server, appends paged results with de-duping, and keeps the default dashboard payload small until an admin searches.
+- `syncBatchPolling(payload)`: Auto-refreshes `/dashboard-data` every few seconds while the OCR tab is visible and any persisted batch is still `queued` or `running`, so progress bars update without manual refresh.
 - `markJobNoText(jobId, button)`: Lets an admin mark a failed OCR job as `needs_review` after opening the source image and confirming the brochure page has no useful text, avoiding false provider-error treatment while preserving retry if needed.
 - `handleProviderListClick(event)`: Copies provider troubleshooting context, including provider key, health status, credential presence, last check timestamp, and last error, without exposing stored credential values.
 - Provider-specific field rules come from `window.FranchiseOcrProviderMetadata`, which is injected from `src/lib/ocr-provider-metadata.js`; simple-key providers show only API key, Azure shows key plus endpoint, Cloudflare/Groq show model where relevant, AWS shows access key/secret/region, and Veryfi shows API key plus client ID plus username/auth secret.
 - `handleFormChange(event)` / `saveConfig(successMessage)`: Auto-saves provider metadata plus optional replacement credentials or explicit clear flags; blank password inputs preserve existing D1 values, new credentials check the active-provider toggle automatically, and clearing the API key disables the provider.
 - `handleSchedulerFormChange(event)` / `saveSchedulerConfig(successMessage)`: Auto-saves third-party scheduler credentials/settings through `update_ocr_scheduler_config`; blank token fields preserve existing encrypted D1 values, and new tokens enable the scheduler automatically.
-- `runDryRun()` / `enqueueJobs()` / `runJobs()` / `retryBatch()` / `retryJob()` / `retryFailedJobs()`: Calls the admin-only OCR actions with explicit copy that dry-run is a real one-asset OCR run and `Jalankan 100` creates a persisted server-side batch drained by a third-party scheduler in small chunks. Batch retry reschedules an existing batch after scheduler credential/URL fixes; per-row failed-job OCR retry runs that job immediately; batch failed retry only requeues up to 100 failed jobs. Job execution/retry buttons are disabled when no active provider with stored credentials is available.
+- `runDryRun()` / `enqueueJobs()` / `runJobs()` / `retryBatch()` / `retryJob()` / `retryFailedJobs()`: Calls the admin-only OCR actions with explicit copy that dry-run is a real one-asset OCR run and `Jalankan 100` creates a persisted server-side batch drained by a third-party scheduler in small chunks. Batch retry requeues failed jobs inside that batch before rescheduling it after scheduler credential/URL fixes; per-row failed-job OCR retry runs that job immediately; batch failed retry requeues up to 100 failed jobs. Job execution/retry buttons are disabled when no active provider with stored credentials is available.
 
 ### File: `js/dashboard-ocr-schedulers.js`
 *Dashboard OCR scheduler browser helper.*
@@ -860,7 +862,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Auditable proposal text and candidate extraction.*
 - `extractProposalKnowledge(arrayBuffer, listing)`: Parses selectable PDF text with UnPDF, records page count/status, marks low-text documents as `needs_ocr`, and filters deterministic candidates to fields currently missing from the canonical listing.
 - `extractProposalCandidatesFromText(text)`: Extracts bounded outlet type, area/location requirement, total investment, franchise fee, BEP, royalty, net profit, and support candidates.
-- `proposalKnowledgeStatements(db, input)`: Upserts `franchise_asset_knowledge` and creates a pending `listing_edit_suggestions` row for admin review without directly updating `franchises`.
+- `proposalKnowledgeStatements(db, input)`: Upserts `franchise_asset_knowledge` and creates a pending `listing_edit_suggestions` row for admin review without directly updating `franchises` only when a valid D1 user actor is available.
 
 ### File: `functions/_clerk-auth.js`
 *Shared Clerk session verification, D1 user sync, and role authorization helper.*
@@ -904,13 +906,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
 - `onRequestGet()`: Requires Clerk auth plus D1 `staff`; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
-- `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, and admin-triggered OCR dry-run/enqueue/run/retry/no-text/batch actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
+- `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, and admin-triggered OCR dry-run/enqueue/run/retry/no-text/search/batch actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
 - OCR batch start/retry actions are routed to `_ocr-batch-runs.js`; `_ocr-job-runner.js` stays focused on job processing and OCR provider execution.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
+- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
@@ -938,7 +940,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_ocr-batch-runs.js`
 *Persisted OCR batch-run orchestration module.*
 - `handleStartOcrBatchRun(db, auth, data, env, options)`: Admin-only action that first runs scheduler preflight, then ensures enough pending proposal-image jobs, creates an `ocr_batch_runs` row up to 100 assigned jobs, tags those jobs with `batch_id`, and asks `_ocr-scheduler-config.js` to trigger the first third-party scheduler message. If preflight fails, no batch/jobs are created.
-- `handleRetryOcrBatchRun(db, auth, data, env, options)`: Admin-only action that reschedules an existing non-completed batch through the active scheduler provider after credential/URL fixes.
+- `handleRetryOcrBatchRun(db, auth, data, env, options)`: Admin-only action that resets failed jobs in an existing non-completed batch back to `pending`, then reschedules that batch through the active scheduler provider after credential/URL fixes.
 - `refreshBatchProgress(db, batchId, options)`: Recomputes assigned/processed/succeeded/failed/needs-review counts from `ocr_jobs`, updates `ocr_batch_runs`, and returns the masked batch row.
 - `maskBatchRow(row)`: Produces the dashboard-safe batch progress contract.
 
@@ -950,13 +952,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_ocr-job-runner.js`
 *OCR queue/cache/failover orchestrator shared by dashboard actions and the protected worker.*
-- `getOcrJobState(db, auth)`: Returns admin-only OCR queue counts, recent jobs, recent OCR result previews with listing/review metadata, recent persisted batch runs, enqueue-candidate count, and a `migration_required` fallback when OCR job/batch migrations are not applied.
+- `getOcrJobState(db, auth)`: Returns admin-only OCR queue counts, recent jobs, expanded OCR result previews with listing/review metadata, recent persisted batch runs, enqueue-candidate count, and a `migration_required` fallback when OCR job/batch migrations are not applied.
+- `handleSearchOcrResults(db, auth, data)`: Admin-only server-side history search for `franchise_asset_knowledge`, filtering by status and query text across brand/slug/source text with bounded limit/offset pagination for dashboard "Muat lagi".
 - `handleEnqueueOcrJobs(db, auth, data)`: Admin-only action that queues active image proposal assets into `ocr_jobs`; it does not call external OCR providers.
 - `handleRunOcrDryRun(db, auth, data, env, options)`: Admin-only action that requires `OCR_KEY` and one enabled provider, prepares at most one candidate proposal-image job, and processes only that job before broad backfills.
 - `handleRunOcrJobs(db, auth, data, env, options)`: Admin-only action that runs a bounded batch and requires `OCR_KEY` before any provider call can happen.
 - `handleRetryOcrJob(db, auth, data, env, options)` / `handleRetryFailedOcrJobs(db, auth, data)`: Admin-only retry actions. Single-job retry moves one failed or needs-review job back to `pending` and immediately runs OCR for that job; batch retry moves up to 100 failed jobs back to `pending` without deleting attempt history.
 - `handleMarkOcrJobNoText(db, auth, data)`: Admin-only manual resolution for failed/needs-review OCR jobs after checking the source brochure image; marks the job `needs_review` with an actionable no-text note and writes an audit event.
-- `runOcrJobs(db, env, auth, options)`: Claims pending jobs, optionally scoped by `batch_id`, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` when available, checks local quota/trial state, tries enabled providers in priority order, logs attempts and usage, writes successful OCR text through `proposalKnowledgeStatements()`, treats provider text-too-short responses as job review state instead of provider-health failure, and refreshes batch progress after each scoped drain.
+- `runOcrJobs(db, env, auth, options)`: Claims pending jobs, optionally scoped by `batch_id`, carries the original `requested_by_user_id` into worker-processed writes so scheduled OCR never writes synthetic user IDs into FK-backed tables, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` when available, checks local quota/trial state, tries enabled providers in priority order, logs attempts and usage, writes successful OCR text through `proposalKnowledgeStatements()`, treats provider text-too-short responses as job review state instead of provider-health failure, and refreshes batch progress after each scoped drain.
 - `claimPendingJobs(db, maxJobs, jobId)`: Selects one pending franchise group first, then claims proposal pages from that franchise by asset display order so manual/worker batches build fuller per-franchise brochure context instead of sampling the first page from many franchises.
 - `prepareRateLimit(db, provider)`: Checks provider `cooldown_until` and local request-window metadata before each external call; if the window is exhausted, the runner records a skipped attempt and updates provider cooldown instead of sending another request.
 
