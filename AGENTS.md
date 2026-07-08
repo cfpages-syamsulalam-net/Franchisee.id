@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-07-07 15:40 (Asia/Jakarta)
+Last updated: 2026-07-09 01:20 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -32,6 +32,7 @@ Last updated: 2026-07-07 15:40 (Asia/Jakarta)
 - TypeScript is the default for new app, backend, importer, schema, and migration-adjacent work.
 - Zod validates untrusted runtime data before business logic or D1 writes: form submissions, query params, CSV/Sheets imports, Clerk webhooks, environment/config, and admin actions.
 - D1 schema changes must go through committed SQL migrations. Do not rely on ad hoc production table edits as the database contract.
+- When a committed SQL migration is necessary for the code in the same work session to run correctly, apply it to the active remote D1 database for the user before final reporting, unless the user explicitly asks not to. If remote apply is blocked by credentials/network/tooling, report the blocker clearly and include the exact command the user must run.
 - Roles are D1-authoritative: `franchisee`, `franchisor`, `admin`, and `staff`. Clerk metadata can be a UI hint only. `admin` may satisfy protected-role checks globally; `staff` is limited to staff-level dashboard/operations access and must not be treated as admin.
 - For users who should have admin/staff access before their first Clerk login, use `email_role_grants` keyed by normalized email. Do not create fake `users` rows; `users.clerk_user_id` must come from Clerk after Google/email login.
 - Current bootstrap admin email grants in remote D1 are `admin@alampintar.org` and `email@franchisor.id`; both remain pending until a real Clerk login creates the D1 `users` row.

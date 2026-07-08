@@ -10,6 +10,8 @@ const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const MIN_OCR_TEXT_CHARS = 20;
 const CACHE_TEXT_CHARS = 60_000;
 const JOB_TABLE_ERROR = /ocr_jobs|ocr_attempts|ocr_content_cache|ocr_provider_usage_events|ocr_batch_runs|batch_id|no such table|no such column/i;
+const PAUSE_RATE_LIMIT_NOTE = "OCR_PAUSED_RATE_LIMIT";
+const PAUSE_QUOTA_NOTE = "OCR_PAUSED_QUOTA";
 
 export async function getOcrJobState(db, auth) {
   if (!isAdmin(auth)) return { admin_only: true, counts: {}, recent: [], results: [], migration_required: false };
@@ -390,18 +392,22 @@ export async function runOcrJobs(db, env, auth, options = {}) {
   if (!textOrNull(env.OCR_KEY)) throw new Error("Tambahkan Cloudflare Pages secret OCR_KEY sebelum menjalankan OCR.");
   const maxJobs = Math.min(Math.max(Number(options.maxJobs || 1), 1), MAX_RUN_LIMIT);
   const jobs = await claimPendingJobs(db, maxJobs, options.jobId, options.batchId);
-  const providers = await loadRunnableProviders(db);
   const processed = [];
   for (const job of jobs) {
-    processed.push(await processJob(db, env, auth, job, providers, options));
+    const providerState = await loadRunnableProviderState(db);
+    const result = await processJob(db, env, auth, job, providerState, options);
+    processed.push(result);
+    if (isPausedResult(result)) {
+      await releaseUnprocessedJobs(db, jobs.slice(processed.length), result.note);
+      break;
+    }
   }
-  const batch = options.batchId ? await refreshBatchProgress(db, options.batchId, {
-    message: processed.length ? `Memproses ${processed.length} job terakhir.` : "Tidak ada job pending di batch ini.",
-  }) : null;
+  const pause = processed.find(isPausedResult);
+  const batch = options.batchId ? await refreshBatchProgress(db, options.batchId, batchProgressOptions(processed, pause)) : null;
   return {
-    processed_count: processed.length,
+    processed_count: processed.filter((item) => !isPausedResult(item)).length,
     processed,
-    provider_count: providers.length,
+    provider_count: processed.length ? Number(processed[processed.length - 1]?.provider_count || 0) : 0,
     batch,
   };
 }
@@ -476,18 +482,39 @@ async function markJobsRunning(db, jobs) {
     .bind(job.id)));
 }
 
-async function loadRunnableProviders(db) {
+async function loadRunnableProviderState(db) {
   const result = await db
     .prepare(
       `SELECT *
        FROM ocr_provider_configs
        WHERE is_enabled = 1
          AND COALESCE(api_key, '') <> ''
-         AND COALESCE(health_status, 'ready') IN ('ready', 'cooldown', 'disabled')
+         AND COALESCE(health_status, 'ready') IN ('ready', 'cooldown', 'exhausted')
        ORDER BY priority, display_name`,
     )
     .all();
-  return (result.results || []).filter((provider) => provider.health_status !== "disabled");
+  const rows = result.results || [];
+  const now = new Date();
+  const providers = rows.filter((provider) => {
+    if (provider.health_status === "exhausted") return false;
+    const cooldownUntil = provider.cooldown_until ? new Date(provider.cooldown_until) : null;
+    return !cooldownUntil || cooldownUntil <= now;
+  });
+  const exhaustedCount = rows.filter((provider) => provider.health_status === "exhausted").length;
+  const cooldowns = rows
+    .map((provider) => provider.cooldown_until ? new Date(provider.cooldown_until) : null)
+    .filter((date) => date && date > now)
+    .sort((a, b) => a.getTime() - b.getTime());
+  return {
+    providers,
+    configuredCount: rows.length,
+    exhaustedCount,
+    cooldownUntil: cooldowns.length ? cooldowns[0].toISOString() : "",
+  };
+}
+
+async function loadRunnableProviders(db) {
+  return (await loadRunnableProviderState(db)).providers;
 }
 
 async function prepareOneDryRunJob(db, auth, data) {
@@ -565,7 +592,8 @@ async function prepareOneDryRunJob(db, auth, data) {
   return { job, enqueued: true };
 }
 
-async function processJob(db, env, auth, job, providers, options) {
+async function processJob(db, env, auth, job, providerState, options) {
+  const providers = Array.isArray(providerState) ? providerState : providerState.providers || [];
   try {
     const image = await loadImage(job, options.fetchImpl || fetch);
     const contentHash = await sha256Base64Url(image.bytes);
@@ -586,16 +614,29 @@ async function processJob(db, env, auth, job, providers, options) {
     }
 
     if (!providers.length) {
+      if (providerState?.configuredCount && providerState?.exhaustedCount) {
+        const message = "Semua provider OCR aktif sedang kehabisan kuota. Batch dijeda sampai kuota reset atau provider lain diaktifkan.";
+        await pauseJob(db, job, message);
+        return processedResult(job, "paused", "", 0, PAUSE_QUOTA_NOTE, providers.length, message);
+      }
+      if (providerState?.configuredCount && providerState?.cooldownUntil) {
+        const message = `Semua provider OCR aktif sedang cooldown/rate limit. Batch dijeda sampai ${providerState.cooldownUntil}.`;
+        await pauseJob(db, job, message);
+        return processedResult(job, "paused", "", 0, PAUSE_RATE_LIMIT_NOTE, providers.length, message);
+      }
       await failJob(db, job, "Belum ada provider OCR aktif yang siap dipakai.");
-      return processedResult(job, "failed", "", 0, "NO_PROVIDER");
+      return processedResult(job, "failed", "", 0, "NO_PROVIDER", providers.length);
     }
 
     let lastError = null;
     let textTooShortCount = 0;
     let hardFailureCount = 0;
+    let rateLimitPauseCount = 0;
+    let quotaPauseCount = 0;
     for (const provider of providers) {
       const quota = await prepareQuota(db, provider);
       if (!quota.allowed) {
+        quotaPauseCount += 1;
         await db.batch([
           attemptStatement(db, job.id, provider.provider_key, "quota_exhausted", null, null, 0, "OCR_PROVIDER_QUOTA_EXHAUSTED", quota.reason),
           providerHealthStatement(db, provider.provider_key, "exhausted", quota.reason),
@@ -604,6 +645,7 @@ async function processJob(db, env, auth, job, providers, options) {
       }
       const rateLimit = await prepareRateLimit(db, provider);
       if (!rateLimit.allowed) {
+        rateLimitPauseCount += 1;
         await db.batch([
           attemptStatement(db, job.id, provider.provider_key, "skipped", null, null, 0, "OCR_PROVIDER_RATE_LIMITED", rateLimit.reason),
           providerCooldownStatement(db, provider.provider_key, rateLimit.cooldownUntil, rateLimit.reason),
@@ -655,6 +697,8 @@ async function processJob(db, env, auth, job, providers, options) {
         const quotaFailure = isQuotaFailure(error);
         const rateLimitFailure = isRateLimitFailure(error);
         if (textTooShort) textTooShortCount += 1;
+        else if (rateLimitFailure) rateLimitPauseCount += 1;
+        else if (quotaFailure) quotaPauseCount += 1;
         else hardFailureCount += 1;
         const failureStatements = [
           attemptStatement(
@@ -680,17 +724,41 @@ async function processJob(db, env, auth, job, providers, options) {
       }
     }
 
+    if (rateLimitPauseCount > 0 && hardFailureCount === 0) {
+      const message = cleanError(lastError?.message || "Provider OCR terkena rate limit. Batch dijeda dan job akan dicoba lagi setelah cooldown.");
+      await pauseJob(db, job, message);
+      return processedResult(job, "paused", "", 0, PAUSE_RATE_LIMIT_NOTE, providers.length, message);
+    }
+
+    if (quotaPauseCount > 0 && hardFailureCount === 0) {
+      const message = cleanError(lastError?.message || "Kuota provider OCR habis. Batch dijeda sampai provider lain siap atau kuota reset.");
+      await pauseJob(db, job, message);
+      return processedResult(job, "paused", "", 0, PAUSE_QUOTA_NOTE, providers.length, message);
+    }
+
+    if (lastError && isRateLimitFailure(lastError)) {
+      const message = cleanError(lastError.message || "Provider OCR terkena rate limit. Batch dijeda dan job akan dicoba lagi setelah cooldown.");
+      await pauseJob(db, job, message);
+      return processedResult(job, "paused", "", 0, PAUSE_RATE_LIMIT_NOTE, providers.length, message);
+    }
+
+    if (lastError && isQuotaFailure(lastError)) {
+      const message = cleanError(lastError.message || "Kuota provider OCR habis. Batch dijeda sampai provider lain siap atau kuota reset.");
+      await pauseJob(db, job, message);
+      return processedResult(job, "paused", "", 0, PAUSE_QUOTA_NOTE, providers.length, message);
+    }
+
     if (textTooShortCount > 0 && hardFailureCount === 0) {
       const message = "OCR selesai, tetapi halaman brosur ini tidak memiliki teks yang cukup untuk dipakai. Lihat gambar untuk memastikan.";
       await markJobNeedsReview(db, auth, job, message);
-      return processedResult(job, "needs_review", "", 0, "OCR_TEXT_TOO_SHORT");
+      return processedResult(job, "needs_review", "", 0, "OCR_TEXT_TOO_SHORT", providers.length);
     }
 
     await failJob(db, job, lastError?.message || "Semua provider OCR gagal atau sudah mencapai limit.");
-    return processedResult(job, "failed", "", 0, cleanError(lastError?.message || "FAILED"));
+    return processedResult(job, "failed", "", 0, cleanError(lastError?.message || "FAILED"), providers.length);
   } catch (error) {
     await failJob(db, job, error.message);
-    return processedResult(job, "failed", "", 0, cleanError(error.message));
+    return processedResult(job, "failed", "", 0, cleanError(error.message), providers.length);
   }
 }
 
@@ -782,7 +850,7 @@ async function prepareRateLimit(db, provider) {
        FROM ocr_provider_usage_events
        WHERE provider_key = ?
          AND status = 'counted'
-         AND created_at >= ?`,
+         AND datetime(created_at) >= datetime(?)`,
     )
     .bind(provider.provider_key, windowStart)
     .first();
@@ -903,6 +971,30 @@ async function failJob(db, job, message) {
     .run();
 }
 
+async function pauseJob(db, job, message) {
+  await db
+    .prepare(
+      `UPDATE ocr_jobs
+       SET status = 'pending', error_message = ?,
+           started_at = NULL, completed_at = NULL, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+    )
+    .bind(cleanError(message), job.id)
+    .run();
+}
+
+async function releaseUnprocessedJobs(db, jobs, reason) {
+  if (!jobs.length) return;
+  await db.batch(jobs.map((job) => db
+    .prepare(
+      `UPDATE ocr_jobs
+       SET status = 'pending', error_message = COALESCE(error_message, ?),
+           started_at = NULL, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND status = 'running'`,
+    )
+    .bind(cleanError(reason), job.id)));
+}
+
 async function markJobNeedsReview(db, auth, job, message) {
   const actorUserId = effectiveActorUserId(auth, job);
   await db.batch([
@@ -1006,7 +1098,7 @@ function parseJsonObject(value) {
   }
 }
 
-function processedResult(job, status, providerKey, textLength, note) {
+function processedResult(job, status, providerKey, textLength, note, providerCount = 0, message = "") {
   return {
     job_id: job.id,
     asset_id: job.asset_id,
@@ -1015,6 +1107,8 @@ function processedResult(job, status, providerKey, textLength, note) {
     provider_key: providerKey || "",
     text_length: Number(textLength || 0),
     note: note || "",
+    provider_count: Number(providerCount || 0),
+    message: message || "",
   };
 }
 
@@ -1031,11 +1125,33 @@ function isTextTooShortFailure(error) {
 }
 
 function isQuotaFailure(error) {
-  return error?.httpStatus === 429 || /quota|limit|rate/i.test(error?.message || "") || /QUOTA|LIMIT|RATE/i.test(error?.code || "");
+  return error?.httpStatus === 429 || /quota|limit|rate|E553/i.test(error?.message || "") || /QUOTA|LIMIT|RATE/i.test(error?.code || "");
 }
 
 function isRateLimitFailure(error) {
-  return error?.httpStatus === 429 || /rate/i.test(error?.message || "") || /RATE/i.test(error?.code || "");
+  return error?.httpStatus === 429 || /rate limit|rate-limit|too many requests|E553/i.test(error?.message || "") || /RATE/i.test(error?.code || "");
+}
+
+function isPausedResult(result) {
+  return result?.note === PAUSE_RATE_LIMIT_NOTE || result?.note === PAUSE_QUOTA_NOTE;
+}
+
+function batchProgressOptions(processed, pause) {
+  if (pause?.note === PAUSE_RATE_LIMIT_NOTE) {
+    return {
+      status: "paused_rate_limit",
+      message: pause.message || "Batch OCR dijeda karena provider mencapai rate limit. Retry setelah cooldown selesai.",
+    };
+  }
+  if (pause?.note === PAUSE_QUOTA_NOTE) {
+    return {
+      status: "paused_quota",
+      message: pause.message || "Batch OCR dijeda karena kuota provider habis. Aktifkan provider lain atau tunggu reset kuota.",
+    };
+  }
+  return {
+    message: processed.length ? `Memproses ${processed.length} job terakhir.` : "Tidak ada job pending di batch ini.",
+  };
 }
 
 function nextRateCooldown(provider) {

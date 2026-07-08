@@ -3,6 +3,7 @@ import { preflightOcrScheduler, triggerOcrScheduler } from "./_ocr-scheduler-con
 
 const MAX_BATCH_TARGET = 100;
 const MAX_RUN_LIMIT = 5;
+const PAUSED_BATCH_STATUSES = new Set(["paused_rate_limit", "paused_quota"]);
 
 export async function handleStartOcrBatchRun(db, auth, data, env, options = {}) {
   assertAdmin(auth);
@@ -136,7 +137,9 @@ export async function refreshBatchProgress(db, batchId, options = {}) {
   const assigned = processed + Number(byStatus.pending || 0) + Number(byStatus.running || 0);
   const completed = assigned > 0 && processed >= assigned;
   const failed = assigned > 0 && !Number(byStatus.pending || 0) && !Number(byStatus.running || 0) && Number(byStatus.succeeded || 0) === 0 && (Number(byStatus.failed || 0) > 0);
-  const nextStatus = completed ? (failed ? "failed" : "completed") : "running";
+  const requestedStatus = textOrNull(options.status);
+  const canPause = requestedStatus && PAUSED_BATCH_STATUSES.has(requestedStatus) && !completed;
+  const nextStatus = canPause ? requestedStatus : completed ? (failed ? "failed" : "completed") : "running";
   const message = options.message || (completed ? "Batch OCR selesai." : "Batch OCR masih berjalan.");
   await db
     .prepare(
@@ -218,7 +221,8 @@ async function hasRunnableOcrProvider(db) {
        FROM ocr_provider_configs
        WHERE is_enabled = 1
          AND COALESCE(api_key, '') <> ''
-         AND COALESCE(health_status, 'ready') IN ('ready', 'cooldown', 'disabled')
+         AND COALESCE(health_status, 'ready') = 'ready'
+         AND (cooldown_until IS NULL OR datetime(cooldown_until) <= CURRENT_TIMESTAMP)
        LIMIT 1`,
     )
     .first();

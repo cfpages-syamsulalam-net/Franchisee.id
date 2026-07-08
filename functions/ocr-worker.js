@@ -58,7 +58,7 @@ export async function onRequestPost({ request, env }) {
     const batchId = String(payload.batch_id || "").trim();
     const result = await runOcrJobs(env.franchise_db, env, auth, { maxJobs, batchId });
     let next_trigger = null;
-    if (batchId && result.batch && !["completed", "failed", "cancelled"].includes(result.batch.status)) {
+    if (batchId && result.batch && !["completed", "failed", "cancelled", "paused_rate_limit", "paused_quota"].includes(result.batch.status)) {
       next_trigger = await triggerOcrScheduler(env.franchise_db, env, { id: batchId }, {
         providerKey: payload.source || "",
         limit: requestedLimit,
@@ -102,7 +102,7 @@ async function countTodayUsage(db) {
       `SELECT COALESCE(SUM(units), 0) used
        FROM ocr_provider_usage_events
        WHERE status = 'counted'
-         AND created_at >= ?`,
+         AND datetime(created_at) >= datetime(?)`,
     )
     .bind(midnight.toISOString())
     .first();

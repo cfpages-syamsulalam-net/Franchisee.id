@@ -394,9 +394,16 @@
   font-weight: 600;
   line-height: 1.35;
 }
+.dash-ocr-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 12px;
+  align-items: start;
+}
 .dash-ocr-result-card {
   display: grid;
   gap: 10px;
+  height: 100%;
 }
 .dash-ocr-result-filter {
   display: grid;
@@ -597,6 +604,9 @@
     grid-template-columns: 1fr;
   }
   .dash-ocr-result-filter {
+    grid-template-columns: 1fr;
+  }
+  .dash-ocr-results {
     grid-template-columns: 1fr;
   }
   .dash-ocr-result-card-head {

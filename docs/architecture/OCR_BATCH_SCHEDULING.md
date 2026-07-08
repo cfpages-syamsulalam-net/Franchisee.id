@@ -1,6 +1,6 @@
 # OCR Batch Scheduling Strategy
 
-Last updated: 2026-07-08 (Asia/Jakarta)
+Last updated: 2026-07-09 (Asia/Jakarta)
 
 ## Goal
 
@@ -13,7 +13,7 @@ The safe design is not a single dashboard HTTP request that sleeps until 100 ima
 3. If preflight fails, dashboard returns the scheduler error and does not create the `ocr_batch_runs` record or assign 100 jobs.
 4. If preflight succeeds, dashboard creates an `ocr_batch_runs` record with `target_count = 100`, a generated batch id, and assigned pending jobs.
 5. A third-party scheduler/queue triggers `/ocr-worker`, and the existing Pages Function drains that batch in small chunks, for example 1-5 OCR jobs per invocation.
-6. Each invocation uses existing D1 provider cooldown/quota metadata to decide whether it can call a provider now, should wait, or should stop for the day.
+6. Each invocation uses existing D1 provider cooldown/quota metadata to decide whether it can call a provider now, should wait, or should stop for the day. Provider rate-limit/quota errors pause the batch and return the active job to `pending`; they do not mark every remaining page as failed.
 7. Dashboard polls batch progress and shows processed/succeeded/failed/needs-review/skipped counts.
 
 This gives the admin the intended UX without relying on a long browser tab, long Pages Function request, or uncontrolled sleep loop.
@@ -55,6 +55,7 @@ Implementation sketch:
 - `/ocr-worker` accepts `{ "preflight": true }` for scheduler checks and `{ "batch_id": "...", "limit": 5 }` for real batch drains.
 - Third-party scheduler calls `/ocr-worker`; the worker exits quickly when no claimable batch job exists.
 - Keep each worker invocation small. The “100 jobs” target is achieved by repeated safe invocations, not one long request.
+- When a provider returns a rate-limit/quota error such as OCR.Space `E553`, the runner marks the provider cooldown/exhausted state, moves the current job back to `pending`, releases other already-claimed but unprocessed jobs, sets the batch to `paused_rate_limit` or `paused_quota`, and stops scheduling the next trigger until an admin retries after cooldown or enables another provider.
 
 This is the lowest-risk path because it keeps the current D1 queue/cache/failover code and only adds batch orchestration plus encrypted scheduler credential storage.
 
@@ -101,6 +102,7 @@ Use this order:
 - Status panel:
   - `Batch berjalan: 17/100 diproses`
   - `Sukses 12 · Perlu cek 3 · Gagal 1 · Skip rate limit 1`
+  - `Jeda rate limit` or `Jeda kuota` when provider limits are hit; pending jobs remain pending for retry.
   - `Lanjut otomatis oleh Upstash QStash` or `Menunggu trigger eksternal`
 - Actions:
   - `Refresh`

@@ -467,6 +467,8 @@
         queued: ["fa-clock", "pending", "Queued"],
         pending: ["fa-clock", "pending", "Pending"],
         running: ["fa-spinner fa-spin", "running", "Running"],
+        paused_rate_limit: ["fa-hourglass-half", "review", "Jeda rate limit"],
+        paused_quota: ["fa-pause-circle", "review", "Jeda kuota"],
         completed: ["fa-check-circle", "success", "Selesai"],
         cancelled: ["fa-ban", "failed", "Batal"]
       };
@@ -997,8 +999,10 @@
     }
 
     function countActiveProviders(providers) {
+      var now = Date.now();
       return (providers || []).filter(function (provider) {
-        return provider && provider.is_enabled && provider.has_api_key;
+        var cooldownUntil = provider && provider.cooldown_until ? Date.parse(provider.cooldown_until) : 0;
+        return provider && provider.is_enabled && provider.has_api_key && provider.health_status !== "cooldown" && (!cooldownUntil || cooldownUntil <= now);
       }).length;
     }
 

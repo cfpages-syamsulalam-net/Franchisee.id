@@ -4,6 +4,21 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-09 01:03 (Asia/Jakarta)
+### Added
+- `.context/session-20260709-0103.md`: Added this session continuity snapshot for OCR provider rate-limit pause handling.
+- `migrations/0024_ocr_batch_pause_statuses.sql`: Added OCR batch pause statuses for provider rate-limit and quota pauses.
+
+### Changed
+- `functions/_ocr-job-runner.js`: Changed provider rate-limit/quota handling so E553/429-style provider limit errors put the current job back to `pending`, release any already-claimed unprocessed jobs, and mark the batch as paused instead of failing every following proposal page.
+- `functions/_ocr-batch-runs.js`: Added paused batch progress support and changed runnable-provider checks to exclude providers still in cooldown.
+- `functions/ocr-worker.js`: Stopped third-party scheduler re-dispatch when a scoped OCR batch is paused for provider rate limit/quota and normalized daily usage timestamp comparisons.
+- `js/dashboard-ocr.js`: Added visible paused batch labels and treated cooldown providers as not runnable for OCR execution buttons.
+- `css/dashboard-ocr.css`: Changed Hasil OCR franchise cards to a responsive grid that shows two cards per row when viewport width allows.
+- `AGENTS.md`: Added a persistent rule that necessary committed SQL migrations must be applied to the active remote D1 database before final reporting unless explicitly declined or blocked.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/OCR_BATCH_SCHEDULING.md`: Updated OCR batch documentation for pause-on-rate-limit behavior.
+- Remote D1 `franchise_db`: Applied migration `0024_ocr_batch_pause_statuses.sql` and verified `ocr_batch_runs.status` accepts `paused_rate_limit` and `paused_quota`.
+
 ## 2026-07-08 19:58 (Asia/Jakarta)
 ### Added
 - `.context/session-20260708-2040.md`: Added this session continuity snapshot for QStash batch retry fixes and the suggestion 73 OCR maintainability split.
