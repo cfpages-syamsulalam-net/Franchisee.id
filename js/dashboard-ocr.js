@@ -117,6 +117,12 @@
         await retryJob(retryButton.getAttribute("data-ocr-retry-job"), retryButton);
         return;
       }
+      var noTextButton = event.target && event.target.closest && event.target.closest("[data-ocr-mark-no-text]");
+      if (noTextButton) {
+        event.preventDefault();
+        await markJobNoText(noTextButton.getAttribute("data-ocr-mark-no-text"), noTextButton);
+        return;
+      }
       var resultLink = event.target && event.target.closest && event.target.closest("[data-ocr-open-result]");
       if (!resultLink) return;
       event.preventDefault();
@@ -199,6 +205,7 @@
             "Pending: " + Number(counts.pending || 0).toLocaleString("id-ID"),
             "Running: " + Number(counts.running || 0).toLocaleString("id-ID"),
             "Sukses: " + Number(counts.succeeded || 0).toLocaleString("id-ID"),
+            "Perlu cek: " + Number(counts.needs_review || 0).toLocaleString("id-ID"),
             "Gagal: " + Number(counts.failed || 0).toLocaleString("id-ID")
           ];
           if (state.activeProviderCount === 0) statusParts.push("Provider aktif: 0 — aktifkan provider OCR dulu.");
@@ -216,11 +223,16 @@
         var page = job.page_number ? "Hal. " + Number(job.page_number).toLocaleString("id-ID") : "Hal. proposal";
         var provider = job.provider_key || "belum ada provider";
         var link = job.slug ? renderJobActionLink("/peluang-usaha/" + job.slug, "fa-external-link-alt", "Listing", "Buka listing publik", true) : "";
+        var imageLink = job.source_url ? renderJobActionLink(job.source_url, "fa-image", "Gambar", "Buka gambar halaman brosur yang dikirim ke OCR.", true) : "";
         var resultLink = job.status === "succeeded"
           ? renderJobResultAction(job.asset_id)
           : "";
-        var retryButton = job.status === "failed"
-          ? renderJobActionButton(job.id, "fa-play", "OCR", state.activeProviderCount ? "Coba OCR ulang sekarang untuk job ini." : "Aktifkan provider OCR dulu sebelum menjalankan ulang job ini.", state.activeProviderCount === 0)
+        var canRetry = job.status === "failed" || job.status === "needs_review";
+        var retryButton = canRetry
+          ? renderJobActionButton("data-ocr-retry-job", job.id, "fa-play", "OCR", state.activeProviderCount ? "Coba OCR ulang sekarang untuk job ini." : "Aktifkan provider OCR dulu sebelum menjalankan ulang job ini.", state.activeProviderCount === 0)
+          : "";
+        var noTextButton = job.status === "failed"
+          ? renderJobActionButton("data-ocr-mark-no-text", job.id, "fa-ban", "Tanpa teks", "Tandai halaman ini sebagai gambar tanpa teks cukup setelah admin membuka dan mengecek gambarnya.", false)
           : "";
         return '<li class="dash-ocr-job-item is-' + utils.escapeAttr(job.status || "unknown") + '">' +
           '<div class="dash-ocr-job-main">' +
@@ -232,7 +244,7 @@
           '</div>' +
           (job.error_message ? '<div class="dash-ocr-job-error"><i class="fas fa-times-circle" aria-hidden="true"></i><span>' + utils.escapeHtml(job.error_message) + '</span></div>' : '') +
           '</div>' +
-          '<div class="dash-ocr-job-actions">' + link + resultLink + retryButton + '</div>' +
+          '<div class="dash-ocr-job-actions">' + imageLink + link + resultLink + retryButton + noTextButton + '</div>' +
           '</li>';
       }).join("") : '<li><span>Belum ada job OCR. Antrekan proposal gambar terlebih dahulu.</span></li>';
     }
@@ -241,6 +253,7 @@
       var map = {
         succeeded: ["fa-check-circle", "success", "Sukses"],
         failed: ["fa-times-circle", "failed", "Gagal"],
+        needs_review: ["fa-eye", "review", "Perlu cek"],
         pending: ["fa-clock", "pending", "Pending"],
         running: ["fa-spinner fa-spin", "running", "Running"]
       };
@@ -258,8 +271,8 @@
         '<i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Hasil</span></a>';
     }
 
-    function renderJobActionButton(jobId, icon, label, tooltip, disabled) {
-      return '<button type="button" class="dash-ocr-row-action" data-ocr-retry-job="' + utils.escapeAttr(jobId) + '" data-fr-tooltip="' + utils.escapeAttr(tooltip) + '"' + (disabled ? " disabled" : "") + '>' +
+    function renderJobActionButton(actionAttr, jobId, icon, label, tooltip, disabled) {
+      return '<button type="button" class="dash-ocr-row-action" ' + actionAttr + '="' + utils.escapeAttr(jobId) + '" data-fr-tooltip="' + utils.escapeAttr(tooltip) + '"' + (disabled ? " disabled" : "") + '>' +
         '<i class="fas ' + icon + '" aria-hidden="true"></i><span>' + utils.escapeHtml(label) + '</span></button>';
     }
 
@@ -449,7 +462,23 @@
       }
       await buttonAction(button, "OCR...", async function () {
         var result = await options.postDashboardAction({ action: "retry_ocr_job", job_id: jobId });
-        options.setStatus("OCR ulang selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " job diproses.", false);
+        options.setStatus("OCR ulang selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " job diproses. Jika tetap tanpa teks, status akan menjadi Perlu cek.", false);
+        await options.reloadDashboard();
+      }, options.setStatus);
+    }
+
+    async function markJobNoText(jobId, button) {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa menandai job OCR tanpa teks.", true);
+        return;
+      }
+      await buttonAction(button, "Menandai...", async function () {
+        await options.postDashboardAction({
+          action: "mark_ocr_job_no_text",
+          job_id: jobId,
+          notes: "Admin sudah cek gambar: halaman brosur tidak memiliki teks yang cukup untuk OCR."
+        });
+        options.setStatus("Job OCR ditandai Perlu cek: gambar tidak memiliki teks yang cukup, bukan error provider.", false);
         await options.reloadDashboard();
       }, options.setStatus);
     }

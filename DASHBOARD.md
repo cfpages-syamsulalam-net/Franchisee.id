@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-08 15:13 (Asia/Jakarta)
+Last updated: 2026-07-08 17:33 (Asia/Jakarta)
 
 ## Purpose
 
@@ -50,6 +50,7 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 | OCR controlled worker | Implemented | Added protected `/ocr-worker` plus optional GitHub Actions workflow for large queued backfills. It requires shared `OCR_SECRET`, allows manual workflow runs without the cron gate, keeps scheduled cron disabled until `OCR_WORKER_ENABLED=true`, runs small batches, and enforces a daily OCR usage cap before sending jobs. |
 | OCR franchise-context batching | Implemented | 2026-07-08 request tracker completed: OCR queue/run ordering now completes proposal pages for one franchise before moving to the next franchise, because proposal meaning depends on full-franchise context rather than first-page-only snippets from many franchises. Hasil OCR rows show franchise/page/source context, and recent successful jobs link directly to the matching Hasil OCR row. |
 | OCR provider rate limits | Implemented | Suggestion 68 completed: added provider short-window rate metadata, local cooldown state, runner skip behavior for rate-limited providers, and dashboard visibility for rate/cooldown status. |
+| OCR empty-image/no-text handling | Implemented | Recent OCR jobs now expose a Gambar action so admins can inspect the exact brochure page sent to OCR. OCR responses with too little text become `needs_review` instead of provider failure when no hard provider error occurred, and failed rows can be manually marked as “Tanpa teks” after visual inspection. |
 | OCR provider activation and retry UX | In Progress | 2026-07-08 request tracker: move provider active/disabled control out of credential form and into Prioritas Provider OCR only, fix confusing autosave path that can leave providers disabled after credential tinkering, disable all OCR execution buttons when no active provider is available, make batch failed retry visually clear, and make per-row failed OCR action run OCR immediately rather than only returning the job to pending. |
 | Dashboard action-icon UX audit | In Progress | 2026-07-08 UX audit: OCR job rows should use generous status/action icons, compact action text, tooltip explanations, better row layout, and consistent button alignment. Expand this dashboard-wide pattern gradually: every ambiguous operational action should have an icon plus short label, and state should use visual symbols such as checkmark/success and x/failed where the icon improves scan speed. |
 | Dashboard auth loading skeleton | In Progress | 2026-07-08 UX audit: `/dashboard` should show a neutral loading skeleton while Clerk/session/dashboard authorization is being checked. The login form should only appear after the app knows there is no usable session or the session is expired/unauthorized. |
@@ -181,6 +182,7 @@ Existing tables to reuse:
 17. Upgrade OCR job row/action UX with compact icon-led rows and direct per-row OCR retry execution. In progress; tracked above.
 18. Add dashboard auth loading skeleton before showing the login form. In progress; tracked above.
 19. Split large dashboard CSS by feature surface. Done for auth loading, OCR, Review/Data Quality, Operations/admin helpers, and Premium Operations; tracker lives in `AUDIT.md`.
+20. Add OCR no-text resolution flow. Done: job rows show the source image, OCR text-too-short outcomes become `needs_review`, and admins can manually mark failed jobs as no-text pages.
 
 ## Open Decisions
 

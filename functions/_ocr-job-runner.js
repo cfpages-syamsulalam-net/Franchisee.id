@@ -19,7 +19,8 @@ export async function getOcrJobState(db, auth) {
         .prepare(
           `SELECT j.id, j.asset_id, j.franchise_id, j.status, j.provider_key, j.attempt_count,
                   j.error_message, j.created_at, j.updated_at, f.brand_name, f.slug,
-                  COALESCE(a.display_order, 0) display_order, a.public_url, a.legacy_url
+                  COALESCE(a.display_order, 0) display_order,
+                  COALESCE(j.source_url, a.public_url, a.legacy_url) source_url
            FROM ocr_jobs j
            LEFT JOIN franchises f ON f.id = j.franchise_id
            LEFT JOIN franchise_assets a ON a.id = j.asset_id
@@ -213,11 +214,11 @@ export async function handleRetryOcrJob(db, auth, data, env, options = {}) {
     .bind(data.job_id)
     .first();
   if (!job) return jsonResponse({ success: false, error: "OCR_JOB_NOT_FOUND", message: "Job OCR tidak ditemukan." }, { status: 404 });
-  if (job.status !== "failed") {
+  if (!["failed", "needs_review"].includes(job.status)) {
     return jsonResponse({
       success: false,
-      error: "OCR_JOB_NOT_FAILED",
-      message: "Hanya job OCR berstatus gagal yang bisa di-retry manual.",
+      error: "OCR_JOB_NOT_RETRYABLE",
+      message: "Hanya job OCR berstatus gagal atau perlu cek yang bisa di-retry manual.",
     }, { status: 409 });
   }
 
@@ -231,6 +232,34 @@ export async function handleRetryOcrJob(db, auth, data, env, options = {}) {
   ]);
   const runResult = await runOcrJobs(db, env, auth, { ...options, maxJobs: 1, jobId: job.id });
   return jsonResponse({ success: true, retried: 1, job_id: job.id, run_now: true, ...runResult });
+}
+
+export async function handleMarkOcrJobNoText(db, auth, data) {
+  assertAdmin(auth);
+  const job = await db
+    .prepare("SELECT id, asset_id, franchise_id, status FROM ocr_jobs WHERE id = ? LIMIT 1")
+    .bind(data.job_id)
+    .first();
+  if (!job) return jsonResponse({ success: false, error: "OCR_JOB_NOT_FOUND", message: "Job OCR tidak ditemukan." }, { status: 404 });
+  if (!["failed", "needs_review"].includes(job.status)) {
+    return jsonResponse({
+      success: false,
+      error: "OCR_JOB_NOT_REVIEWABLE",
+      message: "Hanya job OCR gagal atau perlu cek yang bisa ditandai sebagai gambar tanpa teks.",
+    }, { status: 409 });
+  }
+
+  const message = cleanError(data.notes || "Ditandai admin: halaman brosur tidak memiliki teks yang cukup untuk OCR.");
+  await db.batch([
+    markJobNeedsReviewStatement(db, job.id, message, auth.id),
+    auditStatement(db, "dashboard.ocr_jobs.no_text", "ocr_jobs", job.id, {
+      asset_id: job.asset_id,
+      franchise_id: job.franchise_id,
+      previous_status: job.status,
+      notes: message,
+    }, auth.id),
+  ]);
+  return jsonResponse({ success: true, job_id: job.id, status: "needs_review", message });
 }
 
 export async function handleRetryFailedOcrJobs(db, auth, data) {
@@ -456,6 +485,8 @@ async function processJob(db, env, auth, job, providers, options) {
     }
 
     let lastError = null;
+    let textTooShortCount = 0;
+    let hardFailureCount = 0;
     for (const provider of providers) {
       const quota = await prepareQuota(db, provider);
       if (!quota.allowed) {
@@ -479,7 +510,7 @@ async function processJob(db, env, auth, job, providers, options) {
         const result = await callOcrProvider(provider, image, env, options);
         const latency = Date.now() - started;
         if (result.textLength < MIN_OCR_TEXT_CHARS) {
-          throw providerAttemptError("OCR_TEXT_TOO_SHORT", "Provider tidak mengembalikan teks yang cukup untuk dipakai.", result.httpStatus);
+          throw providerAttemptError("OCR_TEXT_TOO_SHORT", "Provider tidak mengembalikan teks yang cukup untuk dipakai.", result.httpStatus, result.textLength);
         }
         const text = result.text.slice(0, CACHE_TEXT_CHARS);
         await db.batch([
@@ -514,26 +545,39 @@ async function processJob(db, env, auth, job, providers, options) {
       } catch (error) {
         lastError = error;
         const latency = Date.now() - started;
+        const textTooShort = isTextTooShortFailure(error);
         const quotaFailure = isQuotaFailure(error);
         const rateLimitFailure = isRateLimitFailure(error);
+        if (textTooShort) textTooShortCount += 1;
+        else hardFailureCount += 1;
         const failureStatements = [
           attemptStatement(
             db,
             job.id,
             provider.provider_key,
-            quotaFailure ? "quota_exhausted" : "failed",
+            textTooShort ? "skipped" : quotaFailure ? "quota_exhausted" : "failed",
             error.httpStatus || null,
             latency,
-            0,
+            Number(error.textLength || 0),
             error.code || "OCR_PROVIDER_FAILED",
             cleanError(error.message),
           ),
         ];
-        failureStatements.push(rateLimitFailure
-          ? providerCooldownStatement(db, provider.provider_key, nextRateCooldown(provider), cleanError(error.message))
-          : providerHealthStatement(db, provider.provider_key, quotaFailure ? "exhausted" : "ready", cleanError(error.message)));
+        if (textTooShort) {
+          failureStatements.push(providerHealthStatement(db, provider.provider_key, "ready", null));
+        } else {
+          failureStatements.push(rateLimitFailure
+            ? providerCooldownStatement(db, provider.provider_key, nextRateCooldown(provider), cleanError(error.message))
+            : providerHealthStatement(db, provider.provider_key, quotaFailure ? "exhausted" : "ready", cleanError(error.message)));
+        }
         await db.batch(failureStatements);
       }
+    }
+
+    if (textTooShortCount > 0 && hardFailureCount === 0) {
+      const message = "OCR selesai, tetapi halaman brosur ini tidak memiliki teks yang cukup untuk dipakai. Lihat gambar untuk memastikan.";
+      await markJobNeedsReview(db, auth, job, message);
+      return processedResult(job, "needs_review", "", 0, "OCR_TEXT_TOO_SHORT");
     }
 
     await failJob(db, job, lastError?.message || "Semua provider OCR gagal atau sudah mencapai limit.");
@@ -752,6 +796,28 @@ async function failJob(db, job, message) {
     .run();
 }
 
+async function markJobNeedsReview(db, auth, job, message) {
+  await db.batch([
+    markJobNeedsReviewStatement(db, job.id, message, auth.id),
+    auditStatement(db, "dashboard.ocr_jobs.needs_review", "ocr_jobs", job.id, {
+      asset_id: job.asset_id,
+      franchise_id: job.franchise_id,
+      reason: message,
+    }, auth.id),
+  ]);
+}
+
+function markJobNeedsReviewStatement(db, jobId, message, userId) {
+  return db
+    .prepare(
+      `UPDATE ocr_jobs
+       SET status = 'needs_review', error_message = ?, requested_by_user_id = ?,
+           completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+    )
+    .bind(cleanError(message), userId, jobId);
+}
+
 function retryJobStatement(db, jobId, userId) {
   return db
     .prepare(
@@ -759,7 +825,7 @@ function retryJobStatement(db, jobId, userId) {
        SET status = 'pending', provider_key = NULL, error_message = NULL,
            started_at = NULL, completed_at = NULL, requested_by_user_id = ?,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND status = 'failed'`,
+       WHERE id = ? AND status IN ('failed', 'needs_review')`,
     )
     .bind(userId, jobId);
 }
@@ -780,7 +846,7 @@ function maskJobRow(row) {
     brand_name: row.brand_name || "",
     slug: row.slug || "",
     page_number: Number(row.display_order || 0) > 0 ? Number(row.display_order || 0) : null,
-    source_url: row.public_url || row.legacy_url || "",
+    source_url: row.source_url || "",
     status: row.status,
     provider_key: row.provider_key || "",
     attempt_count: Number(row.attempt_count || 0),
@@ -833,11 +899,16 @@ function processedResult(job, status, providerKey, textLength, note) {
   };
 }
 
-function providerAttemptError(code, message, httpStatus) {
+function providerAttemptError(code, message, httpStatus, textLength) {
   const error = new Error(message);
   error.code = code;
   error.httpStatus = httpStatus || null;
+  error.textLength = Number(textLength || 0);
   return error;
+}
+
+function isTextTooShortFailure(error) {
+  return error?.code === "OCR_TEXT_TOO_SHORT";
 }
 
 function isQuotaFailure(error) {

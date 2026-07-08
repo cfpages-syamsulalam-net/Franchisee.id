@@ -31,7 +31,7 @@ import {
 import { DashboardActionSchema, EDITABLE_LISTING_FIELD_DEFS, SITE_ID } from "./_dashboard-schemas.js";
 import { jsonResponse } from "./_dashboard-utils.js";
 import { getOcrProviderConfigs, handleToggleOcrProviderEnabled, handleUpdateOcrProviderConfig } from "./_ocr-provider-config.js";
-import { getOcrJobState, handleEnqueueOcrJobs, handleRetryFailedOcrJobs, handleRetryOcrJob, handleRunOcrDryRun, handleRunOcrJobs } from "./_ocr-job-runner.js";
+import { getOcrJobState, handleEnqueueOcrJobs, handleMarkOcrJobNoText, handleRetryFailedOcrJobs, handleRetryOcrJob, handleRunOcrDryRun, handleRunOcrJobs } from "./_ocr-job-runner.js";
 import { logOperationEvent } from "./_telemetry.js";
 
 export async function onRequestGet({ request, env }) {
@@ -132,6 +132,7 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "run_ocr_dry_run") return handleRunOcrDryRun(env.franchise_db, auth, data, env);
     if (data.action === "run_ocr_jobs") return handleRunOcrJobs(env.franchise_db, auth, data, env);
     if (data.action === "retry_ocr_job") return handleRetryOcrJob(env.franchise_db, auth, data, env);
+    if (data.action === "mark_ocr_job_no_text") return handleMarkOcrJobNoText(env.franchise_db, auth, data);
     if (data.action === "retry_failed_ocr_jobs") return handleRetryFailedOcrJobs(env.franchise_db, auth, data);
 
     return jsonResponse({ success: false, error: "UNKNOWN_DASHBOARD_ACTION" }, { status: 400 });

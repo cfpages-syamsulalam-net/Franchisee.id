@@ -233,6 +233,10 @@
   background: #fde8e8;
   color: var(--dash-bad) !important;
 }
+.dash-ocr-job-state.is-review {
+  background: #e8f0ff;
+  color: #1d4ed8 !important;
+}
 .dash-ocr-job-state.is-pending,
 .dash-ocr-job-state.is-running {
   background: #fff4cf;

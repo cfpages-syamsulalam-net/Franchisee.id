@@ -26,6 +26,13 @@ async function main() {
   });
   assert.equal(dryRun.success, true);
 
+  const markNoText = DashboardActionSchema.safeParse({
+    action: "mark_ocr_job_no_text",
+    job_id: "ocrjob_example",
+    notes: "Admin sudah cek gambar: tidak ada teks cukup.",
+  });
+  assert.equal(markNoText.success, true);
+
   const tooWideRun = DashboardActionSchema.safeParse({
     action: "run_ocr_jobs",
     max_jobs: 50,

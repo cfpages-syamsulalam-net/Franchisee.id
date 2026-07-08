@@ -10,12 +10,14 @@ Format:
 - `.context/session-20260708-1259.md`: Added this session continuity snapshot for the OCR provider toggle/retry work.
 - `.context/session-20260708-1456.md`: Added this session continuity snapshot for the OCR job-row UX and dashboard auth skeleton work.
 - `.context/session-20260708-1513.md`: Added this session continuity snapshot for the broader dashboard CSS feature-module extraction.
+- `.context/session-20260708-1733.md`: Added this session continuity snapshot for OCR no-text handling and dashboard schema refactor work.
 - `css/dashboard-auth.css`: Added a focused dashboard auth/loading stylesheet module.
 - `css/dashboard-review.css`: Added a focused dashboard Review/Data Quality stylesheet module for guided edit rows, field diffs, and Area Listing editor layout.
 - `css/dashboard-operations.css`: Added a focused dashboard Operations/admin helper stylesheet module for full-width panels, publication controls, and checkbox rows.
 - `css/dashboard-premium.css`: Added a focused dashboard Premium Operations stylesheet module for payment/settings forms, QRIS preview, and Premium layout rules.
 - `css/dashboard-ocr.css`: Added a focused dashboard OCR stylesheet module for OCR provider, job, result, and responsive UI.
 - `functions/ocr-worker.js`: Added a protected OCR queue worker endpoint that uses `OCR_SECRET`, small bounded batches, daily counted-usage caps, and operation-event summaries for larger queued backfills.
+- `functions/_dashboard-ocr-schemas.js`: Added a focused OCR dashboard action schema module for provider config/toggles, dry-run, bounded batches, retries, and no-text resolution.
 - `.github/workflows/ocr-worker.yaml`: Added a manual/scheduled OCR worker trigger. Manual runs can be used without the cron gate; scheduled runs require repository variable `OCR_WORKER_ENABLED=true`.
 - `migrations/0022_ocr_provider_rate_limits.sql`: Added provider short-window rate-limit metadata and `cooldown_until` so OCR batches can skip providers that are temporarily rate-limited.
 
@@ -32,6 +34,7 @@ Format:
 - `DASHBOARD.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the OCR provider activation fix, disabled no-provider execution state, failed-job retry workflow, dashboard action-icon UX audit, auth skeleton, dashboard CSS refactor, and the new dashboard OCR client regression check.
 - `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, and `css/dashboard.css`: Reworked the OCR tab for non-technical admins with guide cards, OCR subtabs for Pengaturan/Eksekusi Job/Hasil OCR, clearer tooltips, icon+text action buttons, better desktop/mobile layout, auto-saving provider configuration, disabled-provider greying, and explicit dry-run/batch copy.
 - `js/dashboard-ocr.js` and `css/dashboard.css`: Added visible provider error panels and a `Copy error` button that copies provider health/error context for troubleshooting without exposing credentials.
+- `functions/_ocr-job-runner.js`, `functions/dashboard-data.js`, `functions/_dashboard-schemas.js`, `functions/_dashboard-ocr-schemas.js`, `js/dashboard-ocr.js`, and `css/dashboard-ocr.css`: Added source-image links for recent OCR jobs, no-text manual resolution, `needs_review` handling for text-too-short OCR outcomes, retry support for needs-review jobs, and split OCR-specific dashboard action validation out of the shared dashboard schema facade.
 - `src/lib/franchise-detail-styles.ts` and `src/lib/franchise-detail-scripts.ts`: Changed brochure previous/next image navigation to transparent gradient overlays that appear only while the pointer is moving and auto-hide after one second of pointer inactivity.
 - `functions/_ocr-job-runner.js`: Added OCR result rows to `/dashboard-data`, including listing slug, source-text preview, candidate field summary, latest proposal-extraction suggestion status, proposal page/source context, franchise-first pending-job claiming, and provider short-window cooldown checks so manual/worker batches process fuller franchise proposal context without duplicate OCR.
 - `functions/_ocr-provider-config.js` and `js/dashboard-ocr.js`: Exposed provider rate-limit and cooldown metadata in the OCR provider panel without making those values editable in the admin form.
