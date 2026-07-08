@@ -13,6 +13,13 @@ export const OcrProviderKeySchema = z.enum([
   "api4ai",
 ]);
 
+export const OcrSchedulerProviderKeySchema = z.enum([
+  "upstash_qstash",
+  "cron_job_org",
+  "inngest",
+  "trigger_dev",
+]);
+
 export const UpdateOcrProviderConfigSchema = z.object({
   action: z.literal("update_ocr_provider_config"),
   provider_key: OcrProviderKeySchema,
@@ -49,6 +56,7 @@ export const EnqueueOcrJobsSchema = z.object({
 export const RunOcrJobsSchema = z.object({
   action: z.literal("run_ocr_jobs"),
   max_jobs: z.coerce.number().int().min(1).max(5).optional().default(1),
+  batch_id: z.string().trim().max(160).optional().default(""),
 });
 
 export const RunOcrDryRunSchema = z.object({
@@ -73,6 +81,32 @@ export const RetryFailedOcrJobsSchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(100),
 });
 
+export const UpdateOcrSchedulerConfigSchema = z.object({
+  action: z.literal("update_ocr_scheduler_config"),
+  provider_key: OcrSchedulerProviderKeySchema,
+  api_key: z.string().max(4000).optional().default(""),
+  api_secret: z.string().max(4000).optional().default(""),
+  clear_api_key: z.boolean().optional().default(false),
+  clear_api_secret: z.boolean().optional().default(false),
+  endpoint_url: z.string().trim().max(500).refine((value) => !value || /^https:\/\//i.test(value), "Endpoint harus memakai HTTPS.").optional().default(""),
+  schedule_cron: z.string().trim().max(120).optional().default(""),
+  request_url: z.string().trim().max(500).refine((value) => !value || /^https:\/\//i.test(value), "URL worker harus memakai HTTPS.").optional().default(""),
+  request_body: z.string().trim().max(1200).optional().default(""),
+  is_enabled: z.boolean().optional().default(false),
+});
+
+export const ToggleOcrSchedulerEnabledSchema = z.object({
+  action: z.literal("toggle_ocr_scheduler_enabled"),
+  provider_key: OcrSchedulerProviderKeySchema,
+  is_enabled: z.boolean(),
+});
+
+export const StartOcrBatchRunSchema = z.object({
+  action: z.literal("start_ocr_batch_run"),
+  target_count: z.coerce.number().int().min(1).max(100).optional().default(100),
+  scheduler_provider_key: OcrSchedulerProviderKeySchema.optional().default("upstash_qstash"),
+});
+
 export const DASHBOARD_OCR_ACTION_SCHEMAS = [
   UpdateOcrProviderConfigSchema,
   ToggleOcrProviderEnabledSchema,
@@ -82,4 +116,7 @@ export const DASHBOARD_OCR_ACTION_SCHEMAS = [
   RetryOcrJobSchema,
   MarkOcrJobNoTextSchema,
   RetryFailedOcrJobsSchema,
+  UpdateOcrSchedulerConfigSchema,
+  ToggleOcrSchedulerEnabledSchema,
+  StartOcrBatchRunSchema,
 ];

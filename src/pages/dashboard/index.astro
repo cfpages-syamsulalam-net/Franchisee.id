@@ -583,9 +583,9 @@ const ocrProviderMetadataJson = JSON.stringify({
                 <span>Pilih provider OCR dan isi key. Provider dengan key akan aktif kecuali admin menonaktifkannya.</span>
               </article>
               <article class="dash-ocr-guide-card">
-                <i class="fas fa-tasks" aria-hidden="true"></i>
+                <i class="fas fa-clock" aria-hidden="true"></i>
                 <strong>2. Eksekusi</strong>
-                <span>Antrekan brosur gambar, coba Dry run untuk 1 aset, lalu jalankan batch kecil per klik.</span>
+                <span>Antrekan brosur gambar, coba Dry run, lalu jalankan batch 100 lewat scheduler pihak ketiga.</span>
               </article>
               <article class="dash-ocr-guide-card">
                 <i class="fas fa-clipboard-check" aria-hidden="true"></i>
@@ -716,6 +716,72 @@ const ocrProviderMetadataJson = JSON.stringify({
                   </div>
                 </form>
               </section>
+
+              <section class="dash-panel">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <i class="fas fa-clock dash-section-icon" aria-hidden="true"></i>
+                    <div>
+                      <h2>
+                        Scheduler OCR
+                        <span class="dash-help-dot" data-fr-tooltip="Scheduler pihak ketiga memanggil worker OCR sedikit demi sedikit. Ini dipakai untuk batch besar agar tidak menabrak batas waktu request dan tetap mengikuti rate limit provider OCR.">?</span>
+                      </h2>
+                      <p>Atur provider trigger batch. Credential disimpan terenkripsi dengan OCR_KEY.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="dash-warning-box dash-ocr-warning">
+                  Rekomendasi: pakai Upstash QStash untuk batch otomatis. cron-job.org, Inngest, dan Trigger.dev disediakan sebagai opsi trigger eksternal bila ingin dipakai manual dari akun masing-masing.
+                </div>
+                <form class="dash-form dash-ocr-form" data-ocr-scheduler-form>
+                  <label class="dash-form-wide">
+                    <span>
+                      Provider scheduler
+                      <span class="dash-help-dot" data-fr-tooltip="Upstash QStash bisa men-trigger batch otomatis dari dashboard. Provider lain berguna bila Anda ingin trigger eksternal yang memanggil endpoint worker secara berkala.">?</span>
+                    </span>
+                    <select name="provider_key" data-ocr-scheduler-select required>
+                      <option value="">Pilih scheduler...</option>
+                    </select>
+                  </label>
+                  <label data-ocr-scheduler-field="api_key">
+                    <span class="dash-field-label-row">
+                      <span data-ocr-scheduler-label="api_key">API key / token</span>
+                      <span class="dash-credential-badge" data-ocr-scheduler-key-state="api_key"></span>
+                    </span>
+                    <input name="api_key" type="password" maxlength="4000" autocomplete="new-password" placeholder="Kosongkan untuk mempertahankan" />
+                    <small data-ocr-scheduler-help="api_key">Untuk Upstash isi QSTASH_TOKEN.</small>
+                  </label>
+                  <label data-ocr-scheduler-field="api_secret" hidden>
+                    <span class="dash-field-label-row">
+                      <span data-ocr-scheduler-label="api_secret">API secret</span>
+                      <span class="dash-credential-badge" data-ocr-scheduler-key-state="api_secret"></span>
+                    </span>
+                    <input name="api_secret" type="password" maxlength="4000" autocomplete="new-password" placeholder="Hanya jika provider memerlukan" />
+                    <small data-ocr-scheduler-help="api_secret">Isi hanya jika provider membutuhkan secret terpisah.</small>
+                  </label>
+                  <label class="dash-form-wide" data-ocr-scheduler-field="request_url">
+                    Worker URL
+                    <input name="request_url" type="text" maxlength="500" placeholder="https://franchisee.id/ocr-worker" />
+                    <small>Endpoint yang dipanggil scheduler. Biasanya biarkan default.</small>
+                  </label>
+                  <label data-ocr-scheduler-field="schedule_cron">
+                    Jadwal
+                    <input name="schedule_cron" type="text" maxlength="120" placeholder="* * * * *" />
+                    <small>Dipakai oleh provider cron eksternal. QStash memakai delay per pesan.</small>
+                  </label>
+                  <label class="dash-check-row" data-ocr-scheduler-field="clear_api_key">
+                    <input name="clear_api_key" type="checkbox" />
+                    Hapus token tersimpan
+                  </label>
+                  <div class="dash-form-wide dash-credential-summary" data-ocr-scheduler-summary>
+                    Pilih scheduler untuk melihat status credential.
+                  </div>
+                  <div class="dash-form-wide dash-ocr-autosave-status">
+                    <i class="fas fa-save" aria-hidden="true"></i>
+                    <span class="dash-muted" data-ocr-scheduler-status>Pilih scheduler. Perubahan tersimpan otomatis.</span>
+                  </div>
+                </form>
+              </section>
               </div>
             </div>
 
@@ -735,8 +801,8 @@ const ocrProviderMetadataJson = JSON.stringify({
                 </div>
                 <div class="dash-ocr-step-box">
                   <strong>Langkah aman:</strong>
-                  <span>1) Antrekan brosur gambar. 2) Klik Dry run untuk cek provider dan hasil. 3) Jika hasil masuk akal, klik Jalankan batch berikutnya. Sistem akan menyelesaikan halaman brosur satu franchise dulu sebelum pindah ke franchise lain. 4) Buka tab Hasil OCR lalu lanjut Review.</span>
-                  <span>Untuk backfill besar, gunakan workflow GitHub Actions "OCR Worker". Manual run bisa langsung dipakai; cron otomatis baru aktif kalau repository variable <code>OCR_WORKER_ENABLED=true</code> diset.</span>
+                  <span>1) Antrekan brosur gambar. 2) Klik Dry run untuk cek provider dan hasil. 3) Jika hasil masuk akal, klik Jalankan 100. Sistem membuat batch persisted lalu scheduler pihak ketiga memprosesnya sedikit demi sedikit. 4) Buka tab Hasil OCR lalu lanjut Review.</span>
+                  <span>Untuk batch otomatis, aktifkan Upstash QStash di subtab Pengaturan. Jika belum ada scheduler aktif, tombol batch tetap membuat antrean namun perlu dijalankan manual per chunk.</span>
                 </div>
                 <div class="dash-toolbar dash-ocr-toolbar" role="toolbar" aria-label="Aksi OCR proposal">
                   <button class="dash-icon-button dash-action-button is-primary" type="button" data-ocr-dry-run data-fr-tooltip="Dry run adalah OCR sungguhan untuk satu aset saja. Dipakai untuk memastikan key provider, kuota, cache, dan hasil review bekerja sebelum batch besar.">
@@ -747,9 +813,9 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <i class="fas fa-list-ul" aria-hidden="true"></i>
                     <span>Antrekan 100</span>
                   </button>
-                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Memproses maksimal 5 job per klik dari satu franchise terlebih dahulu supaya konteks proposal tetap utuh, tidak timeout, dan kuota provider tetap terkendali. Klik lagi untuk batch berikutnya.">
-                    <i class="fas fa-play" aria-hidden="true"></i>
-                    <span>Jalankan batch berikutnya</span>
+                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Membuat batch sampai 100 job lalu memicu scheduler pihak ketiga. Worker tetap memproses chunk kecil per panggilan agar aman terhadap rate limit dan timeout.">
+                    <i class="fas fa-clock" aria-hidden="true"></i>
+                    <span>Jalankan 100</span>
                   </button>
                   <button class="dash-icon-button dash-action-button" type="button" data-ocr-retry-failed data-fr-tooltip="Mengembalikan maksimal 100 job gagal ke antrean pending. Setelah itu klik Jalankan batch untuk memprosesnya.">
                     <i class="fas fa-redo-alt" aria-hidden="true"></i>
@@ -757,6 +823,9 @@ const ocrProviderMetadataJson = JSON.stringify({
                   </button>
                 </div>
                 <p class="dash-muted dash-ocr-job-status" data-ocr-job-status>Memuat status job OCR...</p>
+                <ul class="dash-list dash-ocr-batches" data-ocr-batch-rows>
+                  <li><span>Belum ada batch OCR.</span></li>
+                </ul>
                 <ul class="dash-list" data-ocr-job-rows>
                   <li><span>Memuat job OCR...</span></li>
                 </ul>

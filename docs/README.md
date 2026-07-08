@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-07-06 10:39 (Asia/Jakarta)
+Last updated: 2026-07-08 18:04 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -14,6 +14,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: implementation tracker for `/profil`, read-only identity fields in `/daftar`, profile/listing ownership UX, and owner-facing profile APIs.
 - `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: low-friction defaults and public-display rules for Indonesian vs overseas franchisor origin/target-market metadata.
 - `docs/architecture/OCR_PROVIDER_STRATEGY.md`: ranked OCR free-tier providers, quota-aware rotation policy, encrypted dashboard credentials, admin-triggered OCR job integration, and protected worker/backfill controls.
+- `docs/architecture/OCR_BATCH_SCHEDULING.md`: scheduler/cron provider ranking and recommended persisted-batch design for draining up to 100 OCR jobs with delay/rate limiting.
 - `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: listing detail page compactness, claim CTA, and Cloudflare Pages Function request-limit tracker.
@@ -32,6 +33,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/PROFILE_PAGE_PLAN.md`: staged plan for the protected `/profil` account center, side-tab sections, D1 profile/listing reads, and owner edit workflows.
 - `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: default Indonesia behavior, non-Indonesia form expansion, flag display rules, and legacy origin/target backfill policy.
 - `docs/architecture/OCR_PROVIDER_STRATEGY.md`: official free-limit research, provider ranking, failover guardrails, admin-managed OCR configuration contract, job/cache execution model, and protected worker setup.
+- `docs/architecture/OCR_BATCH_SCHEDULING.md`: official scheduler free-tier research, provider ranking, and batch-run architecture for one-click OCR backfills up to 100 jobs.
 - `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: premium network membership, `/premium` page, manual payment operations, conversion tracking, payment confirmation, traffic growth, and renewal roadmap.
 - `docs/architecture/RESEND_EMAIL_DELIVERY.md`: Resend/Cloudflare Pages email delivery setup for queued Premium emails, reports, and reminders.
 

@@ -5,10 +5,45 @@
   var metadataPayload = window.FranchiseOcrProviderMetadata || {};
   var PROVIDER_FIELDS = metadataPayload.providers || {};
   var FIELD_NAMES = metadataPayload.field_names || ["api_key", "api_secret", "account_id", "endpoint_url", "region", "model", "clear_api_key", "clear_api_secret"];
+  var SCHEDULER_META = {
+    upstash_qstash: {
+      fields: ["api_key", "request_url", "clear_api_key"],
+      token_label: "QSTASH_TOKEN",
+      help: "Upstash QStash otomatis menjadwalkan panggilan berikutnya sampai batch selesai."
+    },
+    cron_job_org: {
+      fields: ["api_key", "request_url", "schedule_cron", "clear_api_key"],
+      token_label: "cron-job.org API key",
+      help: "Gunakan untuk mengelola trigger eksternal yang memanggil worker secara berkala."
+    },
+    inngest: {
+      fields: ["api_key", "request_url", "clear_api_key"],
+      token_label: "Inngest signing/API key",
+      help: "Opsi workflow eksternal; saat ini dipakai sebagai konfigurasi trigger manual."
+    },
+    trigger_dev: {
+      fields: ["api_key", "request_url", "clear_api_key"],
+      token_label: "Trigger.dev access token",
+      help: "Opsi workflow eksternal; saat ini dipakai sebagai konfigurasi trigger manual."
+    }
+  };
 
   function createOperations(options) {
     options = options || {};
-    var state = { providers: [], adminOnly: true, activeProviderCount: 0, filling: false, autosaveTimer: null, saving: false };
+    var state = {
+      providers: [],
+      schedulers: [],
+      adminOnly: true,
+      schedulerAdminOnly: true,
+      activeProviderCount: 0,
+      activeSchedulerCount: 0,
+      filling: false,
+      fillingScheduler: false,
+      autosaveTimer: null,
+      schedulerAutosaveTimer: null,
+      saving: false,
+      savingScheduler: false
+    };
 
     function bind() {
       (options.subtabs || []).forEach(function (tab) {
@@ -21,9 +56,17 @@
           fillForm(findProvider(options.providerSelect.value));
         });
       }
+      if (options.schedulerSelect) {
+        options.schedulerSelect.addEventListener("change", function () {
+          fillSchedulerForm(findScheduler(options.schedulerSelect.value));
+        });
+      }
       if (options.form) options.form.addEventListener("submit", submit);
       if (options.form) options.form.addEventListener("input", handleFormChange);
       if (options.form) options.form.addEventListener("change", handleFormChange);
+      if (options.schedulerForm) options.schedulerForm.addEventListener("submit", submitScheduler);
+      if (options.schedulerForm) options.schedulerForm.addEventListener("input", handleSchedulerFormChange);
+      if (options.schedulerForm) options.schedulerForm.addEventListener("change", handleSchedulerFormChange);
       if (options.providerList) options.providerList.addEventListener("click", handleProviderListClick);
       if (options.jobRows) options.jobRows.addEventListener("click", handleJobRowsClick);
       if (options.resultRows) options.resultRows.addEventListener("click", handleResultClick);
@@ -33,16 +76,22 @@
       if (options.retryFailedButton) options.retryFailedButton.addEventListener("click", retryFailedJobs);
     }
 
-    function render(payload, jobsPayload) {
+    function render(payload, jobsPayload, schedulerPayload) {
       payload = payload || {};
       jobsPayload = jobsPayload || {};
+      schedulerPayload = schedulerPayload || {};
       state.providers = payload.providers || [];
+      state.schedulers = schedulerPayload.providers || [];
       state.adminOnly = Boolean(payload.admin_only);
+      state.schedulerAdminOnly = Boolean(schedulerPayload.admin_only);
       state.activeProviderCount = countActiveProviders(state.providers);
+      state.activeSchedulerCount = countActiveSchedulers(state.schedulers);
       renderList(payload);
       renderJobs(jobsPayload);
       renderResults(jobsPayload);
+      renderBatches(jobsPayload);
       renderSelect();
+      renderSchedulerSelect();
       if (state.adminOnly) {
         setFormDisabled(true);
         setJobButtonsDisabled(true);
@@ -57,6 +106,16 @@
       var selected = findProvider(selectedKey) || state.providers[0] || null;
       if (selected && options.providerSelect) options.providerSelect.value = selected.provider_key;
       fillForm(selected);
+      if (state.schedulerAdminOnly || schedulerPayload.migration_required) {
+        setSchedulerFormDisabled(true);
+        setSchedulerStatus(schedulerPayload.migration_required ? "Migration scheduler OCR belum siap." : "Hanya admin yang dapat mengubah scheduler OCR.");
+      } else {
+        setSchedulerFormDisabled(false);
+        var selectedSchedulerKey = options.schedulerSelect && options.schedulerSelect.value;
+        var selectedScheduler = findScheduler(selectedSchedulerKey) || state.schedulers[0] || null;
+        if (selectedScheduler && options.schedulerSelect) options.schedulerSelect.value = selectedScheduler.provider_key;
+        fillSchedulerForm(selectedScheduler);
+      }
     }
 
     function activateSubtab(name) {
@@ -209,6 +268,7 @@
             "Gagal: " + Number(counts.failed || 0).toLocaleString("id-ID")
           ];
           if (state.activeProviderCount === 0) statusParts.push("Provider aktif: 0 — aktifkan provider OCR dulu.");
+          if (state.activeSchedulerCount === 0) statusParts.push("Scheduler aktif: 0 — batch 100 perlu dijalankan manual per chunk.");
           options.jobStatus.textContent = statusParts.join(" · ");
         }
       }
@@ -247,6 +307,30 @@
           '<div class="dash-ocr-job-actions">' + imageLink + link + resultLink + retryButton + noTextButton + '</div>' +
           '</li>';
       }).join("") : '<li><span>Belum ada job OCR. Antrekan proposal gambar terlebih dahulu.</span></li>';
+    }
+
+    function renderBatches(payload) {
+      if (!options.batchRows) return;
+      payload = payload || {};
+      var batches = payload.batches || [];
+      options.batchRows.innerHTML = batches.length ? batches.map(function (batch) {
+        var progress = Number(batch.assigned_count || 0)
+          ? Math.round((Number(batch.processed_count || 0) / Number(batch.assigned_count || 1)) * 100)
+          : 0;
+        var meta = [
+          Number(batch.processed_count || 0).toLocaleString("id-ID") + "/" + Number(batch.assigned_count || 0).toLocaleString("id-ID") + " diproses",
+          "Sukses " + Number(batch.succeeded_count || 0).toLocaleString("id-ID"),
+          "Perlu cek " + Number(batch.needs_review_count || 0).toLocaleString("id-ID"),
+          "Gagal " + Number(batch.failed_count || 0).toLocaleString("id-ID"),
+          batch.scheduler_provider_key ? "Scheduler " + batch.scheduler_provider_key : "Manual"
+        ];
+        return '<li class="dash-ocr-batch-item is-' + utils.escapeAttr(batch.status || "queued") + '">' +
+          '<div class="dash-ocr-batch-head"><strong><i class="fas fa-layer-group" aria-hidden="true"></i> Batch ' + utils.escapeHtml(batch.id || "-") + '</strong>' + renderJobStatus(batch.status) + '</div>' +
+          '<div class="dash-ocr-progress"><span style="width:' + Math.max(0, Math.min(progress, 100)) + '%"></span></div>' +
+          '<span>' + utils.escapeHtml(meta.join(" · ")) + '</span>' +
+          (batch.last_message ? '<small>' + utils.escapeHtml(batch.last_message) + '</small>' : '') +
+          '</li>';
+      }).join("") : '<li><span>Belum ada batch OCR besar. Klik Jalankan 100 setelah provider OCR dan scheduler siap.</span></li>';
     }
 
     function renderJobStatus(status) {
@@ -419,6 +503,67 @@
       }
     }
 
+    async function submitScheduler(event) {
+      event.preventDefault();
+      await saveSchedulerConfig("Konfigurasi scheduler OCR tersimpan.");
+    }
+
+    function handleSchedulerFormChange(event) {
+      if (state.fillingScheduler || state.schedulerAdminOnly || !options.schedulerForm) return;
+      var target = event.target;
+      if (!target || target.name === "provider_key") return;
+      scheduleSchedulerAutosave();
+    }
+
+    function scheduleSchedulerAutosave() {
+      window.clearTimeout(state.schedulerAutosaveTimer);
+      setSchedulerStatus("Perubahan scheduler akan disimpan otomatis...");
+      state.schedulerAutosaveTimer = window.setTimeout(function () {
+        saveSchedulerConfig("Perubahan scheduler OCR tersimpan otomatis.").catch(function (error) {
+          options.setStatus(error.message || "Scheduler OCR belum bisa disimpan.", true);
+        });
+      }, 900);
+    }
+
+    async function saveSchedulerConfig(successMessage) {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa mengubah scheduler OCR.", true);
+        return;
+      }
+      if (state.savingScheduler) return;
+      state.savingScheduler = true;
+      try {
+        var form = new FormData(options.schedulerForm);
+        var scheduler = findScheduler(String(form.get("provider_key") || ""));
+        var hasNewCredential = Boolean(String(form.get("api_key") || "").trim() || String(form.get("api_secret") || "").trim());
+        var clearsCredential = form.get("clear_api_key") === "on" || form.get("clear_api_secret") === "on";
+        var nextEnabled = clearsCredential ? false : (hasNewCredential ? true : Boolean(scheduler && scheduler.is_enabled));
+        setSchedulerFormDisabled(true);
+        await options.postDashboardAction({
+          action: "update_ocr_scheduler_config",
+          provider_key: String(form.get("provider_key") || ""),
+          api_key: String(form.get("api_key") || ""),
+          api_secret: String(form.get("api_secret") || ""),
+          clear_api_key: form.get("clear_api_key") === "on",
+          clear_api_secret: form.get("clear_api_secret") === "on",
+          endpoint_url: "",
+          schedule_cron: String(form.get("schedule_cron") || ""),
+          request_url: String(form.get("request_url") || ""),
+          request_body: "",
+          is_enabled: nextEnabled
+        });
+        setSchedulerStatus(successMessage || "Scheduler OCR tersimpan otomatis.");
+        options.setStatus(successMessage || "Scheduler OCR tersimpan otomatis.", false);
+        await options.reloadDashboard();
+      } catch (error) {
+        options.setStatus(error.message || "Scheduler OCR belum bisa disimpan.", true);
+        throw error;
+      } finally {
+        state.savingScheduler = false;
+        setSchedulerFormDisabled(false);
+      }
+    }
+
     async function enqueueJobs() {
       if (!options.isAdmin || !options.isAdmin()) {
         options.setStatus("Hanya admin yang bisa mengantrekan OCR.", true);
@@ -448,9 +593,15 @@
         options.setStatus("Hanya admin yang bisa menjalankan OCR.", true);
         return;
       }
-      await buttonAction(options.runButton, "Menjalankan...", async function () {
-        var result = await options.postDashboardAction({ action: "run_ocr_jobs", max_jobs: 5 });
-        options.setStatus("Batch OCR selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " dari maksimal 5 job diproses untuk satu franchise terlebih dahulu. Klik lagi untuk batch berikutnya.", false);
+      await buttonAction(options.runButton, "Menjadwalkan...", async function () {
+        var scheduler = state.schedulers.find(function (item) { return item.is_enabled && item.has_api_key; });
+        var result = await options.postDashboardAction({
+          action: "start_ocr_batch_run",
+          target_count: 100,
+          scheduler_provider_key: scheduler ? scheduler.provider_key : "upstash_qstash"
+        });
+        var schedulerMessage = result.scheduler && result.scheduler.message ? " " + result.scheduler.message : "";
+        options.setStatus("Batch OCR dibuat: " + Number(result.assigned_count || 0).toLocaleString("id-ID") + " job masuk batch." + schedulerMessage, false);
         await options.reloadDashboard();
       }, options.setStatus);
     }
@@ -499,10 +650,82 @@
       return state.providers.find(function (provider) { return provider.provider_key === key; }) || null;
     }
 
+    function findScheduler(key) {
+      return state.schedulers.find(function (provider) { return provider.provider_key === key; }) || null;
+    }
+
     function countActiveProviders(providers) {
       return (providers || []).filter(function (provider) {
         return provider && provider.is_enabled && provider.has_api_key;
       }).length;
+    }
+
+    function countActiveSchedulers(providers) {
+      return (providers || []).filter(function (provider) {
+        return provider && provider.is_enabled && provider.has_api_key;
+      }).length;
+    }
+
+    function renderSchedulerSelect() {
+      if (!options.schedulerSelect) return;
+      var current = options.schedulerSelect.value;
+      options.schedulerSelect.innerHTML = '<option value="">Pilih scheduler...</option>' + state.schedulers.map(function (provider) {
+        return '<option value="' + utils.escapeAttr(provider.provider_key) + '">' + utils.escapeHtml(provider.display_name) + '</option>';
+      }).join("");
+      if (state.schedulers.some(function (provider) { return provider.provider_key === current; })) options.schedulerSelect.value = current;
+    }
+
+    function fillSchedulerForm(provider) {
+      if (!options.schedulerForm || !provider) return;
+      state.fillingScheduler = true;
+      var meta = SCHEDULER_META[provider.provider_key] || SCHEDULER_META.upstash_qstash;
+      setSchedulerValue("provider_key", provider.provider_key);
+      setSchedulerValue("api_key", "");
+      setSchedulerValue("api_secret", "");
+      setSchedulerValue("request_url", provider.request_url || "https://franchisee.id/ocr-worker");
+      setSchedulerValue("schedule_cron", provider.schedule_cron || "");
+      setSchedulerChecked("clear_api_key", false);
+      ["api_key", "api_secret", "request_url", "schedule_cron", "clear_api_key"].forEach(function (name) {
+        var row = options.schedulerForm.querySelector('[data-ocr-scheduler-field="' + name + '"]');
+        if (row) row.hidden = (meta.fields || []).indexOf(name) === -1 || (name === "clear_api_key" && !provider.has_api_key);
+      });
+      var label = options.schedulerForm.querySelector('[data-ocr-scheduler-label="api_key"]');
+      if (label) label.textContent = meta.token_label || "API key / token";
+      var help = options.schedulerForm.querySelector('[data-ocr-scheduler-help="api_key"]');
+      if (help) help.textContent = meta.help || "Token provider scheduler.";
+      renderSchedulerCredentialBadge("api_key", provider.has_api_key);
+      var summary = options.schedulerForm.querySelector("[data-ocr-scheduler-summary]");
+      if (summary) {
+        summary.innerHTML = '<strong>' + utils.escapeHtml(provider.display_name) + '</strong><br><span>' +
+          utils.escapeHtml((provider.has_api_key ? "Token sudah tersimpan." : "Token belum tersimpan.") + " Status: " + (provider.is_enabled ? "aktif" : "nonaktif") + ". " + (provider.last_error ? "Error: " + provider.last_error : "")) +
+          '</span>';
+      }
+      setSchedulerStatus(provider.has_api_key ? "Token scheduler sudah tersimpan. Mengisi token baru akan mengganti nilai lama." : "Isi token scheduler agar batch 100 bisa berjalan otomatis.");
+      state.fillingScheduler = false;
+    }
+
+    function renderSchedulerCredentialBadge(name, hasValue) {
+      var badge = options.schedulerForm && options.schedulerForm.querySelector('[data-ocr-scheduler-key-state="' + name + '"]');
+      if (!badge) return;
+      badge.className = "dash-credential-badge" + (hasValue ? " is-set" : " is-empty");
+      badge.innerHTML = hasValue
+        ? '<i class="fas fa-check" aria-hidden="true"></i><span>Tersimpan</span>'
+        : '<span>Belum ada</span>';
+    }
+
+    function setSchedulerValue(name, value) {
+      var input = options.schedulerForm && options.schedulerForm.elements.namedItem(name);
+      if (input) input.value = value == null ? "" : String(value);
+    }
+
+    function setSchedulerChecked(name, checked) {
+      var input = options.schedulerForm && options.schedulerForm.elements.namedItem(name);
+      if (input) input.checked = Boolean(checked);
+    }
+
+    function setSchedulerFormDisabled(disabled) {
+      if (!options.schedulerForm) return;
+      Array.from(options.schedulerForm.elements).forEach(function (input) { input.disabled = Boolean(disabled); });
     }
 
     function providerConfig(provider) {
@@ -612,6 +835,10 @@
 
     function setInlineStatus(message) {
       if (options.status) options.status.textContent = message || "";
+    }
+
+    function setSchedulerStatus(message) {
+      if (options.schedulerStatus) options.schedulerStatus.textContent = message || "";
     }
 
     return { bind: bind, render: render };

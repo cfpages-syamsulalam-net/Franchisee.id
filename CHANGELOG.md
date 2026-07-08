@@ -4,6 +4,26 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-08 19:58 (Asia/Jakarta)
+### Added
+- `migrations/0023_ocr_batch_scheduler.sql`: Added persisted OCR batch runs, OCR job `batch_id`, and encrypted third-party OCR scheduler provider configuration for Upstash QStash, cron-job.org, Inngest, and Trigger.dev.
+- `functions/_ocr-scheduler-config.js`: Added masked scheduler config reads, encrypted scheduler credential saves using `OCR_KEY`, scheduler enable toggles, and Upstash QStash delayed trigger dispatch to `/ocr-worker`.
+
+### Changed
+- `functions/_dashboard-ocr-schemas.js`: Added scheduler config/toggle action schemas, `start_ocr_batch_run`, and optional `batch_id` support for bounded OCR runs.
+- `functions/_ocr-job-runner.js`: Added persisted OCR batch creation up to 100 jobs, batch job assignment, batch progress refresh, batch-scoped claiming, and third-party scheduler triggering while preserving franchise-first job processing.
+- `functions/dashboard-data.js`: Added masked OCR scheduler state to dashboard reads and routed scheduler config/toggle plus persisted OCR batch start actions.
+- `functions/ocr-worker.js`: Added `batch_id` support and next-trigger scheduling through the active third-party scheduler while preserving `OCR_SECRET` protection and daily cap checks.
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, and `css/dashboard-ocr.css`: Added the OCR Scheduler panel, encrypted scheduler credential autosave UI, `Jalankan 100` persisted-batch action, and visible OCR batch progress rows.
+- `docs/architecture/OCR_BATCH_SCHEDULING.md`: Updated the OCR batch strategy from GitHub/Cloudflare scheduling to third-party scheduler/queue integration, with Upstash QStash as the implemented automatic path.
+- `AUDIT.md`: Added the 2026-07-08 refactor-candidate plan for OCR runner, dashboard OCR client, OCR dashboard markup, and scheduler provider adapters.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Updated the living code map for OCR scheduler config, persisted batch runs, worker batch draining, and dashboard OCR scheduler UI.
+- `SUGGESTION.md`: Marked suggestion 72 done and added suggestion 73 for follow-up OCR maintainability refactors.
+- Remote D1 `franchise_db`: Applied migration `0023_ocr_batch_scheduler.sql` for OCR batch/scheduler state.
+
+### Removed
+- `.github/workflows/ocr-worker.yaml`: Removed the OCR-specific GitHub Actions scheduler path so OCR batch continuation uses third-party providers instead of GitHub/Cloudflare scheduling.
+
 ## 2026-07-08 01:36 (Asia/Jakarta)
 ### Added
 - `.context/session-20260708-0136.md`: Added this session continuity snapshot.
@@ -11,6 +31,7 @@ Format:
 - `.context/session-20260708-1456.md`: Added this session continuity snapshot for the OCR job-row UX and dashboard auth skeleton work.
 - `.context/session-20260708-1513.md`: Added this session continuity snapshot for the broader dashboard CSS feature-module extraction.
 - `.context/session-20260708-1733.md`: Added this session continuity snapshot for OCR no-text handling and dashboard schema refactor work.
+- `.context/session-20260708-1804.md`: Added this session continuity snapshot for OCR batch scheduling research.
 - `css/dashboard-auth.css`: Added a focused dashboard auth/loading stylesheet module.
 - `css/dashboard-review.css`: Added a focused dashboard Review/Data Quality stylesheet module for guided edit rows, field diffs, and Area Listing editor layout.
 - `css/dashboard-operations.css`: Added a focused dashboard Operations/admin helper stylesheet module for full-width panels, publication controls, and checkbox rows.
@@ -18,6 +39,7 @@ Format:
 - `css/dashboard-ocr.css`: Added a focused dashboard OCR stylesheet module for OCR provider, job, result, and responsive UI.
 - `functions/ocr-worker.js`: Added a protected OCR queue worker endpoint that uses `OCR_SECRET`, small bounded batches, daily counted-usage caps, and operation-event summaries for larger queued backfills.
 - `functions/_dashboard-ocr-schemas.js`: Added a focused OCR dashboard action schema module for provider config/toggles, dry-run, bounded batches, retries, and no-text resolution.
+- `docs/architecture/OCR_BATCH_SCHEDULING.md`: Added scheduler/cron free-tier research and a persisted-batch architecture recommendation for one-click OCR runs up to 100 jobs.
 - `.github/workflows/ocr-worker.yaml`: Added a manual/scheduled OCR worker trigger. Manual runs can be used without the cron gate; scheduled runs require repository variable `OCR_WORKER_ENABLED=true`.
 - `migrations/0022_ocr_provider_rate_limits.sql`: Added provider short-window rate-limit metadata and `cooldown_until` so OCR batches can skip providers that are temporarily rate-limited.
 
@@ -40,6 +62,7 @@ Format:
 - `functions/_ocr-provider-config.js` and `js/dashboard-ocr.js`: Exposed provider rate-limit and cooldown metadata in the OCR provider panel without making those values editable in the admin form.
 - `src/pages/dashboard/index.astro`, `js/dashboard-ocr.js`, and `css/dashboard.css`: Fixed OCR enqueue button icon/alignment and linked successful recent jobs directly to the matching Hasil OCR row.
 - `DASHBOARD.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/OCR_PROVIDER_STRATEGY.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, `docs/README.md`, and `SUGGESTION.md`: Documented the OCR admin UX improvements, bounded/franchise-first batch behavior, result-review path, worker setup, provider cooldown guardrails, and marked suggestions 67 and 68 complete.
+- `docs/README.md`, `docs/architecture/OCR_PROVIDER_STRATEGY.md`, and `SUGGESTION.md`: Linked the OCR batch scheduling strategy and recorded the follow-up to add persisted OCR batch runs before raising dashboard batch UX to 100 jobs.
 - Cloudflare Pages project `franchisee-id` and GitHub repository `cfpages-syamsulalam-net/Franchisee.id`: Set matching `OCR_SECRET` secrets without printing the generated value.
 - Remote D1 `franchise_db`: Applied migration `0022_ocr_provider_rate_limits.sql` and seeded OCR provider short-window rate-limit metadata.
 

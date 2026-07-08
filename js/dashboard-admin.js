@@ -87,9 +87,13 @@
     enqueueButton: document.querySelector("[data-ocr-enqueue]"),
     runButton: document.querySelector("[data-ocr-run]"),
     retryFailedButton: document.querySelector("[data-ocr-retry-failed]"),
+    batchRows: document.querySelector("[data-ocr-batch-rows]"),
     providerSelect: document.querySelector("[data-ocr-provider-select]"),
     form: document.querySelector("[data-ocr-config-form]"),
     status: document.querySelector("[data-ocr-config-status]"),
+    schedulerSelect: document.querySelector("[data-ocr-scheduler-select]"),
+    schedulerForm: document.querySelector("[data-ocr-scheduler-form]"),
+    schedulerStatus: document.querySelector("[data-ocr-scheduler-status]"),
     isAdmin: function () { return currentUserIsAdmin; },
     postDashboardAction: postDashboardAction,
     reloadDashboard: reloadDashboard,
@@ -206,7 +210,7 @@
     dashboardOperations.render(data);
     reviewOperations.render(data);
     premiumOperations.render(data.premium_operations || {});
-    ocrOperations.render(data.ocr_providers || {}, data.ocr_jobs || {});
+    ocrOperations.render(data.ocr_providers || {}, data.ocr_jobs || {}, data.ocr_schedulers || {});
     if (window.FranchiseTooltip && typeof window.FranchiseTooltip.refresh === "function") {
       window.FranchiseTooltip.refresh();
     }

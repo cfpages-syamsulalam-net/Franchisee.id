@@ -8,6 +8,8 @@ Use local selectable-text extraction first. Send only image-only/scanned brochur
 
 Provider credential metadata is still managed from D1 because the admin explicitly requested dashboard-managed configuration, but credential values must be encrypted before storage with a root key held outside D1. The root key is the Cloudflare Pages secret `OCR_KEY`. The dashboard must never return stored credential values, must use blank password fields to preserve existing values, and must audit only configuration metadata. Without `OCR_KEY`, new credential saves and provider enablement must fail closed so plaintext is not written to D1.
 
+For the next step of making one dashboard click drain up to 100 OCR jobs with delay/rate limiting, use the persisted batch-run plan in `docs/architecture/OCR_BATCH_SCHEDULING.md`. That document ranks scheduler/cron providers and recommends a server-side `ocr_batch_runs` model instead of one long dashboard request.
+
 ## Ranked provider shortlist
 
 Free limits change frequently. Verify the provider console before enabling production rotation. “Recurring” means the cited allowance resets; “trial” means it is not durable capacity.

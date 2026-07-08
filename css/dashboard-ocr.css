@@ -1,5 +1,5 @@
 .dash-panel-grid.ocr-settings-grid {
-  grid-template-columns: minmax(260px, 0.82fr) minmax(320px, 1.18fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .dash-ocr-guide-grid {
   display: grid;
@@ -203,6 +203,42 @@
   gap: 12px;
   align-items: center;
 }
+.dash-ocr-batches {
+  margin-bottom: 12px;
+}
+.dash-ocr-batch-item {
+  display: grid;
+  gap: 7px;
+}
+.dash-ocr-batch-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+.dash-ocr-batch-head strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.dash-ocr-progress {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf1f5;
+}
+.dash-ocr-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--dash-accent), #16a34a);
+}
+.dash-ocr-batch-item small {
+  color: var(--dash-muted);
+  font-weight: 700;
+}
 .dash-ocr-job-head {
   display: flex;
   flex-wrap: wrap;
@@ -397,6 +433,9 @@
   .dash-panel-grid.ocr-settings-grid,
   .dash-ocr-guide-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .dash-panel-grid.ocr-settings-grid > .dash-panel:last-child {
+    grid-column: 1 / -1;
   }
 }
 @media (max-width: 720px) {

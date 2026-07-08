@@ -1,5 +1,6 @@
 import { jsonResponse } from "./_dashboard-utils.js";
 import { runOcrJobs } from "./_ocr-job-runner.js";
+import { triggerOcrScheduler } from "./_ocr-scheduler-config.js";
 import { logOperationEvent } from "./_telemetry.js";
 
 const DEFAULT_BATCH_LIMIT = 5;
@@ -43,15 +44,27 @@ export async function onRequestPost({ request, env }) {
       id: "ocr_worker",
       roles: [{ role: "admin" }],
     };
-    const result = await runOcrJobs(env.franchise_db, env, auth, { maxJobs });
+    const batchId = String(payload.batch_id || "").trim();
+    const result = await runOcrJobs(env.franchise_db, env, auth, { maxJobs, batchId });
+    let next_trigger = null;
+    if (batchId && result.batch && !["completed", "failed", "cancelled"].includes(result.batch.status)) {
+      next_trigger = await triggerOcrScheduler(env.franchise_db, env, { id: batchId }, {
+        providerKey: payload.source || "",
+        limit: requestedLimit,
+        delay: payload.next_delay || "75s",
+      });
+    }
     const summary = {
       source: payload.source || "scheduled",
+      batch_id: batchId,
       requested_limit: requestedLimit,
       processed_count: result.processed_count,
       provider_count: result.provider_count,
       used_today: usedToday + Number(result.processed_count || 0),
       daily_cap: dailyCap,
       processed: result.processed,
+      batch: result.batch,
+      next_trigger,
     };
     await logWorkerEvent(env, summary, result.processed?.some((item) => item.status === "failed") ? "warning" : "info");
     return jsonResponse({ success: true, summary });

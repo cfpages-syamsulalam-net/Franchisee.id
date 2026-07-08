@@ -31,7 +31,8 @@ import {
 import { DashboardActionSchema, EDITABLE_LISTING_FIELD_DEFS, SITE_ID } from "./_dashboard-schemas.js";
 import { jsonResponse } from "./_dashboard-utils.js";
 import { getOcrProviderConfigs, handleToggleOcrProviderEnabled, handleUpdateOcrProviderConfig } from "./_ocr-provider-config.js";
-import { getOcrJobState, handleEnqueueOcrJobs, handleMarkOcrJobNoText, handleRetryFailedOcrJobs, handleRetryOcrJob, handleRunOcrDryRun, handleRunOcrJobs } from "./_ocr-job-runner.js";
+import { getOcrSchedulerState, handleToggleOcrSchedulerEnabled, handleUpdateOcrSchedulerConfig } from "./_ocr-scheduler-config.js";
+import { getOcrJobState, handleEnqueueOcrJobs, handleMarkOcrJobNoText, handleRetryFailedOcrJobs, handleRetryOcrJob, handleRunOcrDryRun, handleRunOcrJobs, handleStartOcrBatchRun } from "./_ocr-job-runner.js";
 import { logOperationEvent } from "./_telemetry.js";
 
 export async function onRequestGet({ request, env }) {
@@ -39,7 +40,7 @@ export async function onRequestGet({ request, env }) {
     const auth = await requireDashboardAccess(request, env);
     const db = env.franchise_db;
 
-    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, pendingPremiumPayments, premiumOperations, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth, ocrProviders, ocrJobs] = await Promise.all([
+    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, pendingPremiumPayments, premiumOperations, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth, ocrProviders, ocrJobs, ocrSchedulers] = await Promise.all([
       getOverview(db),
       getDataQuality(db),
       getPublishState(db),
@@ -56,6 +57,7 @@ export async function onRequestGet({ request, env }) {
       getSystemHealth(db, env),
       getOcrProviderConfigs(db, auth),
       getOcrJobState(db, auth),
+      getOcrSchedulerState(db, auth, env),
     ]);
 
     return jsonResponse({
@@ -88,6 +90,7 @@ export async function onRequestGet({ request, env }) {
       system_health: systemHealth,
       ocr_providers: ocrProviders,
       ocr_jobs: ocrJobs,
+      ocr_schedulers: ocrSchedulers,
       generated_at: new Date().toISOString(),
     });
   } catch (error) {
@@ -134,6 +137,9 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "retry_ocr_job") return handleRetryOcrJob(env.franchise_db, auth, data, env);
     if (data.action === "mark_ocr_job_no_text") return handleMarkOcrJobNoText(env.franchise_db, auth, data);
     if (data.action === "retry_failed_ocr_jobs") return handleRetryFailedOcrJobs(env.franchise_db, auth, data);
+    if (data.action === "update_ocr_scheduler_config") return handleUpdateOcrSchedulerConfig(env.franchise_db, auth, data, env);
+    if (data.action === "toggle_ocr_scheduler_enabled") return handleToggleOcrSchedulerEnabled(env.franchise_db, auth, data);
+    if (data.action === "start_ocr_batch_run") return handleStartOcrBatchRun(env.franchise_db, auth, data, env);
 
     return jsonResponse({ success: false, error: "UNKNOWN_DASHBOARD_ACTION" }, { status: 400 });
   } catch (error) {

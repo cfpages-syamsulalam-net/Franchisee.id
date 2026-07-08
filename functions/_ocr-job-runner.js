@@ -2,23 +2,25 @@ import { proposalKnowledgeStatements, extractProposalCandidatesFromText } from "
 import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, randomId } from "./_dashboard-utils.js";
 import { callOcrProvider, normalizeOcrText } from "./_ocr-provider-adapters.js";
+import { triggerOcrScheduler } from "./_ocr-scheduler-config.js";
 
 const MAX_ENQUEUE_LIMIT = 200;
 const MAX_RUN_LIMIT = 5;
+const MAX_BATCH_TARGET = 100;
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const MIN_OCR_TEXT_CHARS = 20;
 const CACHE_TEXT_CHARS = 60_000;
-const JOB_TABLE_ERROR = /ocr_jobs|ocr_attempts|ocr_content_cache|ocr_provider_usage_events|no such table/i;
+const JOB_TABLE_ERROR = /ocr_jobs|ocr_attempts|ocr_content_cache|ocr_provider_usage_events|ocr_batch_runs|batch_id|no such table|no such column/i;
 
 export async function getOcrJobState(db, auth) {
   if (!isAdmin(auth)) return { admin_only: true, counts: {}, recent: [], results: [], migration_required: false };
   try {
-    const [counts, recent, candidates, results] = await Promise.all([
+    const [counts, recent, candidates, results, batches] = await Promise.all([
       db.prepare("SELECT status, COUNT(*) count FROM ocr_jobs GROUP BY status").all(),
       db
         .prepare(
           `SELECT j.id, j.asset_id, j.franchise_id, j.status, j.provider_key, j.attempt_count,
-                  j.error_message, j.created_at, j.updated_at, f.brand_name, f.slug,
+                  j.error_message, j.created_at, j.updated_at, j.batch_id, f.brand_name, f.slug,
                   COALESCE(a.display_order, 0) display_order,
                   COALESCE(j.source_url, a.public_url, a.legacy_url) source_url
            FROM ocr_jobs j
@@ -73,6 +75,17 @@ export async function getOcrJobState(db, auth) {
            LIMIT 20`,
         )
         .all(),
+      db
+        .prepare(
+          `SELECT id, status, target_count, assigned_count, processed_count, succeeded_count,
+                  failed_count, needs_review_count, skipped_count, scheduler_provider_key,
+                  scheduler_external_id, last_message, started_at, last_run_at, completed_at,
+                  cancelled_at, created_at, updated_at
+           FROM ocr_batch_runs
+           ORDER BY created_at DESC
+           LIMIT 8`,
+        )
+        .all(),
     ]);
     return {
       admin_only: false,
@@ -80,6 +93,7 @@ export async function getOcrJobState(db, auth) {
       counts: Object.fromEntries((counts.results || []).map((row) => [row.status, Number(row.count || 0)])),
       recent: (recent.results || []).map(maskJobRow),
       results: (results.results || []).map(maskResultRow),
+      batches: (batches.results || []).map(maskBatchRow),
       enqueue_candidates: Number(candidates?.count || 0),
     };
   } catch (error) {
@@ -165,8 +179,74 @@ export async function handleEnqueueOcrJobs(db, auth, data) {
 export async function handleRunOcrJobs(db, auth, data, env, options = {}) {
   assertAdmin(auth);
   const maxJobs = Math.min(Math.max(Number(data.max_jobs || 1), 1), MAX_RUN_LIMIT);
-  const result = await runOcrJobs(db, env, auth, { ...options, maxJobs });
+  const result = await runOcrJobs(db, env, auth, { ...options, maxJobs, batchId: data.batch_id });
   return jsonResponse({ success: true, ...result });
+}
+
+export async function handleStartOcrBatchRun(db, auth, data, env, options = {}) {
+  assertAdmin(auth);
+  if (!textOrNull(env.OCR_KEY)) {
+    return jsonResponse({ success: false, error: "OCR_KEY_REQUIRED", message: "Tambahkan Cloudflare Pages secret OCR_KEY sebelum menjalankan OCR." }, { status: 400 });
+  }
+  const providers = await loadRunnableProviders(db);
+  if (!providers.length) {
+    return jsonResponse({
+      success: false,
+      error: "OCR_PROVIDER_REQUIRED",
+      message: "Aktifkan minimal satu provider OCR yang sudah memiliki credential sebelum menjalankan batch.",
+    }, { status: 400 });
+  }
+
+  const targetCount = Math.min(Math.max(Number(data.target_count || MAX_BATCH_TARGET), 1), MAX_BATCH_TARGET);
+  const batchId = `ocrbatch_${randomId()}`;
+  await ensurePendingJobsForBatch(db, auth, targetCount);
+  const assignedJobs = await assignPendingJobsToBatch(db, auth, batchId, targetCount);
+  if (!assignedJobs.length) {
+    return jsonResponse({
+      success: false,
+      error: "OCR_BATCH_NO_JOBS",
+      message: "Belum ada job pending untuk diproses. Klik Antrekan 100 terlebih dahulu atau pastikan masih ada brosur gambar yang belum punya hasil OCR.",
+    }, { status: 404 });
+  }
+
+  const batch = {
+    id: batchId,
+    target_count: targetCount,
+    assigned_count: assignedJobs.length,
+  };
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO ocr_batch_runs (
+           id, status, target_count, assigned_count, requested_by_user_id, started_at, last_message
+         ) VALUES (?, 'queued', ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
+      )
+      .bind(batchId, targetCount, assignedJobs.length, auth.id, "Batch OCR dibuat dan menunggu trigger scheduler pihak ketiga."),
+    auditStatement(db, "dashboard.ocr_batch.start", "ocr_batch_runs", batchId, {
+      target_count: targetCount,
+      assigned_count: assignedJobs.length,
+      scheduler_provider_key: data.scheduler_provider_key || "",
+    }, auth.id),
+  ]);
+
+  const trigger = await triggerOcrScheduler(db, env, batch, {
+    providerKey: data.scheduler_provider_key,
+    delay: options.delay || "10s",
+    limit: MAX_RUN_LIMIT,
+  });
+  if (!trigger.triggered) {
+    await db
+      .prepare("UPDATE ocr_batch_runs SET status = 'running', last_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+      .bind(trigger.message || "Batch siap. Jalankan manual atau aktifkan scheduler pihak ketiga.", batchId)
+      .run();
+  }
+
+  return jsonResponse({
+    success: true,
+    batch_id: batchId,
+    assigned_count: assignedJobs.length,
+    scheduler: trigger,
+  });
 }
 
 export async function handleRunOcrDryRun(db, auth, data, env, options = {}) {
@@ -291,24 +371,156 @@ export async function handleRetryFailedOcrJobs(db, auth, data) {
   return jsonResponse({ success: true, retried: jobs.length });
 }
 
+async function ensurePendingJobsForBatch(db, auth, targetCount) {
+  const pending = await db.prepare("SELECT COUNT(*) count FROM ocr_jobs WHERE status = 'pending' AND batch_id IS NULL").first();
+  const needed = Math.max(0, targetCount - Number(pending?.count || 0));
+  if (!needed) return 0;
+
+  const rows = await db
+    .prepare(
+      `SELECT a.id asset_id, a.franchise_id, COALESCE(a.public_url, a.legacy_url) source_url,
+              a.mime_type, COALESCE(a.display_order, 0) display_order
+       FROM franchise_assets a
+       LEFT JOIN ocr_jobs j ON j.asset_id = a.id
+       LEFT JOIN franchise_asset_knowledge k ON k.asset_id = a.id
+       WHERE a.asset_type = 'proposal'
+         AND a.status = 'active'
+         AND COALESCE(a.public_url, a.legacy_url, '') <> ''
+         AND LOWER(COALESCE(a.mime_type, '')) LIKE 'image/%'
+         AND j.id IS NULL
+         AND COALESCE(k.extraction_status, '') NOT IN ('extracted')
+       ORDER BY a.franchise_id, COALESCE(a.display_order, 0), a.created_at
+       LIMIT ?`,
+    )
+    .bind(needed)
+    .all();
+  const statements = [];
+  let currentFranchiseId = "";
+  let franchiseIndex = -1;
+  for (const row of rows.results || []) {
+    if (!isSafeExternalUrl(row.source_url)) continue;
+    if (row.franchise_id !== currentFranchiseId) {
+      currentFranchiseId = row.franchise_id;
+      franchiseIndex += 1;
+    }
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO ocr_jobs (
+             id, asset_id, franchise_id, status, priority, source_url, mime_type, requested_by_user_id
+           ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?)
+           ON CONFLICT(asset_id) DO NOTHING`,
+        )
+        .bind(
+          `ocrjob_${randomId()}`,
+          row.asset_id,
+          row.franchise_id,
+          100 + (franchiseIndex * 1000) + Number(row.display_order || 0),
+          row.source_url,
+          row.mime_type || null,
+          auth.id,
+        ),
+    );
+  }
+  if (statements.length) await db.batch(statements);
+  return statements.length;
+}
+
+async function assignPendingJobsToBatch(db, auth, batchId, targetCount) {
+  const rows = await db
+    .prepare(
+      `SELECT id, asset_id, franchise_id
+       FROM ocr_jobs
+       WHERE status = 'pending'
+         AND batch_id IS NULL
+       ORDER BY franchise_id, priority, created_at
+       LIMIT ?`,
+    )
+    .bind(targetCount)
+    .all();
+  const jobs = rows.results || [];
+  if (!jobs.length) return [];
+  await db.batch([
+    ...jobs.map((job) => db
+      .prepare(
+        `UPDATE ocr_jobs
+         SET batch_id = ?, requested_by_user_id = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND status = 'pending' AND batch_id IS NULL`,
+      )
+      .bind(batchId, auth.id, job.id)),
+  ]);
+  return jobs;
+}
+
+async function refreshBatchProgress(db, batchId, options = {}) {
+  const id = textOrNull(batchId);
+  if (!id) return null;
+  const counts = await db
+    .prepare(
+      `SELECT status, COUNT(*) count
+       FROM ocr_jobs
+       WHERE batch_id = ?
+       GROUP BY status`,
+    )
+    .bind(id)
+    .all();
+  const byStatus = Object.fromEntries((counts.results || []).map((row) => [row.status, Number(row.count || 0)]));
+  const processed = Number(byStatus.succeeded || 0) + Number(byStatus.failed || 0) + Number(byStatus.needs_review || 0) + Number(byStatus.cancelled || 0);
+  const assigned = processed + Number(byStatus.pending || 0) + Number(byStatus.running || 0);
+  const completed = assigned > 0 && processed >= assigned;
+  const failed = assigned > 0 && !Number(byStatus.pending || 0) && !Number(byStatus.running || 0) && Number(byStatus.succeeded || 0) === 0 && (Number(byStatus.failed || 0) > 0);
+  const nextStatus = completed ? (failed ? "failed" : "completed") : "running";
+  const message = options.message || (completed ? "Batch OCR selesai." : "Batch OCR masih berjalan.");
+  await db
+    .prepare(
+      `UPDATE ocr_batch_runs
+       SET status = ?, assigned_count = ?, processed_count = ?, succeeded_count = ?,
+           failed_count = ?, needs_review_count = ?, skipped_count = ?,
+           last_run_at = CURRENT_TIMESTAMP,
+           completed_at = CASE WHEN ? = 1 THEN COALESCE(completed_at, CURRENT_TIMESTAMP) ELSE completed_at END,
+           last_message = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+    )
+    .bind(
+      nextStatus,
+      assigned,
+      processed,
+      Number(byStatus.succeeded || 0),
+      Number(byStatus.failed || 0),
+      Number(byStatus.needs_review || 0),
+      Number(byStatus.cancelled || 0),
+      completed ? 1 : 0,
+      message,
+      id,
+    )
+    .run();
+  const batch = await db.prepare("SELECT * FROM ocr_batch_runs WHERE id = ? LIMIT 1").bind(id).first();
+  return batch ? maskBatchRow(batch) : null;
+}
+
 export async function runOcrJobs(db, env, auth, options = {}) {
   if (!textOrNull(env.OCR_KEY)) throw new Error("Tambahkan Cloudflare Pages secret OCR_KEY sebelum menjalankan OCR.");
   const maxJobs = Math.min(Math.max(Number(options.maxJobs || 1), 1), MAX_RUN_LIMIT);
-  const jobs = await claimPendingJobs(db, maxJobs, options.jobId);
+  const jobs = await claimPendingJobs(db, maxJobs, options.jobId, options.batchId);
   const providers = await loadRunnableProviders(db);
   const processed = [];
   for (const job of jobs) {
     processed.push(await processJob(db, env, auth, job, providers, options));
   }
+  const batch = options.batchId ? await refreshBatchProgress(db, options.batchId, {
+    message: processed.length ? `Memproses ${processed.length} job terakhir.` : "Tidak ada job pending di batch ini.",
+  }) : null;
   return {
     processed_count: processed.length,
     processed,
     provider_count: providers.length,
+    batch,
   };
 }
 
-async function claimPendingJobs(db, maxJobs, jobId = "") {
+async function claimPendingJobs(db, maxJobs, jobId = "", batchId = "") {
   const scopedJobId = textOrNull(jobId);
+  const scopedBatchId = textOrNull(batchId);
   if (scopedJobId) {
     const exact = await db
       .prepare(
@@ -318,9 +530,10 @@ async function claimPendingJobs(db, maxJobs, jobId = "") {
          LEFT JOIN franchise_assets a ON a.id = j.asset_id
          WHERE j.status = 'pending'
            AND j.id = ?
+           AND (? IS NULL OR j.batch_id = ?)
          LIMIT 1`,
       )
-      .bind(scopedJobId)
+      .bind(scopedJobId, scopedBatchId, scopedBatchId)
       .all();
     const jobs = exact.results || [];
     if (!jobs.length) return [];
@@ -333,10 +546,12 @@ async function claimPendingJobs(db, maxJobs, jobId = "") {
       `SELECT j.franchise_id, MIN(j.created_at) first_created, MIN(j.priority) min_priority
        FROM ocr_jobs j
        WHERE j.status = 'pending'
+         AND (? IS NULL OR j.batch_id = ?)
        GROUP BY j.franchise_id
        ORDER BY first_created, min_priority, j.franchise_id
        LIMIT 1`,
     )
+    .bind(scopedBatchId, scopedBatchId)
     .first();
   if (!target?.franchise_id) return [];
 
@@ -348,10 +563,11 @@ async function claimPendingJobs(db, maxJobs, jobId = "") {
        LEFT JOIN franchise_assets a ON a.id = j.asset_id
        WHERE j.status = 'pending'
          AND j.franchise_id = ?
+         AND (? IS NULL OR j.batch_id = ?)
        ORDER BY COALESCE(a.display_order, 0), j.priority, j.created_at
        LIMIT ?`,
     )
-    .bind(target.franchise_id, maxJobs)
+    .bind(target.franchise_id, scopedBatchId, scopedBatchId, maxJobs)
     .all();
   const jobs = result.results || [];
   if (!jobs.length) return [];
@@ -843,6 +1059,7 @@ function maskJobRow(row) {
     id: row.id,
     asset_id: row.asset_id,
     franchise_id: row.franchise_id,
+    batch_id: row.batch_id || "",
     brand_name: row.brand_name || "",
     slug: row.slug || "",
     page_number: Number(row.display_order || 0) > 0 ? Number(row.display_order || 0) : null,
@@ -851,6 +1068,29 @@ function maskJobRow(row) {
     provider_key: row.provider_key || "",
     attempt_count: Number(row.attempt_count || 0),
     error_message: row.error_message || "",
+    created_at: row.created_at || null,
+    updated_at: row.updated_at || null,
+  };
+}
+
+function maskBatchRow(row) {
+  return {
+    id: row.id,
+    status: row.status || "queued",
+    target_count: Number(row.target_count || 0),
+    assigned_count: Number(row.assigned_count || 0),
+    processed_count: Number(row.processed_count || 0),
+    succeeded_count: Number(row.succeeded_count || 0),
+    failed_count: Number(row.failed_count || 0),
+    needs_review_count: Number(row.needs_review_count || 0),
+    skipped_count: Number(row.skipped_count || 0),
+    scheduler_provider_key: row.scheduler_provider_key || "",
+    scheduler_external_id: row.scheduler_external_id || "",
+    last_message: row.last_message || "",
+    started_at: row.started_at || null,
+    last_run_at: row.last_run_at || null,
+    completed_at: row.completed_at || null,
+    cancelled_at: row.cancelled_at || null,
     created_at: row.created_at || null,
     updated_at: row.updated_at || null,
   };
