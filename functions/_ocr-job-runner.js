@@ -206,6 +206,60 @@ export async function handleRunOcrDryRun(db, auth, data, env, options = {}) {
   });
 }
 
+export async function handleRetryOcrJob(db, auth, data) {
+  assertAdmin(auth);
+  const job = await db
+    .prepare("SELECT id, asset_id, franchise_id, status FROM ocr_jobs WHERE id = ? LIMIT 1")
+    .bind(data.job_id)
+    .first();
+  if (!job) return jsonResponse({ success: false, error: "OCR_JOB_NOT_FOUND", message: "Job OCR tidak ditemukan." }, { status: 404 });
+  if (job.status !== "failed") {
+    return jsonResponse({
+      success: false,
+      error: "OCR_JOB_NOT_FAILED",
+      message: "Hanya job OCR berstatus gagal yang bisa di-retry manual.",
+    }, { status: 409 });
+  }
+
+  await db.batch([
+    retryJobStatement(db, job.id, auth.id),
+    auditStatement(db, "dashboard.ocr_jobs.retry", "ocr_jobs", job.id, {
+      asset_id: job.asset_id,
+      franchise_id: job.franchise_id,
+    }, auth.id),
+  ]);
+  return jsonResponse({ success: true, retried: 1, job_id: job.id });
+}
+
+export async function handleRetryFailedOcrJobs(db, auth, data) {
+  assertAdmin(auth);
+  const limit = Math.min(Math.max(Number(data.limit || 100), 1), MAX_ENQUEUE_LIMIT);
+  const franchiseId = textOrNull(data.franchise_id);
+  const rows = await db
+    .prepare(
+      `SELECT id, asset_id, franchise_id
+       FROM ocr_jobs
+       WHERE status = 'failed'
+         AND (? IS NULL OR franchise_id = ?)
+       ORDER BY updated_at, created_at
+       LIMIT ?`,
+    )
+    .bind(franchiseId, franchiseId, limit)
+    .all();
+  const jobs = rows.results || [];
+  if (!jobs.length) return jsonResponse({ success: true, retried: 0 });
+
+  await db.batch([
+    ...jobs.map((job) => retryJobStatement(db, job.id, auth.id)),
+    auditStatement(db, "dashboard.ocr_jobs.retry_failed_batch", "ocr_jobs", null, {
+      retried: jobs.length,
+      franchise_id: franchiseId,
+      job_ids: jobs.slice(0, 20).map((job) => job.id),
+    }, auth.id),
+  ]);
+  return jsonResponse({ success: true, retried: jobs.length });
+}
+
 export async function runOcrJobs(db, env, auth, options = {}) {
   if (!textOrNull(env.OCR_KEY)) throw new Error("Tambahkan Cloudflare Pages secret OCR_KEY sebelum menjalankan OCR.");
   const maxJobs = Math.min(Math.max(Number(options.maxJobs || 1), 1), MAX_RUN_LIMIT);
@@ -694,6 +748,18 @@ async function failJob(db, job, message) {
     )
     .bind(cleanError(message), job.id)
     .run();
+}
+
+function retryJobStatement(db, jobId, userId) {
+  return db
+    .prepare(
+      `UPDATE ocr_jobs
+       SET status = 'pending', provider_key = NULL, error_message = NULL,
+           started_at = NULL, completed_at = NULL, requested_by_user_id = ?,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND status = 'failed'`,
+    )
+    .bind(userId, jobId);
 }
 
 function onlyMissingCandidates(candidates, listing) {

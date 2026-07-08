@@ -145,6 +145,64 @@ export async function handleUpdateOcrProviderConfig(db, auth, data, env = {}) {
   });
 }
 
+export async function handleToggleOcrProviderEnabled(db, auth, data, env = {}) {
+  assertAdmin(auth);
+  const current = await db
+    .prepare("SELECT * FROM ocr_provider_configs WHERE provider_key = ? LIMIT 1")
+    .bind(data.provider_key)
+    .first();
+  if (!current) return jsonResponse({ success: false, error: "OCR_PROVIDER_NOT_FOUND", message: "Provider OCR tidak ditemukan." }, { status: 404 });
+
+  const apiKeyPresent = hasStoredCredential(current.api_key);
+  const apiSecretPresent = hasStoredCredential(current.api_secret);
+  if (data.is_enabled) {
+    if (!textOrNull(env.OCR_KEY)) {
+      return jsonResponse({
+        success: false,
+        error: "OCR_KEY_REQUIRED",
+        message: "Tambahkan Cloudflare Pages secret OCR_KEY sebelum mengaktifkan provider OCR.",
+      }, { status: 400 });
+    }
+    const missingRequirement = getOcrProviderRequirementError(data.provider_key, {
+      ...current,
+      apiKeyPresent,
+      apiSecretPresent,
+    });
+    if (missingRequirement) {
+      return jsonResponse({ success: false, error: "OCR_PROVIDER_CONFIG_INCOMPLETE", message: missingRequirement }, { status: 400 });
+    }
+  }
+
+  const healthStatus = data.is_enabled ? "ready" : (apiKeyPresent ? "disabled" : "unconfigured");
+  await db.batch([
+    db
+      .prepare(
+        `UPDATE ocr_provider_configs
+         SET is_enabled = ?, health_status = ?, last_error = NULL, cooldown_until = NULL,
+             updated_by_user_id = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE provider_key = ?`,
+      )
+      .bind(data.is_enabled ? 1 : 0, healthStatus, auth.id, data.provider_key),
+    auditStatement(db, "dashboard.ocr_provider.toggle", "ocr_provider_configs", data.provider_key, {
+      is_enabled: data.is_enabled,
+      health_status: healthStatus,
+      has_api_key: apiKeyPresent,
+      has_api_secret: apiSecretPresent,
+    }, auth.id),
+  ]);
+
+  return jsonResponse({
+    success: true,
+    provider: maskProviderConfig({
+      ...current,
+      is_enabled: data.is_enabled ? 1 : 0,
+      health_status: healthStatus,
+      last_error: null,
+      cooldown_until: null,
+    }),
+  });
+}
+
 function maskProviderConfig(row) {
   return {
     provider_key: row.provider_key,

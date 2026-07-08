@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-08 02:45 (Asia/Jakarta)
+Last updated: 2026-07-08 03:35 (Asia/Jakarta)
 
 ## Purpose
 
@@ -50,6 +50,7 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 | OCR controlled worker | Implemented | Added protected `/ocr-worker` plus optional GitHub Actions workflow for large queued backfills. It requires shared `OCR_SECRET`, allows manual workflow runs without the cron gate, keeps scheduled cron disabled until `OCR_WORKER_ENABLED=true`, runs small batches, and enforces a daily OCR usage cap before sending jobs. |
 | OCR franchise-context batching | Implemented | 2026-07-08 request tracker completed: OCR queue/run ordering now completes proposal pages for one franchise before moving to the next franchise, because proposal meaning depends on full-franchise context rather than first-page-only snippets from many franchises. Hasil OCR rows show franchise/page/source context, and recent successful jobs link directly to the matching Hasil OCR row. |
 | OCR provider rate limits | Implemented | Suggestion 68 completed: added provider short-window rate metadata, local cooldown state, runner skip behavior for rate-limited providers, and dashboard visibility for rate/cooldown status. |
+| OCR provider activation and retry UX | In Progress | 2026-07-08 request tracker: move provider active/disabled control out of credential form and into Prioritas Provider OCR only, fix confusing autosave path that can leave providers disabled after credential tinkering, disable all OCR execution buttons when no active provider is available, add per-job retry for failed OCR rows, and add batch retry failed OCR. |
 | Brochure overlay navigation polish | Implemented | 2026-07-08 request tracker completed: proposal previous/next hit areas are transparent gradient overlays that appear only while the cursor is moving over the image, then auto-hide after 1 second of no pointer movement even if still hovering. OCR enqueue button alignment/icon was fixed at the same time. |
 | Listing operations editor | Implemented MVP | Listing selector plus structured JSON diff form covers all whitelisted public listing fields. A richer field-by-field drawer can be added later. |
 | Leads/commercial view | Implemented read-only MVP | Reads `franchise_leads` status counts and recent leads. Payment/subscription revenue metrics remain pending. |
@@ -173,6 +174,7 @@ Existing tables to reuse:
 13. Polish brochure image overlay controls. Done; tracked above.
 14. Change OCR queue processing to franchise-context-first batches. Done; tracked above.
 15. Add provider short-window rate-limit/cooldown guardrails. Done; tracked above.
+16. Move OCR provider activation to provider-priority list, disable OCR execution buttons when no active provider is available, and add failed-job retry controls. In progress; tracked above.
 
 ## Open Decisions
 

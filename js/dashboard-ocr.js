@@ -8,7 +8,7 @@
 
   function createOperations(options) {
     options = options || {};
-    var state = { providers: [], adminOnly: true, filling: false, autosaveTimer: null, saving: false };
+    var state = { providers: [], adminOnly: true, activeProviderCount: 0, filling: false, autosaveTimer: null, saving: false };
 
     function bind() {
       (options.subtabs || []).forEach(function (tab) {
@@ -25,10 +25,12 @@
       if (options.form) options.form.addEventListener("input", handleFormChange);
       if (options.form) options.form.addEventListener("change", handleFormChange);
       if (options.providerList) options.providerList.addEventListener("click", handleProviderListClick);
+      if (options.jobRows) options.jobRows.addEventListener("click", handleJobRowsClick);
       if (options.resultRows) options.resultRows.addEventListener("click", handleResultClick);
       if (options.dryRunButton) options.dryRunButton.addEventListener("click", runDryRun);
       if (options.enqueueButton) options.enqueueButton.addEventListener("click", enqueueJobs);
       if (options.runButton) options.runButton.addEventListener("click", runJobs);
+      if (options.retryFailedButton) options.retryFailedButton.addEventListener("click", retryFailedJobs);
     }
 
     function render(payload, jobsPayload) {
@@ -36,6 +38,7 @@
       jobsPayload = jobsPayload || {};
       state.providers = payload.providers || [];
       state.adminOnly = Boolean(payload.admin_only);
+      state.activeProviderCount = countActiveProviders(state.providers);
       renderList(payload);
       renderJobs(jobsPayload);
       renderResults(jobsPayload);
@@ -49,7 +52,7 @@
         return;
       }
       setFormDisabled(false);
-      setJobButtonsDisabled(Boolean(jobsPayload.migration_required));
+      setJobButtonsDisabled(Boolean(jobsPayload.migration_required) || state.activeProviderCount === 0);
       var selectedKey = options.providerSelect && options.providerSelect.value;
       var selected = findProvider(selectedKey) || state.providers[0] || null;
       if (selected && options.providerSelect) options.providerSelect.value = selected.provider_key;
@@ -87,6 +90,12 @@
     }
 
     async function handleProviderListClick(event) {
+      var toggleButton = event.target && event.target.closest && event.target.closest("[data-ocr-toggle-provider]");
+      if (toggleButton) {
+        event.preventDefault();
+        await toggleProvider(toggleButton.getAttribute("data-ocr-toggle-provider"));
+        return;
+      }
       var button = event.target && event.target.closest && event.target.closest("[data-ocr-copy-provider-error]");
       if (!button) return;
       event.preventDefault();
@@ -99,6 +108,37 @@
       } catch (error) {
         options.setStatus("Browser belum mengizinkan copy otomatis. Seleksi teks error provider lalu copy manual.", true);
       }
+    }
+
+    async function handleJobRowsClick(event) {
+      var retryButton = event.target && event.target.closest && event.target.closest("[data-ocr-retry-job]");
+      if (retryButton) {
+        event.preventDefault();
+        await retryJob(retryButton.getAttribute("data-ocr-retry-job"), retryButton);
+        return;
+      }
+      var resultLink = event.target && event.target.closest && event.target.closest("[data-ocr-open-result]");
+      if (!resultLink) return;
+      event.preventDefault();
+      activateSubtab("results");
+      focusResultRow(resultLink.getAttribute("data-ocr-open-result"));
+    }
+
+    async function toggleProvider(providerKey) {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa mengubah provider OCR.", true);
+        return;
+      }
+      var provider = findProvider(providerKey);
+      if (!provider) return;
+      var nextEnabled = !provider.is_enabled;
+      await options.postDashboardAction({
+        action: "toggle_ocr_provider_enabled",
+        provider_key: provider.provider_key,
+        is_enabled: nextEnabled
+      });
+      options.setStatus((nextEnabled ? "Provider OCR diaktifkan: " : "Provider OCR dinonaktifkan: ") + provider.display_name + ".", false);
+      await options.reloadDashboard();
     }
 
     function renderList(payload) {
@@ -118,10 +158,22 @@
           : "Limit mengikuti akun provider";
         var rowClass = provider.is_enabled ? "" : ' class="is-muted"';
         var providerError = renderProviderError(provider);
-        return '<li' + rowClass + '><strong>#' + Number(provider.priority || 100) + ' · ' + utils.escapeHtml(provider.display_name) + '</strong><span>' +
+        return '<li' + rowClass + '><div class="dash-ocr-provider-row"><div><strong>#' + Number(provider.priority || 100) + ' · ' + utils.escapeHtml(provider.display_name) + '</strong><span>' +
           utils.escapeHtml(configured + " · " + (provider.is_enabled ? "Aktif" : "Nonaktif") + " · " + provider.health_status) +
-          '<br>' + quota + '</span>' + providerError + '</li>';
+          '<br>' + quota + '</span></div>' + renderProviderToggle(provider) + '</div>' + providerError + '</li>';
       }).join("") : '<li><span>Belum ada provider OCR.</span></li>';
+    }
+
+    function renderProviderToggle(provider) {
+      var canEnable = Boolean(provider.has_api_key);
+      var disabled = !provider.is_enabled && !canEnable;
+      var label = provider.is_enabled ? "Nonaktifkan" : "Aktifkan";
+      var icon = provider.is_enabled ? "fa-check" : "fa-power-off";
+      var tooltip = provider.is_enabled
+        ? "Nonaktifkan provider OCR ini. Credential tetap tersimpan."
+        : (canEnable ? "Aktifkan provider OCR ini untuk dipakai oleh dry run dan batch." : "Isi credential provider dulu sebelum mengaktifkan.");
+      return '<button type="button" class="dash-icon-button dash-ocr-provider-toggle' + (provider.is_enabled ? ' is-active' : '') + '" data-ocr-toggle-provider="' + utils.escapeAttr(provider.provider_key) + '" data-fr-tooltip="' + utils.escapeAttr(tooltip) + '"' + (disabled ? " disabled" : "") + '>' +
+        '<i class="fas ' + icon + '" aria-hidden="true"></i><span>' + label + '</span></button>';
     }
 
     function renderProviderError(provider) {
@@ -142,13 +194,15 @@
           options.jobStatus.textContent = "Queue OCR belum siap. Jalankan migration OCR terlebih dahulu.";
         } else {
           var counts = payload.counts || {};
-          options.jobStatus.textContent = [
+          var statusParts = [
             "Belum antre: " + Number(payload.enqueue_candidates || 0).toLocaleString("id-ID"),
             "Pending: " + Number(counts.pending || 0).toLocaleString("id-ID"),
             "Running: " + Number(counts.running || 0).toLocaleString("id-ID"),
             "Sukses: " + Number(counts.succeeded || 0).toLocaleString("id-ID"),
             "Gagal: " + Number(counts.failed || 0).toLocaleString("id-ID")
-          ].join(" · ");
+          ];
+          if (state.activeProviderCount === 0) statusParts.push("Provider aktif: 0 — aktifkan provider OCR dulu.");
+          options.jobStatus.textContent = statusParts.join(" · ");
         }
       }
       if (!options.jobRows) return;
@@ -166,7 +220,10 @@
         var resultLink = job.status === "succeeded"
           ? ' <a href="#ocr-results" data-ocr-open-result="' + utils.escapeAttr(job.asset_id) + '">Lihat hasil OCR</a>'
           : "";
-        return '<li><strong>' + utils.escapeHtml(brand) + '</strong><span>' + detail + link + resultLink + '</span></li>';
+        var retryButton = job.status === "failed"
+          ? ' <button type="button" class="dash-ocr-inline-action" data-ocr-retry-job="' + utils.escapeAttr(job.id) + '" data-fr-tooltip="' + (state.activeProviderCount ? "Retry job OCR gagal ini" : "Aktifkan provider OCR dulu sebelum retry") + '"' + (state.activeProviderCount ? "" : " disabled") + '><i class="fas fa-rotate-right" aria-hidden="true"></i><span>Retry</span></button>'
+          : "";
+        return '<li><strong>' + utils.escapeHtml(brand) + '</strong><span>' + detail + link + resultLink + retryButton + '</span></li>';
       }).join("") : '<li><span>Belum ada job OCR. Antrekan proposal gambar terlebih dahulu.</span></li>';
     }
 
@@ -241,7 +298,6 @@
       setValue("region", provider.region || "");
       setValue("model", provider.model || "");
       setValue("priority", provider.priority || 100);
-      setChecked("is_enabled", provider.is_enabled || provider.has_api_key);
       setChecked("clear_api_key", false);
       setChecked("clear_api_secret", false);
       options.form.classList.toggle("is-provider-disabled", Boolean(provider.has_api_key && !provider.is_enabled));
@@ -261,12 +317,6 @@
       if (state.filling || state.adminOnly || !options.form) return;
       var target = event.target;
       if (!target || target.name === "provider_key") return;
-      if ((target.name === "api_key" || target.name === "api_secret") && String(target.value || "").trim()) {
-        setChecked("is_enabled", true);
-      }
-      if (target.name === "clear_api_key" && target.checked) {
-        setChecked("is_enabled", false);
-      }
       scheduleAutosave();
     }
 
@@ -289,6 +339,10 @@
       state.saving = true;
       try {
         var form = new FormData(options.form);
+        var provider = findProvider(String(form.get("provider_key") || ""));
+        var hasNewCredential = Boolean(String(form.get("api_key") || "").trim() || String(form.get("api_secret") || "").trim());
+        var clearsCredential = form.get("clear_api_key") === "on" || form.get("clear_api_secret") === "on";
+        var nextEnabled = clearsCredential ? false : (hasNewCredential ? true : Boolean(provider && provider.is_enabled));
         setFormDisabled(true);
         await options.postDashboardAction({
           action: "update_ocr_provider_config",
@@ -302,7 +356,7 @@
           region: String(form.get("region") || ""),
           model: String(form.get("model") || ""),
           priority: Number(form.get("priority") || 100),
-          is_enabled: form.get("is_enabled") === "1"
+          is_enabled: nextEnabled
         });
         setInlineStatus(successMessage || "Konfigurasi OCR tersimpan otomatis.");
         options.setStatus(successMessage || "Konfigurasi OCR tersimpan otomatis.", false);
@@ -352,8 +406,38 @@
       }, options.setStatus);
     }
 
+    async function retryJob(jobId, button) {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa retry OCR.", true);
+        return;
+      }
+      await buttonAction(button, "Retry...", async function () {
+        var result = await options.postDashboardAction({ action: "retry_ocr_job", job_id: jobId });
+        options.setStatus("Job OCR gagal dikembalikan ke antrean: " + Number(result.retried || 0).toLocaleString("id-ID") + " job.", false);
+        await options.reloadDashboard();
+      }, options.setStatus);
+    }
+
+    async function retryFailedJobs() {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa retry OCR.", true);
+        return;
+      }
+      await buttonAction(options.retryFailedButton, "Retry...", async function () {
+        var result = await options.postDashboardAction({ action: "retry_failed_ocr_jobs", limit: 100 });
+        options.setStatus("Job OCR gagal dikembalikan ke antrean: " + Number(result.retried || 0).toLocaleString("id-ID") + " job.", false);
+        await options.reloadDashboard();
+      }, options.setStatus);
+    }
+
     function findProvider(key) {
       return state.providers.find(function (provider) { return provider.provider_key === key; }) || null;
+    }
+
+    function countActiveProviders(providers) {
+      return (providers || []).filter(function (provider) {
+        return provider && provider.is_enabled && provider.has_api_key;
+      }).length;
     }
 
     function providerConfig(provider) {
@@ -458,6 +542,7 @@
       if (options.dryRunButton) options.dryRunButton.disabled = Boolean(disabled);
       if (options.enqueueButton) options.enqueueButton.disabled = Boolean(disabled);
       if (options.runButton) options.runButton.disabled = Boolean(disabled);
+      if (options.retryFailedButton) options.retryFailedButton.disabled = Boolean(disabled);
     }
 
     function setInlineStatus(message) {

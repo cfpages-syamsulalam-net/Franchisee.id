@@ -625,7 +625,7 @@ const ocrProviderMetadataJson = JSON.stringify({
                   </div>
                 </div>
                 <div class="dash-warning-box dash-ocr-warning">
-                  Credential yang tersimpan tidak pernah ditampilkan kembali di browser. Kolom kosong mempertahankan nilai lama. Jika memasukkan key baru, provider otomatis aktif kecuali checkbox Provider aktif dimatikan.
+                  Credential yang tersimpan tidak pernah ditampilkan kembali di browser. Kolom kosong mempertahankan nilai lama. Aktif/nonaktif provider diatur dari daftar Prioritas Provider OCR agar tidak ikut berubah saat mengedit credential.
                 </div>
                 <form class="dash-form dash-ocr-form" data-ocr-config-form>
                   <label class="dash-form-wide">
@@ -641,13 +641,6 @@ const ocrProviderMetadataJson = JSON.stringify({
                     Prioritas
                     <input name="priority" type="number" min="1" max="1000" step="1" value="100" />
                     <small>Angka kecil dicoba lebih dulu.</small>
-                  </label>
-                  <label class="dash-check-row dash-ocr-active-row">
-                    <input name="is_enabled" type="checkbox" value="1" />
-                    <span>
-                      <strong>Provider aktif</strong>
-                      <small>Matikan jika key masih tersimpan tetapi tidak ingin dipakai.</small>
-                    </span>
                   </label>
                   <label data-ocr-field="api_key">
                     <span class="dash-field-label-row">
@@ -739,6 +732,10 @@ const ocrProviderMetadataJson = JSON.stringify({
                   <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Memproses maksimal 5 job per klik dari satu franchise terlebih dahulu supaya konteks proposal tetap utuh, tidak timeout, dan kuota provider tetap terkendali. Klik lagi untuk batch berikutnya.">
                     <i class="fas fa-play" aria-hidden="true"></i>
                     <span>Jalankan batch berikutnya</span>
+                  </button>
+                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-retry-failed data-fr-tooltip="Mengembalikan job OCR yang gagal ke antrean pending agar bisa dicoba ulang dengan provider aktif.">
+                    <i class="fas fa-rotate-right" aria-hidden="true"></i>
+                    <span>Retry gagal</span>
                   </button>
                 </div>
                 <p class="dash-muted dash-ocr-job-status" data-ocr-job-status>Memuat status job OCR...</p>

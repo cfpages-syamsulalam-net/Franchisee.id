@@ -299,11 +299,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-ocr.js`
 *Admin OCR provider/job/results module for `/dashboard`.*
 - `window.FranchiseDashboardOcr.createOperations(options)`: Creates the OCR tab controller from subtab, provider-list/select/form/status/job/result DOM references and shared dashboard callbacks.
-- `render(payload, jobsPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderResults(payload)` / `fillForm(provider)`: Shows ranked provider state, key/secret presence booleans, read-only quota/free-limit metadata, visible provider health/error status, job counts/recent jobs, OCR result previews, franchise/page/source/listing/review links, and non-secret configuration without receiving stored credentials. Successful recent jobs link to the matching Hasil OCR row by `asset_id`.
+- `render(payload, jobsPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderResults(payload)` / `fillForm(provider)`: Shows ranked provider state, key/secret presence booleans, read-only quota/free-limit metadata, visible provider health/error status, provider-priority enable/disable controls, job counts/recent jobs, OCR result previews, franchise/page/source/listing/review links, and non-secret configuration without receiving stored credentials. Successful recent jobs link to the matching Hasil OCR row by `asset_id`.
 - `handleProviderListClick(event)`: Copies provider troubleshooting context, including provider key, health status, credential presence, last check timestamp, and last error, without exposing stored credential values.
 - Provider-specific field rules come from `window.FranchiseOcrProviderMetadata`, which is injected from `src/lib/ocr-provider-metadata.js`; simple-key providers show only API key, Azure shows key plus endpoint, Cloudflare/Groq show model where relevant, AWS shows access key/secret/region, and Veryfi shows API key plus client ID plus username/auth secret.
 - `handleFormChange(event)` / `saveConfig(successMessage)`: Auto-saves provider metadata plus optional replacement credentials or explicit clear flags; blank password inputs preserve existing D1 values, new credentials check the active-provider toggle automatically, and clearing the API key disables the provider.
-- `runDryRun()` / `enqueueJobs()` / `runJobs()`: Calls the admin-only OCR actions with explicit copy that dry-run is a real one-asset OCR run and manual batch processing is bounded per click while the backend completes one franchise's proposal pages before moving to another franchise.
+- `runDryRun()` / `enqueueJobs()` / `runJobs()` / `retryJob()` / `retryFailedJobs()`: Calls the admin-only OCR actions with explicit copy that dry-run is a real one-asset OCR run and manual batch processing is bounded per click while the backend completes one franchise's proposal pages before moving to another franchise. Job execution/retry buttons are disabled when no active provider with stored credentials is available.
 
 ### File: `src/lib/ocr-provider-metadata.js`
 *Shared OCR provider requirements contract.*
@@ -556,6 +556,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Focused generated-detail asset regression check.*
 - `pnpm run detail-assets:check`: Verifies `injectDetailAssets()` is idempotent and injects the expected detail CSS/JS hooks for tabs, proposal overlay/download/navigation, contact floats, compare actions, and WordPress-runtime cleanup.
 
+### File: `scripts/check-dashboard-ocr-client.mjs`
+*Focused dashboard OCR browser-module regression check.*
+- `pnpm run dashboard:ocr:check`: Runs `node --check` only on the browser/non-module OCR client and asserts provider toggle, retry action, retry button, and no-active-provider disabled-state wiring remain present.
+
 ### File: `js/product-events.js`
 *Public privacy-safe listing interaction tracker.*
 - Records detail page views and contact clicks through `/product-event`.
@@ -626,7 +630,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads the dashboard auth/tooltips/utilities plus Premium, Review, Operations, OCR, and controller client modules; shows a login-only staff/admin form when no Clerk session exists.
-- Renders the branded dashboard shell and an OCR tab with provider selector, provider-specific password credential fields, read-only quota/free-limit metadata, priority, enablement, and explicit credential clear controls. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` for the browser module. Runtime authorization remains server-side.
+- Renders the branded dashboard shell and an OCR tab with provider selector, provider-specific password credential fields, read-only quota/free-limit metadata, priority-list enablement, retry controls, and explicit credential clear controls. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` for the browser module. Runtime authorization remains server-side.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
@@ -873,12 +877,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
 - `onRequestGet()`: Requires Clerk auth plus D1 `staff`; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js` and OCR queue state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
-- `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js`, OCR configuration to `_ocr-provider-config.js`, and admin-triggered OCR dry-run/enqueue/run actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution or credential encryption needs it.
+- `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, and admin-triggered OCR dry-run/enqueue/run/retry actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, or credential encryption needs it.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions plus `update_ocr_provider_config`, `run_ocr_dry_run`, `enqueue_ocr_jobs`, and `run_ocr_jobs`, with fixed provider IDs, credential size limits, HTTPS endpoint checks, bounded priority, and OCR batch-size limits.
+- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions plus `update_ocr_provider_config`, `toggle_ocr_provider_enabled`, `run_ocr_dry_run`, `enqueue_ocr_jobs`, `run_ocr_jobs`, `retry_ocr_job`, and `retry_failed_ocr_jobs`, with fixed provider IDs, credential size limits, HTTPS endpoint checks, bounded priority, retry limits, and OCR batch-size limits.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
@@ -887,6 +891,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Admin-only OCR provider configuration and credential boundary.*
 - `getOcrProviderConfigs(db, auth)`: Returns provider metadata only to admin; SQL derives `has_api_key` / `has_api_secret` booleans and does not select credential values.
 - `handleUpdateOcrProviderConfig(db, auth, data, env)`: Preserves blank credential inputs, applies explicit clear flags, encrypts saved credentials with external `OCR_KEY`, re-encrypts legacy plaintext values on next save, enforces provider-specific activation prerequisites through `src/lib/ocr-provider-metadata.js`, preserves seeded quota/free-limit/rate-limit metadata on dashboard saves, clears stale cooldown on config save, updates D1 state, and audits only non-secret metadata.
+- `handleToggleOcrProviderEnabled(db, auth, data, env)`: Admin-only explicit active/disabled toggle used by the provider-priority list. It requires `OCR_KEY` and provider-specific required fields before enabling, clears stale errors/cooldown, and keeps credential autosave from accidentally changing provider activation.
 - `maskProviderConfig(row)`: Produces the stable browser response contract without `api_key` or `api_secret` properties.
 
 ### File: `functions/_ocr-provider-adapters.js`
@@ -901,6 +906,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleEnqueueOcrJobs(db, auth, data)`: Admin-only action that queues active image proposal assets into `ocr_jobs`; it does not call external OCR providers.
 - `handleRunOcrDryRun(db, auth, data, env, options)`: Admin-only action that requires `OCR_KEY` and one enabled provider, prepares at most one candidate proposal-image job, and processes only that job before broad backfills.
 - `handleRunOcrJobs(db, auth, data, env, options)`: Admin-only action that runs a bounded batch and requires `OCR_KEY` before any provider call can happen.
+- `handleRetryOcrJob(db, auth, data)` / `handleRetryFailedOcrJobs(db, auth, data)`: Admin-only retry actions that move failed OCR jobs back to `pending` without deleting attempt history, either one failed job from the recent-job row or up to a bounded batch of failed jobs.
 - `runOcrJobs(db, env, auth, options)`: Claims pending jobs, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` when available, checks local quota/trial state, tries enabled providers in priority order, logs attempts and usage, and writes successful OCR text through `proposalKnowledgeStatements()`.
 - `claimPendingJobs(db, maxJobs, jobId)`: Selects one pending franchise group first, then claims proposal pages from that franchise by asset display order so manual/worker batches build fuller per-franchise brochure context instead of sampling the first page from many franchises.
 - `prepareRateLimit(db, provider)`: Checks provider `cooldown_until` and local request-window metadata before each external call; if the window is exhausted, the runner records a skipped attempt and updates provider cooldown instead of sending another request.

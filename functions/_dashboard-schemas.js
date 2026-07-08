@@ -114,20 +114,22 @@ const UpdatePremiumSettingsSchema = z.object({
   promo_max_views_per_user: z.coerce.number().int().min(0).max(30).default(1),
 });
 
+const OcrProviderKeySchema = z.enum([
+  "ocr_space",
+  "azure_vision",
+  "cloudflare_workers_ai",
+  "google_vision",
+  "groq_vision",
+  "aws_textract",
+  "veryfi",
+  "mindee",
+  "pdf_co",
+  "api4ai",
+]);
+
 const UpdateOcrProviderConfigSchema = z.object({
   action: z.literal("update_ocr_provider_config"),
-  provider_key: z.enum([
-    "ocr_space",
-    "azure_vision",
-    "cloudflare_workers_ai",
-    "google_vision",
-    "groq_vision",
-    "aws_textract",
-    "veryfi",
-    "mindee",
-    "pdf_co",
-    "api4ai",
-  ]),
+  provider_key: OcrProviderKeySchema,
   api_key: z.string().max(2000).optional().default(""),
   api_secret: z.string().max(4000).optional().default(""),
   clear_api_key: z.boolean().optional().default(false),
@@ -142,6 +144,12 @@ const UpdateOcrProviderConfigSchema = z.object({
   free_quota_period: z.enum(["daily", "monthly", "trial", "compute_daily", "account_specific"]).default("account_specific"),
   quota_unit: z.enum(["requests", "transactions", "pages", "neurons", "documents", "credits"]).default("requests"),
   trial_ends_at: z.string().trim().max(40).optional().default(""),
+});
+
+const ToggleOcrProviderEnabledSchema = z.object({
+  action: z.literal("toggle_ocr_provider_enabled"),
+  provider_key: OcrProviderKeySchema,
+  is_enabled: z.boolean(),
 });
 
 const EnqueueOcrJobsSchema = z.object({
@@ -162,6 +170,17 @@ const RunOcrDryRunSchema = z.object({
   franchise_id: z.string().trim().max(120).optional().default(""),
 });
 
+const RetryOcrJobSchema = z.object({
+  action: z.literal("retry_ocr_job"),
+  job_id: z.string().trim().min(1).max(160),
+});
+
+const RetryFailedOcrJobsSchema = z.object({
+  action: z.literal("retry_failed_ocr_jobs"),
+  franchise_id: z.string().trim().max(120).optional().default(""),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(100),
+});
+
 export const DashboardActionSchema = z.discriminatedUnion("action", [
   OutreachEventSchema,
   SuggestEditSchema,
@@ -175,9 +194,12 @@ export const DashboardActionSchema = z.discriminatedUnion("action", [
   ManageNotificationEmailSchema,
   UpdatePremiumSettingsSchema,
   UpdateOcrProviderConfigSchema,
+  ToggleOcrProviderEnabledSchema,
   EnqueueOcrJobsSchema,
   RunOcrJobsSchema,
   RunOcrDryRunSchema,
+  RetryOcrJobSchema,
+  RetryFailedOcrJobsSchema,
 ]);
 
 export function sanitizeChanges(changes) {

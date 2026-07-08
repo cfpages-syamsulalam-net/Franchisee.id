@@ -85,6 +85,7 @@
     dryRunButton: document.querySelector("[data-ocr-dry-run]"),
     enqueueButton: document.querySelector("[data-ocr-enqueue]"),
     runButton: document.querySelector("[data-ocr-run]"),
+    retryFailedButton: document.querySelector("[data-ocr-retry-failed]"),
     providerSelect: document.querySelector("[data-ocr-provider-select]"),
     form: document.querySelector("[data-ocr-config-form]"),
     status: document.querySelector("[data-ocr-config-status]"),
