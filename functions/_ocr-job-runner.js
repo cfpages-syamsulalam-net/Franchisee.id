@@ -206,7 +206,7 @@ export async function handleRunOcrDryRun(db, auth, data, env, options = {}) {
   });
 }
 
-export async function handleRetryOcrJob(db, auth, data) {
+export async function handleRetryOcrJob(db, auth, data, env, options = {}) {
   assertAdmin(auth);
   const job = await db
     .prepare("SELECT id, asset_id, franchise_id, status FROM ocr_jobs WHERE id = ? LIMIT 1")
@@ -226,9 +226,11 @@ export async function handleRetryOcrJob(db, auth, data) {
     auditStatement(db, "dashboard.ocr_jobs.retry", "ocr_jobs", job.id, {
       asset_id: job.asset_id,
       franchise_id: job.franchise_id,
+      run_now: true,
     }, auth.id),
   ]);
-  return jsonResponse({ success: true, retried: 1, job_id: job.id });
+  const runResult = await runOcrJobs(db, env, auth, { ...options, maxJobs: 1, jobId: job.id });
+  return jsonResponse({ success: true, retried: 1, job_id: job.id, run_now: true, ...runResult });
 }
 
 export async function handleRetryFailedOcrJobs(db, auth, data) {

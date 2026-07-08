@@ -8,6 +8,13 @@ Format:
 ### Added
 - `.context/session-20260708-0136.md`: Added this session continuity snapshot.
 - `.context/session-20260708-1259.md`: Added this session continuity snapshot for the OCR provider toggle/retry work.
+- `.context/session-20260708-1456.md`: Added this session continuity snapshot for the OCR job-row UX and dashboard auth skeleton work.
+- `.context/session-20260708-1513.md`: Added this session continuity snapshot for the broader dashboard CSS feature-module extraction.
+- `css/dashboard-auth.css`: Added a focused dashboard auth/loading stylesheet module.
+- `css/dashboard-review.css`: Added a focused dashboard Review/Data Quality stylesheet module for guided edit rows, field diffs, and Area Listing editor layout.
+- `css/dashboard-operations.css`: Added a focused dashboard Operations/admin helper stylesheet module for full-width panels, publication controls, and checkbox rows.
+- `css/dashboard-premium.css`: Added a focused dashboard Premium Operations stylesheet module for payment/settings forms, QRIS preview, and Premium layout rules.
+- `css/dashboard-ocr.css`: Added a focused dashboard OCR stylesheet module for OCR provider, job, result, and responsive UI.
 - `functions/ocr-worker.js`: Added a protected OCR queue worker endpoint that uses `OCR_SECRET`, small bounded batches, daily counted-usage caps, and operation-event summaries for larger queued backfills.
 - `.github/workflows/ocr-worker.yaml`: Added a manual/scheduled OCR worker trigger. Manual runs can be used without the cron gate; scheduled runs require repository variable `OCR_WORKER_ENABLED=true`.
 - `migrations/0022_ocr_provider_rate_limits.sql`: Added provider short-window rate-limit metadata and `cooldown_until` so OCR batches can skip providers that are temporarily rate-limited.
@@ -15,9 +22,14 @@ Format:
 ### Changed
 - `AGENTS.md`: Added the repository-specific validation rule that `node --check` should not be used on Cloudflare Functions ESM files; use the repo Functions/TypeScript checks instead.
 - `scripts/check-dashboard-ocr-client.mjs` and `package.json`: Added `pnpm run dashboard:ocr:check` for the browser OCR dashboard module's provider-toggle, retry, and no-active-provider disabled-state wiring.
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, and `css/dashboard.css`: Added a dashboard auth loading skeleton so `/dashboard` does not show the login form while Clerk/session/dashboard authorization is still being checked.
+- `js/dashboard-ocr.js` and `css/dashboard.css`: Reworked recent OCR job rows into icon-led rows with status chips, compact metadata, action chips, listing/result icons, error icons, and clearer direct per-row OCR retry/run copy.
+- `src/pages/dashboard/index.astro` and `css/dashboard.css`: Refactored dashboard styling by loading dedicated `dashboard-auth.css`, `dashboard-review.css`, `dashboard-operations.css`, `dashboard-premium.css`, and `dashboard-ocr.css` modules, reducing the base dashboard stylesheet to shared shell/layout/components.
+- `functions/_ocr-job-runner.js` and `functions/dashboard-data.js`: Changed single failed-job retry to immediately run OCR for that job after resetting it to `pending`; batch failed retry remains a bounded requeue action.
+- `src/pages/dashboard/index.astro`: Renamed the batch failed retry button to `Antre ulang gagal`, changed its icon to a Font Awesome 5-compatible `fa-redo-alt`, and clarified the tooltip that batch retry requeues jobs before batch execution.
 - `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, and `css/dashboard.css`: Moved OCR provider active/disabled control out of the credential form into the Prioritas Provider OCR list, added failed-job retry buttons, added batch retry for failed OCR jobs, and greyed out OCR execution/retry controls when no active provider with stored credentials is available.
 - `functions/_dashboard-schemas.js`, `functions/dashboard-data.js`, `functions/_ocr-provider-config.js`, and `functions/_ocr-job-runner.js`: Added validated `toggle_ocr_provider_enabled`, `retry_ocr_job`, and `retry_failed_ocr_jobs` dashboard actions; provider toggles now validate requirements separately from credential autosave, and retries move failed jobs back to `pending` without deleting attempt history.
-- `DASHBOARD.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the OCR provider activation fix, disabled no-provider execution state, failed-job retry workflow, and the new dashboard OCR client regression check.
+- `DASHBOARD.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the OCR provider activation fix, disabled no-provider execution state, failed-job retry workflow, dashboard action-icon UX audit, auth skeleton, dashboard CSS refactor, and the new dashboard OCR client regression check.
 - `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, and `css/dashboard.css`: Reworked the OCR tab for non-technical admins with guide cards, OCR subtabs for Pengaturan/Eksekusi Job/Hasil OCR, clearer tooltips, icon+text action buttons, better desktop/mobile layout, auto-saving provider configuration, disabled-provider greying, and explicit dry-run/batch copy.
 - `js/dashboard-ocr.js` and `css/dashboard.css`: Added visible provider error panels and a `Copy error` button that copies provider health/error context for troubleshooting without exposing credentials.
 - `src/lib/franchise-detail-styles.ts` and `src/lib/franchise-detail-scripts.ts`: Changed brochure previous/next image navigation to transparent gradient overlays that appear only while the pointer is moving and auto-hide after one second of pointer inactivity.

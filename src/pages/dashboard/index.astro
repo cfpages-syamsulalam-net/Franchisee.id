@@ -25,6 +25,11 @@ const ocrProviderMetadataJson = JSON.stringify({
     <link rel="stylesheet" href="/css/auth-clerk.css">
     <link rel="stylesheet" href="/css/shared-tooltip.css">
     <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/dashboard-auth.css">
+    <link rel="stylesheet" href="/css/dashboard-review.css">
+    <link rel="stylesheet" href="/css/dashboard-operations.css">
+    <link rel="stylesheet" href="/css/dashboard-premium.css">
+    <link rel="stylesheet" href="/css/dashboard-ocr.css">
   </head>
   <body>
     <div class="dash-shell">
@@ -45,7 +50,20 @@ const ocrProviderMetadataJson = JSON.stringify({
       <main class="dash-main" data-dashboard-protected="locked">
         <div class="dash-alert" data-dashboard-status>Memeriksa akses admin/staff...</div>
 
-        <section class="dash-login-panel" data-dashboard-login aria-label="Login admin dan staff">
+        <section class="dash-auth-loading" data-dashboard-loading aria-live="polite" aria-label="Memeriksa akses dashboard">
+          <div class="dash-auth-skeleton-card">
+            <div class="dash-skeleton-line is-title"></div>
+            <div class="dash-skeleton-line"></div>
+            <div class="dash-skeleton-line is-short"></div>
+            <div class="dash-skeleton-grid">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="dash-login-panel" data-dashboard-login aria-label="Login admin dan staff" hidden>
           <div id="franchise-auth-root" data-auth-mode="login" data-auth-variant="staff" data-auth-next="/dashboard/"></div>
           <div class="dash-debug-panel" data-auth-debug>
             <div class="dash-debug-head">
@@ -733,9 +751,9 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <i class="fas fa-play" aria-hidden="true"></i>
                     <span>Jalankan batch berikutnya</span>
                   </button>
-                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-retry-failed data-fr-tooltip="Mengembalikan job OCR yang gagal ke antrean pending agar bisa dicoba ulang dengan provider aktif.">
-                    <i class="fas fa-rotate-right" aria-hidden="true"></i>
-                    <span>Retry gagal</span>
+                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-retry-failed data-fr-tooltip="Mengembalikan maksimal 100 job gagal ke antrean pending. Setelah itu klik Jalankan batch untuk memprosesnya.">
+                    <i class="fas fa-redo-alt" aria-hidden="true"></i>
+                    <span>Antre ulang gagal</span>
                   </button>
                 </div>
                 <p class="dash-muted dash-ocr-job-status" data-ocr-job-status>Memuat status job OCR...</p>

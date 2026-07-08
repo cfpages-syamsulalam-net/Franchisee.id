@@ -213,18 +213,54 @@
       var recent = payload.recent || [];
       options.jobRows.innerHTML = recent.length ? recent.map(function (job) {
         var brand = job.brand_name || job.franchise_id || "Listing";
-        var page = job.page_number ? "Halaman " + Number(job.page_number).toLocaleString("id-ID") : "Halaman proposal";
-        var detail = utils.escapeHtml([page, job.status, job.provider_key || "belum ada provider", job.attempt_count + " attempt"].join(" · "));
-        if (job.error_message) detail += "<br>" + utils.escapeHtml(job.error_message);
-        var link = job.slug ? ' <a href="/peluang-usaha/' + utils.escapeAttr(job.slug) + '" target="_blank" rel="noopener">Lihat listing</a>' : "";
+        var page = job.page_number ? "Hal. " + Number(job.page_number).toLocaleString("id-ID") : "Hal. proposal";
+        var provider = job.provider_key || "belum ada provider";
+        var link = job.slug ? renderJobActionLink("/peluang-usaha/" + job.slug, "fa-external-link-alt", "Listing", "Buka listing publik", true) : "";
         var resultLink = job.status === "succeeded"
-          ? ' <a href="#ocr-results" data-ocr-open-result="' + utils.escapeAttr(job.asset_id) + '">Lihat hasil OCR</a>'
+          ? renderJobResultAction(job.asset_id)
           : "";
         var retryButton = job.status === "failed"
-          ? ' <button type="button" class="dash-ocr-inline-action" data-ocr-retry-job="' + utils.escapeAttr(job.id) + '" data-fr-tooltip="' + (state.activeProviderCount ? "Retry job OCR gagal ini" : "Aktifkan provider OCR dulu sebelum retry") + '"' + (state.activeProviderCount ? "" : " disabled") + '><i class="fas fa-rotate-right" aria-hidden="true"></i><span>Retry</span></button>'
+          ? renderJobActionButton(job.id, "fa-play", "OCR", state.activeProviderCount ? "Coba OCR ulang sekarang untuk job ini." : "Aktifkan provider OCR dulu sebelum menjalankan ulang job ini.", state.activeProviderCount === 0)
           : "";
-        return '<li><strong>' + utils.escapeHtml(brand) + '</strong><span>' + detail + link + resultLink + retryButton + '</span></li>';
+        return '<li class="dash-ocr-job-item is-' + utils.escapeAttr(job.status || "unknown") + '">' +
+          '<div class="dash-ocr-job-main">' +
+          '<div class="dash-ocr-job-head"><strong>' + utils.escapeHtml(brand) + '</strong>' + renderJobStatus(job.status) + '</div>' +
+          '<div class="dash-ocr-job-meta">' +
+          '<span><i class="fas fa-file-image" aria-hidden="true"></i>' + utils.escapeHtml(page) + '</span>' +
+          '<span><i class="fas fa-plug" aria-hidden="true"></i>' + utils.escapeHtml(provider) + '</span>' +
+          '<span><i class="fas fa-redo-alt" aria-hidden="true"></i>' + Number(job.attempt_count || 0).toLocaleString("id-ID") + 'x</span>' +
+          '</div>' +
+          (job.error_message ? '<div class="dash-ocr-job-error"><i class="fas fa-times-circle" aria-hidden="true"></i><span>' + utils.escapeHtml(job.error_message) + '</span></div>' : '') +
+          '</div>' +
+          '<div class="dash-ocr-job-actions">' + link + resultLink + retryButton + '</div>' +
+          '</li>';
       }).join("") : '<li><span>Belum ada job OCR. Antrekan proposal gambar terlebih dahulu.</span></li>';
+    }
+
+    function renderJobStatus(status) {
+      var map = {
+        succeeded: ["fa-check-circle", "success", "Sukses"],
+        failed: ["fa-times-circle", "failed", "Gagal"],
+        pending: ["fa-clock", "pending", "Pending"],
+        running: ["fa-spinner fa-spin", "running", "Running"]
+      };
+      var item = map[status] || ["fa-circle", "unknown", status || "Status"];
+      return '<span class="dash-ocr-job-state is-' + utils.escapeAttr(item[1]) + '"><i class="fas ' + item[0] + '" aria-hidden="true"></i>' + utils.escapeHtml(item[2]) + '</span>';
+    }
+
+    function renderJobActionLink(href, icon, label, tooltip, newTab) {
+      return '<a class="dash-ocr-row-action" href="' + utils.escapeAttr(href) + '"' + (newTab ? ' target="_blank" rel="noopener"' : '') + ' data-fr-tooltip="' + utils.escapeAttr(tooltip) + '">' +
+        '<i class="fas ' + icon + '" aria-hidden="true"></i><span>' + utils.escapeHtml(label) + '</span></a>';
+    }
+
+    function renderJobResultAction(assetId) {
+      return '<a class="dash-ocr-row-action" href="#ocr-results" data-ocr-open-result="' + utils.escapeAttr(assetId) + '" data-fr-tooltip="Buka teks OCR yang berhasil diekstrak.">' +
+        '<i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Hasil</span></a>';
+    }
+
+    function renderJobActionButton(jobId, icon, label, tooltip, disabled) {
+      return '<button type="button" class="dash-ocr-row-action" data-ocr-retry-job="' + utils.escapeAttr(jobId) + '" data-fr-tooltip="' + utils.escapeAttr(tooltip) + '"' + (disabled ? " disabled" : "") + '>' +
+        '<i class="fas ' + icon + '" aria-hidden="true"></i><span>' + utils.escapeHtml(label) + '</span></button>';
     }
 
     function renderResults(payload) {
@@ -411,9 +447,9 @@
         options.setStatus("Hanya admin yang bisa retry OCR.", true);
         return;
       }
-      await buttonAction(button, "Retry...", async function () {
+      await buttonAction(button, "OCR...", async function () {
         var result = await options.postDashboardAction({ action: "retry_ocr_job", job_id: jobId });
-        options.setStatus("Job OCR gagal dikembalikan ke antrean: " + Number(result.retried || 0).toLocaleString("id-ID") + " job.", false);
+        options.setStatus("OCR ulang selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " job diproses.", false);
         await options.reloadDashboard();
       }, options.setStatus);
     }
@@ -423,9 +459,9 @@
         options.setStatus("Hanya admin yang bisa retry OCR.", true);
         return;
       }
-      await buttonAction(options.retryFailedButton, "Retry...", async function () {
+      await buttonAction(options.retryFailedButton, "Antre ulang...", async function () {
         var result = await options.postDashboardAction({ action: "retry_failed_ocr_jobs", limit: 100 });
-        options.setStatus("Job OCR gagal dikembalikan ke antrean: " + Number(result.retried || 0).toLocaleString("id-ID") + " job.", false);
+        options.setStatus("Job OCR gagal dikembalikan ke antrean: " + Number(result.retried || 0).toLocaleString("id-ID") + " job. Klik Jalankan batch untuk memprosesnya.", false);
         await options.reloadDashboard();
       }, options.setStatus);
     }

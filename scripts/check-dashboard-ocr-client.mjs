@@ -18,6 +18,10 @@ const requiredFragments = [
   "retryFailedButton",
   "activeProviderCount === 0",
   "Aktifkan provider OCR dulu",
+  "renderJobStatus",
+  "renderJobActionLink",
+  "renderJobResultAction",
+  "OCR ulang selesai",
 ];
 
 for (const fragment of requiredFragments) {

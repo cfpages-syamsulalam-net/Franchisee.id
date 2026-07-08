@@ -3,6 +3,7 @@
   var userEl = document.querySelector("[data-dashboard-user]");
   var mainEl = document.querySelector("[data-dashboard-protected]");
   var loginEl = document.querySelector("[data-dashboard-login]");
+  var loadingEl = document.querySelector("[data-dashboard-loading]");
   var authDebugSummary = document.querySelector("[data-auth-debug-summary]");
   var authDebugOutput = document.querySelector("[data-auth-debug-output]");
   var authDebugRefresh = document.querySelector("[data-auth-debug-refresh]");
@@ -160,6 +161,7 @@
   async function boot() {
     try {
       if (!window.FranchiseAuth) throw new Error("Auth runtime belum tersedia.");
+      showLoadingPanel("Memeriksa sesi admin/staff...");
       renderAuthDebug("boot:start");
       await window.FranchiseAuth.init();
       renderAuthDebug("boot:after_init");
@@ -180,6 +182,7 @@
       if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat.");
       renderDashboard(data);
     } catch (error) {
+      if (loadingEl) loadingEl.hidden = true;
       if (loginEl) loginEl.hidden = false;
       if (userEl.textContent === "Memuat sesi...") userEl.textContent = "Akses belum diizinkan";
       setStatus(error.message, true);
@@ -191,6 +194,7 @@
     dashboardState = data;
     currentUserIsAdmin = (data.user.roles || []).indexOf("admin") >= 0;
     if (mainEl) mainEl.setAttribute("data-dashboard-protected", "ready");
+    if (loadingEl) loadingEl.hidden = true;
     if (loginEl) loginEl.hidden = true;
     setStatus("Dashboard aktif untuk site franchisee.id.", false);
     renderAuthDebug("dashboard:ready", { roles: data.user.roles || [] });
@@ -240,9 +244,17 @@
 
   function showLoginPanel(message, isError) {
     userEl.textContent = "Belum login";
+    if (loadingEl) loadingEl.hidden = true;
     if (loginEl) loginEl.hidden = false;
     setStatus(message, isError);
     renderAuthDebug("dashboard:login_panel", { message: message, isError: Boolean(isError) });
+  }
+
+  function showLoadingPanel(message) {
+    userEl.textContent = "Memuat sesi...";
+    if (loadingEl) loadingEl.hidden = false;
+    if (loginEl) loginEl.hidden = true;
+    setStatus(message || "Memeriksa akses admin/staff...", false);
   }
 
   function renderAuthDebug(stage, extra) {

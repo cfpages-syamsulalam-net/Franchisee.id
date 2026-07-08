@@ -1,0 +1,52 @@
+.dash-auth-loading {
+  max-width: 620px;
+  margin: 24px auto 0;
+}
+.dash-auth-loading[hidden] {
+  display: none !important;
+}
+.dash-auth-skeleton-card {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--dash-line);
+  border-radius: 18px;
+  background: rgba(255, 253, 246, 0.92);
+  box-shadow: 0 18px 46px rgba(17, 24, 39, 0.08);
+  padding: 22px;
+}
+.dash-skeleton-line,
+.dash-skeleton-grid span {
+  display: block;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(17, 24, 39, 0.08), rgba(255, 192, 61, 0.24), rgba(17, 24, 39, 0.08));
+  background-size: 220% 100%;
+  animation: dashSkeleton 1.2s ease-in-out infinite;
+}
+.dash-skeleton-line.is-title {
+  width: 56%;
+  height: 22px;
+}
+.dash-skeleton-line.is-short {
+  width: 42%;
+}
+.dash-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+.dash-skeleton-grid span {
+  height: 52px;
+  border-radius: 14px;
+}
+@keyframes dashSkeleton {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
+@media (max-width: 720px) {
+  .dash-skeleton-grid {
+    grid-template-columns: 1fr;
+  }
+}

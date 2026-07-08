@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-08 03:35 (Asia/Jakarta)
+Last updated: 2026-07-08 15:13 (Asia/Jakarta)
 
 ## Purpose
 
@@ -50,7 +50,10 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 | OCR controlled worker | Implemented | Added protected `/ocr-worker` plus optional GitHub Actions workflow for large queued backfills. It requires shared `OCR_SECRET`, allows manual workflow runs without the cron gate, keeps scheduled cron disabled until `OCR_WORKER_ENABLED=true`, runs small batches, and enforces a daily OCR usage cap before sending jobs. |
 | OCR franchise-context batching | Implemented | 2026-07-08 request tracker completed: OCR queue/run ordering now completes proposal pages for one franchise before moving to the next franchise, because proposal meaning depends on full-franchise context rather than first-page-only snippets from many franchises. Hasil OCR rows show franchise/page/source context, and recent successful jobs link directly to the matching Hasil OCR row. |
 | OCR provider rate limits | Implemented | Suggestion 68 completed: added provider short-window rate metadata, local cooldown state, runner skip behavior for rate-limited providers, and dashboard visibility for rate/cooldown status. |
-| OCR provider activation and retry UX | In Progress | 2026-07-08 request tracker: move provider active/disabled control out of credential form and into Prioritas Provider OCR only, fix confusing autosave path that can leave providers disabled after credential tinkering, disable all OCR execution buttons when no active provider is available, add per-job retry for failed OCR rows, and add batch retry failed OCR. |
+| OCR provider activation and retry UX | In Progress | 2026-07-08 request tracker: move provider active/disabled control out of credential form and into Prioritas Provider OCR only, fix confusing autosave path that can leave providers disabled after credential tinkering, disable all OCR execution buttons when no active provider is available, make batch failed retry visually clear, and make per-row failed OCR action run OCR immediately rather than only returning the job to pending. |
+| Dashboard action-icon UX audit | In Progress | 2026-07-08 UX audit: OCR job rows should use generous status/action icons, compact action text, tooltip explanations, better row layout, and consistent button alignment. Expand this dashboard-wide pattern gradually: every ambiguous operational action should have an icon plus short label, and state should use visual symbols such as checkmark/success and x/failed where the icon improves scan speed. |
+| Dashboard auth loading skeleton | In Progress | 2026-07-08 UX audit: `/dashboard` should show a neutral loading skeleton while Clerk/session/dashboard authorization is being checked. The login form should only appear after the app knows there is no usable session or the session is expired/unauthorized. |
+| Dashboard CSS modularization | Implemented | 2026-07-08 maintainability audit: `css/dashboard.css` grew too large. Split is now done for auth loading, OCR, Review/Data Quality, Operations/admin helpers, and Premium Operations styles; `css/dashboard.css` remains the shared shell/base stylesheet. |
 | Brochure overlay navigation polish | Implemented | 2026-07-08 request tracker completed: proposal previous/next hit areas are transparent gradient overlays that appear only while the cursor is moving over the image, then auto-hide after 1 second of no pointer movement even if still hovering. OCR enqueue button alignment/icon was fixed at the same time. |
 | Listing operations editor | Implemented MVP | Listing selector plus structured JSON diff form covers all whitelisted public listing fields. A richer field-by-field drawer can be added later. |
 | Leads/commercial view | Implemented read-only MVP | Reads `franchise_leads` status counts and recent leads. Payment/subscription revenue metrics remain pending. |
@@ -175,6 +178,9 @@ Existing tables to reuse:
 14. Change OCR queue processing to franchise-context-first batches. Done; tracked above.
 15. Add provider short-window rate-limit/cooldown guardrails. Done; tracked above.
 16. Move OCR provider activation to provider-priority list, disable OCR execution buttons when no active provider is available, and add failed-job retry controls. In progress; tracked above.
+17. Upgrade OCR job row/action UX with compact icon-led rows and direct per-row OCR retry execution. In progress; tracked above.
+18. Add dashboard auth loading skeleton before showing the login form. In progress; tracked above.
+19. Split large dashboard CSS by feature surface. Done for auth loading, OCR, Review/Data Quality, Operations/admin helpers, and Premium Operations; tracker lives in `AUDIT.md`.
 
 ## Open Decisions
 

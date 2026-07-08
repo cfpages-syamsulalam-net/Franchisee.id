@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-07 09:45 (Asia/Jakarta)
+Last updated: 2026-07-08 15:13 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -119,6 +119,20 @@ Actionability checklist for future edits:
 - [x] Review `/login` and `/daftar` recovery states for direct `next` links after the next auth UI pass.
 - [x] Remove static public payment-account details from `/premium`; route users to the action that generates current instructions.
 - [x] Standardize touched public Premium/Profile copy away from technical/internal language.
+
+## Dashboard CSS Refactor Plan - 2026-07-08
+
+`css/dashboard.css` grew past 1,190 lines after Premium Operations, Review, location editing, OCR configuration, OCR job execution, and auth-debug/loading states. The file still works, but dashboard-specific surfaces now need clearer style ownership so future operational UI changes are easier to review.
+
+| Step | Target files | Scope | Status |
+| --- | --- | --- | --- |
+| 1 | `css/dashboard.css` | Keep the dashboard shell/base styles: header, metrics, tabs, panels, forms, generic action buttons, tables, debug panel, and shared responsive rules. | Done |
+| 2 | `css/dashboard-auth.css` | Extract auth-loading skeleton styles so login/loading state changes do not expand the base dashboard stylesheet. | Done |
+| 3 | `css/dashboard-ocr.css` | Extract OCR guide cards, provider credential/status UI, job toolbar, icon-led job rows, OCR results, and OCR responsive rules. | Done |
+| 4 | `css/dashboard-premium.css` | Extract Premium Operations payment/settings/funnel/notification/report styles. | Done |
+| 5 | `css/dashboard-review.css` | Extract Review/Data Quality guided field editor, diff row, and Area Listing editor styles. | Done |
+| 6 | `css/dashboard-operations.css` | Extract operations/admin helpers such as full-width panels, publication controls, and checkbox rows. | Done |
+| 7 | Validation | Keep `pnpm run build`, `pnpm run dashboard:ocr:check`, and targeted client syntax checks as the minimum guard after dashboard CSS/module edits. | In Progress |
 
 ## Target Architecture
 
