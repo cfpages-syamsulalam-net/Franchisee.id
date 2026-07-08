@@ -5,28 +5,7 @@
   var metadataPayload = window.FranchiseOcrProviderMetadata || {};
   var PROVIDER_FIELDS = metadataPayload.providers || {};
   var FIELD_NAMES = metadataPayload.field_names || ["api_key", "api_secret", "account_id", "endpoint_url", "region", "model", "clear_api_key", "clear_api_secret"];
-  var SCHEDULER_META = {
-    upstash_qstash: {
-      fields: ["api_key", "request_url", "clear_api_key"],
-      token_label: "QSTASH_TOKEN",
-      help: "Upstash QStash otomatis menjadwalkan panggilan berikutnya sampai batch selesai."
-    },
-    cron_job_org: {
-      fields: ["api_key", "request_url", "schedule_cron", "clear_api_key"],
-      token_label: "cron-job.org API key",
-      help: "Gunakan untuk mengelola trigger eksternal yang memanggil worker secara berkala."
-    },
-    inngest: {
-      fields: ["api_key", "request_url", "clear_api_key"],
-      token_label: "Inngest signing/API key",
-      help: "Opsi workflow eksternal; saat ini dipakai sebagai konfigurasi trigger manual."
-    },
-    trigger_dev: {
-      fields: ["api_key", "request_url", "clear_api_key"],
-      token_label: "Trigger.dev access token",
-      help: "Opsi workflow eksternal; saat ini dipakai sebagai konfigurasi trigger manual."
-    }
-  };
+  var schedulerHelpers = window.FranchiseDashboardOcrSchedulers || {};
 
   function createOperations(options) {
     options = options || {};
@@ -69,6 +48,7 @@
       if (options.schedulerForm) options.schedulerForm.addEventListener("change", handleSchedulerFormChange);
       if (options.providerList) options.providerList.addEventListener("click", handleProviderListClick);
       if (options.jobRows) options.jobRows.addEventListener("click", handleJobRowsClick);
+      if (options.batchRows) options.batchRows.addEventListener("click", handleBatchRowsClick);
       if (options.resultRows) options.resultRows.addEventListener("click", handleResultClick);
       if (options.dryRunButton) options.dryRunButton.addEventListener("click", runDryRun);
       if (options.enqueueButton) options.enqueueButton.addEventListener("click", enqueueJobs);
@@ -187,6 +167,20 @@
       event.preventDefault();
       activateSubtab("results");
       focusResultRow(resultLink.getAttribute("data-ocr-open-result"));
+    }
+
+    async function handleBatchRowsClick(event) {
+      var retryButton = event.target && event.target.closest && event.target.closest("[data-ocr-retry-batch]");
+      if (retryButton) {
+        event.preventDefault();
+        await retryBatch(retryButton.getAttribute("data-ocr-retry-batch"), retryButton);
+        return;
+      }
+      var refreshButton = event.target && event.target.closest && event.target.closest("[data-ocr-refresh-batches]");
+      if (!refreshButton) return;
+      event.preventDefault();
+      options.setStatus("Memuat ulang status batch OCR...", false);
+      await options.reloadDashboard();
     }
 
     async function toggleProvider(providerKey) {
@@ -324,11 +318,17 @@
           "Gagal " + Number(batch.failed_count || 0).toLocaleString("id-ID"),
           batch.scheduler_provider_key ? "Scheduler " + batch.scheduler_provider_key : "Manual"
         ];
+        var done = ["completed", "cancelled"].indexOf(batch.status) !== -1;
+        var retryButton = !done
+          ? '<button type="button" class="dash-ocr-row-action" data-ocr-retry-batch="' + utils.escapeAttr(batch.id || "") + '" data-fr-tooltip="Coba jadwalkan ulang batch ini lewat scheduler aktif. Jika error token muncul lagi, ganti QSTASH_TOKEN di Pengaturan."><i class="fas fa-redo-alt" aria-hidden="true"></i><span>Retry</span></button>'
+          : "";
+        var refreshButton = '<button type="button" class="dash-ocr-row-action" data-ocr-refresh-batches data-fr-tooltip="Muat ulang status batch OCR dari server."><i class="fas fa-sync-alt" aria-hidden="true"></i><span>Refresh</span></button>';
         return '<li class="dash-ocr-batch-item is-' + utils.escapeAttr(batch.status || "queued") + '">' +
           '<div class="dash-ocr-batch-head"><strong><i class="fas fa-layer-group" aria-hidden="true"></i> Batch ' + utils.escapeHtml(batch.id || "-") + '</strong>' + renderJobStatus(batch.status) + '</div>' +
           '<div class="dash-ocr-progress"><span style="width:' + Math.max(0, Math.min(progress, 100)) + '%"></span></div>' +
           '<span>' + utils.escapeHtml(meta.join(" · ")) + '</span>' +
           (batch.last_message ? '<small>' + utils.escapeHtml(batch.last_message) + '</small>' : '') +
+          '<div class="dash-ocr-batch-actions">' + retryButton + refreshButton + '</div>' +
           '</li>';
       }).join("") : '<li><span>Belum ada batch OCR besar. Klik Jalankan 100 setelah provider OCR dan scheduler siap.</span></li>';
     }
@@ -338,8 +338,11 @@
         succeeded: ["fa-check-circle", "success", "Sukses"],
         failed: ["fa-times-circle", "failed", "Gagal"],
         needs_review: ["fa-eye", "review", "Perlu cek"],
+        queued: ["fa-clock", "pending", "Queued"],
         pending: ["fa-clock", "pending", "Pending"],
-        running: ["fa-spinner fa-spin", "running", "Running"]
+        running: ["fa-spinner fa-spin", "running", "Running"],
+        completed: ["fa-check-circle", "success", "Selesai"],
+        cancelled: ["fa-ban", "failed", "Batal"]
       };
       var item = map[status] || ["fa-circle", "unknown", status || "Status"];
       return '<span class="dash-ocr-job-state is-' + utils.escapeAttr(item[1]) + '"><i class="fas ' + item[0] + '" aria-hidden="true"></i>' + utils.escapeHtml(item[2]) + '</span>';
@@ -593,15 +596,15 @@
         options.setStatus("Hanya admin yang bisa menjalankan OCR.", true);
         return;
       }
-      await buttonAction(options.runButton, "Menjadwalkan...", async function () {
-        var scheduler = state.schedulers.find(function (item) { return item.is_enabled && item.has_api_key; });
+      await buttonAction(options.runButton, "Cek scheduler...", async function () {
+        var scheduler = firstActiveScheduler();
         var result = await options.postDashboardAction({
           action: "start_ocr_batch_run",
           target_count: 100,
           scheduler_provider_key: scheduler ? scheduler.provider_key : "upstash_qstash"
         });
         var schedulerMessage = result.scheduler && result.scheduler.message ? " " + result.scheduler.message : "";
-        options.setStatus("Batch OCR dibuat: " + Number(result.assigned_count || 0).toLocaleString("id-ID") + " job masuk batch." + schedulerMessage, false);
+        options.setStatus("Preflight scheduler berhasil. Batch OCR dibuat: " + Number(result.assigned_count || 0).toLocaleString("id-ID") + " job masuk batch." + schedulerMessage, false);
         await options.reloadDashboard();
       }, options.setStatus);
     }
@@ -646,6 +649,24 @@
       }, options.setStatus);
     }
 
+    async function retryBatch(batchId, button) {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa retry batch OCR.", true);
+        return;
+      }
+      await buttonAction(button, "Retry...", async function () {
+        var scheduler = firstActiveScheduler();
+        var result = await options.postDashboardAction({
+          action: "retry_ocr_batch_run",
+          batch_id: batchId,
+          scheduler_provider_key: scheduler ? scheduler.provider_key : "upstash_qstash"
+        });
+        var message = result.scheduler && result.scheduler.message ? result.scheduler.message : "Batch dijadwalkan ulang.";
+        options.setStatus(message, !(result.scheduler && result.scheduler.triggered));
+        await options.reloadDashboard();
+      }, options.setStatus);
+    }
+
     function findProvider(key) {
       return state.providers.find(function (provider) { return provider.provider_key === key; }) || null;
     }
@@ -661,9 +682,15 @@
     }
 
     function countActiveSchedulers(providers) {
-      return (providers || []).filter(function (provider) {
-        return provider && provider.is_enabled && provider.has_api_key;
-      }).length;
+      return typeof schedulerHelpers.countActive === "function"
+        ? schedulerHelpers.countActive(providers)
+        : (providers || []).filter(function (provider) { return provider && provider.is_enabled && provider.has_api_key; }).length;
+    }
+
+    function firstActiveScheduler() {
+      return typeof schedulerHelpers.firstActive === "function"
+        ? schedulerHelpers.firstActive(state.schedulers)
+        : (state.schedulers || []).find(function (provider) { return provider && provider.is_enabled && provider.has_api_key; }) || null;
     }
 
     function renderSchedulerSelect() {
@@ -678,7 +705,9 @@
     function fillSchedulerForm(provider) {
       if (!options.schedulerForm || !provider) return;
       state.fillingScheduler = true;
-      var meta = SCHEDULER_META[provider.provider_key] || SCHEDULER_META.upstash_qstash;
+      var meta = typeof schedulerHelpers.providerMeta === "function"
+        ? schedulerHelpers.providerMeta(provider.provider_key)
+        : { fields: ["api_key", "request_url", "clear_api_key"], token_label: "API key / token", help: "Token provider scheduler." };
       setSchedulerValue("provider_key", provider.provider_key);
       setSchedulerValue("api_key", "");
       setSchedulerValue("api_secret", "");

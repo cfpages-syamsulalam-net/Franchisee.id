@@ -107,6 +107,12 @@ export const StartOcrBatchRunSchema = z.object({
   scheduler_provider_key: OcrSchedulerProviderKeySchema.optional().default("upstash_qstash"),
 });
 
+export const RetryOcrBatchRunSchema = z.object({
+  action: z.literal("retry_ocr_batch_run"),
+  batch_id: z.string().trim().min(1).max(160),
+  scheduler_provider_key: OcrSchedulerProviderKeySchema.optional().default("upstash_qstash"),
+});
+
 export const DASHBOARD_OCR_ACTION_SCHEMAS = [
   UpdateOcrProviderConfigSchema,
   ToggleOcrProviderEnabledSchema,
@@ -119,4 +125,5 @@ export const DASHBOARD_OCR_ACTION_SCHEMAS = [
   UpdateOcrSchedulerConfigSchema,
   ToggleOcrSchedulerEnabledSchema,
   StartOcrBatchRunSchema,
+  RetryOcrBatchRunSchema,
 ];

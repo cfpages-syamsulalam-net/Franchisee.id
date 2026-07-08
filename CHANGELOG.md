@@ -6,19 +6,28 @@ Format:
 
 ## 2026-07-08 19:58 (Asia/Jakarta)
 ### Added
+- `.context/session-20260708-2040.md`: Added this session continuity snapshot for QStash batch retry fixes and the suggestion 73 OCR maintainability split.
 - `migrations/0023_ocr_batch_scheduler.sql`: Added persisted OCR batch runs, OCR job `batch_id`, and encrypted third-party OCR scheduler provider configuration for Upstash QStash, cron-job.org, Inngest, and Trigger.dev.
 - `functions/_ocr-scheduler-config.js`: Added masked scheduler config reads, encrypted scheduler credential saves using `OCR_KEY`, scheduler enable toggles, and Upstash QStash delayed trigger dispatch to `/ocr-worker`.
+- `functions/_ocr-batch-runs.js`: Added a focused persisted OCR batch-run module for batch creation, assignment, progress refresh, safe masking, and retry scheduler dispatch.
+- `js/dashboard-ocr-schedulers.js`: Added a focused dashboard OCR scheduler metadata/helper module.
 
 ### Changed
 - `functions/_dashboard-ocr-schemas.js`: Added scheduler config/toggle action schemas, `start_ocr_batch_run`, and optional `batch_id` support for bounded OCR runs.
 - `functions/_ocr-job-runner.js`: Added persisted OCR batch creation up to 100 jobs, batch job assignment, batch progress refresh, batch-scoped claiming, and third-party scheduler triggering while preserving franchise-first job processing.
 - `functions/dashboard-data.js`: Added masked OCR scheduler state to dashboard reads and routed scheduler config/toggle plus persisted OCR batch start actions.
-- `functions/ocr-worker.js`: Added `batch_id` support and next-trigger scheduling through the active third-party scheduler while preserving `OCR_SECRET` protection and daily cap checks.
-- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, and `css/dashboard-ocr.css`: Added the OCR Scheduler panel, encrypted scheduler credential autosave UI, `Jalankan 100` persisted-batch action, and visible OCR batch progress rows.
+- `functions/ocr-worker.js`: Added `batch_id` support, harmless preflight request handling, and next-trigger scheduling through the active third-party scheduler while preserving `OCR_SECRET` protection and daily cap checks.
+- `functions/_ocr-scheduler-config.js`: Fixed Upstash QStash publish URL formatting, validates scheduler worker URLs before dispatch, strips a pasted `Bearer ` prefix from stored QStash tokens, and returns a clearer invalid-token hint when QStash responds with 401.
+- `functions/dashboard-data.js` and `functions/_dashboard-ocr-schemas.js`: Added `retry_ocr_batch_run` so an existing failed/running OCR batch can be rescheduled after scheduler credential or URL fixes.
+- `functions/_ocr-scheduler-config.js`, `functions/_ocr-batch-runs.js`, `functions/ocr-worker.js`, and `js/dashboard-ocr.js`: Added automatic Upstash QStash scheduler preflight before `Jalankan 100`; failed preflight now blocks batch creation instead of producing a confusing `Running 0/100` batch row.
+- `functions/_ocr-job-runner.js`: Refactored persisted batch-run creation/progress out to `_ocr-batch-runs.js` while keeping OCR job processing, provider failover, and proposal knowledge persistence in the runner.
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, `js/dashboard-ocr-schedulers.js`, and `css/dashboard-ocr.css`: Added the OCR Scheduler panel, encrypted scheduler credential autosave UI, `Jalankan 100` persisted-batch action, visible OCR batch progress rows, and per-batch Retry/Refresh controls.
 - `docs/architecture/OCR_BATCH_SCHEDULING.md`: Updated the OCR batch strategy from GitHub/Cloudflare scheduling to third-party scheduler/queue integration, with Upstash QStash as the implemented automatic path.
 - `AUDIT.md`: Added the 2026-07-08 refactor-candidate plan for OCR runner, dashboard OCR client, OCR dashboard markup, and scheduler provider adapters.
 - `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Updated the living code map for OCR scheduler config, persisted batch runs, worker batch draining, and dashboard OCR scheduler UI.
 - `SUGGESTION.md`: Marked suggestion 72 done and added suggestion 73 for follow-up OCR maintainability refactors.
+- `SUGGESTION.md` and `AUDIT.md`: Marked suggestion 73 done for the first OCR maintainability split and kept remaining deeper split candidates as future follow-up.
+- `SUGGESTION.md`: Marked suggestion 74 done by implementing automatic scheduler preflight before large batch starts.
 - Remote D1 `franchise_db`: Applied migration `0023_ocr_batch_scheduler.sql` for OCR batch/scheduler state.
 
 ### Removed

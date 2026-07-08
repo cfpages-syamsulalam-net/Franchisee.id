@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-08 18:55 (Asia/Jakarta)
+Last updated: 2026-07-08 20:40 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -30,14 +30,14 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 - Proposal uploads now preserve extracted text and reviewable missing-field candidates separately from canonical listing data. Image-only brochure OCR is handled by an admin-triggered queue so uploads stay fast and OCR-derived facts still require review.
 - OCR provider configuration is now an admin-only `/dashboard` surface backed by D1 migration 0020, with encrypted credential storage using the external Cloudflare Pages secret `OCR_KEY`. Migration 0021 is applied remotely and adds OCR jobs, attempts, content-hash cache, and provider usage events; external OCR calls only run when an admin explicitly starts a dry-run or bounded batch.
 - `src/lib/franchise-detail-assets.ts` has grown into a large mixed CSS/JS injection module. It is stable enough for the current production fixes, but should be split before the next major listing-detail feature pass.
-- OCR operations now include provider config, encrypted scheduler config, batch-run orchestration, and worker draining. The implementation is functional, but `functions/_ocr-job-runner.js` and `js/dashboard-ocr.js` should be split before adding more provider adapters or richer batch controls.
+- OCR operations now include provider config, encrypted scheduler config, batch-run orchestration, and worker draining. The first maintainability split is done: batch-run orchestration lives in `_ocr-batch-runs.js`, scheduler browser metadata lives in `dashboard-ocr-schedulers.js`, and the remaining runner/client modules should be split further only before adding deeper provider adapters or richer batch controls.
 
 ## Refactor Candidates - 2026-07-08
 
 | File / area | Why it is now a refactor candidate | Proposed split | Priority | Status |
 | --- | --- | --- | --- | --- |
-| `functions/_ocr-job-runner.js` | It now owns job enqueueing, dry-run, retry, no-text review, batch assignment, batch progress, image loading, provider failover, cache writes, quota/rate-limit guards, and proposal knowledge persistence. This is too many responsibilities for safe future OCR changes. | Split into `_ocr-job-actions.js` for dashboard handlers, `_ocr-batch-runs.js` for batch creation/progress, `_ocr-job-claiming.js` for leasing/franchise-first selection, and keep provider processing in `_ocr-job-runner.js`. | High | Planned |
-| `js/dashboard-ocr.js` | It now renders provider credentials, scheduler credentials, job execution, batch progress, result navigation, row actions, autosave, and subtab behavior in one browser script. | Split into `dashboard-ocr-providers.js`, `dashboard-ocr-schedulers.js`, `dashboard-ocr-jobs.js`, and a small coordinator that wires shared state/status. | High | Planned |
+| `functions/_ocr-job-runner.js` | It had grown to own job enqueueing, dry-run, retry, no-text review, batch assignment, batch progress, image loading, provider failover, cache writes, quota/rate-limit guards, and proposal knowledge persistence. | Split batch creation/progress/retry into `_ocr-batch-runs.js`; keep provider processing and existing dashboard job handlers in `_ocr-job-runner.js` for now. Future split target: `_ocr-job-actions.js` and `_ocr-job-claiming.js` before adding more runner logic. | High | Partial done |
+| `js/dashboard-ocr.js` | It had grown to render provider credentials, scheduler credentials, job execution, batch progress, result navigation, row actions, autosave, and subtab behavior in one browser script. | Split scheduler provider metadata/helpers into `dashboard-ocr-schedulers.js`; keep the coordinator in `dashboard-ocr.js`. Future split target: provider renderer and job/result renderer modules if the OCR tab grows again. | High | Partial done |
 | `src/pages/dashboard/index.astro` OCR panel | OCR markup now has settings, scheduler credentials, execution, results, tooltips, and action copy inline inside the full dashboard page. It is readable but will become brittle as OCR grows. | Extract OCR panel markup into `src/components/dashboard/OcrPanel.astro` or a small render helper when dashboard componentization is introduced. | Medium | Planned |
 | `functions/_ocr-scheduler-config.js` | It currently handles encrypted config and QStash dispatch. That is acceptable for one automatic provider but should not absorb every provider API. | Keep config CRUD in `_ocr-scheduler-config.js`; move provider-specific dispatch into `_ocr-scheduler-adapters.js` before adding cron-job.org API sync, Inngest, or Trigger.dev adapters. | Medium | Planned |
 

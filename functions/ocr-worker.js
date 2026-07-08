@@ -21,6 +21,17 @@ export async function onRequestPost({ request, env }) {
     }
 
     const payload = await request.json().catch(() => ({}));
+    if (payload.preflight) {
+      const summary = {
+        source: payload.source || "scheduled",
+        preflight: true,
+        processed_count: 0,
+        provider_count: 0,
+      };
+      await logWorkerEvent(env, summary, "info");
+      return jsonResponse({ success: true, summary });
+    }
+
     const dailyCap = boundedNumber(env.OCR_WORKER_DAILY_CAP || payload.daily_cap, 1, 500, DEFAULT_DAILY_CAP);
     const requestedLimit = boundedNumber(payload.limit, 1, MAX_BATCH_LIMIT, DEFAULT_BATCH_LIMIT);
     const usedToday = await countTodayUsage(env.franchise_db);
@@ -99,11 +110,14 @@ async function countTodayUsage(db) {
 }
 
 async function logWorkerEvent(env, summary, severity) {
+  const message = summary.preflight
+    ? `preflight=true source=${summary.source || "scheduled"}`
+    : `processed=${summary.processed_count} providers=${summary.provider_count} used_today=${summary.used_today}/${summary.daily_cap}`;
   await logOperationEvent(env.franchise_db, {
     eventType: "ocr.worker.run",
     severity,
     route: "/ocr-worker",
-    message: `processed=${summary.processed_count} providers=${summary.provider_count} used_today=${summary.used_today}/${summary.daily_cap}`,
+    message,
     metadata: summary,
   }).catch(() => {});
 }

@@ -325,7 +325,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Provider-specific field rules come from `window.FranchiseOcrProviderMetadata`, which is injected from `src/lib/ocr-provider-metadata.js`; simple-key providers show only API key, Azure shows key plus endpoint, Cloudflare/Groq show model where relevant, AWS shows access key/secret/region, and Veryfi shows API key plus client ID plus username/auth secret.
 - `handleFormChange(event)` / `saveConfig(successMessage)`: Auto-saves provider metadata plus optional replacement credentials or explicit clear flags; blank password inputs preserve existing D1 values, new credentials check the active-provider toggle automatically, and clearing the API key disables the provider.
 - `handleSchedulerFormChange(event)` / `saveSchedulerConfig(successMessage)`: Auto-saves third-party scheduler credentials/settings through `update_ocr_scheduler_config`; blank token fields preserve existing encrypted D1 values, and new tokens enable the scheduler automatically.
-- `runDryRun()` / `enqueueJobs()` / `runJobs()` / `retryJob()` / `retryFailedJobs()`: Calls the admin-only OCR actions with explicit copy that dry-run is a real one-asset OCR run and `Jalankan 100` creates a persisted server-side batch drained by a third-party scheduler in small chunks. Per-row failed-job OCR retry runs that job immediately; batch failed retry only requeues up to 100 failed jobs. Job execution/retry buttons are disabled when no active provider with stored credentials is available.
+- `runDryRun()` / `enqueueJobs()` / `runJobs()` / `retryBatch()` / `retryJob()` / `retryFailedJobs()`: Calls the admin-only OCR actions with explicit copy that dry-run is a real one-asset OCR run and `Jalankan 100` creates a persisted server-side batch drained by a third-party scheduler in small chunks. Batch retry reschedules an existing batch after scheduler credential/URL fixes; per-row failed-job OCR retry runs that job immediately; batch failed retry only requeues up to 100 failed jobs. Job execution/retry buttons are disabled when no active provider with stored credentials is available.
+
+### File: `js/dashboard-ocr-schedulers.js`
+*Dashboard OCR scheduler browser helper.*
+- `providerMeta(providerKey)`: Returns scheduler-provider visible field/copy metadata for Upstash QStash, cron-job.org, Inngest, and Trigger.dev.
+- `countActive(providers)` / `firstActive(providers)`: Shared helpers for the OCR dashboard coordinator to find active scheduler credentials without duplicating provider filtering logic.
 
 ### File: `src/lib/ocr-provider-metadata.js`
 *Shared OCR provider requirements contract.*
@@ -900,6 +905,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Thin protected Franchisee.id dashboard router.*
 - `onRequestGet()`: Requires Clerk auth plus D1 `staff`; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
 - `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, and admin-triggered OCR dry-run/enqueue/run/retry/no-text/batch actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
+- OCR batch start/retry actions are routed to `_ocr-batch-runs.js`; `_ocr-job-runner.js` stays focused on job processing and OCR provider execution.
 - `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
 
 ### File: `functions/_dashboard-schemas.js`
@@ -925,8 +931,16 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Admin-only OCR scheduler configuration and third-party dispatch boundary.*
 - `getOcrSchedulerState(db, auth, env)`: Returns masked scheduler provider rows for Upstash QStash, cron-job.org, Inngest, and Trigger.dev, including stored-token booleans, health status, request URL, and recommended provider metadata without exposing credential values.
 - `handleUpdateOcrSchedulerConfig(db, auth, data, env)` / `handleToggleOcrSchedulerEnabled(db, auth, data)`: Stores third-party scheduler credentials encrypted with `OCR_KEY`, preserves blank token fields, supports explicit clearing, and audits non-secret scheduler state.
+- `preflightOcrScheduler(db, env, options)`: Validates the active scheduler before large batch creation. Upstash QStash preflight publishes a harmless `{ preflight: true }` message to `/ocr-worker`; token/worker URL/secret failures block batch creation.
 - `triggerOcrScheduler(db, env, batch, options)`: Selects an active scheduler provider and dispatches the next batch trigger. Upstash QStash is implemented as delayed HTTP delivery to `/ocr-worker`; other providers are configurable external-trigger entries pending deeper provider-specific adapters.
-- `readSchedulerApiKey(env, provider, fieldName)`: Decrypts a scheduler credential only at dispatch time using `OCR_KEY` and provider/field AAD.
+- `readSchedulerApiKey(env, provider, fieldName)`: Decrypts a scheduler credential only at dispatch time using `OCR_KEY` and provider/field AAD. QStash dispatch strips a pasted `Bearer ` prefix and sends the destination URL using QStash's raw URL path format.
+
+### File: `functions/_ocr-batch-runs.js`
+*Persisted OCR batch-run orchestration module.*
+- `handleStartOcrBatchRun(db, auth, data, env, options)`: Admin-only action that first runs scheduler preflight, then ensures enough pending proposal-image jobs, creates an `ocr_batch_runs` row up to 100 assigned jobs, tags those jobs with `batch_id`, and asks `_ocr-scheduler-config.js` to trigger the first third-party scheduler message. If preflight fails, no batch/jobs are created.
+- `handleRetryOcrBatchRun(db, auth, data, env, options)`: Admin-only action that reschedules an existing non-completed batch through the active scheduler provider after credential/URL fixes.
+- `refreshBatchProgress(db, batchId, options)`: Recomputes assigned/processed/succeeded/failed/needs-review counts from `ocr_jobs`, updates `ocr_batch_runs`, and returns the masked batch row.
+- `maskBatchRow(row)`: Produces the dashboard-safe batch progress contract.
 
 ### File: `functions/_ocr-provider-adapters.js`
 *External OCR provider adapter boundary.*
@@ -940,7 +954,6 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleEnqueueOcrJobs(db, auth, data)`: Admin-only action that queues active image proposal assets into `ocr_jobs`; it does not call external OCR providers.
 - `handleRunOcrDryRun(db, auth, data, env, options)`: Admin-only action that requires `OCR_KEY` and one enabled provider, prepares at most one candidate proposal-image job, and processes only that job before broad backfills.
 - `handleRunOcrJobs(db, auth, data, env, options)`: Admin-only action that runs a bounded batch and requires `OCR_KEY` before any provider call can happen.
-- `handleStartOcrBatchRun(db, auth, data, env, options)`: Admin-only action that ensures enough pending proposal-image jobs, creates an `ocr_batch_runs` row up to 100 assigned jobs, tags those jobs with `batch_id`, and asks `_ocr-scheduler-config.js` to trigger the first third-party scheduler message.
 - `handleRetryOcrJob(db, auth, data, env, options)` / `handleRetryFailedOcrJobs(db, auth, data)`: Admin-only retry actions. Single-job retry moves one failed or needs-review job back to `pending` and immediately runs OCR for that job; batch retry moves up to 100 failed jobs back to `pending` without deleting attempt history.
 - `handleMarkOcrJobNoText(db, auth, data)`: Admin-only manual resolution for failed/needs-review OCR jobs after checking the source brochure image; marks the job `needs_review` with an actionable no-text note and writes an audit event.
 - `runOcrJobs(db, env, auth, options)`: Claims pending jobs, optionally scoped by `batch_id`, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` when available, checks local quota/trial state, tries enabled providers in priority order, logs attempts and usage, writes successful OCR text through `proposalKnowledgeStatements()`, treats provider text-too-short responses as job review state instead of provider-health failure, and refreshes batch progress after each scoped drain.
@@ -949,7 +962,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/ocr-worker.js`
 *Protected OCR queue worker endpoint for third-party scheduled backfills.*
-- `onRequestPost({ request, env })`: Requires `OCR_SECRET`, verifies bearer or `x-worker-secret`, accepts optional `batch_id`, checks the counted OCR usage for the current UTC day, bounds the requested run size to 1-10 jobs, calls `runOcrJobs()` with a synthetic admin actor, schedules the next Upstash QStash delayed trigger while a scoped batch is still running, logs a summary to `operation_events`, and returns processed/provider/daily-cap/batch metadata.
+- `onRequestPost({ request, env })`: Requires `OCR_SECRET`, verifies bearer or `x-worker-secret`, accepts harmless `{ preflight: true }` scheduler checks without running OCR, accepts optional `batch_id`, checks the counted OCR usage for the current UTC day on real runs, bounds the requested run size to 1-10 jobs, calls `runOcrJobs()` with a synthetic admin actor, schedules the next Upstash QStash delayed trigger while a scoped batch is still running, logs a summary to `operation_events`, and returns processed/provider/daily-cap/batch metadata.
 - `countTodayUsage(db)`: Sums counted `ocr_provider_usage_events` rows since UTC midnight so the worker can stop before exceeding the configured daily cap.
 - `hasValidSecret(request, expectedSecret)`: Keeps the worker trigger independent from dashboard/Clerk auth while still requiring the Cloudflare Pages `OCR_SECRET` shared secret.
 

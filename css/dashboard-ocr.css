@@ -239,6 +239,12 @@
   color: var(--dash-muted);
   font-weight: 700;
 }
+.dash-ocr-batch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
 .dash-ocr-job-head {
   display: flex;
   flex-wrap: wrap;

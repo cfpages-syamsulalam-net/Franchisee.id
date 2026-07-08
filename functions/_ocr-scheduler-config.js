@@ -153,8 +153,27 @@ export async function triggerOcrScheduler(db, env, batch, options = {}) {
   };
 }
 
+export async function preflightOcrScheduler(db, env, options = {}) {
+  const provider = await loadPreferredScheduler(db, options.providerKey);
+  if (!provider) {
+    return {
+      ok: false,
+      provider_key: "",
+      message: "Belum ada scheduler pihak ketiga yang aktif. Aktifkan Upstash QStash sebelum menjalankan batch OCR besar.",
+    };
+  }
+  if (provider.provider_key === "upstash_qstash") {
+    return preflightQstash(db, env, provider);
+  }
+  return {
+    ok: false,
+    provider_key: provider.provider_key,
+    message: `${provider.display_name} belum punya preflight otomatis di dashboard ini. Gunakan Upstash QStash untuk batch OCR 100 yang dijalankan dari dashboard.`,
+  };
+}
+
 async function triggerQstash(db, env, provider, batch, options = {}) {
-  const token = await readSchedulerApiKey(env, provider, "api_key");
+  const token = normalizeBearerToken(await readSchedulerApiKey(env, provider, "api_key"));
   const workerSecret = textOrNull(env.OCR_SECRET);
   if (!token || !workerSecret) {
     const message = !workerSecret
@@ -163,13 +182,18 @@ async function triggerQstash(db, env, provider, batch, options = {}) {
     await markSchedulerFailure(db, provider.provider_key, message);
     return { triggered: false, provider_key: provider.provider_key, message };
   }
-  const workerUrl = textOrNull(provider.request_url) || resolveWorkerUrl(env);
+  const workerUrl = normalizeWorkerUrl(textOrNull(provider.request_url) || resolveWorkerUrl(env));
+  if (!workerUrl) {
+    const message = "Worker URL scheduler tidak valid. Gunakan URL lengkap, contoh: https://franchisee.id/ocr-worker.";
+    await markSchedulerFailure(db, provider.provider_key, message);
+    return { triggered: false, provider_key: provider.provider_key, message };
+  }
   const body = {
     source: "upstash_qstash",
     batch_id: batch.id,
     limit: options.limit || 5,
   };
-  const response = await fetch(`${QSTASH_PUBLISH_URL}${encodeURIComponent(workerUrl)}`, {
+  const response = await fetch(`${QSTASH_PUBLISH_URL}${workerUrl}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -181,7 +205,8 @@ async function triggerQstash(db, env, provider, batch, options = {}) {
   });
   const responseText = await response.text().catch(() => "");
   if (!response.ok) {
-    const message = cleanError(`Upstash QStash gagal menjadwalkan OCR (${response.status}): ${responseText || response.statusText}`);
+    const authHint = response.status === 401 ? " Pastikan token yang disimpan adalah QSTASH_TOKEN dari Upstash, bukan signing key, current signing key, atau URL endpoint." : "";
+    const message = cleanError(`Upstash QStash gagal menjadwalkan OCR (${response.status}): ${responseText || response.statusText}${authHint}`);
     await markSchedulerFailure(db, provider.provider_key, message);
     return { triggered: false, provider_key: provider.provider_key, message };
   }
@@ -206,6 +231,57 @@ async function triggerQstash(db, env, provider, batch, options = {}) {
     triggered: true,
     provider_key: provider.provider_key,
     message: `Trigger QStash terjadwal (${options.delay || QSTASH_NEXT_DELAY}).`,
+  };
+}
+
+async function preflightQstash(db, env, provider) {
+  const token = normalizeBearerToken(await readSchedulerApiKey(env, provider, "api_key"));
+  const workerSecret = textOrNull(env.OCR_SECRET);
+  if (!token || !workerSecret) {
+    const message = !workerSecret
+      ? "Cloudflare Pages secret OCR_SECRET belum tersedia untuk worker OCR."
+      : "Token Upstash QStash belum tersimpan.";
+    await markSchedulerFailure(db, provider.provider_key, message);
+    return { ok: false, provider_key: provider.provider_key, message };
+  }
+  const workerUrl = normalizeWorkerUrl(textOrNull(provider.request_url) || resolveWorkerUrl(env));
+  if (!workerUrl) {
+    const message = "Worker URL scheduler tidak valid. Gunakan URL lengkap, contoh: https://franchisee.id/ocr-worker.";
+    await markSchedulerFailure(db, provider.provider_key, message);
+    return { ok: false, provider_key: provider.provider_key, message };
+  }
+  const response = await fetch(`${QSTASH_PUBLISH_URL}${workerUrl}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "Upstash-Forward-Authorization": `Bearer ${workerSecret}`,
+    },
+    body: JSON.stringify({
+      source: "upstash_qstash",
+      preflight: true,
+      limit: 1,
+    }),
+  });
+  const responseText = await response.text().catch(() => "");
+  if (!response.ok) {
+    const authHint = response.status === 401 ? " Pastikan token yang disimpan adalah QSTASH_TOKEN dari Upstash, bukan signing key, current signing key, atau URL endpoint." : "";
+    const message = cleanError(`Preflight Upstash QStash gagal (${response.status}): ${responseText || response.statusText}${authHint}`);
+    await markSchedulerFailure(db, provider.provider_key, message);
+    return { ok: false, provider_key: provider.provider_key, message };
+  }
+  await db
+    .prepare(
+      `UPDATE ocr_scheduler_configs
+       SET health_status = 'ready', last_error = NULL, last_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+       WHERE provider_key = ?`,
+    )
+    .bind(provider.provider_key)
+    .run();
+  return {
+    ok: true,
+    provider_key: provider.provider_key,
+    message: "Preflight scheduler OCR berhasil. Batch aman dibuat.",
   };
 }
 
@@ -283,6 +359,23 @@ function qstashMessageId(responseText) {
 
 function defaultRequestBody(providerKey) {
   return JSON.stringify({ source: providerKey || "scheduled", limit: 5 });
+}
+
+function normalizeWorkerUrl(value) {
+  const raw = textOrNull(value);
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (!["https:", "http:"].includes(url.protocol)) return "";
+    return url.toString();
+  } catch (_error) {
+    return "";
+  }
+}
+
+function normalizeBearerToken(value) {
+  const raw = textOrNull(value) || "";
+  return raw.replace(/^Bearer\s+/i, "").trim();
 }
 
 function textOrNull(value) {

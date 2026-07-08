@@ -9,10 +9,12 @@ Make the `/dashboard` OCR action feel like “klik sekali untuk proses sampai 10
 The safe design is not a single dashboard HTTP request that sleeps until 100 images finish. The safe design is:
 
 1. Admin clicks `Jalankan batch berikutnya`.
-2. Dashboard creates an `ocr_batch_runs` record with `target_count = 100`, `status = running`, and a generated batch id.
-3. A third-party scheduler/queue triggers `/ocr-worker`, and the existing Pages Function drains that batch in small chunks, for example 1-5 OCR jobs per invocation.
-4. Each invocation uses existing D1 provider cooldown/quota metadata to decide whether it can call a provider now, should wait, or should stop for the day.
-5. Dashboard polls batch progress and shows processed/succeeded/failed/needs-review/skipped counts.
+2. Dashboard runs scheduler preflight before creating work. For Upstash QStash this publishes a harmless `{ "preflight": true }` message to `/ocr-worker`, validating the QStash token, destination URL shape, and worker secret path without running OCR.
+3. If preflight fails, dashboard returns the scheduler error and does not create the `ocr_batch_runs` record or assign 100 jobs.
+4. If preflight succeeds, dashboard creates an `ocr_batch_runs` record with `target_count = 100`, a generated batch id, and assigned pending jobs.
+5. A third-party scheduler/queue triggers `/ocr-worker`, and the existing Pages Function drains that batch in small chunks, for example 1-5 OCR jobs per invocation.
+6. Each invocation uses existing D1 provider cooldown/quota metadata to decide whether it can call a provider now, should wait, or should stop for the day.
+7. Dashboard polls batch progress and shows processed/succeeded/failed/needs-review/skipped counts.
 
 This gives the admin the intended UX without relying on a long browser tab, long Pages Function request, or uncontrolled sleep loop.
 
@@ -49,7 +51,8 @@ Implementation sketch:
   - `last_message`
 - Added optional `batch_id` to `ocr_jobs` so the dashboard-created batch owns a stable slice of work.
 - Added dashboard action `start_ocr_batch_run` with `target_count` bounded to 100.
-- `/ocr-worker` accepts `{ "batch_id": "...", "limit": 5 }`.
+- `start_ocr_batch_run` runs automatic scheduler preflight before creating the batch; failed preflight blocks batch creation.
+- `/ocr-worker` accepts `{ "preflight": true }` for scheduler checks and `{ "batch_id": "...", "limit": 5 }` for real batch drains.
 - Third-party scheduler calls `/ocr-worker`; the worker exits quickly when no claimable batch job exists.
 - Keep each worker invocation small. The “100 jobs” target is achieved by repeated safe invocations, not one long request.
 
@@ -61,7 +64,7 @@ The OCR scheduler path intentionally avoids adding another Cloudflare Cron/Worke
 
 Current provider behavior:
 
-1. Upstash QStash: implemented as the recommended automatic queue/delay provider. `start_ocr_batch_run` publishes a QStash message to `/ocr-worker`, and each worker chunk schedules the next delayed message while the batch is still running.
+1. Upstash QStash: implemented as the recommended automatic queue/delay provider. `start_ocr_batch_run` first publishes a harmless QStash preflight message to `/ocr-worker`; only after that succeeds does it create the batch and publish the real QStash message. Each worker chunk schedules the next delayed message while the batch is still running. The dashboard should store `QSTASH_TOKEN`; if an admin pastes `Bearer ...`, the dispatch layer strips the prefix before calling QStash.
 2. cron-job.org: configurable in dashboard as an external cron trigger provider. Use it to call `/ocr-worker` on a fixed cadence if a plain minutely cron is preferred.
 3. Inngest and Trigger.dev: configurable as external workflow trigger providers for later deeper integration, without putting secrets in code or environment variables beyond `OCR_KEY`.
 
@@ -94,13 +97,14 @@ Use this order:
 `Jalankan batch berikutnya` should become:
 
 - Button label: `Jalankan 100`
-- On click: create server-side batch run and return immediately.
+- On click: run automatic scheduler preflight first. If preflight succeeds, create the server-side batch run and return immediately. If preflight fails, show the scheduler error and do not create a batch.
 - Status panel:
   - `Batch berjalan: 17/100 diproses`
   - `Sukses 12 · Perlu cek 3 · Gagal 1 · Skip rate limit 1`
   - `Lanjut otomatis oleh Upstash QStash` or `Menunggu trigger eksternal`
 - Actions:
   - `Refresh`
+  - `Retry` for a failed scheduler trigger after fixing scheduler credential/URL configuration
   - `Batalkan`
   - `Lanjutkan sekarang` for admin-triggered one-off drain
 
