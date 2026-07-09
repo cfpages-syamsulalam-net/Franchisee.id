@@ -315,9 +315,19 @@
         var rowClass = provider.is_enabled ? "" : ' class="is-muted"';
         var providerError = renderProviderError(provider);
         return '<li' + rowClass + '><div class="dash-ocr-provider-row"><div><strong>#' + Number(provider.priority || 100) + ' · ' + utils.escapeHtml(provider.display_name) + '</strong><span>' +
-          utils.escapeHtml(configured + " · " + (provider.is_enabled ? "Aktif" : "Nonaktif") + " · " + provider.health_status) +
+          utils.escapeHtml(configured + " · " + (provider.is_enabled ? "Aktif" : "Nonaktif") + " · " + providerHealthLabel(provider)) +
           '<br>' + quota + '</span></div>' + renderProviderToggle(provider) + '</div>' + providerError + '</li>';
       }).join("") : '<li><span>Belum ada provider OCR.</span></li>';
+    }
+
+    function providerHealthLabel(provider) {
+      if (!provider) return "-";
+      var status = provider.health_status || "-";
+      if (status === "cooldown") {
+        var cooldownUntil = provider.cooldown_until ? Date.parse(provider.cooldown_until) : 0;
+        return cooldownUntil && cooldownUntil <= Date.now() ? "Cooldown selesai" : "Cooldown";
+      }
+      return status;
     }
 
     function renderProviderToggle(provider) {
@@ -416,8 +426,9 @@
           batch.scheduler_provider_key ? "Scheduler " + batch.scheduler_provider_key : "Manual"
         ];
         var done = ["completed", "cancelled"].indexOf(batch.status) !== -1;
+        var retryDisabled = state.activeProviderCount === 0;
         var retryButton = !done
-          ? '<button type="button" class="dash-ocr-row-action" data-ocr-retry-batch="' + utils.escapeAttr(batch.id || "") + '" data-fr-tooltip="Coba jadwalkan ulang batch ini lewat scheduler aktif. Jika error token muncul lagi, ganti QSTASH_TOKEN di Pengaturan."><i class="fas fa-redo-alt" aria-hidden="true"></i><span>Retry</span></button>'
+          ? '<button type="button" class="dash-ocr-row-action" data-ocr-retry-batch="' + utils.escapeAttr(batch.id || "") + '" data-fr-tooltip="' + utils.escapeAttr(retryDisabled ? "Aktifkan provider OCR yang siap dipakai sebelum retry batch." : "Coba jadwalkan ulang batch ini lewat scheduler aktif. Jika error token muncul lagi, ganti QSTASH_TOKEN di Pengaturan.") + '"' + (retryDisabled ? " disabled" : "") + '><i class="fas fa-redo-alt" aria-hidden="true"></i><span>Retry</span></button>'
           : "";
         var refreshButton = '<button type="button" class="dash-ocr-row-action" data-ocr-refresh-batches data-fr-tooltip="Muat ulang status batch OCR dari server."><i class="fas fa-sync-alt" aria-hidden="true"></i><span>Refresh</span></button>';
         return '<li class="dash-ocr-batch-item is-' + utils.escapeAttr(batch.status || "queued") + '">' +
@@ -1002,7 +1013,8 @@
       var now = Date.now();
       return (providers || []).filter(function (provider) {
         var cooldownUntil = provider && provider.cooldown_until ? Date.parse(provider.cooldown_until) : 0;
-        return provider && provider.is_enabled && provider.has_api_key && provider.health_status !== "cooldown" && (!cooldownUntil || cooldownUntil <= now);
+        var cooldownActive = provider && provider.health_status === "cooldown" && cooldownUntil && cooldownUntil > now;
+        return provider && provider.is_enabled && provider.has_api_key && !cooldownActive;
       }).length;
     }
 

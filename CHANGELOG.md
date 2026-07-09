@@ -12,12 +12,14 @@ Format:
 ### Changed
 - `functions/_ocr-job-runner.js`: Changed provider rate-limit/quota handling so E553/429-style provider limit errors put the current job back to `pending`, release any already-claimed unprocessed jobs, and mark the batch as paused instead of failing every following proposal page.
 - `functions/_ocr-batch-runs.js`: Added paused batch progress support and changed runnable-provider checks to exclude providers still in cooldown.
+- `functions/_ocr-batch-runs.js`: Fixed expired cooldown handling so providers with `health_status = 'cooldown'` become runnable again after `cooldown_until` passes.
 - `functions/ocr-worker.js`: Stopped third-party scheduler re-dispatch when a scoped OCR batch is paused for provider rate limit/quota and normalized daily usage timestamp comparisons.
-- `js/dashboard-ocr.js`: Added visible paused batch labels and treated cooldown providers as not runnable for OCR execution buttons.
+- `js/dashboard-ocr.js`: Added visible paused batch labels, treated only currently active cooldown providers as not runnable, labeled expired cooldowns clearly, and disabled per-batch Retry when no provider is runnable.
 - `css/dashboard-ocr.css`: Changed Hasil OCR franchise cards to a responsive grid that shows two cards per row when viewport width allows.
 - `AGENTS.md`: Added a persistent rule that necessary committed SQL migrations must be applied to the active remote D1 database before final reporting unless explicitly declined or blocked.
 - `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `docs/architecture/OCR_BATCH_SCHEDULING.md`: Updated OCR batch documentation for pause-on-rate-limit behavior.
 - Remote D1 `franchise_db`: Applied migration `0024_ocr_batch_pause_statuses.sql` and verified `ocr_batch_runs.status` accepts `paused_rate_limit` and `paused_quota`.
+- Remote D1 `franchise_db`: Reset expired `ocr_space` cooldown to `ready` after confirming `cooldown_until` had already passed, so current production retry is not blocked by stale cooldown state.
 
 ## 2026-07-08 19:58 (Asia/Jakarta)
 ### Added

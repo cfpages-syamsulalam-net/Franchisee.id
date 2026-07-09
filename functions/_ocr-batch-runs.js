@@ -221,7 +221,7 @@ async function hasRunnableOcrProvider(db) {
        FROM ocr_provider_configs
        WHERE is_enabled = 1
          AND COALESCE(api_key, '') <> ''
-         AND COALESCE(health_status, 'ready') = 'ready'
+         AND COALESCE(health_status, 'ready') IN ('ready', 'cooldown')
          AND (cooldown_until IS NULL OR datetime(cooldown_until) <= CURRENT_TIMESTAMP)
        LIMIT 1`,
     )
