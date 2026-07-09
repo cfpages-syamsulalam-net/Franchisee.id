@@ -138,7 +138,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Custom ClerkJS auth page facade using existing site CSS.*
 - `Auth.init()` / `Auth.getToken()` / `Auth.getAuthHeaders()` / `Auth.syncUser()`: Exposed through the backward-compatible `window.FranchiseAuth` object, delegated to `js/auth-clerk-core.js`.
 - `Auth.getDebugSnapshot()` / `Auth.recordDebug()`: Delegates masked Clerk lifecycle diagnostics to `js/auth-clerk-debug.js` for `/dashboard` and `/sso-callback/`.
-- `mountAuthPage()`: Replaces `/login` legacy WPForms markup with public `Masuk`/`Buat Akun`/forgot-password/forgot-email/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`.
+- `mountAuthPage(options)`: Replaces `/login` legacy WPForms markup with public `Masuk`/`Buat Akun`/forgot-password/forgot-email/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`. A root with `data-auth-defer="true"` is skipped until callers pass `{ force: true }`, preventing the hidden dashboard login form from doing redundant session-state rendering while the dashboard skeleton is active.
 - `showInitialAuthMessage(root)`: Shows CTA-backed info messages when anonymous `/daftar` or `/profil` visitors are redirected to `/login?next=...`.
 - `showMessage(root, message, type)`: Renders plain or structured auth messages with optional hint text and CTA buttons/links, including panel switches for register/reset recovery.
 - `renderSessionState(root)`: Shows a logged-in status for public users and hides auth forms, while admin/staff users keep the forms visible for manual auth UI inspection.
@@ -289,7 +289,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-ocr.css`
 *Dashboard OCR stylesheet module.*
-- Owns OCR guide cards, provider credential/status UI, scheduler credential UI, provider toggle/error/copy controls, job toolbar, persisted batch progress rows, icon-led job rows including needs-review/no-text status styling, OCR result search controls, compact franchise-grouped OCR result cards with page controls/actions, responsive two-column result-card layout, and OCR-specific responsive rules.
+- Owns OCR guide cards, provider credential/status UI, scheduler credential UI, provider toggle/error/copy controls, job toolbar, persisted batch progress rows with scheduler-delay countdown chips, icon-led job rows including needs-review/no-text status styling, OCR result search controls, compact franchise-grouped OCR result cards with page controls/actions, responsive two-column result-card layout, and OCR-specific responsive rules.
 
 ### File: `js/dashboard-premium-operations.js`
 *Premium Operations client module for `/dashboard`.*
@@ -319,7 +319,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-ocr.js`
 *Admin OCR provider/scheduler/job/results module for `/dashboard`.*
 - `window.FranchiseDashboardOcr.createOperations(options)`: Creates the OCR tab controller from subtab, provider-list/select/form/status, scheduler-select/form/status, job/batch/result DOM references, and shared dashboard callbacks.
-- `render(payload, jobsPayload, schedulerPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderBatches(payload)` / `renderResults(payload)` / `fillForm(provider)` / `fillSchedulerForm(provider)`: Shows ranked provider state, scheduler provider state, key/secret presence booleans, read-only quota/free-limit metadata, visible provider health/error status, provider-priority enable/disable controls, scheduler credential status, job counts, persisted batch progress including paused rate-limit/quota labels, icon-led recent job rows with status/action chips, source-image links, manual no-text review actions, server-searched OCR result status, and compact OCR result cards grouped by franchise with per-franchise page prev/next controls, source/listing/review actions, and non-secret configuration without receiving stored credentials. Successful recent jobs link to the matching Hasil OCR card/page by `asset_id`.
+- `render(payload, jobsPayload, schedulerPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderBatches(payload)` / `renderResults(payload)` / `fillForm(provider)` / `fillSchedulerForm(provider)`: Shows ranked provider state, scheduler provider state, key/secret presence booleans, read-only quota/free-limit metadata, visible provider health/error status, provider-priority enable/disable controls, scheduler credential status, job counts, persisted batch progress including paused rate-limit/quota labels and local scheduler-delay countdown chips, icon-led recent job rows with status/action chips, source-image links, manual no-text review actions, server-searched OCR result status, and compact OCR result cards grouped by franchise with per-franchise page prev/next controls, source/listing/review actions, and non-secret configuration without receiving stored credentials. Successful recent jobs link to the matching Hasil OCR card/page by `asset_id`.
+- `syncBatchCountdowns()` / `schedulerCountdown(batch)`: Parses scheduler delay messages such as `Trigger QStash terjadwal (10s)`, combines them with UTC D1 timestamps, and updates local countdown labels every second until the next server refresh/poll becomes authoritative.
 - `searchOcrResults(append)` / `resetResultSearch()` / `loadMoreResultSearch()`: Calls `search_ocr_results` to fetch filtered OCR result history by text/status from the server, appends paged results with de-duping, and keeps the default dashboard payload small until an admin searches.
 - `syncBatchPolling(payload)`: Auto-refreshes `/dashboard-data` every few seconds while the OCR tab is visible and any persisted batch is still `queued` or `running`, so progress bars update without manual refresh.
 - `markJobNoText(jobId, button)`: Lets an admin mark a failed OCR job as `needs_review` after opening the source image and confirming the brochure page has no useful text, avoiding false provider-error treatment while preserving retry if needed.
@@ -342,9 +343,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
-- `boot()` / `showLoadingPanel(message)` / `showLoginPanel(message, isError)`: Initializes `window.FranchiseAuth`, shows a skeleton while auth/dashboard authorization is processing, only shows the login form after no usable session or an auth error is known, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
+- `boot()` / `showLoadingPanel(message)` / `showLoginPanel(message, isError)`: Initializes `window.FranchiseAuth`, shows a skeleton while auth/dashboard authorization is processing, only shows and force-mounts the login form after no usable session or an auth error is known, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
+- `readDashboardCache()` / `writeDashboardCache(data)` / `clearDashboardCache()`: Maintains a short `sessionStorage` cache for successful dashboard payloads keyed to the active Clerk user id and active session. Cached data can render immediately after Clerk init, then `/dashboard-data` refreshes live; missing/expired authorization clears the cache and relocks the protected shell.
 - `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, Operations, and OCR, including arrow/Home/End keyboard navigation.
-- `renderDashboard(data)`: Reveals the protected shell and fans dashboard API data into metrics plus delegated Operations, Review/Data Quality/Claim, Premium, and OCR modules.
+- `renderDashboard(data, options)`: Reveals the protected shell and fans dashboard API data into metrics plus delegated Operations, Review/Data Quality/Claim, Premium, and OCR modules. `options.cached` shows a refresh-in-progress status while live data is fetched.
 - `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
 
 ### File: `js/build-listing.js`
@@ -658,7 +660,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Static protected admin/staff dashboard shell.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
-- Loads dashboard base/auth/OCR styles plus auth/tooltips/utilities, Premium, Review, Operations, OCR, and controller client modules; shows a skeleton while the session is checked and only reveals the login-only staff/admin form when no Clerk session exists or the session must be renewed.
+- Loads dashboard base/auth/OCR styles plus auth/tooltips/utilities, Premium, Review, Operations, OCR, and controller client modules; shows a skeleton while the session is checked and marks the login-only staff/admin auth root with `data-auth-defer="true"` so it is only mounted when no Clerk session exists or the session must be renewed.
 - Renders the branded dashboard shell and an OCR tab with provider selector, provider-specific password credential fields, read-only quota/free-limit metadata, priority-list enablement, icon-led job rows, retry controls, and explicit credential clear controls. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` for the browser module. Runtime authorization remains server-side.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
@@ -867,6 +869,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_clerk-auth.js`
 *Shared Clerk session verification, D1 user sync, and role authorization helper.*
 - `requireD1User(request, env, db, options)`: Verifies Clerk bearer token, upserts D1 user, applies active email role grants, optionally assigns self-selectable role, and enforces required D1 role. `admin` satisfies protected-role checks; `staff` satisfies staff-level checks only.
+- `requireD1UserFast(request, env, db, options)`: Read-optimized auth path for already-synced dashboard GET requests. It verifies the Clerk bearer token, reads the D1 user and roles by `clerk_user_id`, enforces the required role, and avoids Clerk user fetches plus metadata writes. Missing/inactive users or role mismatches can fall back to `requireD1User()` so first login, email grants, and role repairs still work.
 - `syncD1User(request, env, db, requestedRole)`: Auth sync variant used by `/auth-sync`; applies pending `email_role_grants` and pushes the current D1 role snapshot back into Clerk metadata.
 - `syncWebhookUserToD1(env, db, clerkUser)`: Verifies Clerk webhook identity payloads, upserts D1 `users` from `user.created` / `user.updated`, and applies pending email role grants.
 - `markD1UserDeleted(db, clerkUserId)`: Marks the D1 user row as `deleted` after a verified Clerk `user.deleted` webhook.
@@ -905,10 +908,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff`; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
-- `onRequestPost()`: Validates the discriminated action payload and routes normal workflows to `_dashboard-actions.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, and admin-triggered OCR dry-run/enqueue/run/retry/no-text/search/batch actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff` through `requireD1UserFast()` for already-synced users; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
+- `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows to `_dashboard-actions.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, and admin-triggered OCR dry-run/enqueue/run/retry/no-text/search/batch actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
 - OCR batch start/retry actions are routed to `_ocr-batch-runs.js`; `_ocr-job-runner.js` stays focused on job processing and OCR provider execution.
-- `requireDashboardAccess(request, env)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs.
+- `requireDashboardAccess(request, env, options)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs. `options.fast` is used only for GET refreshes and falls back to full sync when needed.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*

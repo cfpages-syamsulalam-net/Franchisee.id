@@ -19,10 +19,14 @@
   document.addEventListener("DOMContentLoaded", function () {
     mountAuthPage();
   });
+  Auth.mountAuthPage = mountAuthPage;
 
-  function mountAuthPage() {
+  function mountAuthPage(options = {}) {
     const root = document.getElementById("franchise-auth-root") || document.getElementById("wpforms-725");
     if (!root) return;
+    if (root.getAttribute("data-auth-defer") === "true" && !options.force) return;
+    if (root.getAttribute("data-auth-rendered") === "true") return;
+    root.setAttribute("data-auth-rendered", "true");
 
     const variant = root.getAttribute("data-auth-variant") || "public";
     const isLoginOnly = variant === "staff";

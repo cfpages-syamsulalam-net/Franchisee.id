@@ -239,6 +239,16 @@
   color: var(--dash-muted);
   font-weight: 700;
 }
+.dash-ocr-batch-countdown {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412 !important;
+}
 .dash-ocr-batch-actions {
   display: flex;
   flex-wrap: wrap;

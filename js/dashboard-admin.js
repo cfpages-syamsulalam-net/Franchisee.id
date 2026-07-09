@@ -18,6 +18,8 @@
   var paymentMethodForm = document.querySelector("[data-payment-method-form]");
   var premiumSettingsForm = document.querySelector("[data-premium-settings-form]");
   var ocrClient = window.FranchiseDashboardOcr;
+  var DASHBOARD_CACHE_KEY = "franchise_dashboard_state_v1";
+  var DASHBOARD_CACHE_TTL_MS = 90 * 1000;
   var dashboardState = null;
   var currentUserIsAdmin = false;
   var dashboardUtils = window.FranchiseDashboardUtils;
@@ -173,9 +175,15 @@
       renderAuthDebug("boot:start");
       await window.FranchiseAuth.init();
       renderAuthDebug("boot:after_init");
+      var cached = readDashboardCache();
+      if (cached) {
+        renderDashboard(cached, { cached: true });
+      }
+
       var headers = await window.FranchiseAuth.getAuthHeaders();
       renderAuthDebug("boot:after_headers", { hasAuthorization: Boolean(headers.Authorization) });
       if (!headers.Authorization) {
+        clearDashboardCache();
         showLoginPanel("Login dengan akun admin/staff untuk membuka dashboard.", false);
         return;
       }
@@ -183,29 +191,40 @@
       var response = await fetch("/dashboard-data", { headers: headers });
       renderAuthDebug("dashboard_data:response", { status: response.status, ok: response.ok });
       if (response.status === 401) {
+        clearDashboardCache();
         showLoginPanel("Sesi login kedaluwarsa. Silakan login ulang.", true);
         return;
       }
       var data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat.");
       renderDashboard(data);
+      writeDashboardCache(data);
     } catch (error) {
+      if (dashboardState) {
+        if (loadingEl) loadingEl.hidden = true;
+        if (loginEl) loginEl.hidden = true;
+        setStatus("Dashboard cache tampil, tetapi refresh data terbaru gagal: " + escapeHtml(error.message || String(error)), true);
+        renderAuthDebug("boot:refresh_error_after_cache", { message: error.message || String(error) });
+        return;
+      }
       if (loadingEl) loadingEl.hidden = true;
       if (loginEl) loginEl.hidden = false;
+      mountDeferredLogin();
       if (userEl.textContent === "Memuat sesi...") userEl.textContent = "Akses belum diizinkan";
       setStatus(error.message, true);
       renderAuthDebug("boot:error", { message: error.message || String(error) });
     }
   }
 
-  function renderDashboard(data) {
+  function renderDashboard(data, options) {
+    options = options || {};
     dashboardState = data;
     currentUserIsAdmin = (data.user.roles || []).indexOf("admin") >= 0;
     if (mainEl) mainEl.setAttribute("data-dashboard-protected", "ready");
     if (loadingEl) loadingEl.hidden = true;
     if (loginEl) loginEl.hidden = true;
-    setStatus("Dashboard aktif untuk site franchisee.id.", false);
-    renderAuthDebug("dashboard:ready", { roles: data.user.roles || [] });
+    setStatus(options.cached ? "Dashboard dibuka dari cache sesi. Data sedang diperbarui..." : "Dashboard aktif untuk site franchisee.id.", false);
+    renderAuthDebug(options.cached ? "dashboard:cache_ready" : "dashboard:ready", { roles: data.user.roles || [], cached: Boolean(options.cached) });
     userEl.textContent = (data.user.name || data.user.email || "Admin/staff") + " - " + data.user.roles.join(", ");
     setMetric("total_listings", data.overview.total_listings);
     setMetric("unclaimed_listings", data.overview.unclaimed_listings);
@@ -226,6 +245,7 @@
     var data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat ulang.");
     renderDashboard(data);
+    writeDashboardCache(data);
   }
 
   async function postDashboardAction(payload) {
@@ -251,9 +271,13 @@
   }
 
   function showLoginPanel(message, isError) {
+    dashboardState = null;
+    currentUserIsAdmin = false;
     userEl.textContent = "Belum login";
+    if (mainEl) mainEl.setAttribute("data-dashboard-protected", "locked");
     if (loadingEl) loadingEl.hidden = true;
     if (loginEl) loginEl.hidden = false;
+    mountDeferredLogin();
     setStatus(message, isError);
     renderAuthDebug("dashboard:login_panel", { message: message, isError: Boolean(isError) });
   }
@@ -263,6 +287,56 @@
     if (loadingEl) loadingEl.hidden = false;
     if (loginEl) loginEl.hidden = true;
     setStatus(message || "Memeriksa akses admin/staff...", false);
+  }
+
+  function mountDeferredLogin() {
+    var root = document.getElementById("franchise-auth-root");
+    if (!root || root.getAttribute("data-auth-rendered") === "true") return;
+    if (window.FranchiseAuth && typeof window.FranchiseAuth.mountAuthPage === "function") {
+      window.FranchiseAuth.mountAuthPage({ force: true });
+    }
+  }
+
+  function readDashboardCache() {
+    try {
+      if (!window.sessionStorage || !window.FranchiseAuth || !window.FranchiseAuth.clerk) return null;
+      var raw = sessionStorage.getItem(DASHBOARD_CACHE_KEY);
+      if (!raw) return null;
+      var envelope = JSON.parse(raw);
+      if (!envelope || !envelope.data || !envelope.clerk_user_id || !envelope.cached_at) return null;
+      if (Date.now() - Number(envelope.cached_at || 0) > DASHBOARD_CACHE_TTL_MS) return null;
+      var clerkUserId = window.FranchiseAuth.clerk.user && window.FranchiseAuth.clerk.user.id;
+      var hasSession = Boolean(window.FranchiseAuth.clerk.session);
+      if (!hasSession) return null;
+      if (!clerkUserId || envelope.clerk_user_id !== clerkUserId) return null;
+      return envelope.data;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function writeDashboardCache(data) {
+    try {
+      if (!window.sessionStorage || !window.FranchiseAuth || !window.FranchiseAuth.clerk || !data || !data.success) return;
+      if (!window.FranchiseAuth.clerk.session) return;
+      var clerkUserId = window.FranchiseAuth.clerk.user && window.FranchiseAuth.clerk.user.id;
+      if (!clerkUserId) return;
+      sessionStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
+        clerk_user_id: clerkUserId,
+        cached_at: Date.now(),
+        data: data
+      }));
+    } catch (_error) {
+      // Cache is an optional speed-up only.
+    }
+  }
+
+  function clearDashboardCache() {
+    try {
+      if (window.sessionStorage) sessionStorage.removeItem(DASHBOARD_CACHE_KEY);
+    } catch (_error) {
+      // Ignore cache cleanup failures.
+    }
   }
 
   function renderAuthDebug(stage, extra) {

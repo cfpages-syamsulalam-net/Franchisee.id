@@ -39,6 +39,35 @@ export async function requireD1User(request, env, db, options = {}) {
   };
 }
 
+export async function requireD1UserFast(request, env, db, options = {}) {
+  const session = await authenticateClerkSession(request, env);
+  const user = await getD1UserByClerkId(db, session.userId);
+
+  if (!user || user.status !== "active") {
+    if (options.fallbackToFullSync !== false) {
+      return requireD1User(request, env, db, options);
+    }
+    throw new AuthError("Sesi login belum tersinkron. Silakan muat ulang halaman.", 401, "AUTH_SYNC_REQUIRED");
+  }
+
+  const roles = await getUserRoles(db, user.id);
+  if (options.requiredRole && !hasRequiredRole(roles, options.requiredRole)) {
+    if (options.fallbackToFullSyncOnForbidden !== false) {
+      return requireD1User(request, env, db, options);
+    }
+    throw new AuthError("Akun Anda tidak memiliki izin untuk aksi ini.", 403, "ROLE_FORBIDDEN");
+  }
+
+  return {
+    ...user,
+    clerk_user_id: session.userId,
+    session_id: session.sessionId,
+    roles,
+    clerk_user: null,
+    auth_mode: "d1_fast",
+  };
+}
+
 export async function syncD1User(request, env, db, requestedRole) {
   const session = await authenticateClerkSession(request, env);
   const clerkUser = await getClerkUser(env, session.userId);

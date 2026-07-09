@@ -1,4 +1,4 @@
-import { authErrorResponse, requireD1User } from "./_clerk-auth.js";
+import { authErrorResponse, requireD1User, requireD1UserFast } from "./_clerk-auth.js";
 import {
   handleLogOutreach,
   handleManageNotificationEmail,
@@ -38,7 +38,7 @@ import { logOperationEvent } from "./_telemetry.js";
 
 export async function onRequestGet({ request, env }) {
   try {
-    const auth = await requireDashboardAccess(request, env);
+    const auth = await requireDashboardAccess(request, env, { fast: true });
     const db = env.franchise_db;
 
     const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, pendingPremiumPayments, premiumOperations, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth, ocrProviders, ocrJobs, ocrSchedulers] = await Promise.all([
@@ -158,9 +158,12 @@ export async function onRequestPost({ request, env }) {
   }
 }
 
-async function requireDashboardAccess(request, env) {
+async function requireDashboardAccess(request, env, options = {}) {
   if (!env.franchise_db) {
     throw new Error("Cloudflare D1 binding `franchise_db` is required for dashboard data.");
+  }
+  if (options.fast) {
+    return requireD1UserFast(request, env, env.franchise_db, { requiredRole: "staff" });
   }
   return requireD1User(request, env, env.franchise_db, { requiredRole: "staff" });
 }

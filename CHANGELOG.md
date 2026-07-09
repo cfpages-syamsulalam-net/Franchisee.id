@@ -10,6 +10,11 @@ Format:
 - `migrations/0024_ocr_batch_pause_statuses.sql`: Added OCR batch pause statuses for provider rate-limit and quota pauses.
 
 ### Changed
+- `js/auth-clerk.js` and `src/pages/dashboard/index.astro`: Deferred mounting the dashboard login form until the dashboard actually needs to show login, avoiding a redundant hidden session-state sync and the confusing "Anda sudah login" step before the dashboard opens.
+- `js/dashboard-admin.js`: Added a short per-tab `sessionStorage` cache for successful `/dashboard-data` payloads keyed to the current active Clerk user/session, so a recently opened authenticated dashboard can render immediately while live data refreshes in the background; missing/expired authorization clears the cache and relocks the protected shell.
+- `js/dashboard-ocr.js` and `css/dashboard-ocr.css`: Added a live local countdown chip for OCR batch scheduler delays, so rows like "Trigger QStash terjadwal (10s)" give second-by-second waiting feedback before the next server refresh.
+- `functions/_clerk-auth.js` and `functions/dashboard-data.js`: Added a fast D1-backed dashboard GET authorization path that verifies the Clerk bearer token and reads the already-synced D1 user/roles without fetching Clerk user details or rewriting Clerk metadata on every refresh; first sync, inactive users, or missing roles still fall back to the existing full sync path, and dashboard POST actions still use full auth sync.
+- `TECHNICAL_INVENTORY.md` and `SUGGESTION.md`: Audited the OCR runtime inventory for suggestion 76 and confirmed the `_ocr-job-runner.js` and `ocr-worker.js` documentation now lives in single canonical blocks.
 - `functions/_ocr-job-runner.js`: Changed provider rate-limit/quota handling so E553/429-style provider limit errors put the current job back to `pending`, release any already-claimed unprocessed jobs, and mark the batch as paused instead of failing every following proposal page.
 - `functions/_ocr-batch-runs.js`: Added paused batch progress support and changed runnable-provider checks to exclude providers still in cooldown.
 - `functions/_ocr-batch-runs.js`: Fixed expired cooldown handling so providers with `health_status = 'cooldown'` become runnable again after `cooldown_until` passes.
