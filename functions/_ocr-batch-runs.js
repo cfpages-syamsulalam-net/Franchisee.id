@@ -96,7 +96,12 @@ export async function handleRetryOcrBatchRun(db, auth, data, env, options = {}) 
     }, { status: 400 });
   }
 
-  const reset = await resetFailedJobsInBatch(db, batch.id, auth.id);
+  const reset = await resetRetryableJobsInBatch(db, batch.id, auth.id);
+  await refreshBatchProgress(db, batch.id, {
+    message: reset
+      ? "Batch OCR dijadwalkan ulang; job sukses tetap dilewati."
+      : "Batch OCR dijadwalkan ulang.",
+  });
   const trigger = await triggerOcrScheduler(db, env, batch, {
     providerKey: data.scheduler_provider_key,
     delay: options.delay || "10s",
@@ -106,18 +111,31 @@ export async function handleRetryOcrBatchRun(db, auth, data, env, options = {}) 
     db
       .prepare(
         `UPDATE ocr_batch_runs
-         SET status = ?, last_message = ?, updated_at = CURRENT_TIMESTAMP
+         SET status = ?, last_message = ?,
+             scheduler_trigger_status = ?,
+             scheduler_trigger_delay_seconds = ?,
+             scheduler_trigger_due_at = ?,
+             scheduler_last_triggered_at = CASE WHEN ? IS NOT NULL THEN COALESCE(scheduler_last_triggered_at, CURRENT_TIMESTAMP) ELSE scheduler_last_triggered_at END,
+             updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`,
       )
-      .bind(trigger.triggered ? "queued" : "failed", trigger.message || "Retry scheduler batch selesai.", batch.id),
+      .bind(
+        trigger.triggered ? "queued" : "failed",
+        trigger.message || "Retry scheduler batch selesai.",
+        trigger.trigger_status || (trigger.triggered ? "scheduled" : "failed"),
+        trigger.trigger_delay_seconds ?? null,
+        trigger.trigger_due_at || null,
+        trigger.triggered ? 1 : null,
+        batch.id,
+      ),
     auditStatement(db, "dashboard.ocr_batch.retry_schedule", "ocr_batch_runs", batch.id, {
       scheduler_provider_key: trigger.provider_key || data.scheduler_provider_key || "",
       triggered: Boolean(trigger.triggered),
       message: trigger.message || "",
-      reset_failed_jobs: reset,
+      reset_retryable_jobs: reset,
     }, auth.id),
   ]);
-  return jsonResponse({ success: true, batch_id: batch.id, reset_failed_jobs: reset, scheduler: trigger });
+  return jsonResponse({ success: true, batch_id: batch.id, reset_retryable_jobs: reset, reset_failed_jobs: reset, scheduler: trigger });
 }
 
 export async function refreshBatchProgress(db, batchId, options = {}) {
@@ -181,6 +199,10 @@ export function maskBatchRow(row) {
     skipped_count: Number(row.skipped_count || 0),
     scheduler_provider_key: row.scheduler_provider_key || "",
     scheduler_external_id: row.scheduler_external_id || "",
+    scheduler_trigger_status: row.scheduler_trigger_status || "",
+    scheduler_trigger_delay_seconds: Number(row.scheduler_trigger_delay_seconds || 0),
+    scheduler_trigger_due_at: row.scheduler_trigger_due_at || null,
+    scheduler_last_triggered_at: row.scheduler_last_triggered_at || null,
     last_message: row.last_message || "",
     started_at: row.started_at || null,
     last_run_at: row.last_run_at || null,
@@ -194,12 +216,21 @@ export function maskBatchRow(row) {
 async function updateBatchAfterTrigger(db, batchId, trigger, fallbackStatus) {
   if (trigger.triggered) return;
   await db
-    .prepare("UPDATE ocr_batch_runs SET status = ?, last_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
-    .bind(fallbackStatus, trigger.message || "Batch siap. Jalankan manual atau aktifkan scheduler pihak ketiga.", batchId)
+    .prepare(
+      `UPDATE ocr_batch_runs
+       SET status = ?,
+           last_message = ?,
+           scheduler_trigger_status = ?,
+           scheduler_trigger_delay_seconds = NULL,
+           scheduler_trigger_due_at = NULL,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+    )
+    .bind(fallbackStatus, trigger.message || "Batch siap. Jalankan manual atau aktifkan scheduler pihak ketiga.", trigger.trigger_status || "failed", batchId)
     .run();
 }
 
-async function resetFailedJobsInBatch(db, batchId, userId) {
+async function resetRetryableJobsInBatch(db, batchId, userId) {
   const result = await db
     .prepare(
       `UPDATE ocr_jobs
@@ -207,7 +238,7 @@ async function resetFailedJobsInBatch(db, batchId, userId) {
            started_at = NULL, completed_at = NULL, requested_by_user_id = ?,
            updated_at = CURRENT_TIMESTAMP
        WHERE batch_id = ?
-         AND status = 'failed'`,
+         AND status IN ('failed', 'running')`,
     )
     .bind(userId, batchId)
     .run();

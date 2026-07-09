@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-07-09 01:20 (Asia/Jakarta)
+Last updated: 2026-07-10 00:28 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -11,6 +11,7 @@ Last updated: 2026-07-09 01:20 (Asia/Jakarta)
 - Keep `SUGGESTION.md` as the assistant-owned improvement backlog. This file is exclusively for Codex/assistant suggestions, not user instructions. You are free to add or update entries whenever you see opportunities to improve product value, UX, reliability, performance, security, data quality, operations, migration safety, or developer workflow; keep the table current and actionable.
 - Before validation in every implementation session, do a short suggestion pass based on what changed or what was learned. Add a new `SUGGESTION.md` row for any concrete improvement discovered, update existing rows when work changes their priority/status, or explicitly say `No further suggestion for this session.` in the final response when nothing useful emerged. Do this without waiting for the user to ask.
 - If a newly discovered suggestion is closely related to the current work and is a low-risk maintainability step, such as extracting duplicated logic into a modular file/helper, implement it in the same work session before validation instead of leaving it as a backlog-only item. This is especially mandatory when the current change creates or exposes duplicated contracts across UI/backend/test/docs, because centralizing that contract is part of finishing the original work rather than optional follow-up.
+- Do not treat a small, additive, replayable SQL migration as a reason to defer a closely related suggestion when it materially improves correctness, data integrity, operations visibility, or UX. Implement the migration, apply it to the active remote D1 database when required by this session's code, and document the result instead of leaving the item as backlog-only.
 - Be proactive from now on: do not wait only for user-directed tasks. When project context reveals useful improvements, propose them clearly and, when the task is already agreed or low-risk, implement the next sensible step while keeping scope controlled.
 - Code modularly by default. Prefer small, purpose-owned files/modules for new or touched runtime logic instead of growing monolithic scripts, functions, or Astro pages. When refactoring, preserve behavior first, validate, then update `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `CHANGELOG.md`.
 - Prioritize finishing the current pending task over progress narration. Keep user-facing updates minimal and reserve final reporting for work that is actually completed or genuinely blocked.

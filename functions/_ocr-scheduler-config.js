@@ -141,7 +141,12 @@ export async function handleToggleOcrSchedulerEnabled(db, auth, data) {
 export async function triggerOcrScheduler(db, env, batch, options = {}) {
   const provider = await loadPreferredScheduler(db, options.providerKey);
   if (!provider) {
-    return { triggered: false, provider_key: "", message: "Belum ada scheduler pihak ketiga yang aktif. Jalankan batch manual atau aktifkan Upstash QStash." };
+    return {
+      triggered: false,
+      provider_key: "",
+      trigger_status: "missing_provider",
+      message: "Belum ada scheduler pihak ketiga yang aktif. Jalankan batch manual atau aktifkan Upstash QStash.",
+    };
   }
   if (provider.provider_key === "upstash_qstash") {
     return triggerQstash(db, env, provider, batch, options);
@@ -149,6 +154,7 @@ export async function triggerOcrScheduler(db, env, batch, options = {}) {
   return {
     triggered: false,
     provider_key: provider.provider_key,
+    trigger_status: "external",
     message: `${provider.display_name} sudah aktif sebagai trigger eksternal. Pastikan provider tersebut memanggil /ocr-worker secara berkala.`,
   };
 }
@@ -180,14 +186,18 @@ async function triggerQstash(db, env, provider, batch, options = {}) {
       ? "Cloudflare Pages secret OCR_SECRET belum tersedia untuk worker OCR."
       : "Token Upstash QStash belum tersimpan.";
     await markSchedulerFailure(db, provider.provider_key, message);
-    return { triggered: false, provider_key: provider.provider_key, message };
+    await markBatchSchedulerFailure(db, batch?.id, provider.provider_key, message);
+    return { triggered: false, provider_key: provider.provider_key, trigger_status: "failed", message };
   }
   const workerUrl = normalizeWorkerUrl(textOrNull(provider.request_url) || resolveWorkerUrl(env));
   if (!workerUrl) {
     const message = "Worker URL scheduler tidak valid. Gunakan URL lengkap, contoh: https://franchisee.id/ocr-worker.";
     await markSchedulerFailure(db, provider.provider_key, message);
-    return { triggered: false, provider_key: provider.provider_key, message };
+    await markBatchSchedulerFailure(db, batch?.id, provider.provider_key, message);
+    return { triggered: false, provider_key: provider.provider_key, trigger_status: "failed", message };
   }
+  const delaySeconds = parseDelaySeconds(options.delay || QSTASH_NEXT_DELAY);
+  const triggerDueAt = new Date(Date.now() + (delaySeconds * 1000)).toISOString();
   const body = {
     source: "upstash_qstash",
     batch_id: batch.id,
@@ -208,8 +218,10 @@ async function triggerQstash(db, env, provider, batch, options = {}) {
     const authHint = response.status === 401 ? " Pastikan token yang disimpan adalah QSTASH_TOKEN dari Upstash, bukan signing key, current signing key, atau URL endpoint." : "";
     const message = cleanError(`Upstash QStash gagal menjadwalkan OCR (${response.status}): ${responseText || response.statusText}${authHint}`);
     await markSchedulerFailure(db, provider.provider_key, message);
-    return { triggered: false, provider_key: provider.provider_key, message };
+    await markBatchSchedulerFailure(db, batch?.id, provider.provider_key, message);
+    return { triggered: false, provider_key: provider.provider_key, trigger_status: "failed", message };
   }
+  const externalId = qstashMessageId(responseText);
   await db.batch([
     db
       .prepare(
@@ -222,14 +234,22 @@ async function triggerQstash(db, env, provider, batch, options = {}) {
       .prepare(
         `UPDATE ocr_batch_runs
          SET scheduler_provider_key = ?, scheduler_external_id = ?, last_message = ?,
+             scheduler_trigger_status = 'scheduled',
+             scheduler_trigger_delay_seconds = ?,
+             scheduler_trigger_due_at = ?,
+             scheduler_last_triggered_at = CURRENT_TIMESTAMP,
              updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`,
       )
-      .bind(provider.provider_key, qstashMessageId(responseText), `Trigger QStash terjadwal (${options.delay || QSTASH_NEXT_DELAY}).`, batch.id),
+      .bind(provider.provider_key, externalId, `Trigger QStash terjadwal (${options.delay || QSTASH_NEXT_DELAY}).`, delaySeconds, triggerDueAt, batch.id),
   ]);
   return {
     triggered: true,
     provider_key: provider.provider_key,
+    scheduler_external_id: externalId,
+    trigger_status: "scheduled",
+    trigger_delay_seconds: delaySeconds,
+    trigger_due_at: triggerDueAt,
     message: `Trigger QStash terjadwal (${options.delay || QSTASH_NEXT_DELAY}).`,
   };
 }
@@ -348,6 +368,24 @@ async function markSchedulerFailure(db, providerKey, message) {
     .run();
 }
 
+async function markBatchSchedulerFailure(db, batchId, providerKey, message) {
+  const id = textOrNull(batchId);
+  if (!id) return;
+  await db
+    .prepare(
+      `UPDATE ocr_batch_runs
+       SET scheduler_provider_key = ?,
+           scheduler_trigger_status = 'failed',
+           scheduler_trigger_delay_seconds = NULL,
+           scheduler_trigger_due_at = NULL,
+           last_message = ?,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+    )
+    .bind(providerKey || null, cleanError(message), id)
+    .run();
+}
+
 function qstashMessageId(responseText) {
   try {
     const parsed = JSON.parse(responseText || "{}");
@@ -376,6 +414,18 @@ function normalizeWorkerUrl(value) {
 function normalizeBearerToken(value) {
   const raw = textOrNull(value) || "";
   return raw.replace(/^Bearer\s+/i, "").trim();
+}
+
+function parseDelaySeconds(value) {
+  const raw = String(value || "").trim();
+  const match = raw.match(/^(\d+)\s*([smh])?$/i);
+  if (!match) return 0;
+  const amount = Number(match[1] || 0);
+  const unit = String(match[2] || "s").toLowerCase();
+  if (!amount) return 0;
+  if (unit === "h") return amount * 60 * 60;
+  if (unit === "m") return amount * 60;
+  return amount;
 }
 
 function textOrNull(value) {

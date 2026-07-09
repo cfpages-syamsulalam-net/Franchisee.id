@@ -496,14 +496,21 @@
 
     function schedulerCountdown(batch) {
       if (!batch || ["queued", "running"].indexOf(batch.status) === -1) return null;
+      var structuredDueAt = parseSqlTimestampMs(batch.scheduler_trigger_due_at);
+      if (structuredDueAt) {
+        return {
+          until_ms: structuredDueAt,
+          remaining_seconds: Math.max(0, Math.ceil((structuredDueAt - Date.now()) / 1000)),
+          source: "structured"
+        };
+      }
       var delaySeconds = parseSchedulerDelaySeconds(batch.last_message || "");
       if (!delaySeconds) return null;
       var base = parseSqlTimestampMs(batch.updated_at || batch.created_at || batch.started_at);
       if (!base) return null;
       var until = base + (delaySeconds * 1000);
       var remaining = Math.max(0, Math.ceil((until - Date.now()) / 1000));
-      if (remaining <= 0) return null;
-      return { until_ms: until, remaining_seconds: remaining };
+      return { until_ms: until, remaining_seconds: remaining, source: "message" };
     }
 
     function countdownAttrs(countdown) {
@@ -515,7 +522,7 @@
       seconds = Math.max(0, Number(seconds || 0));
       return seconds > 0
         ? "Menunggu trigger scheduler · " + seconds.toLocaleString("id-ID") + " detik lagi"
-        : "Trigger scheduler sedang dipanggil. Memuat status terbaru...";
+        : "Jadwal scheduler sudah lewat. Menunggu status terbaru; klik Refresh atau Retry jika tidak berubah.";
     }
 
     function parseSchedulerDelaySeconds(message) {
@@ -1075,8 +1082,8 @@
           batch_id: batchId,
           scheduler_provider_key: scheduler ? scheduler.provider_key : "upstash_qstash"
         });
-        var reset = Number(result.reset_failed_jobs || 0);
-        var message = (reset ? reset.toLocaleString("id-ID") + " job gagal dikembalikan ke antrean. " : "") +
+        var reset = Number(result.reset_retryable_jobs || result.reset_failed_jobs || 0);
+        var message = (reset ? reset.toLocaleString("id-ID") + " job gagal/berjalan dikembalikan ke antrean. " : "") +
           (result.scheduler && result.scheduler.message ? result.scheduler.message : "Batch dijadwalkan ulang.");
         options.setStatus(message, !(result.scheduler && result.scheduler.triggered));
         await options.reloadDashboard();

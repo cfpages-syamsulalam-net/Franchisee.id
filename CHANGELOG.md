@@ -4,6 +4,29 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-10 00:28 (Asia/Jakarta)
+### Added
+- `migrations/0025_ocr_batch_scheduler_timing.sql`: Added structured OCR batch scheduler timing fields for trigger status, delay seconds, due timestamp, and last-trigger timestamp.
+- `.context/session-20260710-0028.md`: Added this session continuity snapshot for structured OCR scheduler timing implementation.
+
+### Changed
+- `functions/_ocr-scheduler-config.js`: Changed QStash dispatch to write structured scheduler trigger ETA/status fields to `ocr_batch_runs` on success and clear ETA on scheduler failure.
+- `functions/_ocr-batch-runs.js`: Changed masked batch output and retry status updates to include structured scheduler timing fields while preserving succeeded-job skip behavior.
+- `functions/_ocr-job-runner.js`: Changed recent OCR batch reads to include structured scheduler timing fields for dashboard rendering.
+- `js/dashboard-ocr.js`: Changed batch countdowns to use `scheduler_trigger_due_at` as the primary source, with `last_message` parsing kept only as a legacy fallback for older rows.
+- `AGENTS.md`: Clarified that small additive SQL migrations are not a reason to defer closely related correctness/operations/UX suggestions.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, and `docs/architecture/OCR_BATCH_SCHEDULING.md`: Documented structured OCR scheduler timing and marked suggestion 78 done.
+- Remote D1 `franchise_db`: Applied migration `0025_ocr_batch_scheduler_timing.sql` and verified `ocr_batch_runs` has structured scheduler timing columns.
+
+## 2026-07-10 00:10 (Asia/Jakarta)
+### Added
+- `.context/session-20260710-0010.md`: Added this session continuity snapshot for OCR batch retry and overdue scheduler feedback handling.
+
+### Changed
+- `functions/_ocr-batch-runs.js`: Changed persisted OCR batch retry to leave `succeeded` jobs untouched while returning retryable `failed` and stale `running` jobs in the same batch to `pending`, refresh progress counts immediately, and then reschedule the batch.
+- `js/dashboard-ocr.js`: Changed batch retry status copy to report failed/running jobs returned to the queue, and kept scheduler countdown chips visible after the scheduled delay has passed with a clear Refresh/Retry instruction instead of hiding the feedback.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Updated OCR batch retry/overdue scheduler documentation and recorded a follow-up recommendation for structured scheduler ETA fields.
+
 ## 2026-07-09 01:03 (Asia/Jakarta)
 ### Added
 - `.context/session-20260709-0103.md`: Added this session continuity snapshot for OCR provider rate-limit pause handling.

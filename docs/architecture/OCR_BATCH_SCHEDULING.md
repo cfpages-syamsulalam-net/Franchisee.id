@@ -1,6 +1,6 @@
 # OCR Batch Scheduling Strategy
 
-Last updated: 2026-07-09 (Asia/Jakarta)
+Last updated: 2026-07-10 (Asia/Jakarta)
 
 ## Goal
 
@@ -48,6 +48,7 @@ Implementation sketch:
   - `skipped_count`
   - `status`: `queued`, `running`, `paused_rate_limit`, `paused_quota`, `completed`, `cancelled`, `failed`
   - `started_at`, `last_run_at`, `completed_at`, `updated_at`
+  - `scheduler_trigger_status`, `scheduler_trigger_delay_seconds`, `scheduler_trigger_due_at`, `scheduler_last_triggered_at`
   - `last_message`
 - Added optional `batch_id` to `ocr_jobs` so the dashboard-created batch owns a stable slice of work.
 - Added dashboard action `start_ocr_batch_run` with `target_count` bounded to 100.
@@ -56,6 +57,7 @@ Implementation sketch:
 - Third-party scheduler calls `/ocr-worker`; the worker exits quickly when no claimable batch job exists.
 - Keep each worker invocation small. The “100 jobs” target is achieved by repeated safe invocations, not one long request.
 - When a provider returns a rate-limit/quota error such as OCR.Space `E553`, the runner marks the provider cooldown/exhausted state, moves the current job back to `pending`, releases other already-claimed but unprocessed jobs, sets the batch to `paused_rate_limit` or `paused_quota`, and stops scheduling the next trigger until an admin retries after cooldown or enables another provider.
+- QStash trigger ETA is stored as structured batch data (`scheduler_trigger_due_at`, delay seconds, status, and last-trigger timestamp). The dashboard countdown uses these fields instead of parsing the human-readable `last_message`; message parsing remains only as a legacy fallback for old rows.
 
 This is the lowest-risk path because it keeps the current D1 queue/cache/failover code and only adds batch orchestration plus encrypted scheduler credential storage.
 

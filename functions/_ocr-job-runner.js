@@ -80,8 +80,9 @@ export async function getOcrJobState(db, auth) {
         .prepare(
           `SELECT id, status, target_count, assigned_count, processed_count, succeeded_count,
                   failed_count, needs_review_count, skipped_count, scheduler_provider_key,
-                  scheduler_external_id, last_message, started_at, last_run_at, completed_at,
-                  cancelled_at, created_at, updated_at
+                  scheduler_external_id, scheduler_trigger_status, scheduler_trigger_delay_seconds,
+                  scheduler_trigger_due_at, scheduler_last_triggered_at, last_message, started_at,
+                  last_run_at, completed_at, cancelled_at, created_at, updated_at
            FROM ocr_batch_runs
            ORDER BY created_at DESC
            LIMIT 8`,
