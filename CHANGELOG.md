@@ -4,6 +4,22 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-10 01:18 (Asia/Jakarta)
+### Added
+- `functions/_dashboard-ocr-schemas.js` and `functions/dashboard-data.js`: Added the admin `search_ocr_jobs` dashboard action for paginated OCR job status filtering.
+- `functions/_ocr-job-runner.js`: Added server-side OCR job search by status/franchise, including a virtual `unqueued` status that lists active proposal images not yet in `ocr_jobs`.
+- `js/dashboard-ocr-state.js`, `js/dashboard-ocr-providers.js`, `js/dashboard-ocr-jobs.js`, `js/dashboard-ocr-batches.js`, and `js/dashboard-ocr-results.js`: Added focused OCR dashboard browser modules for state initialization, provider/scheduler rendering, job rendering, batch/countdown rendering, and OCR result rendering.
+- `.context/session-20260710-0118.md`: Added this session continuity snapshot for OCR job filtering, pagination, and dashboard OCR refactor planning.
+
+### Changed
+- `js/dashboard-ocr.js`: Changed OCR job status counts into clickable filter chips, added paginated server-backed job lists, grouped visible jobs by franchise, preserved the active job filter after OCR mutations, improved batch Refresh feedback so a completed refresh visibly reports when no server-side progress changed, and refactored the file into an OCR coordinator/facade that delegates state and rendering to focused modules.
+- `js/dashboard-admin.js`: Changed dashboard data fetches to `cache: "no-store"` so manual Refresh actions do not look stale because of browser/intermediate caching.
+- `css/dashboard-ocr.css`: Added compact grouped job-card, filter-chip, and pagination styles for the OCR execution panel.
+- `src/pages/dashboard/index.astro`: Changed the OCR job status container from a paragraph to a div so it can validly contain interactive filter buttons, and loaded the focused OCR browser modules before the OCR facade.
+- `scripts/check-dashboard-ocr-client.mjs`: Expanded the OCR dashboard regression check to cover the split browser modules and job filter/pagination wiring.
+- `AUDIT.md` and `SUGGESTION.md`: Marked the `js/dashboard-ocr.js` focused module split complete and kept `src/pages/dashboard/index.astro` as the next dashboard refactor candidate.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the server-side OCR job filtering/pagination contract, grouped dashboard job UI, and split OCR dashboard browser modules.
+
 ## 2026-07-10 00:28 (Asia/Jakarta)
 ### Added
 - `migrations/0025_ocr_batch_scheduler_timing.sql`: Added structured OCR batch scheduler timing fields for trigger status, delay seconds, due timestamp, and last-trigger timestamp.

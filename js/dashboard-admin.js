@@ -188,7 +188,7 @@
         return;
       }
 
-      var response = await fetch("/dashboard-data", { headers: headers });
+      var response = await fetch("/dashboard-data", { headers: headers, cache: "no-store" });
       renderAuthDebug("dashboard_data:response", { status: response.status, ok: response.ok });
       if (response.status === 401) {
         clearDashboardCache();
@@ -241,7 +241,7 @@
 
   async function reloadDashboard() {
     var headers = await window.FranchiseAuth.getAuthHeaders();
-    var response = await fetch("/dashboard-data", { headers: headers });
+    var response = await fetch("/dashboard-data", { headers: headers, cache: "no-store" });
     var data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat ulang.");
     renderDashboard(data);

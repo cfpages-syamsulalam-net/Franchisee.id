@@ -6,32 +6,45 @@
   var PROVIDER_FIELDS = metadataPayload.providers || {};
   var FIELD_NAMES = metadataPayload.field_names || ["api_key", "api_secret", "account_id", "endpoint_url", "region", "model", "clear_api_key", "clear_api_secret"];
   var schedulerHelpers = window.FranchiseDashboardOcrSchedulers || {};
+  var stateFactory = window.FranchiseDashboardOcrState || {};
+  var providerRendererFactory = window.FranchiseDashboardOcrProviders || {};
+  var jobRendererFactory = window.FranchiseDashboardOcrJobs || {};
+  var batchRendererFactory = window.FranchiseDashboardOcrBatches || {};
+  var resultRendererFactory = window.FranchiseDashboardOcrResults || {};
 
   function createOperations(options) {
     options = options || {};
-    var state = {
-      providers: [],
-      schedulers: [],
-      adminOnly: true,
-      schedulerAdminOnly: true,
-      activeProviderCount: 0,
-      activeSchedulerCount: 0,
-      filling: false,
-      fillingScheduler: false,
-      autosaveTimer: null,
-      schedulerAutosaveTimer: null,
-      saving: false,
-      savingScheduler: false,
-      lastJobsPayload: null,
-      resultPageByFranchise: {},
-      resultSearchActive: false,
-      resultSearchResults: [],
-      resultSearchMeta: null,
-      resultSearchLoading: false,
-      pollTimer: null,
-      countdownTimer: null,
-      polling: false
-    };
+    var state = stateFactory.createInitialState();
+    var jobRenderers = typeof jobRendererFactory.createRenderer === "function" ? jobRendererFactory.createRenderer({
+      utils: utils,
+      getJobFilterStatus: function () { return state.jobFilterStatus; },
+      getJobFilterResults: function () { return state.jobFilterResults; },
+      getJobFilterMeta: function () { return state.jobFilterMeta; },
+      getJobFilterLoading: function () { return state.jobFilterLoading; },
+      getActiveProviderCount: function () { return state.activeProviderCount; },
+      statusLabel: statusLabel,
+      renderJobStatus: renderJobStatus,
+      renderJobActionLink: renderJobActionLink,
+      renderJobResultAction: renderJobResultAction,
+      renderJobActionButton: renderJobActionButton
+    }) : null;
+    var batchRenderers = typeof batchRendererFactory.createRenderer === "function" ? batchRendererFactory.createRenderer({
+      utils: utils,
+      getActiveProviderCount: function () { return state.activeProviderCount; },
+      renderJobStatus: renderJobStatus
+    }) : null;
+    var resultRenderers = typeof resultRendererFactory.createRenderer === "function" ? resultRendererFactory.createRenderer({
+      utils: utils,
+      statusLabel: statusLabel,
+      fieldLabel: fieldLabel,
+      clampResultPage: clampResultPage
+    }) : null;
+    var providerRenderers = typeof providerRendererFactory.createRenderer === "function" ? providerRendererFactory.createRenderer({
+      utils: utils,
+      providerFields: PROVIDER_FIELDS,
+      fieldNames: FIELD_NAMES,
+      schedulerHelpers: schedulerHelpers
+    }) : null;
 
     function bind() {
       (options.subtabs || []).forEach(function (tab) {
@@ -56,6 +69,7 @@
       if (options.schedulerForm) options.schedulerForm.addEventListener("input", handleSchedulerFormChange);
       if (options.schedulerForm) options.schedulerForm.addEventListener("change", handleSchedulerFormChange);
       if (options.providerList) options.providerList.addEventListener("click", handleProviderListClick);
+      if (options.jobStatus) options.jobStatus.addEventListener("click", handleJobStatusClick);
       if (options.jobRows) options.jobRows.addEventListener("click", handleJobRowsClick);
       if (options.batchRows) options.batchRows.addEventListener("click", handleBatchRowsClick);
       if (options.resultRows) options.resultRows.addEventListener("click", handleResultClick);
@@ -89,24 +103,22 @@
       renderSelect();
       renderSchedulerSelect();
       if (state.adminOnly) {
-        setFormDisabled(true);
+        providerRenderers.setProviderFormDisabled(options.form, true);
         setJobButtonsDisabled(true);
         setInlineStatus("Hanya admin yang dapat melihat dan mengubah konfigurasi OCR.");
-        renderProviderMeta(null);
-        renderCredentialSummary(null);
         return;
       }
-      setFormDisabled(false);
+      providerRenderers.setProviderFormDisabled(options.form, false);
       setJobButtonsDisabled(Boolean(jobsPayload.migration_required) || state.activeProviderCount === 0);
       var selectedKey = options.providerSelect && options.providerSelect.value;
       var selected = findProvider(selectedKey) || state.providers[0] || null;
       if (selected && options.providerSelect) options.providerSelect.value = selected.provider_key;
       fillForm(selected);
       if (state.schedulerAdminOnly || schedulerPayload.migration_required) {
-        setSchedulerFormDisabled(true);
+        providerRenderers.setSchedulerFormDisabled(options.schedulerForm, true);
         setSchedulerStatus(schedulerPayload.migration_required ? "Migration scheduler OCR belum siap." : "Hanya admin yang dapat mengubah scheduler OCR.");
       } else {
-        setSchedulerFormDisabled(false);
+        providerRenderers.setSchedulerFormDisabled(options.schedulerForm, false);
         var selectedSchedulerKey = options.schedulerSelect && options.schedulerSelect.value;
         var selectedScheduler = findScheduler(selectedSchedulerKey) || state.schedulers[0] || null;
         if (selectedScheduler && options.schedulerSelect) options.schedulerSelect.value = selectedScheduler.provider_key;
@@ -226,6 +238,42 @@
       }
     }
 
+    async function searchOcrJobs(status, offset) {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa melihat daftar job OCR lengkap.", true);
+        return;
+      }
+      if (state.jobFilterLoading) return;
+      state.jobFilterLoading = true;
+      state.jobFilterStatus = status || "all";
+      renderJobs(state.lastJobsPayload || {});
+      try {
+        var limit = state.jobFilterMeta ? Number(state.jobFilterMeta.limit || 80) : 80;
+        var result = await options.postDashboardAction({
+          action: "search_ocr_jobs",
+          status: state.jobFilterStatus,
+          limit: limit,
+          offset: Math.max(0, Number(offset || 0))
+        });
+        state.jobFilterResults = result.jobs || [];
+        state.jobFilterMeta = {
+          total: Number(result.total || 0),
+          limit: Number(result.limit || limit),
+          offset: Number(result.offset || 0),
+          has_more: Boolean(result.has_more),
+          filters: result.filters || { status: state.jobFilterStatus }
+        };
+        renderJobs(state.lastJobsPayload || {});
+        refreshTooltips();
+        options.setStatus("Daftar job OCR difilter: " + statusLabel(state.jobFilterStatus) + " · " + state.jobFilterResults.length.toLocaleString("id-ID") + " tampil.", false);
+      } catch (error) {
+        options.setStatus(error.message || "Filter job OCR gagal.", true);
+      } finally {
+        state.jobFilterLoading = false;
+        renderJobs(state.lastJobsPayload || {});
+      }
+    }
+
     async function handleProviderListClick(event) {
       var toggleButton = event.target && event.target.closest && event.target.closest("[data-ocr-toggle-provider]");
       if (toggleButton) {
@@ -248,6 +296,12 @@
     }
 
     async function handleJobRowsClick(event) {
+      var pageButton = event.target && event.target.closest && event.target.closest("[data-ocr-job-page]");
+      if (pageButton) {
+        event.preventDefault();
+        await searchOcrJobs(state.jobFilterStatus || "all", Number(pageButton.getAttribute("data-ocr-job-page") || 0));
+        return;
+      }
       var retryButton = event.target && event.target.closest && event.target.closest("[data-ocr-retry-job]");
       if (retryButton) {
         event.preventDefault();
@@ -267,6 +321,13 @@
       focusResultRow(resultLink.getAttribute("data-ocr-open-result"));
     }
 
+    async function handleJobStatusClick(event) {
+      var button = event.target && event.target.closest && event.target.closest("[data-ocr-job-filter]");
+      if (!button) return;
+      event.preventDefault();
+      await searchOcrJobs(button.getAttribute("data-ocr-job-filter") || "all", 0);
+    }
+
     async function handleBatchRowsClick(event) {
       var retryButton = event.target && event.target.closest && event.target.closest("[data-ocr-retry-batch]");
       if (retryButton) {
@@ -277,8 +338,12 @@
       var refreshButton = event.target && event.target.closest && event.target.closest("[data-ocr-refresh-batches]");
       if (!refreshButton) return;
       event.preventDefault();
-      options.setStatus("Memuat ulang status batch OCR...", false);
-      await options.reloadDashboard();
+      await buttonAction(refreshButton, "Refresh...", async function () {
+        options.setStatus("Memuat ulang status batch OCR...", false);
+        await options.reloadDashboard();
+        var now = new Date();
+        options.setStatus("Status batch OCR sudah di-refresh pada " + now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + ". Jika angka belum berubah, worker/scheduler memang belum mengirim update baru.", false);
+      }, options.setStatus);
     }
 
     async function toggleProvider(providerKey) {
@@ -300,56 +365,7 @@
 
     function renderList(payload) {
       if (!options.providerList) return;
-      if (payload.migration_required) {
-        options.providerList.innerHTML = '<li><strong>Konfigurasi belum siap</strong><span>Jalankan migration OCR terlebih dahulu.</span></li>';
-        return;
-      }
-      if (state.adminOnly) {
-        options.providerList.innerHTML = '<li><strong>Akses admin</strong><span>Login sebagai admin untuk mengelola credential OCR.</span></li>';
-        return;
-      }
-      options.providerList.innerHTML = state.providers.length ? state.providers.map(function (provider) {
-        var configured = provider.has_api_key ? "Key tersimpan" : "Belum ada key";
-        var quota = provider.free_quota_limit
-          ? Number(provider.free_quota_limit).toLocaleString("id-ID") + " " + utils.escapeHtml(provider.quota_unit || "request") + " / " + quotaPeriodLabel(provider.free_quota_period)
-          : "Limit mengikuti akun provider";
-        var rowClass = provider.is_enabled ? "" : ' class="is-muted"';
-        var providerError = renderProviderError(provider);
-        return '<li' + rowClass + '><div class="dash-ocr-provider-row"><div><strong>#' + Number(provider.priority || 100) + ' · ' + utils.escapeHtml(provider.display_name) + '</strong><span>' +
-          utils.escapeHtml(configured + " · " + (provider.is_enabled ? "Aktif" : "Nonaktif") + " · " + providerHealthLabel(provider)) +
-          '<br>' + quota + '</span></div>' + renderProviderToggle(provider) + '</div>' + providerError + '</li>';
-      }).join("") : '<li><span>Belum ada provider OCR.</span></li>';
-    }
-
-    function providerHealthLabel(provider) {
-      if (!provider) return "-";
-      var status = provider.health_status || "-";
-      if (status === "cooldown") {
-        var cooldownUntil = provider.cooldown_until ? Date.parse(provider.cooldown_until) : 0;
-        return cooldownUntil && cooldownUntil <= Date.now() ? "Cooldown selesai" : "Cooldown";
-      }
-      return status;
-    }
-
-    function renderProviderToggle(provider) {
-      var canEnable = Boolean(provider.has_api_key);
-      var disabled = !provider.is_enabled && !canEnable;
-      var label = provider.is_enabled ? "Nonaktifkan" : "Aktifkan";
-      var icon = provider.is_enabled ? "fa-check" : "fa-power-off";
-      var tooltip = provider.is_enabled
-        ? "Nonaktifkan provider OCR ini. Credential tetap tersimpan."
-        : (canEnable ? "Aktifkan provider OCR ini untuk dipakai oleh dry run dan batch." : "Isi credential provider dulu sebelum mengaktifkan.");
-      return '<button type="button" class="dash-icon-button dash-ocr-provider-toggle' + (provider.is_enabled ? ' is-active' : '') + '" data-ocr-toggle-provider="' + utils.escapeAttr(provider.provider_key) + '" data-fr-tooltip="' + utils.escapeAttr(tooltip) + '"' + (disabled ? " disabled" : "") + '>' +
-        '<i class="fas ' + icon + '" aria-hidden="true"></i><span>' + label + '</span></button>';
-    }
-
-    function renderProviderError(provider) {
-      if (!provider || !provider.last_error) return "";
-      return '<div class="dash-ocr-provider-error">' +
-        '<div><strong>Error terakhir provider</strong><code>' + utils.escapeHtml(provider.last_error) + '</code></div>' +
-        '<button type="button" class="dash-icon-button dash-ocr-copy-error" data-ocr-copy-provider-error="' + utils.escapeAttr(provider.provider_key) + '" data-fr-tooltip="Copy detail error provider untuk troubleshooting">' +
-        '<i class="fas fa-copy" aria-hidden="true"></i><span>Copy error</span></button>' +
-        '</div>';
+      options.providerList.innerHTML = providerRenderers.renderProviderList(payload, state.providers, state.adminOnly);
     }
 
     function renderJobs(payload) {
@@ -361,17 +377,19 @@
           options.jobStatus.textContent = "Queue OCR belum siap. Jalankan migration OCR terlebih dahulu.";
         } else {
           var counts = payload.counts || {};
-          var statusParts = [
-            "Belum antre: " + Number(payload.enqueue_candidates || 0).toLocaleString("id-ID"),
-            "Pending: " + Number(counts.pending || 0).toLocaleString("id-ID"),
-            "Running: " + Number(counts.running || 0).toLocaleString("id-ID"),
-            "Sukses: " + Number(counts.succeeded || 0).toLocaleString("id-ID"),
-            "Perlu cek: " + Number(counts.needs_review || 0).toLocaleString("id-ID"),
-            "Gagal: " + Number(counts.failed || 0).toLocaleString("id-ID")
+          var statusButtons = [
+            jobRenderers.renderJobFilterButton("unqueued", "fa-plus-circle", "Belum antre", payload.enqueue_candidates || 0),
+            jobRenderers.renderJobFilterButton("pending", "fa-clock", "Pending", counts.pending || 0),
+            jobRenderers.renderJobFilterButton("running", "fa-spinner", "Running", counts.running || 0),
+            jobRenderers.renderJobFilterButton("succeeded", "fa-check-circle", "Sukses", counts.succeeded || 0),
+            jobRenderers.renderJobFilterButton("needs_review", "fa-eye", "Perlu cek", counts.needs_review || 0),
+            jobRenderers.renderJobFilterButton("failed", "fa-times-circle", "Gagal", counts.failed || 0)
           ];
-          if (state.activeProviderCount === 0) statusParts.push("Provider aktif: 0 — aktifkan provider OCR dulu.");
-          if (state.activeSchedulerCount === 0) statusParts.push("Scheduler aktif: 0 — batch 100 perlu dijalankan manual per chunk.");
-          options.jobStatus.textContent = statusParts.join(" · ");
+          var notices = [];
+          if (state.activeProviderCount === 0) notices.push("Provider aktif: 0 — aktifkan provider OCR dulu.");
+          if (state.activeSchedulerCount === 0) notices.push("Scheduler aktif: 0 — batch 100 perlu dijalankan manual per chunk.");
+          options.jobStatus.innerHTML = '<div class="dash-ocr-job-filterbar">' + statusButtons.join("") + '</div>' +
+            (notices.length ? '<small>' + utils.escapeHtml(notices.join(" · ")) + '</small>' : "");
         }
       }
       if (!options.jobRows) return;
@@ -379,69 +397,20 @@
         options.jobRows.innerHTML = '<li><strong>Queue belum aktif</strong><span>Migration OCR job queue perlu dijalankan sebelum batch OCR dipakai.</span></li>';
         return;
       }
-      var recent = payload.recent || [];
-      options.jobRows.innerHTML = recent.length ? recent.map(function (job) {
-        var brand = job.brand_name || job.franchise_id || "Listing";
-        var page = job.page_number ? "Hal. " + Number(job.page_number).toLocaleString("id-ID") : "Hal. proposal";
-        var provider = job.provider_key || "belum ada provider";
-        var link = job.slug ? renderJobActionLink("/peluang-usaha/" + job.slug, "fa-external-link-alt", "Listing", "Buka listing publik", true) : "";
-        var imageLink = job.source_url ? renderJobActionLink(job.source_url, "fa-image", "Gambar", "Buka gambar halaman brosur yang dikirim ke OCR.", true) : "";
-        var resultLink = job.status === "succeeded"
-          ? renderJobResultAction(job.asset_id)
-          : "";
-        var canRetry = job.status === "failed" || job.status === "needs_review";
-        var retryButton = canRetry
-          ? renderJobActionButton("data-ocr-retry-job", job.id, "fa-play", "OCR", state.activeProviderCount ? "Coba OCR ulang sekarang untuk job ini." : "Aktifkan provider OCR dulu sebelum menjalankan ulang job ini.", state.activeProviderCount === 0)
-          : "";
-        var noTextButton = job.status === "failed"
-          ? renderJobActionButton("data-ocr-mark-no-text", job.id, "fa-ban", "Tanpa teks", "Tandai halaman ini sebagai gambar tanpa teks cukup setelah admin membuka dan mengecek gambarnya.", false)
-          : "";
-        return '<li class="dash-ocr-job-item is-' + utils.escapeAttr(job.status || "unknown") + '">' +
-          '<div class="dash-ocr-job-main">' +
-          '<div class="dash-ocr-job-head"><strong>' + utils.escapeHtml(brand) + '</strong>' + renderJobStatus(job.status) + '</div>' +
-          '<div class="dash-ocr-job-meta">' +
-          '<span><i class="fas fa-file-image" aria-hidden="true"></i>' + utils.escapeHtml(page) + '</span>' +
-          '<span><i class="fas fa-plug" aria-hidden="true"></i>' + utils.escapeHtml(provider) + '</span>' +
-          '<span><i class="fas fa-redo-alt" aria-hidden="true"></i>' + Number(job.attempt_count || 0).toLocaleString("id-ID") + 'x</span>' +
-          '</div>' +
-          (job.error_message ? '<div class="dash-ocr-job-error"><i class="fas fa-times-circle" aria-hidden="true"></i><span>' + utils.escapeHtml(job.error_message) + '</span></div>' : '') +
-          '</div>' +
-          '<div class="dash-ocr-job-actions">' + imageLink + link + resultLink + retryButton + noTextButton + '</div>' +
-          '</li>';
-      }).join("") : '<li><span>Belum ada job OCR. Antrekan proposal gambar terlebih dahulu.</span></li>';
+      var jobPayload = state.jobFilterStatus ? jobRenderers.buildJobFilterPayload(payload) : payload;
+      var jobs = jobPayload.recent || [];
+      var groups = jobRenderers.groupJobsByFranchise(jobs);
+      var heading = jobRenderers.renderJobFilterHeading(jobPayload);
+      var pagination = jobRenderers.renderJobPagination(jobPayload);
+      options.jobRows.innerHTML = heading + (groups.length
+        ? groups.map(jobRenderers.renderJobGroup).join("")
+        : '<li><span>' + utils.escapeHtml(state.jobFilterStatus ? "Tidak ada job untuk filter ini." : "Belum ada job OCR. Antrekan proposal gambar terlebih dahulu.") + '</span></li>') + pagination;
     }
 
     function renderBatches(payload) {
       if (!options.batchRows) return;
       payload = payload || {};
-      var batches = payload.batches || [];
-      options.batchRows.innerHTML = batches.length ? batches.map(function (batch) {
-        var progress = Number(batch.assigned_count || 0)
-          ? Math.round((Number(batch.processed_count || 0) / Number(batch.assigned_count || 1)) * 100)
-          : 0;
-        var meta = [
-          Number(batch.processed_count || 0).toLocaleString("id-ID") + "/" + Number(batch.assigned_count || 0).toLocaleString("id-ID") + " diproses",
-          "Sukses " + Number(batch.succeeded_count || 0).toLocaleString("id-ID"),
-          "Perlu cek " + Number(batch.needs_review_count || 0).toLocaleString("id-ID"),
-          "Gagal " + Number(batch.failed_count || 0).toLocaleString("id-ID"),
-          batch.scheduler_provider_key ? "Scheduler " + batch.scheduler_provider_key : "Manual"
-        ];
-        var done = ["completed", "cancelled"].indexOf(batch.status) !== -1;
-        var retryDisabled = state.activeProviderCount === 0;
-        var countdown = schedulerCountdown(batch);
-        var retryButton = !done
-          ? '<button type="button" class="dash-ocr-row-action" data-ocr-retry-batch="' + utils.escapeAttr(batch.id || "") + '" data-fr-tooltip="' + utils.escapeAttr(retryDisabled ? "Aktifkan provider OCR yang siap dipakai sebelum retry batch." : "Coba jadwalkan ulang batch ini lewat scheduler aktif. Jika error token muncul lagi, ganti QSTASH_TOKEN di Pengaturan.") + '"' + (retryDisabled ? " disabled" : "") + '><i class="fas fa-redo-alt" aria-hidden="true"></i><span>Retry</span></button>'
-          : "";
-        var refreshButton = '<button type="button" class="dash-ocr-row-action" data-ocr-refresh-batches data-fr-tooltip="Muat ulang status batch OCR dari server."><i class="fas fa-sync-alt" aria-hidden="true"></i><span>Refresh</span></button>';
-        return '<li class="dash-ocr-batch-item is-' + utils.escapeAttr(batch.status || "queued") + '"' + countdownAttrs(countdown) + '>' +
-          '<div class="dash-ocr-batch-head"><strong><i class="fas fa-layer-group" aria-hidden="true"></i> Batch ' + utils.escapeHtml(batch.id || "-") + '</strong>' + renderJobStatus(batch.status) + '</div>' +
-          '<div class="dash-ocr-progress"><span style="width:' + Math.max(0, Math.min(progress, 100)) + '%"></span></div>' +
-          '<span>' + utils.escapeHtml(meta.join(" · ")) + '</span>' +
-          (batch.last_message ? '<small>' + utils.escapeHtml(batch.last_message) + '</small>' : '') +
-          (countdown ? '<small class="dash-ocr-batch-countdown"><i class="fas fa-hourglass-half" aria-hidden="true"></i><span data-ocr-batch-countdown>' + utils.escapeHtml(countdownLabel(countdown.remaining_seconds)) + '</span></small>' : '') +
-          '<div class="dash-ocr-batch-actions">' + retryButton + refreshButton + '</div>' +
-          '</li>';
-      }).join("") : '<li><span>Belum ada batch OCR besar. Klik Jalankan 100 setelah provider OCR dan scheduler siap.</span></li>';
+      options.batchRows.innerHTML = batchRenderers.renderBatches(payload);
       syncBatchCountdowns();
     }
 
@@ -473,78 +442,11 @@
 
     function updateBatchCountdownLabels() {
       if (!options.batchRows) return;
-      var now = Date.now();
-      var activeCount = 0;
-      options.batchRows.querySelectorAll("[data-ocr-batch-countdown-until]").forEach(function (item) {
-        var until = Number(item.getAttribute("data-ocr-batch-countdown-until") || 0);
-        var target = item.querySelector("[data-ocr-batch-countdown]");
-        if (!until || !target) return;
-        var remaining = Math.max(0, Math.ceil((until - now) / 1000));
-        target.textContent = countdownLabel(remaining);
-        if (remaining > 0) {
-          activeCount += 1;
-          item.setAttribute("data-ocr-batch-waiting", "true");
-        } else {
-          item.setAttribute("data-ocr-batch-waiting", "done");
-        }
-      });
+      var activeCount = batchRenderers.updateCountdownLabels(options.batchRows);
       if (!activeCount && state.countdownTimer) {
         window.clearInterval(state.countdownTimer);
         state.countdownTimer = null;
       }
-    }
-
-    function schedulerCountdown(batch) {
-      if (!batch || ["queued", "running"].indexOf(batch.status) === -1) return null;
-      var structuredDueAt = parseSqlTimestampMs(batch.scheduler_trigger_due_at);
-      if (structuredDueAt) {
-        return {
-          until_ms: structuredDueAt,
-          remaining_seconds: Math.max(0, Math.ceil((structuredDueAt - Date.now()) / 1000)),
-          source: "structured"
-        };
-      }
-      var delaySeconds = parseSchedulerDelaySeconds(batch.last_message || "");
-      if (!delaySeconds) return null;
-      var base = parseSqlTimestampMs(batch.updated_at || batch.created_at || batch.started_at);
-      if (!base) return null;
-      var until = base + (delaySeconds * 1000);
-      var remaining = Math.max(0, Math.ceil((until - Date.now()) / 1000));
-      return { until_ms: until, remaining_seconds: remaining, source: "message" };
-    }
-
-    function countdownAttrs(countdown) {
-      if (!countdown) return "";
-      return ' data-ocr-batch-countdown-until="' + utils.escapeAttr(String(countdown.until_ms)) + '" data-ocr-batch-waiting="true"';
-    }
-
-    function countdownLabel(seconds) {
-      seconds = Math.max(0, Number(seconds || 0));
-      return seconds > 0
-        ? "Menunggu trigger scheduler · " + seconds.toLocaleString("id-ID") + " detik lagi"
-        : "Jadwal scheduler sudah lewat. Menunggu status terbaru; klik Refresh atau Retry jika tidak berubah.";
-    }
-
-    function parseSchedulerDelaySeconds(message) {
-      var match = String(message || "").match(/\((\d+)\s*([smh])\)/i);
-      if (!match) return 0;
-      var value = Number(match[1] || 0);
-      var unit = String(match[2] || "s").toLowerCase();
-      if (!value) return 0;
-      if (unit === "h") return value * 60 * 60;
-      if (unit === "m") return value * 60;
-      return value;
-    }
-
-    function parseSqlTimestampMs(value) {
-      if (!value) return 0;
-      var text = String(value).trim();
-      if (!text) return 0;
-      if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(text)) {
-        text = text.replace(" ", "T") + "Z";
-      }
-      var parsed = Date.parse(text);
-      return Number.isFinite(parsed) ? parsed : 0;
     }
 
     function hasActiveBatch(payload) {
@@ -567,6 +469,7 @@
         queued: ["fa-clock", "pending", "Queued"],
         pending: ["fa-clock", "pending", "Pending"],
         running: ["fa-spinner fa-spin", "running", "Running"],
+        unqueued: ["fa-plus-circle", "pending", "Belum antre"],
         paused_rate_limit: ["fa-hourglass-half", "review", "Jeda rate limit"],
         paused_quota: ["fa-pause-circle", "review", "Jeda kuota"],
         completed: ["fa-check-circle", "success", "Selesai"],
@@ -599,9 +502,9 @@
         return;
       }
       var results = payload.results || [];
-      var groups = groupResultsByFranchise(results);
+      var groups = resultRenderers.groupResultsByFranchise(results);
       options.resultRows.innerHTML = groups.length
-        ? groups.map(renderResultGroup).join("")
+        ? groups.map(resultRenderers.renderResultGroup).join("")
         : '<li><strong>Belum ada hasil OCR</strong><span>Jalankan Dry run atau batch untuk menghasilkan teks. Setelah sukses, hasilnya muncul di sini.</span></li>';
     }
 
@@ -675,7 +578,7 @@
         return;
       }
       var sourceResults = state.resultSearchActive ? state.resultSearchResults : ((state.lastJobsPayload && state.lastJobsPayload.results) || []);
-      var groups = groupResultsByFranchise(sourceResults);
+      var groups = resultRenderers.groupResultsByFranchise(sourceResults);
       var found = groups.some(function (group) {
         var index = group.items.findIndex(function (item) { return item.asset_id === assetId; });
         if (index === -1) return false;
@@ -690,7 +593,7 @@
         state.resultSearchMeta = null;
         renderResults(state.lastJobsPayload || {});
         renderResultSearchStatus(state.lastJobsPayload || {});
-        groups = groupResultsByFranchise((state.lastJobsPayload && state.lastJobsPayload.results) || []);
+        groups = resultRenderers.groupResultsByFranchise((state.lastJobsPayload && state.lastJobsPayload.results) || []);
         groups.some(function (group) {
           var index = group.items.findIndex(function (item) { return item.asset_id === assetId; });
           if (index === -1) return false;
@@ -716,96 +619,6 @@
       options.setStatus("Ini teks OCR yang berhasil diekstrak dari halaman brosur tersebut.", false);
     }
 
-    function groupResultsByFranchise(results) {
-      var map = {};
-      (results || []).forEach(function (item) {
-        var key = resultGroupKey(item);
-        if (!map[key]) {
-          map[key] = {
-            key: key,
-            brandName: item.brand_name || item.franchise_id || "Listing",
-            franchiseId: item.franchise_id || "",
-            slug: item.slug || "",
-            items: []
-          };
-        }
-        if (!map[key].slug && item.slug) map[key].slug = item.slug;
-        map[key].items.push(item);
-      });
-      return Object.keys(map).map(function (key) {
-        map[key].items.sort(function (a, b) {
-          return Number(a.page_number || 0) - Number(b.page_number || 0) || String(a.updated_at || "").localeCompare(String(b.updated_at || ""));
-        });
-        return map[key];
-      });
-    }
-
-    function renderResultGroup(group) {
-      var activeIndex = clampResultPage(group.key, group.items.length);
-      var item = group.items[activeIndex] || group.items[0] || {};
-      var extracted = group.items.filter(function (row) { return row.extraction_status === "extracted"; }).length;
-      var needsCheck = group.items.filter(function (row) { return row.extraction_status !== "extracted"; }).length;
-      var listingLink = group.slug
-        ? '<a class="dash-ocr-row-action" href="/peluang-usaha/' + utils.escapeAttr(group.slug) + '" target="_blank" rel="noopener" data-fr-tooltip="Buka listing publik franchise ini."><i class="fas fa-external-link-alt" aria-hidden="true"></i><span>Listing</span></a>'
-        : "";
-      return '<li class="dash-ocr-result-card" data-ocr-result-group="' + utils.escapeAttr(group.key) + '">' +
-        '<div class="dash-ocr-result-card-head">' +
-          '<div><strong><i class="fas fa-store" aria-hidden="true"></i> ' + utils.escapeHtml(group.brandName) + '</strong>' +
-          '<span>' + utils.escapeHtml(group.items.length.toLocaleString("id-ID") + " halaman · " + extracted.toLocaleString("id-ID") + " berhasil" + (needsCheck ? " · " + needsCheck.toLocaleString("id-ID") + " perlu cek" : "")) + '</span></div>' +
-          '<div class="dash-ocr-result-actions">' + listingLink + '</div>' +
-        '</div>' +
-        renderResultPager(group, activeIndex) +
-        renderResultPageBody(group, item, activeIndex) +
-        '</li>';
-    }
-
-    function renderResultPager(group, activeIndex) {
-      if (group.items.length <= 1) {
-        return '<div class="dash-ocr-result-pager is-single"><span><i class="fas fa-file-alt" aria-hidden="true"></i> ' + utils.escapeHtml(resultPageTitle(group.items[0] || {}, 0)) + '</span></div>';
-      }
-      var buttons = group.items.map(function (item, index) {
-        var active = index === activeIndex;
-        var label = item.page_number ? Number(item.page_number).toLocaleString("id-ID") : String(index + 1);
-        return '<button type="button" class="dash-ocr-page-button' + (active ? ' is-active' : '') + '" data-ocr-result-page="' + utils.escapeAttr(group.key) + '" data-ocr-result-page-index="' + index + '" data-fr-tooltip="' + utils.escapeAttr("Baca hasil OCR " + resultPageTitle(item, index)) + '">' +
-          '<i class="fas ' + resultStatusIcon(item.extraction_status) + '" aria-hidden="true"></i><span>' + utils.escapeHtml(label) + '</span></button>';
-      }).join("");
-      return '<div class="dash-ocr-result-pager">' +
-        '<button type="button" class="dash-ocr-page-nav" data-ocr-result-prev="' + utils.escapeAttr(group.key) + '"' + (activeIndex <= 0 ? " disabled" : "") + ' data-fr-tooltip="Halaman sebelumnya"><i class="fas fa-chevron-left" aria-hidden="true"></i><span>Prev</span></button>' +
-        '<div class="dash-ocr-page-strip" aria-label="Halaman hasil OCR">' + buttons + '</div>' +
-        '<button type="button" class="dash-ocr-page-nav" data-ocr-result-next="' + utils.escapeAttr(group.key) + '"' + (activeIndex >= group.items.length - 1 ? " disabled" : "") + ' data-fr-tooltip="Halaman berikutnya"><span>Next</span><i class="fas fa-chevron-right" aria-hidden="true"></i></button>' +
-        '</div>';
-    }
-
-    function renderResultPageBody(group, item, activeIndex) {
-      var page = resultPageTitle(item, activeIndex);
-      var fields = (item.candidate_fields || []).length
-        ? item.candidate_fields.map(fieldLabel).join(", ")
-        : "Belum ada kandidat field baru dari teks ini.";
-      var assetLink = item.source_url
-        ? '<a href="' + utils.escapeAttr(item.source_url) + '" target="_blank" rel="noopener" data-fr-tooltip="Buka gambar brosur yang dikirim ke OCR."><i class="fas fa-image" aria-hidden="true"></i><span>Gambar</span></a>'
-        : "";
-      var reviewLink = '<a href="#review" data-ocr-open-review data-fr-tooltip="Buka tab Review untuk meninjau kandidat data."><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Review</span></a>';
-      return '<div class="dash-ocr-result-item dash-ocr-result-page-body is-' + utils.escapeAttr(extractionStatusClass(item.extraction_status)) + '" data-ocr-result-asset-id="' + utils.escapeAttr(item.asset_id || "") + '">' +
-        '<div class="dash-ocr-result-meta">' +
-          '<span><i class="fas fa-file-alt" aria-hidden="true"></i> ' + utils.escapeHtml(page) + '</span>' +
-          '<span><i class="fas ' + resultStatusIcon(item.extraction_status) + '" aria-hidden="true"></i> ' + utils.escapeHtml(statusLabel(item.extraction_status)) + '</span>' +
-          '<span><i class="fas fa-robot" aria-hidden="true"></i> ' + utils.escapeHtml(item.extraction_method || "ocr") + '</span>' +
-          '<span><i class="fas fa-align-left" aria-hidden="true"></i> ' + utils.escapeHtml(Number(item.text_length || 0).toLocaleString("id-ID") + " karakter") + '</span>' +
-        '</div>' +
-        '<span class="dash-ocr-result-fields"><i class="fas fa-tags" aria-hidden="true"></i> ' + utils.escapeHtml(fields) + '</span>' +
-        '<p class="dash-ocr-result-text">' + utils.escapeHtml(item.source_text_preview || "Tidak ada preview teks.") + '</p>' +
-        '<div class="dash-ocr-result-actions">' + assetLink + reviewLink + '</div>' +
-        '</div>';
-    }
-
-    function resultGroupKey(item) {
-      return item.franchise_id || item.slug || item.brand_name || "unknown";
-    }
-
-    function resultPageTitle(item, fallbackIndex) {
-      return item && item.page_number ? "Halaman " + Number(item.page_number).toLocaleString("id-ID") : "Halaman " + (Number(fallbackIndex || 0) + 1).toLocaleString("id-ID");
-    }
-
     function setResultGroupPage(groupKey, pageIndex) {
       state.resultPageByFranchise[groupKey] = Math.max(0, Number(pageIndex || 0));
       renderResults(state.lastJobsPayload || {});
@@ -813,7 +626,7 @@
     }
 
     function moveResultGroupPage(groupKey, delta) {
-      var groups = groupResultsByFranchise((state.lastJobsPayload && state.lastJobsPayload.results) || []);
+      var groups = resultRenderers.groupResultsByFranchise((state.lastJobsPayload && state.lastJobsPayload.results) || []);
       var group = groups.find(function (item) { return item.key === groupKey; });
       if (!group) return;
       setResultGroupPage(groupKey, clampResultPage(groupKey, group.items.length) + Number(delta || 0));
@@ -827,41 +640,14 @@
       return current;
     }
 
-    function resultStatusIcon(status) {
-      return status === "extracted" ? "fa-check-circle" : status === "failed" ? "fa-times-circle" : "fa-exclamation-circle";
-    }
-
-    function extractionStatusClass(status) {
-      return status === "extracted" ? "extracted" : status === "failed" ? "failed" : "review";
-    }
-
     function renderSelect() {
-      if (!options.providerSelect) return;
-      var current = options.providerSelect.value;
-      options.providerSelect.innerHTML = '<option value="">Pilih provider...</option>' + state.providers.map(function (provider) {
-        return '<option value="' + utils.escapeAttr(provider.provider_key) + '">' + utils.escapeHtml(provider.display_name) + '</option>';
-      }).join("");
-      if (state.providers.some(function (provider) { return provider.provider_key === current; })) options.providerSelect.value = current;
+      providerRenderers.renderProviderSelect(options.providerSelect, state.providers);
     }
 
     function fillForm(provider) {
       if (!options.form || !provider) return;
       state.filling = true;
-      setValue("provider_key", provider.provider_key);
-      setValue("api_key", "");
-      setValue("api_secret", "");
-      setValue("account_id", provider.account_id || "");
-      setValue("endpoint_url", provider.endpoint_url || "");
-      setValue("region", provider.region || "");
-      setValue("model", provider.model || "");
-      setValue("priority", provider.priority || 100);
-      setChecked("clear_api_key", false);
-      setChecked("clear_api_secret", false);
-      options.form.classList.toggle("is-provider-disabled", Boolean(provider.has_api_key && !provider.is_enabled));
-      renderProviderFields(provider);
-      renderProviderMeta(provider);
-      renderCredentialSummary(provider);
-      setInlineStatus(credentialStatusText(provider));
+      providerRenderers.fillProviderForm(options.form, provider, setInlineStatus);
       state.filling = false;
     }
 
@@ -900,7 +686,7 @@
         var hasNewCredential = Boolean(String(form.get("api_key") || "").trim() || String(form.get("api_secret") || "").trim());
         var clearsCredential = form.get("clear_api_key") === "on" || form.get("clear_api_secret") === "on";
         var nextEnabled = clearsCredential ? false : (hasNewCredential ? true : Boolean(provider && provider.is_enabled));
-        setFormDisabled(true);
+        providerRenderers.setProviderFormDisabled(options.form, true);
         await options.postDashboardAction({
           action: "update_ocr_provider_config",
           provider_key: String(form.get("provider_key") || ""),
@@ -923,7 +709,7 @@
         throw error;
       } finally {
         state.saving = false;
-        setFormDisabled(false);
+        providerRenderers.setProviderFormDisabled(options.form, false);
       }
     }
 
@@ -962,7 +748,7 @@
         var hasNewCredential = Boolean(String(form.get("api_key") || "").trim() || String(form.get("api_secret") || "").trim());
         var clearsCredential = form.get("clear_api_key") === "on" || form.get("clear_api_secret") === "on";
         var nextEnabled = clearsCredential ? false : (hasNewCredential ? true : Boolean(scheduler && scheduler.is_enabled));
-        setSchedulerFormDisabled(true);
+        providerRenderers.setSchedulerFormDisabled(options.schedulerForm, true);
         await options.postDashboardAction({
           action: "update_ocr_scheduler_config",
           provider_key: String(form.get("provider_key") || ""),
@@ -984,7 +770,7 @@
         throw error;
       } finally {
         state.savingScheduler = false;
-        setSchedulerFormDisabled(false);
+        providerRenderers.setSchedulerFormDisabled(options.schedulerForm, false);
       }
     }
 
@@ -996,7 +782,7 @@
       await buttonAction(options.enqueueButton, "Mengantrekan...", async function () {
         var result = await options.postDashboardAction({ action: "enqueue_ocr_jobs", limit: 100 });
         options.setStatus("OCR proposal diantrekan: " + Number(result.enqueued || 0).toLocaleString("id-ID") + " aset.", false);
-        await options.reloadDashboard();
+        await refreshAfterJobMutation();
       }, options.setStatus);
     }
 
@@ -1008,7 +794,7 @@
       await buttonAction(options.dryRunButton, "Dry-run...", async function () {
         var result = await options.postDashboardAction({ action: "run_ocr_dry_run" });
         options.setStatus("Dry-run OCR selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " job diproses.", false);
-        await options.reloadDashboard();
+        await refreshAfterJobMutation();
       }, options.setStatus);
     }
 
@@ -1026,7 +812,7 @@
         });
         var schedulerMessage = result.scheduler && result.scheduler.message ? " " + result.scheduler.message : "";
         options.setStatus("Preflight scheduler berhasil. Batch OCR dibuat: " + Number(result.assigned_count || 0).toLocaleString("id-ID") + " job masuk batch." + schedulerMessage, false);
-        await options.reloadDashboard();
+        await refreshAfterJobMutation();
       }, options.setStatus);
     }
 
@@ -1038,7 +824,7 @@
       await buttonAction(button, "OCR...", async function () {
         var result = await options.postDashboardAction({ action: "retry_ocr_job", job_id: jobId });
         options.setStatus("OCR ulang selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " job diproses. Jika tetap tanpa teks, status akan menjadi Perlu cek.", false);
-        await options.reloadDashboard();
+        await refreshAfterJobMutation();
       }, options.setStatus);
     }
 
@@ -1054,7 +840,7 @@
           notes: "Admin sudah cek gambar: halaman brosur tidak memiliki teks yang cukup untuk OCR."
         });
         options.setStatus("Job OCR ditandai Perlu cek: gambar tidak memiliki teks yang cukup, bukan error provider.", false);
-        await options.reloadDashboard();
+        await refreshAfterJobMutation();
       }, options.setStatus);
     }
 
@@ -1066,7 +852,7 @@
       await buttonAction(options.retryFailedButton, "Antre ulang...", async function () {
         var result = await options.postDashboardAction({ action: "retry_failed_ocr_jobs", limit: 100 });
         options.setStatus("Job OCR gagal dikembalikan ke antrean: " + Number(result.retried || 0).toLocaleString("id-ID") + " job. Klik Jalankan batch untuk memprosesnya.", false);
-        await options.reloadDashboard();
+        await refreshAfterJobMutation();
       }, options.setStatus);
     }
 
@@ -1086,8 +872,16 @@
         var message = (reset ? reset.toLocaleString("id-ID") + " job gagal/berjalan dikembalikan ke antrean. " : "") +
           (result.scheduler && result.scheduler.message ? result.scheduler.message : "Batch dijadwalkan ulang.");
         options.setStatus(message, !(result.scheduler && result.scheduler.triggered));
-        await options.reloadDashboard();
+        await refreshAfterJobMutation();
       }, options.setStatus);
+    }
+
+    async function refreshAfterJobMutation() {
+      await options.reloadDashboard();
+      if (state.jobFilterStatus) {
+        var offset = state.jobFilterMeta ? Number(state.jobFilterMeta.offset || 0) : 0;
+        await searchOcrJobs(state.jobFilterStatus, offset);
+      }
     }
 
     function findProvider(key) {
@@ -1120,165 +914,14 @@
     }
 
     function renderSchedulerSelect() {
-      if (!options.schedulerSelect) return;
-      var current = options.schedulerSelect.value;
-      options.schedulerSelect.innerHTML = '<option value="">Pilih scheduler...</option>' + state.schedulers.map(function (provider) {
-        return '<option value="' + utils.escapeAttr(provider.provider_key) + '">' + utils.escapeHtml(provider.display_name) + '</option>';
-      }).join("");
-      if (state.schedulers.some(function (provider) { return provider.provider_key === current; })) options.schedulerSelect.value = current;
+      providerRenderers.renderSchedulerSelect(options.schedulerSelect, state.schedulers);
     }
 
     function fillSchedulerForm(provider) {
       if (!options.schedulerForm || !provider) return;
       state.fillingScheduler = true;
-      var meta = typeof schedulerHelpers.providerMeta === "function"
-        ? schedulerHelpers.providerMeta(provider.provider_key)
-        : { fields: ["api_key", "request_url", "clear_api_key"], token_label: "API key / token", help: "Token provider scheduler." };
-      setSchedulerValue("provider_key", provider.provider_key);
-      setSchedulerValue("api_key", "");
-      setSchedulerValue("api_secret", "");
-      setSchedulerValue("request_url", provider.request_url || "https://franchisee.id/ocr-worker");
-      setSchedulerValue("schedule_cron", provider.schedule_cron || "");
-      setSchedulerChecked("clear_api_key", false);
-      ["api_key", "api_secret", "request_url", "schedule_cron", "clear_api_key"].forEach(function (name) {
-        var row = options.schedulerForm.querySelector('[data-ocr-scheduler-field="' + name + '"]');
-        if (row) row.hidden = (meta.fields || []).indexOf(name) === -1 || (name === "clear_api_key" && !provider.has_api_key);
-      });
-      var label = options.schedulerForm.querySelector('[data-ocr-scheduler-label="api_key"]');
-      if (label) label.textContent = meta.token_label || "API key / token";
-      var help = options.schedulerForm.querySelector('[data-ocr-scheduler-help="api_key"]');
-      if (help) help.textContent = meta.help || "Token provider scheduler.";
-      renderSchedulerCredentialBadge("api_key", provider.has_api_key);
-      var summary = options.schedulerForm.querySelector("[data-ocr-scheduler-summary]");
-      if (summary) {
-        summary.innerHTML = '<strong>' + utils.escapeHtml(provider.display_name) + '</strong><br><span>' +
-          utils.escapeHtml((provider.has_api_key ? "Token sudah tersimpan." : "Token belum tersimpan.") + " Status: " + (provider.is_enabled ? "aktif" : "nonaktif") + ". " + (provider.last_error ? "Error: " + provider.last_error : "")) +
-          '</span>';
-      }
-      setSchedulerStatus(provider.has_api_key ? "Token scheduler sudah tersimpan. Mengisi token baru akan mengganti nilai lama." : "Isi token scheduler agar batch 100 bisa berjalan otomatis.");
+      providerRenderers.fillSchedulerForm(options.schedulerForm, provider, setSchedulerStatus);
       state.fillingScheduler = false;
-    }
-
-    function renderSchedulerCredentialBadge(name, hasValue) {
-      var badge = options.schedulerForm && options.schedulerForm.querySelector('[data-ocr-scheduler-key-state="' + name + '"]');
-      if (!badge) return;
-      badge.className = "dash-credential-badge" + (hasValue ? " is-set" : " is-empty");
-      badge.innerHTML = hasValue
-        ? '<i class="fas fa-check" aria-hidden="true"></i><span>Tersimpan</span>'
-        : '<span>Belum ada</span>';
-    }
-
-    function setSchedulerValue(name, value) {
-      var input = options.schedulerForm && options.schedulerForm.elements.namedItem(name);
-      if (input) input.value = value == null ? "" : String(value);
-    }
-
-    function setSchedulerChecked(name, checked) {
-      var input = options.schedulerForm && options.schedulerForm.elements.namedItem(name);
-      if (input) input.checked = Boolean(checked);
-    }
-
-    function setSchedulerFormDisabled(disabled) {
-      if (!options.schedulerForm) return;
-      Array.from(options.schedulerForm.elements).forEach(function (input) { input.disabled = Boolean(disabled); });
-    }
-
-    function providerConfig(provider) {
-      return PROVIDER_FIELDS[provider && provider.provider_key] || { fields: ["api_key"], labels: {}, help: {} };
-    }
-
-    function renderProviderFields(provider) {
-      if (!options.form || !provider) return;
-      var config = providerConfig(provider);
-      var active = config.fields || [];
-      FIELD_NAMES.forEach(function (name) {
-        var row = options.form.querySelector('[data-ocr-field="' + name + '"]');
-        if (!row) return;
-        var visible = active.indexOf(name) !== -1;
-        if (name === "clear_api_key") visible = active.indexOf("api_key") !== -1 && Boolean(provider.has_api_key);
-        if (name === "clear_api_secret") visible = active.indexOf("api_secret") !== -1 && Boolean(provider.has_api_secret);
-        row.hidden = !visible;
-      });
-      Object.keys(config.labels || {}).forEach(function (name) {
-        var label = options.form.querySelector('[data-ocr-label="' + name + '"]');
-        if (label) label.textContent = config.labels[name];
-      });
-      Object.keys(config.help || {}).forEach(function (name) {
-        var help = options.form.querySelector('[data-ocr-help="' + name + '"]');
-        if (help) help.textContent = config.help[name];
-      });
-      renderCredentialBadge("api_key", provider.has_api_key);
-      renderCredentialBadge("api_secret", provider.has_api_secret);
-    }
-
-    function renderCredentialBadge(name, hasValue) {
-      var badge = options.form && options.form.querySelector('[data-ocr-key-state="' + name + '"]');
-      if (!badge) return;
-      badge.className = "dash-credential-badge" + (hasValue ? " is-set" : " is-empty");
-      badge.innerHTML = hasValue
-        ? '<i class="fas fa-check" aria-hidden="true"></i><span>Tersimpan</span>'
-        : '<span>Belum ada</span>';
-    }
-
-    function renderProviderMeta(provider) {
-      var target = options.form && options.form.querySelector("[data-ocr-provider-meta]");
-      if (!target) return;
-      if (!provider) {
-        target.textContent = "Pilih provider untuk melihat kebutuhan credential dan limit gratisnya.";
-        return;
-      }
-      var parts = [
-        ["Limit gratis", quotaLabel(provider)],
-        ["Dipakai", Number(provider.quota_used || 0).toLocaleString("id-ID") + " " + utils.escapeHtml(provider.quota_unit || "request")],
-        ["Reset", provider.quota_reset_at ? formatDate(provider.quota_reset_at) : "Mengikuti provider"],
-        ["Rate limit lokal", rateLimitLabel(provider)],
-        ["Cooldown", provider.cooldown_until ? formatDateTime(provider.cooldown_until) : "Tidak aktif"],
-        ["Trial", provider.trial_ends_at ? "Berakhir " + formatDate(provider.trial_ends_at) : "Tidak ada tanggal di sistem"],
-        ["Endpoint", provider.endpoint_url || "Default provider"],
-      ];
-      target.innerHTML = parts.map(function (item) {
-        return '<span><strong>' + utils.escapeHtml(item[0]) + '</strong>' + utils.escapeHtml(item[1]) + '</span>';
-      }).join("");
-    }
-
-    function renderCredentialSummary(provider) {
-      var target = options.form && options.form.querySelector("[data-ocr-credential-summary]");
-      if (!target) return;
-      if (!provider) {
-        target.textContent = "Belum ada provider dipilih.";
-        return;
-      }
-      var config = providerConfig(provider);
-      var fields = (config.fields || []).map(function (name) {
-        return config.labels && config.labels[name] ? config.labels[name] : fieldFallbackLabel(name);
-      });
-      target.innerHTML = '<strong>Field yang dibutuhkan:</strong> ' + utils.escapeHtml(fields.join(", ")) +
-        '<br><span>' + utils.escapeHtml(credentialStatusText(provider)) + ' Mengisi credential baru akan mengganti nilai lama setelah disimpan.</span>';
-    }
-
-    function credentialStatusText(provider) {
-      if (!provider) return "Pilih provider untuk melihat status credential.";
-      var parts = [];
-      parts.push(provider.has_api_key ? "API key/token sudah tersimpan." : "API key/token belum tersimpan.");
-      if ((providerConfig(provider).fields || []).indexOf("api_secret") !== -1) {
-        parts.push(provider.has_api_secret ? "Secret sudah tersimpan." : "Secret belum tersimpan.");
-      }
-      return parts.join(" ");
-    }
-
-    function setValue(name, value) {
-      var input = options.form && options.form.elements.namedItem(name);
-      if (input) input.value = value == null ? "" : String(value);
-    }
-
-    function setChecked(name, checked) {
-      var input = options.form && options.form.elements.namedItem(name);
-      if (input) input.checked = Boolean(checked);
-    }
-
-    function setFormDisabled(disabled) {
-      if (!options.form) return;
-      Array.from(options.form.elements).forEach(function (input) { input.disabled = Boolean(disabled); });
     }
 
     function setJobButtonsDisabled(disabled) {
@@ -1299,47 +942,6 @@
     return { bind: bind, render: render };
   }
 
-  function quotaPeriodLabel(value) {
-    return {
-      daily: "hari",
-      monthly: "bulan",
-      trial: "trial",
-      compute_daily: "hari (compute)",
-      account_specific: "akun"
-    }[value] || value || "akun";
-  }
-
-  function quotaLabel(provider) {
-    if (!provider || !provider.free_quota_limit) return "Cek di akun provider";
-    return Number(provider.free_quota_limit).toLocaleString("id-ID") + " " + (provider.quota_unit || "request") + " / " + quotaPeriodLabel(provider.free_quota_period);
-  }
-
-  function formatDate(value) {
-    return String(value || "").slice(0, 10) || "-";
-  }
-
-  function formatDateTime(value) {
-    return String(value || "").replace("T", " ").slice(0, 16) || "-";
-  }
-
-  function rateLimitLabel(provider) {
-    var max = Number(provider && provider.rate_limit_max_requests || 0);
-    var windowSeconds = Number(provider && provider.rate_limit_window_seconds || 0);
-    if (!max || !windowSeconds) return "Belum diatur";
-    return max.toLocaleString("id-ID") + " request / " + windowSeconds.toLocaleString("id-ID") + " detik";
-  }
-
-  function fieldFallbackLabel(name) {
-    return {
-      api_key: "API key / token",
-      api_secret: "API secret",
-      account_id: "Account / project / client ID",
-      endpoint_url: "Endpoint HTTPS",
-      region: "Region",
-      model: "Model / operasi"
-    }[name] || name;
-  }
-
   function fieldLabel(name) {
     return {
       outlet_type: "Tipe outlet",
@@ -1358,7 +960,12 @@
       extracted: "Berhasil dibaca",
       needs_ocr: "Perlu OCR",
       failed: "Gagal",
-      pending: "Menunggu"
+      unqueued: "Belum antre",
+      pending: "Pending",
+      running: "Running",
+      succeeded: "Sukses",
+      needs_review: "Perlu cek",
+      all: "Semua job"
     }[value] || value || "Status tidak diketahui";
   }
 

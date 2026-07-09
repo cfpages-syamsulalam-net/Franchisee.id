@@ -822,7 +822,7 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <span>Antre ulang gagal</span>
                   </button>
                 </div>
-                <p class="dash-muted dash-ocr-job-status" data-ocr-job-status>Memuat status job OCR...</p>
+                <div class="dash-muted dash-ocr-job-status" data-ocr-job-status>Memuat status job OCR...</div>
                 <ul class="dash-list dash-ocr-batches" data-ocr-batch-rows>
                   <li><span>Belum ada batch OCR.</span></li>
                 </ul>
@@ -905,6 +905,11 @@ const ocrProviderMetadataJson = JSON.stringify({
     <script src="/js/dashboard-operations.js" is:inline></script>
     <script is:inline set:html={`window.FranchiseOcrProviderMetadata = ${ocrProviderMetadataJson};`}></script>
     <script src="/js/dashboard-ocr-schedulers.js" is:inline></script>
+    <script src="/js/dashboard-ocr-state.js" is:inline></script>
+    <script src="/js/dashboard-ocr-providers.js" is:inline></script>
+    <script src="/js/dashboard-ocr-jobs.js" is:inline></script>
+    <script src="/js/dashboard-ocr-batches.js" is:inline></script>
+    <script src="/js/dashboard-ocr-results.js" is:inline></script>
     <script src="/js/dashboard-ocr.js" is:inline></script>
     <script src="/js/dashboard-admin.js" is:inline></script>
   </body>

@@ -389,6 +389,113 @@ export async function handleSearchOcrResults(db, auth, data) {
   });
 }
 
+export async function handleSearchOcrJobs(db, auth, data) {
+  assertAdmin(auth);
+  const limit = Math.min(Math.max(Number(data.limit || 80), 1), 120);
+  const offset = Math.min(Math.max(Number(data.offset || 0), 0), 5000);
+  const status = textOrNull(data.status) || "all";
+  const franchiseId = textOrNull(data.franchise_id);
+
+  if (status === "unqueued") {
+    return searchUnqueuedOcrAssets(db, { franchiseId, limit, offset, status });
+  }
+
+  const where = [];
+  const binds = [];
+  if (status !== "all") {
+    where.push("j.status = ?");
+    binds.push(status);
+  }
+  if (franchiseId) {
+    where.push("j.franchise_id = ?");
+    binds.push(franchiseId);
+  }
+  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const count = await bindStatement(db
+    .prepare(
+      `SELECT COUNT(*) count
+       FROM ocr_jobs j
+       ${whereSql}`,
+    ), binds)
+    .first();
+  const rows = await bindStatement(db
+    .prepare(
+      `SELECT j.id, j.asset_id, j.franchise_id, j.status, j.provider_key, j.attempt_count,
+              j.error_message, j.created_at, j.updated_at, j.batch_id, f.brand_name, f.slug,
+              COALESCE(a.display_order, 0) display_order,
+              COALESCE(j.source_url, a.public_url, a.legacy_url) source_url
+       FROM ocr_jobs j
+       LEFT JOIN franchises f ON f.id = j.franchise_id
+       LEFT JOIN franchise_assets a ON a.id = j.asset_id
+       ${whereSql}
+       ORDER BY COALESCE(f.brand_name, j.franchise_id), COALESCE(a.display_order, 0), j.updated_at DESC
+       LIMIT ? OFFSET ?`,
+    ), [...binds, limit, offset])
+    .all();
+  const total = Number(count?.count || 0);
+  const jobs = (rows.results || []).map(maskJobRow);
+  return jsonResponse({
+    success: true,
+    jobs,
+    total,
+    limit,
+    offset,
+    has_more: offset + jobs.length < total,
+    filters: { status, franchise_id: franchiseId || "" },
+  });
+}
+
+async function searchUnqueuedOcrAssets(db, options) {
+  const where = [
+    "a.asset_type = 'proposal'",
+    "a.status = 'active'",
+    "COALESCE(a.public_url, a.legacy_url, '') <> ''",
+    "LOWER(COALESCE(a.mime_type, '')) LIKE 'image/%'",
+    "j.id IS NULL",
+    "COALESCE(k.extraction_status, '') NOT IN ('extracted')",
+  ];
+  const binds = [];
+  if (options.franchiseId) {
+    where.push("a.franchise_id = ?");
+    binds.push(options.franchiseId);
+  }
+  const whereSql = where.join(" AND ");
+  const count = await bindStatement(db
+    .prepare(
+      `SELECT COUNT(*) count
+       FROM franchise_assets a
+       LEFT JOIN ocr_jobs j ON j.asset_id = a.id
+       LEFT JOIN franchise_asset_knowledge k ON k.asset_id = a.id
+       WHERE ${whereSql}`,
+    ), binds)
+    .first();
+  const rows = await bindStatement(db
+    .prepare(
+      `SELECT a.id asset_id, a.franchise_id, COALESCE(a.public_url, a.legacy_url) source_url,
+              COALESCE(a.display_order, 0) display_order, a.created_at, a.updated_at,
+              f.brand_name, f.slug
+       FROM franchise_assets a
+       LEFT JOIN ocr_jobs j ON j.asset_id = a.id
+       LEFT JOIN franchise_asset_knowledge k ON k.asset_id = a.id
+       LEFT JOIN franchises f ON f.id = a.franchise_id
+       WHERE ${whereSql}
+       ORDER BY COALESCE(f.brand_name, a.franchise_id), COALESCE(a.display_order, 0), a.created_at
+       LIMIT ? OFFSET ?`,
+    ), [...binds, options.limit, options.offset])
+    .all();
+  const total = Number(count?.count || 0);
+  const jobs = (rows.results || []).map(maskUnqueuedJobRow);
+  return jsonResponse({
+    success: true,
+    jobs,
+    total,
+    limit: options.limit,
+    offset: options.offset,
+    has_more: options.offset + jobs.length < total,
+    filters: { status: options.status, franchise_id: options.franchiseId || "" },
+  });
+}
+
 export async function runOcrJobs(db, env, auth, options = {}) {
   if (!textOrNull(env.OCR_KEY)) throw new Error("Tambahkan Cloudflare Pages secret OCR_KEY sebelum menjalankan OCR.");
   const maxJobs = Math.min(Math.max(Number(options.maxJobs || 1), 1), MAX_RUN_LIMIT);
@@ -1063,6 +1170,25 @@ function maskJobRow(row) {
     provider_key: row.provider_key || "",
     attempt_count: Number(row.attempt_count || 0),
     error_message: row.error_message || "",
+    created_at: row.created_at || null,
+    updated_at: row.updated_at || null,
+  };
+}
+
+function maskUnqueuedJobRow(row) {
+  return {
+    id: "",
+    asset_id: row.asset_id,
+    franchise_id: row.franchise_id,
+    batch_id: "",
+    brand_name: row.brand_name || "",
+    slug: row.slug || "",
+    page_number: Number(row.display_order || 0) > 0 ? Number(row.display_order || 0) : null,
+    source_url: row.source_url || "",
+    status: "unqueued",
+    provider_key: "",
+    attempt_count: 0,
+    error_message: "",
     created_at: row.created_at || null,
     updated_at: row.updated_at || null,
   };

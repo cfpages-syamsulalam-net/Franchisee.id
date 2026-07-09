@@ -122,6 +122,14 @@ export const SearchOcrResultsSchema = z.object({
   offset: z.coerce.number().int().min(0).max(5000).optional().default(0),
 });
 
+export const SearchOcrJobsSchema = z.object({
+  action: z.literal("search_ocr_jobs"),
+  status: z.enum(["all", "unqueued", "pending", "running", "succeeded", "needs_review", "failed"]).optional().default("all"),
+  franchise_id: z.string().trim().max(120).optional().default(""),
+  limit: z.coerce.number().int().min(1).max(120).optional().default(80),
+  offset: z.coerce.number().int().min(0).max(5000).optional().default(0),
+});
+
 export const DASHBOARD_OCR_ACTION_SCHEMAS = [
   UpdateOcrProviderConfigSchema,
   ToggleOcrProviderEnabledSchema,
@@ -136,4 +144,5 @@ export const DASHBOARD_OCR_ACTION_SCHEMAS = [
   StartOcrBatchRunSchema,
   RetryOcrBatchRunSchema,
   SearchOcrResultsSchema,
+  SearchOcrJobsSchema,
 ];
