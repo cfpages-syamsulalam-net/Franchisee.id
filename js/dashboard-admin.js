@@ -83,6 +83,7 @@
     subpanels: Array.from(document.querySelectorAll("[data-ocr-subpanel]")),
     providerList: document.querySelector("[data-ocr-provider-list]"),
     jobStatus: document.querySelector("[data-ocr-job-status]"),
+    jobLimitSelect: document.querySelector("[data-ocr-job-limit]"),
     jobRows: document.querySelector("[data-ocr-job-rows]"),
     resultRows: document.querySelector("[data-ocr-result-rows]"),
     resultFilterForm: document.querySelector("[data-ocr-result-filter-form]"),

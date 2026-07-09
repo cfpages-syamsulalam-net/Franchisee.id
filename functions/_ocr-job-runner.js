@@ -28,7 +28,7 @@ export async function getOcrJobState(db, auth) {
            LEFT JOIN franchises f ON f.id = j.franchise_id
            LEFT JOIN franchise_assets a ON a.id = j.asset_id
            ORDER BY j.updated_at DESC
-           LIMIT 12`,
+           LIMIT 120`,
         )
         .all(),
       db
@@ -391,7 +391,7 @@ export async function handleSearchOcrResults(db, auth, data) {
 
 export async function handleSearchOcrJobs(db, auth, data) {
   assertAdmin(auth);
-  const limit = Math.min(Math.max(Number(data.limit || 80), 1), 120);
+  const limit = Math.min(Math.max(Number(data.limit || 120), 1), 120);
   const offset = Math.min(Math.max(Number(data.offset || 0), 0), 5000);
   const status = textOrNull(data.status) || "all";
   const franchiseId = textOrNull(data.franchise_id);

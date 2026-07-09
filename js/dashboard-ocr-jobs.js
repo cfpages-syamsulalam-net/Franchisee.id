@@ -5,7 +5,8 @@
     if (!utils) throw new Error("Dashboard OCR job renderer membutuhkan utils.");
 
     function renderJobFilterButton(status, icon, label, count) {
-      var active = deps.getJobFilterStatus && deps.getJobFilterStatus() === status;
+      var currentStatus = deps.getJobFilterStatus ? deps.getJobFilterStatus() : "";
+      var active = currentStatus === status || (!currentStatus && status === "all");
       return '<button type="button" class="dash-ocr-job-filter' + (active ? ' is-active' : '') + '" data-ocr-job-filter="' + utils.escapeAttr(status) + '" data-fr-tooltip="Tampilkan job OCR: ' + utils.escapeAttr(label) + '">' +
         '<i class="fas ' + icon + '" aria-hidden="true"></i><span>' + utils.escapeHtml(label) + '</span><strong>' + Number(count || 0).toLocaleString("id-ID") + '</strong></button>';
     }
@@ -35,7 +36,7 @@
       var status = deps.getJobFilterStatus ? deps.getJobFilterStatus() : "";
       if (!status || !payload.job_filter) return "";
       var meta = payload.job_filter;
-      var limit = Number(meta.limit || 80);
+      var limit = Number(meta.limit || 120);
       var offset = Number(meta.offset || 0);
       var total = Number(meta.total || 0);
       if (total <= limit) return "";

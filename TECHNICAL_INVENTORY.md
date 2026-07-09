@@ -320,7 +320,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Admin OCR coordinator/facade for `/dashboard`.*
 - `window.FranchiseDashboardOcr.createOperations(options)`: Creates the OCR tab controller from subtab, provider-list/select/form/status, scheduler-select/form/status, job/batch/result DOM references, and shared dashboard callbacks.
 - `render(payload, jobsPayload, schedulerPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderBatches(payload)` / `renderResults(payload)` / `fillForm(provider)` / `fillSchedulerForm(provider)`: Coordinates provider/scheduler forms and delegates state creation plus provider, job, batch/countdown, and result rendering to focused modules.
-- `searchOcrJobs(status, offset)`: Fetches paginated OCR job rows from `/dashboard-data` for unqueued/pending/running/succeeded/needs-review/failed status chips, preserves the active filter after job mutations, and delegates grouped rendering to `js/dashboard-ocr-jobs.js`.
+- `searchOcrJobs(status, offset)`: Fetches paginated OCR job rows from `/dashboard-data` for all/unqueued/pending/running/succeeded/needs-review/failed status chips, uses the selected page size with 120 as the default, preserves the active filter after job mutations, and delegates grouped rendering to `js/dashboard-ocr-jobs.js`.
 - `syncBatchCountdowns()`: Delegates structured scheduler ETA countdown label updates to `js/dashboard-ocr-batches.js` while keeping the facade responsible for timer lifecycle.
 - `searchOcrResults(append)` / `resetResultSearch()` / `loadMoreResultSearch()`: Calls `search_ocr_results` to fetch filtered OCR result history by text/status from the server, appends paged results with de-duping, and keeps the default dashboard payload small until an admin searches.
 - `syncBatchPolling(payload)`: Auto-refreshes `/dashboard-data` every few seconds while the OCR tab is visible and any persisted batch is still `queued` or `running`, so progress bars update without manual refresh.
@@ -333,7 +333,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-ocr-state.js`
 *Dashboard OCR state factory.*
-- `window.FranchiseDashboardOcrState.createInitialState()`: Creates the provider/scheduler admin flags, autosave timers, active job/result filter state, result group page indexes, polling flags, and countdown timer handles used by the OCR coordinator.
+- `window.FranchiseDashboardOcrState.createInitialState()`: Creates the provider/scheduler admin flags, autosave timers, active job/result filter state, OCR job page-size default, result group page indexes, polling flags, and countdown timer handles used by the OCR coordinator.
 
 ### File: `js/dashboard-ocr-providers.js`
 *Dashboard OCR provider/scheduler renderer.*
@@ -342,7 +342,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-ocr-jobs.js`
 *Dashboard OCR job renderer.*
-- `window.FranchiseDashboardOcrJobs.createRenderer(deps)`: Creates pure render helpers for OCR job status chips, paginated job filter headings, grouped franchise job cards, and per-job source/result/retry/no-text actions.
+- `window.FranchiseDashboardOcrJobs.createRenderer(deps)`: Creates pure render helpers for OCR job status chips including default `Semua`, paginated job filter headings, grouped franchise job cards, and per-job source/result/retry/no-text actions.
 - `groupJobsByFranchise(jobs)` / `renderJobPagination(payload)`: Compact server-filtered job rows into franchise groups and show Prev/Next pagination for status-specific job lists.
 
 ### File: `js/dashboard-ocr-batches.js`
@@ -948,7 +948,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_dashboard-ocr-schemas.js`
 *OCR dashboard action validation module.*
 - `OcrProviderKeySchema`: Shared fixed provider ID enum used by provider config/toggle schemas.
-- `DASHBOARD_OCR_ACTION_SCHEMAS`: Zod object schema list for OCR provider config/toggle, dry-run, enqueue, bounded batch run, direct retry, batch failed retry, manual no-text resolution, OCR result search, and OCR job status search/pagination payloads.
+- `DASHBOARD_OCR_ACTION_SCHEMAS`: Zod object schema list for OCR provider config/toggle, dry-run, enqueue, bounded batch run, direct retry, batch failed retry, manual no-text resolution, OCR result search, and OCR job status search/pagination payloads; OCR job search defaults to 120 rows and caps at 120 per page.
 
 ### File: `functions/_ocr-provider-config.js`
 *Admin-only OCR provider configuration and credential boundary.*
@@ -980,8 +980,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_ocr-job-runner.js`
 *OCR queue/cache/failover orchestrator shared by dashboard actions and the protected worker.*
-- `getOcrJobState(db, auth)`: Returns admin-only OCR queue counts, recent jobs, expanded OCR result previews with listing/review metadata, recent persisted batch runs including structured scheduler timing fields, enqueue-candidate count, and a `migration_required` fallback when OCR job/batch migrations are not applied.
-- `handleSearchOcrJobs(db, auth, data)`: Admin-only server-side OCR job search for status chips. It paginates `ocr_jobs` by status/franchise and maps `unqueued` to active proposal image assets that have not yet entered `ocr_jobs`, so dashboard status counts are inspectable beyond the recent 12 rows.
+- `getOcrJobState(db, auth)`: Returns admin-only OCR queue counts, up to 120 recent jobs, expanded OCR result previews with listing/review metadata, recent persisted batch runs including structured scheduler timing fields, enqueue-candidate count, and a `migration_required` fallback when OCR job/batch migrations are not applied.
+- `handleSearchOcrJobs(db, auth, data)`: Admin-only server-side OCR job search for status chips. It paginates `ocr_jobs` by status/franchise and maps `unqueued` to active proposal image assets that have not yet entered `ocr_jobs`, so dashboard status counts are inspectable beyond the default 120-row page.
 - `handleSearchOcrResults(db, auth, data)`: Admin-only server-side history search for `franchise_asset_knowledge`, filtering by status and query text across brand/slug/source text with bounded limit/offset pagination for dashboard "Muat lagi".
 - `handleEnqueueOcrJobs(db, auth, data)`: Admin-only action that queues active image proposal assets into `ocr_jobs`; it does not call external OCR providers.
 - `handleRunOcrDryRun(db, auth, data, env, options)`: Admin-only action that requires `OCR_KEY` and one enabled provider, prepares at most one candidate proposal-image job, and processes only that job before broad backfills.

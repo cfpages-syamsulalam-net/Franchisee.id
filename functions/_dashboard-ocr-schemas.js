@@ -126,7 +126,7 @@ export const SearchOcrJobsSchema = z.object({
   action: z.literal("search_ocr_jobs"),
   status: z.enum(["all", "unqueued", "pending", "running", "succeeded", "needs_review", "failed"]).optional().default("all"),
   franchise_id: z.string().trim().max(120).optional().default(""),
-  limit: z.coerce.number().int().min(1).max(120).optional().default(80),
+  limit: z.coerce.number().int().min(1).max(120).optional().default(120),
   offset: z.coerce.number().int().min(0).max(5000).optional().default(0),
 });
 

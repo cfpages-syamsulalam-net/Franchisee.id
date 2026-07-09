@@ -70,6 +70,7 @@
       if (options.schedulerForm) options.schedulerForm.addEventListener("change", handleSchedulerFormChange);
       if (options.providerList) options.providerList.addEventListener("click", handleProviderListClick);
       if (options.jobStatus) options.jobStatus.addEventListener("click", handleJobStatusClick);
+      if (options.jobLimitSelect) options.jobLimitSelect.addEventListener("change", handleJobLimitChange);
       if (options.jobRows) options.jobRows.addEventListener("click", handleJobRowsClick);
       if (options.batchRows) options.batchRows.addEventListener("click", handleBatchRowsClick);
       if (options.resultRows) options.resultRows.addEventListener("click", handleResultClick);
@@ -100,6 +101,7 @@
       renderResultSearchStatus(resultsPayload);
       renderBatches(jobsPayload);
       syncBatchPolling(jobsPayload);
+      ensureDefaultJobSearch(jobsPayload);
       renderSelect();
       renderSchedulerSelect();
       if (state.adminOnly) {
@@ -248,7 +250,7 @@
       state.jobFilterStatus = status || "all";
       renderJobs(state.lastJobsPayload || {});
       try {
-        var limit = state.jobFilterMeta ? Number(state.jobFilterMeta.limit || 80) : 80;
+        var limit = readJobLimit();
         var result = await options.postDashboardAction({
           action: "search_ocr_jobs",
           status: state.jobFilterStatus,
@@ -272,6 +274,21 @@
         state.jobFilterLoading = false;
         renderJobs(state.lastJobsPayload || {});
       }
+    }
+
+    function ensureDefaultJobSearch(payload) {
+      payload = payload || {};
+      if (state.jobFilterBootstrapped || state.jobFilterLoading || state.jobFilterStatus) return;
+      if (payload.admin_only || payload.migration_required) return;
+      state.jobFilterBootstrapped = true;
+      window.setTimeout(function () {
+        searchOcrJobs("all", 0);
+      }, 0);
+    }
+
+    async function handleJobLimitChange() {
+      state.jobPageSize = readJobLimit();
+      await searchOcrJobs(state.jobFilterStatus || "all", 0);
     }
 
     async function handleProviderListClick(event) {
@@ -377,7 +394,11 @@
           options.jobStatus.textContent = "Queue OCR belum siap. Jalankan migration OCR terlebih dahulu.";
         } else {
           var counts = payload.counts || {};
+          var totalJobs = Object.keys(counts).reduce(function (sum, key) {
+            return sum + Number(counts[key] || 0);
+          }, 0);
           var statusButtons = [
+            jobRenderers.renderJobFilterButton("all", "fa-layer-group", "Semua", totalJobs),
             jobRenderers.renderJobFilterButton("unqueued", "fa-plus-circle", "Belum antre", payload.enqueue_candidates || 0),
             jobRenderers.renderJobFilterButton("pending", "fa-clock", "Pending", counts.pending || 0),
             jobRenderers.renderJobFilterButton("running", "fa-spinner", "Running", counts.running || 0),
@@ -546,6 +567,13 @@
         status: String(data.get("status") || "all"),
         limit: Math.min(Math.max(Number(data.get("limit") || 40), 1), 100)
       };
+    }
+
+    function readJobLimit() {
+      var value = options.jobLimitSelect ? Number(options.jobLimitSelect.value || 120) : Number(state.jobPageSize || 120);
+      var limit = Math.min(Math.max(value || 120, 1), 120);
+      state.jobPageSize = limit;
+      return limit;
     }
 
     function mergeResultRows(current, incoming) {

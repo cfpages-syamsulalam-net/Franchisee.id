@@ -23,6 +23,8 @@
       jobFilterResults: [],
       jobFilterMeta: null,
       jobFilterLoading: false,
+      jobFilterBootstrapped: false,
+      jobPageSize: 120,
       pollTimer: null,
       countdownTimer: null,
       polling: false

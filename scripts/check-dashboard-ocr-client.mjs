@@ -18,7 +18,8 @@ for (const file of files) {
   }
 }
 
-const source = files.map((file) => readFileSync(file, "utf8")).join("\n");
+const assertionSources = files.concat(["src/pages/dashboard/index.astro"]);
+const source = assertionSources.map((file) => readFileSync(file, "utf8")).join("\n");
 const requiredFragments = [
   "FranchiseDashboardOcrState",
   "FranchiseDashboardOcrProviders",
@@ -42,9 +43,11 @@ const requiredFragments = [
   "renderJobResultAction",
   "OCR ulang selesai",
   "data-ocr-job-filter",
+  "data-ocr-job-limit",
   "search_ocr_jobs",
   "data-ocr-job-page",
   "groupJobsByFranchise",
+  "jobPageSize: 120",
 ];
 
 for (const fragment of requiredFragments) {

@@ -209,6 +209,29 @@
   gap: 7px;
   align-items: center;
 }
+.dash-ocr-job-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin: 10px 0 8px;
+}
+.dash-ocr-job-controls label {
+  display: inline-grid;
+  gap: 5px;
+  min-width: min(100%, 180px);
+  color: var(--dash-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+.dash-ocr-job-controls select {
+  width: 100%;
+  border: 1px solid rgba(17, 24, 39, 0.14);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--dash-ink);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+}
 .dash-ocr-job-filter {
   display: inline-flex;
   align-items: center;

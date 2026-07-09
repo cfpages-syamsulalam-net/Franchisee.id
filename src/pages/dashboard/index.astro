@@ -822,6 +822,17 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <span>Antre ulang gagal</span>
                   </button>
                 </div>
+                <div class="dash-ocr-job-controls">
+                  <label>
+                    <span>Jumlah tampil</span>
+                    <select name="job_limit" data-ocr-job-limit data-fr-tooltip="Jumlah job yang ditampilkan per halaman. Default 120 mengikuti batas aman server saat ini.">
+                      <option value="25">25 job</option>
+                      <option value="50">50 job</option>
+                      <option value="100">100 job</option>
+                      <option value="120" selected>120 job</option>
+                    </select>
+                  </label>
+                </div>
                 <div class="dash-muted dash-ocr-job-status" data-ocr-job-status>Memuat status job OCR...</div>
                 <ul class="dash-list dash-ocr-batches" data-ocr-batch-rows>
                   <li><span>Belum ada batch OCR.</span></li>

@@ -12,10 +12,10 @@ Format:
 - `.context/session-20260710-0118.md`: Added this session continuity snapshot for OCR job filtering, pagination, and dashboard OCR refactor planning.
 
 ### Changed
-- `js/dashboard-ocr.js`: Changed OCR job status counts into clickable filter chips, added paginated server-backed job lists, grouped visible jobs by franchise, preserved the active job filter after OCR mutations, improved batch Refresh feedback so a completed refresh visibly reports when no server-side progress changed, and refactored the file into an OCR coordinator/facade that delegates state and rendering to focused modules.
+- `js/dashboard-ocr.js`: Changed OCR job status counts into clickable filter chips, added a default server-backed `Semua` job list with pagination, added a per-page job limit selector defaulting to 120, grouped visible jobs by franchise, preserved the active job filter after OCR mutations, improved batch Refresh feedback so a completed refresh visibly reports when no server-side progress changed, and refactored the file into an OCR coordinator/facade that delegates state and rendering to focused modules.
 - `js/dashboard-admin.js`: Changed dashboard data fetches to `cache: "no-store"` so manual Refresh actions do not look stale because of browser/intermediate caching.
-- `css/dashboard-ocr.css`: Added compact grouped job-card, filter-chip, and pagination styles for the OCR execution panel.
-- `src/pages/dashboard/index.astro`: Changed the OCR job status container from a paragraph to a div so it can validly contain interactive filter buttons, and loaded the focused OCR browser modules before the OCR facade.
+- `css/dashboard-ocr.css`: Added compact grouped job-card, filter-chip, job-limit selector, and pagination styles for the OCR execution panel.
+- `src/pages/dashboard/index.astro`: Changed the OCR job status container from a paragraph to a div so it can validly contain interactive filter buttons, added the OCR job per-page selector, and loaded the focused OCR browser modules before the OCR facade.
 - `scripts/check-dashboard-ocr-client.mjs`: Expanded the OCR dashboard regression check to cover the split browser modules and job filter/pagination wiring.
 - `AUDIT.md` and `SUGGESTION.md`: Marked the `js/dashboard-ocr.js` focused module split complete and kept `src/pages/dashboard/index.astro` as the next dashboard refactor candidate.
 - `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the server-side OCR job filtering/pagination contract, grouped dashboard job UI, and split OCR dashboard browser modules.
