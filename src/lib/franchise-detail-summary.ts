@@ -54,9 +54,14 @@ export function generateDetailInfoPanel(row: D1FranchiseRow, logoUrl: string, ca
     target ? detailInfoItem("fa-bullseye", "Target Pasar", target) : "",
     normalizeText(row.outlet_type) ? detailInfoItem("fa-shop", "Tipe Outlet", normalizeText(row.outlet_type)) : "",
     normalizeText(row.location_requirement) ? detailInfoItem("fa-ruler-combined", "Kriteria Lokasi", truncate(normalizeText(row.location_requirement), 120)) : "",
+    row.min_area_sqm ? detailInfoItem("fa-ruler-combined", "Luas Minimum", `${row.min_area_sqm} m²`) : "",
+    row.min_staff_count ? detailInfoItem("fa-users-gear", "Staff Minimum", `${row.min_staff_count} orang`) : "",
+    row.setup_duration_days ? detailInfoItem("fa-screwdriver-wrench", "Estimasi Setup", `${row.setup_duration_days} hari`) : "",
     row.contract_duration_months ? detailInfoItem("fa-file-signature", "Durasi Kontrak", formatMonths(row.contract_duration_months)) : "",
     row.omzet_monthly_idr ? detailInfoItem("fa-sack-dollar", "Estimasi Omzet", `${formatRupiah(row.omzet_monthly_idr)} / bulan`) : "",
+    rangeText(row.omzet_monthly_min_idr, row.omzet_monthly_max_idr, formatRupiah) ? detailInfoItem("fa-sack-dollar", "Range Omzet", `${rangeText(row.omzet_monthly_min_idr, row.omzet_monthly_max_idr, formatRupiah)} / bulan`) : "",
     row.net_profit_percent ? detailInfoItem("fa-chart-line", "Estimasi Laba Bersih", `${formatPercent(row.net_profit_percent)}`) : "",
+    rangeText(row.net_profit_monthly_min_idr, row.net_profit_monthly_max_idr, formatRupiah) ? detailInfoItem("fa-chart-line", "Range Laba Bersih", `${rangeText(row.net_profit_monthly_min_idr, row.net_profit_monthly_max_idr, formatRupiah)} / bulan`) : "",
     support ? detailInfoItem("fa-handshake-angle", "Support Franchisor", truncate(support, 140)) : "",
   ].filter(Boolean);
   const logo = logoUrl
@@ -119,9 +124,14 @@ function infoTooltip(label: string) {
     "Target Pasar": "Negara atau wilayah yang menjadi sasaran ekspansi brand.",
     "Tipe Outlet": "Format operasional yang ditawarkan, misalnya booth, gerobak, ruko, dine-in, cloud kitchen, atau model lain.",
     "Kriteria Lokasi": "Syarat lokasi yang biasanya dibutuhkan agar outlet berpeluang berjalan baik.",
+    "Luas Minimum": "Estimasi luas minimum area outlet yang dibutuhkan.",
+    "Staff Minimum": "Jumlah tim awal yang disarankan untuk menjalankan operasional.",
+    "Estimasi Setup": "Perkiraan waktu persiapan sampai outlet siap beroperasi.",
     "Durasi Kontrak": "Masa kerja sama lisensi/kemitraan sebelum perlu diperpanjang.",
     "Estimasi Omzet": "Perkiraan penjualan kotor sebelum dikurangi biaya. Ini berbeda dari laba bersih.",
+    "Range Omzet": "Kisaran penjualan kotor bulanan yang disebutkan pemilik brand atau brosur. Angka tetap perlu dikonfirmasi.",
     "Estimasi Laba Bersih": "Perkiraan persentase keuntungan setelah biaya utama. Angka ini tetap perlu divalidasi dengan franchisor.",
+    "Range Laba Bersih": "Kisaran laba bersih bulanan yang disebutkan pemilik brand atau brosur. Angka tetap perlu dikonfirmasi.",
     "Support Franchisor": "Bentuk dukungan dari franchisor, misalnya training, SOP, supply bahan, marketing, atau bantuan pembukaan outlet.",
   };
   return tips[label] || "";
@@ -176,4 +186,13 @@ function formatMonths(value: number | null | undefined) {
   if (!value || !Number.isFinite(value)) return "-";
   if (value % 12 === 0) return `${value / 12} tahun`;
   return `${value} bulan`;
+}
+
+function rangeText(min: number | null | undefined, max: number | null | undefined, formatter: (value: number | null | undefined) => string) {
+  const hasMin = Number.isFinite(min ?? NaN) && Number(min) > 0;
+  const hasMax = Number.isFinite(max ?? NaN) && Number(max) > 0;
+  if (hasMin && hasMax && Number(min) !== Number(max)) return `${formatter(min)} - ${formatter(max)}`;
+  if (hasMin) return formatter(min);
+  if (hasMax) return formatter(max);
+  return "";
 }

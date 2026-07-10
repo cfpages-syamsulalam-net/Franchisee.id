@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-09 01:03 (Asia/Jakarta)
+Last updated: 2026-07-11 00:35 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -33,7 +33,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `window.openTab(tabName)`: Tab switch + animated segmented-control indicator positioning + revalidation + lazy claim data fetch.
 - `window.nextStep(stepIndex)`: Step-forward navigation with progress tracking + **detailed console logging** (step index, state.currentStep, validation result, target visibility).
 - `window.prevStep(stepIndex)`: Step-back navigation with progress tracking.
-- `window.validateStep(stepIndex)`: Required-field and Rp 0 warning validation + **debug output** (invalid field names, values, validation pass/fail status).
+- `window.validateStep(stepIndex)`: Required-field and Rp 0 warning validation + **debug output** (invalid field names, values, validation pass/fail status). The franchisor Step 2 modal warning treats `min_capital` / `total_investment_value` as the baseline answer, so optional fee-breakdown fields can remain blank without triggering a false zero-modal warning.
 
 ### File: `js/form-04-calculation-city.js`
 *BEP calculation + minimum-capital + city autocomplete.*
@@ -66,13 +66,19 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/form-07-init.js`
 *Bootstrap coordinator for the modular form stack.*
-- DOMContentLoaded orchestrator for claim bindings, calculations/city loader, country-code loader, submit wiring, state restoration, role query tab selection, and `/daftar` Clerk login enforcement.
+- DOMContentLoaded orchestrator for claim bindings, calculations/city loader, country-code loader, submit wiring, progressive franchisor field behavior, state restoration, role query tab selection, and `/daftar` Clerk login enforcement.
 - `enforceDaftarAuthAndPrefill()`: Initializes `window.FranchiseAuth`, redirects anonymous users to `/login?next=<current-daftar-url>`, syncs D1 user state, locks franchisee/franchisor email/name/PIC fields from Clerk/D1 identity, and redirects completed profiles to `/profil/`.
 - `redirectCompletedProfileIfNeeded()`: Reads `/profile-data` after auth and sends users whose selected role is already complete away from first-time `/daftar` to `/profil/`.
 - `initBrandOriginFields()`: Keeps `brand_country` / `target_market` collapsed for Indonesian franchisors, opens and prefills origin when a non-Indonesia contact country code is selected, and ensures blank submissions default to Indonesia/Indonesia.
 - `renderBrandCountryOptions()`: Rebuilds the collapsed `brand_country` select from shared country metadata after the public JSON loads.
 - `lockIdentityValue()`: Writes Clerk/D1 identity into preserved form fields, keeps them read-only instead of disabled so existing submit contracts remain intact, uses `data-fr-tooltip` for the lock hint, and appends the identity lock note.
 - Re-exposes compatibility globals (`window.fetchUnclaimedBrands`, `window.fillMainFranchisorForm`).
+
+### File: `js/form-10-progressive-franchisor.js`
+*Progressive franchisor field helper.*
+- `FF.initProgressiveFranchisorForm()`: Opens optional follow-up groups only after related baseline fields are filled, while reopening those groups when restored drafts already contain values.
+- `updateTotalInvestment()`: Keeps hidden `total_investment_value` in sync from either the simple `min_capital` answer or the optional license/capex/construction/working-capital breakdown.
+- `syncSupportSystem()`: Converts non-submitting support checkbox chips plus optional notes into the preserved `support_system` field so the existing submit contract receives one text value.
 
 ### File: `js/form-08-franchisee-steps.js`
 *Franchisee form step navigation (2-step layout).*
@@ -402,7 +408,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `scripts/build-d1-franchise-pages.ts`
 *TypeScript D1-backed public page generation bridge.*
-- `fetchRowsFromD1(options)`: Loads published `site_franchisee_id` rows with the complete static detail contract, including outlet type, location requirement, cost components, contract duration, omzet, profit, royalty basis/period, contacts, media, and aggregated structured locations. This closes the gap where form data existed in D1/schema but became `null` in generated listings.
+- `fetchRowsFromD1(options)`: Loads published `site_franchisee_id` rows with the complete static detail contract, including outlet type, location requirement, cost components, area/staff/setup requirements, working capital, contract duration, BEP min/max, omzet min/max, profit min/max, royalty basis/period, contacts, media, and aggregated structured locations. This closes the gap where form data existed in D1/schema but became `null` in generated listings.
 - D1 row validation uses `D1FranchiseRowSchema` from `src/lib/shared-schemas.ts` so build-time and Astro snapshot rendering share the same row contract.
 - `fetchRowsFromD1Http(sql, token)`: Build-safe D1 query path for Cloudflare Pages and CI. Uses `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` when set, with current project defaults.
 - `fetchRowsFromD1Wrangler(sql, options)`: Local fallback path that runs `pnpm exec wrangler d1 execute` with a cfman token.
@@ -482,7 +488,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/shared-schemas.ts`
 *Shared TypeScript schemas for import/build/Astro validation.*
 - `ImportFranchisorRowSchema` / `ImportUnclaimedRowSchema` / `ImportFranchiseeRowSchema`: CSV row validators used by the D1 importer.
-- `D1FranchiseRowSchema`: Shared D1 static snapshot row validator used by the D1 page builder and Astro renderer, including optional brand-origin and target-market listing facts.
+- `D1FranchiseRowSchema`: Shared D1 static snapshot row validator used by the D1 page builder and Astro renderer, including optional brand-origin/target-market listing facts and progressive canonical fields for area, staff, setup duration, working capital, additional cost notes, BEP ranges, omzet ranges, and net-profit ranges.
 - `structured_locations`: Optional JSON field in the D1 static snapshot, populated by the public page builder from `locations` and `franchise_locations`.
 - `normalizeListingStatusValue()` / `normalizeVerificationTierValue()` / `normalizeRoyaltyBasisValue()` / `normalizeHakiStatusValue()`: Shared enum/value normalizers for import and build paths.
 
@@ -527,14 +533,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/franchise-detail-summary.ts`
 *Shared generated franchise detail summary renderer.*
 - `generateDetailQuickFacts(row, tier)`: Returns only complementary chips such as BEP, non-Indonesia origin/target, or verified/premium status so the visible heading does not repeat the existing category/meta row.
-- `generateDetailInfoPanel(row, logoUrl, category, minimumModal)`: Builds the `Profil` tab summary panel with a compact logo card, official social links when Website/Instagram/Facebook/TikTok/YouTube/LinkedIn URLs exist, category link, shared-tooltip explanations, actionable `Tanya Admin` / `Hubungi Admin` contact-tab openers, and icon-enriched fact cards from D1/form fields such as company, fees, royalty, founding year, outlets/area, BEP, origin/target, outlet type, location requirement, contract duration, omzet, net profit, and support.
+- `generateDetailInfoPanel(row, logoUrl, category, minimumModal)`: Builds the `Profil` tab summary panel with a compact logo card, official social links when Website/Instagram/Facebook/TikTok/YouTube/LinkedIn URLs exist, category link, shared-tooltip explanations, actionable `Tanya Admin` / `Hubungi Admin` contact-tab openers, and icon-enriched fact cards from D1/form fields such as company, fees, royalty, founding year, outlets/area, minimum area, minimum staff, setup duration, BEP range, origin/target, outlet type, location requirement, contract duration, omzet range, net-profit range, and support.
 - Shared through `src/lib/franchise-detail-tabs.ts` by both `src/lib/franchise-static.ts` and `scripts/d1-page-renderer.ts` so Astro output and the committed D1 bridge stay consistent.
 
 ### File: `src/lib/franchise-detail-tabs.ts`
 *Shared connected tab composer for generated franchise detail pages.*
 - `generateDetailTabEntries(row, options)`: Returns buyer-intent tabs from existing D1 data: `Profil`, `Detail`, `Investasi`, optional `Support`, optional Premium/media/Brosur/FAQ entries, and `Kontak`.
 - `renderDetailTabsShell(tabEntries)`: Renders the connected full-width tab heading/content shell used by both Astro detail generation and the D1 bridge.
-- `generateInvestmentTab(row, minimumModal)`: Internal helper that turns modal, fee, royalty, BEP, omzet, and net-profit data into compact icon cards and makes unknown values open the contact tab.
+- `generateInvestmentTab(row, minimumModal)`: Internal helper that turns modal, fee breakdown, working capital, additional-cost notes, royalty, BEP range, omzet range, and net-profit range into compact icon cards and makes unknown values open the contact tab.
 
 ### File: `src/lib/franchise-contact.ts`
 *Detail contact renderer for D1-backed franchise static pages.*
@@ -607,7 +613,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/franchise-detail-styles.ts`
 *Generated detail-page CSS module for D1-backed Astro pages.*
 - `FRANCHISE_DETAIL_STYLE_ID`: Stable DOM id used by the injector and smoke check.
-- `renderFranchiseDetailStyles()`: Returns the generated detail `<style>` block for border-light profile/tab presentation, Premium gallery/brochure/FAQ styling, dynamic contact floats, brochure overlay top bar, transparent-gradient left/right hit areas, pointer-motion visibility states, and responsive rules.
+- `renderFranchiseDetailStyles()`: Returns the generated detail `<style>` block for border-light profile/tab presentation, investment note styling, Premium gallery/brochure/FAQ styling, dynamic contact floats, brochure overlay top bar, transparent-gradient left/right hit areas, pointer-motion visibility states, and responsive rules.
 
 ### File: `src/lib/franchise-detail-scripts.ts`
 *Generated detail-page browser script module for D1-backed Astro pages.*
@@ -727,7 +733,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_profile-read-model.js`
 *Profile GET/read-model helper for `/profile-data`.*
-- `loadProfileData(db, actor)`: Builds the `/profile-data` GET payload with user summary, completion flags, profile rows, owned listings, structured location rows, claims, recommendations, saved opportunities, inquiry history, lead inbox, Premium membership state, and owner analytics.
+- `loadProfileData(db, actor)`: Builds the `/profile-data` GET payload with user summary, completion flags, profile rows, owned listings including progressive canonical listing fields, structured location rows, claims, recommendations, saved opportunities, inquiry history, lead inbox, Premium membership state, and owner analytics.
 - `profileLoaders`: Exposes `loadFranchiseeProfile()`, `loadPublicOpportunity()`, `loadSavedOpportunities()`, `loadFranchiseeInquiryHistory()`, and `loadFranchiseeLead()` callbacks consumed by franchisee action handlers.
 - Owned listing edit lock state still uses `OWNER_LISTING_EDIT_INTERVAL_HOURS` from `functions/_profile-franchisor-actions.js`.
 
@@ -760,7 +766,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_profile-schemas.js`
 *Zod mutation schemas for `/profile-data`.*
-- `MutationSchema`: Discriminated union for account/profile/listing/location/role/inquiry/saved-opportunity/lead/Premium actions. Listing updates accept optional `brand_country` and `target_market`.
+- `MutationSchema`: Discriminated union for account/profile/listing/location/role/inquiry/saved-opportunity/lead/Premium actions. Listing updates accept optional `brand_country`, `target_market`, and progressive canonical fields such as area/staff/setup, working capital, BEP range, omzet range, and net-profit range.
 - `FranchiseInquirySchema`: Accepts optional `buyer_context` so public/profile inquiry clients can pass recent tool intent without changing lead table columns.
 - Scalar validators keep text, integer, number, and money parsing consistent before profile writes.
 
@@ -778,7 +784,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_profile-listing-patch.js`
 *Owner listing update helper for `/profile-data`.*
-- `listingPatch(data)`: Keeps the allowed owner-editable franchise fields in one place, including `brand_country` and `target_market`.
+- `listingPatch(data)`: Keeps the allowed owner-editable franchise fields in one place, including `brand_country`, `target_market`, and progressive canonical listing fields.
 - `buildUpdate(table, patch, idColumn)`: Builds the SQL update fragment used by the rate-limited owner listing save path.
 
 ### File: `functions/_location-writes.js`
@@ -1081,9 +1087,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_shared-schemas.js`
 *Shared validation/schema constants for Pages Functions.*
-- `EDITABLE_LISTING_FIELD_DEFS`: Canonical dashboard-editable listing fields with labels, types, and select options, including brand-origin and target-market fields.
+- `EDITABLE_LISTING_FIELD_DEFS`: Canonical dashboard-editable listing fields with labels, types, and select options, including brand-origin, target-market, and progressive canonical fields for area/staff/setup/working-capital/BEP/omzet/profit ranges.
 - `sanitizeListingChanges(changes)` / `normalizeListingFieldValue(field, value)`: Shared dashboard listing change validation and normalization.
-- `BaseSubmissionSchema` / `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Shared form payload validators used by `/form-submit`; franchisor submissions accept optional `brand_country` and `target_market`, which submit helpers default to Indonesia/Indonesia when omitted.
+- `BaseSubmissionSchema` / `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Shared form payload validators used by `/form-submit`; franchisor submissions accept optional `brand_country`, `target_market`, and the progressive field set, while submit helpers default origin/market to Indonesia/Indonesia when omitted.
 - `GetFranchisesQuerySchema`: Shared `/get-franchises` query validator.
 - Role/source/form/contact/quality-check enum schemas: Shared Zod enums for public/internal roles, source sheets, form types, test actions, contact types, quality-check statuses, and dashboard review decisions.
 - `normalizeListingStatusValue()` / `normalizeVerificationTierValue()` / `normalizeRoyaltyBasisValue()` / `normalizeHakiStatusValue()`: Shared value normalizers for Function write paths.
@@ -1123,7 +1129,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_form-submit-franchisor.js`
 *Franchisor listing and claim submit workflow.*
-- `handleFranchisorSubmit(db, data, isClaim, actor)`: Checks duplicates and writes or updates franchisor/listing/package/publication/claim/audit D1 records with `user_id`, `owner_user_id`, `claimant_user_id`, brand origin/target-market listing metadata, franchisor profile contact/social URLs, and static rebuild queue requests for `site_franchisee_id`.
+- `handleFranchisorSubmit(db, data, isClaim, actor)`: Checks duplicates and writes or updates franchisor/listing/package/publication/claim/audit D1 records with `user_id`, `owner_user_id`, `claimant_user_id`, brand origin/target-market listing metadata, progressive canonical listing fields, franchisor profile contact/social URLs, and static rebuild queue requests for `site_franchisee_id`.
 
 ### File: `functions/_form-submit-test-actions.js`
 *Staff/admin dev test-data workflows.*
@@ -1133,7 +1139,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Shared helpers for the form-submit modules.*
 - `findClaimSource(db, data)`: Finds D1 `UNCLAIMED` franchise rows by `unclaimed_id` or normalized brand name for claim migration.
 - `uniqueSlug()` / `slugExists()`: Generates non-conflicting D1 slugs for new submitted listings.
-- Also owns validation/duplicate/json responses, payload cleaning, normalization, id/timestamp generation, common franchise bind values including brand-origin/target-market columns, shared country metadata fallback for omitted origin/market metadata, and audit/legacy-source statements.
+- Also owns validation/duplicate/json responses, payload cleaning, normalization, id/timestamp generation, common franchise bind values including brand-origin/target-market columns and progressive canonical fields, shared country metadata fallback for omitted origin/market metadata, and audit/legacy-source statements.
 - Important: `/form-submit` must remain D1-only and authenticated; do not restore anonymous writes.
 
 ## 3a. Directory: `/.github/workflows` (Automation)

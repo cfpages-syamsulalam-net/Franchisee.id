@@ -73,16 +73,23 @@ function generateInvestmentTab(row: D1FranchiseRow, minimumModal: string) {
   const items = [
     ["fa-coins", "Modal Minimal", minimumModal],
     ["fa-file-invoice-dollar", "Franchise Fee", formatRupiah(row.fee_license_idr)],
+    row.fee_capex_idr ? ["fa-boxes-stacked", "Paket Peralatan", formatRupiah(row.fee_capex_idr)] : null,
+    row.fee_construction_idr ? ["fa-hammer", "Renovasi / Booth", formatRupiah(row.fee_construction_idr)] : null,
+    row.working_capital_idr ? ["fa-wallet", "Modal Kerja Awal", formatRupiah(row.working_capital_idr)] : null,
     ["fa-percent", "Biaya Royalti", formatRoyaltyInfo(row)],
-    ["fa-chart-line", "Estimasi BEP", row.estimated_bep_months ? `${row.estimated_bep_months} bulan` : "Tanya Admin"],
+    ["fa-chart-line", "Estimasi BEP", bepText(row)],
     row.omzet_monthly_idr ? ["fa-sack-dollar", "Estimasi Omzet", `${formatRupiah(row.omzet_monthly_idr)} / bulan`] : null,
+    rangeText(row.omzet_monthly_min_idr, row.omzet_monthly_max_idr, formatRupiah) ? ["fa-sack-dollar", "Range Omzet", `${rangeText(row.omzet_monthly_min_idr, row.omzet_monthly_max_idr, formatRupiah)} / bulan`] : null,
     row.net_profit_percent ? ["fa-chart-line", "Estimasi Laba Bersih", `${formatPercent(row.net_profit_percent)}`] : null,
+    rangeText(row.net_profit_monthly_min_idr, row.net_profit_monthly_max_idr, formatRupiah) ? ["fa-chart-line", "Range Laba Bersih", `${rangeText(row.net_profit_monthly_min_idr, row.net_profit_monthly_max_idr, formatRupiah)} / bulan`] : null,
   ].filter(Boolean) as [string, string, string][];
+  const notes = normalizeText(row.additional_cost_notes);
 
   return `<section class="fr-detail-tab-block">
     <h3><i class="fas fa-coins" aria-hidden="true"></i> Ringkasan investasi</h3>
     <p>Gunakan angka ini sebagai titik awal perbandingan. Detail final tetap perlu dikonfirmasi ke franchisor.</p>
     <div class="fr-detail-tab-cards">${items.map(([icon, label, value]) => tabInfoCard(icon, label, value)).join("")}</div>
+    ${notes ? `<div class="fr-detail-tab-note"><strong>Catatan biaya tambahan:</strong> ${escapeHtml(notes)}</div>` : ""}
   </section>`;
 }
 
@@ -105,4 +112,19 @@ function formatRoyaltyInfo(row: D1FranchiseRow) {
 function formatPercent(value: number | null | undefined) {
   if (!Number.isFinite(value ?? NaN)) return "Tanya Admin";
   return `${Number(value).toLocaleString("id-ID", { maximumFractionDigits: 2 })}%`;
+}
+
+function bepText(row: D1FranchiseRow) {
+  const range = rangeText(row.estimated_bep_min_months, row.estimated_bep_max_months, (value) => `${value} bulan`);
+  if (range) return range;
+  return row.estimated_bep_months ? `${row.estimated_bep_months} bulan` : "Tanya Admin";
+}
+
+function rangeText(min: number | null | undefined, max: number | null | undefined, formatter: (value: number | null | undefined) => string) {
+  const hasMin = Number.isFinite(min ?? NaN) && Number(min) > 0;
+  const hasMax = Number.isFinite(max ?? NaN) && Number(max) > 0;
+  if (hasMin && hasMax && Number(min) !== Number(max)) return `${formatter(min)} - ${formatter(max)}`;
+  if (hasMin) return formatter(min);
+  if (hasMax) return formatter(max);
+  return "";
 }

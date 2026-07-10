@@ -599,6 +599,16 @@ export function renderFranchiseDetailStyles() {
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
+.fr-detail-tab-note {
+  padding: 12px 14px;
+  border: 1px solid rgba(240, 202, 0, 0.35);
+  background: #fffbea;
+  color: #3f3a2f;
+  line-height: 1.6;
+}
+.fr-detail-tab-note strong {
+  color: #111111;
+}
 .franchise-contact-block ul {
   margin: 12px 0 0 0;
   padding: 0;

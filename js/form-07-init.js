@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof FF.initCalculationAndCity === 'function') FF.initCalculationAndCity();
     if (typeof FF.loadCountryCodeOptions === 'function') FF.loadCountryCodeOptions();
     if (typeof FF.initFormSubmission === 'function') FF.initFormSubmission();
+    if (typeof FF.initProgressiveFranchisorForm === 'function') FF.initProgressiveFranchisorForm();
     if (typeof window.bindAutoFormatting === 'function') window.bindAutoFormatting();
     initBrandOriginFields();
 

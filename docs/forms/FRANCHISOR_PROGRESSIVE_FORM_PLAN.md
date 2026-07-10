@@ -1,6 +1,6 @@
 # Franchisor Progressive Form Plan
 
-Last updated: 2026-07-11 00:00 (Asia/Jakarta)
+Last updated: 2026-07-11 00:35 (Asia/Jakarta)
 
 ## Goal
 
@@ -248,6 +248,8 @@ Store those as supplemental proposal insights later.
 
 ### Phase 1 - Schema and backend
 
+Status: Implemented.
+
 - Add a D1 migration for the priority canonical fields above.
 - Add fields to shared editable listing definitions.
 - Add fields to profile/listing update schemas if owners/admins should edit them later.
@@ -256,6 +258,8 @@ Store those as supplemental proposal insights later.
 - Extend OCR/AI candidate mapping only after the fields exist.
 
 ### Phase 2 - Progressive form UI
+
+Status: Implemented.
 
 - Restore the currently missing documented fields in `/daftar/index.html`.
 - Add new optional fields under progressive groups.
@@ -266,12 +270,16 @@ Store those as supplemental proposal insights later.
 
 ### Phase 3 - Autosave and validation
 
+Status: Implemented.
+
 - Ensure autosave captures fields whether visible or currently collapsed.
 - Validation should require only baseline fields.
 - Optional follow-up groups validate only if the user starts filling them.
 - Keep step validation short and actionable.
 
 ### Phase 4 - Public listing display
+
+Status: Implemented.
 
 - Add the new canonical fields to public static snapshot.
 - Show them only when values exist:
@@ -281,6 +289,8 @@ Store those as supplemental proposal insights later.
 - Keep unknown values as “Tanya Admin” only where currently useful; do not create empty cards.
 
 ### Phase 5 - OCR/AI assist
+
+Status: Not implemented in this phase.
 
 - When brochure OCR exists, AI can suggest values for the new canonical fields.
 - Suggestions go through existing review flow, not direct public overwrite.

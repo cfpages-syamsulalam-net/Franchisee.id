@@ -2,6 +2,10 @@
 
 **Last Updated**: 2026-06-08 (Asia/Jakarta)
 
+## 2026-07-11 Progressive Form Update
+
+The fields listed below still must not be removed, but the active franchisor form now uses progressive disclosure to reduce first-step friction. Existing backend-supported fields may be optional and hidden inside collapsible follow-up groups until the user answers a related baseline question. This is an intentional UX change requested by the user; preserving a field means preserving its `name` and submit mapping, not necessarily forcing it as an always-visible required input.
+
 ## ⚠️ CRITICAL RULE: DO NOT REMOVE FORM FIELDS
 
 **All form inputs, selects, textareas, radio buttons, checkboxes, and hidden fields in `/daftar/index.html` MUST be preserved unless explicitly requested by the user.**

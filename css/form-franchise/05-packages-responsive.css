@@ -137,6 +137,9 @@ input[type=number] {
     .custom-grid-2-col {
         grid-template-columns: 1fr; /* Stack jadi 1 kolom di HP */
     }
+    .progressive-check-grid {
+        grid-template-columns: 1fr;
+    }
     
     .dashboard-flex-wrapper {
         flex-direction: column; /* Stack vertikal di HP */

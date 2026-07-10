@@ -123,13 +123,17 @@
         if (isValid && stepIndex === 2) {
             const elCapex = document.getElementById('fee_capex');
             const elConstruct = document.getElementById('fee_construction');
+            const elMinCapital = currentStepDiv.querySelector('input[name="min_capital"]');
+            const elTotal = document.getElementById('total_investment_value');
+            const valMinCapital = window.cleanNumber(elMinCapital ? elMinCapital.value : '');
+            const valTotal = window.cleanNumber(elTotal ? elTotal.value : '');
             const valCapex = window.cleanNumber(elCapex ? elCapex.value : '');
             const valConstruct = window.cleanNumber(elConstruct ? elConstruct.value : '');
 
-            if (valCapex === 0 && valConstruct === 0) {
+            if (valMinCapital === 0 && valTotal === 0 && valCapex === 0 && valConstruct === 0) {
                 const confirmZero = confirm('⚠️ Modal Awal Rp 0? Pastikan benar.');
                 if (!confirmZero) {
-                    if (elCapex) elCapex.focus();
+                    if (elMinCapital) elMinCapital.focus();
                     return false;
                 }
             }

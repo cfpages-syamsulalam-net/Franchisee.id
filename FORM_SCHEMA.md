@@ -49,33 +49,49 @@ The field inventory is storage-provider neutral. The current frontend posts thes
 - `haki_number` (Text, Cond): Required if HAKI is Registered/Process.
 - `nib_number` (Text, Opt): 13 digit NIB.
 
-### Section 2: Konsep & Biaya
-- `outlet_type` (Radio, Req): Tipe A-F (Booth to Cloud Kitchen).
-- `location_requirement` (Text, Req): Dimensi/Luas minimal.
-- `rent_cost` (Text, Cond): Label changes based on `outlet_type`.
-- `fee_license` (Number, Req): Franchise Fee.
-- `fee_capex` (Number, Req): Paket Peralatan/Pusat.
-- `fee_construction` (Number, Req): Estimasi Renovasi/Booth.
-- `total_investment_value` (Hidden): Auto-calculated sum.
-- `net_profit_percent` (Number, Req): Margin Profit (%).
-- `royalty_percent` (Number, Req): Royalty Fee (%).
-- `royalty_basis` (Select): Omzet / Profit.
+### Section 2: Model & Modal
+- `min_capital` (Text/Rupiah, Req): Investasi terendah / modal headline.
+- `outlet_type` (Select, Opt, Progressive): Format outlet utama. Membuka follow-up lokasi/operasional.
+- `location_requirement` (Text, Opt, Progressive): Dimensi/luas/syarat lokasi.
+- `min_area_sqm` (Number, Opt, Progressive): Luas minimum dalam m².
+- `min_staff_count` (Number, Opt, Progressive): Jumlah staff minimum.
+- `setup_duration_days` (Number, Opt, Progressive): Estimasi waktu setup sampai siap buka.
+- `rent_cost` (Text, Opt, Progressive): Referensi biaya sewa lokasi.
+- `fee_license` (Text/Rupiah, Opt, Progressive): Franchise Fee.
+- `fee_capex` (Text/Rupiah, Opt, Progressive): Paket peralatan/stok awal/pusat.
+- `fee_construction` (Text/Rupiah, Opt, Progressive): Estimasi renovasi/booth/setup fisik.
+- `working_capital_idr` (Text/Rupiah, Opt, Progressive): Modal kerja awal.
+- `additional_cost_notes` (Textarea, Opt, Progressive): Catatan biaya tambahan seperti sewa, pengiriman, akomodasi trainer, POS bulanan.
+- `total_investment_value` (Hidden): Auto-calculated sum dari rincian modal, fallback ke `min_capital`.
+- `royalty_percent` (Number, Opt): Royalty Fee (%).
+- `royalty_basis` (Select, Opt): Omzet / Profit / Fixed / None.
 
-### Section 3: Profil Marketing
-- `short_desc` (Textarea, Req): Teaser (max 150 chars).
+### Section 3: Proyeksi
+- Projection trigger (Select, no submit name): Membuka follow-up proyeksi jika user punya angka.
+- `estimated_bep_months` (Number, Opt, Progressive): Estimasi BEP utama dalam bulan.
+- `estimated_bep_min_months` (Number, Opt, Progressive): BEP minimum.
+- `estimated_bep_max_months` (Number, Opt, Progressive): BEP maksimum.
+- `omzet_monthly_idr` (Text/Rupiah, Opt, Progressive): Estimasi omzet bulanan utama.
+- `omzet_monthly_min_idr` (Text/Rupiah, Opt, Progressive): Omzet bulanan minimum.
+- `omzet_monthly_max_idr` (Text/Rupiah, Opt, Progressive): Omzet bulanan maksimum.
+- `net_profit_percent` (Number, Opt, Progressive): Margin laba bersih (%).
+- `net_profit_monthly_min_idr` (Text/Rupiah, Opt, Progressive): Laba bersih bulanan minimum.
+- `net_profit_monthly_max_idr` (Text/Rupiah, Opt, Progressive): Laba bersih bulanan maksimum.
+
+### Section 4: Profil Marketing & Dukungan
+- `short_desc` (Textarea, Opt): Teaser singkat.
 - `full_desc` (Textarea, Req): Keunggulan & Sejarah.
-- `support_system` (Checkbox): List of facilities (Bahan baku, training, etc.).
+- `support_system` (Hidden/Text, Opt, Progressive): Diisi dari checkbox dukungan + catatan tambahan.
+- Support choices (Checkboxes, no submit name): Survei lokasi, desain outlet, peralatan, bahan baku, training, POS, marketing support, SOP.
+- Support extra (Textarea, no submit name): Dukungan lain.
 
-### Section 4: Media & Visual (Compatibility URL Fields, R2 Upload Path)
-- `logo_url` (Hidden, Req): Brand Logo.
-- `cover_url` (Hidden, Req): Banner Utama.
-- `gallery_urls` (Hidden, Opt): Up to 5 photos.
+### Section 5: Media & Kontak Leads
+- `logo_url` (Text URL, Req): Brand Logo compatibility URL.
+- `cover_url` (Text URL, Opt, Progressive): Banner Utama compatibility URL.
+- `gallery_urls` (Textarea URLs, Opt, Progressive): Up to 5 photos.
 - `video_url` (URL, Opt): YouTube Link.
-- `proposal_url` (Hidden, Opt): PDF E-Proposal.
+- `proposal_url` (Text URL, Opt, Progressive): PDF E-Proposal.
 Note: these `*_url` field names remain compatibility fields for `/daftar` and D1 listing storage. Owner edits in `/profil` now upload logo, cover, and proposal files through the R2-backed media path and update these URL fields after upload.
-Digital proposal PDFs uploaded through `/profil` are also parsed for selectable text. Extracted facts are stored as auditable knowledge and sent to admin review only for currently missing listing fields; extraction does not remove form fields or silently overwrite owner-entered values.
-
-### Section 5: Kontak Leads
 - `pic_name` (Text, Req): Nama Contact Person.
 - `country_code` (Select, Req): WhatsApp country code (default `+62`).
 - `whatsapp` (Tel, Req): WhatsApp Business PIC.

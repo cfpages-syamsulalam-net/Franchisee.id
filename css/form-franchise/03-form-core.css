@@ -258,6 +258,75 @@
     display: none !important;
 }
 
+.form-progressive-note {
+    margin: -4px 0 18px;
+    padding: 10px 12px;
+    border: 1px solid rgba(240, 202, 0, 0.35);
+    border-radius: 12px;
+    background: #fffbea;
+    color: #5f5130;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.progressive-form-group {
+    margin: 14px 0;
+    padding: 0;
+    border: 1px solid rgba(17, 24, 39, 0.10);
+    border-radius: 14px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.progressive-form-group summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 16px;
+    cursor: pointer;
+    font-weight: 800;
+    color: #111827;
+    background: #f9fafb;
+}
+
+.progressive-form-group[open] summary {
+    border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.progressive-form-group .form-group-row {
+    margin: 0;
+    padding: 14px 16px;
+}
+
+.form-total-display {
+    display: inline-flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: #111827;
+    color: #f0ca00;
+    font-weight: 900;
+}
+
+.progressive-check-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px 16px 0;
+}
+
+.progressive-check-grid label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(17, 24, 39, 0.10);
+    border-radius: 12px;
+    background: #fffdf4;
+    font-weight: 700;
+}
+
 /* JENIS PAKET (2 KOLOM GRID) */
 .outlet-grid-container {
     display: grid;

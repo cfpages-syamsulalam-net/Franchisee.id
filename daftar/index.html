@@ -643,19 +643,19 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 																</li>
 																<li class="step-item" data-step="2">
 																	<div class="step-circle">2</div>
-																	<div class="step-text">Biaya</div>
+																	<div class="step-text">Model & Modal</div>
 																</li>
 																<li class="step-item" data-step="3">
 																	<div class="step-circle">3</div>
-																	<div class="step-text">Profil</div>
+																	<div class="step-text">Proyeksi</div>
 																</li>
 																<li class="step-item" data-step="4">
 																	<div class="step-circle">4</div>
-																	<div class="step-text">Media</div>
+																	<div class="step-text">Profil</div>
 																</li>
 																<li class="step-item" data-step="5">
 																	<div class="step-circle">5</div>
-																	<div class="step-text">Kontak</div>
+																	<div class="step-text">Media & Kontak</div>
 																</li>
 															</ul>
 															<div class="progress mt-2" style="height: 4px;">
@@ -778,19 +778,106 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 												<!-- STEP 2: BIAYA -->
 												<div id="step-2" class="step-content" style="display:none;">
 													<div class="form-section-card">
-														<h3 class="section-title">Langkah 2: Konsep & Biaya</h3>
+														<h3 class="section-title">Langkah 2: Model & Modal</h3>
+														<p class="form-progressive-note">Isi yang utama dulu. Detail tambahan akan terbuka otomatis kalau bagian terkait mulai Anda isi.</p>
 														<div class="form-group-row">
 															<div class="label-col"><label class="form-label">Investasi Terendah</label></div>
 															<div class="input-col">
 																<div class="input-group">
 																	<span class="input-group-text">Rp</span>
-																	<input type="text" name="min_capital" class="form-control rupiah-input" required>
+																	<input type="text" name="min_capital" class="form-control rupiah-input" required data-progressive-trigger="investment" data-total-source>
 																</div>
+																<small class="helper-text-bottom text-muted">Cukup isi angka modal paling rendah dulu. Rincian paket bisa dilengkapi kalau sudah siap.</small>
 															</div>
 														</div>
 														<div class="form-group-row">
+															<div class="label-col"><label class="form-label">Tipe Outlet Utama</label></div>
+															<div class="input-col">
+																<select name="outlet_type" class="form-select" data-progressive-trigger="outlet">
+																	<option value="">Pilih kalau sudah tahu...</option>
+																	<option value="Booth / Gerobak">Booth / Gerobak</option>
+																	<option value="Container / Booth Outdoor">Container / Booth Outdoor</option>
+																	<option value="Island / Stand Mall">Island / Stand Mall</option>
+																	<option value="Kiosk">Kiosk</option>
+																	<option value="Ruko / Cafe / Resto">Ruko / Cafe / Resto</option>
+																	<option value="Virtual / Cloud Kitchen">Virtual / Cloud Kitchen</option>
+																</select>
+																<small class="helper-text-bottom text-muted">Pilih format yang paling umum atau paling laku dulu.</small>
+															</div>
+														</div>
+														<details class="progressive-form-group" data-progressive-group="outlet">
+															<summary><i class="fas fa-location-dot" aria-hidden="true"></i> Detail lokasi & operasional</summary>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Kebutuhan Lokasi</label></div>
+																<div class="input-col"><input type="text" name="location_requirement" class="form-control" placeholder="Contoh: 3x4 meter, min. 50 m², area kampus/perkantoran"></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Luas Minimum (m²)</label></div>
+																<div class="input-col"><input type="number" name="min_area_sqm" class="form-control" min="0" step="1" placeholder="Contoh: 12"></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Staff Minimum</label></div>
+																<div class="input-col"><input type="number" name="min_staff_count" class="form-control" min="0" step="1" placeholder="Contoh: 2"></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Estimasi Setup</label></div>
+																<div class="input-col">
+																	<div class="input-group">
+																		<input type="number" name="setup_duration_days" class="form-control" min="0" step="1" placeholder="Contoh: 14">
+																		<span class="input-group-text">hari</span>
+																	</div>
+																</div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Referensi Sewa Lokasi</label></div>
+																<div class="input-col"><input type="text" name="rent_cost" class="form-control" placeholder="Contoh: Rp 50-100 juta/tahun atau Rp 1,5 juta/bulan"></div>
+															</div>
+														</details>
+														<details class="progressive-form-group" data-progressive-group="investment">
+															<summary><i class="fas fa-coins" aria-hidden="true"></i> Rincian modal & biaya</summary>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Biaya Lisensi / Franchise Fee</label></div>
+																<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" name="fee_license" class="form-control rupiah-input" data-total-source></div></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Paket Peralatan / Stok Awal</label></div>
+																<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" name="fee_capex" id="fee_capex" class="form-control rupiah-input" data-total-source></div></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Renovasi / Booth / Setup Fisik</label></div>
+																<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" name="fee_construction" id="fee_construction" class="form-control rupiah-input" data-total-source></div></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Modal Kerja Awal</label></div>
+																<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" name="working_capital_idr" class="form-control rupiah-input" data-total-source></div></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Total Estimasi Modal</label></div>
+																<div class="input-col">
+																	<input type="hidden" name="total_investment_value" id="total_investment_value">
+																	<div class="form-total-display">Rp <span id="total_display_text">0</span></div>
+																	<small class="helper-text-bottom text-muted">Jika hanya investasi terendah yang diisi, angka itu tetap dipakai sebagai modal utama.</small>
+																</div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Catatan Biaya Tambahan</label></div>
+																<div class="input-col"><textarea name="additional_cost_notes" class="form-control" rows="3" placeholder="Contoh: belum termasuk sewa, pengiriman luar kota, biaya akomodasi trainer, POS bulanan"></textarea></div>
+															</div>
+														</details>
+														<div class="form-group-row">
 															<div class="label-col"><label class="form-label">Royalty Fee (%)</label></div>
-															<div class="input-col"><input type="number" name="royalty_percent" id="royalty_percent" class="form-control" step="0.1"></div>
+															<div class="input-col">
+																<input type="number" name="royalty_percent" id="royalty_percent" class="form-control" step="0.1">
+																<div class="mt-2">
+																	<select name="royalty_basis" class="form-select">
+																		<option value="">Dasar royalty...</option>
+																		<option value="omzet">Dari omzet</option>
+																		<option value="profit">Dari profit</option>
+																		<option value="fixed">Nominal tetap</option>
+																		<option value="none">Tidak ada royalty</option>
+																	</select>
+																</div>
+															</div>
 														</div>
 														<div class="d-flex justify-content-center gap-2 mt-4">
 															<button type="button" class="btn btn-outline-secondary" onclick="prevStep(2)">KEMBALI</button>
@@ -802,8 +889,66 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 												<!-- STEP 3, 4, 5 -->
 												<div id="step-3" class="step-content" style="display:none;">
 													<div class="form-section-card">
-														<h3 class="section-title">Langkah 3: Profil & Deskripsi</h3>
-														<textarea name="full_desc" class="form-control" rows="5" required placeholder="Ceritakan tentang bisnis Anda..."></textarea>
+														<h3 class="section-title">Langkah 3: Proyeksi</h3>
+														<p class="form-progressive-note">Kalau belum punya angka resmi, bagian ini boleh dilewati. Lebih baik kosong daripada menebak.</p>
+														<div class="form-group-row">
+															<div class="label-col"><label class="form-label">Punya estimasi BEP/omzet?</label></div>
+															<div class="input-col">
+																<select class="form-select" data-progressive-trigger="projection">
+																	<option value="">Belum / lengkapi nanti</option>
+																	<option value="yes">Ya, saya punya estimasi</option>
+																</select>
+																<small class="helper-text-bottom text-muted">Jika ada brosur, nanti sistem juga bisa bantu ekstrak proyeksi dari sana.</small>
+															</div>
+														</div>
+														<details class="progressive-form-group" data-progressive-group="projection">
+															<summary><i class="fas fa-chart-line" aria-hidden="true"></i> Detail proyeksi usaha</summary>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Estimasi BEP Utama</label></div>
+																<div class="input-col"><div class="input-group"><input type="number" name="estimated_bep_months" class="form-control" min="0" step="1" placeholder="Contoh: 12"><span class="input-group-text">bulan</span></div></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Range BEP</label></div>
+																<div class="input-col">
+																	<div class="input-group">
+																		<input type="number" name="estimated_bep_min_months" class="form-control" min="0" step="1" placeholder="Min">
+																		<span class="input-group-text">s/d</span>
+																		<input type="number" name="estimated_bep_max_months" class="form-control" min="0" step="1" placeholder="Max">
+																		<span class="input-group-text">bulan</span>
+																	</div>
+																</div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Omzet Bulanan</label></div>
+																<div class="input-col"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" name="omzet_monthly_idr" id="omzet_monthly" class="form-control rupiah-input calc-bep" placeholder="Estimasi utama"></div></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Range Omzet Bulanan</label></div>
+																<div class="input-col">
+																	<div class="input-group">
+																		<span class="input-group-text">Rp</span>
+																		<input type="text" name="omzet_monthly_min_idr" class="form-control rupiah-input" placeholder="Min">
+																		<span class="input-group-text">s/d</span>
+																		<input type="text" name="omzet_monthly_max_idr" class="form-control rupiah-input" placeholder="Max">
+																	</div>
+																</div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Margin Laba Bersih (%)</label></div>
+																<div class="input-col"><input type="number" name="net_profit_percent" id="net_profit_percent" class="form-control calc-bep" step="0.1" min="0" max="100"></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Range Laba Bersih Bulanan</label></div>
+																<div class="input-col">
+																	<div class="input-group">
+																		<span class="input-group-text">Rp</span>
+																		<input type="text" name="net_profit_monthly_min_idr" class="form-control rupiah-input" placeholder="Min">
+																		<span class="input-group-text">s/d</span>
+																		<input type="text" name="net_profit_monthly_max_idr" class="form-control rupiah-input" placeholder="Max">
+																	</div>
+																</div>
+															</div>
+														</details>
 														<div class="d-flex justify-content-center gap-2 mt-4">
 															<button type="button" class="btn btn-outline-secondary" onclick="prevStep(3)">KEMBALI</button>
 															<button type="button" class="btn btn-success" onclick="nextStep(3)">LANJUT</button>
@@ -813,11 +958,30 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 
 												<div id="step-4" class="step-content" style="display:none;">
 													<div class="form-section-card">
-														<h3 class="section-title">Langkah 4: Media & Visual</h3>
-														<div class="mb-3">
-															<label class="form-label">Logo URL (Cloudinary)</label>
-															<input type="text" name="logo_url" id="logo_url" class="form-control" required>
+														<h3 class="section-title">Langkah 4: Profil & Dukungan</h3>
+														<div class="form-group-row">
+															<div class="label-col"><label class="form-label">Deskripsi Singkat</label></div>
+															<div class="input-col"><textarea name="short_desc" class="form-control" rows="2" maxlength="180" placeholder="Contoh: Franchise minuman kekinian dengan SOP lengkap dan modal terjangkau."></textarea></div>
 														</div>
+														<div class="form-group-row">
+															<div class="label-col"><label class="form-label">Tentang Brand</label></div>
+															<div class="input-col"><textarea name="full_desc" class="form-control" rows="5" required data-progressive-trigger="support" placeholder="Ceritakan tentang bisnis Anda, keunggulan, sejarah singkat, dan alasan mitra cocok bergabung..."></textarea></div>
+														</div>
+														<details class="progressive-form-group" data-progressive-group="support">
+															<summary><i class="fas fa-handshake-angle" aria-hidden="true"></i> Dukungan untuk mitra</summary>
+															<input type="hidden" name="support_system" data-support-system-value>
+															<div class="progressive-check-grid">
+																<label><input type="checkbox" value="Survei lokasi" data-support-choice> Survei lokasi</label>
+																<label><input type="checkbox" value="Desain outlet/interior" data-support-choice> Desain outlet/interior</label>
+																<label><input type="checkbox" value="Peralatan operasional" data-support-choice> Peralatan operasional</label>
+																<label><input type="checkbox" value="Bahan baku awal" data-support-choice> Bahan baku awal</label>
+																<label><input type="checkbox" value="Training karyawan" data-support-choice> Training karyawan</label>
+																<label><input type="checkbox" value="Sistem kasir / POS" data-support-choice> Sistem kasir / POS</label>
+																<label><input type="checkbox" value="Marketing support" data-support-choice> Marketing support</label>
+																<label><input type="checkbox" value="SOP operasional" data-support-choice> SOP operasional</label>
+															</div>
+															<textarea class="form-control mt-3" rows="3" data-support-extra placeholder="Dukungan lain, contoh: pendampingan grand opening, rekrutmen, monitoring operasional"></textarea>
+														</details>
 														<div class="d-flex justify-content-center gap-2 mt-4">
 															<button type="button" class="btn btn-outline-secondary" onclick="prevStep(4)">KEMBALI</button>
 															<button type="button" class="btn btn-success" onclick="nextStep(4)">LANJUT</button>
@@ -827,7 +991,36 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 
 												<div id="step-5" class="step-content" style="display:none;">
 													<div class="form-section-card">
-														<h3 class="section-title">Langkah 5: Kontak Bisnis</h3>
+														<h3 class="section-title">Langkah 5: Media & Kontak</h3>
+														<div class="form-group-row">
+															<div class="label-col"><label class="form-label">Logo URL</label></div>
+															<div class="input-col">
+																<input type="text" name="logo_url" id="logo_url" class="form-control" required data-progressive-trigger="media" placeholder="https://...">
+																<small class="helper-text-bottom text-muted">Untuk sementara isi URL logo. Upload file tetap bisa dilengkapi lewat Profil setelah listing dibuat.</small>
+															</div>
+														</div>
+														<details class="progressive-form-group" data-progressive-group="media">
+															<summary><i class="fas fa-images" aria-hidden="true"></i> Media tambahan & brosur</summary>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Cover URL</label></div>
+																<div class="input-col"><input type="text" name="cover_url" class="form-control" placeholder="https://..."></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Gallery URLs</label></div>
+																<div class="input-col"><textarea name="gallery_urls" class="form-control" rows="3" placeholder="Masukkan beberapa URL foto, satu baris per URL"></textarea></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Video YouTube</label></div>
+																<div class="input-col"><input type="url" name="video_url" class="form-control" placeholder="https://youtube.com/..."></div>
+															</div>
+															<div class="form-group-row">
+																<div class="label-col"><label class="form-label">Brosur / Proposal URL</label></div>
+																<div class="input-col">
+																	<input type="text" name="proposal_url" class="form-control" placeholder="https://...pdf">
+																	<small class="helper-text-bottom text-muted">Brosur membantu sistem mengekstrak paket, proyeksi, dan syarat lokasi untuk direview.</small>
+																</div>
+															</div>
+														</details>
 														<div class="form-group-row">
 															<div class="label-col"><label class="form-label">Nama PIC</label></div>
 															<div class="input-col">
@@ -1302,6 +1495,7 @@ var elementorFrontendConfig = {"environmentMode":{"edit":false,"wpPreview":false
         { id: 'form-04-calculation-city-js', src: '/js/form-04-calculation-city.js' },
         { id: 'form-05-country-whatsapp-js', src: '/js/form-05-country-whatsapp.js' },
         { id: 'form-06-submit-validation-js', src: '/js/form-06-submit-validation.js' },
+        { id: 'form-10-progressive-franchisor-js', src: '/js/form-10-progressive-franchisor.js' },
         { id: 'form-07-init-js', src: '/js/form-07-init.js' },
         { id: 'form-08-franchisee-steps-js', src: '/js/form-08-franchisee-steps.js' },
         { id: 'form-09-test-data-generator-js', src: '/js/form-09-test-data-generator.js' }

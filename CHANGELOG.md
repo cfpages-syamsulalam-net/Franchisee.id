@@ -8,9 +8,18 @@ Format:
 ### Added
 - `.context/session-20260711-0010.md`: Added this session continuity snapshot for the franchisor progressive form and canonical field planning work.
 - `docs/forms/FRANCHISOR_PROGRESSIVE_FORM_PLAN.md`: Added a current-state audit and implementation plan for restoring backend-supported franchisor fields, adding priority canonical fields, and making the 5-step form progressive.
+- `migrations/0028_franchisor_progressive_fields.sql`: Added nullable D1 franchise columns for minimum area, staff count, setup duration, working capital, additional cost notes, BEP min/max, omzet min/max, and net-profit min/max.
+- `js/form-10-progressive-franchisor.js`: Added the progressive franchisor form helper for conditional follow-up groups, total-investment syncing, and support-system checkbox syncing.
 
 ### Changed
 - `AUDIT.md`, `docs/README.md`, `SUGGESTION.md`, and `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Documented the current active `/daftar` franchisor form mismatch, linked the progressive form plan, and added suggestion 83 for restoring existing supported fields before implementing new canonical fields.
+- `daftar/index.html`: Reworked the franchisor form into the Phase 1-4 progressive 5-step structure, restored existing supported optional fields, and added priority canonical questions without making the first screen heavier.
+- `css/form-franchise/03-form-core.css` and `css/form-franchise/05-packages-responsive.css`: Added progressive-group, computed-total, note, and checkbox-chip styling with responsive stacking.
+- `js/form-03-navigation-steps.js` and `js/form-07-init.js`: Updated franchisor step validation/bootstrap for progressive fields and simple-modal baseline handling.
+- `functions/_shared-schemas.js`, `functions/_form-submit-utils.js`, `functions/_form-submit-franchisor.js`, `functions/_profile-listing-patch.js`, `functions/_profile-schemas.js`, and `functions/_profile-read-model.js`: Added validation, normalization, D1 binding, claim/update/insert, profile read, and owner-edit support for the restored/progressive canonical listing fields.
+- `scripts/build-d1-franchise-pages.ts`, `src/lib/shared-schemas.ts`, `src/lib/franchise-detail-summary.ts`, `src/lib/franchise-detail-tabs.ts`, and `src/lib/franchise-detail-styles.ts`: Carried the progressive canonical fields into the static snapshot and rendered them conditionally in the public Profil/Investasi tabs.
+- `FORM_SCHEMA.md`, `FORM_PRESERVATION_MANDATE.md`, `docs/forms/FRANCHISOR_PROGRESSIVE_FORM_PLAN.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, and `.context/session-20260711-0010.md`: Updated documentation and trackers for the implemented progressive form contract, suggestion 83 completion, and a follow-up build-artifact workflow suggestion.
+- Remote D1 `franchise_db`: Applied migration `0028_franchisor_progressive_fields.sql` and verified the new franchise columns exist.
 
 ## 2026-07-10 17:49 (Asia/Jakarta)
 ### Added
