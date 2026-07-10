@@ -11,6 +11,7 @@
   var jobRendererFactory = window.FranchiseDashboardOcrJobs || {};
   var batchRendererFactory = window.FranchiseDashboardOcrBatches || {};
   var resultRendererFactory = window.FranchiseDashboardOcrResults || {};
+  var workerRendererFactory = window.FranchiseDashboardOcrWorker || {};
 
   function createOperations(options) {
     options = options || {};
@@ -38,6 +39,9 @@
       statusLabel: statusLabel,
       fieldLabel: fieldLabel,
       clampResultPage: clampResultPage
+    }) : null;
+    var workerRenderers = typeof workerRendererFactory.createRenderer === "function" ? workerRendererFactory.createRenderer({
+      utils: utils
     }) : null;
     var providerRenderers = typeof providerRendererFactory.createRenderer === "function" ? providerRendererFactory.createRenderer({
       utils: utils,
@@ -417,7 +421,7 @@
           if (payload.active_run_lease && !state.continuousRunActive) {
             notices.push("OCR beruntun aktif oleh " + (payload.active_run_lease.owner_label || "admin lain") + ".");
           }
-          options.jobStatus.innerHTML = renderWorkerUsage(payload.worker_usage) +
+          options.jobStatus.innerHTML = (workerRenderers ? workerRenderers.renderWorkerUsage(payload.worker_usage) : "") +
             '<div class="dash-ocr-job-filterbar">' + statusButtons.join("") + '</div>' +
             (notices.length ? '<small>' + utils.escapeHtml(notices.join(" · ")) + '</small>' : "");
         }
@@ -444,22 +448,6 @@
       syncBatchCountdowns();
     }
 
-    function renderWorkerUsage(usage) {
-      if (!usage) return "";
-      var cap = Number(usage.cap || 0);
-      var used = Number(usage.used || 0);
-      var remaining = Number(usage.remaining || 0);
-      var status = usage.status || (remaining <= 0 ? "exhausted" : "available");
-      var icon = status === "exhausted" ? "fa-pause-circle" : status === "near_limit" ? "fa-exclamation-triangle" : "fa-tachometer-alt";
-      var label = status === "exhausted" ? "Cap worker habis" : status === "near_limit" ? "Cap worker hampir habis" : "Cap worker tersedia";
-      var reset = usage.reset_at ? formatResetTime(usage.reset_at) : "reset UTC berikutnya";
-      var tooltip = "Worker cap membatasi jumlah OCR yang diproses otomatis per hari agar provider tidak kebablasan. Jika habis, batch dijeda dan bisa dilanjutkan setelah reset atau setelah OCR_WORKER_DAILY_CAP dinaikkan.";
-      return '<div class="dash-ocr-worker-usage is-' + utils.escapeAttr(status) + '" data-fr-tooltip="' + utils.escapeAttr(tooltip) + '">' +
-        '<span><i class="fas ' + icon + '" aria-hidden="true"></i><strong>' + utils.escapeHtml(label) + '</strong></span>' +
-        '<span>Terpakai ' + used.toLocaleString("id-ID") + '/' + cap.toLocaleString("id-ID") + ' · Sisa ' + remaining.toLocaleString("id-ID") + ' · Reset ' + utils.escapeHtml(reset) + '</span>' +
-        '</div>';
-    }
-
     function syncBatchPolling(payload) {
       window.clearTimeout(state.pollTimer);
       state.pollTimer = null;
@@ -480,19 +468,29 @@
     function syncBatchCountdowns() {
       window.clearInterval(state.countdownTimer);
       state.countdownTimer = null;
-      updateBatchCountdownLabels();
-      if (options.batchRows && options.batchRows.querySelector("[data-ocr-batch-countdown-until]")) {
+      updateLiveCountdownLabels();
+      if ((options.batchRows && options.batchRows.querySelector("[data-ocr-batch-countdown-until]")) ||
+        (options.jobStatus && options.jobStatus.querySelector("[data-ocr-worker-reset-at]"))) {
         state.countdownTimer = window.setInterval(updateBatchCountdownLabels, 1000);
       }
     }
 
     function updateBatchCountdownLabels() {
+      updateLiveCountdownLabels();
+    }
+
+    function updateLiveCountdownLabels() {
       if (!options.batchRows) return;
       var activeCount = batchRenderers.updateCountdownLabels(options.batchRows);
+      activeCount += updateWorkerUsageCountdown();
       if (!activeCount && state.countdownTimer) {
         window.clearInterval(state.countdownTimer);
         state.countdownTimer = null;
       }
+    }
+
+    function updateWorkerUsageCountdown() {
+      return workerRenderers && options.jobStatus ? workerRenderers.updateWorkerUsageCountdown(options.jobStatus) : 0;
     }
 
     async function handleForegroundRefresh() {
@@ -1187,12 +1185,6 @@
     return new Promise(function (resolve) {
       window.setTimeout(resolve, Math.max(0, Number(ms || 0)));
     });
-  }
-
-  function formatResetTime(value) {
-    var date = new Date(value);
-    if (!Number.isFinite(date.getTime())) return "UTC berikutnya";
-    return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
   }
 
   function buildProviderErrorText(provider) {

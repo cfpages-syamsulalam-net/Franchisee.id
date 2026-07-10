@@ -1,8 +1,9 @@
 import { proposalKnowledgeStatements, extractProposalCandidatesFromText } from "./_proposal-knowledge.js";
 import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, randomId } from "./_dashboard-utils.js";
-import { callOcrProvider, normalizeOcrText } from "./_ocr-provider-adapters.js";
+import { callOcrProvider } from "./_ocr-provider-adapters.js";
 import { maskBatchRow, refreshBatchProgress } from "./_ocr-batch-runs.js";
+import { claimPendingJobs, cleanOcrError as cleanError, releaseUnprocessedJobs, textOrNull } from "./_ocr-job-claiming.js";
 import { getActiveOcrRunLease, requireOcrRunLease } from "./_ocr-run-lease.js";
 
 const MAX_ENQUEUE_LIMIT = 200;
@@ -270,90 +271,6 @@ export async function handleRunOcrDryRun(db, auth, data, env, options = {}) {
   });
 }
 
-export async function handleRetryOcrJob(db, auth, data, env, options = {}) {
-  assertAdmin(auth);
-  const job = await db
-    .prepare("SELECT id, asset_id, franchise_id, status FROM ocr_jobs WHERE id = ? LIMIT 1")
-    .bind(data.job_id)
-    .first();
-  if (!job) return jsonResponse({ success: false, error: "OCR_JOB_NOT_FOUND", message: "Job OCR tidak ditemukan." }, { status: 404 });
-  if (!["failed", "needs_review", "no_text"].includes(job.status)) {
-    return jsonResponse({
-      success: false,
-      error: "OCR_JOB_NOT_RETRYABLE",
-      message: "Hanya job OCR berstatus gagal, perlu cek, atau tanpa teks yang bisa di-retry manual.",
-    }, { status: 409 });
-  }
-
-  await db.batch([
-    retryJobStatement(db, job.id, auth.id),
-    auditStatement(db, "dashboard.ocr_jobs.retry", "ocr_jobs", job.id, {
-      asset_id: job.asset_id,
-      franchise_id: job.franchise_id,
-      run_now: true,
-    }, auth.id),
-  ]);
-  const runResult = await runOcrJobs(db, env, auth, { ...options, maxJobs: 1, jobId: job.id });
-  return jsonResponse({ success: true, retried: 1, job_id: job.id, run_now: true, ...runResult });
-}
-
-export async function handleMarkOcrJobNoText(db, auth, data) {
-  assertAdmin(auth);
-  const job = await db
-    .prepare("SELECT id, asset_id, franchise_id, status FROM ocr_jobs WHERE id = ? LIMIT 1")
-    .bind(data.job_id)
-    .first();
-  if (!job) return jsonResponse({ success: false, error: "OCR_JOB_NOT_FOUND", message: "Job OCR tidak ditemukan." }, { status: 404 });
-  if (!["failed", "needs_review"].includes(job.status)) {
-    return jsonResponse({
-      success: false,
-      error: "OCR_JOB_NOT_REVIEWABLE",
-      message: "Hanya job OCR gagal atau perlu cek yang bisa ditandai sebagai gambar tanpa teks.",
-    }, { status: 409 });
-  }
-
-  const message = cleanError(data.notes || "Ditandai admin: halaman brosur tidak memiliki teks yang cukup untuk OCR.");
-  await db.batch([
-    markJobNoTextStatement(db, job.id, message, auth.id),
-    auditStatement(db, "dashboard.ocr_jobs.no_text", "ocr_jobs", job.id, {
-      asset_id: job.asset_id,
-      franchise_id: job.franchise_id,
-      previous_status: job.status,
-      notes: message,
-    }, auth.id),
-  ]);
-  return jsonResponse({ success: true, job_id: job.id, status: "no_text", message });
-}
-
-export async function handleRetryFailedOcrJobs(db, auth, data) {
-  assertAdmin(auth);
-  const limit = Math.min(Math.max(Number(data.limit || 100), 1), MAX_ENQUEUE_LIMIT);
-  const franchiseId = textOrNull(data.franchise_id);
-  const rows = await db
-    .prepare(
-      `SELECT id, asset_id, franchise_id
-       FROM ocr_jobs
-       WHERE status = 'failed'
-         AND (? IS NULL OR franchise_id = ?)
-       ORDER BY updated_at, created_at
-       LIMIT ?`,
-    )
-    .bind(franchiseId, franchiseId, limit)
-    .all();
-  const jobs = rows.results || [];
-  if (!jobs.length) return jsonResponse({ success: true, retried: 0 });
-
-  await db.batch([
-    ...jobs.map((job) => retryJobStatement(db, job.id, auth.id)),
-    auditStatement(db, "dashboard.ocr_jobs.retry_failed_batch", "ocr_jobs", null, {
-      retried: jobs.length,
-      franchise_id: franchiseId,
-      job_ids: jobs.slice(0, 20).map((job) => job.id),
-    }, auth.id),
-  ]);
-  return jsonResponse({ success: true, retried: jobs.length });
-}
-
 export async function handleSearchOcrResults(db, auth, data) {
   assertAdmin(auth);
   const limit = Math.min(Math.max(Number(data.limit || 40), 1), 100);
@@ -591,76 +508,6 @@ function rotateProviderState(providerState, offset) {
     ...providerState,
     providers: providers.slice(start).concat(providers.slice(0, start)),
   };
-}
-
-async function claimPendingJobs(db, maxJobs, jobId = "", batchId = "") {
-  const scopedJobId = textOrNull(jobId);
-  const scopedBatchId = textOrNull(batchId);
-  if (scopedJobId) {
-    const exact = await db
-      .prepare(
-        `SELECT j.id, j.asset_id, j.franchise_id, j.source_url, j.mime_type, j.attempt_count,
-                j.requested_by_user_id,
-                COALESCE(a.display_order, 0) display_order
-         FROM ocr_jobs j
-         LEFT JOIN franchise_assets a ON a.id = j.asset_id
-         WHERE j.status = 'pending'
-           AND j.id = ?
-           AND (? IS NULL OR j.batch_id = ?)
-         LIMIT 1`,
-      )
-      .bind(scopedJobId, scopedBatchId, scopedBatchId)
-      .all();
-    const jobs = exact.results || [];
-    if (!jobs.length) return [];
-    await markJobsRunning(db, jobs);
-    return jobs;
-  }
-
-  const target = await db
-    .prepare(
-      `SELECT j.franchise_id, MIN(j.created_at) first_created, MIN(j.priority) min_priority
-       FROM ocr_jobs j
-       WHERE j.status = 'pending'
-         AND (? IS NULL OR j.batch_id = ?)
-       GROUP BY j.franchise_id
-       ORDER BY first_created, min_priority, j.franchise_id
-       LIMIT 1`,
-    )
-    .bind(scopedBatchId, scopedBatchId)
-    .first();
-  if (!target?.franchise_id) return [];
-
-  const result = await db
-    .prepare(
-      `SELECT j.id, j.asset_id, j.franchise_id, j.source_url, j.mime_type, j.attempt_count,
-              j.requested_by_user_id,
-              COALESCE(a.display_order, 0) display_order
-       FROM ocr_jobs j
-       LEFT JOIN franchise_assets a ON a.id = j.asset_id
-       WHERE j.status = 'pending'
-         AND j.franchise_id = ?
-         AND (? IS NULL OR j.batch_id = ?)
-       ORDER BY COALESCE(a.display_order, 0), j.priority, j.created_at
-       LIMIT ?`,
-    )
-    .bind(target.franchise_id, scopedBatchId, scopedBatchId, maxJobs)
-    .all();
-  const jobs = result.results || [];
-  if (!jobs.length) return [];
-  await markJobsRunning(db, jobs);
-  return jobs;
-}
-
-async function markJobsRunning(db, jobs) {
-  await db.batch(jobs.map((job) => db
-    .prepare(
-      `UPDATE ocr_jobs
-       SET status = 'running', started_at = COALESCE(started_at, CURRENT_TIMESTAMP),
-           updated_at = CURRENT_TIMESTAMP, error_message = NULL
-       WHERE id = ? AND status = 'pending'`,
-    )
-    .bind(job.id)));
 }
 
 async function loadRunnableProviderState(db) {
@@ -1165,18 +1012,6 @@ async function pauseJob(db, job, message) {
     .run();
 }
 
-async function releaseUnprocessedJobs(db, jobs, reason) {
-  if (!jobs.length) return;
-  await db.batch(jobs.map((job) => db
-    .prepare(
-      `UPDATE ocr_jobs
-       SET status = 'pending', error_message = COALESCE(error_message, ?),
-           started_at = NULL, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND status = 'running'`,
-    )
-    .bind(cleanError(reason), job.id)));
-}
-
 async function markJobNeedsReview(db, auth, job, message) {
   const actorUserId = effectiveActorUserId(auth, job);
   await db.batch([
@@ -1198,29 +1033,6 @@ function markJobNeedsReviewStatement(db, jobId, message, userId) {
        WHERE id = ?`,
     )
     .bind(cleanError(message), userId, jobId);
-}
-
-function markJobNoTextStatement(db, jobId, message, userId) {
-  return db
-    .prepare(
-      `UPDATE ocr_jobs
-       SET status = 'no_text', error_message = ?, requested_by_user_id = ?,
-           provider_key = NULL, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
-    )
-    .bind(cleanError(message), userId, jobId);
-}
-
-function retryJobStatement(db, jobId, userId) {
-  return db
-    .prepare(
-      `UPDATE ocr_jobs
-       SET status = 'pending', provider_key = NULL, error_message = NULL,
-           started_at = NULL, completed_at = NULL, requested_by_user_id = ?,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND status IN ('failed', 'needs_review', 'no_text')`,
-    )
-    .bind(userId, jobId);
 }
 
 function onlyMissingCandidates(candidates, listing) {
@@ -1375,15 +1187,6 @@ function providerQuotaExhaustedMessage(provider, reason = "") {
 function nextRateCooldown(provider) {
   const windowSeconds = Math.max(Number(provider?.rate_limit_window_seconds || 60), 30);
   return new Date(Date.now() + (windowSeconds * 1000)).toISOString();
-}
-
-function cleanError(value) {
-  return normalizeOcrText(value).slice(0, 500);
-}
-
-function textOrNull(value) {
-  const normalized = (value ?? "").toString().trim();
-  return normalized || null;
 }
 
 function isSafeExternalUrl(value) {

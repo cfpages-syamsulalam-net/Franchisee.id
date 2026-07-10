@@ -7,16 +7,23 @@ Format:
 ## 2026-07-10 17:49 (Asia/Jakarta)
 ### Added
 - `.context/session-20260710-1749.md`: Added this session continuity snapshot for scheduler-backed OCR execution and multi-provider OCR waves.
+- `functions/_ocr-job-actions.js`: Added a focused admin OCR job-action module for row retry, failed-batch retry, and manual no-text resolution.
+- `functions/_ocr-job-claiming.js`: Added a focused OCR pending-job claiming/release helper shared by the runner and job actions.
+- `js/dashboard-ocr-worker.js`: Added a focused dashboard OCR worker-cap renderer and reset-countdown helper.
 
 ### Changed
+- `functions/_ocr-job-runner.js` and `functions/dashboard-data.js`: Split OCR retry/no-text dashboard actions and pending-job claiming/release helpers out of the runner so the runner stays focused on provider execution, cache writes, batch refreshes, and proposal knowledge persistence.
 - `functions/_ocr-job-runner.js`: Changed bounded OCR drains to run concurrent waves when multiple providers are active, rotating each job's first-choice provider while preserving existing fallback and pause-on-rate-limit behavior.
 - `functions/_ocr-job-runner.js`, `functions/dashboard-data.js`, `js/dashboard-ocr.js`, and `css/dashboard-ocr.css`: Added OCR worker cap/usage/remaining/reset visibility in the dashboard OCR execution panel and clarified provider-quota exhaustion copy to suggest activating another provider or waiting for quota reset.
 - `functions/ocr-worker.js`: Raised the default OCR worker daily cap from 25 to 100 counted units and changed worker-cap exhaustion to mark scoped batches `paused_quota` with an actionable message instead of letting them become overdue scheduler failures.
 - `js/dashboard-ocr.js`, `js/dashboard-ocr-state.js`, `js/dashboard-ocr-batches.js`, and `src/pages/dashboard/index.astro`: Changed `Jalankan OCR` to prefer a persisted server-side scheduler batch when a scheduler is active, kept browser continuous OCR only as a no-scheduler fallback with explicit warning copy, refreshed OCR state when a hidden/background tab becomes active again, and changed batch status chips/descriptions to show waiting/processing states without scary overdue copy.
 - `js/dashboard-ocr.js`: Changed new/retried scheduler batches to immediately process one scoped dashboard chunk and changed the top `Jalankan OCR` action to resume failed/paused unfinished scheduler batches before creating a new batch.
-- `scripts/check-dashboard-ocr-client.mjs`: Extended the dashboard OCR regression check for scheduler-backed run creation and foreground refresh wiring.
+- `js/dashboard-ocr-jobs.js`: Added the `Tanpa teks` confirmation action to `needs_review` OCR rows, so low/no-text brochure pages can be resolved after visual review instead of staying in `Perlu cek`.
+- `js/dashboard-ocr.js` and `css/dashboard-ocr.css`: Added a live reset countdown to the OCR worker cap chip, e.g. `Silakan tunggu 9 jam 36 menit 14 detik lagi`, based on the server-provided reset timestamp.
+- `js/dashboard-ocr.js` and `src/pages/dashboard/index.astro`: Refactored worker-cap usage rendering/countdown updates out of the OCR coordinator into `js/dashboard-ocr-worker.js` and loaded the worker module before the OCR facade.
+- `scripts/check-dashboard-ocr-client.mjs`: Extended the dashboard OCR regression check for scheduler-backed run creation, foreground refresh wiring, and the worker-cap renderer module.
 - `scripts/check-ocr-job-runner.ts`: Added schema coverage for scoped batch chunk runs.
-- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, and `docs/architecture/OCR_BATCH_SCHEDULING.md`: Documented scheduler-backed OCR as the reliable long-run path, browser fallback limits, foreground refresh, multi-provider bounded concurrency, dashboard first-chunk priming, the 100-unit worker cap, and a follow-up to surface worker cap/usage in the dashboard.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, and `docs/architecture/OCR_BATCH_SCHEDULING.md`: Documented scheduler-backed OCR as the reliable long-run path, browser fallback limits, foreground refresh, multi-provider bounded concurrency, dashboard first-chunk priming, the 100-unit worker cap, worker-cap dashboard visibility, worker-cap renderer refactor, and the completed OCR runner action/claiming split.
 
 ## 2026-07-10 13:03 (Asia/Jakarta)
 ### Added

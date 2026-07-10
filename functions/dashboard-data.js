@@ -33,7 +33,8 @@ import { jsonResponse } from "./_dashboard-utils.js";
 import { getOcrProviderConfigs, handleToggleOcrProviderEnabled, handleUpdateOcrProviderConfig } from "./_ocr-provider-config.js";
 import { getOcrSchedulerState, handleToggleOcrSchedulerEnabled, handleUpdateOcrSchedulerConfig } from "./_ocr-scheduler-config.js";
 import { handleRetryOcrBatchRun, handleStartOcrBatchRun } from "./_ocr-batch-runs.js";
-import { getOcrJobState, handleEnqueueOcrJobs, handleMarkOcrJobNoText, handleRetryFailedOcrJobs, handleRetryOcrJob, handleRunOcrDryRun, handleRunOcrJobs, handleSearchOcrJobs, handleSearchOcrResults } from "./_ocr-job-runner.js";
+import { handleMarkOcrJobNoText, handleRetryFailedOcrJobs, handleRetryOcrJob } from "./_ocr-job-actions.js";
+import { getOcrJobState, handleEnqueueOcrJobs, handleRunOcrDryRun, handleRunOcrJobs, handleSearchOcrJobs, handleSearchOcrResults } from "./_ocr-job-runner.js";
 import { handleAcquireOcrRunLease, handleHeartbeatOcrRunLease, handleReleaseOcrRunLease } from "./_ocr-run-lease.js";
 import { logOperationEvent } from "./_telemetry.js";
 

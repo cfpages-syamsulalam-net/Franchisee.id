@@ -7,6 +7,7 @@ const files = [
   "js/dashboard-ocr-jobs.js",
   "js/dashboard-ocr-batches.js",
   "js/dashboard-ocr-results.js",
+  "js/dashboard-ocr-worker.js",
   "js/dashboard-ocr.js",
 ];
 
@@ -26,6 +27,7 @@ const requiredFragments = [
   "FranchiseDashboardOcrJobs",
   "FranchiseDashboardOcrBatches",
   "FranchiseDashboardOcrResults",
+  "FranchiseDashboardOcrWorker",
   "data-ocr-toggle-provider",
   "toggle_ocr_provider_enabled",
   "data-ocr-retry-job",
@@ -36,6 +38,7 @@ const requiredFragments = [
   "activeProviderCount === 0",
   "Aktifkan provider OCR dulu",
   "data-ocr-mark-no-text",
+  "canMarkNoText",
   "Buka gambar halaman brosur",
   "Perlu cek",
   "renderJobStatus",
@@ -59,6 +62,8 @@ const requiredFragments = [
   "firstResumableSchedulerBatch",
   "dash-ocr-worker-usage",
   "worker_usage",
+  "workerResetCountdownLabel",
+  "data-ocr-worker-countdown",
 ];
 
 for (const fragment of requiredFragments) {

@@ -88,8 +88,9 @@
       var retryButton = canRetry
         ? deps.renderJobActionButton("data-ocr-retry-job", job.id, "fa-play", "OCR", activeProviderCount ? "Coba OCR ulang sekarang untuk job ini." : "Aktifkan provider OCR dulu sebelum menjalankan ulang job ini.", activeProviderCount === 0)
         : "";
-      var noTextButton = job.id && job.status === "failed"
-        ? deps.renderJobActionButton("data-ocr-mark-no-text", job.id, "fa-ban", "Tanpa teks", "Tandai halaman ini sebagai gambar tanpa teks cukup setelah admin membuka dan mengecek gambarnya.", false)
+      var canMarkNoText = job.id && (job.status === "failed" || job.status === "needs_review");
+      var noTextButton = canMarkNoText
+        ? deps.renderJobActionButton("data-ocr-mark-no-text", job.id, "fa-check-circle", "Tanpa teks", "Konfirmasi halaman ini memang tidak punya teks yang cukup. Status akan selesai sebagai Tanpa teks.", false)
         : "";
       return '<article class="dash-ocr-job-item is-' + utils.escapeAttr(job.status || "unknown") + '">' +
         '<div class="dash-ocr-job-main">' +
