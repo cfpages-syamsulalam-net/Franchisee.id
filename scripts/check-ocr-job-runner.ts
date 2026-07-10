@@ -18,8 +18,27 @@ async function main() {
   const run = DashboardActionSchema.safeParse({
     action: "run_ocr_jobs",
     max_jobs: 2,
+    lease_id: "ocrrun_1234567890abcdef",
   });
   assert.equal(run.success, true);
+
+  const acquireLease = DashboardActionSchema.safeParse({
+    action: "acquire_ocr_run_lease",
+    source: "dashboard_continuous",
+  });
+  assert.equal(acquireLease.success, true);
+
+  const heartbeatLease = DashboardActionSchema.safeParse({
+    action: "heartbeat_ocr_run_lease",
+    lease_id: "ocrrun_1234567890abcdef",
+  });
+  assert.equal(heartbeatLease.success, true);
+
+  const releaseLease = DashboardActionSchema.safeParse({
+    action: "release_ocr_run_lease",
+    lease_id: "ocrrun_1234567890abcdef",
+  });
+  assert.equal(releaseLease.success, true);
 
   const dryRun = DashboardActionSchema.safeParse({
     action: "run_ocr_dry_run",
@@ -32,6 +51,13 @@ async function main() {
     notes: "Admin sudah cek gambar: tidak ada teks cukup.",
   });
   assert.equal(markNoText.success, true);
+
+  const noTextSearch = DashboardActionSchema.safeParse({
+    action: "search_ocr_jobs",
+    status: "no_text",
+    limit: 120,
+  });
+  assert.equal(noTextSearch.success, true);
 
   const tooWideRun = DashboardActionSchema.safeParse({
     action: "run_ocr_jobs",

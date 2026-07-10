@@ -27,7 +27,10 @@
       jobPageSize: 120,
       pollTimer: null,
       countdownTimer: null,
-      polling: false
+      polling: false,
+      continuousRunActive: false,
+      continuousRunStopRequested: false,
+      continuousRunLeaseId: ""
     };
   }
 

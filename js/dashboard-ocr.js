@@ -404,11 +404,15 @@
             jobRenderers.renderJobFilterButton("running", "fa-spinner", "Running", counts.running || 0),
             jobRenderers.renderJobFilterButton("succeeded", "fa-check-circle", "Sukses", counts.succeeded || 0),
             jobRenderers.renderJobFilterButton("needs_review", "fa-eye", "Perlu cek", counts.needs_review || 0),
+            jobRenderers.renderJobFilterButton("no_text", "fa-ban", "Tanpa teks", counts.no_text || 0),
             jobRenderers.renderJobFilterButton("failed", "fa-times-circle", "Gagal", counts.failed || 0)
           ];
           var notices = [];
           if (state.activeProviderCount === 0) notices.push("Provider aktif: 0 — aktifkan provider OCR dulu.");
           if (state.activeSchedulerCount === 0) notices.push("Scheduler aktif: 0 — batch 100 perlu dijalankan manual per chunk.");
+          if (payload.active_run_lease && !state.continuousRunActive) {
+            notices.push("OCR beruntun aktif oleh " + (payload.active_run_lease.owner_label || "admin lain") + ".");
+          }
           options.jobStatus.innerHTML = '<div class="dash-ocr-job-filterbar">' + statusButtons.join("") + '</div>' +
             (notices.length ? '<small>' + utils.escapeHtml(notices.join(" · ")) + '</small>' : "");
         }
@@ -487,6 +491,7 @@
         succeeded: ["fa-check-circle", "success", "Sukses"],
         failed: ["fa-times-circle", "failed", "Gagal"],
         needs_review: ["fa-eye", "review", "Perlu cek"],
+        no_text: ["fa-ban", "success", "Tanpa teks"],
         queued: ["fa-clock", "pending", "Queued"],
         pending: ["fa-clock", "pending", "Pending"],
         running: ["fa-spinner fa-spin", "running", "Running"],
@@ -831,17 +836,76 @@
         options.setStatus("Hanya admin yang bisa menjalankan OCR.", true);
         return;
       }
-      await buttonAction(options.runButton, "Cek scheduler...", async function () {
-        var scheduler = firstActiveScheduler();
-        var result = await options.postDashboardAction({
-          action: "start_ocr_batch_run",
-          target_count: 100,
-          scheduler_provider_key: scheduler ? scheduler.provider_key : "upstash_qstash"
+      if (countActiveProviders(state.providers) <= 0) {
+        options.setStatus("Aktifkan minimal satu provider OCR dengan credential yang valid sebelum menjalankan OCR.", true);
+        return;
+      }
+      if (state.continuousRunActive) {
+        state.continuousRunStopRequested = true;
+        options.setStatus("OCR beruntun akan dihentikan setelah chunk yang sedang berjalan selesai.", false);
+        return;
+      }
+      state.continuousRunActive = true;
+      state.continuousRunStopRequested = false;
+      state.continuousRunLeaseId = "";
+      var totalProcessed = 0;
+      var totalEnqueued = 0;
+      var chunkIndex = 0;
+      try {
+        options.setStatus("Mengambil lease OCR beruntun...", false);
+        var acquired = await options.postDashboardAction({
+          action: "acquire_ocr_run_lease",
+          source: "dashboard_continuous"
         });
-        var schedulerMessage = result.scheduler && result.scheduler.message ? " " + result.scheduler.message : "";
-        options.setStatus("Preflight scheduler berhasil. Batch OCR dibuat: " + Number(result.assigned_count || 0).toLocaleString("id-ID") + " job masuk batch." + schedulerMessage, false);
+        state.continuousRunLeaseId = acquired.lease && acquired.lease.run_id ? acquired.lease.run_id : "";
+        if (!state.continuousRunLeaseId) throw new Error("Lease OCR tidak tersedia. Coba klik Jalankan OCR lagi.");
+        setRunButtonRunning(true);
+        while (!state.continuousRunStopRequested && chunkIndex < 80) {
+          chunkIndex += 1;
+          options.setStatus("OCR beruntun berjalan: chunk " + chunkIndex.toLocaleString("id-ID") + ", " + totalProcessed.toLocaleString("id-ID") + " job sudah diproses. Klik tombol ini lagi untuk stop setelah chunk aktif.", false);
+          var enqueued = await options.postDashboardAction({ action: "enqueue_ocr_jobs", limit: 100 });
+          totalEnqueued += Number(enqueued.enqueued || 0);
+          var result = await options.postDashboardAction({
+            action: "run_ocr_jobs",
+            max_jobs: 5,
+            lease_id: state.continuousRunLeaseId
+          });
+          var processed = Number(result.processed_count || 0);
+          totalProcessed += processed;
+          await refreshAfterJobMutation();
+          var pause = findPausedProcessedResult(result.processed || []);
+          if (pause) {
+            options.setStatus("OCR dijeda: " + (pause.message || pause.note || "provider sedang rate limit/kuota habis") + ". Coba lagi setelah cooldown atau aktifkan provider lain.", true);
+            break;
+          }
+          if (!processed && !Number(enqueued.enqueued || 0)) {
+            options.setStatus("OCR beruntun selesai: tidak ada job pending atau proposal gambar baru untuk diproses. Total diproses " + totalProcessed.toLocaleString("id-ID") + " job.", false);
+            break;
+          }
+          await delay(1200);
+        }
+        if (state.continuousRunStopRequested) {
+          options.setStatus("OCR beruntun dihentikan. Total diproses " + totalProcessed.toLocaleString("id-ID") + " job, antrean baru " + totalEnqueued.toLocaleString("id-ID") + ".", false);
+        } else if (chunkIndex >= 80) {
+          options.setStatus("OCR beruntun berhenti di batas aman 80 chunk. Klik Jalankan OCR lagi kalau masih ada pending.", false);
+        }
+      } catch (error) {
+        options.setStatus(error.message || "OCR beruntun gagal.", true);
+      } finally {
+        var leaseId = state.continuousRunLeaseId;
+        state.continuousRunActive = false;
+        state.continuousRunStopRequested = false;
+        state.continuousRunLeaseId = "";
+        setRunButtonRunning(false);
+        if (leaseId) {
+          try {
+            await options.postDashboardAction({ action: "release_ocr_run_lease", lease_id: leaseId });
+          } catch (_error) {
+            // Lease expiry is safe; dashboard refresh below will show current server state.
+          }
+        }
         await refreshAfterJobMutation();
-      }, options.setStatus);
+      }
     }
 
     async function retryJob(jobId, button) {
@@ -851,7 +915,7 @@
       }
       await buttonAction(button, "OCR...", async function () {
         var result = await options.postDashboardAction({ action: "retry_ocr_job", job_id: jobId });
-        options.setStatus("OCR ulang selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " job diproses. Jika tetap tanpa teks, status akan menjadi Perlu cek.", false);
+        options.setStatus("OCR ulang selesai: " + Number(result.processed_count || 0).toLocaleString("id-ID") + " job diproses. Jika provider tetap tidak menemukan cukup teks, status akan menjadi Perlu cek untuk admin review.", false);
         await refreshAfterJobMutation();
       }, options.setStatus);
     }
@@ -867,7 +931,7 @@
           job_id: jobId,
           notes: "Admin sudah cek gambar: halaman brosur tidak memiliki teks yang cukup untuk OCR."
         });
-        options.setStatus("Job OCR ditandai Perlu cek: gambar tidak memiliki teks yang cukup, bukan error provider.", false);
+        options.setStatus("Job OCR ditandai Tanpa teks: halaman sudah dicek admin dan low/no text dianggap selesai.", false);
         await refreshAfterJobMutation();
       }, options.setStatus);
     }
@@ -879,7 +943,7 @@
       }
       await buttonAction(options.retryFailedButton, "Antre ulang...", async function () {
         var result = await options.postDashboardAction({ action: "retry_failed_ocr_jobs", limit: 100 });
-        options.setStatus("Job OCR gagal dikembalikan ke antrean: " + Number(result.retried || 0).toLocaleString("id-ID") + " job. Klik Jalankan batch untuk memprosesnya.", false);
+        options.setStatus("Job OCR gagal dikembalikan ke antrean: " + Number(result.retried || 0).toLocaleString("id-ID") + " job. Klik Jalankan OCR untuk memprosesnya.", false);
         await refreshAfterJobMutation();
       }, options.setStatus);
     }
@@ -959,6 +1023,14 @@
       if (options.retryFailedButton) options.retryFailedButton.disabled = Boolean(disabled);
     }
 
+    function setRunButtonRunning(running) {
+      if (!options.runButton) return;
+      options.runButton.classList.toggle("is-running", Boolean(running));
+      options.runButton.innerHTML = running
+        ? '<i class="fas fa-stop" aria-hidden="true"></i><span>Stop setelah chunk</span>'
+        : '<i class="fas fa-play" aria-hidden="true"></i><span>Jalankan OCR</span>';
+    }
+
     function setInlineStatus(message) {
       if (options.status) options.status.textContent = message || "";
     }
@@ -993,8 +1065,21 @@
       running: "Running",
       succeeded: "Sukses",
       needs_review: "Perlu cek",
+      no_text: "Tanpa teks",
       all: "Semua job"
     }[value] || value || "Status tidak diketahui";
+  }
+
+  function findPausedProcessedResult(items) {
+    return (items || []).find(function (item) {
+      return item && (item.status === "paused" || item.note === "OCR_PAUSED_RATE_LIMIT" || item.note === "OCR_PAUSED_QUOTA");
+    }) || null;
+  }
+
+  function delay(ms) {
+    return new Promise(function (resolve) {
+      window.setTimeout(resolve, Math.max(0, Number(ms || 0)));
+    });
   }
 
   function buildProviderErrorText(provider) {

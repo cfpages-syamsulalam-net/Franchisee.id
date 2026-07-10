@@ -48,6 +48,10 @@ const requiredFragments = [
   "data-ocr-job-page",
   "groupJobsByFranchise",
   "jobPageSize: 120",
+  "acquire_ocr_run_lease",
+  "release_ocr_run_lease",
+  "continuousRunLeaseId",
+  "lease_id",
 ];
 
 for (const fragment of requiredFragments) {

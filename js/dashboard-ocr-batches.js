@@ -15,6 +15,7 @@
           Number(batch.processed_count || 0).toLocaleString("id-ID") + "/" + Number(batch.assigned_count || 0).toLocaleString("id-ID") + " diproses",
           "Sukses " + Number(batch.succeeded_count || 0).toLocaleString("id-ID"),
           "Perlu cek " + Number(batch.needs_review_count || 0).toLocaleString("id-ID"),
+          "Tanpa teks " + Number(batch.skipped_count || 0).toLocaleString("id-ID"),
           "Gagal " + Number(batch.failed_count || 0).toLocaleString("id-ID"),
           batch.scheduler_provider_key ? "Scheduler " + batch.scheduler_provider_key : "Manual"
         ];

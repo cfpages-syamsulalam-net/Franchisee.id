@@ -62,6 +62,7 @@
     Auth.getAuthHeaders = getAuthHeaders;
     Auth.syncUser = syncUser;
     Auth.ensureSignedIn = ensureSignedIn;
+    Auth.activateSession = activateSession;
     Auth.debugEvents = Debug.initEvents(Auth.debugEvents || []);
     Auth.getDebugSnapshot = Debug.getDebugSnapshot;
     Auth.recordDebug = recordDebug;
@@ -130,6 +131,24 @@
         throw new Error("Silakan login terlebih dahulu sebelum menyimpan data.");
       }
       return clerk;
+    }
+
+    async function activateSession(clerk, sessionId) {
+      if (!clerk || typeof clerk.setActive !== "function" || !sessionId) {
+        throw new Error("Session login belum bisa diaktifkan. Silakan coba login ulang.");
+      }
+      await clerk.setActive({ session: sessionId });
+      await refreshClerkResources(clerk);
+      if (!clerk.session && clerk.client?.activeSession) {
+        await clerk.setActive({ session: clerk.client.activeSession.id });
+        await refreshClerkResources(clerk);
+      }
+      if (!clerk.session) {
+        recordDebug("session:activate_missing_after_set_active", summarizeClerk(clerk));
+        throw new Error("Login berhasil di Clerk, tetapi session belum aktif di browser. Coba muat ulang lalu login lagi.");
+      }
+      recordDebug("session:activated", summarizeClerk(clerk));
+      return clerk.session;
     }
 
     async function syncUser(role) {
@@ -247,6 +266,7 @@
       Debug,
       initClerk,
       syncUser,
+      activateSession,
       setPendingRole,
       getPendingRole,
       clearPendingRole,
@@ -325,7 +345,7 @@
       });
       recordDebug("oauth_callback:handled", summarizeClerk(clerk));
       if (!clerk.session && createdSessionId && typeof clerk.setActive === "function") {
-        await clerk.setActive({ session: createdSessionId });
+        await activateSession(clerk, createdSessionId);
         recordDebug("oauth_callback:set_active_from_param", summarizeClerk(clerk));
       }
       await refreshClerkResources(clerk);

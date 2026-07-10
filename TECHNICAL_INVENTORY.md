@@ -129,10 +129,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `window.FranchiseAuthCore.create(options)`: Builds the core auth controller used by `js/auth-clerk.js`.
 - `Auth.init()`: Fetches `/auth-config`, normalizes the publishable key with a public client fallback when config is stale/empty, sets `window.__clerk_publishable_key` plus Clerk script data attributes before browser-bundle evaluation, loads locally copied `/clerk/clerk.browser.js` with CDN fallbacks, initializes Clerk, and finalizes any Clerk OAuth redirect callback before token checks run.
 - `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
+- `Auth.activateSession(clerk, sessionId)`: Shared created-session activation helper for email/password, reset-password, registration, and OAuth fallback flows; calls `clerk.setActive()`, refreshes Clerk resources, records masked debug state, and fails before redirect if the browser still has no active Clerk session.
 - `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign explicit or pending self-selectable `franchisee`/`franchisor` roles.
 - `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
-- `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to `clerk.setActive()` with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
+- `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to shared created-session activation with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
 
 ### File: `js/auth-clerk.js`
 *Custom ClerkJS auth page facade using existing site CSS.*
@@ -948,7 +949,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_dashboard-ocr-schemas.js`
 *OCR dashboard action validation module.*
 - `OcrProviderKeySchema`: Shared fixed provider ID enum used by provider config/toggle schemas.
-- `DASHBOARD_OCR_ACTION_SCHEMAS`: Zod object schema list for OCR provider config/toggle, dry-run, enqueue, bounded batch run, direct retry, batch failed retry, manual no-text resolution, OCR result search, and OCR job status search/pagination payloads; OCR job search defaults to 120 rows and caps at 120 per page.
+- `DASHBOARD_OCR_ACTION_SCHEMAS`: Zod object schema list for OCR provider config/toggle, dry-run, enqueue, bounded batch run with optional lease id, continuous-run lease acquire/heartbeat/release, direct retry, batch failed retry, manual no-text resolution, OCR result search, and OCR job status search/pagination payloads; OCR job search defaults to 120 rows and caps at 120 per page.
 
 ### File: `functions/_ocr-provider-config.js`
 *Admin-only OCR provider configuration and credential boundary.*
@@ -972,6 +973,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `refreshBatchProgress(db, batchId, options)`: Recomputes assigned/processed/succeeded/failed/needs-review counts from `ocr_jobs`, updates `ocr_batch_runs`, supports `paused_rate_limit`/`paused_quota` while work remains pending, and returns the masked batch row. Batch start/retry provider gating treats `cooldown` providers as runnable again once `cooldown_until` has passed.
 - `maskBatchRow(row)`: Produces the dashboard-safe batch progress contract, including non-secret scheduler provider, external message id, trigger status, trigger delay, trigger due timestamp, and last-trigger timestamp.
 
+### File: `functions/_ocr-run-lease.js`
+*Short-lived dashboard continuous-OCR lease module.*
+- `getActiveOcrRunLease(db)`: Deletes expired OCR run leases and returns a masked active lease for dashboard display.
+- `handleAcquireOcrRunLease(db, auth, data)`: Admin-only action that acquires the single `dashboard_continuous` OCR lease for 90 seconds, returning a conflict with active owner context when another tab/admin is already running.
+- `handleHeartbeatOcrRunLease(db, auth, data)` / `requireOcrRunLease(db, auth, leaseId)`: Extends the active lease only when the same admin owns the lease; used by multi-job `run_ocr_jobs` chunks to prevent overlapping continuous dashboard runs.
+- `handleReleaseOcrRunLease(db, auth, data)`: Admin-only cleanup action used when the dashboard continuous run completes, stops, or errors.
+
 ### File: `functions/_ocr-provider-adapters.js`
 *External OCR provider adapter boundary.*
 - `callOcrProvider(provider, image, env, options)`: Decrypts the selected provider credential values with `OCR_KEY` and dispatches to the provider-specific adapter for OCR.Space, Azure Vision, Cloudflare Workers AI, Google Vision, Groq Vision, AWS Textract, Veryfi, Mindee, PDF.co, or API4AI.
@@ -980,14 +988,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_ocr-job-runner.js`
 *OCR queue/cache/failover orchestrator shared by dashboard actions and the protected worker.*
-- `getOcrJobState(db, auth)`: Returns admin-only OCR queue counts, up to 120 recent jobs, expanded OCR result previews with listing/review metadata, recent persisted batch runs including structured scheduler timing fields, enqueue-candidate count, and a `migration_required` fallback when OCR job/batch migrations are not applied.
+- `getOcrJobState(db, auth)`: Returns admin-only OCR queue counts, up to 120 recent jobs, expanded OCR result previews with listing/review metadata, recent persisted batch runs including structured scheduler timing fields, active continuous-run lease state, enqueue-candidate count, and a `migration_required` fallback when OCR job/batch/lease migrations are not applied.
 - `handleSearchOcrJobs(db, auth, data)`: Admin-only server-side OCR job search for status chips. It paginates `ocr_jobs` by status/franchise and maps `unqueued` to active proposal image assets that have not yet entered `ocr_jobs`, so dashboard status counts are inspectable beyond the default 120-row page.
 - `handleSearchOcrResults(db, auth, data)`: Admin-only server-side history search for `franchise_asset_knowledge`, filtering by status and query text across brand/slug/source text with bounded limit/offset pagination for dashboard "Muat lagi".
 - `handleEnqueueOcrJobs(db, auth, data)`: Admin-only action that queues active image proposal assets into `ocr_jobs`; it does not call external OCR providers.
 - `handleRunOcrDryRun(db, auth, data, env, options)`: Admin-only action that requires `OCR_KEY` and one enabled provider, prepares at most one candidate proposal-image job, and processes only that job before broad backfills.
-- `handleRunOcrJobs(db, auth, data, env, options)`: Admin-only action that runs a bounded batch and requires `OCR_KEY` before any provider call can happen.
+- `handleRunOcrJobs(db, auth, data, env, options)`: Admin-only action that runs a bounded batch and requires `OCR_KEY` before any provider call can happen; multi-job dashboard chunks without `batch_id` must present a valid continuous-run lease.
 - `handleRetryOcrJob(db, auth, data, env, options)` / `handleRetryFailedOcrJobs(db, auth, data)`: Admin-only retry actions. Single-job retry moves one failed or needs-review job back to `pending` and immediately runs OCR for that job; batch retry moves up to 100 failed jobs back to `pending` without deleting attempt history.
-- `handleMarkOcrJobNoText(db, auth, data)`: Admin-only manual resolution for failed/needs-review OCR jobs after checking the source brochure image; marks the job `needs_review` with an actionable no-text note and writes an audit event.
+- `handleMarkOcrJobNoText(db, auth, data)`: Admin-only manual resolution for failed/needs-review OCR jobs after checking the source brochure image; marks the job `no_text` as a final resolved low/no-text state and writes an audit event.
 - `runOcrJobs(db, env, auth, options)`: Claims pending jobs, optionally scoped by `batch_id`, carries the original `requested_by_user_id` into worker-processed writes so scheduled OCR never writes synthetic user IDs into FK-backed tables, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` when available, checks local quota/trial state, tries enabled providers in priority order, logs attempts and usage, writes successful OCR text through `proposalKnowledgeStatements()`, treats provider text-too-short responses as job review state instead of provider-health failure, pauses provider rate-limit/quota runs by moving the current job back to `pending` and releasing already-claimed unprocessed jobs, and refreshes batch progress after each scoped drain.
 - `claimPendingJobs(db, maxJobs, jobId)`: Selects one pending franchise group first, then claims proposal pages from that franchise by asset display order so manual/worker batches build fuller per-franchise brochure context instead of sampling the first page from many franchises.
 - `prepareRateLimit(db, provider)`: Checks provider `cooldown_until` and local request-window metadata before each external call; if the window is exhausted, the runner records a skipped attempt and updates provider cooldown instead of sending another request.

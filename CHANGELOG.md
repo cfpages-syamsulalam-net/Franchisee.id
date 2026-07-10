@@ -4,6 +4,32 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-10 13:03 (Asia/Jakarta)
+### Added
+- `migrations/0027_ocr_run_leases.sql`: Added `ocr_run_leases` for short-lived dashboard continuous-OCR run ownership.
+- `functions/_ocr-run-lease.js`: Added admin-only acquire, heartbeat, release, active-state masking, and validation helpers for continuous OCR leases.
+- `.context/session-20260710-1303.md`: Added this session continuity snapshot for suggestion 80.
+
+### Changed
+- `functions/_dashboard-ocr-schemas.js`, `functions/dashboard-data.js`, and `functions/_ocr-job-runner.js`: Added dashboard actions for OCR run lease acquire/heartbeat/release, returned the active lease in OCR dashboard state, and required a valid lease for multi-job dashboard `run_ocr_jobs` chunks without a batch id.
+- `js/dashboard-ocr.js` and `js/dashboard-ocr-state.js`: Changed continuous dashboard OCR runs to acquire a server lease before processing, pass `lease_id` to each chunk, release the lease on stop/completion/error, and show active lease ownership in the OCR job notice.
+- `scripts/check-dashboard-ocr-client.mjs` and `scripts/check-ocr-job-runner.ts`: Extended OCR regression checks for lease actions and continuous-run lease wiring.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the OCR run lease and marked suggestion 80 done.
+- Remote D1 `franchise_db`: Applied migration `0027_ocr_run_leases.sql` and verified `ocr_run_leases` exists with zero active leases.
+
+## 2026-07-10 12:47 (Asia/Jakarta)
+### Added
+- `migrations/0026_ocr_no_text_status.sql`: Added the final `no_text` OCR job status and migrated previously admin-confirmed no/low-text `needs_review` rows into the new resolved state.
+- `.context/session-20260710-1247.md`: Added this session continuity snapshot for OCR no-text resolution, continuous dashboard OCR runs, overdue batch refresh handling, and Clerk session activation hardening.
+
+### Changed
+- `functions/_dashboard-ocr-schemas.js`, `functions/_ocr-job-runner.js`, and `functions/_ocr-batch-runs.js`: Added `no_text` as a first-class OCR status, made manual no-text review resolve jobs instead of leaving them in `needs_review`, counted no-text rows as processed/skipped in batch progress, refreshed active batch rows server-side on dashboard reads, and marked scheduler-overdue queued/running batches as failed with an actionable retry/run message.
+- `js/dashboard-ocr.js`, `js/dashboard-ocr-state.js`, `js/dashboard-ocr-jobs.js`, `js/dashboard-ocr-batches.js`, `css/dashboard-ocr.css`, and `src/pages/dashboard/index.astro`: Changed the main OCR run button from scheduler batch creation to a continuous dashboard-run loop that enqueues missing jobs, processes small chunks in franchise-first order, supports stop-after-current-chunk, renders `Tanpa teks` as a resolved status, and updates OCR copy/tooltips away from the old "Jalankan batch" instruction.
+- `js/auth-clerk-core.js` and `js/auth-clerk.js`: Hardened Clerk login/session activation by routing email/password, password-reset, registration, and OAuth-created sessions through a shared activation helper that refreshes Clerk resources and errors clearly if the browser still has no active session before redirecting.
+- `scripts/check-ocr-job-runner.ts`: Added coverage for the new `no_text` dashboard OCR status schema.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the simplified OCR execution UX, resolved no-text job state, scheduler-overdue refresh behavior, updated auth/session responsibility, and recorded a follow-up recommendation for a server-side continuous-OCR run lease.
+- Remote D1 `franchise_db`: Applied migration `0026_ocr_no_text_status.sql` and verified OCR job counts include the new `no_text` status.
+
 ## 2026-07-10 01:18 (Asia/Jakarta)
 ### Added
 - `functions/_dashboard-ocr-schemas.js` and `functions/dashboard-data.js`: Added the admin `search_ocr_jobs` dashboard action for paginated OCR job status filtering.

@@ -420,6 +420,9 @@
   font-size: 12px;
   line-height: 1.4;
 }
+.dash-ocr-job-error.is-resolved {
+  color: var(--dash-ok);
+}
 .dash-ocr-job-error span {
   display: inline;
   margin: 0;

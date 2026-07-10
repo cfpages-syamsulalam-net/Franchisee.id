@@ -141,6 +141,8 @@ export async function handleRetryOcrBatchRun(db, auth, data, env, options = {}) 
 export async function refreshBatchProgress(db, batchId, options = {}) {
   const id = textOrNull(batchId);
   if (!id) return null;
+  const current = await db.prepare("SELECT * FROM ocr_batch_runs WHERE id = ? LIMIT 1").bind(id).first();
+  if (!current) return null;
   const counts = await db
     .prepare(
       `SELECT status, COUNT(*) count
@@ -151,14 +153,20 @@ export async function refreshBatchProgress(db, batchId, options = {}) {
     .bind(id)
     .all();
   const byStatus = Object.fromEntries((counts.results || []).map((row) => [row.status, Number(row.count || 0)]));
-  const processed = Number(byStatus.succeeded || 0) + Number(byStatus.failed || 0) + Number(byStatus.needs_review || 0) + Number(byStatus.cancelled || 0);
+  const noText = Number(byStatus.no_text || 0);
+  const processed = Number(byStatus.succeeded || 0) + Number(byStatus.failed || 0) + Number(byStatus.needs_review || 0) + noText + Number(byStatus.cancelled || 0);
   const assigned = processed + Number(byStatus.pending || 0) + Number(byStatus.running || 0);
   const completed = assigned > 0 && processed >= assigned;
-  const failed = assigned > 0 && !Number(byStatus.pending || 0) && !Number(byStatus.running || 0) && Number(byStatus.succeeded || 0) === 0 && (Number(byStatus.failed || 0) > 0);
+  const failed = assigned > 0 && !Number(byStatus.pending || 0) && !Number(byStatus.running || 0) && Number(byStatus.succeeded || 0) === 0 && noText === 0 && (Number(byStatus.failed || 0) > 0);
   const requestedStatus = textOrNull(options.status);
   const canPause = requestedStatus && PAUSED_BATCH_STATUSES.has(requestedStatus) && !completed;
-  const nextStatus = canPause ? requestedStatus : completed ? (failed ? "failed" : "completed") : "running";
-  const message = options.message || (completed ? "Batch OCR selesai." : "Batch OCR masih berjalan.");
+  const overdue = isSchedulerOverdue(current) && ["queued", "running"].includes(current.status || "") && !completed && !Number(byStatus.running || 0);
+  const nextStatus = canPause ? requestedStatus : completed ? (failed ? "failed" : "completed") : overdue ? "failed" : "running";
+  const message = options.message || (completed
+    ? "Batch OCR selesai."
+    : overdue
+      ? "Scheduler tidak mengirim update setelah jadwal lewat. Klik Retry untuk menjadwalkan ulang, atau pakai Jalankan OCR beruntun dari dashboard."
+      : "Batch OCR masih berjalan.");
   await db
     .prepare(
       `UPDATE ocr_batch_runs
@@ -176,8 +184,8 @@ export async function refreshBatchProgress(db, batchId, options = {}) {
       Number(byStatus.succeeded || 0),
       Number(byStatus.failed || 0),
       Number(byStatus.needs_review || 0),
-      Number(byStatus.cancelled || 0),
-      completed ? 1 : 0,
+      noText + Number(byStatus.cancelled || 0),
+      (completed || overdue) ? 1 : 0,
       message,
       id,
     )
@@ -211,6 +219,23 @@ export function maskBatchRow(row) {
     created_at: row.created_at || null,
     updated_at: row.updated_at || null,
   };
+}
+
+function isSchedulerOverdue(batch) {
+  const dueAt = parseTimestampMs(batch?.scheduler_trigger_due_at);
+  if (!dueAt) return false;
+  return dueAt + 60_000 < Date.now();
+}
+
+function parseTimestampMs(value) {
+  if (!value) return 0;
+  let text = String(value).trim();
+  if (!text) return 0;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(text)) {
+    text = text.replace(" ", "T") + "Z";
+  }
+  const parsed = Date.parse(text);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 async function updateBatchAfterTrigger(db, batchId, trigger, fallbackStatus) {

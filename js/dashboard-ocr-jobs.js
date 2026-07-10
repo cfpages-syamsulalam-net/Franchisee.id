@@ -78,7 +78,7 @@
 
     function renderJobItem(job) {
       var page = job.page_number ? "Hal. " + Number(job.page_number).toLocaleString("id-ID") : "Hal. proposal";
-      var provider = job.provider_key || (job.status === "unqueued" ? "belum antre" : "belum ada provider");
+      var provider = job.provider_key || (job.status === "unqueued" ? "belum antre" : job.status === "no_text" ? "sudah dicek admin" : "belum ada provider");
       var imageLink = job.source_url ? deps.renderJobActionLink(job.source_url, "fa-image", "Gambar", "Buka gambar halaman brosur yang dikirim ke OCR.", true) : "";
       var resultLink = job.status === "succeeded"
         ? deps.renderJobResultAction(job.asset_id)
@@ -98,7 +98,7 @@
         '<span><i class="fas fa-plug" aria-hidden="true"></i>' + utils.escapeHtml(provider) + '</span>' +
         '<span><i class="fas fa-redo-alt" aria-hidden="true"></i>' + Number(job.attempt_count || 0).toLocaleString("id-ID") + 'x</span>' +
         '</div>' +
-        (job.error_message ? '<div class="dash-ocr-job-error"><i class="fas fa-times-circle" aria-hidden="true"></i><span>' + utils.escapeHtml(job.error_message) + '</span></div>' : '') +
+        (job.error_message ? '<div class="dash-ocr-job-error' + (job.status === "no_text" ? ' is-resolved' : '') + '"><i class="fas ' + (job.status === "no_text" ? 'fa-info-circle' : 'fa-times-circle') + '" aria-hidden="true"></i><span>' + utils.escapeHtml(job.error_message) + '</span></div>' : '') +
         '</div>' +
         '<div class="dash-ocr-job-actions">' + imageLink + resultLink + retryButton + noTextButton + '</div>' +
         '</article>';

@@ -57,11 +57,27 @@ export const RunOcrJobsSchema = z.object({
   action: z.literal("run_ocr_jobs"),
   max_jobs: z.coerce.number().int().min(1).max(5).optional().default(1),
   batch_id: z.string().trim().max(160).optional().default(""),
+  lease_id: z.string().trim().max(160).optional().default(""),
 });
 
 export const RunOcrDryRunSchema = z.object({
   action: z.literal("run_ocr_dry_run"),
   franchise_id: z.string().trim().max(120).optional().default(""),
+});
+
+export const AcquireOcrRunLeaseSchema = z.object({
+  action: z.literal("acquire_ocr_run_lease"),
+  source: z.string().trim().max(80).optional().default("dashboard"),
+});
+
+export const HeartbeatOcrRunLeaseSchema = z.object({
+  action: z.literal("heartbeat_ocr_run_lease"),
+  lease_id: z.string().trim().min(1).max(160),
+});
+
+export const ReleaseOcrRunLeaseSchema = z.object({
+  action: z.literal("release_ocr_run_lease"),
+  lease_id: z.string().trim().max(160).optional().default(""),
 });
 
 export const RetryOcrJobSchema = z.object({
@@ -124,7 +140,7 @@ export const SearchOcrResultsSchema = z.object({
 
 export const SearchOcrJobsSchema = z.object({
   action: z.literal("search_ocr_jobs"),
-  status: z.enum(["all", "unqueued", "pending", "running", "succeeded", "needs_review", "failed"]).optional().default("all"),
+  status: z.enum(["all", "unqueued", "pending", "running", "succeeded", "needs_review", "no_text", "failed"]).optional().default("all"),
   franchise_id: z.string().trim().max(120).optional().default(""),
   limit: z.coerce.number().int().min(1).max(120).optional().default(120),
   offset: z.coerce.number().int().min(0).max(5000).optional().default(0),
@@ -136,6 +152,9 @@ export const DASHBOARD_OCR_ACTION_SCHEMAS = [
   EnqueueOcrJobsSchema,
   RunOcrJobsSchema,
   RunOcrDryRunSchema,
+  AcquireOcrRunLeaseSchema,
+  HeartbeatOcrRunLeaseSchema,
+  ReleaseOcrRunLeaseSchema,
   RetryOcrJobSchema,
   MarkOcrJobNoTextSchema,
   RetryFailedOcrJobsSchema,

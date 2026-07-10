@@ -793,7 +793,7 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <div>
                       <h2>
                         Job OCR Proposal
-                        <span class="dash-help-dot" data-fr-tooltip="Job OCR adalah tugas membaca teks dari gambar brosur. Antrekan hanya membuat daftar tugas. Dry run dan Jalankan batch baru mengirim gambar ke provider.">?</span>
+                        <span class="dash-help-dot" data-fr-tooltip="Job OCR adalah tugas membaca teks dari gambar brosur. Antrekan hanya membuat daftar tugas. Dry run dan Jalankan OCR baru mengirim gambar ke provider.">?</span>
                       </h2>
                       <p>Dry run adalah OCR sungguhan untuk 1 aset sebagai tes aman. Batch manual memproses franchise yang sama terlebih dahulu agar konteks brosur lebih utuh.</p>
                     </div>
@@ -813,11 +813,11 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <i class="fas fa-list-ul" aria-hidden="true"></i>
                     <span>Antrekan 100</span>
                   </button>
-                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Membuat batch sampai 100 job lalu memicu scheduler pihak ketiga. Worker tetap memproses chunk kecil per panggilan agar aman terhadap rate limit dan timeout.">
-                    <i class="fas fa-clock" aria-hidden="true"></i>
-                    <span>Jalankan 100</span>
+                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Menjalankan OCR beruntun dari dashboard dalam chunk kecil. Sistem tetap menghormati rate limit provider; klik lagi untuk stop setelah chunk aktif selesai.">
+                    <i class="fas fa-play" aria-hidden="true"></i>
+                    <span>Jalankan OCR</span>
                   </button>
-                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-retry-failed data-fr-tooltip="Mengembalikan maksimal 100 job gagal ke antrean pending. Setelah itu klik Jalankan batch untuk memprosesnya.">
+                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-retry-failed data-fr-tooltip="Mengembalikan maksimal 100 job gagal ke antrean pending. Setelah itu klik Jalankan OCR untuk memprosesnya.">
                     <i class="fas fa-redo-alt" aria-hidden="true"></i>
                     <span>Antre ulang gagal</span>
                   </button>

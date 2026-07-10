@@ -34,6 +34,7 @@ import { getOcrProviderConfigs, handleToggleOcrProviderEnabled, handleUpdateOcrP
 import { getOcrSchedulerState, handleToggleOcrSchedulerEnabled, handleUpdateOcrSchedulerConfig } from "./_ocr-scheduler-config.js";
 import { handleRetryOcrBatchRun, handleStartOcrBatchRun } from "./_ocr-batch-runs.js";
 import { getOcrJobState, handleEnqueueOcrJobs, handleMarkOcrJobNoText, handleRetryFailedOcrJobs, handleRetryOcrJob, handleRunOcrDryRun, handleRunOcrJobs, handleSearchOcrJobs, handleSearchOcrResults } from "./_ocr-job-runner.js";
+import { handleAcquireOcrRunLease, handleHeartbeatOcrRunLease, handleReleaseOcrRunLease } from "./_ocr-run-lease.js";
 import { logOperationEvent } from "./_telemetry.js";
 
 export async function onRequestGet({ request, env }) {
@@ -134,6 +135,9 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "toggle_ocr_provider_enabled") return handleToggleOcrProviderEnabled(env.franchise_db, auth, data, env);
     if (data.action === "enqueue_ocr_jobs") return handleEnqueueOcrJobs(env.franchise_db, auth, data);
     if (data.action === "run_ocr_dry_run") return handleRunOcrDryRun(env.franchise_db, auth, data, env);
+    if (data.action === "acquire_ocr_run_lease") return handleAcquireOcrRunLease(env.franchise_db, auth, data);
+    if (data.action === "heartbeat_ocr_run_lease") return handleHeartbeatOcrRunLease(env.franchise_db, auth, data);
+    if (data.action === "release_ocr_run_lease") return handleReleaseOcrRunLease(env.franchise_db, auth, data);
     if (data.action === "run_ocr_jobs") return handleRunOcrJobs(env.franchise_db, auth, data, env);
     if (data.action === "retry_ocr_job") return handleRetryOcrJob(env.franchise_db, auth, data, env);
     if (data.action === "mark_ocr_job_no_text") return handleMarkOcrJobNoText(env.franchise_db, auth, data);

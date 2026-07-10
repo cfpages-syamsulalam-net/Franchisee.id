@@ -7,6 +7,7 @@
   const SELF_ASSIGNABLE_ROLES = AuthCore.SELF_ASSIGNABLE_ROLES;
   const initClerk = AuthCore.initClerk;
   const syncUser = AuthCore.syncUser;
+  const activateSession = AuthCore.activateSession;
   const setPendingRole = AuthCore.setPendingRole;
   const clearPendingRole = AuthCore.clearPendingRole;
   const setPendingNext = AuthCore.setPendingNext;
@@ -163,7 +164,7 @@
         throw new Error("Login memerlukan langkah verifikasi tambahan yang belum diaktifkan di halaman ini.");
       }
 
-      await clerk.setActive({ session: signIn.createdSessionId });
+      await activateSession(clerk, signIn.createdSessionId);
       await syncUser();
       showMessage(root, "Login berhasil.", "success");
       window.location.href = nextUrl(root);
@@ -232,7 +233,7 @@
         throw new Error("Password belum bisa disimpan. Silakan coba lagi.");
       }
 
-      await clerk.setActive({ session: reset.createdSessionId });
+      await activateSession(clerk, reset.createdSessionId);
       await syncUser();
       Auth.resetPasswordSignIn = null;
       Auth.resetPasswordEmail = "";
@@ -345,7 +346,7 @@
   }
 
   async function finishRegistration(root, clerk, sessionId, role) {
-    await clerk.setActive({ session: sessionId });
+    await activateSession(clerk, sessionId);
     await syncUser(role);
     clearPendingRole();
     clearPendingNext();

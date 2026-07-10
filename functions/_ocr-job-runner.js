@@ -3,20 +3,21 @@ import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, randomId } from "./_dashboard-utils.js";
 import { callOcrProvider, normalizeOcrText } from "./_ocr-provider-adapters.js";
 import { maskBatchRow, refreshBatchProgress } from "./_ocr-batch-runs.js";
+import { getActiveOcrRunLease, requireOcrRunLease } from "./_ocr-run-lease.js";
 
 const MAX_ENQUEUE_LIMIT = 200;
 const MAX_RUN_LIMIT = 5;
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const MIN_OCR_TEXT_CHARS = 20;
 const CACHE_TEXT_CHARS = 60_000;
-const JOB_TABLE_ERROR = /ocr_jobs|ocr_attempts|ocr_content_cache|ocr_provider_usage_events|ocr_batch_runs|batch_id|no such table|no such column/i;
+const JOB_TABLE_ERROR = /ocr_jobs|ocr_attempts|ocr_content_cache|ocr_provider_usage_events|ocr_batch_runs|ocr_run_leases|batch_id|no such table|no such column/i;
 const PAUSE_RATE_LIMIT_NOTE = "OCR_PAUSED_RATE_LIMIT";
 const PAUSE_QUOTA_NOTE = "OCR_PAUSED_QUOTA";
 
 export async function getOcrJobState(db, auth) {
   if (!isAdmin(auth)) return { admin_only: true, counts: {}, recent: [], results: [], migration_required: false };
   try {
-    const [counts, recent, candidates, results, batches] = await Promise.all([
+    const [counts, recent, candidates, results, batches, activeRunLease] = await Promise.all([
       db.prepare("SELECT status, COUNT(*) count FROM ocr_jobs GROUP BY status").all(),
       db
         .prepare(
@@ -88,15 +89,25 @@ export async function getOcrJobState(db, auth) {
            LIMIT 8`,
         )
         .all(),
+      getActiveOcrRunLease(db),
     ]);
+    const refreshedBatches = [];
+    for (const batch of batches.results || []) {
+      if (["queued", "running"].includes(batch.status)) {
+        refreshedBatches.push(await refreshBatchProgress(db, batch.id));
+      } else {
+        refreshedBatches.push(maskBatchRow(batch));
+      }
+    }
     return {
       admin_only: false,
       migration_required: false,
       counts: Object.fromEntries((counts.results || []).map((row) => [row.status, Number(row.count || 0)])),
       recent: (recent.results || []).map(maskJobRow),
       results: (results.results || []).map(maskResultRow),
-      batches: (batches.results || []).map(maskBatchRow),
+      batches: refreshedBatches.filter(Boolean),
       enqueue_candidates: Number(candidates?.count || 0),
+      active_run_lease: activeRunLease,
     };
   } catch (error) {
     if (JOB_TABLE_ERROR.test(error?.message || "")) {
@@ -181,6 +192,10 @@ export async function handleEnqueueOcrJobs(db, auth, data) {
 export async function handleRunOcrJobs(db, auth, data, env, options = {}) {
   assertAdmin(auth);
   const maxJobs = Math.min(Math.max(Number(data.max_jobs || 1), 1), MAX_RUN_LIMIT);
+  if (!textOrNull(data.batch_id) && maxJobs > 1) {
+    const lease = await requireOcrRunLease(db, auth, data.lease_id);
+    if (!lease.ok) return lease.response;
+  }
   const result = await runOcrJobs(db, env, auth, { ...options, maxJobs, batchId: data.batch_id });
   return jsonResponse({ success: true, ...result });
 }
@@ -230,11 +245,11 @@ export async function handleRetryOcrJob(db, auth, data, env, options = {}) {
     .bind(data.job_id)
     .first();
   if (!job) return jsonResponse({ success: false, error: "OCR_JOB_NOT_FOUND", message: "Job OCR tidak ditemukan." }, { status: 404 });
-  if (!["failed", "needs_review"].includes(job.status)) {
+  if (!["failed", "needs_review", "no_text"].includes(job.status)) {
     return jsonResponse({
       success: false,
       error: "OCR_JOB_NOT_RETRYABLE",
-      message: "Hanya job OCR berstatus gagal atau perlu cek yang bisa di-retry manual.",
+      message: "Hanya job OCR berstatus gagal, perlu cek, atau tanpa teks yang bisa di-retry manual.",
     }, { status: 409 });
   }
 
@@ -267,7 +282,7 @@ export async function handleMarkOcrJobNoText(db, auth, data) {
 
   const message = cleanError(data.notes || "Ditandai admin: halaman brosur tidak memiliki teks yang cukup untuk OCR.");
   await db.batch([
-    markJobNeedsReviewStatement(db, job.id, message, auth.id),
+    markJobNoTextStatement(db, job.id, message, auth.id),
     auditStatement(db, "dashboard.ocr_jobs.no_text", "ocr_jobs", job.id, {
       asset_id: job.asset_id,
       franchise_id: job.franchise_id,
@@ -275,7 +290,7 @@ export async function handleMarkOcrJobNoText(db, auth, data) {
       notes: message,
     }, auth.id),
   ]);
-  return jsonResponse({ success: true, job_id: job.id, status: "needs_review", message });
+  return jsonResponse({ success: true, job_id: job.id, status: "no_text", message });
 }
 
 export async function handleRetryFailedOcrJobs(db, auth, data) {
@@ -1126,6 +1141,17 @@ function markJobNeedsReviewStatement(db, jobId, message, userId) {
     .bind(cleanError(message), userId, jobId);
 }
 
+function markJobNoTextStatement(db, jobId, message, userId) {
+  return db
+    .prepare(
+      `UPDATE ocr_jobs
+       SET status = 'no_text', error_message = ?, requested_by_user_id = ?,
+           provider_key = NULL, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+    )
+    .bind(cleanError(message), userId, jobId);
+}
+
 function retryJobStatement(db, jobId, userId) {
   return db
     .prepare(
@@ -1133,7 +1159,7 @@ function retryJobStatement(db, jobId, userId) {
        SET status = 'pending', provider_key = NULL, error_message = NULL,
            started_at = NULL, completed_at = NULL, requested_by_user_id = ?,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND status IN ('failed', 'needs_review')`,
+       WHERE id = ? AND status IN ('failed', 'needs_review', 'no_text')`,
     )
     .bind(userId, jobId);
 }
