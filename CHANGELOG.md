@@ -8,6 +8,7 @@ Format:
 ### Added
 - `.context/session-20260711-0010.md`: Added this session continuity snapshot for the franchisor progressive form and canonical field planning work.
 - `.context/session-20260711-0110.md`: Added this session continuity snapshot for suggestion 84 and the D1 bridge output workflow change.
+- `.context/session-20260711-0155.md`: Added this session continuity snapshot for closing stale `AUDIT.md` in-progress implementation statuses.
 - `docs/forms/FRANCHISOR_PROGRESSIVE_FORM_PLAN.md`: Added a current-state audit and implementation plan for restoring backend-supported franchisor fields, adding priority canonical fields, and making the 5-step form progressive.
 - `migrations/0028_franchisor_progressive_fields.sql`: Added nullable D1 franchise columns for minimum area, staff count, setup duration, working capital, additional cost notes, BEP min/max, omzet min/max, and net-profit min/max.
 - `js/form-10-progressive-franchisor.js`: Added the progressive franchisor form helper for conditional follow-up groups, total-investment syncing, and support-system checkbox syncing.
@@ -25,6 +26,7 @@ Format:
 - `package.json`: Added `build:d1:franchises:bridge` as the explicit legacy bridge regeneration command.
 - `json/d1-franchise-static-data.json`: Refreshed the tracked Astro snapshot so local static rendering includes the new progressive franchisor canonical fields without requiring a bridge HTML rewrite.
 - `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the suggestion 84 build workflow change and marked the recommendation done.
+- `AUDIT.md`: Marked completed migration implementation phases and dashboard CSS validation as done, marked the D1 builder/importer script split done, and moved remaining production QA / business decisions into operational follow-ups instead of leaving core implementation phases as `In progress`.
 
 ## 2026-07-10 17:49 (Asia/Jakarta)
 ### Added

@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-10 23:45 (Asia/Jakarta)
+Last updated: 2026-07-11 01:55 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -171,7 +171,7 @@ Actionability checklist for future edits:
 | 4 | `css/dashboard-premium.css` | Extract Premium Operations payment/settings/funnel/notification/report styles. | Done |
 | 5 | `css/dashboard-review.css` | Extract Review/Data Quality guided field editor, diff row, and Area Listing editor styles. | Done |
 | 6 | `css/dashboard-operations.css` | Extract operations/admin helpers such as full-width panels, publication controls, and checkbox rows. | Done |
-| 7 | Validation | Keep `pnpm run build`, `pnpm run dashboard:ocr:check`, and targeted client syntax checks as the minimum guard after dashboard CSS/module edits. | In Progress |
+| 7 | Validation | Keep `pnpm run build`, `pnpm run dashboard:ocr:check`, and targeted client syntax checks as the minimum guard after dashboard CSS/module edits. | Done |
 
 ## Target Architecture
 
@@ -263,17 +263,17 @@ API/server routes:
 
 | Phase | Status | Scope |
 | --- | --- | --- |
-| 0. Documentation baseline | In progress | Root docs are centralized around `AGENTS.md`, `CODEBASE.md`, `AUDIT.md`, and `docs/README.md`; long form references moved under `docs/`. Keep reducing duplication as implementation changes. |
-| 1. Data contract design | In progress | Initial shared-network D1 SQL migration created and applied remotely; TypeScript/Zod importer now maps current CSV snapshots into the first D1 schema. Next define reusable API/form payload schemas. |
-| 2. Cloudflare project config | In progress | `wrangler.toml` points to `franchise_db`, declares Pages output `dist`, and keeps unsupported `account_id` out of config. R2 production custom domain is `https://assets.franchisee.id`. Migrations are applied through `cfman` sequentially. Cloudflare Pages must keep build command set to `pnpm run build` or `pnpm run build:astro`. |
-| 3. Import pipeline | In progress | `scripts/import-csv-to-d1.ts` imports CSV snapshots into D1, preserves `UNCLAIMED` sanitization and stable slugs, and has completed the first remote import. Runtime reads now use D1 first through `/get-franchises`. |
-| 4. Auth foundation | In progress | Custom Clerk email/password and Google login/register surfaces, shared created-session activation before redirect, OAuth callback finalization before session checks, `/auth-config`, `/auth-sync`, `/clerk-webhook`, `/user-role`, `/sync-clerk-metadata`, D1 user mapping, email-based pre-login role grants, D1-to-Clerk metadata snapshots, and D1 role checks are implemented. `admin@alampintar.org` and `email@franchisor.id` are pre-authorized in remote D1 through `email_role_grants` for first Google/email login. Next redeploy and verify Google OAuth/dashboard login on Cloudflare Pages. |
-| 5. Form API replacement | In progress | `/form-submit` now performs D1-only writes for franchisee, franchisor, claim, and dev test-data actions with Clerk session verification, D1 role checks, owner fields, and actor audit events. Next verify deployed form submissions against the real Pages binding and Clerk app. |
-| 6. Asset pipeline | In progress | Protected R2 uploads are implemented for owner listing media and Premium receipt proofs, with D1 `franchise_assets` ownership metadata and public URLs from the R2 custom domain. Legacy Blogspot proposal image backfill has also been applied for 34 franchises / 491 proposal page images, preserving source URLs in `franchise_assets` and replacing `franchises.proposal_url` with first-party `assets.franchisee.id` URLs. Proposal PDF download stays client-side from first-party images to avoid duplicate R2 storage. Remaining work is optional gallery backfill. |
-| 7. Public directory rebuild | In progress | D1-backed sync now refreshes the Astro snapshot and claim-search JSON by default without rewriting root bridge HTML; Astro static routes generate canonical `/peluang-usaha`, flat detail pages, CSS-only image placeholders, readable yellow/category chip states, self-contained detail tabs, parsed public contact data for unclaimed listings, all-caps description presentation normalization, cleaned metadata, and redirect-only compatibility for old directory/category archives, then the build copies legacy static assets/pages without overwriting Astro output. Explicit bridge regeneration remains available through `pnpm run build:d1:franchises:bridge`. Next add real popularity/view/lead metrics and verify deployed route precedence. |
-| 8. D1-to-static publish automation | In progress | D1 dirty queue tables, `/form-submit`, `/profile-data`, `/profile-upload`, dashboard approvals/publication changes, and Premium downgrade writes enqueue rebuild requests where public pages can change. The 30-minute GitHub Actions poller exists, and the stale Google Sheets auto-update workflow was removed. Remaining work: production dirty-to-build verification and alerting for stuck requests. |
-| 9. Dashboards | In progress | `/dashboard` and `/dashboard-data` now implement the Franchisee.id admin/staff MVP plus admin-only OCR configuration and job controls: protected metrics, outreach, quality/review, Premium/publication operations, masked OCR credential management, OCR enqueue/run status, system health, audit writes, and rebuild queue writes. `DASHBOARD.md` remains the progress tracker for future network-wide operations. |
-| 10. Premium monetization | In progress | The manual premium membership path is implemented from `PREMIUM_MONETIZATION_PLAN.md`: `/premium` public sales page, D1 premium order/payment/subscription tables, profile membership tab, unique-code transfer instructions, receipt uploads, admin payment review, premium activation/renewal, admin-managed payment methods/settings, readiness checks, funnel analytics, owner/admin notifications, queued/sent payment emails through Resend, grace-period downgrade behavior, annual report queueing, configurable multi-brand discounts, creation/publication of included network site rows, audit logging, and rebuild queueing. The Premium email worker GitHub Action has successfully authenticated with delivery configured. Remaining work is automated payment matching. |
+| 0. Documentation baseline | Done | Root docs are centralized around `AGENTS.md`, `CODEBASE.md`, `AUDIT.md`, and `docs/README.md`; long form references moved under `docs/`; session continuity uses timestamped `.context` notes. Future docs cleanup is ongoing maintenance, not a blocking migration phase. |
+| 1. Data contract design | Done | Shared-network D1 migrations, TypeScript/Zod importer validation, shared Function schemas, shared TypeScript snapshot schemas, profile/dashboard/form schemas, and committed SQL migration workflow are implemented. Future trust-boundary schemas should be added to the shared modules as normal feature work. |
+| 2. Cloudflare project config | Done | `wrangler.toml` points to `franchise_db`, declares Pages output `dist`, keeps unsupported `account_id` out of config, uses D1/R2 bindings, and R2 production custom domain is `https://assets.franchisee.id`. Migrations are applied through committed SQL and sequential `cfman`/Wrangler operations. Production Pages settings remain an operations checklist item. |
+| 3. Import pipeline | Done | `scripts/import-csv-to-d1.ts` imports CSV snapshots into D1, preserves `UNCLAIMED` sanitization and stable slugs, completed the first remote import, and runtime reads use D1 first through `/get-franchises`. Google Sheets/CSV is archive/import-only transition behavior. |
+| 4. Auth foundation | Done | Custom Clerk email/password and Google login/register surfaces, shared created-session activation before redirect, OAuth callback finalization before session checks, `/auth-config`, `/auth-sync`, `/clerk-webhook`, `/user-role`, `/sync-clerk-metadata`, D1 user mapping, email-based pre-login role grants, D1-to-Clerk metadata snapshots, and D1 role checks are implemented. Production account-linking/OAuth QA remains an operations checklist item. |
+| 5. Form API replacement | Done | `/form-submit` performs D1-only writes for franchisee, franchisor, claim, and dev test-data actions with Clerk session verification, D1 role checks, owner fields, actor audit events, static rebuild enqueueing, progressive franchisor canonical fields, and shared runtime validation. Production form smoke tests remain an operations checklist item. |
+| 6. Asset pipeline | Done | Protected R2 uploads are implemented for owner listing media and Premium receipt proofs, with D1 `franchise_assets` ownership metadata and public URLs from the R2 custom domain. Legacy Blogspot proposal image backfill was applied for 34 franchises / 491 proposal page images, preserving source URLs in `franchise_assets` and replacing `franchises.proposal_url` with first-party `assets.franchisee.id` URLs. Optional gallery backfill is future enrichment, not a blocking migration phase. |
+| 7. Public directory rebuild | Done | D1-backed sync refreshes the Astro snapshot and claim-search JSON by default without rewriting root bridge HTML; Astro static routes generate canonical `/peluang-usaha`, flat detail pages, capital/category/city routes, CSS-only image placeholders, readable yellow/category chip states, self-contained detail tabs, parsed public contact data for unclaimed listings, all-caps description presentation normalization, cleaned metadata, and redirect-only compatibility for old directory/category archives; build then copies legacy static assets/pages without overwriting Astro output. Explicit bridge regeneration remains available through `pnpm run build:d1:franchises:bridge`. |
+| 8. D1-to-static publish automation | Done | D1 dirty queue tables, enqueue helpers, `/form-submit`, `/profile-data`, `/profile-upload`, dashboard approvals/publication changes, Premium lifecycle writes, the 30-minute GitHub Actions poller, deploy-hook publishing, guardrails, direct deploy fallback, and stale Google Sheets workflow removal are implemented. Production dirty-to-build verification and alerting remain operations checklist items. |
+| 9. Dashboards | Done | `/dashboard` and `/dashboard-data` implement the Franchisee.id admin/staff MVP plus admin-only OCR configuration and job controls: protected metrics, outreach, quality/review, Premium/publication operations, traffic guardrail, masked OCR credential management, OCR enqueue/run status, system health, audit writes, and rebuild queue writes. Future network-wide dashboard expansion belongs in `DASHBOARD.md`. |
+| 10. Premium monetization | Done | The manual premium membership path is implemented from `PREMIUM_MONETIZATION_PLAN.md`: `/premium` public sales page, D1 premium order/payment/subscription tables, profile membership tab, unique-code transfer instructions, receipt uploads, admin payment review, premium activation/renewal, admin-managed payment methods/settings, readiness checks, funnel analytics, owner/admin notifications, queued/sent payment emails through Resend, grace-period downgrade behavior, annual report queueing, configurable multi-brand discounts, creation/publication of included network site rows, audit logging, and rebuild queueing. Automated payment matching is a future provider/API decision, not a blocking manual Premium milestone. |
 | 11. Decommission Sheets dependency | Pending | Freeze or remove Sheets writes, keep optional import/export admin tooling only. |
 
 ## Long File Refactor Tracker
@@ -449,7 +449,7 @@ Use this checklist as the next implementation tracker:
 | 8 | Extract dashboard Review/Data Quality/Claim workflows. | Guided edit fields, quality warning seeding, edit submission/review, and claim review live outside `js/dashboard-admin.js`. | Done |
 | 9 | Extract dashboard Outreach/Publications workflows. | Outreach rows/logging and publication controls live in a focused module; `js/dashboard-admin.js` becomes core boot/tabs/status plus orchestration. | Done |
 | 10 | Split `src/lib/franchise-static.ts` contact/text/ranking/helpers. | Public `/peluang-usaha` output hash should remain unchanged except for intentional feature changes. | Done - text, Premium detail, contact, ranking, category, and generated detail assets are extracted |
-| 11 | Split D1 builder/importer scripts. | Existing `pnpm run build:d1:franchises`, `pnpm run import:csv:dry`, and build pipeline behavior remains unchanged. | Pending |
+| 11 | Split D1 builder/importer scripts. | Existing `pnpm run build:d1:franchises`, `pnpm run import:csv:dry`, and build pipeline behavior remains unchanged. | Done - `scripts/d1-page-renderer.ts` and `scripts/import-csv-utils.ts` own reusable renderer/importer helpers while facades keep orchestration. |
 | 12 | Continue profile client extraction. | `js/profile-page.js` remains the controller facade; account, role, leads, franchisee/franchisor renderers, Premium membership, UI helpers, and saved-opportunity storage are extracted. | Done |
 
 ## Migration Rules
@@ -472,13 +472,15 @@ Use this checklist as the next implementation tracker:
 - R2 public access strategy must be decided: public bucket/custom domain, signed proxy route, or hybrid.
 - Legacy static HTML volume is large; migration should prioritize app-critical routes instead of converting every exported page at once.
 
-## Immediate Next Work
-1. Production-check the next dashboard deploy: login as admin, open Operations, confirm Premium settings, email queue controls, Review, Data Quality, Claim, and Premium payment actions still render after the dashboard module split.
+## Operational Follow-ups After Completed Migration Phases
+These items are ongoing production QA, business decisions, or future enhancements. They should not keep the implementation phases above in an active implementation state.
+
+1. Production-check the next dashboard deploy: login as admin, open Operations, confirm Premium settings, email queue controls, Review, Data Quality, Claim, OCR, and Premium payment actions still render after the dashboard module split.
 2. Verify one controlled D1 dirty-to-build cycle: make a low-risk public listing edit, confirm `site_rebuild_requests`, poller/deploy hook, and public HTML freshness.
-3. Continue behavior-preserving refactors in this order: auth Clerk core, profile CSS domain split when profile UI is touched, then D1 builder/importer scripts.
-4. Keep manual Premium payment as the current production path: bank transfer with unique amount and optional QRIS/payment proof upload. Add automated payment matching only after choosing a safe payment gateway or official bank API.
-5. Keep auth/account-linking production QA current for `/login`, `/daftar`, `/profil`, Google SSO, password recovery, and same-email linking.
-6. Add admin/owner location management UI before expanding many more long-tail city landing pages beyond the current supported city alias set.
+3. Keep manual Premium payment as the current production path: bank transfer with unique amount and optional QRIS/payment proof upload. Add automated payment matching only after choosing a safe payment gateway or official bank API.
+4. Keep auth/account-linking production QA current for `/login`, `/daftar`, `/profil`, Google SSO, password recovery, and same-email linking.
+5. Continue watch-only refactors when growth resumes: dashboard query/action read models, OCR runner quota/search helpers, generated detail assets, and profile controller workflow helpers.
+6. Treat Google Sheets/CSV as archive/import-only until the separate decommission phase is explicitly completed.
 
 ## Import Status
 - First D1 CSV importer: `scripts/import-csv-to-d1.ts`.
@@ -531,7 +533,7 @@ Use this checklist as the next implementation tracker:
   - `.github/workflows/d1-static-publish.yaml` runs at minutes 7 and 37, exits cleanly when no pending work exists, and does not commit generated output.
   - `wrangler.toml` declares `pages_build_output_dir = "dist"`, `package.json` exposes `pnpm run build`, and `.node-version` pins Node 20.19.4 for the Astro 5 build path.
   - `scripts/build-d1-franchise-pages.ts` now queries D1 via the Cloudflare HTTP API when a token is available, avoiding Wrangler account-discovery failures during Cloudflare Pages or CI builds.
-- Implementation checklist:
+- Operational checklist after implementation:
   - [x] Add `site_rebuild_requests` migration.
   - [x] Add `site_publish_state` migration for per-site dirty/published timestamps and publish counters.
   - [x] Add shared enqueue helper for D1 mutation endpoints.
