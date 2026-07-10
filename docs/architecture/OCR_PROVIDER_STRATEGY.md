@@ -89,7 +89,7 @@ Set the shared worker trigger secret as `OCR_SECRET` in both Cloudflare Pages an
 Manual workflow runs are allowed without the enable variable so one-off testing stays easy. Scheduled cron runs remain inert until repository variable `OCR_WORKER_ENABLED=true` is set, because cron can spend OCR quota without an admin watching it. Optional controls:
 
 - `OCR_WORKER_SITE_URL`: GitHub repository variable; defaults to `https://franchisee.id`.
-- `OCR_WORKER_DAILY_CAP`: Cloudflare Pages environment value; defaults to 25 counted OCR units/day.
+- `OCR_WORKER_DAILY_CAP`: Cloudflare Pages environment value; defaults to 100 counted OCR units/day so one dashboard-created 100-job batch can drain unless provider-specific rate/quota guards pause it first. Dashboard OCR execution shows used/remaining/reset state so admins can tell whether the worker cap, provider quota, or provider rate limit is blocking progress.
 
 The scheduled worker does not enqueue new work by itself. Admins still enqueue proposal assets from `/dashboard`; the worker only drains pending `ocr_jobs` in small quota-aware batches.
 

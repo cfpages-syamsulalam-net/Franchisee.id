@@ -55,6 +55,10 @@ const requiredFragments = [
   "start_ocr_batch_run",
   "Proses tetap berjalan walau tab/browser tidak aktif",
   "handleForegroundRefresh",
+  "primeBatchChunk",
+  "firstResumableSchedulerBatch",
+  "dash-ocr-worker-usage",
+  "worker_usage",
 ];
 
 for (const fragment of requiredFragments) {

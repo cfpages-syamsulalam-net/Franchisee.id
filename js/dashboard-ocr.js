@@ -417,7 +417,8 @@
           if (payload.active_run_lease && !state.continuousRunActive) {
             notices.push("OCR beruntun aktif oleh " + (payload.active_run_lease.owner_label || "admin lain") + ".");
           }
-          options.jobStatus.innerHTML = '<div class="dash-ocr-job-filterbar">' + statusButtons.join("") + '</div>' +
+          options.jobStatus.innerHTML = renderWorkerUsage(payload.worker_usage) +
+            '<div class="dash-ocr-job-filterbar">' + statusButtons.join("") + '</div>' +
             (notices.length ? '<small>' + utils.escapeHtml(notices.join(" · ")) + '</small>' : "");
         }
       }
@@ -441,6 +442,22 @@
       payload = payload || {};
       options.batchRows.innerHTML = batchRenderers.renderBatches(payload);
       syncBatchCountdowns();
+    }
+
+    function renderWorkerUsage(usage) {
+      if (!usage) return "";
+      var cap = Number(usage.cap || 0);
+      var used = Number(usage.used || 0);
+      var remaining = Number(usage.remaining || 0);
+      var status = usage.status || (remaining <= 0 ? "exhausted" : "available");
+      var icon = status === "exhausted" ? "fa-pause-circle" : status === "near_limit" ? "fa-exclamation-triangle" : "fa-tachometer-alt";
+      var label = status === "exhausted" ? "Cap worker habis" : status === "near_limit" ? "Cap worker hampir habis" : "Cap worker tersedia";
+      var reset = usage.reset_at ? formatResetTime(usage.reset_at) : "reset UTC berikutnya";
+      var tooltip = "Worker cap membatasi jumlah OCR yang diproses otomatis per hari agar provider tidak kebablasan. Jika habis, batch dijeda dan bisa dilanjutkan setelah reset atau setelah OCR_WORKER_DAILY_CAP dinaikkan.";
+      return '<div class="dash-ocr-worker-usage is-' + utils.escapeAttr(status) + '" data-fr-tooltip="' + utils.escapeAttr(tooltip) + '">' +
+        '<span><i class="fas ' + icon + '" aria-hidden="true"></i><strong>' + utils.escapeHtml(label) + '</strong></span>' +
+        '<span>Terpakai ' + used.toLocaleString("id-ID") + '/' + cap.toLocaleString("id-ID") + ' · Sisa ' + remaining.toLocaleString("id-ID") + ' · Reset ' + utils.escapeHtml(reset) + '</span>' +
+        '</div>';
     }
 
     function syncBatchPolling(payload) {
@@ -865,13 +882,21 @@
       var scheduler = firstActiveScheduler();
       if (scheduler) {
         await buttonAction(options.runButton, "Menjadwalkan...", async function () {
+          var existingBatch = firstResumableSchedulerBatch();
+          if (existingBatch) {
+            var continued = await scheduleAndPrimeBatch(existingBatch.id, scheduler.provider_key);
+            options.setStatus("Batch OCR dilanjutkan: " + existingBatch.id + ". " + continued.message, continued.isError);
+            await refreshAfterJobMutation();
+            return;
+          }
           var result = await options.postDashboardAction({
             action: "start_ocr_batch_run",
             target_count: 100,
             scheduler_provider_key: scheduler.provider_key
           });
           var schedulerMessage = result.scheduler && result.scheduler.message ? " " + result.scheduler.message : "";
-          options.setStatus("Batch OCR background dibuat: " + Number(result.assigned_count || 0).toLocaleString("id-ID") + " job. Proses tetap berjalan walau tab/browser tidak aktif." + schedulerMessage, false);
+          var primed = await primeBatchChunk(result.batch_id);
+          options.setStatus("Batch OCR background dibuat: " + Number(result.assigned_count || 0).toLocaleString("id-ID") + " job. Proses tetap berjalan walau tab/browser tidak aktif." + schedulerMessage + " " + primed.message, primed.isError);
           await refreshAfterJobMutation();
         }, options.setStatus);
         return;
@@ -991,17 +1016,63 @@
       }
       await buttonAction(button, "Retry...", async function () {
         var scheduler = firstActiveScheduler();
-        var result = await options.postDashboardAction({
-          action: "retry_ocr_batch_run",
-          batch_id: batchId,
-          scheduler_provider_key: scheduler ? scheduler.provider_key : "upstash_qstash"
-        });
-        var reset = Number(result.reset_retryable_jobs || result.reset_failed_jobs || 0);
-        var message = (reset ? reset.toLocaleString("id-ID") + " job gagal/berjalan dikembalikan ke antrean. " : "") +
-          (result.scheduler && result.scheduler.message ? result.scheduler.message : "Batch dijadwalkan ulang.");
-        options.setStatus(message, !(result.scheduler && result.scheduler.triggered));
+        var result = await scheduleAndPrimeBatch(batchId, scheduler ? scheduler.provider_key : "upstash_qstash");
+        options.setStatus(result.message, result.isError);
         await refreshAfterJobMutation();
       }, options.setStatus);
+    }
+
+    async function scheduleAndPrimeBatch(batchId, schedulerProviderKey) {
+      var result = await options.postDashboardAction({
+        action: "retry_ocr_batch_run",
+        batch_id: batchId,
+        scheduler_provider_key: schedulerProviderKey || "upstash_qstash"
+      });
+      var reset = Number(result.reset_retryable_jobs || result.reset_failed_jobs || 0);
+      var scheduleMessage = (reset ? reset.toLocaleString("id-ID") + " job gagal/berjalan dikembalikan ke antrean. " : "") +
+        (result.scheduler && result.scheduler.message ? result.scheduler.message : "Batch dijadwalkan ulang.");
+      var primed = await primeBatchChunk(batchId);
+      return {
+        isError: Boolean(!(result.scheduler && result.scheduler.triggered) || primed.isError),
+        message: scheduleMessage + " " + primed.message
+      };
+    }
+
+    async function primeBatchChunk(batchId) {
+      if (!batchId) return { isError: true, message: "Batch belum punya ID sehingga chunk awal tidak bisa dijalankan." };
+      try {
+        var result = await options.postDashboardAction({
+          action: "run_ocr_jobs",
+          max_jobs: 5,
+          batch_id: batchId
+        });
+        var processed = Number(result.processed_count || 0);
+        var pause = findPausedProcessedResult(result.processed || []);
+        if (pause) {
+          return {
+            isError: true,
+            message: "Chunk awal dijeda: " + (pause.message || pause.note || "provider sedang rate limit/kuota habis") + "."
+          };
+        }
+        return {
+          isError: false,
+          message: "Chunk awal langsung diproses dari dashboard: " + processed.toLocaleString("id-ID") + " job."
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          message: "Chunk awal belum berhasil diproses: " + (error.message || "dashboard action gagal") + "."
+        };
+      }
+    }
+
+    function firstResumableSchedulerBatch() {
+      var batches = (state.lastJobsPayload && state.lastJobsPayload.batches) || [];
+      return batches.find(function (batch) {
+        var assigned = Number(batch.assigned_count || 0);
+        var processed = Number(batch.processed_count || 0);
+        return assigned > processed && ["failed", "paused_rate_limit", "paused_quota"].indexOf(batch.status || "") !== -1;
+      }) || null;
     }
 
     async function refreshAfterJobMutation() {
@@ -1091,7 +1162,7 @@
     }[name] || name;
   }
 
-  function statusLabel(value) {
+    function statusLabel(value) {
     return {
       extracted: "Berhasil dibaca",
       needs_ocr: "Perlu OCR",
@@ -1116,6 +1187,12 @@
     return new Promise(function (resolve) {
       window.setTimeout(resolve, Math.max(0, Number(ms || 0)));
     });
+  }
+
+  function formatResetTime(value) {
+    var date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return "UTC berikutnya";
+    return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
   }
 
   function buildProviderErrorText(provider) {

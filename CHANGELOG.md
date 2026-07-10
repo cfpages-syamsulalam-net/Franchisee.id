@@ -10,9 +10,13 @@ Format:
 
 ### Changed
 - `functions/_ocr-job-runner.js`: Changed bounded OCR drains to run concurrent waves when multiple providers are active, rotating each job's first-choice provider while preserving existing fallback and pause-on-rate-limit behavior.
+- `functions/_ocr-job-runner.js`, `functions/dashboard-data.js`, `js/dashboard-ocr.js`, and `css/dashboard-ocr.css`: Added OCR worker cap/usage/remaining/reset visibility in the dashboard OCR execution panel and clarified provider-quota exhaustion copy to suggest activating another provider or waiting for quota reset.
+- `functions/ocr-worker.js`: Raised the default OCR worker daily cap from 25 to 100 counted units and changed worker-cap exhaustion to mark scoped batches `paused_quota` with an actionable message instead of letting them become overdue scheduler failures.
 - `js/dashboard-ocr.js`, `js/dashboard-ocr-state.js`, `js/dashboard-ocr-batches.js`, and `src/pages/dashboard/index.astro`: Changed `Jalankan OCR` to prefer a persisted server-side scheduler batch when a scheduler is active, kept browser continuous OCR only as a no-scheduler fallback with explicit warning copy, refreshed OCR state when a hidden/background tab becomes active again, and changed batch status chips/descriptions to show waiting/processing states without scary overdue copy.
+- `js/dashboard-ocr.js`: Changed new/retried scheduler batches to immediately process one scoped dashboard chunk and changed the top `Jalankan OCR` action to resume failed/paused unfinished scheduler batches before creating a new batch.
 - `scripts/check-dashboard-ocr-client.mjs`: Extended the dashboard OCR regression check for scheduler-backed run creation and foreground refresh wiring.
-- `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented scheduler-backed OCR as the reliable long-run path, browser fallback limits, foreground refresh, and multi-provider bounded concurrency.
+- `scripts/check-ocr-job-runner.ts`: Added schema coverage for scoped batch chunk runs.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, and `docs/architecture/OCR_BATCH_SCHEDULING.md`: Documented scheduler-backed OCR as the reliable long-run path, browser fallback limits, foreground refresh, multi-provider bounded concurrency, dashboard first-chunk priming, the 100-unit worker cap, and a follow-up to surface worker cap/usage in the dashboard.
 
 ## 2026-07-10 13:03 (Asia/Jakarta)
 ### Added

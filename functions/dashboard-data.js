@@ -58,7 +58,7 @@ export async function onRequestGet({ request, env }) {
       getLeadSummary(db),
       getSystemHealth(db, env),
       getOcrProviderConfigs(db, auth),
-      getOcrJobState(db, auth),
+      getOcrJobState(db, auth, env),
       getOcrSchedulerState(db, auth, env),
     ]);
 

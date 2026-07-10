@@ -1,11 +1,12 @@
 import { jsonResponse } from "./_dashboard-utils.js";
 import { runOcrJobs } from "./_ocr-job-runner.js";
+import { refreshBatchProgress } from "./_ocr-batch-runs.js";
 import { triggerOcrScheduler } from "./_ocr-scheduler-config.js";
 import { logOperationEvent } from "./_telemetry.js";
 
 const DEFAULT_BATCH_LIMIT = 5;
 const MAX_BATCH_LIMIT = 10;
-const DEFAULT_DAILY_CAP = 25;
+const DEFAULT_DAILY_CAP = 100;
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -37,15 +38,25 @@ export async function onRequestPost({ request, env }) {
     const usedToday = await countTodayUsage(env.franchise_db);
     const remainingToday = Math.max(0, dailyCap - usedToday);
     const maxJobs = Math.min(requestedLimit, remainingToday);
+    const batchId = String(payload.batch_id || "").trim();
 
     if (maxJobs <= 0) {
+      let batch = null;
+      if (batchId) {
+        batch = await refreshBatchProgress(env.franchise_db, batchId, {
+          status: "paused_quota",
+          message: `Batch OCR dijeda: batas harian worker sudah tercapai (${usedToday}/${dailyCap}). Retry setelah kuota reset atau naikkan OCR_WORKER_DAILY_CAP jika aman untuk provider aktif.`,
+        });
+      }
       const summary = {
         source: payload.source || "scheduled",
+        batch_id: batchId,
         processed_count: 0,
         provider_count: 0,
         used_today: usedToday,
         daily_cap: dailyCap,
         skipped: "daily_cap_reached",
+        batch,
       };
       await logWorkerEvent(env, summary, "info");
       return jsonResponse({ success: true, summary });
@@ -55,7 +66,6 @@ export async function onRequestPost({ request, env }) {
       id: "ocr_worker",
       roles: [{ role: "admin" }],
     };
-    const batchId = String(payload.batch_id || "").trim();
     const result = await runOcrJobs(env.franchise_db, env, auth, { maxJobs, batchId });
     let next_trigger = null;
     if (batchId && result.batch && !["completed", "failed", "cancelled", "paused_rate_limit", "paused_quota"].includes(result.batch.status)) {

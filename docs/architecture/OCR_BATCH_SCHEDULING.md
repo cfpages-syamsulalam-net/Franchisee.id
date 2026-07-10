@@ -15,6 +15,7 @@ The safe design is not a single dashboard HTTP request that sleeps until 100 ima
 5. A third-party scheduler/queue triggers `/ocr-worker`, and the existing Pages Function drains that batch in small chunks, for example 1-5 OCR jobs per invocation.
 6. Each invocation uses existing D1 provider cooldown/quota metadata to decide whether it can call a provider now, should wait, or should stop for the day. Provider rate-limit/quota errors pause the batch and return the active job to `pending`; they do not mark every remaining page as failed.
 7. Dashboard polls batch progress and shows processed/succeeded/failed/needs-review/skipped counts.
+8. The dashboard also runs one immediate scoped chunk after creating or retrying a scheduler batch, so the admin gets visible progress even before the delayed scheduler trigger arrives.
 
 This gives the admin the intended UX without relying on a long browser tab, long Pages Function request, or uncontrolled sleep loop.
 
@@ -56,7 +57,9 @@ Implementation sketch:
 - `/ocr-worker` accepts `{ "preflight": true }` for scheduler checks and `{ "batch_id": "...", "limit": 5 }` for real batch drains.
 - Third-party scheduler calls `/ocr-worker`; the worker exits quickly when no claimable batch job exists.
 - Keep each worker invocation small. The “100 jobs” target is achieved by repeated safe invocations, not one long request.
+- `/ocr-worker` defaults to 100 counted OCR units/day. If `OCR_WORKER_DAILY_CAP` is reached, the scoped batch is marked `paused_quota` with an actionable message instead of later looking like a failed/overdue scheduler. The dashboard shows worker cap, used today, remaining today, and reset time in the OCR execution panel.
 - When a provider returns a rate-limit/quota error such as OCR.Space `E553`, the runner marks the provider cooldown/exhausted state, moves the current job back to `pending`, releases other already-claimed but unprocessed jobs, sets the batch to `paused_rate_limit` or `paused_quota`, and stops scheduling the next trigger until an admin retries after cooldown or enables another provider.
+- Provider quota exhaustion messages must tell admins the next action: activate another OCR provider to continue now, or wait until the exhausted provider resets.
 - QStash trigger ETA is stored as structured batch data (`scheduler_trigger_due_at`, delay seconds, status, and last-trigger timestamp). The dashboard countdown uses these fields instead of parsing the human-readable `last_message`; message parsing remains only as a legacy fallback for old rows.
 
 This is the lowest-risk path because it keeps the current D1 queue/cache/failover code and only adds batch orchestration plus encrypted scheduler credential storage.

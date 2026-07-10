@@ -22,6 +22,13 @@ async function main() {
   });
   assert.equal(run.success, true);
 
+  const batchRun = DashboardActionSchema.safeParse({
+    action: "run_ocr_jobs",
+    max_jobs: 5,
+    batch_id: "ocrbatch_1234567890abcdef",
+  });
+  assert.equal(batchRun.success, true);
+
   const acquireLease = DashboardActionSchema.safeParse({
     action: "acquire_ocr_run_lease",
     source: "dashboard_continuous",
