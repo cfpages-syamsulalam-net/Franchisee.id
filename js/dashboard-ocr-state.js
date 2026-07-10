@@ -28,6 +28,7 @@
       pollTimer: null,
       countdownTimer: null,
       polling: false,
+      foregroundRefreshAt: 0,
       continuousRunActive: false,
       continuousRunStopRequested: false,
       continuousRunLeaseId: ""

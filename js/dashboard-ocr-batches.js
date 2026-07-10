@@ -22,19 +22,20 @@
         var done = ["completed", "cancelled"].indexOf(batch.status) !== -1;
         var retryDisabled = (deps.getActiveProviderCount ? deps.getActiveProviderCount() : 0) === 0;
         var countdown = schedulerCountdown(batch);
+        var batchStatus = batchStatusDisplay(batch, countdown);
+        var description = batchDescription(batch, countdown);
         var retryButton = !done
           ? '<button type="button" class="dash-ocr-row-action" data-ocr-retry-batch="' + utils.escapeAttr(batch.id || "") + '" data-fr-tooltip="' + utils.escapeAttr(retryDisabled ? "Aktifkan provider OCR yang siap dipakai sebelum retry batch." : "Coba jadwalkan ulang batch ini lewat scheduler aktif. Jika error token muncul lagi, ganti QSTASH_TOKEN di Pengaturan.") + '"' + (retryDisabled ? " disabled" : "") + '><i class="fas fa-redo-alt" aria-hidden="true"></i><span>Retry</span></button>'
           : "";
         var refreshButton = '<button type="button" class="dash-ocr-row-action" data-ocr-refresh-batches data-fr-tooltip="Muat ulang status batch OCR dari server."><i class="fas fa-sync-alt" aria-hidden="true"></i><span>Refresh</span></button>';
         return '<li class="dash-ocr-batch-item is-' + utils.escapeAttr(batch.status || "queued") + '"' + countdownAttrs(countdown) + '>' +
-          '<div class="dash-ocr-batch-head"><strong><i class="fas fa-layer-group" aria-hidden="true"></i> Batch ' + utils.escapeHtml(batch.id || "-") + '</strong>' + deps.renderJobStatus(batch.status) + '</div>' +
+          '<div class="dash-ocr-batch-head"><strong><i class="fas fa-layer-group" aria-hidden="true"></i> Batch ' + utils.escapeHtml(batch.id || "-") + '</strong>' + renderBatchStatus(batchStatus) + '</div>' +
           '<div class="dash-ocr-progress"><span style="width:' + Math.max(0, Math.min(progress, 100)) + '%"></span></div>' +
           '<span>' + utils.escapeHtml(meta.join(" · ")) + '</span>' +
-          (batch.last_message ? '<small>' + utils.escapeHtml(batch.last_message) + '</small>' : '') +
-          (countdown ? '<small class="dash-ocr-batch-countdown"><i class="fas fa-hourglass-half" aria-hidden="true"></i><span data-ocr-batch-countdown>' + utils.escapeHtml(countdownLabel(countdown.remaining_seconds)) + '</span></small>' : '') +
+          '<small data-ocr-batch-description>' + utils.escapeHtml(description) + '</small>' +
           '<div class="dash-ocr-batch-actions">' + retryButton + refreshButton + '</div>' +
           '</li>';
-      }).join("") : '<li><span>Belum ada batch OCR besar. Klik Jalankan 100 setelah provider OCR dan scheduler siap.</span></li>';
+      }).join("") : '<li><span>Belum ada batch OCR background. Klik Jalankan OCR setelah provider OCR dan scheduler siap.</span></li>';
     }
 
     function updateCountdownLabels(root) {
@@ -43,10 +44,16 @@
       var activeCount = 0;
       root.querySelectorAll("[data-ocr-batch-countdown-until]").forEach(function (item) {
         var until = Number(item.getAttribute("data-ocr-batch-countdown-until") || 0);
-        var target = item.querySelector("[data-ocr-batch-countdown]");
-        if (!until || !target) return;
+        var status = item.querySelector("[data-ocr-batch-status]");
+        var description = item.querySelector("[data-ocr-batch-description]");
+        if (!until) return;
         var remaining = Math.max(0, Math.ceil((until - now) / 1000));
-        target.textContent = countdownLabel(remaining);
+        var display = countdownStatusDisplay(remaining);
+        if (status) {
+          status.className = "dash-ocr-job-state is-" + display.kind;
+          status.innerHTML = '<i class="fas ' + display.icon + '" aria-hidden="true"></i>' + utils.escapeHtml(display.label);
+        }
+        if (description) description.textContent = countdownDescription(remaining);
         if (remaining > 0) {
           activeCount += 1;
           item.setAttribute("data-ocr-batch-waiting", "true");
@@ -55,6 +62,44 @@
         }
       });
       return activeCount;
+    }
+
+    function renderBatchStatus(item) {
+      return '<span class="dash-ocr-job-state is-' + utils.escapeAttr(item.kind) + '" data-ocr-batch-status>' +
+        '<i class="fas ' + utils.escapeAttr(item.icon) + '" aria-hidden="true"></i>' + utils.escapeHtml(item.label) + '</span>';
+    }
+
+    function batchStatusDisplay(batch, countdown) {
+      if (countdown) return countdownStatusDisplay(countdown.remaining_seconds);
+      if (batch.status === "completed") return { icon: "fa-check-circle", kind: "success", label: "Selesai" };
+      if (batch.status === "failed") return { icon: "fa-times-circle", kind: "failed", label: "Gagal" };
+      if (batch.status === "cancelled") return { icon: "fa-ban", kind: "failed", label: "Batal" };
+      if (batch.status === "paused_rate_limit") return { icon: "fa-hourglass-half", kind: "review", label: "Jeda rate limit" };
+      if (batch.status === "paused_quota") return { icon: "fa-pause-circle", kind: "review", label: "Jeda kuota" };
+      if (batch.status === "running" || batch.status === "queued") return { icon: "fa-spinner fa-spin", kind: "running", label: "Memproses" };
+      return { icon: "fa-circle", kind: "unknown", label: batch.status || "Status" };
+    }
+
+    function countdownStatusDisplay(seconds) {
+      seconds = Math.max(0, Number(seconds || 0));
+      return seconds > 0
+        ? { icon: "fa-hourglass-half", kind: "pending", label: "Menunggu " + seconds.toLocaleString("id-ID") + "s" }
+        : { icon: "fa-spinner fa-spin", kind: "running", label: "Memproses" };
+    }
+
+    function batchDescription(batch, countdown) {
+      if (countdown) return countdownDescription(countdown.remaining_seconds);
+      if (batch.status === "running" || batch.status === "queued") {
+        return "Batch OCR berjalan di background. Sistem sedang memproses chunk atau menunggu jadwal scheduler berikutnya.";
+      }
+      return batch.last_message || "Status batch OCR diperbarui dari server.";
+    }
+
+    function countdownDescription(seconds) {
+      seconds = Math.max(0, Number(seconds || 0));
+      return seconds > 0
+        ? "Batch OCR berjalan di background. Menunggu " + seconds.toLocaleString("id-ID") + " detik sebelum scheduler memicu chunk berikutnya."
+        : "Scheduler sedang memproses chunk OCR berikutnya. Mohon tunggu; status akan diperbarui otomatis.";
     }
 
     function schedulerCountdown(batch) {
@@ -79,13 +124,6 @@
     function countdownAttrs(countdown) {
       if (!countdown) return "";
       return ' data-ocr-batch-countdown-until="' + utils.escapeAttr(String(countdown.until_ms)) + '" data-ocr-batch-waiting="true"';
-    }
-
-    function countdownLabel(seconds) {
-      seconds = Math.max(0, Number(seconds || 0));
-      return seconds > 0
-        ? "Menunggu trigger scheduler · " + seconds.toLocaleString("id-ID") + " detik lagi"
-        : "Jadwal scheduler sudah lewat. Menunggu status terbaru; klik Refresh atau Retry jika tidak berubah.";
     }
 
     function parseSchedulerDelaySeconds(message) {

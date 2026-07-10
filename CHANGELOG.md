@@ -4,6 +4,16 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-10 17:49 (Asia/Jakarta)
+### Added
+- `.context/session-20260710-1749.md`: Added this session continuity snapshot for scheduler-backed OCR execution and multi-provider OCR waves.
+
+### Changed
+- `functions/_ocr-job-runner.js`: Changed bounded OCR drains to run concurrent waves when multiple providers are active, rotating each job's first-choice provider while preserving existing fallback and pause-on-rate-limit behavior.
+- `js/dashboard-ocr.js`, `js/dashboard-ocr-state.js`, `js/dashboard-ocr-batches.js`, and `src/pages/dashboard/index.astro`: Changed `Jalankan OCR` to prefer a persisted server-side scheduler batch when a scheduler is active, kept browser continuous OCR only as a no-scheduler fallback with explicit warning copy, refreshed OCR state when a hidden/background tab becomes active again, and changed batch status chips/descriptions to show waiting/processing states without scary overdue copy.
+- `scripts/check-dashboard-ocr-client.mjs`: Extended the dashboard OCR regression check for scheduler-backed run creation and foreground refresh wiring.
+- `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Documented scheduler-backed OCR as the reliable long-run path, browser fallback limits, foreground refresh, and multi-provider bounded concurrency.
+
 ## 2026-07-10 13:03 (Asia/Jakarta)
 ### Added
 - `migrations/0027_ocr_run_leases.sql`: Added `ocr_run_leases` for short-lived dashboard continuous-OCR run ownership.

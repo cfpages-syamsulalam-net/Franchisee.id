@@ -81,6 +81,10 @@
       if (options.enqueueButton) options.enqueueButton.addEventListener("click", enqueueJobs);
       if (options.runButton) options.runButton.addEventListener("click", runJobs);
       if (options.retryFailedButton) options.retryFailedButton.addEventListener("click", retryFailedJobs);
+      window.addEventListener("focus", handleForegroundRefresh);
+      document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) handleForegroundRefresh();
+      });
     }
 
     function render(payload, jobsPayload, schedulerPayload) {
@@ -409,7 +413,7 @@
           ];
           var notices = [];
           if (state.activeProviderCount === 0) notices.push("Provider aktif: 0 — aktifkan provider OCR dulu.");
-          if (state.activeSchedulerCount === 0) notices.push("Scheduler aktif: 0 — batch 100 perlu dijalankan manual per chunk.");
+          if (state.activeSchedulerCount === 0) notices.push("Scheduler aktif: 0 — Jalankan OCR memakai fallback browser; biarkan tab tetap terbuka atau aktifkan scheduler agar proses lanjut di background.");
           if (payload.active_run_lease && !state.continuousRunActive) {
             notices.push("OCR beruntun aktif oleh " + (payload.active_run_lease.owner_label || "admin lain") + ".");
           }
@@ -471,6 +475,24 @@
       if (!activeCount && state.countdownTimer) {
         window.clearInterval(state.countdownTimer);
         state.countdownTimer = null;
+      }
+    }
+
+    async function handleForegroundRefresh() {
+      if (document.hidden || typeof options.reloadDashboard !== "function") return;
+      if (!isOcrPanelVisible()) return;
+      if (!state.continuousRunActive && !hasActiveBatch(state.lastJobsPayload || {})) return;
+      var now = Date.now();
+      if (now - Number(state.foregroundRefreshAt || 0) < 3000) return;
+      state.foregroundRefreshAt = now;
+      try {
+        await options.reloadDashboard();
+        if (state.jobFilterStatus) {
+          var offset = state.jobFilterMeta ? Number(state.jobFilterMeta.offset || 0) : 0;
+          await searchOcrJobs(state.jobFilterStatus, offset);
+        }
+      } catch (_error) {
+        options.setStatus("Status OCR belum bisa disinkronkan setelah tab aktif lagi. Klik Refresh jika angka belum berubah.", true);
       }
     }
 
@@ -840,6 +862,20 @@
         options.setStatus("Aktifkan minimal satu provider OCR dengan credential yang valid sebelum menjalankan OCR.", true);
         return;
       }
+      var scheduler = firstActiveScheduler();
+      if (scheduler) {
+        await buttonAction(options.runButton, "Menjadwalkan...", async function () {
+          var result = await options.postDashboardAction({
+            action: "start_ocr_batch_run",
+            target_count: 100,
+            scheduler_provider_key: scheduler.provider_key
+          });
+          var schedulerMessage = result.scheduler && result.scheduler.message ? " " + result.scheduler.message : "";
+          options.setStatus("Batch OCR background dibuat: " + Number(result.assigned_count || 0).toLocaleString("id-ID") + " job. Proses tetap berjalan walau tab/browser tidak aktif." + schedulerMessage, false);
+          await refreshAfterJobMutation();
+        }, options.setStatus);
+        return;
+      }
       if (state.continuousRunActive) {
         state.continuousRunStopRequested = true;
         options.setStatus("OCR beruntun akan dihentikan setelah chunk yang sedang berjalan selesai.", false);
@@ -852,7 +888,7 @@
       var totalEnqueued = 0;
       var chunkIndex = 0;
       try {
-        options.setStatus("Mengambil lease OCR beruntun...", false);
+        options.setStatus("Scheduler OCR belum aktif, jadi dashboard memakai fallback browser. Proses ini bisa melambat saat tab tidak aktif; aktifkan scheduler untuk eksekusi background penuh. Mengambil lease OCR beruntun...", false);
         var acquired = await options.postDashboardAction({
           action: "acquire_ocr_run_lease",
           source: "dashboard_continuous"

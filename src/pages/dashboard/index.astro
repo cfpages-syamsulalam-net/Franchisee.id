@@ -801,8 +801,8 @@ const ocrProviderMetadataJson = JSON.stringify({
                 </div>
                 <div class="dash-ocr-step-box">
                   <strong>Langkah aman:</strong>
-                  <span>1) Antrekan brosur gambar. 2) Klik Dry run untuk cek provider dan hasil. 3) Jika hasil masuk akal, klik Jalankan 100. Sistem membuat batch persisted lalu scheduler pihak ketiga memprosesnya sedikit demi sedikit. 4) Buka tab Hasil OCR lalu lanjut Review.</span>
-                  <span>Untuk batch otomatis, aktifkan Upstash QStash di subtab Pengaturan. Jika belum ada scheduler aktif, tombol batch tetap membuat antrean namun perlu dijalankan manual per chunk.</span>
+                  <span>1) Antrekan brosur gambar. 2) Klik Dry run untuk cek provider dan hasil. 3) Jika hasil masuk akal, klik Jalankan OCR. Jika scheduler aktif, sistem membuat batch background yang tetap berjalan walau tab/browser tidak aktif. 4) Buka tab Hasil OCR lalu lanjut Review.</span>
+                  <span>Untuk proses background penuh, aktifkan Upstash QStash di subtab Pengaturan. Jika belum ada scheduler aktif, dashboard memakai fallback browser sehingga tab sebaiknya tetap terbuka dan aktif.</span>
                 </div>
                 <div class="dash-toolbar dash-ocr-toolbar" role="toolbar" aria-label="Aksi OCR proposal">
                   <button class="dash-icon-button dash-action-button is-primary" type="button" data-ocr-dry-run data-fr-tooltip="Dry run adalah OCR sungguhan untuk satu aset saja. Dipakai untuk memastikan key provider, kuota, cache, dan hasil review bekerja sebelum batch besar.">
@@ -813,7 +813,7 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <i class="fas fa-list-ul" aria-hidden="true"></i>
                     <span>Antrekan 100</span>
                   </button>
-                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Menjalankan OCR beruntun dari dashboard dalam chunk kecil. Sistem tetap menghormati rate limit provider; klik lagi untuk stop setelah chunk aktif selesai.">
+                  <button class="dash-icon-button dash-action-button" type="button" data-ocr-run data-fr-tooltip="Jika scheduler aktif, Jalankan OCR membuat batch background server-side yang tetap jalan walau tab/browser tidak aktif. Jika belum, dashboard memproses chunk kecil dari browser; tab sebaiknya tetap aktif/terbuka.">
                     <i class="fas fa-play" aria-hidden="true"></i>
                     <span>Jalankan OCR</span>
                   </button>

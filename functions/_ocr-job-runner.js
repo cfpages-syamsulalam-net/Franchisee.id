@@ -516,12 +516,21 @@ export async function runOcrJobs(db, env, auth, options = {}) {
   const maxJobs = Math.min(Math.max(Number(options.maxJobs || 1), 1), MAX_RUN_LIMIT);
   const jobs = await claimPendingJobs(db, maxJobs, options.jobId, options.batchId);
   const processed = [];
-  for (const job of jobs) {
+  let claimedIndex = 0;
+  let providerCount = 0;
+  while (claimedIndex < jobs.length) {
     const providerState = await loadRunnableProviderState(db);
-    const result = await processJob(db, env, auth, job, providerState, options);
-    processed.push(result);
-    if (isPausedResult(result)) {
-      await releaseUnprocessedJobs(db, jobs.slice(processed.length), result.note);
+    providerCount = Math.max(providerCount, Number(providerState.providers?.length || 0));
+    const concurrency = concurrentOcrJobLimit(providerState, jobs.length - claimedIndex, options);
+    const wave = jobs.slice(claimedIndex, claimedIndex + concurrency);
+    const waveResults = concurrency > 1
+      ? await Promise.all(wave.map((job, index) => processJob(db, env, auth, job, rotateProviderState(providerState, index), options)))
+      : [await processJob(db, env, auth, wave[0], providerState, options)];
+    processed.push(...waveResults);
+    claimedIndex += wave.length;
+    const pause = waveResults.find(isPausedResult);
+    if (pause) {
+      await releaseUnprocessedJobs(db, jobs.slice(claimedIndex), pause.note);
       break;
     }
   }
@@ -530,8 +539,25 @@ export async function runOcrJobs(db, env, auth, options = {}) {
   return {
     processed_count: processed.filter((item) => !isPausedResult(item)).length,
     processed,
-    provider_count: processed.length ? Number(processed[processed.length - 1]?.provider_count || 0) : 0,
+    provider_count: processed.length ? Math.max(providerCount, Number(processed[processed.length - 1]?.provider_count || 0)) : providerCount,
     batch,
+  };
+}
+
+function concurrentOcrJobLimit(providerState, remainingJobs, options = {}) {
+  if (options.jobId) return 1;
+  const providers = Array.isArray(providerState?.providers) ? providerState.providers : [];
+  if (providers.length <= 1) return 1;
+  return Math.max(1, Math.min(Number(remainingJobs || 1), providers.length, MAX_RUN_LIMIT));
+}
+
+function rotateProviderState(providerState, offset) {
+  const providers = Array.isArray(providerState?.providers) ? providerState.providers : [];
+  if (providers.length <= 1) return providerState;
+  const start = Math.abs(Number(offset || 0)) % providers.length;
+  return {
+    ...providerState,
+    providers: providers.slice(start).concat(providers.slice(0, start)),
   };
 }
 

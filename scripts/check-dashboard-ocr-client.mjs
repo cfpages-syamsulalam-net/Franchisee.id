@@ -52,6 +52,9 @@ const requiredFragments = [
   "release_ocr_run_lease",
   "continuousRunLeaseId",
   "lease_id",
+  "start_ocr_batch_run",
+  "Proses tetap berjalan walau tab/browser tidak aktif",
+  "handleForegroundRefresh",
 ];
 
 for (const fragment of requiredFragments) {
