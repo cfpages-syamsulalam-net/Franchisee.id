@@ -10,6 +10,7 @@
     "import:csv:remote": "tsx scripts/import-csv-to-d1.ts --out .context/d1-import-franchise-data.sql --apply-remote --account franchise-network",
     "build:d1:franchises:dry": "tsx scripts/build-d1-franchise-pages.ts --dry-run",
     "build:d1:franchises": "tsx scripts/build-d1-franchise-pages.ts",
+    "build:d1:franchises:bridge": "tsx scripts/build-d1-franchise-pages.ts --write-bridge-pages",
     "astro:sync": "pnpm run build:d1:franchises",
     "build": "pnpm run build:astro",
     "build:astro": "pnpm run astro:sync && astro build && pnpm run copy:legacy-static",

@@ -412,11 +412,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - D1 row validation uses `D1FranchiseRowSchema` from `src/lib/shared-schemas.ts` so build-time and Astro snapshot rendering share the same row contract.
 - `fetchRowsFromD1Http(sql, token)`: Build-safe D1 query path for Cloudflare Pages and CI. Uses `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` when set, with current project defaults.
 - `fetchRowsFromD1Wrangler(sql, options)`: Local fallback path that runs `pnpm exec wrangler d1 execute` with a cfman token.
-- `buildListingIndex(rows, template, previousManifest, nextManifest, options, stats)`: Renders `/peluang-usaha/index.html` from D1 data and skips unchanged output by manifest hash.
+- `buildListingIndex(rows, template, previousManifest, nextManifest, options, stats)`: Renders `/peluang-usaha/index.html` from D1 data only during dry-run validation or explicit bridge-write mode, and skips unchanged output by manifest hash when bridge writing is enabled.
 - `buildUnclaimedJson(rows, options, stats)`: Regenerates `json/unclaimed-brands.json` from D1 unclaimed rows for claim search.
 - Snapshot behavior: non-dry runs write `json/d1-franchise-static-data.json`, which Astro consumes for static route generation.
-- Detail output behavior: writes flat `/peluang-usaha/[slug].html` files while generated links remain extensionless `/peluang-usaha/[slug]`.
-- Manifest behavior: `json/d1-generated-pages-manifest.json` tracks D1-owned pages; prune only removes tracked files that still contain the D1 marker, including old marker-owned folder indexes when paths change.
+- Default output behavior: normal `pnpm run build:d1:franchises` does not write root `/peluang-usaha/*.html` bridge files or `json/d1-generated-pages-manifest.json`; Astro owns deployable franchise pages in `dist`.
+- Bridge output behavior: `--write-bridge-pages` / `pnpm run build:d1:franchises:bridge` writes flat `/peluang-usaha/[slug].html` files while generated links remain extensionless `/peluang-usaha/[slug]`.
+- Manifest behavior: in explicit bridge-write mode, `json/d1-generated-pages-manifest.json` tracks D1-owned pages; prune only removes tracked files that still contain the D1 marker, including old marker-owned folder indexes when paths change.
 - Wrangler fallback uses project-pinned `pnpm exec wrangler` so the script does not resolve a newer Node-22-only Wrangler version under Node 20.
 
 ### File: `scripts/d1-page-renderer.ts`

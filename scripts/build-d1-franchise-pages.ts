@@ -49,6 +49,7 @@ interface BuildOptions {
   account: string;
   dryRun: boolean;
   prune: boolean;
+  writeBridgePages: boolean;
   limit: number | null;
   fromJson: string;
 }
@@ -67,9 +68,10 @@ async function main() {
   const options = parseArgs(process.argv.slice(2));
   const rows = options.fromJson ? loadRowsFromJson(options.fromJson) : await fetchRowsFromD1(options);
   const franchises = options.limit ? rows.slice(0, options.limit) : rows;
-  const previousManifest = loadManifest();
-  const template = readFileSync(DETAIL_TEMPLATE_PATH, "utf8");
-  const listingTemplate = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
+  const shouldRenderBridgePages = options.writeBridgePages || options.dryRun;
+  const previousManifest = shouldRenderBridgePages ? loadManifest() : null;
+  const template = shouldRenderBridgePages ? readFileSync(DETAIL_TEMPLATE_PATH, "utf8") : "";
+  const listingTemplate = shouldRenderBridgePages ? readFileSync(LISTING_TEMPLATE_PATH, "utf8") : "";
 
   const now = new Date().toISOString();
   const nextManifest: Manifest = {
@@ -90,43 +92,47 @@ async function main() {
   };
 
   ensureDir(JSON_DIR);
-  ensureDir(OUTPUT_DIR);
+  if (shouldRenderBridgePages) ensureDir(OUTPUT_DIR);
 
   const sorted = [...franchises].sort(compareFranchises);
-  buildListingIndex(sorted, listingTemplate, previousManifest, nextManifest, options, stats);
+  if (shouldRenderBridgePages) {
+    buildListingIndex(sorted, listingTemplate, previousManifest, nextManifest, options, stats);
+  }
   buildUnclaimedJson(sorted, options, stats);
 
   const currentSlugs = new Set<string>();
-  for (const row of sorted) {
-    currentSlugs.add(row.slug);
-    const html = renderDetailPage(row, template);
-    const hash = sha256(html);
-    const pagePath = join(OUTPUT_DIR, `${row.slug}.html`);
-    const relativePath = toRepoPath(pagePath);
-    const previous = previousManifest?.pages[row.slug];
+  if (shouldRenderBridgePages) {
+    for (const row of sorted) {
+      currentSlugs.add(row.slug);
+      const html = renderDetailPage(row, template);
+      const hash = sha256(html);
+      const pagePath = join(OUTPUT_DIR, `${row.slug}.html`);
+      const relativePath = toRepoPath(pagePath);
+      const previous = previousManifest?.pages[row.slug];
 
-    nextManifest.pages[row.slug] = {
-      franchise_id: row.id,
-      slug: row.slug,
-      path: relativePath,
-      hash,
-      data_hash: sha256(stableJson(row)),
-      generated_at: now,
-    };
+      nextManifest.pages[row.slug] = {
+        franchise_id: row.id,
+        slug: row.slug,
+        path: relativePath,
+        hash,
+        data_hash: sha256(stableJson(row)),
+        generated_at: now,
+      };
 
-    if (previous?.hash === hash && existsSync(pagePath)) {
-      stats.detailSkipped++;
-      continue;
-    }
+      if (previous?.hash === hash && existsSync(pagePath)) {
+        stats.detailSkipped++;
+        continue;
+      }
 
-    stats.detailWritten++;
-    if (!options.dryRun) {
-      ensureDir(dirname(pagePath));
-      writeFileSync(pagePath, html, "utf8");
+      stats.detailWritten++;
+      if (!options.dryRun && options.writeBridgePages) {
+        ensureDir(dirname(pagePath));
+        writeFileSync(pagePath, html, "utf8");
+      }
     }
   }
 
-  if (options.prune && previousManifest) {
+  if (options.writeBridgePages && options.prune && previousManifest) {
     for (const [slug, page] of Object.entries(previousManifest.pages)) {
       const nextPage = nextManifest.pages[slug];
       if (currentSlugs.has(slug) && nextPage?.path === page.path) continue;
@@ -144,7 +150,9 @@ async function main() {
 
   if (!options.dryRun) {
     writeFileSync(STATIC_DATA_PATH, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
-    writeFileSync(MANIFEST_PATH, `${JSON.stringify(nextManifest, null, 2)}\n`, "utf8");
+    if (options.writeBridgePages) {
+      writeFileSync(MANIFEST_PATH, `${JSON.stringify(nextManifest, null, 2)}\n`, "utf8");
+    }
   }
 
   printStats(stats, options);
@@ -155,6 +163,7 @@ function parseArgs(args: string[]): BuildOptions {
     account: DEFAULT_ACCOUNT,
     dryRun: false,
     prune: true,
+    writeBridgePages: false,
     limit: null,
     fromJson: "",
   };
@@ -163,6 +172,7 @@ function parseArgs(args: string[]): BuildOptions {
     const arg = args[i];
     if (arg === "--dry-run") options.dryRun = true;
     else if (arg === "--no-prune") options.prune = false;
+    else if (arg === "--write-bridge-pages") options.writeBridgePages = true;
     else if (arg === "--account") options.account = args[++i] || DEFAULT_ACCOUNT;
     else if (arg === "--limit") options.limit = Number.parseInt(args[++i] || "", 10);
     else if (arg === "--from-json") options.fromJson = args[++i] || "";
@@ -188,6 +198,8 @@ function printHelp() {
 
 Options:
   --dry-run           Query/parse/render without writing files
+  --write-bridge-pages
+                      Also write legacy root /peluang-usaha/*.html bridge files and manifest
   --no-prune          Do not delete previously D1-generated pages missing from D1
   --account <alias>   cfman account alias, defaults to franchise-network
   --limit <number>    Render only the first N D1 rows
@@ -394,6 +406,7 @@ function toRepoPath(filePath: string) {
 function printStats(stats: BuildStats, options: BuildOptions) {
   console.log("D1 franchise page build:");
   console.log(`- fetched=${stats.fetched}`);
+  console.log(`- bridge_pages=${options.writeBridgePages ? "written" : options.dryRun ? "validated_dry_run" : "disabled"}`);
   console.log(`- detail_written=${stats.detailWritten}`);
   console.log(`- detail_skipped=${stats.detailSkipped}`);
   console.log(`- detail_pruned=${stats.detailPruned}`);
