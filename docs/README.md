@@ -15,6 +15,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: low-friction defaults and public-display rules for Indonesian vs overseas franchisor origin/target-market metadata.
 - `docs/architecture/OCR_PROVIDER_STRATEGY.md`: ranked OCR free-tier providers, quota-aware rotation policy, encrypted dashboard credentials, admin-triggered OCR job integration, and protected worker/backfill controls.
 - `docs/architecture/OCR_BATCH_SCHEDULING.md`: scheduler/cron provider ranking and recommended persisted-batch design for draining up to 100 OCR jobs with delay/rate limiting.
+- `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: OCR result sampling, AI extraction/review plan, supplemental insight data model, and dynamic public listing tab recommendations.
 - `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: listing detail page compactness, claim CTA, and Cloudflare Pages Function request-limit tracker.
@@ -34,6 +35,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/INTERNATIONAL_FRANCHISOR_POLICY.md`: default Indonesia behavior, non-Indonesia form expansion, flag display rules, and legacy origin/target backfill policy.
 - `docs/architecture/OCR_PROVIDER_STRATEGY.md`: official free-limit research, provider ranking, failover guardrails, admin-managed OCR configuration contract, job/cache execution model, and protected worker setup.
 - `docs/architecture/OCR_BATCH_SCHEDULING.md`: official scheduler free-tier research, provider ranking, and batch-run architecture for one-click OCR backfills up to 100 jobs.
+- `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: plan for converting OCR/proposal text into reviewed listing fields, supplemental insight records, and optional public listing tabs.
 - `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: premium network membership, `/premium` page, manual payment operations, conversion tracking, payment confirmation, traffic growth, and renewal roadmap.
 - `docs/architecture/RESEND_EMAIL_DELIVERY.md`: Resend/Cloudflare Pages email delivery setup for queued Premium emails, reports, and reminders.
 
@@ -44,6 +46,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/forms/FORM_VALIDATION_FIXES.md`: form validation and formatting behavior.
 - `docs/forms/FORM_UX_FIXES.md`: form UX fixes and debug notes.
 - `docs/forms/franchise-info-form.md`: detailed franchise listing form UX/data specification.
+- `docs/forms/FRANCHISOR_PROGRESSIVE_FORM_PLAN.md`: current franchisor form audit, priority canonical field additions, and progressive multi-step question plan.
 
 ## Testing And Debugging
 - `docs/testing/DEBUGGING.md`: personal `/daftar?dev=1` and cache debugging workflow.

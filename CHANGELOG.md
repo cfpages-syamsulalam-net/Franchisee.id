@@ -4,15 +4,25 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-11 00:10 (Asia/Jakarta)
+### Added
+- `.context/session-20260711-0010.md`: Added this session continuity snapshot for the franchisor progressive form and canonical field planning work.
+- `docs/forms/FRANCHISOR_PROGRESSIVE_FORM_PLAN.md`: Added a current-state audit and implementation plan for restoring backend-supported franchisor fields, adding priority canonical fields, and making the 5-step form progressive.
+
+### Changed
+- `AUDIT.md`, `docs/README.md`, `SUGGESTION.md`, and `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Documented the current active `/daftar` franchisor form mismatch, linked the progressive form plan, and added suggestion 83 for restoring existing supported fields before implementing new canonical fields.
+
 ## 2026-07-10 17:49 (Asia/Jakarta)
 ### Added
 - `.context/session-20260710-1749.md`: Added this session continuity snapshot for scheduler-backed OCR execution and multi-provider OCR waves.
+- `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Added a data-backed plan for turning OCR/proposal text into reviewed listing fields, supplemental proposal insights, and optional public listing tabs.
 - `functions/_ocr-job-actions.js`: Added a focused admin OCR job-action module for row retry, failed-batch retry, and manual no-text resolution.
 - `functions/_ocr-job-claiming.js`: Added a focused OCR pending-job claiming/release helper shared by the runner and job actions.
 - `js/dashboard-ocr-worker.js`: Added a focused dashboard OCR worker-cap renderer and reset-countdown helper.
 
 ### Changed
 - `functions/_ocr-job-runner.js` and `functions/dashboard-data.js`: Split OCR retry/no-text dashboard actions and pending-job claiming/release helpers out of the runner so the runner stays focused on provider execution, cache writes, batch refreshes, and proposal knowledge persistence.
+- `AUDIT.md`, `docs/README.md`, `SUGGESTION.md`, and `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Documented the OCR listing enrichment milestone after sampling remote OCR results, added suggestion 82 for AI-assisted proposal insight extraction, and clarified the canonical-field decision rule plus progressive-disclosure franchisor form strategy.
 - `functions/_ocr-job-runner.js`: Changed bounded OCR drains to run concurrent waves when multiple providers are active, rotating each job's first-choice provider while preserving existing fallback and pause-on-rate-limit behavior.
 - `functions/_ocr-job-runner.js`, `functions/dashboard-data.js`, `js/dashboard-ocr.js`, and `css/dashboard-ocr.css`: Added OCR worker cap/usage/remaining/reset visibility in the dashboard OCR execution panel and clarified provider-quota exhaustion copy to suggest activating another provider or waiting for quota reset.
 - `functions/ocr-worker.js`: Raised the default OCR worker daily cap from 25 to 100 counted units and changed worker-cap exhaustion to mark scoped batches `paused_quota` with an actionable message instead of letting them become overdue scheduler failures.

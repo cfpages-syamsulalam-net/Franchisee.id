@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-10 12:50 (Asia/Jakarta)
+Last updated: 2026-07-10 23:45 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -32,6 +32,7 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 - `src/lib/franchise-detail-assets.ts` has grown into a large mixed CSS/JS injection module. It is stable enough for the current production fixes, but should be split before the next major listing-detail feature pass.
 - OCR operations now include provider config, encrypted scheduler config, batch-run orchestration, and worker draining. The first maintainability split is done: batch-run orchestration lives in `_ocr-batch-runs.js`, scheduler browser metadata lives in `dashboard-ocr-schedulers.js`, and the remaining runner/client modules should be split further only before adding deeper provider adapters or richer batch controls.
 - OCR execution UX audit: OCR execution must not depend on an active browser tab. The main dashboard run CTA now prefers the persisted server-side scheduler batch when a scheduler is active, with the visible continuous dashboard loop kept only as a no-scheduler fallback that clearly warns admins to keep the tab open.
+- OCR result sampling shows the extracted brochure text is rich enough for AI-assisted listing enrichment. The next product/data milestone is converting per-franchise OCR text into reviewed canonical field suggestions plus supplemental proposal insights for dynamic public tabs. See `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`.
 
 ## Refactor Candidates - 2026-07-08
 
@@ -55,6 +56,19 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 | Multiple active OCR providers should increase throughput instead of only acting as a serial fallback. | Run bounded waves across active providers by rotating the first-choice provider per claimed job, while preserving the existing provider fallback and pause-on-rate-limit behavior. | Implemented |
 | Per-row OCR retry is easier to trust than broad batch retry. | Keep row-level OCR action as immediate run for one failed/needs-review job. Do not show retry by default for final `no_text` rows; they are already resolved. | Implemented |
 | Continuous dashboard OCR can be clicked from two admin tabs. | Add a short-lived D1-backed run lease. Continuous runs acquire the lease before chunking, refresh it through `run_ocr_jobs`, release it on completion/stop/error, and show the active owner if another tab/admin is running. | Implemented with migration `0027_ocr_run_leases.sql` |
+
+## OCR Listing Enrichment Audit - 2026-07-10
+
+Source: read-only remote D1 sampling of `franchise_asset_knowledge` after OCR jobs had extracted 164 rows across 19 franchises. Dense samples included Gorillaz, Coolio Barbershop, NEC, Hydrophobic Lab, and Codero.
+
+| Finding | Decision / implementation direction | Status |
+| --- | --- | --- |
+| OCR text now contains more than basic profile copy: package prices, include/exclude lists, projections, BEP/profit/royalty notes, location requirements, staffing, support/training, legal/company facts, proof/testimonials, and product/program lists. | Treat OCR as a source for structured listing enrichment, not just a text preview. Keep raw OCR separate from public display until reviewed. | Planned |
+| Existing `franchises` columns can absorb many canonical facts, but brochure content also contains repeatable/section-specific data that does not fit one listing row. | Use canonical `listing_edit_suggestions` for existing fields, and add a supplemental `franchise_proposal_insights` table for reviewable package/projection/operational/support/product/legal/proof insights. | Planned |
+| Extra canonical fields are useful, but too many first-step form questions would reduce franchisor completion. | Add canonical fields only for common, stable, comparable facts used by UI/filtering/comparison. Keep repeatable package/scenario/support/legal/proof data as supplemental insights. Use progressive disclosure in the franchisor form so follow-up questions appear only when the owner engages with the related baseline section or uploads a brochure that can be prefilled. | Planned |
+| Current active `/daftar` franchisor markup is much slimmer than the preservation/schema docs and backend contract: only minimum capital/royalty are visible in the cost step, only full description is visible in the profile step, and only logo URL is visible in the media step. | Before adding new canonical field UI, restore missing existing supported fields into a progressive 5-step form, then add optional priority canonical fields (`min_area_sqm`, `min_staff_count`, `setup_duration_days`, `working_capital_idr`, `additional_cost_notes`, BEP/omzet/profit ranges). Detailed plan: `docs/forms/FRANCHISOR_PROGRESSIVE_FORM_PLAN.md`. | Planned |
+| Public tabs should not become cluttered or empty. | Render optional dynamic tabs only when approved content exists. Recommended first tabs: `Paket & Investasi`, richer `Proyeksi`, `Syarat Lokasi & Operasional`, `Dukungan Mitra`, `Produk/Layanan`, and conservative `Legal & Bukti`. | Planned |
+| Deterministic extraction is too shallow for dense brochures. | Add an AI extraction job that groups all OCR pages for one franchise, returns strict JSON with source page/excerpt/confidence, validates with Zod, and stores pending-review candidates. Do not let AI directly overwrite canonical listing data. | Planned |
 
 ## UX Actionability Audit - 2026-06-28
 
