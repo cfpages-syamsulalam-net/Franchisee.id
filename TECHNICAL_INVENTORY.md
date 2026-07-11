@@ -295,8 +295,20 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Owns the Premium Operations grid, payment/settings forms, QRIS preview, and Premium-specific responsive behavior.
 
 ### File: `css/dashboard-ocr.css`
-*Dashboard OCR stylesheet module.*
-- Owns OCR guide cards, provider credential/status UI, scheduler credential UI, provider toggle/error/copy controls, job toolbar, persisted batch progress rows with structured scheduler-ETA countdown chips, icon-led job rows including needs-review/no-text status styling, OCR result search controls, compact franchise-grouped OCR result cards with page controls/actions, responsive two-column result-card layout, and OCR-specific responsive rules.
+*Dashboard OCR shell stylesheet module.*
+- Kept as the stable OCR tab base include. Detailed settings, execution, and results rules now live in the focused OCR CSS modules loaded after it.
+
+### File: `css/dashboard-ocr-settings.css`
+*Dashboard OCR settings stylesheet module.*
+- Owns OCR guide cards, provider/scheduler credential form layout, provider metadata, stored credential badges, provider toggle/error/copy controls, and settings responsive behavior.
+
+### File: `css/dashboard-ocr-execution.css`
+*Dashboard OCR execution stylesheet module.*
+- Owns execution toolbar/status, combined quota chip, job filters/page-size controls, grouped job cards, job status/error/actions, batch progress/countdown/actions, lazy hover image-preview overlay styling, and execution responsive behavior.
+
+### File: `css/dashboard-ocr-results.css`
+*Dashboard OCR results stylesheet module.*
+- Owns Hasil OCR search/filter controls, compact franchise result cards, per-page pager controls, OCR text preview blocks, result action links, and results responsive behavior.
 
 ### File: `js/dashboard-premium-operations.js`
 *Premium Operations client module for `/dashboard`.*
@@ -351,6 +363,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Dashboard OCR job renderer.*
 - `window.FranchiseDashboardOcrJobs.createRenderer(deps)`: Creates pure render helpers for OCR job status chips including default `Semua`, paginated job filter headings, grouped franchise job cards, and per-job source/result/retry/no-text actions. The `Tanpa teks` confirmation action appears for both failed and needs-review rows so low/no-text pages can be resolved after visual review.
 - `groupJobsByFranchise(jobs)` / `renderJobPagination(payload)`: Compact server-filtered job rows into franchise groups and show Prev/Next pagination for status-specific job lists.
+- `bindImagePreview(root)` / `hideImagePreview(root)`: Adds delegated hover/focus preview for job `Gambar` actions with a 180ms delay, one reusable fixed preview element, requestAnimationFrame positioning, lazy `src` assignment, and cleanup on pointerout, focusout, scroll, resize, hidden tab, or row re-render.
 
 ### File: `js/dashboard-ocr-batches.js`
 *Dashboard OCR batch renderer and countdown helper.*
@@ -629,7 +642,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `scripts/check-dashboard-ocr-client.mjs`
 *Focused dashboard OCR browser-module regression check.*
-- `pnpm run dashboard:ocr:check`: Runs `node --check` only on the browser/non-module OCR client modules and asserts provider/state/worker renderer modules, provider toggle, retry actions, job filter/pagination, and no-active-provider disabled-state wiring remain present.
+- `pnpm run dashboard:ocr:check`: Runs `node --check` only on the browser/non-module OCR client modules and asserts provider/state/worker renderer modules, provider toggle, retry actions, job filter/pagination, hover image-preview wiring, and no-active-provider disabled-state wiring remain present.
 
 ### File: `js/product-events.js`
 *Public privacy-safe listing interaction tracker.*

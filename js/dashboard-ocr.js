@@ -75,7 +75,10 @@
       if (options.providerList) options.providerList.addEventListener("click", handleProviderListClick);
       if (options.jobStatus) options.jobStatus.addEventListener("click", handleJobStatusClick);
       if (options.jobLimitSelect) options.jobLimitSelect.addEventListener("change", handleJobLimitChange);
-      if (options.jobRows) options.jobRows.addEventListener("click", handleJobRowsClick);
+      if (options.jobRows) {
+        options.jobRows.addEventListener("click", handleJobRowsClick);
+        if (jobRenderers && typeof jobRenderers.bindImagePreview === "function") jobRenderers.bindImagePreview(options.jobRows);
+      }
       if (options.batchRows) options.batchRows.addEventListener("click", handleBatchRowsClick);
       if (options.resultRows) options.resultRows.addEventListener("click", handleResultClick);
       if (options.resultFilterForm) options.resultFilterForm.addEventListener("submit", submitResultSearch);
@@ -427,6 +430,7 @@
         }
       }
       if (!options.jobRows) return;
+      if (jobRenderers && typeof jobRenderers.hideImagePreview === "function") jobRenderers.hideImagePreview(options.jobRows);
       if (payload.migration_required) {
         options.jobRows.innerHTML = '<li><strong>Queue belum aktif</strong><span>Migration OCR job queue perlu dijalankan sebelum batch OCR dipakai.</span></li>';
         return;

@@ -1,0 +1,228 @@
+.dash-panel-grid.ocr-settings-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.dash-ocr-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 14px;
+}
+.dash-ocr-guide-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid rgba(17, 24, 39, 0.1);
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 13px 14px;
+}
+.dash-ocr-guide-card i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #fff4c2;
+  color: var(--dash-ink);
+}
+.dash-ocr-guide-card strong {
+  color: var(--dash-ink);
+  font-size: 13px;
+}
+.dash-ocr-guide-card span {
+  color: var(--dash-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.dash-ocr-form {
+  align-items: start;
+  gap: 14px;
+}
+
+.dash-ocr-provider-meta,
+.dash-credential-summary {
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid rgba(17, 24, 39, 0.1);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #ffffff;
+  color: var(--dash-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.dash-ocr-autosave-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--dash-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.dash-ocr-active-row span {
+  display: grid;
+  gap: 2px;
+}
+.dash-ocr-active-row strong {
+  color: var(--dash-ink);
+}
+.dash-ocr-active-row small {
+  font-weight: 600;
+}
+.dash-ocr-form.is-provider-disabled {
+  background: #f9fafb;
+}
+.dash-ocr-provider-error {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  margin-top: 10px;
+  border: 1px solid #f0c6c6;
+  border-radius: 12px;
+  background: #fff4f4;
+  padding: 9px 10px;
+  color: var(--dash-bad);
+}
+.dash-ocr-provider-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+.dash-ocr-provider-toggle {
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+.dash-ocr-provider-toggle.is-active {
+  border-color: #cde8da;
+  background: #eefaf3;
+  color: var(--dash-good);
+}
+.dash-ocr-provider-toggle span {
+  display: inline-block;
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+}
+.dash-ocr-provider-error strong {
+  margin-bottom: 4px;
+  color: var(--dash-bad);
+}
+.dash-ocr-provider-error code {
+  display: block;
+  max-height: 86px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #8b1f1f;
+  font: 12px/1.45 Consolas, "Courier New", monospace;
+}
+.dash-ocr-copy-error {
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 34px;
+  border-color: #f0c6c6;
+  color: var(--dash-bad);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+.dash-ocr-copy-error i {
+  font-size: 14px;
+}
+.dash-ocr-provider-meta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: #f8fafc;
+}
+.dash-ocr-provider-meta span,
+.dash-credential-summary span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dash-ocr-provider-meta strong,
+.dash-credential-summary strong {
+  display: block;
+  color: var(--dash-ink);
+  font-weight: 900;
+}
+
+.dash-field-label-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+}
+.dash-credential-badge {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: #f3f4f6;
+  color: var(--dash-muted);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+.dash-credential-badge.is-set {
+  background: #e8f7ef;
+  color: var(--dash-good);
+}
+.dash-credential-badge.is-set i {
+  color: var(--dash-good);
+}
+.dash-credential-badge:empty {
+  display: none;
+}
+.dash-ocr-form small {
+  color: var(--dash-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+
+@media (max-width: 980px) {
+  .dash-panel-grid.ocr-settings-grid,
+  .dash-ocr-guide-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .dash-panel-grid.ocr-settings-grid > .dash-panel:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .dash-panel-grid.ocr-settings-grid,
+  .dash-ocr-guide-grid {
+    display: block;
+  }
+  .dash-ocr-guide-card {
+    margin-bottom: 10px;
+  }
+  .dash-ocr-provider-error {
+    grid-template-columns: 1fr;
+  }
+  .dash-ocr-provider-row {
+    grid-template-columns: 1fr;
+  }
+  .dash-ocr-provider-toggle {
+    width: fit-content;
+  }
+  .dash-ocr-provider-meta {
+    grid-template-columns: 1fr;
+  }
+}

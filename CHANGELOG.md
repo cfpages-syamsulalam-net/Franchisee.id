@@ -15,6 +15,7 @@ Format:
 - `migrations/0028_franchisor_progressive_fields.sql`: Added nullable D1 franchise columns for minimum area, staff count, setup duration, working capital, additional cost notes, BEP min/max, omzet min/max, and net-profit min/max.
 - `migrations/0029_ocr_provider_actual_limits.sql`: Added D1 calibration updates for OCR provider free quota, quota period/unit, and local request-window guards based on current provider documentation and account-specific caveats.
 - `functions/_ocr-quota-policy.js`: Added a focused OCR quota/cap policy module for combined active-provider quota, reset-aware provider re-entry, provider quota preparation, and quota increment statements.
+- `css/dashboard-ocr-settings.css`, `css/dashboard-ocr-execution.css`, and `css/dashboard-ocr-results.css`: Added focused OCR dashboard stylesheets for settings, execution/job, and results UI while preserving existing selectors and responsive behavior.
 - `js/form-10-progressive-franchisor.js`: Added the progressive franchisor form helper for conditional follow-up groups, total-investment syncing, and support-system checkbox syncing.
 
 ### Changed
@@ -36,10 +37,13 @@ Format:
 - `src/lib/ocr-provider-metadata.js` and `functions/_ocr-provider-config.js`: Added source-linked OCR provider limit metadata so dashboard provider reads can show detailed official/account-specific quota notes without returning credentials.
 - `functions/_ocr-job-runner.js` and `functions/ocr-worker.js`: Replaced the hardcoded 100-unit OCR worker cap with combined active-provider quota calculation, preserved individual provider quota checks before assignment, allowed resettable exhausted providers to re-enter rotation after reset, kept `OCR_WORKER_DAILY_CAP` as an optional safety cap only, and then extracted quota/cap policy out of the runner into `_ocr-quota-policy.js`.
 - `js/dashboard-ocr-providers.js` and `js/dashboard-ocr-worker.js`: Changed dashboard OCR quota UI to show per-provider remaining quota, official limit details/source links, combined active-provider capacity, account-specific provider counts, and safety-cap context.
+- `js/dashboard-ocr-jobs.js`, `js/dashboard-ocr.js`, and `css/dashboard-ocr.css`: Added lazy hover/focus image preview for OCR job `Gambar` actions using one reusable body-level preview element, a short hover delay, requestAnimationFrame positioning, and cleanup on pointerout, focusout, scroll, resize, tab hide, or row re-render.
+- `css/dashboard-ocr.css`, `src/pages/dashboard/index.astro`, and `scripts/check-dashboard-ocr-client.mjs`: Kept the original OCR stylesheet as a stable shell include, loaded the new OCR CSS modules after it, and expanded the dashboard OCR client check to verify the module load-order fragments.
 - `scripts/check-ocr-job-runner.ts`: Added regression coverage that combined OCR capacity sums active providers with known limits while reporting account-specific providers separately.
+- `scripts/check-dashboard-ocr-client.mjs`: Added regression fragments for OCR job image hover-preview wiring.
 - `docs/architecture/OCR_PROVIDER_STRATEGY.md` and `docs/architecture/OCR_BATCH_SCHEDULING.md`: Updated OCR limit strategy and scheduling docs to remove the stale 100/day worker default and document combined provider quota behavior.
 - `AGENTS.md`: Added the working rule to auto-detect long touched/related files each implementation session and record refactor findings/plans in `AUDIT.md`.
-- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented OCR provider limit calibration, combined quota behavior, and marked suggestion 85 done after extracting OCR quota policy from the long runner file.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented OCR provider limit calibration, combined quota behavior, OCR job image hover preview, marked suggestion 85 done after extracting OCR quota policy from the long runner file, and marked suggestion 86 done after splitting the OCR dashboard CSS modules.
 - Remote D1 `franchise_db`: Applied migration `0029_ocr_provider_actual_limits.sql` and verified OCR.Space is now configured as 500 daily requests with a 180/hour local guard while account-specific providers are excluded from known combined quota.
 
 ## 2026-07-10 17:49 (Asia/Jakarta)

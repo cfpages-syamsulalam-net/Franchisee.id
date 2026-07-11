@@ -79,7 +79,7 @@
     function renderJobItem(job) {
       var page = job.page_number ? "Hal. " + Number(job.page_number).toLocaleString("id-ID") : "Hal. proposal";
       var provider = job.provider_key || (job.status === "unqueued" ? "belum antre" : job.status === "no_text" ? "sudah dicek admin" : "belum ada provider");
-      var imageLink = job.source_url ? deps.renderJobActionLink(job.source_url, "fa-image", "Gambar", "Buka gambar halaman brosur yang dikirim ke OCR.", true) : "";
+      var imageLink = job.source_url ? renderImagePreviewLink(job) : "";
       var resultLink = job.status === "succeeded"
         ? deps.renderJobResultAction(job.asset_id)
         : "";
@@ -105,13 +105,166 @@
         '</article>';
     }
 
+    function renderImagePreviewLink(job) {
+      var label = job.page_number ? "Hal. " + Number(job.page_number).toLocaleString("id-ID") : "halaman proposal";
+      var alt = (job.brand_name || "Proposal") + " - " + label;
+      return '<a class="dash-ocr-row-action dash-ocr-image-action" href="' + utils.escapeAttr(job.source_url) + '" target="_blank" rel="noopener" data-ocr-image-preview-url="' + utils.escapeAttr(job.source_url) + '" data-ocr-image-preview-alt="' + utils.escapeAttr(alt) + '" data-fr-tooltip="Hover untuk lihat gambar cepat. Klik untuk membuka gambar di tab baru.">' +
+        '<i class="fas fa-image" aria-hidden="true"></i><span>Gambar</span></a>';
+    }
+
+    function bindImagePreview(root) {
+      if (!root || root.__dashOcrImagePreviewBound) return;
+      root.__dashOcrImagePreviewBound = true;
+      var state = {
+        trigger: null,
+        url: "",
+        timer: 0,
+        frame: 0,
+        preview: null,
+        image: null,
+        status: null
+      };
+
+      root.addEventListener("pointerover", function (event) {
+        var trigger = previewTrigger(event.target);
+        if (!trigger) return;
+        schedulePreview(state, trigger);
+      });
+      root.addEventListener("pointerout", function (event) {
+        var trigger = previewTrigger(event.target);
+        if (!trigger) return;
+        if (event.relatedTarget && trigger.contains(event.relatedTarget)) return;
+        hidePreview(state);
+      });
+      root.addEventListener("focusin", function (event) {
+        var trigger = previewTrigger(event.target);
+        if (trigger) schedulePreview(state, trigger);
+      });
+      root.addEventListener("focusout", function (event) {
+        var trigger = previewTrigger(event.target);
+        if (!trigger) return;
+        if (event.relatedTarget && trigger.contains(event.relatedTarget)) return;
+        hidePreview(state);
+      });
+      root.addEventListener("pointermove", function (event) {
+        if (!state.trigger) return;
+        if (state.frame) return;
+        state.frame = window.requestAnimationFrame(function () {
+          state.frame = 0;
+          positionPreview(state, event.clientX, event.clientY);
+        });
+      });
+      window.addEventListener("scroll", function () { hidePreview(state); }, { passive: true });
+      window.addEventListener("resize", function () { hidePreview(state); });
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) hidePreview(state);
+      });
+      root.__dashOcrImagePreviewHide = function () { hidePreview(state); };
+    }
+
+    function hideBoundImagePreview(root) {
+      if (root && typeof root.__dashOcrImagePreviewHide === "function") root.__dashOcrImagePreviewHide();
+    }
+
+    function previewTrigger(target) {
+      return target && target.closest ? target.closest("[data-ocr-image-preview-url]") : null;
+    }
+
+    function schedulePreview(state, trigger) {
+      if (state.trigger === trigger) return;
+      clearPreviewTimer(state);
+      state.trigger = trigger;
+      state.timer = window.setTimeout(function () {
+        showPreview(state, trigger);
+      }, 180);
+    }
+
+    function showPreview(state, trigger) {
+      if (state.trigger !== trigger) return;
+      ensurePreview(state);
+      var url = trigger.getAttribute("data-ocr-image-preview-url") || "";
+      var alt = trigger.getAttribute("data-ocr-image-preview-alt") || "Preview gambar proposal";
+      if (!url) return;
+      state.preview.hidden = false;
+      state.preview.classList.remove("is-loaded", "is-error");
+      state.status.textContent = "Memuat preview...";
+      state.image.alt = alt;
+      if (state.url !== url) {
+        state.url = url;
+        state.image.removeAttribute("src");
+        state.image.src = url;
+      } else if (state.image.complete && state.image.naturalWidth > 0) {
+        markPreviewLoaded(state);
+      }
+      var rect = trigger.getBoundingClientRect();
+      positionPreview(state, rect.left + rect.width / 2, rect.top + rect.height / 2);
+    }
+
+    function ensurePreview(state) {
+      if (state.preview) return;
+      var preview = document.createElement("div");
+      preview.className = "dash-ocr-image-preview";
+      preview.hidden = true;
+      preview.setAttribute("role", "status");
+      preview.setAttribute("aria-live", "polite");
+      preview.innerHTML = '<div class="dash-ocr-image-preview-frame"><img alt="" decoding="async"><span>Memuat preview...</span></div>';
+      document.body.appendChild(preview);
+      state.preview = preview;
+      state.image = preview.querySelector("img");
+      state.status = preview.querySelector("span");
+      state.image.addEventListener("load", function () { markPreviewLoaded(state); });
+      state.image.addEventListener("error", function () {
+        state.preview.classList.add("is-error");
+        state.status.textContent = "Preview gagal dimuat. Klik Gambar untuk membuka.";
+      });
+    }
+
+    function markPreviewLoaded(state) {
+      state.preview.classList.add("is-loaded");
+      state.status.textContent = "Preview gambar proposal";
+    }
+
+    function positionPreview(state, clientX, clientY) {
+      if (!state.preview || state.preview.hidden) return;
+      var width = Math.min(360, Math.max(260, Math.floor(window.innerWidth * 0.32)));
+      var height = 320;
+      var gap = 14;
+      var left = clientX + gap;
+      var top = clientY + gap;
+      if (left + width > window.innerWidth - 12) left = clientX - width - gap;
+      if (top + height > window.innerHeight - 12) top = window.innerHeight - height - 12;
+      if (left < 12) left = 12;
+      if (top < 12) top = 12;
+      state.preview.style.left = left + "px";
+      state.preview.style.top = top + "px";
+      state.preview.style.width = width + "px";
+    }
+
+    function hidePreview(state) {
+      clearPreviewTimer(state);
+      state.trigger = null;
+      if (state.frame) {
+        window.cancelAnimationFrame(state.frame);
+        state.frame = 0;
+      }
+      if (state.preview) state.preview.hidden = true;
+    }
+
+    function clearPreviewTimer(state) {
+      if (!state.timer) return;
+      window.clearTimeout(state.timer);
+      state.timer = 0;
+    }
+
     return {
       renderJobFilterButton: renderJobFilterButton,
       buildJobFilterPayload: buildJobFilterPayload,
       renderJobFilterHeading: renderJobFilterHeading,
       renderJobPagination: renderJobPagination,
       groupJobsByFranchise: groupJobsByFranchise,
-      renderJobGroup: renderJobGroup
+      renderJobGroup: renderJobGroup,
+      bindImagePreview: bindImagePreview,
+      hideImagePreview: hideBoundImagePreview
     };
   }
 
