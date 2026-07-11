@@ -86,6 +86,11 @@ const requiredFragments = [
   "worker_usage",
   "workerResetCountdownLabel",
   "data-ocr-worker-countdown",
+  "create_ocr_enrichment_suggestion",
+  "data-ocr-create-enrichment",
+  "renderEnrichmentQueue",
+  "Kandidat Review OCR",
+  "Bundle review OCR dibuat",
 ];
 
 for (const fragment of requiredFragments) {

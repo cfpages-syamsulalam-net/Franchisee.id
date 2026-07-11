@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-12 01:20 (Asia/Jakarta)
+Last updated: 2026-07-12 03:42 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -308,7 +308,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-ocr-results.css`
 *Dashboard OCR results stylesheet module.*
-- Owns Hasil OCR search/filter controls, icon-only search/reset/load-more actions, franchise-card pagination, compact franchise result cards, per-page pager controls, OCR text preview blocks, result action links, and results responsive behavior.
+- Owns Hasil OCR search/filter controls, icon-only search/reset/load-more actions, the grouped OCR enrichment queue, franchise-card pagination, compact franchise result cards, per-page pager controls, OCR text preview blocks, result action links, and results responsive behavior.
 
 ### File: `js/dashboard-premium-operations.js`
 *Premium Operations client module for `/dashboard`.*
@@ -344,6 +344,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `syncBatchCountdowns()` / `handleForegroundRefresh()`: Delegates structured scheduler ETA countdown label updates to `js/dashboard-ocr-batches.js`, delegates combined-provider quota reset countdown label updates to `js/dashboard-ocr-worker.js`, owns timer lifecycle, and refreshes OCR state when a hidden/background tab becomes active again.
 - `searchOcrResults(append)` / `resetResultSearch()` / `loadMoreResultSearch()`: Calls `search_ocr_results` to fetch filtered OCR result history by text/status from the server, appends paged results with de-duping, and keeps the default dashboard payload small until an admin searches.
 - `focusResultRow(assetId)` / `loadAndFocusResultAsset(assetId)`: Opens the Hasil OCR subtab at the exact OCR asset from Eksekusi Job. If the asset is not in the currently loaded/default result payload, it fetches that exact `asset_id` from `search_ocr_results` and then highlights the matching page.
+- `createOcrEnrichmentSuggestion(franchiseId, button)`: Admin-only Hasil OCR action that converts one grouped per-franchise OCR candidate queue item into a pending Review-tab edit suggestion bundle, then reloads dashboard data and opens Review.
 - Result franchise pagination state: `resultGroupOffset` and `resultFranchisePageSize` keep Hasil OCR grouped by franchise, with a dashboard selector for how many franchise cards to show per page while each card keeps its own brochure-page pager.
 - `syncBatchPolling(payload)`: Auto-refreshes `/dashboard-data` every few seconds while the OCR tab is visible and any persisted batch is still `queued` or `running`, so progress bars update without manual refresh.
 - `markJobNoText(jobId, button)`: Lets an admin mark a failed OCR job as `needs_review` after opening the source image and confirming the brochure page has no useful text, avoiding false provider-error treatment while preserving retry if needed.
@@ -382,7 +383,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-ocr-results.js`
 *Dashboard OCR result renderer.*
-- `window.FranchiseDashboardOcrResults.createRenderer(deps)`: Creates pure render helpers for compact franchise-grouped OCR result cards, stable per-asset anchors, per-page result navigation, source image links with shared hover-preview attributes and `aria-label` fallback instead of competing tooltips, listing links, and review links.
+- `window.FranchiseDashboardOcrResults.createRenderer(deps)`: Creates pure render helpers for the grouped OCR enrichment queue, compact franchise-grouped OCR result cards, stable per-asset anchors, per-page result navigation, source image links with shared hover-preview attributes and `aria-label` fallback instead of competing tooltips, listing links, and review links.
+- `renderEnrichmentQueue(queue)` / `renderEnrichmentItem(item)`: Renders one reviewable candidate bundle per franchise with field labels, source count, pending-state copy, source/listing links, and the admin-only `Buat Review` action.
 - `groupResultsByFranchise(results)` / `renderResultGroup(group)`: Group OCR text results by franchise and render one card per franchise with page controls instead of a long flat list.
 
 ### File: `js/dashboard-ocr-schedulers.js`
@@ -437,6 +439,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Bridge output behavior: `--write-bridge-pages` / `pnpm run build:d1:franchises:bridge` writes flat `/peluang-usaha/[slug].html` files while generated links remain extensionless `/peluang-usaha/[slug]`.
 - Manifest behavior: in explicit bridge-write mode, `json/d1-generated-pages-manifest.json` tracks D1-owned pages; prune only removes tracked files that still contain the D1 marker, including old marker-owned folder indexes when paths change.
 - Wrangler fallback uses project-pinned `pnpm exec wrangler` so the script does not resolve a newer Node-22-only Wrangler version under Node 20.
+
+### File: `scripts/enrich-ocr-structured-data.ts`
+*Replayable remote D1 enrichment for OCR proposal knowledge.*
+- Fetches extracted `franchise_asset_knowledge` rows and current canonical listing fields from remote `franchise_db` through cfman/Wrangler.
+- Reuses `sanitizeProposalSourceText()` and `extractProposalCandidatesFromText()` from `functions/_proposal-knowledge.js` so upload-time, worker-time, and replay-time extraction stay aligned.
+- Writes `.context/ocr-structured-enrichment-fetch.sql` for the source query and `.context/ocr-structured-enrichment.sql` for idempotent `source_text`/`structured_data` updates.
+- Applies remote changes with `pnpm run ocr:enrich:structured -- --apply-remote`; a clean replay prints `changed=0` and does not emit an operation event.
 
 ### File: `scripts/d1-page-renderer.ts`
 *Pure renderer/helper module for D1-backed public page generation.*
@@ -646,7 +655,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `scripts/check-dashboard-ocr-client.mjs`
 *Focused dashboard OCR browser-module regression check.*
-- `pnpm run dashboard:ocr:check`: Runs `node --check` only on the browser/non-module OCR client modules and asserts provider/state/worker renderer modules, provider toggle, retry actions, job filter/pagination, hover image-preview wiring, and no-active-provider disabled-state wiring remain present.
+- `pnpm run dashboard:ocr:check`: Runs `node --check` only on the browser/non-module OCR client modules and asserts provider/state/worker renderer modules, provider toggle, retry actions, job filter/pagination, grouped OCR enrichment queue wiring, hover image-preview wiring, and no-active-provider disabled-state wiring remain present.
 
 ### File: `js/product-events.js`
 *Public privacy-safe listing interaction tracker.*
@@ -920,8 +929,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_proposal-knowledge.js`
 *Auditable proposal text and candidate extraction.*
 - `extractProposalKnowledge(arrayBuffer, listing)`: Parses selectable PDF text with UnPDF, records page count/status, marks low-text documents as `needs_ocr`, and filters deterministic candidates to fields currently missing from the canonical listing.
-- `extractProposalCandidatesFromText(text)`: Extracts bounded outlet type, area/location requirement, total investment, franchise fee, BEP, royalty, net profit, and support candidates.
-- `proposalKnowledgeStatements(db, input)`: Upserts `franchise_asset_knowledge` and creates a pending `listing_edit_suggestions` row for admin review without directly updating `franchises` only when a valid D1 user actor is available.
+- `sanitizeProposalSourceText(value)`: Normalizes OCR/PDF text and removes known source-noise watermark lines/URLs before storage, dashboard preview, or deterministic extraction.
+- `extractProposalCandidatesFromText(text)`: Extracts bounded outlet type, location requirement, minimum area, staff/setup needs, investment/fee/working-capital values, contract duration, BEP range, monthly omzet/profit, HPP, royalty basis/period, target market, and support candidates.
+- `proposalKnowledgeStatements(db, input)`: Sanitizes source text, upserts `franchise_asset_knowledge`, and creates a pending `listing_edit_suggestions` row for admin review without directly updating `franchises` only when a valid D1 user actor is available.
 
 ### File: `functions/_clerk-auth.js`
 *Shared Clerk session verification, D1 user sync, and role authorization helper.*
@@ -965,9 +975,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff` through `requireD1UserFast()` for already-synced users; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
-- `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows to `_dashboard-actions.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, OCR retry/no-text job actions to `_ocr-job-actions.js`, OCR batch start/retry actions to `_ocr-batch-runs.js`, and OCR dry-run/enqueue/run/search actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
-- `_ocr-batch-runs.js` owns persisted batch creation/progress/retry; `_ocr-job-actions.js` owns dashboard retry/no-text mutations; `_ocr-job-runner.js` stays focused on job processing and OCR provider execution.
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff` through `requireD1UserFast()` for already-synced users; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch/enrichment-review state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
+- `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows to `_dashboard-actions.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, OCR retry/no-text job actions to `_ocr-job-actions.js`, OCR batch start/retry actions to `_ocr-batch-runs.js`, OCR enrichment bundle creation to `_ocr-enrichment-review.js`, and OCR dry-run/enqueue/run/search actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
+- `_ocr-batch-runs.js` owns persisted batch creation/progress/retry; `_ocr-job-actions.js` owns dashboard retry/no-text mutations; `_ocr-enrichment-review.js` owns grouped per-franchise OCR review bundles; `_ocr-job-runner.js` stays focused on job processing and OCR provider execution.
 - `requireDashboardAccess(request, env, options)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs. `options.fast` is used only for GET refreshes and falls back to full sync when needed.
 
 ### File: `functions/_dashboard-schemas.js`
@@ -980,7 +990,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_dashboard-ocr-schemas.js`
 *OCR dashboard action validation module.*
 - `OcrProviderKeySchema`: Shared fixed provider ID enum used by provider config/toggle schemas.
-- `DASHBOARD_OCR_ACTION_SCHEMAS`: Zod object schema list for OCR provider config/toggle, dry-run, enqueue, bounded batch run with optional lease id, continuous-run lease acquire/heartbeat/release, direct retry, batch failed retry, manual no-text resolution, OCR result search, and OCR job status search/pagination payloads; OCR job search defaults to 120 rows and caps at 120 per page.
+- `DASHBOARD_OCR_ACTION_SCHEMAS`: Zod object schema list for OCR provider config/toggle, dry-run, enqueue, bounded batch run with optional lease id, continuous-run lease acquire/heartbeat/release, direct retry, batch failed retry, manual no-text resolution, OCR result search, grouped OCR enrichment review bundle creation, and OCR job status search/pagination payloads; OCR job search defaults to 120 rows and caps at 120 per page.
 
 ### File: `functions/_ocr-provider-config.js`
 *Admin-only OCR provider configuration and credential boundary.*
@@ -1037,9 +1047,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `providerQuotaCanReset(provider, now)`: Lets resettable exhausted providers re-enter runnable rotation after their reset timestamp has passed.
 - `quotaIncrementStatement(db, providerKey)`: Builds the D1 update that increments provider quota usage after a counted successful OCR call.
 
+### File: `functions/_ocr-enrichment-review.js`
+*Grouped OCR enrichment review helper.*
+- `getOcrEnrichmentQueue(db, options)`: Reads extracted `franchise_asset_knowledge.structured_data`, filters candidates to currently empty editable listing fields, normalizes them through the shared listing sanitizer, deduplicates conflicts per franchise/field, and returns a bounded source-linked queue for the OCR Results dashboard.
+- `handleCreateOcrEnrichmentSuggestion(db, auth, data)`: Admin-only action that converts one grouped queue item into a single pending `listing_edit_suggestions` row with `field_name='ocr_enrichment_bundle'`, JSON old/suggested values for the real canonical fields, source summary reason text, and an audit event.
+
 ### File: `functions/_ocr-job-runner.js`
 *OCR queue/cache/failover orchestrator shared by dashboard actions and the protected worker.*
-- `getOcrJobState(db, auth, env)`: Returns admin-only OCR queue counts, up to 120 recent jobs, expanded OCR result previews with listing/review metadata, recent persisted batch runs including structured scheduler timing fields, active continuous-run lease state, enqueue-candidate count, combined provider quota used/remaining/reset status from `_ocr-quota-policy.js`, and a `migration_required` fallback when OCR job/batch/lease migrations are not applied.
+- `getOcrJobState(db, auth, env)`: Returns admin-only OCR queue counts, up to 120 recent jobs, expanded OCR result previews with listing/review metadata, grouped OCR enrichment queue rows from `_ocr-enrichment-review.js`, recent persisted batch runs including structured scheduler timing fields, active continuous-run lease state, enqueue-candidate count, combined provider quota used/remaining/reset status from `_ocr-quota-policy.js`, and a `migration_required` fallback when OCR job/batch/lease migrations are not applied.
 - `handleSearchOcrJobs(db, auth, data)`: Admin-only server-side OCR job search for status chips. It paginates `ocr_jobs` by status/franchise and maps `unqueued` to active proposal image assets that have not yet entered `ocr_jobs`, so dashboard status counts are inspectable beyond the default 120-row page.
 - `handleSearchOcrResults(db, auth, data)`: Admin-only server-side history search for `franchise_asset_knowledge`, filtering by exact `asset_id`, status, and query text across brand/slug/source text with bounded limit/offset pagination for dashboard "Muat lagi" and Eksekusi Job deep-links.
 - `handleEnqueueOcrJobs(db, auth, data)`: Admin-only action that queues active image proposal assets into `ocr_jobs`; it does not call external OCR providers.

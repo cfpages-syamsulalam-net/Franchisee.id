@@ -4,6 +4,31 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-12 03:42 (Asia/Jakarta)
+### Added
+- `functions/_ocr-enrichment-review.js`: Added grouped per-franchise OCR enrichment queue/read helpers and an admin-only action that creates one pending review bundle from structured OCR candidates.
+- `.context/session-20260712-0342.md`: Added this session continuity snapshot for suggestion 87.
+
+### Changed
+- `functions/_dashboard-ocr-schemas.js`, `functions/dashboard-data.js`, and `functions/_ocr-job-runner.js`: Wired the validated `create_ocr_enrichment_suggestion` dashboard action and included the grouped enrichment queue in the OCR dashboard payload.
+- `js/dashboard-ocr-results.js`, `js/dashboard-ocr.js`, and `css/dashboard-ocr-results.css`: Added the OCR Results enrichment queue UI with source/listing/review actions and review-bundle creation handling.
+- `scripts/check-dashboard-ocr-client.mjs` and `scripts/check-ocr-job-runner.ts`: Added regression coverage for grouped OCR enrichment queue wiring and backend candidate grouping.
+- `SUGGESTION.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Marked suggestion 87 complete and documented the grouped OCR review-bundle contract, long-file follow-ups, and validation surface.
+
+## 2026-07-12 02:48 (Asia/Jakarta)
+### Added
+- `scripts/enrich-ocr-structured-data.ts`: Added a replayable remote D1 OCR enrichment script that fetches proposal knowledge rows, reruns the shared sanitizer/extractor, writes idempotent SQL updates, and can apply them through cfman/Wrangler.
+- `.context/ocr-structured-enrichment-fetch.sql` and `.context/ocr-structured-enrichment.sql`: Added generated SQL artifacts for the OCR knowledge fetch query and latest no-op enrichment output.
+- `.context/session-20260712-0248.md`: Added this session continuity snapshot for the OCR structured enrichment replay.
+
+### Changed
+- `functions/_proposal-knowledge.js`: Expanded deterministic proposal/OCR candidate extraction, added source-noise sanitization before storage/extraction, and kept canonical listing fields protected by missing-field review candidates.
+- `functions/_ocr-job-runner.js`: Sanitized OCR result preview text defensively before dashboard output.
+- `scripts/check-proposal-knowledge.ts`: Added regression assertions for expanded OCR candidate extraction and source-noise sanitization.
+- `package.json`: Added `ocr:enrich:structured`.
+- Remote D1 `franchise_db`: Replayed OCR structured enrichment over 479 extracted knowledge rows, increasing rows with structured candidates from 56 to 164 and verifying the filtered source marker count at 0; a final replay returned `changed=0`.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, and `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Documented the sanitizer, replay script, remote backfill result, long-file follow-up, and grouped OCR review-queue suggestion.
+
 ## 2026-07-12 00:57 (Asia/Jakarta)
 ### Added
 - `.context/session-20260712-0057.md`: Added this session continuity snapshot for the OCR dashboard navigation and image-preview polish.

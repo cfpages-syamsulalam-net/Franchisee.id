@@ -35,6 +35,7 @@ import { getOcrSchedulerState, handleToggleOcrSchedulerEnabled, handleUpdateOcrS
 import { handleRetryOcrBatchRun, handleStartOcrBatchRun } from "./_ocr-batch-runs.js";
 import { handleMarkOcrJobNoText, handleRetryFailedOcrJobs, handleRetryOcrJob } from "./_ocr-job-actions.js";
 import { getOcrJobState, handleEnqueueOcrJobs, handleRunOcrDryRun, handleRunOcrJobs, handleSearchOcrJobs, handleSearchOcrResults } from "./_ocr-job-runner.js";
+import { handleCreateOcrEnrichmentSuggestion } from "./_ocr-enrichment-review.js";
 import { handleAcquireOcrRunLease, handleHeartbeatOcrRunLease, handleReleaseOcrRunLease } from "./_ocr-run-lease.js";
 import { logOperationEvent } from "./_telemetry.js";
 
@@ -149,6 +150,7 @@ export async function onRequestPost({ request, env }) {
     if (data.action === "retry_ocr_batch_run") return handleRetryOcrBatchRun(env.franchise_db, auth, data, env);
     if (data.action === "search_ocr_results") return handleSearchOcrResults(env.franchise_db, auth, data);
     if (data.action === "search_ocr_jobs") return handleSearchOcrJobs(env.franchise_db, auth, data);
+    if (data.action === "create_ocr_enrichment_suggestion") return handleCreateOcrEnrichmentSuggestion(env.franchise_db, auth, data);
 
     return jsonResponse({ success: false, error: "UNKNOWN_DASHBOARD_ACTION" }, { status: 400 });
   } catch (error) {

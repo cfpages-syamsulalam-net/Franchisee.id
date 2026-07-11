@@ -147,6 +147,11 @@ export const SearchOcrJobsSchema = z.object({
   offset: z.coerce.number().int().min(0).max(5000).optional().default(0),
 });
 
+export const CreateOcrEnrichmentSuggestionSchema = z.object({
+  action: z.literal("create_ocr_enrichment_suggestion"),
+  franchise_id: z.string().trim().min(1).max(120),
+});
+
 export const DASHBOARD_OCR_ACTION_SCHEMAS = [
   UpdateOcrProviderConfigSchema,
   ToggleOcrProviderEnabledSchema,
@@ -165,4 +170,5 @@ export const DASHBOARD_OCR_ACTION_SCHEMAS = [
   RetryOcrBatchRunSchema,
   SearchOcrResultsSchema,
   SearchOcrJobsSchema,
+  CreateOcrEnrichmentSuggestionSchema,
 ];

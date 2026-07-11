@@ -1,6 +1,6 @@
 # OCR Listing Enrichment Plan
 
-Last updated: 2026-07-10 23:45 (Asia/Jakarta)
+Last updated: 2026-07-12 03:42 (Asia/Jakarta)
 
 ## Why this exists
 
@@ -22,6 +22,41 @@ Read-only remote D1 checks on `franchise_db` found:
 | Rows with location/requirement/sarana signals | 22 |
 | Rows with legal/NIB/merek signals | 15 |
 | Rows with proof/testimonial/mitra signals | 59 |
+
+## 2026-07-12 structured candidate replay
+
+After the broader OCR backfill, remote `franchise_db` had 479 extracted proposal-knowledge rows. Running `pnpm run ocr:enrich:structured -- --apply-remote` replayed the shared sanitizer and deterministic extractor against those rows, updated sanitized `source_text` plus missing-field `structured_data`, and then verified a clean no-op replay.
+
+| Metric | Before replay | After replay |
+| --- | ---: | ---: |
+| Extracted OCR/proposal knowledge rows | 479 | 479 |
+| Rows with structured candidates | 56 | 164 |
+| Rows containing the filtered source watermark marker | 9 | 0 |
+
+Observed structured candidate coverage after replay:
+
+| Candidate group | Rows |
+| --- | ---: |
+| Support/partner assistance | 93 |
+| Royalty percent/basis/period | 20 |
+| Total investment | 16 |
+| Minimum area | 8 |
+| Monthly profit | 6 |
+| Franchise/license fee | 4 |
+| BEP | 2 |
+| Monthly omzet | 1 |
+
+This replay still does not mutate canonical `franchises` fields. It enriches OCR knowledge rows so admin review and later AI/supplemental insight work can start from structured, source-backed candidates.
+
+## 2026-07-12 grouped review queue
+
+Suggestion 87 is implemented as the first review UX layer on top of the deterministic structured candidates:
+
+- `functions/_ocr-enrichment-review.js` groups candidate fields by `franchise_id`, ignores canonical fields that already have values, normalizes candidate values through the shared editable-listing sanitizer, and keeps source page/excerpt context per field.
+- `/dashboard-data` now exposes this as `ocr_jobs.enrichment_queue` and accepts the admin-only `create_ocr_enrichment_suggestion` action.
+- The OCR Results dashboard renders `Kandidat Review OCR` above result cards, with source, public listing, pending-state, and `Buat Review` actions.
+- Review creation writes one pending `listing_edit_suggestions` row per franchise with `field_name='ocr_enrichment_bundle'`. The `suggested_value` JSON contains the actual canonical field changes, so the existing admin approval path still sanitizes and applies normal editable fields.
+- No new D1 migration was needed; this reuses `franchise_asset_knowledge`, `listing_edit_suggestions`, and the existing review/audit/public rebuild path.
 
 Dense current examples:
 

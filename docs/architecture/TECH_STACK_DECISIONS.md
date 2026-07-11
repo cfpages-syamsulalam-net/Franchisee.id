@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-07-04 06:36 (Asia/Jakarta)
+Last updated: 2026-07-12 03:42 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -201,6 +201,8 @@ Dashboard scaffold:
 - `migrations/0019_proposal_knowledge.sql` adds auditable proposal text/structured-candidate storage and was applied remotely on 2026-07-06. Owner-uploaded digital PDFs are parsed after upload; only missing-field candidates enter the existing review workflow, while image-only documents remain explicitly marked for a separate OCR backfill. Canonical listing fields stay human-reviewed.
 - `migrations/0020_ocr_provider_configs.sql` adds ten disabled OCR provider configurations and was applied remotely on 2026-07-07. Admins manage masked credential state, endpoints, provider priority, quota metadata, and trial expiry from `/dashboard`; dashboard reads never select or return stored key/secret values. Credential values are encrypted before D1 storage with the external Cloudflare Pages secret `OCR_KEY`.
 - `migrations/0021_ocr_job_queue.sql` adds admin-triggered OCR jobs, provider attempts, content-hash cache rows, and usage events for image-based proposal pages, and was applied remotely on 2026-07-07. OCR execution is bounded by dashboard action limits and local quota counters, includes a one-asset dry-run action before broad backfills, can be drained by protected `/ocr-worker` when `OCR_SECRET`/workflow enablement are configured, and successful text flows through `franchise_asset_knowledge` plus pending admin-review suggestions instead of directly mutating canonical listing fields.
+- `scripts/enrich-ocr-structured-data.ts` replays the shared proposal sanitizer/extractor over remote `franchise_asset_knowledge` rows after OCR backfills. On 2026-07-12 it sanitized stored OCR text for known source-noise watermarks and increased structured-candidate coverage from 56 to 164 of 479 extracted knowledge rows in remote `franchise_db`; the replay now returns `changed=0`. Canonical `franchises` fields still require admin review before public mutation.
+- `functions/_ocr-enrichment-review.js` turns those structured OCR candidates into a grouped dashboard review queue. It creates at most one pending `ocr_enrichment_bundle` suggestion per franchise, stores the real editable canonical field changes in JSON `suggested_value`, and relies on the existing admin approval path before mutating `franchises`.
 - `migrations/0022_ocr_provider_rate_limits.sql` adds local short-window provider rate-limit metadata and `cooldown_until` so dashboard/worker OCR batches can skip providers that were used too rapidly instead of relying only on daily/monthly quota counters.
 
 ### D1 Change To Static Publish Mechanism

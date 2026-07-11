@@ -47,6 +47,53 @@
         '</li>';
     }
 
+    function renderEnrichmentQueue(queue) {
+      var items = queue && queue.items ? queue.items : [];
+      if (!items.length) return "";
+      return '<li class="dash-ocr-enrichment-queue">' +
+        '<div class="dash-ocr-enrichment-head">' +
+          '<div><strong><i class="fas fa-layer-group" aria-hidden="true"></i> Kandidat Review OCR</strong>' +
+          '<span>' + utils.escapeHtml(items.length.toLocaleString("id-ID") + " franchise punya kandidat field yang bisa digabung sebelum masuk Review.") + '</span></div>' +
+        '</div>' +
+        '<div class="dash-ocr-enrichment-list">' + items.map(renderEnrichmentItem).join("") + '</div>' +
+        '</li>';
+    }
+
+    function renderEnrichmentItem(item) {
+      var fields = (item.field_labels || item.fields || []).slice(0, 8).join(", ");
+      var sourceCopy = Number(item.source_count || 0).toLocaleString("id-ID") + " sumber OCR";
+      var pendingBundle = Number(item.pending_bundle_count || 0) > 0;
+      var pendingPage = Number(item.pending_page_suggestion_count || 0) > 0;
+      var sourceAssetId = firstSourceAssetId(item);
+      var action = pendingBundle
+        ? '<span class="dash-ocr-enrichment-state"><i class="fas fa-clock" aria-hidden="true"></i> Sudah pending</span>'
+        : '<button type="button" class="dash-ocr-row-action" data-ocr-create-enrichment="' + utils.escapeAttr(item.franchise_id || "") + '" data-fr-tooltip="Buat satu bundle review dari kandidat OCR franchise ini."><i class="fas fa-clipboard-list" aria-hidden="true"></i><span>Buat Review</span></button>';
+      var listing = item.public_url
+        ? '<a class="dash-ocr-row-action" href="' + utils.escapeAttr(item.public_url) + '" target="_blank" rel="noopener" data-fr-tooltip="Buka listing publik franchise ini."><i class="fas fa-external-link-alt" aria-hidden="true"></i><span>Listing</span></a>'
+        : "";
+      var sourceLink = sourceAssetId
+        ? '<a class="dash-ocr-row-action" href="#ocr-result-' + utils.escapeAttr(sourceAssetId) + '" data-ocr-open-result="' + utils.escapeAttr(sourceAssetId) + '" data-fr-tooltip="Buka salah satu halaman OCR sumber kandidat ini."><i class="fas fa-file-alt" aria-hidden="true"></i><span>Sumber</span></a>'
+        : "";
+      return '<article class="dash-ocr-enrichment-item">' +
+        '<div class="dash-ocr-enrichment-copy">' +
+          '<strong>' + utils.escapeHtml(item.brand_name || item.franchise_id || "Listing") + '</strong>' +
+          '<span><i class="fas fa-tags" aria-hidden="true"></i> ' + utils.escapeHtml(fields || "Kandidat belum terbaca") + '</span>' +
+          '<span><i class="fas fa-file-alt" aria-hidden="true"></i> ' + utils.escapeHtml(sourceCopy + (pendingPage ? " · ada review halaman lama" : "")) + '</span>' +
+        '</div>' +
+        '<div class="dash-ocr-enrichment-actions">' + sourceLink + listing + action + '</div>' +
+        '</article>';
+    }
+
+    function firstSourceAssetId(item) {
+      var sourceFields = item.sources_by_field || {};
+      var fieldNames = Object.keys(sourceFields);
+      for (var i = 0; i < fieldNames.length; i += 1) {
+        var sources = sourceFields[fieldNames[i]] && sourceFields[fieldNames[i]].sources;
+        if (sources && sources[0] && sources[0].asset_id) return sources[0].asset_id;
+      }
+      return "";
+    }
+
     function renderResultPager(group, activeIndex) {
       if (group.items.length <= 1) {
         return '<div class="dash-ocr-result-pager is-single"><span><i class="fas fa-file-alt" aria-hidden="true"></i> ' + utils.escapeHtml(resultPageTitle(group.items[0] || {}, 0)) + '</span></div>';
@@ -105,7 +152,8 @@
 
     return {
       groupResultsByFranchise: groupResultsByFranchise,
-      renderResultGroup: renderResultGroup
+      renderResultGroup: renderResultGroup,
+      renderEnrichmentQueue: renderEnrichmentQueue
     };
   }
 

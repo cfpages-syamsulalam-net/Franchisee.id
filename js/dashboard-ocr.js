@@ -177,6 +177,12 @@
         moveResultGroupPage(nextButton.getAttribute("data-ocr-result-next"), 1);
         return;
       }
+      var enrichmentButton = event.target && event.target.closest && event.target.closest("[data-ocr-create-enrichment]");
+      if (enrichmentButton) {
+        event.preventDefault();
+        await createOcrEnrichmentSuggestion(enrichmentButton.getAttribute("data-ocr-create-enrichment"), enrichmentButton);
+        return;
+      }
       var resultLink = event.target && event.target.closest && event.target.closest("[data-ocr-open-result]");
       if (resultLink) {
         event.preventDefault();
@@ -603,9 +609,11 @@
       var results = payload.results || [];
       var groups = resultRenderers.groupResultsByFranchise(results);
       var visibleGroups = getVisibleResultGroups(groups);
-      options.resultRows.innerHTML = groups.length
+      var enrichmentQueue = resultRenderers.renderEnrichmentQueue ? resultRenderers.renderEnrichmentQueue(payload.enrichment_queue || {}) : "";
+      var resultHtml = groups.length
         ? renderResultGroupPagination(groups) + visibleGroups.map(resultRenderers.renderResultGroup).join("") + renderResultGroupPagination(groups, true)
         : '<li><strong>Belum ada hasil OCR</strong><span>Jalankan Dry run atau batch untuk menghasilkan teks. Setelah sukses, hasilnya muncul di sini.</span></li>';
+      options.resultRows.innerHTML = enrichmentQueue + resultHtml;
     }
 
     function getActiveResultPayload() {
@@ -1126,6 +1134,27 @@
       }, options.setStatus);
     }
 
+    async function createOcrEnrichmentSuggestion(franchiseId, button) {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa membuat bundle review OCR.", true);
+        return;
+      }
+      if (!franchiseId) {
+        options.setStatus("Franchise untuk bundle review OCR tidak ditemukan.", true);
+        return;
+      }
+      await buttonAction(button, "Membuat...", async function () {
+        var result = await options.postDashboardAction({
+          action: "create_ocr_enrichment_suggestion",
+          franchise_id: franchiseId
+        });
+        options.setStatus(result.message || "Bundle review OCR dibuat di tab Review.", false);
+        await options.reloadDashboard();
+        var reviewTab = document.querySelector('[data-dashboard-tab="review"]');
+        if (reviewTab) reviewTab.click();
+      }, options.setStatus);
+    }
+
     async function retryFailedJobs() {
       if (!options.isAdmin || !options.isAdmin()) {
         options.setStatus("Hanya admin yang bisa retry OCR.", true);
@@ -1287,7 +1316,23 @@
       estimated_bep_months: "Estimasi BEP",
       royalty_percent: "Royalti",
       net_profit_percent: "Estimasi laba bersih",
-      support_system: "Dukungan franchisor"
+      support_system: "Dukungan franchisor",
+      min_area_sqm: "Luas minimum",
+      min_staff_count: "Jumlah staff",
+      setup_duration_days: "Waktu setup",
+      working_capital_idr: "Modal kerja",
+      contract_duration_months: "Durasi kontrak",
+      estimated_bep_min_months: "BEP minimum",
+      estimated_bep_max_months: "BEP maksimum",
+      omzet_monthly_idr: "Omzet bulanan",
+      omzet_monthly_min_idr: "Omzet minimum",
+      omzet_monthly_max_idr: "Omzet maksimum",
+      hpp_percent: "HPP",
+      net_profit_monthly_min_idr: "Laba bulanan minimum",
+      net_profit_monthly_max_idr: "Laba bulanan maksimum",
+      royalty_basis: "Dasar royalti",
+      royalty_period: "Periode royalti",
+      target_market: "Target pasar"
     }[name] || name;
   }
 

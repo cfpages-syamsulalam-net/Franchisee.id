@@ -7,6 +7,8 @@ import { getOcrJobState } from "../functions/_ocr-job-runner.js";
 import { getOcrWorkerUsage } from "../functions/_ocr-quota-policy.js";
 // @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
 import { normalizeOcrText } from "../functions/_ocr-provider-adapters.js";
+// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+import { getOcrEnrichmentQueue } from "../functions/_ocr-enrichment-review.js";
 
 async function main() {
   const enqueue = DashboardActionSchema.safeParse({
@@ -68,6 +70,12 @@ async function main() {
   });
   assert.equal(noTextSearch.success, true);
 
+  const enrichmentBundle = DashboardActionSchema.safeParse({
+    action: "create_ocr_enrichment_suggestion",
+    franchise_id: "franchise_example",
+  });
+  assert.equal(enrichmentBundle.success, true);
+
   const tooWideRun = DashboardActionSchema.safeParse({
     action: "run_ocr_jobs",
     max_jobs: 50,
@@ -121,6 +129,44 @@ async function main() {
   assert.equal(usage.remaining, 1275, "combined remaining should sum known provider remaining quota");
   assert.equal(usage.known_provider_count, 2);
   assert.equal(usage.unknown_provider_count, 1);
+
+  const enrichmentDb = {
+    prepare() {
+      return {
+        bind() {
+          return this;
+        },
+        async all() {
+          return {
+            results: [
+              {
+                id: "knowledge_1",
+                asset_id: "asset_1",
+                franchise_id: "franchise_1",
+                structured_data: JSON.stringify({ min_area_sqm: 15, royalty_percent: 0, support_system: "Training dan SOP" }),
+                source_text_preview: "Luas minimal 15 m2. Royalty 0%. Training dan SOP.",
+                updated_at: "2026-07-12T00:00:00Z",
+                brand_name: "Sample Brand",
+                slug: "sample-brand",
+                min_area_sqm: null,
+                royalty_percent: null,
+                support_system: "",
+                display_order: 2,
+                source_url: "https://assets.franchisee.id/sample/page-2.jpg",
+                pending_bundle_count: 0,
+                pending_page_suggestion_count: 1,
+              },
+            ],
+          };
+        },
+      };
+    },
+  };
+  const enrichment = await getOcrEnrichmentQueue(enrichmentDb);
+  assert.equal(enrichment.total, 1);
+  assert.equal(enrichment.items[0].field_count, 3);
+  assert.equal(enrichment.items[0].suggested_value.min_area_sqm, 15);
+  assert.equal(enrichment.items[0].sources_by_field.min_area_sqm.sources[0].asset_id, "asset_1");
 
   assert.equal(normalizeOcrText("A  \r\n\r\n\r\n B\t\tC"), "A\n\n B C");
 

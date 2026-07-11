@@ -1,4 +1,4 @@
-import { proposalKnowledgeStatements, extractProposalCandidatesFromText } from "./_proposal-knowledge.js";
+import { proposalKnowledgeStatements, extractProposalCandidatesFromText, sanitizeProposalSourceText } from "./_proposal-knowledge.js";
 import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, randomId } from "./_dashboard-utils.js";
 import { callOcrProvider } from "./_ocr-provider-adapters.js";
@@ -6,6 +6,7 @@ import { maskBatchRow, refreshBatchProgress } from "./_ocr-batch-runs.js";
 import { claimPendingJobs, cleanOcrError as cleanError, releaseUnprocessedJobs, textOrNull } from "./_ocr-job-claiming.js";
 import { getActiveOcrRunLease, requireOcrRunLease } from "./_ocr-run-lease.js";
 import { getOcrWorkerUsage, prepareQuota, providerQuotaCanReset, quotaIncrementStatement } from "./_ocr-quota-policy.js";
+import { getOcrEnrichmentQueue } from "./_ocr-enrichment-review.js";
 
 const MAX_ENQUEUE_LIMIT = 200;
 const MAX_RUN_LIMIT = 5;
@@ -19,7 +20,7 @@ const PAUSE_QUOTA_NOTE = "OCR_PAUSED_QUOTA";
 export async function getOcrJobState(db, auth, env = {}) {
   if (!isAdmin(auth)) return { admin_only: true, counts: {}, recent: [], results: [], migration_required: false };
   try {
-    const [counts, recent, candidates, results, batches, activeRunLease, workerUsage] = await Promise.all([
+    const [counts, recent, candidates, results, batches, activeRunLease, workerUsage, enrichmentQueue] = await Promise.all([
       db.prepare("SELECT status, COUNT(*) count FROM ocr_jobs GROUP BY status").all(),
       db
         .prepare(
@@ -93,6 +94,7 @@ export async function getOcrJobState(db, auth, env = {}) {
         .all(),
       getActiveOcrRunLease(db),
       getOcrWorkerUsage(db, env),
+      getOcrEnrichmentQueue(db),
     ]);
     const refreshedBatches = [];
     for (const batch of batches.results || []) {
@@ -112,6 +114,7 @@ export async function getOcrJobState(db, auth, env = {}) {
       enqueue_candidates: Number(candidates?.count || 0),
       active_run_lease: activeRunLease,
       worker_usage: workerUsage,
+      enrichment_queue: enrichmentQueue,
     };
   } catch (error) {
     if (JOB_TABLE_ERROR.test(error?.message || "")) {
@@ -1025,7 +1028,7 @@ function maskResultRow(row) {
     source_url: row.public_url || row.legacy_url || "",
     extraction_method: row.extraction_method || "",
     extraction_status: row.extraction_status || "",
-    source_text_preview: row.source_text_preview || "",
+    source_text_preview: sanitizeProposalSourceText(row.source_text_preview || ""),
     text_length: Number(row.text_length || 0),
     candidate_count: Object.keys(structuredData).length,
     candidate_fields: Object.keys(structuredData),
