@@ -19,7 +19,12 @@ for (const file of files) {
   }
 }
 
-const assertionSources = files.concat(["src/pages/dashboard/index.astro"]);
+const assertionSources = files.concat([
+  "src/pages/dashboard/index.astro",
+  "css/dashboard-ocr-settings.css",
+  "css/dashboard-ocr-execution.css",
+  "css/dashboard-ocr-results.css",
+]);
 const source = assertionSources.map((file) => readFileSync(file, "utf8")).join("\n");
 const requiredFragments = [
   "FranchiseDashboardOcrState",
@@ -33,6 +38,9 @@ const requiredFragments = [
   "data-ocr-retry-job",
   "retry_ocr_job",
   "mark_ocr_job_no_text",
+  "data-ocr-copy-job-error",
+  "dash-ocr-job-message",
+  "Pesan job OCR sudah disalin",
   "retry_failed_ocr_jobs",
   "retryFailedButton",
   "activeProviderCount === 0",
@@ -43,6 +51,8 @@ const requiredFragments = [
   "data-ocr-image-preview-url",
   "bindImagePreview",
   "dash-ocr-image-preview",
+  "getPreviewViewportBounds",
+  "--dash-ocr-preview-max-height",
   "dashboard-ocr-settings.css",
   "dashboard-ocr-execution.css",
   "dashboard-ocr-results.css",

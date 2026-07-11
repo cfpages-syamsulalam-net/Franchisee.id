@@ -294,23 +294,38 @@
   color: inherit;
   font-size: inherit;
 }
-.dash-ocr-job-error {
-  display: flex;
-  gap: 6px;
-  align-items: flex-start;
-  margin-top: 7px;
+.dash-ocr-job-message {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  border-radius: 999px;
+  background: #ffffff;
   color: var(--dash-bad);
-  font-size: 12px;
-  line-height: 1.4;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
 }
-.dash-ocr-job-error.is-resolved {
+.dash-ocr-job-message:hover,
+.dash-ocr-job-message:focus {
+  border-color: currentColor;
+  outline: 0;
+}
+.dash-ocr-job-message.is-warning {
+  color: var(--dash-warn);
+}
+.dash-ocr-job-message.is-resolved {
   color: var(--dash-ok);
 }
-.dash-ocr-job-error span {
-  display: inline;
-  margin: 0;
-  color: inherit;
-  font-size: inherit;
+.dash-ocr-job-message span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 .dash-ocr-job-actions {
   display: flex;
@@ -372,7 +387,7 @@
 .dash-ocr-image-preview img {
   display: block;
   width: 100%;
-  max-height: min(62vh, 420px);
+  max-height: var(--dash-ocr-preview-max-height, min(62vh, 420px));
   object-fit: contain;
   background: #111827;
   opacity: 0;

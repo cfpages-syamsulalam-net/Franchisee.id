@@ -92,17 +92,29 @@
       var noTextButton = canMarkNoText
         ? deps.renderJobActionButton("data-ocr-mark-no-text", job.id, "fa-check-circle", "Tanpa teks", "Konfirmasi halaman ini memang tidak punya teks yang cukup. Status akan selesai sebagai Tanpa teks.", false)
         : "";
+      var messageIcon = renderJobMessageIcon(job);
       return '<article class="dash-ocr-job-item is-' + utils.escapeAttr(job.status || "unknown") + '">' +
         '<div class="dash-ocr-job-main">' +
-        '<div class="dash-ocr-job-head"><strong>' + utils.escapeHtml(page) + '</strong>' + deps.renderJobStatus(job.status) + '</div>' +
+        '<div class="dash-ocr-job-head"><strong>' + utils.escapeHtml(page) + '</strong>' + deps.renderJobStatus(job.status) + messageIcon + '</div>' +
         '<div class="dash-ocr-job-meta">' +
         '<span><i class="fas fa-plug" aria-hidden="true"></i>' + utils.escapeHtml(provider) + '</span>' +
         '<span><i class="fas fa-redo-alt" aria-hidden="true"></i>' + Number(job.attempt_count || 0).toLocaleString("id-ID") + 'x</span>' +
         '</div>' +
-        (job.error_message ? '<div class="dash-ocr-job-error' + (job.status === "no_text" ? ' is-resolved' : '') + '"><i class="fas ' + (job.status === "no_text" ? 'fa-info-circle' : 'fa-times-circle') + '" aria-hidden="true"></i><span>' + utils.escapeHtml(job.error_message) + '</span></div>' : '') +
         '</div>' +
         '<div class="dash-ocr-job-actions">' + imageLink + resultLink + retryButton + noTextButton + '</div>' +
         '</article>';
+    }
+
+    function renderJobMessageIcon(job) {
+      if (!job || !job.error_message) return "";
+      var status = job.status || "";
+      var icon = status === "no_text" ? "fa-info-circle" : status === "needs_review" ? "fa-exclamation-triangle" : "fa-times-circle";
+      var tone = status === "no_text" ? " is-resolved" : status === "needs_review" ? " is-warning" : " is-error";
+      var label = status === "no_text" ? "Catatan" : status === "needs_review" ? "Perlu cek" : "Error";
+      var message = String(job.error_message || "");
+      var tooltip = label + ": " + message + " Klik ikon untuk copy pesan.";
+      return '<button type="button" class="dash-ocr-job-message' + tone + '" data-ocr-copy-job-error="' + utils.escapeAttr(message) + '" data-fr-tooltip="' + utils.escapeAttr(tooltip) + '" aria-label="' + utils.escapeAttr(label + " job OCR. Klik untuk copy pesan.") + '">' +
+        '<i class="fas ' + icon + '" aria-hidden="true"></i><span>' + utils.escapeHtml(label) + '</span></button>';
     }
 
     function renderImagePreviewLink(job) {
@@ -122,7 +134,9 @@
         frame: 0,
         preview: null,
         image: null,
-        status: null
+        status: null,
+        lastClientX: 0,
+        lastClientY: 0
       };
 
       root.addEventListener("pointerover", function (event) {
@@ -148,10 +162,12 @@
       });
       root.addEventListener("pointermove", function (event) {
         if (!state.trigger) return;
+        state.lastClientX = event.clientX;
+        state.lastClientY = event.clientY;
         if (state.frame) return;
         state.frame = window.requestAnimationFrame(function () {
           state.frame = 0;
-          positionPreview(state, event.clientX, event.clientY);
+          positionPreview(state, state.lastClientX, state.lastClientY);
         });
       });
       window.addEventListener("scroll", function () { hidePreview(state); }, { passive: true });
@@ -197,7 +213,9 @@
         markPreviewLoaded(state);
       }
       var rect = trigger.getBoundingClientRect();
-      positionPreview(state, rect.left + rect.width / 2, rect.top + rect.height / 2);
+      state.lastClientX = rect.left + rect.width / 2;
+      state.lastClientY = rect.top + rect.height / 2;
+      positionPreview(state, state.lastClientX, state.lastClientY);
     }
 
     function ensurePreview(state) {
@@ -222,22 +240,55 @@
     function markPreviewLoaded(state) {
       state.preview.classList.add("is-loaded");
       state.status.textContent = "Preview gambar proposal";
+      if (state.lastClientX || state.lastClientY) {
+        window.requestAnimationFrame(function () {
+          positionPreview(state, state.lastClientX, state.lastClientY);
+        });
+      }
     }
 
     function positionPreview(state, clientX, clientY) {
       if (!state.preview || state.preview.hidden) return;
-      var width = Math.min(360, Math.max(260, Math.floor(window.innerWidth * 0.32)));
-      var height = 320;
+      var bounds = getPreviewViewportBounds();
+      var availableWidth = Math.max(180, bounds.right - bounds.left);
+      var availableHeight = Math.max(160, bounds.bottom - bounds.top);
+      var width = Math.min(380, Math.max(240, Math.floor(availableWidth * 0.34)), availableWidth);
       var gap = 14;
-      var left = clientX + gap;
-      var top = clientY + gap;
-      if (left + width > window.innerWidth - 12) left = clientX - width - gap;
-      if (top + height > window.innerHeight - 12) top = window.innerHeight - height - 12;
-      if (left < 12) left = 12;
-      if (top < 12) top = 12;
+      state.preview.style.width = width + "px";
+      state.preview.style.setProperty("--dash-ocr-preview-max-height", Math.max(120, Math.min(420, availableHeight - 24)) + "px");
+      var rect = state.preview.getBoundingClientRect();
+      var height = Math.min(rect.height || 320, availableHeight);
+      var spaceRight = bounds.right - clientX - gap;
+      var spaceLeft = clientX - bounds.left - gap;
+      var left = spaceRight >= width || spaceRight >= spaceLeft
+        ? clientX + gap
+        : clientX - width - gap;
+      var top = clientY - height / 2;
+      if (left + width > bounds.right) left = bounds.right - width;
+      if (left < bounds.left) left = bounds.left;
+      if (top + height > bounds.bottom) top = bounds.bottom - height;
+      if (top < bounds.top) top = bounds.top;
       state.preview.style.left = left + "px";
       state.preview.style.top = top + "px";
-      state.preview.style.width = width + "px";
+    }
+
+    function getPreviewViewportBounds() {
+      var margin = 12;
+      var visualViewport = window.visualViewport;
+      if (visualViewport && typeof visualViewport.width === "number" && typeof visualViewport.height === "number") {
+        return {
+          left: visualViewport.offsetLeft + margin,
+          top: visualViewport.offsetTop + margin,
+          right: visualViewport.offsetLeft + visualViewport.width - margin,
+          bottom: visualViewport.offsetTop + visualViewport.height - margin
+        };
+      }
+      return {
+        left: margin,
+        top: margin,
+        right: window.innerWidth - margin,
+        bottom: window.innerHeight - margin
+      };
     }
 
     function hidePreview(state) {

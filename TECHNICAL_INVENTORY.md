@@ -304,7 +304,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-ocr-execution.css`
 *Dashboard OCR execution stylesheet module.*
-- Owns execution toolbar/status, combined quota chip, job filters/page-size controls, grouped job cards, job status/error/actions, batch progress/countdown/actions, lazy hover image-preview overlay styling, and execution responsive behavior.
+- Owns execution toolbar/status, combined quota chip, job filters/page-size controls, grouped job cards, compact icon-only OCR job message pills, job status/actions, batch progress/countdown/actions, viewport-aware lazy hover image-preview overlay styling, and execution responsive behavior.
 
 ### File: `css/dashboard-ocr-results.css`
 *Dashboard OCR results stylesheet module.*
@@ -361,9 +361,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-ocr-jobs.js`
 *Dashboard OCR job renderer.*
-- `window.FranchiseDashboardOcrJobs.createRenderer(deps)`: Creates pure render helpers for OCR job status chips including default `Semua`, paginated job filter headings, grouped franchise job cards, and per-job source/result/retry/no-text actions. The `Tanpa teks` confirmation action appears for both failed and needs-review rows so low/no-text pages can be resolved after visual review.
+- `window.FranchiseDashboardOcrJobs.createRenderer(deps)`: Creates pure render helpers for OCR job status chips including default `Semua`, paginated job filter headings, grouped franchise job cards, compact copyable message icons, and per-job source/result/retry/no-text actions. The `Tanpa teks` confirmation action appears for both failed and needs-review rows so low/no-text pages can be resolved after visual review.
 - `groupJobsByFranchise(jobs)` / `renderJobPagination(payload)`: Compact server-filtered job rows into franchise groups and show Prev/Next pagination for status-specific job lists.
-- `bindImagePreview(root)` / `hideImagePreview(root)`: Adds delegated hover/focus preview for job `Gambar` actions with a 180ms delay, one reusable fixed preview element, requestAnimationFrame positioning, lazy `src` assignment, and cleanup on pointerout, focusout, scroll, resize, hidden tab, or row re-render.
+- `renderJobMessageIcon(job)`: Renders long OCR error/warning/no-text messages as compact icon-only pills with shared tooltip text and click-to-copy payloads so grouped job cards stay compact.
+- `bindImagePreview(root)` / `hideImagePreview(root)`: Adds delegated hover/focus preview for job `Gambar` actions with a 180ms delay, one reusable fixed preview element, requestAnimationFrame positioning, viewport-aware left/right placement plus edge clamping, lazy `src` assignment, and cleanup on pointerout, focusout, scroll, resize, hidden tab, or row re-render.
 
 ### File: `js/dashboard-ocr-batches.js`
 *Dashboard OCR batch renderer and countdown helper.*

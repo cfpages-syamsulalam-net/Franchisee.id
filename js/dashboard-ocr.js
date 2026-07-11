@@ -342,6 +342,18 @@
         await markJobNoText(noTextButton.getAttribute("data-ocr-mark-no-text"), noTextButton);
         return;
       }
+      var messageButton = event.target && event.target.closest && event.target.closest("[data-ocr-copy-job-error]");
+      if (messageButton) {
+        event.preventDefault();
+        var message = messageButton.getAttribute("data-ocr-copy-job-error") || "";
+        try {
+          await copyText(message);
+          options.setStatus("Pesan job OCR sudah disalin.", false);
+        } catch (error) {
+          options.setStatus("Browser belum mengizinkan copy otomatis. Buka tooltip ikon pesan lalu copy manual.", true);
+        }
+        return;
+      }
       var resultLink = event.target && event.target.closest && event.target.closest("[data-ocr-open-result]");
       if (!resultLink) return;
       event.preventDefault();
