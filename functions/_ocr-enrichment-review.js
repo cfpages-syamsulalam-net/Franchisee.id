@@ -128,7 +128,7 @@ export async function handleCreateOcrEnrichmentSuggestion(db, auth, data) {
     return jsonResponse({ success: false, error: "OCR_ENRICHMENT_EMPTY", message: "Belum ada kandidat OCR baru untuk listing ini." }, { status: 404 });
   }
   if (Number(item.pending_bundle_count || 0) > 0) {
-    return jsonResponse({ success: false, error: "OCR_ENRICHMENT_PENDING", message: "Bundle review OCR untuk listing ini sudah pending di tab Review." }, { status: 409 });
+    return jsonResponse({ success: false, error: "OCR_ENRICHMENT_PENDING", message: "Bundle review OCR untuk listing ini sudah pending di Review OCR." }, { status: 409 });
   }
 
   const suggestionId = `suggestion_${randomId()}`;
@@ -162,7 +162,7 @@ export async function handleCreateOcrEnrichmentSuggestion(db, auth, data) {
     suggestion_id: suggestionId,
     franchise_id: item.franchise_id,
     fields: Object.keys(item.suggested_value),
-    message: "Bundle review OCR dibuat di tab Review.",
+    message: "Bundle review OCR dibuat di Review OCR.",
   });
 }
 

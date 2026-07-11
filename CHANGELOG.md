@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-12 05:50 (Asia/Jakarta)
+### Added
+- `.context/session-20260712-0550.md`: Added this session continuity snapshot for the OCR review UX split.
+
+### Changed
+- `src/pages/dashboard/index.astro`: Moved the pending Brand/Diff/Reason/Aksi edit review table out of the direct-edit form panel, added a dedicated OCR Review guide card/subpanel, and gave OCR bundles their own full-width review table.
+- `js/dashboard-review.js` and `css/dashboard-review.css`: Split OCR enrichment bundles away from generic edit suggestions and improved review diff UI with icon-led old-to-new values plus better wrapping for long reasons.
+- `js/dashboard-utils.js`, `css/dashboard.css`, and `js/dashboard-ocr-results.js`: Added shared dashboard text-pill action helpers/styles and changed OCR enrichment source/listing/review actions to use them.
+- `js/dashboard-admin.js`, `js/dashboard-ocr.js`, `functions/_ocr-enrichment-review.js`, `css/dashboard-ocr-settings.css`, and `scripts/check-dashboard-ocr-client.mjs`: Wired OCR Review row targets, opened Review OCR after bundle creation, updated OCR guide-card navigation, adjusted OCR review copy, and expanded dashboard OCR regression coverage.
+- `AGENTS.md`, `SUGGESTION.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, and `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Documented the shared pill-action rule, dedicated OCR Review surface, long-file follow-ups, and suggestion 87 completion details.
+
 ## 2026-07-12 03:42 (Asia/Jakarta)
 ### Added
 - `functions/_ocr-enrichment-review.js`: Added grouped per-franchise OCR enrichment queue/read helpers and an admin-only action that creates one pending review bundle from structured OCR candidates.

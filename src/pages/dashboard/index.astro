@@ -196,7 +196,6 @@ const ocrProviderMetadataJson = JSON.stringify({
                       <p data-edit-panel-copy>Staff menyiapkan perubahan; admin menyetujui sebelum tampil.</p>
                     </div>
                   </div>
-                  <span class="dash-badge" data-edit-count>-</span>
                 </div>
                 <form class="dash-form" data-edit-form>
                   <label>
@@ -228,21 +227,6 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <span class="dash-muted" data-edit-help>Perubahan akan masuk review admin kecuali akun ini punya izin approve langsung.</span>
                   </div>
                 </form>
-                <div class="dash-table-wrap">
-                  <table class="dash-table">
-                    <thead>
-                      <tr>
-                        <th>Brand</th>
-                        <th>Diff</th>
-                        <th>Reason</th>
-                        <th>Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody data-edit-rows>
-                      <tr><td colspan="4" class="dash-loading">Memuat edit suggestions...</td></tr>
-                    </tbody>
-                  </table>
-                </div>
               </section>
 
               <section class="dash-panel">
@@ -284,6 +268,33 @@ const ocrProviderMetadataJson = JSON.stringify({
                       <span class="dash-muted" data-location-current>Belum ada listing dipilih.</span>
                     </div>
                   </form>
+                </div>
+              </section>
+              <section class="dash-panel dash-panel-wide">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <i class="fas fa-list-check dash-section-icon" aria-hidden="true"></i>
+                    <div>
+                      <h2>Pending Edit Review</h2>
+                      <p>Review perubahan listing umum sebelum diterapkan.</p>
+                    </div>
+                  </div>
+                  <span class="dash-badge" data-edit-count>-</span>
+                </div>
+                <div class="dash-table-wrap dash-review-table-wrap">
+                  <table class="dash-table dash-review-table">
+                    <thead>
+                      <tr>
+                        <th>Brand</th>
+                        <th>Diff</th>
+                        <th>Reason</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody data-edit-rows>
+                      <tr><td colspan="4" class="dash-loading">Memuat edit suggestions...</td></tr>
+                    </tbody>
+                  </table>
                 </div>
               </section>
             </div>
@@ -593,7 +604,12 @@ const ocrProviderMetadataJson = JSON.stringify({
               <button class="dash-ocr-guide-card" type="button" role="tab" aria-selected="false" data-ocr-subtab="results">
                 <i class="fas fa-clipboard-check" aria-hidden="true"></i>
                 <strong>Hasil OCR</strong>
-                <span>Lihat teks OCR dan lanjutkan ke Review sebelum data masuk ke listing publik.</span>
+                <span>Lihat teks OCR dan lanjutkan ke Review OCR sebelum data masuk ke listing publik.</span>
+              </button>
+              <button class="dash-ocr-guide-card" type="button" role="tab" aria-selected="false" data-ocr-subtab="review">
+                <i class="fas fa-list-check" aria-hidden="true"></i>
+                <strong>Review OCR</strong>
+                <span>Setujui atau tolak bundle kandidat OCR tanpa bercampur dengan review umum.</span>
               </button>
             </div>
 
@@ -839,7 +855,7 @@ const ocrProviderMetadataJson = JSON.stringify({
                     <div>
                       <h2>
                         Hasil OCR
-                        <span class="dash-help-dot" data-fr-tooltip="Hasil OCR adalah teks yang berhasil dibaca dari brosur. Data ini belum otomatis mengubah listing; admin tetap perlu meninjau di Review.">?</span>
+                        <span class="dash-help-dot" data-fr-tooltip="Hasil OCR adalah teks yang berhasil dibaca dari brosur. Data ini belum otomatis mengubah listing; admin tetap perlu meninjau di Review OCR.">?</span>
                       </h2>
                       <p>Lihat hasil terbaru, buka listing, lalu lanjutkan review kandidat data dari brosur.</p>
                     </div>
@@ -886,6 +902,36 @@ const ocrProviderMetadataJson = JSON.stringify({
                 <ul class="dash-list dash-ocr-results" data-ocr-result-rows>
                   <li><span>Belum ada hasil OCR yang bisa ditampilkan.</span></li>
                 </ul>
+              </section>
+            </div>
+
+            <div class="dash-ocr-subpanel" data-ocr-subpanel="review" hidden>
+              <section class="dash-panel dash-panel-wide">
+                <div class="dash-panel-header">
+                  <div class="dash-panel-title">
+                    <i class="fas fa-list-check dash-section-icon" aria-hidden="true"></i>
+                    <div>
+                      <h2>Review OCR</h2>
+                      <p>Bundle kandidat dari brosur OCR yang perlu dicek sebelum masuk listing publik.</p>
+                    </div>
+                  </div>
+                  <span class="dash-badge" data-ocr-review-count>-</span>
+                </div>
+                <div class="dash-table-wrap dash-review-table-wrap">
+                  <table class="dash-table dash-review-table">
+                    <thead>
+                      <tr>
+                        <th>Brand</th>
+                        <th>Diff</th>
+                        <th>Reason</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody data-ocr-review-rows>
+                      <tr><td colspan="4" class="dash-loading">Memuat review OCR...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
               </section>
             </div>
           </section>

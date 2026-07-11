@@ -199,9 +199,8 @@
       var link = event.target && event.target.closest && event.target.closest("[data-ocr-open-review]");
       if (!link) return;
       event.preventDefault();
-      var reviewTab = document.querySelector('[data-dashboard-tab="review"]');
-      if (reviewTab) reviewTab.click();
-      options.setStatus("Buka tab Review untuk meninjau kandidat data dari hasil OCR sebelum disetujui ke listing.", false);
+      openOcrReview();
+      options.setStatus("Buka Review OCR untuk meninjau kandidat data dari hasil OCR sebelum disetujui ke listing.", false);
     }
 
     async function submitResultSearch(event) {
@@ -1148,11 +1147,16 @@
           action: "create_ocr_enrichment_suggestion",
           franchise_id: franchiseId
         });
-        options.setStatus(result.message || "Bundle review OCR dibuat di tab Review.", false);
+        options.setStatus(result.message || "Bundle review OCR dibuat di Review OCR.", false);
         await options.reloadDashboard();
-        var reviewTab = document.querySelector('[data-dashboard-tab="review"]');
-        if (reviewTab) reviewTab.click();
+        openOcrReview();
       }, options.setStatus);
+    }
+
+    function openOcrReview() {
+      var ocrTab = document.querySelector('[data-dashboard-tab="ocr"]');
+      if (ocrTab) ocrTab.click();
+      activateSubtab("review");
     }
 
     async function retryFailedJobs() {

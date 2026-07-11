@@ -166,16 +166,27 @@
     }
 
     function renderEditSuggestions(data) {
-      var pending = data.pending || [];
+      var allPending = data.pending || [];
+      var pending = allPending.filter(function (row) { return row.field_name !== "ocr_enrichment_bundle"; });
+      var ocrPending = allPending.filter(function (row) { return row.field_name === "ocr_enrichment_bundle"; });
       var summary = data.summary || {};
-      if (options.editCount) options.editCount.textContent = (summary.pending || 0) + " pending";
-      if (!options.editRows) return;
+      if (options.editCount) options.editCount.textContent = pending.length.toLocaleString("id-ID") + " pending";
+      if (options.ocrReviewCount) options.ocrReviewCount.textContent = ocrPending.length.toLocaleString("id-ID") + " pending";
+      renderSuggestionRows(options.editRows, pending, "Tidak ada edit suggestion pending.");
+      renderSuggestionRows(options.ocrReviewRows, ocrPending, "Tidak ada review OCR pending.");
+      if (summary.pending !== allPending.length && options.editCount) {
+        options.editCount.setAttribute("data-fr-tooltip", Number(summary.pending || allPending.length || 0).toLocaleString("id-ID") + " total review pending.");
+      }
+    }
+
+    function renderSuggestionRows(target, pending, emptyCopy) {
+      if (!target) return;
       if (!pending.length) {
-        options.editRows.innerHTML = '<tr><td colspan="4" class="dash-empty">Tidak ada edit suggestion pending.</td></tr>';
+        target.innerHTML = '<tr><td colspan="4" class="dash-empty">' + utils.escapeHtml(emptyCopy) + '</td></tr>';
         return;
       }
 
-      options.editRows.innerHTML = pending.map(function (row) {
+      target.innerHTML = pending.map(function (row) {
         var actions = isAdmin()
           ? utils.renderActionToolbar([
             utils.renderActionButton({
@@ -201,18 +212,23 @@
           ], "Review edit")
           : '<span class="dash-muted">Menunggu admin.</span>';
         return '<tr>' +
-          '<td><a href="' + utils.escapeAttr(row.public_url || "#") + '" target="_blank" rel="noopener">' + utils.escapeHtml(row.brand_name) + '</a><br><span class="dash-muted">' + utils.escapeHtml(row.suggested_by_email || row.suggested_by_name || "staff") + '</span></td>' +
-          '<td>' + renderFieldDiff(row.old_value || {}, row.suggested_value || {}) + '</td>' +
-          '<td>' + utils.escapeHtml(row.reason || "-") + '</td>' +
+          '<td class="dash-review-brand"><a href="' + utils.escapeAttr(row.public_url || "#") + '" target="_blank" rel="noopener">' + utils.escapeHtml(row.brand_name) + '</a><span class="dash-muted">' + utils.escapeHtml(row.suggested_by_email || row.suggested_by_name || "staff") + '</span>' + renderSuggestionType(row) + '</td>' +
+          '<td class="dash-review-diff-cell">' + renderFieldDiff(row.old_value || {}, row.suggested_value || {}) + '</td>' +
+          '<td class="dash-review-reason">' + utils.escapeHtml(row.reason || "-") + '</td>' +
           '<td>' + actions + '</td>' +
         '</tr>';
       }).join("");
 
-      options.editRows.querySelectorAll("[data-review-edit]").forEach(function (button) {
+      target.querySelectorAll("[data-review-edit]").forEach(function (button) {
         button.addEventListener("click", function () {
           reviewEditSuggestion(button);
         });
       });
+    }
+
+    function renderSuggestionType(row) {
+      if (row.field_name !== "ocr_enrichment_bundle") return "";
+      return '<span class="dash-review-source"><i class="fas fa-file-alt" aria-hidden="true"></i> OCR</span>';
     }
 
     function seedEditSuggestion(button) {
@@ -417,8 +433,12 @@
       return '<div class="dash-field-diff">' + fields.map(function (fieldName) {
         var field = getFieldDef(fieldName);
         return '<div class="dash-field-diff-row">' +
-          '<strong>' + utils.escapeHtml(field.label || fieldName) + '</strong>' +
-          '<span><b>Semula:</b> ' + utils.escapeHtml(formatFieldValue(oldValue[fieldName])) + '<br><b>Usulan:</b> ' + utils.escapeHtml(formatFieldValue(suggestedValue[fieldName])) + '</span>' +
+          '<strong><i class="fas fa-tag" aria-hidden="true"></i>' + utils.escapeHtml(field.label || fieldName) + '</strong>' +
+          '<div class="dash-field-diff-values">' +
+            '<span class="dash-diff-value is-old"><i class="fas fa-minus" aria-hidden="true"></i><b>Semula</b><em>' + utils.escapeHtml(formatFieldValue(oldValue[fieldName])) + '</em></span>' +
+            '<span class="dash-diff-arrow"><i class="fas fa-arrow-right" aria-hidden="true"></i></span>' +
+            '<span class="dash-diff-value is-new"><i class="fas fa-plus" aria-hidden="true"></i><b>Usulan</b><em>' + utils.escapeHtml(formatFieldValue(suggestedValue[fieldName])) + '</em></span>' +
+          '</div>' +
         '</div>';
       }).join("") + '</div>';
     }

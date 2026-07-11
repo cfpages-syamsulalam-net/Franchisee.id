@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-12 03:42 (Asia/Jakarta)
+Last updated: 2026-07-12 05:50 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -57,7 +57,9 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 | File / area | Why it is now a refactor candidate | Proposed split | Priority | Status |
 | --- | --- | --- | --- | --- |
 | `functions/_ocr-job-runner.js` result/read-state section | The file is still 1,143 lines after prior OCR extractions. This session wired the grouped enrichment queue into the dashboard read model, but the actual grouping/review logic lives in new `_ocr-enrichment-review.js`; result reads/search, row masking, and dashboard payload shaping still remain separate from provider execution. | Before adding another OCR dashboard result feature, extract read/search/mask helpers into `_ocr-results-read-model.js`; keep provider execution and job state transitions in `_ocr-job-runner.js`. | Medium | Planned |
-| `js/dashboard-ocr.js` OCR action coordinator | The coordinator is 1,425 lines after adding the grouped enrichment review action. Presentation is already split into focused modules, but action handlers for provider settings, scheduler batches, job retries, result search, and enrichment creation still live together. | Before adding another OCR control workflow, extract action handlers into a small `dashboard-ocr-actions.js` helper while keeping `dashboard-ocr.js` as the state/timer/subtab facade. | Medium | Planned |
+| `js/dashboard-ocr.js` OCR action coordinator | The coordinator is 1,429 lines after routing created OCR bundles to the new Review OCR subtab. Presentation is already split into focused modules, but action handlers for provider settings, scheduler batches, job retries, result search, and enrichment creation still live together. | Before adding another OCR control workflow, extract action handlers into a small `dashboard-ocr-actions.js` helper while keeping `dashboard-ocr.js` as the state/timer/subtab facade. | Medium | Planned |
+| `src/pages/dashboard/index.astro` dashboard shell | The route shell is 962 lines after adding the fourth OCR guide card, dedicated OCR Review subpanel, and full-width pending edit review table. The change improves layout without adding runtime logic, but the static shell remains large. | Before another dashboard layout feature, extract route sections into Astro components starting with `DashboardReviewPanel.astro` and `DashboardOcrPanel.astro`; keep this route as the assembler and script/style loader. | Medium | Planned |
+| `js/dashboard-review.js` review renderer | The module is 587 lines after splitting OCR bundles from generic review and improving field diff rendering. It remains under the deeper split threshold, but now owns quality, generic review, OCR review, claim review, and location editor rendering. | If another review/location workflow lands, extract pending review table/diff rendering into `dashboard-review-table.js` so the main module can stay focused on actions and panel wiring. | Medium | Planned |
 
 ## OCR Execution UX Audit - 2026-07-10
 

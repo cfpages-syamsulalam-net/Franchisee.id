@@ -241,6 +241,9 @@ body {
   min-width: 0;
   overflow: hidden;
 }
+.dash-panel-wide {
+  grid-column: 1 / -1;
+}
 .dash-panel-header {
   padding: 16px 18px;
   border-bottom: 1px solid var(--dash-line);
@@ -421,6 +424,50 @@ body {
   border-color: rgba(17, 24, 39, 0.16);
   background: #ffffff;
   color: var(--dash-ink) !important;
+}
+.dash-pill-action {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  border: 1px solid rgba(17, 24, 39, 0.16);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--dash-ink);
+  cursor: pointer;
+  padding: 6px 9px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none !important;
+}
+.dash-pill-action:hover,
+.dash-pill-action:focus {
+  border-color: var(--dash-ink);
+  background: #fff8df;
+  color: var(--dash-ink);
+  outline: 0;
+}
+.dash-pill-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.dash-pill-action.is-success {
+  border-color: rgba(22, 163, 74, 0.35);
+  color: #14532d;
+}
+.dash-pill-action.is-danger {
+  border-color: rgba(220, 38, 38, 0.35);
+  color: #7f1d1d;
+}
+.dash-pill-action span {
+  display: inline;
+  color: inherit;
+  font-size: inherit;
+  margin: 0;
 }
 .dash-badge {
   display: inline-flex;

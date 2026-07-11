@@ -27,6 +27,10 @@
     return ["dash-icon-button", "dash-action-button", tone ? "is-" + tone : ""].filter(Boolean).join(" ");
   }
 
+  function pillActionClass(tone) {
+    return ["dash-pill-action", tone ? "is-" + tone : ""].filter(Boolean).join(" ");
+  }
+
   function renderAttrs(attrs) {
     return Object.keys(attrs || {}).map(function (name) {
       var value = attrs[name];
@@ -64,6 +68,30 @@
     return '<a class="' + escapeAttr(actionClass(config.tone)) + '"' + renderAttrs(attrs) + '><i class="' + escapeAttr(config.icon || "fas fa-external-link-alt") + '" aria-hidden="true"></i></a>';
   }
 
+  function renderPillActionButton(config) {
+    config = config || {};
+    var attrs = Object.assign({}, config.attrs || {}, {
+      type: "button",
+      "aria-label": config.label || "Aksi",
+      "data-fr-tooltip": config.tooltip || config.label || "Aksi"
+    });
+    return '<button class="' + escapeAttr(pillActionClass(config.tone)) + '"' + renderAttrs(attrs) + '><i class="' + escapeAttr(config.icon || "fas fa-circle") + '" aria-hidden="true"></i><span>' + escapeHtml(config.label || "Aksi") + '</span></button>';
+  }
+
+  function renderPillActionLink(config) {
+    config = config || {};
+    var attrs = Object.assign({}, config.attrs || {}, {
+      href: config.href || "#",
+      "aria-label": config.label || "Buka",
+      "data-fr-tooltip": config.tooltip || config.label || "Buka"
+    });
+    if (config.newTab !== false) {
+      attrs.target = "_blank";
+      attrs.rel = "noopener";
+    }
+    return '<a class="' + escapeAttr(pillActionClass(config.tone)) + '"' + renderAttrs(attrs) + '><i class="' + escapeAttr(config.icon || "fas fa-external-link-alt") + '" aria-hidden="true"></i><span>' + escapeHtml(config.label || "Buka") + '</span></a>';
+  }
+
   window.FranchiseDashboardUtils = {
     escapeHtml: escapeHtml,
     escapeAttr: escapeAttr,
@@ -71,6 +99,8 @@
     renderActionToolbar: renderActionToolbar,
     renderActionButton: renderActionButton,
     renderActionLink: renderActionLink,
+    renderPillActionButton: renderPillActionButton,
+    renderPillActionLink: renderPillActionLink,
     renderAttrs: renderAttrs,
     setFormValue: setFormValue
   };

@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-12 03:42 (Asia/Jakarta)
+Last updated: 2026-07-12 05:50 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -271,11 +271,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `escapeHtml(value)` / `escapeAttr(value)`: Escapes dashboard-rendered strings before injecting HTML.
 - `formatCurrency(value)`: Formats Indonesian Rupiah amounts for dashboard payment rows.
 - `renderActionToolbar(items, label)` / `renderActionButton(config)` / `renderActionLink(config)`: Renders icon-only dashboard action controls with `aria-label` and `data-fr-tooltip`.
+- `renderPillActionButton(config)` / `renderPillActionLink(config)`: Renders shared text-pill dashboard actions with consistent `.dash-pill-action` styling and tooltip attributes.
 - `setFormValue(form, name, value)`: Writes dashboard form control values without duplicating selector logic.
 
 ### File: `css/dashboard.css`
 *Protected admin/staff dashboard base stylesheet.*
-- Owns the `/dashboard` warm yellow/black/cream app shell, dark sticky header, readable user/session chip, rounded metric cards, tab controls, panels, dashboard tables/forms/buttons/badges, generic icon action toolbars, debug panel, and shared responsive dashboard behavior.
+- Owns the `/dashboard` warm yellow/black/cream app shell, dark sticky header, readable user/session chip, rounded metric cards, tab controls, panels, dashboard tables/forms/buttons/badges, generic icon action toolbars, shared text-pill actions, debug panel, and shared responsive dashboard behavior.
 - Keeps dashboard styling visually aligned with `/profil` while preserving the existing dashboard DOM/data/action modules. Feature-heavy auth loading, review, operations, premium, and OCR styles are extracted to focused CSS modules.
 
 ### File: `css/dashboard-auth.css`
@@ -284,7 +285,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-review.css`
 *Dashboard Review/Data Quality stylesheet module.*
-- Owns guided edit field rows, field diff rows, and Area Listing editor layout/responsive behavior for the Review tab.
+- Owns guided edit field rows, full-width pending review tables, icon-led old-to-new field diff rows, OCR/general review source badges, reason wrapping, and Area Listing editor layout/responsive behavior for the Review and OCR Review surfaces.
 
 ### File: `css/dashboard-operations.css`
 *Dashboard Operations/admin helper stylesheet module.*
@@ -300,7 +301,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-ocr-settings.css`
 *Dashboard OCR settings stylesheet module.*
-- Owns OCR guide-card subtab navigation, provider/scheduler credential form layout, provider metadata, stored credential badges, provider toggle/error/copy controls, and settings responsive behavior.
+- Owns OCR guide-card subtab navigation for Pengaturan, Eksekusi Job, Hasil OCR, and Review OCR, provider/scheduler credential form layout, provider metadata, stored credential badges, provider toggle/error/copy controls, and settings responsive behavior.
 
 ### File: `css/dashboard-ocr-execution.css`
 *Dashboard OCR execution stylesheet module.*
@@ -320,7 +321,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-review.js`
 *Review/Data Quality client module for `/dashboard`.*
 - `window.FranchiseDashboardReview.createOperations(options)`: Creates the review controller from DOM references, current dashboard state getter, admin-state callback, and shared action/reload/status callbacks.
-- `render(data)`: Renders data-quality rows, pending claims, listing edit options, guided edit field rows, pending edit suggestions, and admin Area Listing controls.
+- `render(data)`: Renders data-quality rows, pending claims, listing edit options, guided edit field rows, generic pending edit suggestions, OCR-only pending edit suggestions, and admin Area Listing controls.
+- `renderEditSuggestions(data)` / `renderSuggestionRows(target, pending, emptyCopy)`: Splits `ocr_enrichment_bundle` rows away from generic Review and renders both tables with shared admin approve/reject actions, wrapped reason copy, source badges, and icon-led old/new field diffs.
 - `seedEditSuggestion(button)`: Seeds the guided edit form from a Data Quality warning, switches to the Review tab, scrolls to the form, and changes copy/action labels for admin direct-edit versus staff suggestion mode.
 - `submitLocationUpdate(event)`: Admin-only dashboard action that posts structured location rows to `/dashboard-data` and reloads dashboard state after rebuild queueing.
 - `refreshQualityChecks()`: Posts the protected refresh action and reloads dashboard data.
@@ -344,7 +346,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `syncBatchCountdowns()` / `handleForegroundRefresh()`: Delegates structured scheduler ETA countdown label updates to `js/dashboard-ocr-batches.js`, delegates combined-provider quota reset countdown label updates to `js/dashboard-ocr-worker.js`, owns timer lifecycle, and refreshes OCR state when a hidden/background tab becomes active again.
 - `searchOcrResults(append)` / `resetResultSearch()` / `loadMoreResultSearch()`: Calls `search_ocr_results` to fetch filtered OCR result history by text/status from the server, appends paged results with de-duping, and keeps the default dashboard payload small until an admin searches.
 - `focusResultRow(assetId)` / `loadAndFocusResultAsset(assetId)`: Opens the Hasil OCR subtab at the exact OCR asset from Eksekusi Job. If the asset is not in the currently loaded/default result payload, it fetches that exact `asset_id` from `search_ocr_results` and then highlights the matching page.
-- `createOcrEnrichmentSuggestion(franchiseId, button)`: Admin-only Hasil OCR action that converts one grouped per-franchise OCR candidate queue item into a pending Review-tab edit suggestion bundle, then reloads dashboard data and opens Review.
+- `createOcrEnrichmentSuggestion(franchiseId, button)` / `openOcrReview()`: Admin-only Hasil OCR action that converts one grouped per-franchise OCR candidate queue item into a pending OCR Review edit suggestion bundle, then reloads dashboard data and opens the dedicated Review OCR subtab.
 - Result franchise pagination state: `resultGroupOffset` and `resultFranchisePageSize` keep Hasil OCR grouped by franchise, with a dashboard selector for how many franchise cards to show per page while each card keeps its own brochure-page pager.
 - `syncBatchPolling(payload)`: Auto-refreshes `/dashboard-data` every few seconds while the OCR tab is visible and any persisted batch is still `queued` or `running`, so progress bars update without manual refresh.
 - `markJobNoText(jobId, button)`: Lets an admin mark a failed OCR job as `needs_review` after opening the source image and confirming the brochure page has no useful text, avoiding false provider-error treatment while preserving retry if needed.
@@ -384,7 +386,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-ocr-results.js`
 *Dashboard OCR result renderer.*
 - `window.FranchiseDashboardOcrResults.createRenderer(deps)`: Creates pure render helpers for the grouped OCR enrichment queue, compact franchise-grouped OCR result cards, stable per-asset anchors, per-page result navigation, source image links with shared hover-preview attributes and `aria-label` fallback instead of competing tooltips, listing links, and review links.
-- `renderEnrichmentQueue(queue)` / `renderEnrichmentItem(item)`: Renders one reviewable candidate bundle per franchise with field labels, source count, pending-state copy, source/listing links, and the admin-only `Buat Review` action.
+- `renderEnrichmentQueue(queue)` / `renderEnrichmentItem(item)`: Renders one reviewable candidate bundle per franchise with field labels, source count, pending-state copy, shared source/listing pill links, and the admin-only shared `Buat Review` pill action.
 - `groupResultsByFranchise(results)` / `renderResultGroup(group)`: Group OCR text results by franchise and render one card per franchise with page controls instead of a long flat list.
 
 ### File: `js/dashboard-ocr-schedulers.js`
@@ -655,7 +657,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `scripts/check-dashboard-ocr-client.mjs`
 *Focused dashboard OCR browser-module regression check.*
-- `pnpm run dashboard:ocr:check`: Runs `node --check` only on the browser/non-module OCR client modules and asserts provider/state/worker renderer modules, provider toggle, retry actions, job filter/pagination, grouped OCR enrichment queue wiring, hover image-preview wiring, and no-active-provider disabled-state wiring remain present.
+- `pnpm run dashboard:ocr:check`: Runs `node --check` on the browser/non-module OCR client modules plus the shared dashboard utility/review modules touched by OCR Review, and asserts provider/state/worker renderer modules, provider toggle, retry actions, job filter/pagination, grouped OCR enrichment queue/review-subtab wiring, shared pill action helpers, hover image-preview wiring, and no-active-provider disabled-state wiring remain present.
 
 ### File: `js/product-events.js`
 *Public privacy-safe listing interaction tracker.*
@@ -727,7 +729,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads dashboard base/auth/OCR styles plus auth/tooltips/utilities, Premium, Review, Operations, OCR, and controller client modules; shows a skeleton while the session is checked and marks the login-only staff/admin auth root with `data-auth-defer="true"` so it is only mounted when no Clerk session exists or the session must be renewed.
-- Renders the branded dashboard shell and an OCR tab with provider selector, provider-specific password credential fields, read-only quota/free-limit metadata, priority-list enablement, icon-led grouped job rows, retry controls, and explicit credential clear controls. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` and loads the split OCR browser modules before the coordinator facade. Runtime authorization remains server-side.
+- Renders the branded dashboard shell, separates direct listing edits from full-width pending edit review tables, and renders an OCR tab with guide-card navigation for Pengaturan/Eksekusi Job/Hasil OCR/Review OCR, provider selector, provider-specific password credential fields, read-only quota/free-limit metadata, priority-list enablement, icon-led grouped job rows, retry controls, dedicated OCR review table, and explicit credential clear controls. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` and loads the split OCR browser modules before the coordinator facade. Runtime authorization remains server-side.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.

@@ -67,12 +67,29 @@
       var sourceAssetId = firstSourceAssetId(item);
       var action = pendingBundle
         ? '<span class="dash-ocr-enrichment-state"><i class="fas fa-clock" aria-hidden="true"></i> Sudah pending</span>'
-        : '<button type="button" class="dash-ocr-row-action" data-ocr-create-enrichment="' + utils.escapeAttr(item.franchise_id || "") + '" data-fr-tooltip="Buat satu bundle review dari kandidat OCR franchise ini."><i class="fas fa-clipboard-list" aria-hidden="true"></i><span>Buat Review</span></button>';
+        : utils.renderPillActionButton({
+          label: "Buat Review",
+          icon: "fas fa-clipboard-list",
+          tooltip: "Buat satu bundle review dari kandidat OCR franchise ini.",
+          attrs: { "data-ocr-create-enrichment": item.franchise_id || "" }
+        });
       var listing = item.public_url
-        ? '<a class="dash-ocr-row-action" href="' + utils.escapeAttr(item.public_url) + '" target="_blank" rel="noopener" data-fr-tooltip="Buka listing publik franchise ini."><i class="fas fa-external-link-alt" aria-hidden="true"></i><span>Listing</span></a>'
+        ? utils.renderPillActionLink({
+          label: "Listing",
+          icon: "fas fa-external-link-alt",
+          href: item.public_url,
+          tooltip: "Buka listing publik franchise ini."
+        })
         : "";
       var sourceLink = sourceAssetId
-        ? '<a class="dash-ocr-row-action" href="#ocr-result-' + utils.escapeAttr(sourceAssetId) + '" data-ocr-open-result="' + utils.escapeAttr(sourceAssetId) + '" data-fr-tooltip="Buka salah satu halaman OCR sumber kandidat ini."><i class="fas fa-file-alt" aria-hidden="true"></i><span>Sumber</span></a>'
+        ? utils.renderPillActionLink({
+          label: "Sumber",
+          icon: "fas fa-file-alt",
+          href: "#ocr-result-" + sourceAssetId,
+          newTab: false,
+          tooltip: "Buka salah satu halaman OCR sumber kandidat ini.",
+          attrs: { "data-ocr-open-result": sourceAssetId }
+        })
         : "";
       return '<article class="dash-ocr-enrichment-item">' +
         '<div class="dash-ocr-enrichment-copy">' +

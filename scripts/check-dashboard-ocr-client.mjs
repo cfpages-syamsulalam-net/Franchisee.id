@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
 const files = [
+  "js/dashboard-utils.js",
+  "js/dashboard-review.js",
   "js/dashboard-ocr-state.js",
   "js/dashboard-ocr-providers.js",
   "js/dashboard-ocr-jobs.js",
@@ -21,6 +23,8 @@ for (const file of files) {
 
 const assertionSources = files.concat([
   "src/pages/dashboard/index.astro",
+  "css/dashboard.css",
+  "css/dashboard-review.css",
   "css/dashboard-ocr-settings.css",
   "css/dashboard-ocr-execution.css",
   "css/dashboard-ocr-results.css",
@@ -91,6 +95,13 @@ const requiredFragments = [
   "renderEnrichmentQueue",
   "Kandidat Review OCR",
   "Bundle review OCR dibuat",
+  "data-ocr-subtab=\"review\"",
+  "data-ocr-review-rows",
+  "renderPillActionButton",
+  "renderPillActionLink",
+  "dash-pill-action",
+  "ocr_enrichment_bundle",
+  "dash-field-diff-values",
 ];
 
 for (const fragment of requiredFragments) {
