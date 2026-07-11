@@ -80,7 +80,10 @@
         if (jobRenderers && typeof jobRenderers.bindImagePreview === "function") jobRenderers.bindImagePreview(options.jobRows);
       }
       if (options.batchRows) options.batchRows.addEventListener("click", handleBatchRowsClick);
-      if (options.resultRows) options.resultRows.addEventListener("click", handleResultClick);
+      if (options.resultRows) {
+        options.resultRows.addEventListener("click", handleResultClick);
+        if (jobRenderers && typeof jobRenderers.bindImagePreview === "function") jobRenderers.bindImagePreview(options.resultRows);
+      }
       if (options.resultFilterForm) options.resultFilterForm.addEventListener("submit", submitResultSearch);
       if (options.resultResetButton) options.resultResetButton.addEventListener("click", resetResultSearch);
       if (options.resultLoadMoreButton) options.resultLoadMoreButton.addEventListener("click", loadMoreResultSearch);
@@ -592,6 +595,7 @@
     function renderResults(payload) {
       if (!options.resultRows) return;
       payload = payload || {};
+      if (jobRenderers && typeof jobRenderers.hideImagePreview === "function") jobRenderers.hideImagePreview(options.resultRows);
       if (payload.migration_required) {
         options.resultRows.innerHTML = '<li><strong>Hasil belum siap</strong><span>Migration OCR job queue perlu dijalankan sebelum hasil OCR bisa dibaca.</span></li>';
         return;

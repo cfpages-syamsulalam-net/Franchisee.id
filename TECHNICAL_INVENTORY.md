@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-11 00:35 (Asia/Jakarta)
+Last updated: 2026-07-12 00:57 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -300,11 +300,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-ocr-settings.css`
 *Dashboard OCR settings stylesheet module.*
-- Owns OCR guide cards, provider/scheduler credential form layout, provider metadata, stored credential badges, provider toggle/error/copy controls, and settings responsive behavior.
+- Owns OCR guide-card subtab navigation, provider/scheduler credential form layout, provider metadata, stored credential badges, provider toggle/error/copy controls, and settings responsive behavior.
 
 ### File: `css/dashboard-ocr-execution.css`
 *Dashboard OCR execution stylesheet module.*
-- Owns execution toolbar/status, combined quota chip, job filters, compact icon-led page-size control, grouped job cards, compact icon-only OCR job message pills, job status/actions, batch progress/countdown/actions, viewport-aware lazy hover image-preview overlay styling, and execution responsive behavior.
+- Owns execution toolbar/status, combined quota chip, job filters, compact icon-led page-size control, grouped job cards, compact icon-only OCR job message pills, job status/actions, batch progress/countdown/actions, viewport-aware lazy hover image-preview overlay styling shared by job/result image actions, and execution responsive behavior.
 
 ### File: `css/dashboard-ocr-results.css`
 *Dashboard OCR results stylesheet module.*
@@ -339,6 +339,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Admin OCR coordinator/facade for `/dashboard`.*
 - `window.FranchiseDashboardOcr.createOperations(options)`: Creates the OCR tab controller from subtab, provider-list/select/form/status, scheduler-select/form/status, job/batch/result DOM references, and shared dashboard callbacks.
 - `render(payload, jobsPayload, schedulerPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderBatches(payload)` / `renderResults(payload)` / `fillForm(provider)` / `fillSchedulerForm(provider)`: Coordinates provider/scheduler forms and delegates state creation plus provider, combined-quota, job, batch/countdown, and result rendering to focused modules.
+- `bind()` / `renderJobs()` / `renderResults()`: Reuses the delegated `dashboard-ocr-jobs.js` hover-preview component for both Eksekusi Job and Hasil OCR `Gambar` actions, with cleanup before each row/card re-render.
 - `searchOcrJobs(status, offset)`: Fetches paginated OCR job rows from `/dashboard-data` for all/unqueued/pending/running/succeeded/needs-review/failed status chips, uses the selected page size with 120 as the default, preserves the active filter after job mutations, and delegates grouped rendering to `js/dashboard-ocr-jobs.js`.
 - `syncBatchCountdowns()` / `handleForegroundRefresh()`: Delegates structured scheduler ETA countdown label updates to `js/dashboard-ocr-batches.js`, delegates combined-provider quota reset countdown label updates to `js/dashboard-ocr-worker.js`, owns timer lifecycle, and refreshes OCR state when a hidden/background tab becomes active again.
 - `searchOcrResults(append)` / `resetResultSearch()` / `loadMoreResultSearch()`: Calls `search_ocr_results` to fetch filtered OCR result history by text/status from the server, appends paged results with de-duping, and keeps the default dashboard payload small until an admin searches.
@@ -381,7 +382,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-ocr-results.js`
 *Dashboard OCR result renderer.*
-- `window.FranchiseDashboardOcrResults.createRenderer(deps)`: Creates pure render helpers for compact franchise-grouped OCR result cards, stable per-asset anchors, per-page result navigation, source image links, listing links, and review links.
+- `window.FranchiseDashboardOcrResults.createRenderer(deps)`: Creates pure render helpers for compact franchise-grouped OCR result cards, stable per-asset anchors, per-page result navigation, source image links with shared hover-preview attributes, listing links, and review links.
 - `groupResultsByFranchise(results)` / `renderResultGroup(group)`: Group OCR text results by franchise and render one card per franchise with page controls instead of a long flat list.
 
 ### File: `js/dashboard-ocr-schedulers.js`

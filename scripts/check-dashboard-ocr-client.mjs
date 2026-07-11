@@ -49,6 +49,8 @@ const requiredFragments = [
   "canMarkNoText",
   "Hover untuk lihat gambar cepat",
   "data-ocr-image-preview-url",
+  "data-ocr-image-preview-alt",
+  "bindImagePreview(options.resultRows)",
   "bindImagePreview",
   "dash-ocr-image-preview",
   "getPreviewViewportBounds",

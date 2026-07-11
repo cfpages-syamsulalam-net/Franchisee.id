@@ -579,36 +579,21 @@ const ocrProviderMetadataJson = JSON.stringify({
           </section>
 
           <section class="dash-tab-panel" id="dash-panel-ocr" role="tabpanel" aria-labelledby="dash-tab-ocr" data-dashboard-panel="ocr" hidden>
-            <div class="dash-ocr-guide-grid" aria-label="Ringkasan alur OCR">
-              <article class="dash-ocr-guide-card">
+            <div class="dash-ocr-guide-grid" role="tablist" aria-label="Menu OCR">
+              <button class="dash-ocr-guide-card is-active" type="button" role="tab" aria-selected="true" data-ocr-subtab="settings">
                 <i class="fas fa-sliders-h" aria-hidden="true"></i>
-                <strong>1. Pengaturan</strong>
+                <strong>Pengaturan</strong>
                 <span>Pilih provider OCR dan isi key. Provider dengan key akan aktif kecuali admin menonaktifkannya.</span>
-              </article>
-              <article class="dash-ocr-guide-card">
+              </button>
+              <button class="dash-ocr-guide-card" type="button" role="tab" aria-selected="false" data-ocr-subtab="jobs">
                 <i class="fas fa-clock" aria-hidden="true"></i>
-                <strong>2. Eksekusi</strong>
+                <strong>Eksekusi Job</strong>
                 <span>Antrekan brosur gambar, coba Dry run, lalu jalankan batch 100 lewat scheduler pihak ketiga.</span>
-              </article>
-              <article class="dash-ocr-guide-card">
+              </button>
+              <button class="dash-ocr-guide-card" type="button" role="tab" aria-selected="false" data-ocr-subtab="results">
                 <i class="fas fa-clipboard-check" aria-hidden="true"></i>
-                <strong>3. Hasil</strong>
+                <strong>Hasil OCR</strong>
                 <span>Lihat teks OCR dan lanjutkan ke Review sebelum data masuk ke listing publik.</span>
-              </article>
-            </div>
-
-            <div class="dash-subtabs dash-ocr-subtabs" role="tablist" aria-label="Menu OCR">
-              <button class="dash-subtab is-active" type="button" role="tab" aria-selected="true" data-ocr-subtab="settings">
-                <i class="fas fa-sliders-h" aria-hidden="true"></i>
-                <span>Pengaturan</span>
-              </button>
-              <button class="dash-subtab" type="button" role="tab" aria-selected="false" data-ocr-subtab="jobs">
-                <i class="fas fa-tasks" aria-hidden="true"></i>
-                <span>Eksekusi Job</span>
-              </button>
-              <button class="dash-subtab" type="button" role="tab" aria-selected="false" data-ocr-subtab="results">
-                <i class="fas fa-clipboard-check" aria-hidden="true"></i>
-                <span>Hasil OCR</span>
               </button>
             </div>
 

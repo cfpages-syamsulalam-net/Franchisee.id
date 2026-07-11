@@ -106,17 +106,38 @@
   width: min(100%, 136px);
   max-width: 100%;
   min-width: 0;
-  border: 1px solid rgba(17, 24, 39, 0.14);
+  border: 0;
   border-radius: 999px;
-  background: #ffffff;
+  background: #f8fafc;
+  box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.08);
   color: var(--dash-muted);
-  padding: 0 10px;
+  padding: 0 28px 0 10px;
+  position: relative;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+.dash-ocr-job-limit::after {
+  content: "\f078";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  color: var(--dash-muted);
+  font-family: "Font Awesome 5 Free";
+  font-size: 10px;
+  font-weight: 900;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.dash-ocr-job-limit:focus-within {
+  background: #ffffff;
+  box-shadow: inset 0 0 0 2px rgba(246, 138, 30, 0.32);
 }
 .dash-ocr-job-limit i {
   flex: 0 0 auto;
   font-size: 12px;
 }
 .dash-ocr-job-limit select {
+  appearance: none;
+  -webkit-appearance: none;
   min-width: 0;
   flex: 1 1 auto;
   width: 100%;
@@ -128,6 +149,8 @@
   font-size: 13px;
   font-weight: 900;
   outline: 0;
+  box-shadow: none;
+  cursor: pointer;
 }
 .dash-ocr-job-filter {
   display: inline-flex;
