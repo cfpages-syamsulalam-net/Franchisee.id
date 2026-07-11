@@ -88,6 +88,7 @@
     resultRows: document.querySelector("[data-ocr-result-rows]"),
     resultFilterForm: document.querySelector("[data-ocr-result-filter-form]"),
     resultFilterStatus: document.querySelector("[data-ocr-result-filter-status]"),
+    resultFranchiseLimitSelect: document.querySelector("[data-ocr-result-franchise-limit]"),
     resultLoadMoreButton: document.querySelector("[data-ocr-result-load-more]"),
     resultResetButton: document.querySelector("[data-ocr-result-reset]"),
     dryRunButton: document.querySelector("[data-ocr-dry-run]"),

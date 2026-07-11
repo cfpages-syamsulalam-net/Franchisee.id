@@ -19,6 +19,8 @@
       resultSearchResults: [],
       resultSearchMeta: null,
       resultSearchLoading: false,
+      resultGroupOffset: 0,
+      resultFranchisePageSize: 8,
       jobFilterStatus: "",
       jobFilterResults: [],
       jobFilterMeta: null,

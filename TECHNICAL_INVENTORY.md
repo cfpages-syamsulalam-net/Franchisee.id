@@ -308,7 +308,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-ocr-results.css`
 *Dashboard OCR results stylesheet module.*
-- Owns Hasil OCR search/filter controls, compact franchise result cards, per-page pager controls, OCR text preview blocks, result action links, and results responsive behavior.
+- Owns Hasil OCR search/filter controls, icon-only search/reset/load-more actions, franchise-card pagination, compact franchise result cards, per-page pager controls, OCR text preview blocks, result action links, and results responsive behavior.
 
 ### File: `js/dashboard-premium-operations.js`
 *Premium Operations client module for `/dashboard`.*
@@ -342,6 +342,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `searchOcrJobs(status, offset)`: Fetches paginated OCR job rows from `/dashboard-data` for all/unqueued/pending/running/succeeded/needs-review/failed status chips, uses the selected page size with 120 as the default, preserves the active filter after job mutations, and delegates grouped rendering to `js/dashboard-ocr-jobs.js`.
 - `syncBatchCountdowns()` / `handleForegroundRefresh()`: Delegates structured scheduler ETA countdown label updates to `js/dashboard-ocr-batches.js`, delegates combined-provider quota reset countdown label updates to `js/dashboard-ocr-worker.js`, owns timer lifecycle, and refreshes OCR state when a hidden/background tab becomes active again.
 - `searchOcrResults(append)` / `resetResultSearch()` / `loadMoreResultSearch()`: Calls `search_ocr_results` to fetch filtered OCR result history by text/status from the server, appends paged results with de-duping, and keeps the default dashboard payload small until an admin searches.
+- `focusResultRow(assetId)` / `loadAndFocusResultAsset(assetId)`: Opens the Hasil OCR subtab at the exact OCR asset from Eksekusi Job. If the asset is not in the currently loaded/default result payload, it fetches that exact `asset_id` from `search_ocr_results` and then highlights the matching page.
+- Result franchise pagination state: `resultGroupOffset` and `resultFranchisePageSize` keep Hasil OCR grouped by franchise, with a dashboard selector for how many franchise cards to show per page while each card keeps its own brochure-page pager.
 - `syncBatchPolling(payload)`: Auto-refreshes `/dashboard-data` every few seconds while the OCR tab is visible and any persisted batch is still `queued` or `running`, so progress bars update without manual refresh.
 - `markJobNoText(jobId, button)`: Lets an admin mark a failed OCR job as `needs_review` after opening the source image and confirming the brochure page has no useful text, avoiding false provider-error treatment while preserving retry if needed.
 - `handleProviderListClick(event)`: Copies provider troubleshooting context, including provider key, health status, credential presence, last check timestamp, and last error, without exposing stored credential values.
@@ -352,7 +354,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-ocr-state.js`
 *Dashboard OCR state factory.*
-- `window.FranchiseDashboardOcrState.createInitialState()`: Creates the provider/scheduler admin flags, autosave timers, active job/result filter state, OCR job page-size default, result group page indexes, polling flags, countdown/foreground refresh timer handles, and continuous-run lease fields used by the OCR coordinator.
+- `window.FranchiseDashboardOcrState.createInitialState()`: Creates the provider/scheduler admin flags, autosave timers, active job/result filter state, OCR job page-size default, result group page indexes, result franchise-card pagination, polling flags, countdown/foreground refresh timer handles, and continuous-run lease fields used by the OCR coordinator.
 
 ### File: `js/dashboard-ocr-providers.js`
 *Dashboard OCR provider/scheduler renderer.*
@@ -379,7 +381,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-ocr-results.js`
 *Dashboard OCR result renderer.*
-- `window.FranchiseDashboardOcrResults.createRenderer(deps)`: Creates pure render helpers for compact franchise-grouped OCR result cards, per-page result navigation, source image links, listing links, and review links.
+- `window.FranchiseDashboardOcrResults.createRenderer(deps)`: Creates pure render helpers for compact franchise-grouped OCR result cards, stable per-asset anchors, per-page result navigation, source image links, listing links, and review links.
 - `groupResultsByFranchise(results)` / `renderResultGroup(group)`: Group OCR text results by franchise and render one card per franchise with page controls instead of a long flat list.
 
 ### File: `js/dashboard-ocr-schedulers.js`
@@ -1038,7 +1040,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *OCR queue/cache/failover orchestrator shared by dashboard actions and the protected worker.*
 - `getOcrJobState(db, auth, env)`: Returns admin-only OCR queue counts, up to 120 recent jobs, expanded OCR result previews with listing/review metadata, recent persisted batch runs including structured scheduler timing fields, active continuous-run lease state, enqueue-candidate count, combined provider quota used/remaining/reset status from `_ocr-quota-policy.js`, and a `migration_required` fallback when OCR job/batch/lease migrations are not applied.
 - `handleSearchOcrJobs(db, auth, data)`: Admin-only server-side OCR job search for status chips. It paginates `ocr_jobs` by status/franchise and maps `unqueued` to active proposal image assets that have not yet entered `ocr_jobs`, so dashboard status counts are inspectable beyond the default 120-row page.
-- `handleSearchOcrResults(db, auth, data)`: Admin-only server-side history search for `franchise_asset_knowledge`, filtering by status and query text across brand/slug/source text with bounded limit/offset pagination for dashboard "Muat lagi".
+- `handleSearchOcrResults(db, auth, data)`: Admin-only server-side history search for `franchise_asset_knowledge`, filtering by exact `asset_id`, status, and query text across brand/slug/source text with bounded limit/offset pagination for dashboard "Muat lagi" and Eksekusi Job deep-links.
 - `handleEnqueueOcrJobs(db, auth, data)`: Admin-only action that queues active image proposal assets into `ocr_jobs`; it does not call external OCR providers.
 - `handleRunOcrDryRun(db, auth, data, env, options)`: Admin-only action that requires `OCR_KEY` and one enabled provider, prepares at most one candidate proposal-image job, and processes only that job before broad backfills.
 - `handleRunOcrJobs(db, auth, data, env, options)`: Admin-only action that runs a bounded batch and requires `OCR_KEY` before any provider call can happen; multi-job dashboard chunks without `batch_id` must present a valid continuous-run lease.

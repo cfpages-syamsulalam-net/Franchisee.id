@@ -134,6 +134,7 @@ export const SearchOcrResultsSchema = z.object({
   query: z.string().trim().max(120).optional().default(""),
   status: z.enum(["all", "extracted", "needs_ocr", "failed"]).optional().default("all"),
   franchise_id: z.string().trim().max(120).optional().default(""),
+  asset_id: z.string().trim().max(180).optional().default(""),
   limit: z.coerce.number().int().min(1).max(100).optional().default(40),
   offset: z.coerce.number().int().min(0).max(5000).optional().default(0),
 });

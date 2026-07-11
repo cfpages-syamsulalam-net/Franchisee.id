@@ -84,6 +84,7 @@
       if (options.resultFilterForm) options.resultFilterForm.addEventListener("submit", submitResultSearch);
       if (options.resultResetButton) options.resultResetButton.addEventListener("click", resetResultSearch);
       if (options.resultLoadMoreButton) options.resultLoadMoreButton.addEventListener("click", loadMoreResultSearch);
+      if (options.resultFranchiseLimitSelect) options.resultFranchiseLimitSelect.addEventListener("change", handleResultFranchiseLimitChange);
       if (options.dryRunButton) options.dryRunButton.addEventListener("click", runDryRun);
       if (options.enqueueButton) options.enqueueButton.addEventListener("click", enqueueJobs);
       if (options.runButton) options.runButton.addEventListener("click", runJobs);
@@ -154,7 +155,7 @@
       syncBatchPolling(state.lastJobsPayload || {});
     }
 
-    function handleResultClick(event) {
+    async function handleResultClick(event) {
       var pageButton = event.target && event.target.closest && event.target.closest("[data-ocr-result-page]");
       if (pageButton) {
         event.preventDefault();
@@ -177,7 +178,13 @@
       if (resultLink) {
         event.preventDefault();
         activateSubtab("results");
-        focusResultRow(resultLink.getAttribute("data-ocr-open-result"));
+        await focusResultRow(resultLink.getAttribute("data-ocr-open-result"));
+        return;
+      }
+      var groupPageButton = event.target && event.target.closest && event.target.closest("[data-ocr-result-group-page]");
+      if (groupPageButton) {
+        event.preventDefault();
+        setResultGroupOffset(Number(groupPageButton.getAttribute("data-ocr-result-group-page") || 0));
         return;
       }
       var link = event.target && event.target.closest && event.target.closest("[data-ocr-open-review]");
@@ -203,6 +210,7 @@
       state.resultSearchResults = [];
       state.resultSearchMeta = null;
       state.resultPageByFranchise = {};
+      state.resultGroupOffset = 0;
       if (options.resultFilterForm) options.resultFilterForm.reset();
       renderResults(state.lastJobsPayload || {});
       renderResultSearchStatus(state.lastJobsPayload || {});
@@ -238,6 +246,7 @@
           filters: result.filters || filters
         };
         state.resultPageByFranchise = append ? state.resultPageByFranchise : {};
+        state.resultGroupOffset = append ? state.resultGroupOffset : 0;
         var payload = buildSearchResultsPayload(state.lastJobsPayload || {});
         renderResults(payload);
         renderResultSearchStatus(payload);
@@ -249,6 +258,13 @@
         state.resultSearchLoading = false;
         setResultSearchBusy(false);
       }
+    }
+
+    function handleResultFranchiseLimitChange() {
+      state.resultGroupOffset = 0;
+      renderResults(getActiveResultPayload());
+      renderResultSearchStatus(getActiveResultPayload());
+      refreshTooltips();
     }
 
     async function searchOcrJobs(status, offset) {
@@ -358,7 +374,7 @@
       if (!resultLink) return;
       event.preventDefault();
       activateSubtab("results");
-      focusResultRow(resultLink.getAttribute("data-ocr-open-result"));
+      await focusResultRow(resultLink.getAttribute("data-ocr-open-result"));
     }
 
     async function handleJobStatusClick(event) {
@@ -564,7 +580,7 @@
     }
 
     function renderJobResultAction(assetId) {
-      return '<a class="dash-ocr-row-action" href="#ocr-results" data-ocr-open-result="' + utils.escapeAttr(assetId) + '" data-fr-tooltip="Buka teks OCR yang berhasil diekstrak.">' +
+      return '<a class="dash-ocr-row-action" href="#ocr-result-' + utils.escapeAttr(assetId) + '" data-ocr-open-result="' + utils.escapeAttr(assetId) + '" data-fr-tooltip="Buka teks OCR spesifik untuk halaman brosur ini.">' +
         '<i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Hasil</span></a>';
     }
 
@@ -582,9 +598,56 @@
       }
       var results = payload.results || [];
       var groups = resultRenderers.groupResultsByFranchise(results);
+      var visibleGroups = getVisibleResultGroups(groups);
       options.resultRows.innerHTML = groups.length
-        ? groups.map(resultRenderers.renderResultGroup).join("")
+        ? renderResultGroupPagination(groups) + visibleGroups.map(resultRenderers.renderResultGroup).join("") + renderResultGroupPagination(groups, true)
         : '<li><strong>Belum ada hasil OCR</strong><span>Jalankan Dry run atau batch untuk menghasilkan teks. Setelah sukses, hasilnya muncul di sini.</span></li>';
+    }
+
+    function getActiveResultPayload() {
+      return state.resultSearchActive ? buildSearchResultsPayload(state.lastJobsPayload || {}) : (state.lastJobsPayload || {});
+    }
+
+    function getActiveResultRows() {
+      return state.resultSearchActive ? (state.resultSearchResults || []) : ((state.lastJobsPayload && state.lastJobsPayload.results) || []);
+    }
+
+    function readResultFranchiseLimit() {
+      var value = options.resultFranchiseLimitSelect ? Number(options.resultFranchiseLimitSelect.value || 8) : Number(state.resultFranchisePageSize || 8);
+      var limit = Math.min(Math.max(value || 8, 1), 24);
+      state.resultFranchisePageSize = limit;
+      return limit;
+    }
+
+    function getVisibleResultGroups(groups) {
+      var limit = readResultFranchiseLimit();
+      var total = groups.length;
+      if (total <= limit) {
+        state.resultGroupOffset = 0;
+        return groups;
+      }
+      var maxOffset = Math.max(0, Math.floor((total - 1) / limit) * limit);
+      var offset = Math.min(Math.max(Number(state.resultGroupOffset || 0), 0), maxOffset);
+      state.resultGroupOffset = offset;
+      return groups.slice(offset, offset + limit);
+    }
+
+    function renderResultGroupPagination(groups, bottom) {
+      var total = groups.length;
+      var limit = readResultFranchiseLimit();
+      if (total <= limit) return "";
+      var offset = Number(state.resultGroupOffset || 0);
+      var page = Math.floor(offset / limit) + 1;
+      var pages = Math.max(1, Math.ceil(total / limit));
+      var from = offset + 1;
+      var to = Math.min(total, offset + limit);
+      var prevOffset = Math.max(0, offset - limit);
+      var nextOffset = Math.min(Math.max(0, total - 1), offset + limit);
+      return '<li class="dash-ocr-result-group-pagination' + (bottom ? ' is-bottom' : '') + '">' +
+        '<button type="button" class="dash-ocr-page-nav" data-ocr-result-group-page="' + prevOffset + '"' + (offset <= 0 ? " disabled" : "") + ' data-fr-tooltip="Lihat franchise sebelumnya"><i class="fas fa-chevron-left" aria-hidden="true"></i><span>Franchise sebelumnya</span></button>' +
+        '<span><i class="fas fa-store" aria-hidden="true"></i> Franchise ' + from.toLocaleString("id-ID") + '-' + to.toLocaleString("id-ID") + ' dari ' + total.toLocaleString("id-ID") + ' · Hal. ' + page.toLocaleString("id-ID") + '/' + pages.toLocaleString("id-ID") + '</span>' +
+        '<button type="button" class="dash-ocr-page-nav" data-ocr-result-group-page="' + nextOffset + '"' + (offset + limit >= total ? " disabled" : "") + ' data-fr-tooltip="Lihat franchise berikutnya"><span>Franchise berikutnya</span><i class="fas fa-chevron-right" aria-hidden="true"></i></button>' +
+        '</li>';
     }
 
     function buildSearchResultsPayload(basePayload) {
@@ -601,16 +664,22 @@
       if (state.resultSearchActive && state.resultSearchMeta) {
         var total = Number(state.resultSearchMeta.total || 0);
         var shown = (state.resultSearchResults || []).length;
+        var groups = resultRenderers.groupResultsByFranchise(state.resultSearchResults || []);
+        var groupLimit = readResultFranchiseLimit();
+        var visibleGroups = Math.min(groups.length, groupLimit);
         var filters = state.resultSearchMeta.filters || {};
         var parts = [
-          "Menampilkan " + shown.toLocaleString("id-ID") + " dari " + total.toLocaleString("id-ID") + " hasil OCR",
+          "Menampilkan " + visibleGroups.toLocaleString("id-ID") + " dari " + groups.length.toLocaleString("id-ID") + " franchise (" + shown.toLocaleString("id-ID") + "/" + total.toLocaleString("id-ID") + " hasil OCR termuat)",
           filters.query ? "cari: " + filters.query : "",
+          filters.asset_id ? "halaman spesifik" : "",
           filters.status && filters.status !== "all" ? "status: " + statusLabel(filters.status) : ""
         ].filter(Boolean);
         options.resultFilterStatus.innerHTML = '<i class="fas fa-filter" aria-hidden="true"></i> ' + utils.escapeHtml(parts.join(" · "));
       } else {
-        var count = ((payload && payload.results) || []).length;
-        options.resultFilterStatus.innerHTML = '<i class="fas fa-clock" aria-hidden="true"></i> ' + utils.escapeHtml("Menampilkan " + count.toLocaleString("id-ID") + " hasil OCR terbaru.");
+        var groups = resultRenderers.groupResultsByFranchise((payload && payload.results) || []);
+        var limit = readResultFranchiseLimit();
+        var visible = Math.min(groups.length, limit);
+        options.resultFilterStatus.innerHTML = '<i class="fas fa-clock" aria-hidden="true"></i> ' + utils.escapeHtml("Menampilkan " + visible.toLocaleString("id-ID") + " dari " + groups.length.toLocaleString("id-ID") + " franchise terbaru.");
       }
       if (options.resultLoadMoreButton) {
         options.resultLoadMoreButton.hidden = !(state.resultSearchActive && state.resultSearchMeta && state.resultSearchMeta.has_more);
@@ -623,7 +692,7 @@
       return {
         query: String(data.get("query") || "").trim(),
         status: String(data.get("status") || "all"),
-        limit: Math.min(Math.max(Number(data.get("limit") || 40), 1), 100)
+        limit: 100
       };
     }
 
@@ -658,36 +727,22 @@
       }
     }
 
-    function focusResultRow(assetId) {
+    async function focusResultRow(assetId) {
       if (!assetId || !options.resultRows) {
         options.setStatus("Buka subtab Hasil OCR untuk melihat teks yang berhasil diekstrak.", false);
         return;
       }
-      var sourceResults = state.resultSearchActive ? state.resultSearchResults : ((state.lastJobsPayload && state.lastJobsPayload.results) || []);
-      var groups = resultRenderers.groupResultsByFranchise(sourceResults);
-      var found = groups.some(function (group) {
-        var index = group.items.findIndex(function (item) { return item.asset_id === assetId; });
-        if (index === -1) return false;
-        state.resultPageByFranchise[group.key] = index;
-        renderResults(state.resultSearchActive ? buildSearchResultsPayload(state.lastJobsPayload || {}) : (state.lastJobsPayload || {}));
-        refreshTooltips();
-        return true;
-      });
+      var found = focusResultRowInLoadedResults(assetId);
       if (!found && state.resultSearchActive) {
         state.resultSearchActive = false;
         state.resultSearchResults = [];
         state.resultSearchMeta = null;
         renderResults(state.lastJobsPayload || {});
         renderResultSearchStatus(state.lastJobsPayload || {});
-        groups = resultRenderers.groupResultsByFranchise((state.lastJobsPayload && state.lastJobsPayload.results) || []);
-        groups.some(function (group) {
-          var index = group.items.findIndex(function (item) { return item.asset_id === assetId; });
-          if (index === -1) return false;
-          state.resultPageByFranchise[group.key] = index;
-          renderResults(state.lastJobsPayload || {});
-          refreshTooltips();
-          return true;
-        });
+        found = focusResultRowInLoadedResults(assetId);
+      }
+      if (!found) {
+        found = await loadAndFocusResultAsset(assetId);
       }
       var row = options.resultRows.querySelector('[data-ocr-result-asset-id="' + cssEscape(assetId) + '"]');
       if (!row) {
@@ -705,17 +760,73 @@
       options.setStatus("Ini teks OCR yang berhasil diekstrak dari halaman brosur tersebut.", false);
     }
 
+    function focusResultRowInLoadedResults(assetId) {
+      var sourceResults = getActiveResultRows();
+      var groups = resultRenderers.groupResultsByFranchise(sourceResults);
+      var limit = readResultFranchiseLimit();
+      var foundGroupIndex = -1;
+      var found = groups.some(function (group, groupIndex) {
+        var index = group.items.findIndex(function (item) { return item.asset_id === assetId; });
+        if (index === -1) return false;
+        foundGroupIndex = groupIndex;
+        state.resultPageByFranchise[group.key] = index;
+        return true;
+      });
+      if (!found) return false;
+      state.resultGroupOffset = Math.floor(foundGroupIndex / limit) * limit;
+      renderResults(getActiveResultPayload());
+      renderResultSearchStatus(getActiveResultPayload());
+      refreshTooltips();
+      return true;
+    }
+
+    async function loadAndFocusResultAsset(assetId) {
+      if (!options.isAdmin || !options.isAdmin()) return false;
+      try {
+        options.setStatus("Mencari hasil OCR spesifik untuk halaman brosur ini...", false);
+        var result = await options.postDashboardAction({
+          action: "search_ocr_results",
+          asset_id: assetId,
+          status: "all",
+          limit: 20,
+          offset: 0
+        });
+        if (!result.results || !result.results.length) return false;
+        state.resultSearchActive = true;
+        state.resultSearchResults = result.results || [];
+        state.resultSearchMeta = {
+          total: Number(result.total || 0),
+          limit: Number(result.limit || 20),
+          offset: 0,
+          has_more: Boolean(result.has_more),
+          filters: result.filters || { asset_id: assetId }
+        };
+        state.resultGroupOffset = 0;
+        return focusResultRowInLoadedResults(assetId);
+      } catch (error) {
+        options.setStatus(error.message || "Gagal membuka hasil OCR spesifik.", true);
+        return false;
+      }
+    }
+
     function setResultGroupPage(groupKey, pageIndex) {
       state.resultPageByFranchise[groupKey] = Math.max(0, Number(pageIndex || 0));
-      renderResults(state.lastJobsPayload || {});
+      renderResults(getActiveResultPayload());
       refreshTooltips();
     }
 
     function moveResultGroupPage(groupKey, delta) {
-      var groups = resultRenderers.groupResultsByFranchise((state.lastJobsPayload && state.lastJobsPayload.results) || []);
+      var groups = resultRenderers.groupResultsByFranchise(getActiveResultRows());
       var group = groups.find(function (item) { return item.key === groupKey; });
       if (!group) return;
       setResultGroupPage(groupKey, clampResultPage(groupKey, group.items.length) + Number(delta || 0));
+    }
+
+    function setResultGroupOffset(offset) {
+      state.resultGroupOffset = Math.max(0, Number(offset || 0));
+      renderResults(getActiveResultPayload());
+      renderResultSearchStatus(getActiveResultPayload());
+      refreshTooltips();
     }
 
     function clampResultPage(groupKey, total) {

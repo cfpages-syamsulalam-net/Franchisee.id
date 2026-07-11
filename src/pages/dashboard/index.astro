@@ -875,23 +875,23 @@ const ocrProviderMetadataJson = JSON.stringify({
                     </select>
                   </label>
                   <label>
-                    <span>Jumlah</span>
-                    <select name="limit" data-ocr-result-limit>
-                      <option value="40">40 hasil</option>
-                      <option value="80">80 hasil</option>
-                      <option value="100">100 hasil</option>
+                    <span>Franchise tampil</span>
+                    <select name="franchise_limit" data-ocr-result-franchise-limit data-fr-tooltip="Jumlah kartu franchise yang ditampilkan per halaman di tab Hasil OCR. Setiap kartu tetap punya navigasi halaman brosurnya sendiri.">
+                      <option value="4">4 franchise</option>
+                      <option value="8" selected>8 franchise</option>
+                      <option value="12">12 franchise</option>
                     </select>
                   </label>
                   <div class="dash-ocr-result-filter-actions">
-                    <button class="dash-icon-button dash-action-button is-primary" type="submit" data-fr-tooltip="Cari hasil OCR di server berdasarkan franchise, status, atau isi teks brosur.">
+                    <button class="dash-icon-button dash-action-button is-primary" type="submit" aria-label="Cari hasil OCR" data-fr-tooltip="Cari hasil OCR di server berdasarkan franchise, status, atau isi teks brosur.">
                       <i class="fas fa-search" aria-hidden="true"></i>
                       <span>Cari</span>
                     </button>
-                    <button class="dash-icon-button dash-action-button" type="button" data-ocr-result-reset data-fr-tooltip="Kembali ke hasil OCR terbaru dari dashboard.">
+                    <button class="dash-icon-button dash-action-button" type="button" aria-label="Reset pencarian hasil OCR" data-ocr-result-reset data-fr-tooltip="Kembali ke hasil OCR terbaru dari dashboard.">
                       <i class="fas fa-undo" aria-hidden="true"></i>
                       <span>Reset</span>
                     </button>
-                    <button class="dash-icon-button dash-action-button" type="button" data-ocr-result-load-more data-fr-tooltip="Muat hasil berikutnya dari server." hidden>
+                    <button class="dash-icon-button dash-action-button" type="button" aria-label="Muat hasil OCR berikutnya" data-ocr-result-load-more data-fr-tooltip="Muat hasil berikutnya dari server." hidden>
                       <i class="fas fa-chevron-down" aria-hidden="true"></i>
                       <span>Muat lagi</span>
                     </button>

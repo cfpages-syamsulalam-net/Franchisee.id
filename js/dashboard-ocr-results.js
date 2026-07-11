@@ -73,7 +73,7 @@
         ? '<a href="' + utils.escapeAttr(item.source_url) + '" target="_blank" rel="noopener" data-fr-tooltip="Buka gambar brosur yang dikirim ke OCR."><i class="fas fa-image" aria-hidden="true"></i><span>Gambar</span></a>'
         : "";
       var reviewLink = '<a href="#review" data-ocr-open-review data-fr-tooltip="Buka tab Review untuk meninjau kandidat data."><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Review</span></a>';
-      return '<div class="dash-ocr-result-item dash-ocr-result-page-body is-' + utils.escapeAttr(extractionStatusClass(item.extraction_status)) + '" data-ocr-result-asset-id="' + utils.escapeAttr(item.asset_id || "") + '">' +
+      return '<div id="ocr-result-' + utils.escapeAttr(item.asset_id || "") + '" class="dash-ocr-result-item dash-ocr-result-page-body is-' + utils.escapeAttr(extractionStatusClass(item.extraction_status)) + '" data-ocr-result-asset-id="' + utils.escapeAttr(item.asset_id || "") + '">' +
         '<div class="dash-ocr-result-meta">' +
           '<span><i class="fas fa-file-alt" aria-hidden="true"></i> ' + utils.escapeHtml(page) + '</span>' +
           '<span><i class="fas ' + resultStatusIcon(item.extraction_status) + '" aria-hidden="true"></i> ' + utils.escapeHtml(deps.statusLabel(item.extraction_status)) + '</span>' +

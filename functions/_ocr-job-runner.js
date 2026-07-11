@@ -248,10 +248,15 @@ export async function handleSearchOcrResults(db, auth, data) {
   const offset = Math.min(Math.max(Number(data.offset || 0), 0), 5000);
   const status = textOrNull(data.status) || "all";
   const franchiseId = textOrNull(data.franchise_id);
+  const assetId = textOrNull(data.asset_id);
   const query = textOrNull(data.query);
   const where = ["k.extraction_status IN ('extracted', 'needs_ocr', 'failed')"];
   const binds = [];
 
+  if (assetId) {
+    where.push("k.asset_id = ?");
+    binds.push(assetId);
+  }
   if (status !== "all") {
     where.push("k.extraction_status = ?");
     binds.push(status);
@@ -320,7 +325,7 @@ export async function handleSearchOcrResults(db, auth, data) {
     limit,
     offset,
     has_more: offset + results.length < total,
-    filters: { query: query || "", status, franchise_id: franchiseId || "" },
+    filters: { query: query || "", status, franchise_id: franchiseId || "", asset_id: assetId || "" },
   });
 }
 
