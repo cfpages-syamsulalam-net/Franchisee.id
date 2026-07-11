@@ -120,7 +120,7 @@
     function renderImagePreviewLink(job) {
       var label = job.page_number ? "Hal. " + Number(job.page_number).toLocaleString("id-ID") : "halaman proposal";
       var alt = (job.brand_name || "Proposal") + " - " + label;
-      return '<a class="dash-ocr-row-action dash-ocr-image-action" href="' + utils.escapeAttr(job.source_url) + '" target="_blank" rel="noopener" data-ocr-image-preview-url="' + utils.escapeAttr(job.source_url) + '" data-ocr-image-preview-alt="' + utils.escapeAttr(alt) + '" data-fr-tooltip="Hover untuk lihat gambar cepat. Klik untuk membuka gambar di tab baru.">' +
+      return '<a class="dash-ocr-row-action dash-ocr-image-action" href="' + utils.escapeAttr(job.source_url) + '" target="_blank" rel="noopener" data-ocr-image-preview-url="' + utils.escapeAttr(job.source_url) + '" data-ocr-image-preview-alt="' + utils.escapeAttr(alt) + '" aria-label="' + utils.escapeAttr("Lihat preview gambar " + alt + ". Klik untuk membuka gambar di tab baru.") + '">' +
         '<i class="fas fa-image" aria-hidden="true"></i><span>Gambar</span></a>';
     }
 
@@ -239,7 +239,7 @@
 
     function markPreviewLoaded(state) {
       state.preview.classList.add("is-loaded");
-      state.status.textContent = "Preview gambar proposal";
+      state.status.textContent = "Preview gambar proposal. Klik Gambar untuk membuka tab baru.";
       if (state.lastClientX || state.lastClientY) {
         window.requestAnimationFrame(function () {
           positionPreview(state, state.lastClientX, state.lastClientY);

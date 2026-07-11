@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-12 00:57 (Asia/Jakarta)
+Last updated: 2026-07-12 01:20 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -304,7 +304,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-ocr-execution.css`
 *Dashboard OCR execution stylesheet module.*
-- Owns execution toolbar/status, combined quota chip, job filters, compact icon-led page-size control, grouped job cards, compact icon-only OCR job message pills, job status/actions, batch progress/countdown/actions, viewport-aware lazy hover image-preview overlay styling shared by job/result image actions, and execution responsive behavior.
+- Owns execution toolbar/status, combined quota chip, job filters, compact icon-led page-size control, grouped job cards, compact icon-only OCR job message pills, job status/actions, batch progress/countdown/actions, viewport-aware lazy hover image-preview overlay styling shared by job/result image actions without competing text tooltips, and execution responsive behavior.
 
 ### File: `css/dashboard-ocr-results.css`
 *Dashboard OCR results stylesheet module.*
@@ -382,7 +382,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-ocr-results.js`
 *Dashboard OCR result renderer.*
-- `window.FranchiseDashboardOcrResults.createRenderer(deps)`: Creates pure render helpers for compact franchise-grouped OCR result cards, stable per-asset anchors, per-page result navigation, source image links with shared hover-preview attributes, listing links, and review links.
+- `window.FranchiseDashboardOcrResults.createRenderer(deps)`: Creates pure render helpers for compact franchise-grouped OCR result cards, stable per-asset anchors, per-page result navigation, source image links with shared hover-preview attributes and `aria-label` fallback instead of competing tooltips, listing links, and review links.
 - `groupResultsByFranchise(results)` / `renderResultGroup(group)`: Group OCR text results by franchise and render one card per franchise with page controls instead of a long flat list.
 
 ### File: `js/dashboard-ocr-schedulers.js`

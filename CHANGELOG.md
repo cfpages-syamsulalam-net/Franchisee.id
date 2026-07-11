@@ -7,10 +7,12 @@ Format:
 ## 2026-07-12 00:57 (Asia/Jakarta)
 ### Added
 - `.context/session-20260712-0057.md`: Added this session continuity snapshot for the OCR dashboard navigation and image-preview polish.
+- `.context/session-20260712-0120.md`: Added this session continuity snapshot for fixing OCR image-preview tooltip overlap.
 
 ### Changed
 - `src/pages/dashboard/index.astro` and `css/dashboard-ocr-settings.css`: Changed the OCR Pengaturan/Eksekusi Job/Hasil OCR guide cards into the actual subtab navigation and removed the redundant pill menu.
 - `js/dashboard-ocr-results.js`, `js/dashboard-ocr.js`, `css/dashboard-ocr-execution.css`, and `scripts/check-dashboard-ocr-client.mjs`: Reused the shared OCR image hover-preview component for Hasil OCR `Gambar` actions and added regression coverage for result preview wiring.
+- `js/dashboard-ocr-jobs.js`, `js/dashboard-ocr-results.js`, and `scripts/check-dashboard-ocr-client.mjs`: Removed shared text tooltips from OCR image-preview actions, kept accessible `aria-label` text, and added a regression guard so tooltips cannot block the image preview again.
 - `css/dashboard-ocr-execution.css`: Restyled the OCR job page-size select as an integrated custom pill without a visible native black border.
 - `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the OCR guide-card navigation and shared job/result image preview behavior.
 

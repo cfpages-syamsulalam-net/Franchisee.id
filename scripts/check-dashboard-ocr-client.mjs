@@ -47,7 +47,7 @@ const requiredFragments = [
   "Aktifkan provider OCR dulu",
   "data-ocr-mark-no-text",
   "canMarkNoText",
-  "Hover untuk lihat gambar cepat",
+  "Klik Gambar untuk membuka tab baru",
   "data-ocr-image-preview-url",
   "data-ocr-image-preview-alt",
   "bindImagePreview(options.resultRows)",
@@ -92,6 +92,10 @@ for (const fragment of requiredFragments) {
   if (!source.includes(fragment)) {
     throw new Error(`Missing expected OCR dashboard client fragment: ${fragment}`);
   }
+}
+
+if (/data-ocr-image-preview-url[^>]+data-fr-tooltip|data-fr-tooltip[^>]+data-ocr-image-preview-url/.test(source)) {
+  throw new Error("OCR image preview actions must not also use data-fr-tooltip because the tooltip blocks the image preview.");
 }
 
 console.log("Dashboard OCR client check passed.");
