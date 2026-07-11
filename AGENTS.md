@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-07-10 00:28 (Asia/Jakarta)
+Last updated: 2026-07-11 00:42 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -14,6 +14,7 @@ Last updated: 2026-07-10 00:28 (Asia/Jakarta)
 - Do not treat a small, additive, replayable SQL migration as a reason to defer a closely related suggestion when it materially improves correctness, data integrity, operations visibility, or UX. Implement the migration, apply it to the active remote D1 database when required by this session's code, and document the result instead of leaving the item as backlog-only.
 - Be proactive from now on: do not wait only for user-directed tasks. When project context reveals useful improvements, propose them clearly and, when the task is already agreed or low-risk, implement the next sensible step while keeping scope controlled.
 - Code modularly by default. Prefer small, purpose-owned files/modules for new or touched runtime logic instead of growing monolithic scripts, functions, or Astro pages. When refactoring, preserve behavior first, validate, then update `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `CHANGELOG.md`.
+- During each implementation session, auto-detect touched or closely related files that are long enough to be a maintainability risk, especially files over roughly 500 lines or files accumulating multiple responsibilities. If a long file does not need immediate refactor, document that finding and a concrete future refactor plan in `AUDIT.md`; if the current change materially worsens the risk and a low-risk extraction is available, do the extraction in the same session before validation.
 - Prioritize finishing the current pending task over progress narration. Keep user-facing updates minimal and reserve final reporting for work that is actually completed or genuinely blocked.
 - When an agreed task has remaining planned steps, continue implementing them before final reporting instead of stopping at the plan. If decisions are genuinely blocking, ask for confirmation using the available user-input tools when present; otherwise make a conservative, documented implementation choice and keep working. For product/UX work that needs structure, brainstorm in the appropriate `.md` tracker first, then implement the plan in the same work session unless the user explicitly asks to pause.
 - Public-facing copy must be clear, plain, and user-centered. Do not expose infrastructure or implementation terms such as D1, Clerk, onboarding flow, webhooks, static rebuilds, or internal sync in UI text; make the site mechanism handle those details and only tell users what they need to do next.

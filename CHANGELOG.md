@@ -9,8 +9,12 @@ Format:
 - `.context/session-20260711-0010.md`: Added this session continuity snapshot for the franchisor progressive form and canonical field planning work.
 - `.context/session-20260711-0110.md`: Added this session continuity snapshot for suggestion 84 and the D1 bridge output workflow change.
 - `.context/session-20260711-0155.md`: Added this session continuity snapshot for closing stale `AUDIT.md` in-progress implementation statuses.
+- `.context/session-20260711-0215.md`: Added this session continuity snapshot for brochure navigation overlay tweaks.
+- `.context/session-20260711-0639.md`: Added this session continuity snapshot for OCR provider limit calibration and combined provider quota handling.
 - `docs/forms/FRANCHISOR_PROGRESSIVE_FORM_PLAN.md`: Added a current-state audit and implementation plan for restoring backend-supported franchisor fields, adding priority canonical fields, and making the 5-step form progressive.
 - `migrations/0028_franchisor_progressive_fields.sql`: Added nullable D1 franchise columns for minimum area, staff count, setup duration, working capital, additional cost notes, BEP min/max, omzet min/max, and net-profit min/max.
+- `migrations/0029_ocr_provider_actual_limits.sql`: Added D1 calibration updates for OCR provider free quota, quota period/unit, and local request-window guards based on current provider documentation and account-specific caveats.
+- `functions/_ocr-quota-policy.js`: Added a focused OCR quota/cap policy module for combined active-provider quota, reset-aware provider re-entry, provider quota preparation, and quota increment statements.
 - `js/form-10-progressive-franchisor.js`: Added the progressive franchisor form helper for conditional follow-up groups, total-investment syncing, and support-system checkbox syncing.
 
 ### Changed
@@ -27,6 +31,16 @@ Format:
 - `json/d1-franchise-static-data.json`: Refreshed the tracked Astro snapshot so local static rendering includes the new progressive franchisor canonical fields without requiring a bridge HTML rewrite.
 - `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the suggestion 84 build workflow change and marked the recommendation done.
 - `AUDIT.md`: Marked completed migration implementation phases and dashboard CSS validation as done, marked the D1 builder/importer script split done, and moved remaining production QA / business decisions into operational follow-ups instead of leaving core implementation phases as `In progress`.
+- `src/lib/franchise-detail-styles.ts`, `src/lib/franchise-detail-scripts.ts`, and `scripts/check-franchise-detail-assets.ts`: Changed brochure image navigation so only the hovered left or right side shows its transparent gradient/label, keeps the active side visible while hovering/focusing the actual control, suppresses the yellow button flash, and adds regression coverage for side-specific pointer states.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the side-specific brochure navigation overlay behavior.
+- `src/lib/ocr-provider-metadata.js` and `functions/_ocr-provider-config.js`: Added source-linked OCR provider limit metadata so dashboard provider reads can show detailed official/account-specific quota notes without returning credentials.
+- `functions/_ocr-job-runner.js` and `functions/ocr-worker.js`: Replaced the hardcoded 100-unit OCR worker cap with combined active-provider quota calculation, preserved individual provider quota checks before assignment, allowed resettable exhausted providers to re-enter rotation after reset, kept `OCR_WORKER_DAILY_CAP` as an optional safety cap only, and then extracted quota/cap policy out of the runner into `_ocr-quota-policy.js`.
+- `js/dashboard-ocr-providers.js` and `js/dashboard-ocr-worker.js`: Changed dashboard OCR quota UI to show per-provider remaining quota, official limit details/source links, combined active-provider capacity, account-specific provider counts, and safety-cap context.
+- `scripts/check-ocr-job-runner.ts`: Added regression coverage that combined OCR capacity sums active providers with known limits while reporting account-specific providers separately.
+- `docs/architecture/OCR_PROVIDER_STRATEGY.md` and `docs/architecture/OCR_BATCH_SCHEDULING.md`: Updated OCR limit strategy and scheduling docs to remove the stale 100/day worker default and document combined provider quota behavior.
+- `AGENTS.md`: Added the working rule to auto-detect long touched/related files each implementation session and record refactor findings/plans in `AUDIT.md`.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented OCR provider limit calibration, combined quota behavior, and marked suggestion 85 done after extracting OCR quota policy from the long runner file.
+- Remote D1 `franchise_db`: Applied migration `0029_ocr_provider_actual_limits.sql` and verified OCR.Space is now configured as 500 daily requests with a 180/hour local guard while account-specific providers are excluded from known combined quota.
 
 ## 2026-07-10 17:49 (Asia/Jakarta)
 ### Added

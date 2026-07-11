@@ -10,14 +10,29 @@
       var used = Number(usage.used || 0);
       var remaining = Number(usage.remaining || 0);
       var status = usage.status || (remaining <= 0 ? "exhausted" : "available");
-      var icon = status === "exhausted" ? "fa-pause-circle" : status === "near_limit" ? "fa-exclamation-triangle" : "fa-tachometer-alt";
-      var label = status === "exhausted" ? "Cap worker habis" : status === "near_limit" ? "Cap worker hampir habis" : "Cap worker tersedia";
+      var icon = status === "no_provider" ? "fa-plug" : status === "exhausted" ? "fa-pause-circle" : status === "near_limit" ? "fa-exclamation-triangle" : "fa-layer-group";
+      var label = status === "no_provider"
+        ? "Belum ada provider aktif"
+        : status === "account_specific"
+          ? "Limit mengikuti akun provider"
+          : status === "exhausted"
+            ? "Kuota gabungan habis"
+            : status === "near_limit"
+              ? "Kuota gabungan hampir habis"
+              : "Kuota gabungan tersedia";
       var reset = usage.reset_at ? formatResetTime(usage.reset_at) : "reset UTC berikutnya";
       var resetMs = usage.reset_at ? Date.parse(usage.reset_at) : 0;
-      var tooltip = "Worker cap membatasi jumlah OCR yang diproses otomatis per hari agar provider tidak kebablasan. Jika habis, batch dijeda dan bisa dilanjutkan setelah reset atau setelah OCR_WORKER_DAILY_CAP dinaikkan.";
+      var tooltip = "Kapasitas dihitung dari sisa kuota masing-masing provider OCR aktif. Provider yang sudah habis tidak akan diberi job. OCR_WORKER_DAILY_CAP hanya dipakai sebagai safety cap tambahan jika secret/env itu di-set.";
+      var quotaText = usage.has_only_unknown_quota_providers
+        ? "Provider aktif tidak punya angka quota publik stabil; sistem tetap memakai guard individual provider."
+        : 'Terpakai ' + used.toLocaleString("id-ID") + '/' + cap.toLocaleString("id-ID") + ' · Sisa ' + remaining.toLocaleString("id-ID");
+      var providerText = Number(usage.known_provider_count || 0).toLocaleString("id-ID") + " provider berlimit jelas";
+      if (Number(usage.unknown_provider_count || 0)) providerText += " · " + Number(usage.unknown_provider_count || 0).toLocaleString("id-ID") + " provider account-specific";
+      if (usage.safety_cap) providerText += " · Safety cap " + Number(usage.safety_cap || 0).toLocaleString("id-ID");
       return '<div class="dash-ocr-worker-usage is-' + utils.escapeAttr(status) + '"' + (resetMs ? ' data-ocr-worker-reset-at="' + utils.escapeAttr(String(resetMs)) + '"' : '') + ' data-fr-tooltip="' + utils.escapeAttr(tooltip) + '">' +
         '<span><i class="fas ' + icon + '" aria-hidden="true"></i><strong>' + utils.escapeHtml(label) + '</strong></span>' +
-        '<span>Terpakai ' + used.toLocaleString("id-ID") + '/' + cap.toLocaleString("id-ID") + ' · Sisa ' + remaining.toLocaleString("id-ID") + ' · Reset ' + utils.escapeHtml(reset) + '</span>' +
+        '<span>' + quotaText + ' · Reset ' + utils.escapeHtml(reset) + '</span>' +
+        '<span>' + utils.escapeHtml(providerText) + '</span>' +
         '<small data-ocr-worker-countdown>' + utils.escapeHtml(workerResetCountdownLabel(resetMs)) + '</small>' +
         '</div>';
     }

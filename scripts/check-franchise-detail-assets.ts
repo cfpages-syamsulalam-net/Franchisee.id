@@ -37,6 +37,8 @@ assert.equal(injectedTwice, injected, "detail asset injection should be idempote
 
 assert.match(injected, /\.fr-proposal-overlaybar/, "proposal overlay bar styles should exist");
 assert.match(injected, /\.fr-proposal-hit/, "proposal half-image navigation styles should exist");
+assert.match(injected, /is-pointer-prev/, "proposal navigation should track the active hovered side");
+assert.match(injected, /is-pointer-next/, "proposal navigation should track the active hovered side");
 assert.match(injected, /initProposalReaders\(\)/, "proposal reader bootstrap should exist");
 assert.match(injected, /\/proposal-download/, "proposal PDF download endpoint should be wired");
 assert.match(injected, /initCompareButtons\(\)/, "compare action bootstrap should exist");

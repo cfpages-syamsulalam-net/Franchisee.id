@@ -945,6 +945,8 @@ export function renderFranchiseDetailStyles() {
   position: absolute;
   top: 0;
   bottom: 0;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -954,6 +956,7 @@ export function renderFranchiseDetailStyles() {
   color: transparent;
   font: inherit;
   font-weight: 800;
+  box-shadow: none;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
@@ -969,16 +972,25 @@ export function renderFranchiseDetailStyles() {
   justify-content: flex-end;
   padding-right: 18px;
 }
-.fr-proposal-reader.is-pointer-active .fr-proposal-hit,
+.fr-proposal-hit:hover,
+.fr-proposal-hit:active,
+.fr-proposal-hit:focus {
+  border: 0;
+  color: transparent;
+  box-shadow: none;
+  outline: none;
+}
+.fr-proposal-reader.is-pointer-active.is-pointer-prev .fr-proposal-hit-prev,
+.fr-proposal-reader.is-pointer-active.is-pointer-next .fr-proposal-hit-next,
 .fr-proposal-hit:focus-visible {
   opacity: 1;
   pointer-events: auto;
 }
-.fr-proposal-reader.is-pointer-active .fr-proposal-hit-prev,
+.fr-proposal-reader.is-pointer-active.is-pointer-prev .fr-proposal-hit-prev,
 .fr-proposal-hit-prev:focus-visible {
   background: linear-gradient(90deg, rgba(17, 17, 17, 0.28), rgba(17, 17, 17, 0));
 }
-.fr-proposal-reader.is-pointer-active .fr-proposal-hit-next,
+.fr-proposal-reader.is-pointer-active.is-pointer-next .fr-proposal-hit-next,
 .fr-proposal-hit-next:focus-visible {
   background: linear-gradient(270deg, rgba(17, 17, 17, 0.28), rgba(17, 17, 17, 0));
 }
@@ -995,8 +1007,10 @@ export function renderFranchiseDetailStyles() {
   transform: translateX(0);
   transition: opacity 0.16s ease, transform 0.16s ease;
 }
-.fr-proposal-reader.is-pointer-active .fr-proposal-hit i,
-.fr-proposal-reader.is-pointer-active .fr-proposal-hit span,
+.fr-proposal-reader.is-pointer-active.is-pointer-prev .fr-proposal-hit-prev i,
+.fr-proposal-reader.is-pointer-active.is-pointer-prev .fr-proposal-hit-prev span,
+.fr-proposal-reader.is-pointer-active.is-pointer-next .fr-proposal-hit-next i,
+.fr-proposal-reader.is-pointer-active.is-pointer-next .fr-proposal-hit-next span,
 .fr-proposal-hit:focus i,
 .fr-proposal-hit:focus span {
   opacity: 1;

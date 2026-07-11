@@ -326,9 +326,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-ocr.js`
 *Admin OCR coordinator/facade for `/dashboard`.*
 - `window.FranchiseDashboardOcr.createOperations(options)`: Creates the OCR tab controller from subtab, provider-list/select/form/status, scheduler-select/form/status, job/batch/result DOM references, and shared dashboard callbacks.
-- `render(payload, jobsPayload, schedulerPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderBatches(payload)` / `renderResults(payload)` / `fillForm(provider)` / `fillSchedulerForm(provider)`: Coordinates provider/scheduler forms and delegates state creation plus provider, worker-cap, job, batch/countdown, and result rendering to focused modules.
+- `render(payload, jobsPayload, schedulerPayload)` / `renderList(payload)` / `renderJobs(payload)` / `renderBatches(payload)` / `renderResults(payload)` / `fillForm(provider)` / `fillSchedulerForm(provider)`: Coordinates provider/scheduler forms and delegates state creation plus provider, combined-quota, job, batch/countdown, and result rendering to focused modules.
 - `searchOcrJobs(status, offset)`: Fetches paginated OCR job rows from `/dashboard-data` for all/unqueued/pending/running/succeeded/needs-review/failed status chips, uses the selected page size with 120 as the default, preserves the active filter after job mutations, and delegates grouped rendering to `js/dashboard-ocr-jobs.js`.
-- `syncBatchCountdowns()` / `handleForegroundRefresh()`: Delegates structured scheduler ETA countdown label updates to `js/dashboard-ocr-batches.js`, delegates worker-cap reset countdown label updates to `js/dashboard-ocr-worker.js`, owns timer lifecycle, and refreshes OCR state when a hidden/background tab becomes active again.
+- `syncBatchCountdowns()` / `handleForegroundRefresh()`: Delegates structured scheduler ETA countdown label updates to `js/dashboard-ocr-batches.js`, delegates combined-provider quota reset countdown label updates to `js/dashboard-ocr-worker.js`, owns timer lifecycle, and refreshes OCR state when a hidden/background tab becomes active again.
 - `searchOcrResults(append)` / `resetResultSearch()` / `loadMoreResultSearch()`: Calls `search_ocr_results` to fetch filtered OCR result history by text/status from the server, appends paged results with de-duping, and keeps the default dashboard payload small until an admin searches.
 - `syncBatchPolling(payload)`: Auto-refreshes `/dashboard-data` every few seconds while the OCR tab is visible and any persisted batch is still `queued` or `running`, so progress bars update without manual refresh.
 - `markJobNoText(jobId, button)`: Lets an admin mark a failed OCR job as `needs_review` after opening the source image and confirming the brochure page has no useful text, avoiding false provider-error treatment while preserving retry if needed.
@@ -344,7 +344,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-ocr-providers.js`
 *Dashboard OCR provider/scheduler renderer.*
-- `window.FranchiseDashboardOcrProviders.createRenderer(deps)`: Creates render helpers for the provider priority list, provider selector, provider-specific credential field visibility, stored-key badges, read-only quota/rate-limit metadata, scheduler selector/form, and scheduler credential summary.
+- `window.FranchiseDashboardOcrProviders.createRenderer(deps)`: Creates render helpers for the provider priority list, provider selector, provider-specific credential field visibility, stored-key badges, read-only quota/rate-limit metadata, per-provider remaining quota, source-linked official limit notes, scheduler selector/form, and scheduler credential summary.
 - `fillProviderForm(form, provider, setStatus)` / `fillSchedulerForm(form, provider, setStatus)`: Populate password-preserving credential forms without putting stored secret values in the browser, while showing whether a key/secret already exists and whether a new value will replace it.
 
 ### File: `js/dashboard-ocr-jobs.js`
@@ -358,10 +358,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `updateCountdownLabels(root)`: Reads `data-ocr-batch-countdown-until`, updates countdown text every second, and keeps overdue Refresh/Retry guidance visible after the scheduled due time has passed.
 
 ### File: `js/dashboard-ocr-worker.js`
-*Dashboard OCR worker-cap renderer and countdown helper.*
-- `window.FranchiseDashboardOcrWorker.createRenderer(deps)`: Creates render helpers for the OCR worker cap/used/remaining/reset chip, including the quota tooltip and status-specific icon/color class.
-- `renderWorkerUsage(usage)`: Converts server-provided worker usage into the dashboard cap chip without exposing backend implementation details beyond the admin-facing quota information.
-- `updateWorkerUsageCountdown(root)`: Updates `data-ocr-worker-reset-at` countdown text every second so the dashboard can show how long remains until the worker cap resets.
+*Dashboard OCR combined-quota renderer and countdown helper.*
+- `window.FranchiseDashboardOcrWorker.createRenderer(deps)`: Creates render helpers for the active-provider combined quota used/remaining/reset chip, including known-vs-account-specific provider counts, optional `OCR_WORKER_DAILY_CAP` safety-cap context, and status-specific icon/color class.
+- `renderWorkerUsage(usage)`: Converts server-provided combined provider quota usage into the dashboard quota chip without exposing stored credentials or low-level provider implementation details.
+- `updateWorkerUsageCountdown(root)`: Updates `data-ocr-worker-reset-at` countdown text every second so the dashboard can show how long remains until the nearest known provider quota reset.
 
 ### File: `js/dashboard-ocr-results.js`
 *Dashboard OCR result renderer.*
@@ -374,10 +374,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `countActive(providers)` / `firstActive(providers)`: Shared helpers for the OCR dashboard coordinator to find active scheduler credentials without duplicating provider filtering logic.
 
 ### File: `src/lib/ocr-provider-metadata.js`
-*Shared OCR provider requirements contract.*
-- `OCR_PROVIDER_METADATA`: Defines visible dashboard fields, labels/help copy, and activation requirements for OCR.Space, Azure AI Vision, Cloudflare Workers AI, Google Vision, Groq Vision, Amazon Textract, Veryfi, Mindee, PDF.co, and API4AI.
+*Shared OCR provider requirements and limit metadata contract.*
+- `OCR_PROVIDER_METADATA`: Defines visible dashboard fields, labels/help copy, activation requirements, source-linked free-limit details, local rate-limit guards, file-limit notes, reset hints, and account-specific caveats for OCR.Space, Azure AI Vision, Cloudflare Workers AI, Google Vision, Groq Vision, Amazon Textract, Veryfi, Mindee, PDF.co, and API4AI.
 - `OCR_PROVIDER_FIELD_NAMES`: Shared field list used by the dashboard browser module for visibility toggling.
 - `getOcrProviderRequirementError(providerKey, config)`: Server-side activation prerequisite helper used by `functions/_ocr-provider-config.js`.
+- `getOcrProviderLimitMetadata(providerKey)`: Returns normalized limit metadata for `_ocr-provider-config.js` so dashboard reads can show provider limit sources/details without storing that narrative in D1.
 
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
@@ -614,17 +615,17 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/franchise-detail-styles.ts`
 *Generated detail-page CSS module for D1-backed Astro pages.*
 - `FRANCHISE_DETAIL_STYLE_ID`: Stable DOM id used by the injector and smoke check.
-- `renderFranchiseDetailStyles()`: Returns the generated detail `<style>` block for border-light profile/tab presentation, investment note styling, Premium gallery/brochure/FAQ styling, dynamic contact floats, brochure overlay top bar, transparent-gradient left/right hit areas, pointer-motion visibility states, and responsive rules.
+- `renderFranchiseDetailStyles()`: Returns the generated detail `<style>` block for border-light profile/tab presentation, investment note styling, Premium gallery/brochure/FAQ styling, dynamic contact floats, brochure overlay top bar, side-specific transparent-gradient left/right hit areas, pointer-motion visibility states, yellow-flash suppression for proposal navigation buttons, and responsive rules.
 
 ### File: `src/lib/franchise-detail-scripts.ts`
 *Generated detail-page browser script module for D1-backed Astro pages.*
 - `FRANCHISE_DETAIL_SCRIPT_ID`: Stable DOM id used by the injected browser script.
-- `renderFranchiseDetailScripts()`: Returns the generated detail `<script>` block for tab activation, `initProposalReaders()`, `setProposalPage(reader, requestedPage)`, pointer-motion auto-hide for proposal overlay controls, keyboard page navigation, contact-tab shortcuts, compare button behavior, and `/proposal-download` PDF requests with in-button progress/status.
+- `renderFranchiseDetailScripts()`: Returns the generated detail `<script>` block for tab activation, `initProposalReaders()`, `setProposalPage(reader, requestedPage)`, side-specific pointer state for proposal previous/next overlays, pointer-motion auto-hide with pinned hover/focus behavior on the actual controls, keyboard page navigation, contact-tab shortcuts, compare button behavior, and `/proposal-download` PDF requests with in-button progress/status.
 - The actual proposal image fetch/PDF/watermark work remains in `functions/_proposal-pdf.js`; the browser script only sends first-party proposal image URLs and downloads the returned Blob.
 
 ### File: `scripts/check-franchise-detail-assets.ts`
 *Focused generated-detail asset regression check.*
-- `pnpm run detail-assets:check`: Verifies `injectDetailAssets()` is idempotent and injects the expected detail CSS/JS hooks for tabs, proposal overlay/download/navigation, contact floats, compare actions, and WordPress-runtime cleanup.
+- `pnpm run detail-assets:check`: Verifies `injectDetailAssets()` is idempotent and injects the expected detail CSS/JS hooks for tabs, side-specific proposal overlay/download/navigation, contact floats, compare actions, and WordPress-runtime cleanup.
 
 ### File: `scripts/check-dashboard-ocr-client.mjs`
 *Focused dashboard OCR browser-module regression check.*
@@ -1012,21 +1013,27 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `normalizeOcrText(value)`: Converts heterogeneous provider output into trimmed plain text with bounded whitespace before cache/storage.
 - `awsSigV4Headers(input)`: Worker-compatible AWS Signature V4 helper for Textract `DetectDocumentText`.
 
+### File: `functions/_ocr-quota-policy.js`
+*OCR quota/cap policy shared by the runner and protected worker.*
+- `getOcrWorkerUsage(db, env)`: Computes dashboard/worker OCR capacity from the combined remaining quota of active providers with known limits, reports account-specific providers separately, and applies optional `OCR_WORKER_DAILY_CAP` only as a safety ceiling.
+- `prepareQuota(db, provider)`: Checks trial expiry and provider free quota before assignment, initializes or advances reset timestamps for daily/monthly/compute periods, resets used counters after reset, and returns an allow/deny reason without calling external OCR.
+- `providerQuotaCanReset(provider, now)`: Lets resettable exhausted providers re-enter runnable rotation after their reset timestamp has passed.
+- `quotaIncrementStatement(db, providerKey)`: Builds the D1 update that increments provider quota usage after a counted successful OCR call.
+
 ### File: `functions/_ocr-job-runner.js`
 *OCR queue/cache/failover orchestrator shared by dashboard actions and the protected worker.*
-- `getOcrJobState(db, auth, env)`: Returns admin-only OCR queue counts, up to 120 recent jobs, expanded OCR result previews with listing/review metadata, recent persisted batch runs including structured scheduler timing fields, active continuous-run lease state, enqueue-candidate count, worker daily cap/used/remaining/reset status, and a `migration_required` fallback when OCR job/batch/lease migrations are not applied.
+- `getOcrJobState(db, auth, env)`: Returns admin-only OCR queue counts, up to 120 recent jobs, expanded OCR result previews with listing/review metadata, recent persisted batch runs including structured scheduler timing fields, active continuous-run lease state, enqueue-candidate count, combined provider quota used/remaining/reset status from `_ocr-quota-policy.js`, and a `migration_required` fallback when OCR job/batch/lease migrations are not applied.
 - `handleSearchOcrJobs(db, auth, data)`: Admin-only server-side OCR job search for status chips. It paginates `ocr_jobs` by status/franchise and maps `unqueued` to active proposal image assets that have not yet entered `ocr_jobs`, so dashboard status counts are inspectable beyond the default 120-row page.
 - `handleSearchOcrResults(db, auth, data)`: Admin-only server-side history search for `franchise_asset_knowledge`, filtering by status and query text across brand/slug/source text with bounded limit/offset pagination for dashboard "Muat lagi".
 - `handleEnqueueOcrJobs(db, auth, data)`: Admin-only action that queues active image proposal assets into `ocr_jobs`; it does not call external OCR providers.
 - `handleRunOcrDryRun(db, auth, data, env, options)`: Admin-only action that requires `OCR_KEY` and one enabled provider, prepares at most one candidate proposal-image job, and processes only that job before broad backfills.
 - `handleRunOcrJobs(db, auth, data, env, options)`: Admin-only action that runs a bounded batch and requires `OCR_KEY` before any provider call can happen; multi-job dashboard chunks without `batch_id` must present a valid continuous-run lease.
-- `runOcrJobs(db, env, auth, options)`: Delegates pending-job claiming/release to `_ocr-job-claiming.js`, optionally scopes by `batch_id`, carries the original `requested_by_user_id` into worker-processed writes so scheduled OCR never writes synthetic user IDs into FK-backed tables, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` when available, checks local quota/trial state, tries enabled providers in priority order, runs bounded concurrent waves across multiple active providers by rotating each job's first-choice provider, logs attempts and usage, writes successful OCR text through `proposalKnowledgeStatements()`, treats provider text-too-short responses as job review state instead of provider-health failure, pauses provider rate-limit/quota runs by moving the current job back to `pending` and releasing already-claimed unprocessed jobs, writes actionable quota-exhausted copy that suggests activating another provider or waiting for reset, and refreshes batch progress after each scoped drain.
+- `runOcrJobs(db, env, auth, options)`: Delegates pending-job claiming/release to `_ocr-job-claiming.js`, optionally scopes by `batch_id`, carries the original `requested_by_user_id` into worker-processed writes so scheduled OCR never writes synthetic user IDs into FK-backed tables, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` when available, delegates provider quota/trial state checks to `_ocr-quota-policy.js` before assigning a job, tries enabled providers in priority order, runs bounded concurrent waves across multiple active providers by rotating each job's first-choice provider, logs attempts and usage, writes successful OCR text through `proposalKnowledgeStatements()`, treats provider text-too-short responses as job review state instead of provider-health failure, pauses provider rate-limit/quota runs by moving the current job back to `pending` and releasing already-claimed unprocessed jobs, writes actionable quota-exhausted copy that suggests activating another provider or waiting for reset, and refreshes batch progress after each scoped drain.
 - `prepareRateLimit(db, provider)`: Checks provider `cooldown_until` and local request-window metadata before each external call; if the window is exhausted, the runner records a skipped attempt and updates provider cooldown instead of sending another request.
 
 ### File: `functions/ocr-worker.js`
 *Protected OCR queue worker endpoint for third-party scheduled backfills.*
-- `onRequestPost({ request, env })`: Requires `OCR_SECRET`, verifies bearer or `x-worker-secret`, accepts harmless `{ preflight: true }` scheduler checks without running OCR, accepts optional `batch_id`, checks the counted OCR usage for the current UTC day on real runs with a default cap of 100 units/day, bounds the requested run size to 1-10 jobs, marks the scoped batch `paused_quota` when the worker cap is reached, calls `runOcrJobs()` with a synthetic admin actor, schedules the next Upstash QStash delayed trigger while a scoped batch is still queued/running, stops redispatch when the batch is paused for provider rate limit/quota, logs a summary to `operation_events`, and returns processed/provider/daily-cap/batch metadata.
-- `countTodayUsage(db)`: Sums counted `ocr_provider_usage_events` rows since UTC midnight so the worker can stop before exceeding the configured daily cap.
+- `onRequestPost({ request, env })`: Requires `OCR_SECRET`, verifies bearer or `x-worker-secret`, accepts harmless `{ preflight: true }` scheduler checks without running OCR, accepts optional `batch_id`, reads combined active-provider quota from `_ocr-quota-policy.js`, bounds the requested run size to 1-10 jobs and the available combined quota, marks the scoped batch `paused_quota` when combined provider quota or the optional safety cap is reached, calls `runOcrJobs()` with a synthetic admin actor, schedules the next Upstash QStash delayed trigger while a scoped batch is still queued/running, stops redispatch when the batch is paused for provider rate limit/quota, logs a summary to `operation_events`, and returns processed/provider/quota/batch metadata.
 - `hasValidSecret(request, expectedSecret)`: Keeps the worker trigger independent from dashboard/Clerk auth while still requiring the Cloudflare Pages `OCR_SECRET` shared secret.
 
 ### File: `functions/_dashboard-queries.js`

@@ -1,6 +1,6 @@
 # OCR Provider Strategy
 
-Last updated: 2026-07-08 (Asia/Jakarta)
+Last updated: 2026-07-11 (Asia/Jakarta)
 
 ## Decision
 
@@ -17,14 +17,14 @@ Free limits change frequently. Verify the provider console before enabling produ
 | Rank | Provider | Official free allowance | Reset/type | Brochure fit | Integration notes |
 | ---: | --- | --- | --- | --- | --- |
 | 1 | OCR.Space | 500 requests/day per IP on the free endpoint | Recurring daily | Strong first fallback for page images | Simple OCR-specific API. Treat each raster page as one request. Free endpoint availability and file limits are less enterprise-grade than hyperscalers. Source: https://ocr.space/ocrapi |
-| 2 | Azure AI Vision | 5,000 free transactions/month; 20 transactions/minute on F0 | Recurring monthly | Strong OCR accuracy and predictable quota | Multipage PDF pages count separately. Requires endpoint plus key; F0 availability varies by region. Source: https://azure.microsoft.com/en-us/pricing/details/computer-vision/ |
+| 2 | Azure AI Vision | 5,000 free transactions/month; local F0 guard 20 transactions/minute | Recurring monthly | Strong OCR accuracy and predictable quota | Multipage PDF pages count separately. Requires endpoint plus key; F0 availability varies by region/resource. Source: https://azure.microsoft.com/en-us/pricing/details/ai-vision/ |
 | 3 | Cloudflare Workers AI | 10,000 neurons/day at no charge | Recurring daily, compute-based | Best infrastructure fit; useful vision fallback | Not a fixed page quota. Use a vision-capable model and measure actual neurons/page before setting a local page limit. Can use account ID plus scoped API token through REST. Source: https://developers.cloudflare.com/workers-ai/platform/pricing/ |
 | 4 | Google Cloud Vision | First 1,000 OCR units/month free | Recurring monthly | Mature dense-document OCR | Each image/PDF page is a billable unit. Simple image calls can use an API key; async PDF processing has additional Google Cloud storage/auth requirements. Source: https://cloud.google.com/vision/pricing |
 | 5 | Groq vision model | Llama 4 Scout free-plan limit currently 1,000 requests/day | Recurring daily, model/token limited | Useful multimodal fallback for image pages | Not a dedicated OCR endpoint; output must be constrained to transcription only and validated. Organization-level token limits may be reached before request limits. Source: https://console.groq.com/docs/rate-limits |
 | 6 | Amazon Textract | New AWS customers: Detect Document Text up to 1,000 pages/month for three months | Trial, three months | Strong scanned-document OCR | Not a permanent free pool. Requires access key, secret, and region; disable automatically when the trial ends. Source: https://aws.amazon.com/textract/pricing/ |
-| 7 | Veryfi | 100 documents/month on the API free plan | Recurring monthly | Useful for testing structured extraction | The published free allowance focuses on receipts/invoices, so validate general brochure support before production use. Source: https://faq.veryfi.com/en/articles/3743986-what-are-the-plans-prices-for-ocr-api |
-| 8 | Mindee | 200 pages or 14 days | Trial | Good PDF/document pipeline evaluation | Trial only; supports raw text and large PDFs but should not be counted as recurring capacity. Source: https://docs.mindee.com/account-management/plans |
-| 9 | PDF.co | 10,000 credits for one month, no card required | Trial | Useful for PDF-to-text/OCR experiments | Credits are endpoint-dependent rather than a fixed page count. Disable after trial/credits end. Source: https://pdf.co/ |
+| 7 | Veryfi | 100 documents/month on the API free plan | Recurring monthly | Useful for testing structured extraction | The published free allowance focuses on document extraction products; validate general brochure support before production use. Source: https://www.veryfi.com/pricing/ |
+| 8 | Mindee | Current public pricing page does not expose a stable free quota in a scrapeable way | Account-specific/unverified | Good PDF/document pipeline evaluation | Do not count Mindee in combined known free quota until the dashboard/account confirms the exact allowance. Source: https://www.mindee.com/pricing |
+| 9 | PDF.co | Paid plans publish monthly credits; free trial credits are account-specific | Account-specific/trial | Useful for PDF-to-text/OCR experiments | Credits are endpoint-dependent rather than a fixed page count. Do not count PDF.co in combined known free quota until the account quota is known. Source: https://pdf.co/pricing |
 | 10 | API4AI OCR | A free RapidAPI plan is advertised; current public docs do not publish a stable quota | Account-specific/unverified | Supports JPEG, PNG, and multipage PDF | Keep disabled until the provider console confirms the exact free quota and commercial terms. Each PDF page is charged separately. Source: https://api4.ai/docs/ocr |
 
 ## Rotation policy
@@ -60,6 +60,7 @@ Free limits change frequently. Verify the provider console before enabling produ
 - [x] Change manual batch selection to franchise-context-first ordering: queued proposal pages for one franchise are processed by page order before the runner moves to another franchise, while content-hash cache still prevents duplicate OCR for images that were already processed.
 - [x] Surface page/source context in `/dashboard` OCR results so each OCR text preview clearly shows which franchise and proposal page it came from.
 - [x] Add migration `0022_ocr_provider_rate_limits.sql` with local provider request-window metadata and `cooldown_until`; manual dashboard batches and the protected worker now skip providers during cooldown and expose rate/cooldown metadata in the OCR provider panel.
+- [x] Calibrate provider limits with migration `0029_ocr_provider_actual_limits.sql` and shared metadata in `src/lib/ocr-provider-metadata.js`. The dashboard now shows detailed provider limit notes, source links, per-provider remaining quota, and the combined known capacity of active providers. OCR.Space is configured as 500 requests/day, not the old internal 100-job worker cap; the local E553 guard is 180 requests/hour.
 
 ## Dashboard credential field rules
 
@@ -89,7 +90,7 @@ Set the shared worker trigger secret as `OCR_SECRET` in both Cloudflare Pages an
 Manual workflow runs are allowed without the enable variable so one-off testing stays easy. Scheduled cron runs remain inert until repository variable `OCR_WORKER_ENABLED=true` is set, because cron can spend OCR quota without an admin watching it. Optional controls:
 
 - `OCR_WORKER_SITE_URL`: GitHub repository variable; defaults to `https://franchisee.id`.
-- `OCR_WORKER_DAILY_CAP`: Cloudflare Pages environment value; defaults to 100 counted OCR units/day so one dashboard-created 100-job batch can drain unless provider-specific rate/quota guards pause it first. Dashboard OCR execution shows used/remaining/reset state so admins can tell whether the worker cap, provider quota, or provider rate limit is blocking progress.
+- `OCR_WORKER_DAILY_CAP`: optional Cloudflare Pages environment safety cap. When unset, the worker uses the combined remaining quota of active providers with known free limits; each provider is still checked individually before any job is assigned to it. Set this only when you intentionally want a lower global daily ceiling than the provider quotas allow.
 
 The scheduled worker does not enqueue new work by itself. Admins still enqueue proposal assets from `/dashboard`; the worker only drains pending `ocr_jobs` in small quota-aware batches.
 

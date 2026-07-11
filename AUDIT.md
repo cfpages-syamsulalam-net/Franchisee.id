@@ -44,6 +44,13 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 | `src/pages/dashboard/index.astro` dashboard shell/OCR panel | The file is now about 914 lines. It still works as a static protected shell, but the OCR panel alone spans settings, scheduler credentials, job execution, filters, results, tooltips, and action copy across roughly 300 lines. This is not urgent runtime risk, but it slows review and makes future dashboard markup edits more error-prone. | Later split the dashboard shell into components, starting with `src/components/dashboard/OcrPanel.astro`, then premium operations and review/location panels if they keep changing. Keep the page as the route-level assembler that injects metadata and script order. | Medium | Planned |
 | `functions/_ocr-scheduler-config.js` | It currently handles encrypted config and QStash dispatch. That is acceptable for one automatic provider but should not absorb every provider API. | Keep config CRUD in `_ocr-scheduler-config.js`; move provider-specific dispatch into `_ocr-scheduler-adapters.js` before adding cron-job.org API sync, Inngest, or Trigger.dev adapters. | Medium | Planned |
 
+## Refactor Candidates - 2026-07-11
+
+| File / area | Why it is now a refactor candidate | Proposed split | Priority | Status |
+| --- | --- | --- | --- | --- |
+| `functions/_ocr-job-runner.js` quota/cap section | The file remained about 1,300 lines after earlier extractions. Combined active-provider quota calculation, provider quota snapshots, optional worker safety-cap handling, reset-aware exhausted-provider re-entry, and per-provider quota guards had become an independent responsibility from job processing. | Extracted quota/cap helpers into `functions/_ocr-quota-policy.js`: `getOcrWorkerUsage`, provider quota snapshots, provider reset checks, `prepareQuota`, `nextQuotaReset`, and quota increment statement helpers. `_ocr-job-runner.js` now stays focused on job orchestration, image/cache/provider execution, and result persistence. | High | Done |
+| `src/lib/ocr-provider-metadata.js` | Provider field rules and source-linked limit metadata now live in one shared object. This is good for avoiding UI/backend drift, but the object will grow as provider limit sources are refreshed or account-specific quota overrides are added. | If another provider/limit update is needed, split static limit metadata into `src/lib/ocr-provider-limits.js` while keeping credential field/requirement metadata in `ocr-provider-metadata.js`. | Medium | Planned |
+
 ## OCR Execution UX Audit - 2026-07-10
 
 | Finding | Decision / implementation direction | Status |
@@ -56,6 +63,7 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 | Multiple active OCR providers should increase throughput instead of only acting as a serial fallback. | Run bounded waves across active providers by rotating the first-choice provider per claimed job, while preserving the existing provider fallback and pause-on-rate-limit behavior. | Implemented |
 | Per-row OCR retry is easier to trust than broad batch retry. | Keep row-level OCR action as immediate run for one failed/needs-review job. Do not show retry by default for final `no_text` rows; they are already resolved. | Implemented |
 | Continuous dashboard OCR can be clicked from two admin tabs. | Add a short-lived D1-backed run lease. Continuous runs acquire the lease before chunking, refresh it through `run_ocr_jobs`, release it on completion/stop/error, and show the active owner if another tab/admin is running. | Implemented with migration `0027_ocr_run_leases.sql` |
+| OCR.Space publicly allows 500 requests/day, but batch behavior still looked capped at 100 because worker capacity used an internal daily cap instead of actual provider quota. | Replace the hardcoded worker cap with combined active-provider quota, preserve individual provider quota checks before assignment, show per-provider limit details/source links in the dashboard, and keep `OCR_WORKER_DAILY_CAP` only as an optional safety cap. | Implemented with migration `0029_ocr_provider_actual_limits.sql` |
 
 ## OCR Listing Enrichment Audit - 2026-07-10
 

@@ -1,6 +1,6 @@
 # OCR Batch Scheduling Strategy
 
-Last updated: 2026-07-10 (Asia/Jakarta)
+Last updated: 2026-07-11 (Asia/Jakarta)
 
 ## Goal
 
@@ -57,7 +57,7 @@ Implementation sketch:
 - `/ocr-worker` accepts `{ "preflight": true }` for scheduler checks and `{ "batch_id": "...", "limit": 5 }` for real batch drains.
 - Third-party scheduler calls `/ocr-worker`; the worker exits quickly when no claimable batch job exists.
 - Keep each worker invocation small. The “100 jobs” target is achieved by repeated safe invocations, not one long request.
-- `/ocr-worker` defaults to 100 counted OCR units/day. If `OCR_WORKER_DAILY_CAP` is reached, the scoped batch is marked `paused_quota` with an actionable message instead of later looking like a failed/overdue scheduler. The dashboard shows worker cap, used today, remaining today, and reset time in the OCR execution panel.
+- `/ocr-worker` no longer defaults to an internal 100-job cap. It computes the combined remaining quota of active providers with known limits, while still checking each provider's individual quota before assignment. Optional `OCR_WORKER_DAILY_CAP` is a safety cap only; if it is reached, the scoped batch is marked `paused_quota` with an actionable message. The dashboard shows combined used/remaining/reset state and per-provider quota detail so admins can tell whether combined quota, provider quota, or provider rate limit is blocking progress.
 - When a provider returns a rate-limit/quota error such as OCR.Space `E553`, the runner marks the provider cooldown/exhausted state, moves the current job back to `pending`, releases other already-claimed but unprocessed jobs, sets the batch to `paused_rate_limit` or `paused_quota`, and stops scheduling the next trigger until an admin retries after cooldown or enables another provider.
 - Provider quota exhaustion messages must tell admins the next action: activate another OCR provider to continue now, or wait until the exhausted provider resets.
 - QStash trigger ETA is stored as structured batch data (`scheduler_trigger_due_at`, delay seconds, status, and last-trigger timestamp). The dashboard countdown uses these fields instead of parsing the human-readable `last_message`; message parsing remains only as a legacy fallback for old rows.

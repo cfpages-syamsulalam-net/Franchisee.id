@@ -124,21 +124,62 @@ function initProposalReaders() {
     reader.setAttribute("tabindex", "0");
     var stage = reader.querySelector(".fr-proposal-stage");
     var hidePointerTimer = null;
-    function showPointerControls() {
+    var pinnedNavigationSide = "";
+    function setPointerSide(side) {
+      reader.classList.toggle("is-pointer-prev", side === "prev");
+      reader.classList.toggle("is-pointer-next", side === "next");
+    }
+    function sideFromEvent(event) {
+      var target = event.target && event.target.closest ? event.target.closest("[data-proposal-previous], [data-proposal-next]") : null;
+      if (target) return target.hasAttribute("data-proposal-next") ? "next" : "prev";
+      if (!stage || typeof stage.getBoundingClientRect !== "function") return "";
+      var rect = stage.getBoundingClientRect();
+      var x = (event.clientX || rect.left) - rect.left;
+      return x >= rect.width / 2 ? "next" : "prev";
+    }
+    function showPointerControls(event) {
+      setPointerSide(sideFromEvent(event));
       reader.classList.add("is-pointer-active");
       window.clearTimeout(hidePointerTimer);
+      if (pinnedNavigationSide) return;
       hidePointerTimer = window.setTimeout(function () {
         reader.classList.remove("is-pointer-active");
+        setPointerSide("");
       }, 1000);
     }
     function hidePointerControls() {
       window.clearTimeout(hidePointerTimer);
       reader.classList.remove("is-pointer-active");
+      setPointerSide("");
     }
     if (stage) {
       stage.addEventListener("pointermove", showPointerControls);
       stage.addEventListener("pointerdown", showPointerControls);
       stage.addEventListener("pointerleave", hidePointerControls);
+      stage.querySelectorAll("[data-proposal-previous], [data-proposal-next]").forEach(function (button) {
+        button.addEventListener("pointerenter", function (event) {
+          pinnedNavigationSide = button.hasAttribute("data-proposal-next") ? "next" : "prev";
+          showPointerControls(event);
+        });
+        button.addEventListener("pointerleave", function () {
+          pinnedNavigationSide = "";
+          window.clearTimeout(hidePointerTimer);
+          hidePointerTimer = window.setTimeout(function () {
+            reader.classList.remove("is-pointer-active");
+            setPointerSide("");
+          }, 1000);
+        });
+        button.addEventListener("focus", function () {
+          pinnedNavigationSide = button.hasAttribute("data-proposal-next") ? "next" : "prev";
+          setPointerSide(pinnedNavigationSide);
+          reader.classList.add("is-pointer-active");
+          window.clearTimeout(hidePointerTimer);
+        });
+        button.addEventListener("blur", function () {
+          pinnedNavigationSide = "";
+          if (!stage.matches(":hover")) hidePointerControls();
+        });
+      });
     }
     reader.addEventListener("keydown", function (event) {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;

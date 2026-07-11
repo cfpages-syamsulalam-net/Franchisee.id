@@ -20,11 +20,14 @@
         var quota = provider.free_quota_limit
           ? Number(provider.free_quota_limit).toLocaleString("id-ID") + " " + utils.escapeHtml(provider.quota_unit || "request") + " / " + quotaPeriodLabel(provider.free_quota_period)
           : "Limit mengikuti akun provider";
+        var remaining = provider.free_quota_limit
+          ? "Sisa " + Math.max(0, Number(provider.free_quota_limit || 0) - Number(provider.quota_used || 0)).toLocaleString("id-ID") + " " + utils.escapeHtml(provider.quota_unit || "request")
+          : "Sisa kuota dicek di akun provider";
         var rowClass = provider.is_enabled ? "" : ' class="is-muted"';
         var providerError = renderProviderError(provider);
         return '<li' + rowClass + '><div class="dash-ocr-provider-row"><div><strong>#' + Number(provider.priority || 100) + ' · ' + utils.escapeHtml(provider.display_name) + '</strong><span>' +
           utils.escapeHtml(configured + " · " + (provider.is_enabled ? "Aktif" : "Nonaktif") + " · " + providerHealthLabel(provider)) +
-          '<br>' + quota + '</span></div>' + renderProviderToggle(provider) + '</div>' + providerError + '</li>';
+          '<br>' + quota + ' · ' + remaining + '</span></div>' + renderProviderToggle(provider) + '</div>' + providerError + '</li>';
       }).join("") : '<li><span>Belum ada provider OCR.</span></li>';
     }
 
@@ -188,17 +191,24 @@
         return;
       }
       var rows = [
+        ["Limit resmi", provider.limit_details?.summary || quotaLabel(provider)],
         ["Limit gratis", quotaLabel(provider)],
         ["Dipakai", Number(provider.quota_used || 0).toLocaleString("id-ID") + " " + utils.escapeHtml(provider.quota_unit || "request")],
+        ["Sisa", quotaRemainingLabel(provider)],
         ["Reset", provider.quota_reset_at ? formatDate(provider.quota_reset_at) : "Mengikuti provider"],
         ["Rate limit lokal", rateLimitLabel(provider)],
+        ["Batas file", provider.limit_details?.file_limit || "Mengikuti provider"],
         ["Cooldown", provider.cooldown_until ? formatDateTime(provider.cooldown_until) : "Tidak aktif"],
         ["Trial", provider.trial_ends_at ? "Berakhir " + formatDate(provider.trial_ends_at) : "Tidak ada tanggal di sistem"],
         ["Endpoint", provider.endpoint_url || "Default provider"],
       ];
+      var source = provider.limit_details && provider.limit_details.source_url
+        ? '<a href="' + utils.escapeAttr(provider.limit_details.source_url) + '" target="_blank" rel="noopener">' + utils.escapeHtml(provider.limit_details.source_label || "Sumber limit") + '</a>'
+        : "";
       target.innerHTML = rows.map(function (row) {
         return '<span><strong>' + utils.escapeHtml(row[0]) + '</strong>' + utils.escapeHtml(row[1]) + '</span>';
-      }).join("");
+      }).join("") + (source ? '<span><strong>Sumber</strong>' + source + '</span>' : "") +
+        (provider.limit_details?.note ? '<span><strong>Catatan</strong>' + utils.escapeHtml(provider.limit_details.note) + '</span>' : "");
     }
 
     function renderCredentialSummary(form, provider) {
@@ -264,6 +274,11 @@
   function quotaLabel(provider) {
     if (!provider || !provider.free_quota_limit) return "Cek di akun provider";
     return Number(provider.free_quota_limit).toLocaleString("id-ID") + " " + (provider.quota_unit || "request") + " / " + quotaPeriodLabel(provider.free_quota_period);
+  }
+
+  function quotaRemainingLabel(provider) {
+    if (!provider || !provider.free_quota_limit) return "Tidak dihitung lokal; cek dashboard provider";
+    return Math.max(0, Number(provider.free_quota_limit || 0) - Number(provider.quota_used || 0)).toLocaleString("id-ID") + " " + (provider.quota_unit || "request");
   }
 
   function formatDate(value) {

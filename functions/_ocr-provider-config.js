@@ -1,6 +1,6 @@
 import { auditStatement, assertAdmin, jsonResponse } from "./_dashboard-utils.js";
 import { credentialAad, hasStoredCredential, prepareStoredCredential } from "./_ocr-credential-crypto.js";
-import { getOcrProviderRequirementError } from "../src/lib/ocr-provider-metadata.js";
+import { getOcrProviderLimitMetadata, getOcrProviderRequirementError } from "../src/lib/ocr-provider-metadata.js";
 
 export async function getOcrProviderConfigs(db, auth) {
   if (!isAdmin(auth)) return { admin_only: true, providers: [] };
@@ -204,6 +204,7 @@ export async function handleToggleOcrProviderEnabled(db, auth, data, env = {}) {
 }
 
 function maskProviderConfig(row) {
+  const limitMetadata = getOcrProviderLimitMetadata(row.provider_key);
   return {
     provider_key: row.provider_key,
     display_name: row.display_name,
@@ -229,6 +230,19 @@ function maskProviderConfig(row) {
     last_error: row.last_error || "",
     last_checked_at: row.last_checked_at || null,
     updated_at: row.updated_at || null,
+    limit_details: {
+      summary: limitMetadata.summary,
+      file_limit: limitMetadata.file_limit,
+      reset_hint: limitMetadata.reset_hint,
+      source_label: limitMetadata.source_label,
+      source_url: limitMetadata.source_url,
+      note: limitMetadata.note,
+      official_free_quota_limit: limitMetadata.free_quota_limit,
+      official_free_quota_period: limitMetadata.free_quota_period,
+      official_quota_unit: limitMetadata.quota_unit,
+      official_rate_limit_window_seconds: limitMetadata.rate_limit_window_seconds,
+      official_rate_limit_max_requests: limitMetadata.rate_limit_max_requests,
+    },
   };
 }
 

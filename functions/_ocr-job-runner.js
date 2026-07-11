@@ -5,13 +5,13 @@ import { callOcrProvider } from "./_ocr-provider-adapters.js";
 import { maskBatchRow, refreshBatchProgress } from "./_ocr-batch-runs.js";
 import { claimPendingJobs, cleanOcrError as cleanError, releaseUnprocessedJobs, textOrNull } from "./_ocr-job-claiming.js";
 import { getActiveOcrRunLease, requireOcrRunLease } from "./_ocr-run-lease.js";
+import { getOcrWorkerUsage, prepareQuota, providerQuotaCanReset, quotaIncrementStatement } from "./_ocr-quota-policy.js";
 
 const MAX_ENQUEUE_LIMIT = 200;
 const MAX_RUN_LIMIT = 5;
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const MIN_OCR_TEXT_CHARS = 20;
 const CACHE_TEXT_CHARS = 60_000;
-const DEFAULT_WORKER_DAILY_CAP = 100;
 const JOB_TABLE_ERROR = /ocr_jobs|ocr_attempts|ocr_content_cache|ocr_provider_usage_events|ocr_batch_runs|ocr_run_leases|batch_id|no such table|no such column/i;
 const PAUSE_RATE_LIMIT_NOTE = "OCR_PAUSED_RATE_LIMIT";
 const PAUSE_QUOTA_NOTE = "OCR_PAUSED_QUOTA";
@@ -119,35 +119,6 @@ export async function getOcrJobState(db, auth, env = {}) {
     }
     throw error;
   }
-}
-
-async function getOcrWorkerUsage(db, env = {}) {
-  const cap = boundedWorkerDailyCap(env.OCR_WORKER_DAILY_CAP);
-  const midnight = new Date();
-  midnight.setUTCHours(0, 0, 0, 0);
-  const row = await db
-    .prepare(
-      `SELECT COALESCE(SUM(units), 0) used
-       FROM ocr_provider_usage_events
-       WHERE status = 'counted'
-         AND datetime(created_at) >= datetime(?)`,
-    )
-    .bind(midnight.toISOString())
-    .first();
-  const used = Number(row?.used || 0);
-  return {
-    cap,
-    used,
-    remaining: Math.max(0, cap - used),
-    reset_at: new Date(midnight.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-    status: used >= cap ? "exhausted" : used >= Math.max(1, Math.floor(cap * 0.8)) ? "near_limit" : "available",
-  };
-}
-
-function boundedWorkerDailyCap(value) {
-  const number = Number(value || DEFAULT_WORKER_DAILY_CAP);
-  if (!Number.isFinite(number)) return DEFAULT_WORKER_DAILY_CAP;
-  return Math.min(Math.max(Math.trunc(number), 1), 500);
 }
 
 export async function handleEnqueueOcrJobs(db, auth, data) {
@@ -524,7 +495,7 @@ async function loadRunnableProviderState(db) {
   const rows = result.results || [];
   const now = new Date();
   const providers = rows.filter((provider) => {
-    if (provider.health_status === "exhausted") return false;
+    if (provider.health_status === "exhausted" && !providerQuotaCanReset(provider, now)) return false;
     const cooldownUntil = provider.cooldown_until ? new Date(provider.cooldown_until) : null;
     return !cooldownUntil || cooldownUntil <= now;
   });
@@ -893,48 +864,6 @@ async function prepareRateLimit(db, provider) {
   };
 }
 
-async function prepareQuota(db, provider) {
-  const limit = Number(provider.free_quota_limit || 0);
-  const period = provider.free_quota_period || "account_specific";
-  if (!limit) return { allowed: true };
-
-  const now = new Date();
-  if (provider.trial_ends_at && new Date(provider.trial_ends_at) < now) {
-    return { allowed: false, reason: "Trial provider sudah berakhir." };
-  }
-
-  const resetAt = provider.quota_reset_at ? new Date(provider.quota_reset_at) : null;
-  if (resetAt && resetAt <= now && ["daily", "monthly", "compute_daily"].includes(period)) {
-    await db
-      .prepare("UPDATE ocr_provider_configs SET quota_used = 0, quota_reset_at = ?, health_status = 'ready', updated_at = CURRENT_TIMESTAMP WHERE provider_key = ?")
-      .bind(nextQuotaReset(period, now), provider.provider_key)
-      .run();
-    provider.quota_used = 0;
-    provider.quota_reset_at = nextQuotaReset(period, now);
-  } else if (!resetAt && ["daily", "monthly", "compute_daily"].includes(period)) {
-    await db
-      .prepare("UPDATE ocr_provider_configs SET quota_reset_at = ?, updated_at = CURRENT_TIMESTAMP WHERE provider_key = ?")
-      .bind(nextQuotaReset(period, now), provider.provider_key)
-      .run();
-  }
-
-  return Number(provider.quota_used || 0) < limit
-    ? { allowed: true }
-    : { allowed: false, reason: "Limit gratis provider sudah tercapai di sistem." };
-}
-
-function nextQuotaReset(period, now) {
-  const next = new Date(now);
-  if (period === "monthly") {
-    next.setUTCMonth(next.getUTCMonth() + 1, 1);
-    next.setUTCHours(0, 0, 0, 0);
-    return next.toISOString();
-  }
-  next.setUTCDate(next.getUTCDate() + 1);
-  next.setUTCHours(0, 0, 0, 0);
-  return next.toISOString();
-}
-
 function attemptStatement(db, jobId, providerKey, status, httpStatus, latencyMs, textLength, errorCode, errorMessage) {
   return db
     .prepare(
@@ -952,18 +881,6 @@ function usageStatement(db, providerKey, jobId, contentHash, units, status) {
        VALUES (?, ?, ?, ?, ?, ?)`,
     )
     .bind(`ocrusage_${randomId()}`, providerKey, jobId, contentHash, units, status);
-}
-
-function quotaIncrementStatement(db, providerKey) {
-  return db
-    .prepare(
-      `UPDATE ocr_provider_configs
-       SET quota_used = COALESCE(quota_used, 0) + 1,
-           last_checked_at = CURRENT_TIMESTAMP,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE provider_key = ?`,
-    )
-    .bind(providerKey);
 }
 
 function providerHealthStatement(db, providerKey, healthStatus, errorMessage) {

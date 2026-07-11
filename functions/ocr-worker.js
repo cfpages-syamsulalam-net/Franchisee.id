@@ -1,12 +1,12 @@
 import { jsonResponse } from "./_dashboard-utils.js";
 import { runOcrJobs } from "./_ocr-job-runner.js";
+import { getOcrWorkerUsage } from "./_ocr-quota-policy.js";
 import { refreshBatchProgress } from "./_ocr-batch-runs.js";
 import { triggerOcrScheduler } from "./_ocr-scheduler-config.js";
 import { logOperationEvent } from "./_telemetry.js";
 
 const DEFAULT_BATCH_LIMIT = 5;
 const MAX_BATCH_LIMIT = 10;
-const DEFAULT_DAILY_CAP = 100;
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -33,10 +33,9 @@ export async function onRequestPost({ request, env }) {
       return jsonResponse({ success: true, summary });
     }
 
-    const dailyCap = boundedNumber(env.OCR_WORKER_DAILY_CAP || payload.daily_cap, 1, 500, DEFAULT_DAILY_CAP);
     const requestedLimit = boundedNumber(payload.limit, 1, MAX_BATCH_LIMIT, DEFAULT_BATCH_LIMIT);
-    const usedToday = await countTodayUsage(env.franchise_db);
-    const remainingToday = Math.max(0, dailyCap - usedToday);
+    const workerUsage = await getOcrWorkerUsage(env.franchise_db, env);
+    const remainingToday = Math.max(0, Number(workerUsage.remaining || 0));
     const maxJobs = Math.min(requestedLimit, remainingToday);
     const batchId = String(payload.batch_id || "").trim();
 
@@ -45,7 +44,9 @@ export async function onRequestPost({ request, env }) {
       if (batchId) {
         batch = await refreshBatchProgress(env.franchise_db, batchId, {
           status: "paused_quota",
-          message: `Batch OCR dijeda: batas harian worker sudah tercapai (${usedToday}/${dailyCap}). Retry setelah kuota reset atau naikkan OCR_WORKER_DAILY_CAP jika aman untuk provider aktif.`,
+          message: workerUsage.active_provider_count
+            ? `Batch OCR dijeda: combined quota provider aktif sudah habis (${workerUsage.used}/${workerUsage.cap}). Aktifkan provider OCR lain atau tunggu kuota reset.`
+            : "Batch OCR dijeda: belum ada provider OCR aktif dengan credential tersimpan.",
         });
       }
       const summary = {
@@ -53,9 +54,11 @@ export async function onRequestPost({ request, env }) {
         batch_id: batchId,
         processed_count: 0,
         provider_count: 0,
-        used_today: usedToday,
-        daily_cap: dailyCap,
-        skipped: "daily_cap_reached",
+        used_today: workerUsage.used_today,
+        used_quota: workerUsage.used,
+        daily_cap: workerUsage.cap,
+        remaining_quota: workerUsage.remaining,
+        skipped: workerUsage.active_provider_count ? "combined_provider_quota_reached" : "no_active_provider",
         batch,
       };
       await logWorkerEvent(env, summary, "info");
@@ -81,8 +84,10 @@ export async function onRequestPost({ request, env }) {
       requested_limit: requestedLimit,
       processed_count: result.processed_count,
       provider_count: result.provider_count,
-      used_today: usedToday + Number(result.processed_count || 0),
-      daily_cap: dailyCap,
+      used_today: workerUsage.used_today + Number(result.processed_count || 0),
+      used_quota: workerUsage.used + Number(result.processed_count || 0),
+      daily_cap: workerUsage.cap,
+      remaining_quota: Math.max(0, workerUsage.remaining - Number(result.processed_count || 0)),
       processed: result.processed,
       batch: result.batch,
       next_trigger,
@@ -102,21 +107,6 @@ export async function onRequestPost({ request, env }) {
 
 export async function onRequestGet() {
   return jsonResponse({ success: false, error: "METHOD_NOT_ALLOWED" }, { status: 405 });
-}
-
-async function countTodayUsage(db) {
-  const midnight = new Date();
-  midnight.setUTCHours(0, 0, 0, 0);
-  const row = await db
-    .prepare(
-      `SELECT COALESCE(SUM(units), 0) used
-       FROM ocr_provider_usage_events
-       WHERE status = 'counted'
-         AND datetime(created_at) >= datetime(?)`,
-    )
-    .bind(midnight.toISOString())
-    .first();
-  return Number(row?.used || 0);
 }
 
 async function logWorkerEvent(env, summary, severity) {
