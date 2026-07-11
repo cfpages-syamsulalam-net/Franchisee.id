@@ -304,7 +304,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-ocr-execution.css`
 *Dashboard OCR execution stylesheet module.*
-- Owns execution toolbar/status, combined quota chip, job filters/page-size controls, grouped job cards, compact icon-only OCR job message pills, job status/actions, batch progress/countdown/actions, viewport-aware lazy hover image-preview overlay styling, and execution responsive behavior.
+- Owns execution toolbar/status, combined quota chip, job filters, compact icon-led page-size control, grouped job cards, compact icon-only OCR job message pills, job status/actions, batch progress/countdown/actions, viewport-aware lazy hover image-preview overlay styling, and execution responsive behavior.
 
 ### File: `css/dashboard-ocr-results.css`
 *Dashboard OCR results stylesheet module.*
