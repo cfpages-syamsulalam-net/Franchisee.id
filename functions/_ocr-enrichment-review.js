@@ -7,6 +7,16 @@ const MAX_QUEUE_ROWS = 40;
 const MAX_SOURCE_ROWS = 600;
 const FIELD_DEFS = new Map(EDITABLE_LISTING_FIELD_DEFS.map((field) => [field.name, field]));
 const EDITABLE_FIELDS = new Set(EDITABLE_LISTING_FIELD_DEFS.map((field) => field.name));
+const CASE_NORMALIZED_FIELDS = new Set([
+  "category",
+  "subcategory",
+  "label",
+  "city_origin",
+  "brand_country",
+  "outlet_type",
+  "target_market",
+  "royalty_period",
+]);
 
 export async function getOcrEnrichmentQueue(db, options = {}) {
   const franchiseId = textOrNull(options.franchiseId);
@@ -250,10 +260,29 @@ function finalizeQueueItem(item) {
 function normalizeCandidate(field, value) {
   try {
     const clean = sanitizeListingChanges({ [field]: value });
-    return clean[field];
+    return normalizeCandidateCase(field, clean[field]);
   } catch (_error) {
     return null;
   }
+}
+
+function normalizeCandidateCase(field, value) {
+  if (!CASE_NORMALIZED_FIELDS.has(field) || typeof value !== "string") return value;
+  return value
+    .split(/([,;/|]+)/)
+    .map((part) => (/^[,;/|]+$/.test(part) ? part : titleCaseText(part)))
+    .join("")
+    .replace(/\s+([,;/|])/g, "$1")
+    .replace(/([,;/|])\s*/g, "$1 ")
+    .trim();
+}
+
+function titleCaseText(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/\b([a-zà-ÿ])/g, (match) => match.toUpperCase())
+    .replace(/\b(sop|hpp|roi|bep|nib)\b/gi, (match) => match.toUpperCase())
+    .trim();
 }
 
 function buildReason(item) {

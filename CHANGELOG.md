@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-12 21:32 (Asia/Jakarta)
+### Added
+- `.context/session-20260712-2132.md`: Added this session continuity snapshot for OCR/manual review separation and review value formatting.
+
+### Changed
+- `js/dashboard-review.js`: Routed document-derived `proposal_extraction` and `ocr_enrichment_bundle` rows into Review OCR while keeping Pending Edit Review for manual/staff edits; added readable Rupiah/number/percent formatting and title-case display for short classification fields.
+- `css/dashboard-review.css`: Forced review brand cells into a vertical layout so the email/source line always appears below the franchise name, and differentiated manual source badges from OCR/proposal badges.
+- `functions/_ocr-enrichment-review.js`: Normalized new OCR bundle short text candidates such as outlet type/category to consistent title case before creating review suggestions.
+- `scripts/check-dashboard-ocr-client.mjs` and `scripts/check-ocr-job-runner.ts`: Added regression coverage for proposal/OCR review routing, Rupiah formatting fragments, manual badges, and OCR candidate case normalization.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, and `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Documented the review source split, value formatting, candidate normalization, and updated review module line-count follow-up.
+
 ## 2026-07-12 13:53 (Asia/Jakarta)
 ### Added
 - `.context/session-20260712-1353.md`: Added this session continuity snapshot for OCR Review evidence hover previews.

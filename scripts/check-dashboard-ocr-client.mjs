@@ -102,10 +102,15 @@ const requiredFragments = [
   "renderPillActionLink",
   "dash-pill-action",
   "ocr_enrichment_bundle",
+  "proposal_extraction",
+  "isDocumentSuggestion",
   "dash-field-diff-values",
   "__ocr_evidence",
   "dash-review-evidence",
   "Gambar dasar",
+  "formatMoneyValue",
+  "Rp ",
+  "dash-review-source is-manual",
   "fa-clipboard-list",
 ];
 

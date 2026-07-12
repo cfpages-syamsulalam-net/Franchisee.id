@@ -224,13 +224,22 @@
 }
 
 .dash-review-brand {
+  display: grid;
+  gap: 5px;
+  justify-items: start;
   white-space: normal;
 }
 
 .dash-review-brand a {
-  display: inline-block;
+  display: block;
   color: var(--dash-ink);
   font-weight: 900;
+}
+
+.dash-review-brand > .dash-muted {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .dash-review-source {
@@ -238,7 +247,7 @@
   align-items: center;
   gap: 5px;
   width: fit-content;
-  margin-top: 7px !important;
+  margin-top: 2px !important;
   border: 1px solid rgba(246, 138, 30, 0.26);
   border-radius: 999px;
   background: #fff8df;
@@ -246,6 +255,12 @@
   padding: 4px 7px;
   font-size: 11px !important;
   font-weight: 900;
+}
+
+.dash-review-source.is-manual {
+  border-color: rgba(37, 99, 235, 0.2);
+  background: #eff6ff;
+  color: #1d4ed8 !important;
 }
 
 .dash-review-reason {

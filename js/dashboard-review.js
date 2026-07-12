@@ -167,8 +167,8 @@
 
     function renderEditSuggestions(data) {
       var allPending = data.pending || [];
-      var pending = allPending.filter(function (row) { return row.field_name !== "ocr_enrichment_bundle"; });
-      var ocrPending = allPending.filter(function (row) { return row.field_name === "ocr_enrichment_bundle"; });
+      var pending = allPending.filter(function (row) { return !isDocumentSuggestion(row); });
+      var ocrPending = allPending.filter(isDocumentSuggestion);
       var summary = data.summary || {};
       if (options.editCount) options.editCount.textContent = pending.length.toLocaleString("id-ID") + " pending";
       if (options.ocrReviewCount) options.ocrReviewCount.textContent = ocrPending.length.toLocaleString("id-ID") + " pending";
@@ -212,7 +212,7 @@
           ], "Review edit")
           : '<span class="dash-muted">Menunggu admin.</span>';
         return '<tr>' +
-          '<td class="dash-review-brand"><a href="' + utils.escapeAttr(row.public_url || "#") + '" target="_blank" rel="noopener">' + utils.escapeHtml(row.brand_name) + '</a><span class="dash-muted">' + utils.escapeHtml(row.suggested_by_email || row.suggested_by_name || "staff") + '</span>' + renderSuggestionType(row) + '</td>' +
+          '<td class="dash-review-brand"><a href="' + utils.escapeAttr(row.public_url || "#") + '" target="_blank" rel="noopener">' + utils.escapeHtml(row.brand_name) + '</a>' + renderSuggestionActor(row) + renderSuggestionType(row) + '</td>' +
           '<td class="dash-review-diff-cell">' + renderFieldDiff(row.old_value || {}, row.suggested_value || {}) + '</td>' +
           '<td class="dash-review-reason">' + utils.escapeHtml(row.reason || "-") + '</td>' +
           '<td>' + actions + '</td>' +
@@ -227,8 +227,21 @@
     }
 
     function renderSuggestionType(row) {
-      if (row.field_name !== "ocr_enrichment_bundle") return "";
-      return '<span class="dash-review-source"><i class="fas fa-file-alt" aria-hidden="true"></i> OCR</span>';
+      if (row.field_name === "ocr_enrichment_bundle") return '<span class="dash-review-source"><i class="fas fa-file-alt" aria-hidden="true"></i> OCR bundle</span>';
+      if (row.field_name === "proposal_extraction") return '<span class="dash-review-source"><i class="fas fa-file-alt" aria-hidden="true"></i> Proposal</span>';
+      return '<span class="dash-review-source is-manual"><i class="fas fa-pen" aria-hidden="true"></i> Manual</span>';
+    }
+
+    function renderSuggestionActor(row) {
+      if (isDocumentSuggestion(row)) {
+        var source = row.field_name === "ocr_enrichment_bundle" ? "OCR terstruktur" : "Ekstraksi proposal";
+        return '<span class="dash-muted">Sumber: ' + utils.escapeHtml(source) + '</span>';
+      }
+      return '<span class="dash-muted">Diusulkan: ' + utils.escapeHtml(row.suggested_by_name || row.suggested_by_email || "staff") + '</span>';
+    }
+
+    function isDocumentSuggestion(row) {
+      return row && (row.field_name === "ocr_enrichment_bundle" || row.field_name === "proposal_extraction");
     }
 
     function seedEditSuggestion(button) {
@@ -348,7 +361,7 @@
       var oldEl = row.querySelector("[data-edit-old]");
       var listing = selectedListing();
       if (!oldEl) return;
-      oldEl.textContent = "Saat ini: " + formatFieldValue(listing ? listing[fieldName] : "");
+      oldEl.textContent = "Saat ini: " + formatFieldValue(fieldName, listing ? listing[fieldName] : "", getFieldDef(fieldName));
     }
 
     function collectEditChanges() {
@@ -436,9 +449,9 @@
         return '<div class="dash-field-diff-row">' +
           '<strong><i class="fas fa-tag" aria-hidden="true"></i>' + utils.escapeHtml(field.label || fieldName) + '</strong>' +
           '<div class="dash-field-diff-values">' +
-            '<span class="dash-diff-value is-old"><i class="fas fa-minus" aria-hidden="true"></i><b>Semula</b><em>' + utils.escapeHtml(formatFieldValue(oldValue[fieldName])) + '</em></span>' +
+            '<span class="dash-diff-value is-old"><i class="fas fa-minus" aria-hidden="true"></i><b>Semula</b><em>' + utils.escapeHtml(formatFieldValue(fieldName, oldValue[fieldName], field)) + '</em></span>' +
             '<span class="dash-diff-arrow"><i class="fas fa-arrow-right" aria-hidden="true"></i></span>' +
-            '<span class="dash-diff-value is-new"><i class="fas fa-plus" aria-hidden="true"></i><b>Usulan</b><em>' + utils.escapeHtml(formatFieldValue(suggestedValue[fieldName])) + '</em></span>' +
+            '<span class="dash-diff-value is-new"><i class="fas fa-plus" aria-hidden="true"></i><b>Usulan</b><em>' + utils.escapeHtml(formatFieldValue(fieldName, suggestedValue[fieldName], field)) + '</em></span>' +
           '</div>' +
           renderOcrEvidence(fieldName, field, evidenceByField[fieldName]) +
         '</div>';
@@ -473,10 +486,63 @@
       '</div>';
     }
 
-    function formatFieldValue(value) {
+    function formatFieldValue(fieldName, value, field) {
       if (value === null || value === undefined || value === "") return "-";
       if (typeof value === "object") return JSON.stringify(value);
-      return String(value);
+      if (isMoneyField(fieldName)) return formatMoneyValue(value);
+      if (isPercentField(fieldName)) return formatNumberValue(value) + "%";
+      if (field && (field.type === "integer" || field.type === "number")) return formatNumberValue(value);
+      return normalizeDisplayCase(fieldName, value);
+    }
+
+    function isMoneyField(fieldName) {
+      return /_idr$/.test(fieldName || "");
+    }
+
+    function isPercentField(fieldName) {
+      return /_percent$/.test(fieldName || "");
+    }
+
+    function formatMoneyValue(value) {
+      var number = Number(value);
+      if (!Number.isFinite(number)) return String(value);
+      return "Rp " + Math.round(number).toLocaleString("id-ID");
+    }
+
+    function formatNumberValue(value) {
+      var number = Number(value);
+      if (!Number.isFinite(number)) return String(value);
+      return number.toLocaleString("id-ID", { maximumFractionDigits: 2 });
+    }
+
+    function normalizeDisplayCase(fieldName, value) {
+      var text = String(value);
+      if (!shouldNormalizeCase(fieldName)) return text;
+      return text.split(/([,;/|]+)/).map(function (part) {
+        if (/^[,;/|]+$/.test(part)) return part;
+        return titleCaseText(part);
+      }).join("").replace(/\s+([,;/|])/g, "$1").replace(/([,;/|])\s*/g, "$1 ");
+    }
+
+    function shouldNormalizeCase(fieldName) {
+      return [
+        "category",
+        "subcategory",
+        "label",
+        "city_origin",
+        "brand_country",
+        "outlet_type",
+        "target_market",
+        "royalty_period"
+      ].indexOf(fieldName) >= 0;
+    }
+
+    function titleCaseText(value) {
+      return String(value).toLowerCase().replace(/\b([a-zà-ÿ])/g, function (match) {
+        return match.toUpperCase();
+      }).replace(/\b(sop|hpp|roi|bep|nib)\b/gi, function (match) {
+        return match.toUpperCase();
+      }).trim();
     }
 
     async function refreshQualityChecks() {

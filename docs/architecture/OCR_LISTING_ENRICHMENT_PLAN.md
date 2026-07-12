@@ -1,6 +1,6 @@
 # OCR Listing Enrichment Plan
 
-Last updated: 2026-07-12 13:53 (Asia/Jakarta)
+Last updated: 2026-07-12 21:32 (Asia/Jakarta)
 
 ## Why this exists
 
@@ -55,8 +55,9 @@ Suggestion 87 is implemented as the first review UX layer on top of the determin
 - `functions/_ocr-enrichment-review.js` groups candidate fields by `franchise_id`, ignores canonical fields that already have values, normalizes candidate values through the shared editable-listing sanitizer, and keeps source page/excerpt context per field.
 - `/dashboard-data` now exposes this as `ocr_jobs.enrichment_queue` and accepts the admin-only `create_ocr_enrichment_suggestion` action.
 - The OCR Results dashboard renders `Kandidat Review OCR` above result cards, with shared source, public listing, pending-state, and `Buat Review` pill actions.
-- Pending OCR bundles render in a dedicated `Review OCR` dashboard subtab with a full-width Brand/Diff/Reason/Aksi table, separate from generic listing review.
+- Pending document-derived suggestions render in a dedicated `Review OCR` dashboard subtab with a full-width Brand/Diff/Reason/Aksi table, separate from generic manual/staff listing review. This includes both older `proposal_extraction` suggestions and newer grouped `ocr_enrichment_bundle` suggestions.
 - New review bundles store per-field evidence under `old_value.__ocr_evidence`, including source page, OCR excerpt, and brochure image URL when available. The OCR Review diff shows the excerpt and reuses the shared image hover-preview component for the brochure source.
+- OCR Review diffs format `_idr` fields as Rupiah with Indonesian thousand separators and normalize short classification values such as outlet type/category to title case for easier admin scanning.
 - Review creation writes one pending `listing_edit_suggestions` row per franchise with `field_name='ocr_enrichment_bundle'`. The `suggested_value` JSON contains the actual canonical field changes, so the existing admin approval path still sanitizes and applies normal editable fields.
 - No new D1 migration was needed; this reuses `franchise_asset_knowledge`, `listing_edit_suggestions`, and the existing review/audit/public rebuild path.
 

@@ -143,8 +143,8 @@ async function main() {
                 id: "knowledge_1",
                 asset_id: "asset_1",
                 franchise_id: "franchise_1",
-                structured_data: JSON.stringify({ min_area_sqm: 15, royalty_percent: 0, support_system: "Training dan SOP" }),
-                source_text_preview: "Luas minimal 15 m2. Royalty 0%. Training dan SOP.",
+                structured_data: JSON.stringify({ min_area_sqm: 15, royalty_percent: 0, support_system: "Training dan SOP", outlet_type: "RUKO, booth" }),
+                source_text_preview: "Luas minimal 15 m2. Royalty 0%. Training dan SOP. Tipe outlet RUKO, booth.",
                 updated_at: "2026-07-12T00:00:00Z",
                 brand_name: "Sample Brand",
                 slug: "sample-brand",
@@ -164,8 +164,9 @@ async function main() {
   };
   const enrichment = await getOcrEnrichmentQueue(enrichmentDb);
   assert.equal(enrichment.total, 1);
-  assert.equal(enrichment.items[0].field_count, 3);
+  assert.equal(enrichment.items[0].field_count, 4);
   assert.equal(enrichment.items[0].suggested_value.min_area_sqm, 15);
+  assert.equal(enrichment.items[0].suggested_value.outlet_type, "Ruko, Booth");
   assert.equal(enrichment.items[0].sources_by_field.min_area_sqm.sources[0].asset_id, "asset_1");
 
   assert.equal(normalizeOcrText("A  \r\n\r\n\r\n B\t\tC"), "A\n\n B C");
