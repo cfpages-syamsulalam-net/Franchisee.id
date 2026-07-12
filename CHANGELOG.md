@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-12 13:53 (Asia/Jakarta)
+### Added
+- `.context/session-20260712-1353.md`: Added this session continuity snapshot for OCR Review evidence hover previews.
+
+### Changed
+- `functions/_ocr-enrichment-review.js`: Stored sanitized per-field OCR evidence under `old_value.__ocr_evidence` when creating new `ocr_enrichment_bundle` suggestions, preserving `suggested_value` as the canonical approval payload.
+- `js/dashboard-review.js` and `css/dashboard-review.css`: Added source-backed OCR evidence rows to Review OCR diffs, including OCR excerpts and brochure image preview actions using the shared OCR image-preview component.
+- `js/dashboard-admin.js` and `js/dashboard-ocr.js`: Wired the OCR Review table into the shared delegated image-preview binding.
+- `src/pages/dashboard/index.astro`: Replaced unavailable Review OCR icons with the existing clipboard-list icon.
+- `scripts/check-dashboard-ocr-client.mjs`: Expanded dashboard OCR regression coverage for OCR Review evidence and image-preview binding.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, and `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Documented the OCR evidence contract, hover-preview behavior, and review renderer follow-up.
+
 ## 2026-07-12 05:50 (Asia/Jakarta)
 ### Added
 - `.context/session-20260712-0550.md`: Added this session continuity snapshot for the OCR review UX split.

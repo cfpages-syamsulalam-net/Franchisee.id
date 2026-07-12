@@ -1,6 +1,7 @@
 import { SITE_ID } from "./_dashboard-schemas.js";
 import { EDITABLE_LISTING_FIELD_DEFS, sanitizeListingChanges } from "./_shared-schemas.js";
 import { auditStatement, assertAdmin, jsonResponse, randomId } from "./_dashboard-utils.js";
+import { sanitizeProposalSourceText } from "./_proposal-knowledge.js";
 
 const MAX_QUEUE_ROWS = 40;
 const MAX_SOURCE_ROWS = 600;
@@ -146,7 +147,7 @@ export async function handleCreateOcrEnrichmentSuggestion(db, auth, data) {
         item.franchise_id,
         SITE_ID,
         auth.id,
-        JSON.stringify(item.old_value),
+        JSON.stringify(oldValueWithEvidence(item)),
         JSON.stringify(item.suggested_value),
         reason,
       ),
@@ -272,8 +273,15 @@ function buildReason(item) {
   ].filter(Boolean).join(" ").slice(0, 1200);
 }
 
+function oldValueWithEvidence(item) {
+  return {
+    ...item.old_value,
+    __ocr_evidence: item.sources_by_field || {},
+  };
+}
+
 function sourceExcerpt(text, value) {
-  const normalized = normalizeText(text);
+  const normalized = normalizeText(sanitizeProposalSourceText(text));
   if (!normalized) return "";
   const valueText = normalizeText(value);
   if (valueText && valueText.length >= 3) {

@@ -84,6 +84,9 @@
         options.resultRows.addEventListener("click", handleResultClick);
         if (jobRenderers && typeof jobRenderers.bindImagePreview === "function") jobRenderers.bindImagePreview(options.resultRows);
       }
+      if (options.ocrReviewRows && jobRenderers && typeof jobRenderers.bindImagePreview === "function") {
+        jobRenderers.bindImagePreview(options.ocrReviewRows);
+      }
       if (options.resultFilterForm) options.resultFilterForm.addEventListener("submit", submitResultSearch);
       if (options.resultResetButton) options.resultResetButton.addEventListener("click", resetResultSearch);
       if (options.resultLoadMoreButton) options.resultLoadMoreButton.addEventListener("click", loadMoreResultSearch);

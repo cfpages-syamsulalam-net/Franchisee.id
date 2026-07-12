@@ -140,6 +140,59 @@
   font-size: 11px;
 }
 
+.dash-review-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  border: 1px dashed rgba(246, 138, 30, 0.32);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 7px;
+}
+
+.dash-review-evidence-text {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: start;
+  gap: 6px;
+  min-width: min(100%, 320px);
+  flex: 1 1 320px;
+  color: var(--dash-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.dash-review-evidence-text i {
+  color: #b45309;
+  margin-top: 2px;
+}
+
+.dash-review-evidence-text b {
+  color: var(--dash-ink);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.dash-review-evidence-text em {
+  color: #374151;
+  font-style: normal;
+  overflow-wrap: anywhere;
+}
+
+.dash-review-evidence-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.dash-review-evidence-image {
+  flex: 0 0 auto;
+}
+
 .dash-review-table-wrap {
   overflow-x: auto;
 }
@@ -226,7 +279,8 @@
   .dash-field-row,
   .dash-field-main,
   .dash-field-diff-row,
-  .dash-field-diff-values {
+  .dash-field-diff-values,
+  .dash-review-evidence-text {
     display: grid;
     grid-template-columns: 1fr;
   }

@@ -88,6 +88,7 @@
     jobLimitSelect: document.querySelector("[data-ocr-job-limit]"),
     jobRows: document.querySelector("[data-ocr-job-rows]"),
     resultRows: document.querySelector("[data-ocr-result-rows]"),
+    ocrReviewRows: document.querySelector("[data-ocr-review-rows]"),
     resultFilterForm: document.querySelector("[data-ocr-result-filter-form]"),
     resultFilterStatus: document.querySelector("[data-ocr-result-filter-status]"),
     resultFranchiseLimitSelect: document.querySelector("[data-ocr-result-franchise-limit]"),

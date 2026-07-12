@@ -430,6 +430,7 @@
     function renderFieldDiff(oldValue, suggestedValue) {
       var fields = Object.keys(suggestedValue || {});
       if (!fields.length) return '<span class="dash-muted">Tidak ada field.</span>';
+      var evidenceByField = extractOcrEvidence(oldValue);
       return '<div class="dash-field-diff">' + fields.map(function (fieldName) {
         var field = getFieldDef(fieldName);
         return '<div class="dash-field-diff-row">' +
@@ -439,8 +440,37 @@
             '<span class="dash-diff-arrow"><i class="fas fa-arrow-right" aria-hidden="true"></i></span>' +
             '<span class="dash-diff-value is-new"><i class="fas fa-plus" aria-hidden="true"></i><b>Usulan</b><em>' + utils.escapeHtml(formatFieldValue(suggestedValue[fieldName])) + '</em></span>' +
           '</div>' +
+          renderOcrEvidence(fieldName, field, evidenceByField[fieldName]) +
         '</div>';
       }).join("") + '</div>';
+    }
+
+    function extractOcrEvidence(oldValue) {
+      if (!oldValue || typeof oldValue !== "object") return {};
+      var evidence = oldValue.__ocr_evidence;
+      return evidence && typeof evidence === "object" && !Array.isArray(evidence) ? evidence : {};
+    }
+
+    function renderOcrEvidence(fieldName, field, evidence) {
+      if (!evidence || typeof evidence !== "object") return "";
+      var sources = Array.isArray(evidence.sources) ? evidence.sources : [];
+      var source = sources.filter(function (item) { return item && (item.excerpt || item.source_url); })[0] || null;
+      if (!source) return "";
+      var excerpt = source.excerpt ? utils.escapeHtml(source.excerpt) : "Excerpt OCR belum tersedia untuk field ini.";
+      var page = source.page_number ? "Hal. " + Number(source.page_number).toLocaleString("id-ID") : "Halaman brosur";
+      var count = Number(evidence.source_count || sources.length || 0);
+      var conflicts = Number(evidence.conflict_count || 0);
+      var summary = count > 1 ? count.toLocaleString("id-ID") + " sumber cocok" : "1 sumber";
+      if (conflicts > 0) summary += ", " + conflicts.toLocaleString("id-ID") + " variasi lain";
+      var image = source.source_url
+        ? '<a class="dash-pill-action dash-review-evidence-image" href="' + utils.escapeAttr(source.source_url) + '" target="_blank" rel="noopener" data-ocr-image-preview-url="' + utils.escapeAttr(source.source_url) + '" data-ocr-image-preview-alt="' + utils.escapeAttr((field.label || fieldName) + " - " + page) + '" aria-label="' + utils.escapeAttr("Preview gambar dasar OCR untuk " + (field.label || fieldName) + ". Klik untuk membuka gambar di tab baru.") + '">' +
+          '<i class="fas fa-image" aria-hidden="true"></i><span>Gambar dasar</span></a>'
+        : "";
+      return '<div class="dash-review-evidence">' +
+        '<span class="dash-review-evidence-text"><i class="fas fa-quote-left" aria-hidden="true"></i><b>Dasar OCR</b><em>' + excerpt + '</em></span>' +
+        '<span class="dash-review-evidence-meta"><i class="fas fa-file-alt" aria-hidden="true"></i>' + utils.escapeHtml(page + " - " + summary) + '</span>' +
+        image +
+      '</div>';
     }
 
     function formatFieldValue(value) {

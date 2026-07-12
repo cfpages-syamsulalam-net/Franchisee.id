@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-12 05:50 (Asia/Jakarta)
+Last updated: 2026-07-12 13:53 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -285,7 +285,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-review.css`
 *Dashboard Review/Data Quality stylesheet module.*
-- Owns guided edit field rows, full-width pending review tables, icon-led old-to-new field diff rows, OCR/general review source badges, reason wrapping, and Area Listing editor layout/responsive behavior for the Review and OCR Review surfaces.
+- Owns guided edit field rows, full-width pending review tables, icon-led old-to-new field diff rows, OCR/general review source badges, OCR evidence excerpt/image-preview rows, reason wrapping, and Area Listing editor layout/responsive behavior for the Review and OCR Review surfaces.
 
 ### File: `css/dashboard-operations.css`
 *Dashboard Operations/admin helper stylesheet module.*
@@ -322,7 +322,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Review/Data Quality client module for `/dashboard`.*
 - `window.FranchiseDashboardReview.createOperations(options)`: Creates the review controller from DOM references, current dashboard state getter, admin-state callback, and shared action/reload/status callbacks.
 - `render(data)`: Renders data-quality rows, pending claims, listing edit options, guided edit field rows, generic pending edit suggestions, OCR-only pending edit suggestions, and admin Area Listing controls.
-- `renderEditSuggestions(data)` / `renderSuggestionRows(target, pending, emptyCopy)`: Splits `ocr_enrichment_bundle` rows away from generic Review and renders both tables with shared admin approve/reject actions, wrapped reason copy, source badges, and icon-led old/new field diffs.
+- `renderEditSuggestions(data)` / `renderSuggestionRows(target, pending, emptyCopy)`: Splits `ocr_enrichment_bundle` rows away from generic Review and renders both tables with shared admin approve/reject actions, wrapped reason copy, source badges, icon-led old/new field diffs, and source-backed OCR evidence when present.
+- `renderFieldDiff(oldValue, suggestedValue)` / `renderOcrEvidence(fieldName, field, evidence)`: Renders canonical field changes and reads OCR bundle evidence from `oldValue.__ocr_evidence`, showing OCR excerpts plus brochure image preview links that reuse the shared delegated OCR image-preview component.
 - `seedEditSuggestion(button)`: Seeds the guided edit form from a Data Quality warning, switches to the Review tab, scrolls to the form, and changes copy/action labels for admin direct-edit versus staff suggestion mode.
 - `submitLocationUpdate(event)`: Admin-only dashboard action that posts structured location rows to `/dashboard-data` and reloads dashboard state after rebuild queueing.
 - `refreshQualityChecks()`: Posts the protected refresh action and reloads dashboard data.
@@ -1052,7 +1053,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_ocr-enrichment-review.js`
 *Grouped OCR enrichment review helper.*
 - `getOcrEnrichmentQueue(db, options)`: Reads extracted `franchise_asset_knowledge.structured_data`, filters candidates to currently empty editable listing fields, normalizes them through the shared listing sanitizer, deduplicates conflicts per franchise/field, and returns a bounded source-linked queue for the OCR Results dashboard.
-- `handleCreateOcrEnrichmentSuggestion(db, auth, data)`: Admin-only action that converts one grouped queue item into a single pending `listing_edit_suggestions` row with `field_name='ocr_enrichment_bundle'`, JSON old/suggested values for the real canonical fields, source summary reason text, and an audit event.
+- `handleCreateOcrEnrichmentSuggestion(db, auth, data)`: Admin-only action that converts one grouped queue item into a single pending `listing_edit_suggestions` row with `field_name='ocr_enrichment_bundle'`, JSON old/suggested values for the real canonical fields, per-field OCR evidence stored under `old_value.__ocr_evidence`, source summary reason text, and an audit event.
 
 ### File: `functions/_ocr-job-runner.js`
 *OCR queue/cache/failover orchestrator shared by dashboard actions and the protected worker.*

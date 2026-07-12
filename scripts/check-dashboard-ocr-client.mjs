@@ -55,6 +55,7 @@ const requiredFragments = [
   "data-ocr-image-preview-url",
   "data-ocr-image-preview-alt",
   "bindImagePreview(options.resultRows)",
+  "bindImagePreview(options.ocrReviewRows)",
   "bindImagePreview",
   "dash-ocr-image-preview",
   "getPreviewViewportBounds",
@@ -102,6 +103,10 @@ const requiredFragments = [
   "dash-pill-action",
   "ocr_enrichment_bundle",
   "dash-field-diff-values",
+  "__ocr_evidence",
+  "dash-review-evidence",
+  "Gambar dasar",
+  "fa-clipboard-list",
 ];
 
 for (const fragment of requiredFragments) {
