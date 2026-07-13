@@ -472,7 +472,10 @@
       var sources = Array.isArray(evidence.sources) ? evidence.sources : [];
       var source = sources.filter(function (item) { return item && (item.excerpt || item.source_url); })[0] || null;
       if (!source) return "";
-      var excerpt = source.excerpt ? utils.escapeHtml(source.excerpt) : "Excerpt OCR belum tersedia untuk field ini.";
+      var excerpt = source.excerpt ? renderEvidenceExcerpt(source.excerpt, source.basis) : "Excerpt OCR belum tersedia untuk field ini.";
+      if (source.excerpt && !source.basis) {
+        excerpt += '<small>Basis spesifik belum ditemukan di excerpt ini. Cek gambar sebelum approve.</small>';
+      }
       var page = source.page_number ? "Hal. " + Number(source.page_number).toLocaleString("id-ID") : "Halaman brosur";
       var count = Number(evidence.source_count || sources.length || 0);
       var conflicts = Number(evidence.conflict_count || 0);
@@ -487,6 +490,17 @@
         '<span class="dash-review-evidence-meta"><i class="fas fa-file-alt" aria-hidden="true"></i>' + utils.escapeHtml(page + " - " + summary) + '</span>' +
         image +
       '</div>';
+    }
+
+    function renderEvidenceExcerpt(excerpt, basis) {
+      var text = String(excerpt || "");
+      var basisText = String(basis || "").trim();
+      if (!basisText) return utils.escapeHtml(text);
+      var index = text.toLowerCase().indexOf(basisText.toLowerCase());
+      if (index < 0) return utils.escapeHtml(text);
+      return utils.escapeHtml(text.slice(0, index)) +
+        '<mark>' + utils.escapeHtml(text.slice(index, index + basisText.length)) + '</mark>' +
+        utils.escapeHtml(text.slice(index + basisText.length));
     }
 
     function formatFieldValue(fieldName, value, field) {

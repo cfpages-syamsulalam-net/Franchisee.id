@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-13 15:29 (Asia/Jakarta)
+Last updated: 2026-07-13 16:25 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -88,7 +88,7 @@ Source: read-only remote D1 sampling of `franchise_asset_knowledge` after OCR jo
 | Public tabs should not become cluttered or empty. | Render optional dynamic tabs only when approved content exists. Recommended first tabs: `Paket & Investasi`, richer `Proyeksi`, `Syarat Lokasi & Operasional`, `Dukungan Mitra`, `Produk/Layanan`, and conservative `Legal & Bukti`. | Planned |
 | Deterministic extraction is too shallow for dense brochures. | Add an AI extraction job that groups all OCR pages for one franchise, returns strict JSON with source page/excerpt/confidence, validates with Zod, and stores pending-review candidates. Do not let AI directly overwrite canonical listing data. | Planned |
 | Existing deterministic extraction missed many canonical candidate fields after the larger OCR backfill. | Expanded the shared proposal extractor for area/staff/setup, investment/fee/working-capital, contract, BEP range, omzet/profit, royalty basis/period, target-market, and support signals; added a replayable D1 backfill script; sanitized known source-noise watermarks from stored OCR text; remote replay increased candidate-bearing rows from 56 to 164 of 479 and now returns `changed=0`. The extractor now treats franchise fee/license fee/biaya lisensi/biaya franchise/biaya kemitraan/biaya join/joining fee/investasi kemitraan as one `Biaya Kemitraan Awal` field, ignores ambiguous `paket kemitraan`, and avoids extracting total investment from a single fee row unless total/nilai investasi is explicit. | Implemented |
-| One edit suggestion per OCR page would flood Review after structured replay. | Added a per-franchise OCR enrichment queue that groups structured candidates, keeps source page/excerpt/image context, skips already-filled canonical fields, title-cases short classification values, and creates one pending `ocr_enrichment_bundle` suggestion whose JSON payload contains the actual editable fields for normal admin approval. OCR Review now shows proposal/OCR-derived suggestions together, with source excerpts and brochure image hover previews per field. | Implemented |
+| One edit suggestion per OCR page would flood Review after structured replay. | Added a per-franchise OCR enrichment queue that groups structured candidates, keeps source page/excerpt/image context, skips already-filled canonical fields, title-cases short classification values, and creates one pending `ocr_enrichment_bundle` suggestion whose JSON payload contains the actual editable fields for normal admin approval. OCR Review now shows proposal/OCR-derived suggestions together, with source excerpts, highlighted basis snippets, weak-evidence warnings, and brochure image hover previews per field. | Implemented |
 
 ## UX Actionability Audit - 2026-06-28
 

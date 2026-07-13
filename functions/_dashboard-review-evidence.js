@@ -1,11 +1,11 @@
 import { EDITABLE_LISTING_FIELD_DEFS } from "./_shared-schemas.js";
 import { parseJson } from "./_dashboard-utils.js";
-import { sanitizeProposalSourceText } from "./_proposal-knowledge.js";
+import { sourceEvidence } from "./_proposal-evidence.js";
 
 const FIELD_LABELS = new Map(EDITABLE_LISTING_FIELD_DEFS.map((field) => [field.name, field.label || field.name]));
 
 export async function attachDocumentSuggestionEvidence(db, rows) {
-  const needsEvidence = rows.filter((row) => isDocumentSuggestion(row) && !hasOcrEvidence(row.old_value));
+  const needsEvidence = rows.filter((row) => isDocumentSuggestion(row) && !hasCompleteOcrEvidence(row.old_value, row.suggested_value));
   if (!needsEvidence.length) return rows;
 
   const franchiseIds = [...new Set(needsEvidence.map((row) => row.franchise_id).filter(Boolean))];
@@ -39,7 +39,7 @@ export async function attachDocumentSuggestionEvidence(db, rows) {
   }
 
   return rows.map((row) => {
-    if (!isDocumentSuggestion(row) || hasOcrEvidence(row.old_value)) return row;
+    if (!isDocumentSuggestion(row) || hasCompleteOcrEvidence(row.old_value, row.suggested_value)) return row;
     const evidence = buildSuggestionEvidence(row, byFranchise.get(row.franchise_id) || []);
     if (!Object.keys(evidence).length) return row;
     return {
@@ -67,7 +67,7 @@ function buildSuggestionEvidence(suggestion, knowledgeRows) {
       asset_id: row.asset_id,
       page_number: Number(row.display_order || 0) || null,
       source_url: row.source_url || "",
-      excerpt: sourceExcerpt(row.source_text_preview, value),
+      ...sourceEvidence(field, row.source_text_preview, value),
     })).filter((source) => source.excerpt || source.source_url);
     if (!sources.length) continue;
     evidence[field] = {
@@ -85,8 +85,13 @@ function isDocumentSuggestion(row) {
   return row && (row.field_name === "ocr_enrichment_bundle" || row.field_name === "proposal_extraction");
 }
 
-function hasOcrEvidence(oldValue) {
-  return Boolean(oldValue && typeof oldValue === "object" && oldValue.__ocr_evidence && typeof oldValue.__ocr_evidence === "object");
+function hasCompleteOcrEvidence(oldValue, suggestedValue) {
+  if (!oldValue || typeof oldValue !== "object" || !oldValue.__ocr_evidence || typeof oldValue.__ocr_evidence !== "object") return false;
+  return Object.keys(suggestedValue || {}).every((field) => {
+    const detail = oldValue.__ocr_evidence[field];
+    const sources = detail && Array.isArray(detail.sources) ? detail.sources : [];
+    return sources.some((source) => source && source.excerpt && source.basis);
+  });
 }
 
 function sameCandidateValue(left, right) {
@@ -97,17 +102,6 @@ function stableCandidateKey(value) {
   return typeof value === "object"
     ? JSON.stringify(value)
     : normalizeText(value).toLowerCase();
-}
-
-function sourceExcerpt(text, value) {
-  const normalized = normalizeText(sanitizeProposalSourceText(text));
-  if (!normalized) return "";
-  const valueText = normalizeText(value);
-  if (valueText && valueText.length >= 3) {
-    const index = normalized.toLowerCase().indexOf(valueText.toLowerCase());
-    if (index >= 0) return normalized.slice(Math.max(0, index - 70), index + valueText.length + 100).trim();
-  }
-  return normalized.slice(0, 220).trim();
 }
 
 function normalizeText(value) {

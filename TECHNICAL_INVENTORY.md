@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-13 15:29 (Asia/Jakarta)
+Last updated: 2026-07-13 16:25 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -323,7 +323,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `window.FranchiseDashboardReview.createOperations(options)`: Creates the review controller from DOM references, current dashboard state getter, admin-state callback, and shared action/reload/status callbacks.
 - `render(data)`: Renders data-quality rows, pending claims, listing edit options, guided edit field rows, generic pending edit suggestions, OCR-only pending edit suggestions, and admin Area Listing controls.
 - `renderEditSuggestions(data)` / `renderSuggestionRows(target, pending, emptyCopy)`: Splits document-derived `proposal_extraction` and `ocr_enrichment_bundle` rows away from manual/staff Review and renders both tables with shared admin approve/reject actions, wrapped reason copy, source badges, icon-led old/new field diffs, and source-backed OCR evidence when present.
-- `renderFieldDiff(row, oldValue, suggestedValue)` / `renderOcrEvidence(fieldName, field, evidence)`: Renders canonical field changes, admin-only per-field approval checkboxes, and document evidence from `oldValue.__ocr_evidence`, showing sanitized excerpts plus brochure image preview links that reuse the shared delegated OCR image-preview component.
+- `renderFieldDiff(row, oldValue, suggestedValue)` / `renderOcrEvidence(fieldName, field, evidence)` / `renderEvidenceExcerpt(excerpt, basis)`: Renders canonical field changes, admin-only per-field approval checkboxes, and document evidence from `oldValue.__ocr_evidence`, showing sanitized excerpts with highlighted basis snippets plus brochure image preview links that reuse the shared delegated OCR image-preview component. If no field-specific basis is found, the UI warns admins to inspect the image before approval.
 - `formatFieldValue(fieldName, value, field)`: Formats `_idr` numeric values as `Rp` with Indonesian thousands separators, formats percentage fields with `%`, formats other numeric fields with Indonesian separators, and title-cases short classification fields such as outlet type/category in the review display.
 - `seedEditSuggestion(button)`: Seeds the guided edit form from a Data Quality warning, switches to the Review tab, scrolls to the form, and changes copy/action labels for admin direct-edit versus staff suggestion mode.
 - `submitLocationUpdate(event)`: Admin-only dashboard action that posts structured location rows to `/dashboard-data` and reloads dashboard state after rebuild queueing.
@@ -1088,7 +1088,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_dashboard-review-evidence.js`
 *Dashboard review proof helper.*
-- `attachDocumentSuggestionEvidence(db, rows)`: Finds pending `proposal_extraction` / `ocr_enrichment_bundle` rows without embedded `old_value.__ocr_evidence`, loads matching `franchise_asset_knowledge` and asset URLs, and returns rows with sanitized per-field excerpts plus brochure image URLs for Review OCR hover proof.
+- `attachDocumentSuggestionEvidence(db, rows)`: Finds pending `proposal_extraction` / `ocr_enrichment_bundle` rows without complete embedded `old_value.__ocr_evidence`, loads matching `franchise_asset_knowledge` and asset URLs, and returns rows with sanitized per-field excerpts, field-specific basis snippets, and brochure image URLs for Review OCR hover proof.
+
+### File: `functions/_proposal-evidence.js`
+*Shared proposal/OCR evidence basis helper.*
+- `sourceEvidence(field, text, value)`: Sanitizes proposal/OCR text and returns `{ excerpt, basis }`. Field-aware basis matching prevents weak numeric evidence, such as a standalone `8` in unrelated projection text, from looking like proof for `min_staff_count`.
 
 ### File: `functions/_dashboard-actions.js`
 *Protected dashboard write workflows.*

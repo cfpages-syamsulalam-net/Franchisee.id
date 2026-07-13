@@ -1,7 +1,7 @@
 import { SITE_ID } from "./_dashboard-schemas.js";
 import { EDITABLE_LISTING_FIELD_DEFS, sanitizeListingChanges } from "./_shared-schemas.js";
 import { auditStatement, assertAdmin, jsonResponse, randomId } from "./_dashboard-utils.js";
-import { sanitizeProposalSourceText } from "./_proposal-knowledge.js";
+import { sourceEvidence } from "./_proposal-evidence.js";
 
 const MAX_QUEUE_ROWS = 40;
 const MAX_SOURCE_ROWS = 600;
@@ -202,11 +202,13 @@ function addFieldCandidate(item, field, value, row) {
   };
   current.count += 1;
   if (current.sources.length < 4) {
+    const evidence = sourceEvidence(field, row.source_text_preview, value);
     current.sources.push({
       asset_id: row.asset_id,
       page_number: Number(row.display_order || 0) || null,
       source_url: row.source_url || "",
-      excerpt: sourceExcerpt(row.source_text_preview, value),
+      excerpt: evidence.excerpt,
+      basis: evidence.basis,
     });
   }
   bucket[key] = current;
@@ -307,19 +309,6 @@ function oldValueWithEvidence(item) {
     ...item.old_value,
     __ocr_evidence: item.sources_by_field || {},
   };
-}
-
-function sourceExcerpt(text, value) {
-  const normalized = normalizeText(sanitizeProposalSourceText(text));
-  if (!normalized) return "";
-  const valueText = normalizeText(value);
-  if (valueText && valueText.length >= 3) {
-    const index = normalized.toLowerCase().indexOf(valueText.toLowerCase());
-    if (index >= 0) {
-      return normalized.slice(Math.max(0, index - 70), index + valueText.length + 100).trim();
-    }
-  }
-  return normalized.slice(0, 220).trim();
 }
 
 function fieldLabel(field) {

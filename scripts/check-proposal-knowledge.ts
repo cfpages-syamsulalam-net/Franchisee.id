@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 // @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
 import { extractProposalCandidatesFromText, sanitizeProposalSourceText } from "../functions/_proposal-knowledge.js";
+// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+import { sourceEvidence } from "../functions/_proposal-evidence.js";
 
 const candidates = extractProposalCandidatesFromText(`
   Konsep outlet: Booth dan gerobak modern
@@ -80,5 +82,11 @@ const marker = String.fromCharCode(119, 97, 114, 97, 108, 97, 98, 97, 107, 117);
 const sanitized = sanitizeProposalSourceText(`Brand facts\nwww.${marker}.com/source\nInvestasi: Rp 25 juta`);
 assert.doesNotMatch(sanitized.toLowerCase(), new RegExp(marker));
 assert.match(sanitized, /Investasi/i);
+
+const staffEvidence = sourceEvidence("min_staff_count", "Jumlah staff: 8 orang untuk operasional awal.", 8);
+assert.match(staffEvidence.basis, /staff: 8 orang/i);
+
+const weakStaffEvidence = sourceEvidence("min_staff_count", "Asumsi Pendapatan Tahun Per Tahun Laba Per Bulan Rp. 143.750.000", 8);
+assert.equal(weakStaffEvidence.basis, "");
 
 console.log("Proposal knowledge extraction check passed.");

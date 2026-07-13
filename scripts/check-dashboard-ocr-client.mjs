@@ -111,6 +111,8 @@ const requiredFragments = [
   "dash-review-evidence",
   "Bukti dokumen",
   "Dasar dokumen",
+  "renderEvidenceExcerpt",
+  "Basis spesifik belum ditemukan",
   "formatMoneyValue",
   "Rp ",
   "dash-review-source is-manual",

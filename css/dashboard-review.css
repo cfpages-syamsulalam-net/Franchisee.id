@@ -208,6 +208,22 @@
   overflow-wrap: anywhere;
 }
 
+.dash-review-evidence-text mark {
+  border-radius: 4px;
+  background: #fde68a;
+  color: #111827;
+  font-weight: 900;
+  padding: 0 2px;
+}
+
+.dash-review-evidence-text small {
+  display: block;
+  grid-column: 1 / -1;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .dash-review-evidence-meta {
   display: inline-flex;
   align-items: center;

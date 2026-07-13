@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-13 16:25 (Asia/Jakarta)
+### Added
+- `functions/_proposal-evidence.js`: Added shared field-aware evidence extraction for proposal/OCR snippets, returning both excerpt and exact basis text for Review OCR highlighting.
+- `.context/session-20260713-1625.md`: Added this session continuity snapshot for highlighted Review OCR basis evidence.
+
+### Changed
+- `functions/_ocr-enrichment-review.js` and `functions/_dashboard-review-evidence.js`: Store/read `basis` alongside evidence excerpts so Review OCR can highlight the exact supporting phrase instead of only showing a broad excerpt.
+- `js/dashboard-review.js` and `css/dashboard-review.css`: Highlight the basis phrase inside `Dasar dokumen` excerpts and show a warning when no field-specific basis is found.
+- `scripts/check-dashboard-ocr-client.mjs` and `scripts/check-proposal-knowledge.ts`: Added regression coverage for evidence highlighting and weak numeric evidence, including `min_staff_count`.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, and `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Documented highlighted basis snippets and weak-evidence warnings.
+
 ## 2026-07-13 15:09 (Asia/Jakarta)
 ### Added
 - `.context/session-20260713-1509.md`: Added this session continuity snapshot for conservative total-investment extraction and license/partnership fee wording.
