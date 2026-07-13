@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-13 21:04 (Asia/Jakarta)
+Last updated: 2026-07-14 01:26 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -408,6 +408,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `boot()` / `showLoadingPanel(message)` / `showLoginPanel(message, isError)`: Initializes `window.FranchiseAuth`, shows a skeleton while auth/dashboard authorization is processing, only shows and force-mounts the login form after no usable session or an auth error is known, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
 - `readDashboardCache()` / `writeDashboardCache(data)` / `clearDashboardCache()`: Maintains a short `sessionStorage` cache for successful dashboard payloads keyed to the active Clerk user id and active session. Cached data can render immediately after Clerk init, then `/dashboard-data` refreshes live; missing/expired authorization clears the cache and relocks the protected shell.
 - `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, Operations, and OCR, including arrow/Home/End keyboard navigation.
+- `bindDashboardDeepLinks()` / `activateDashboardDeepLink(targetId)`: Maps documentation anchors such as `google-contacts-setup`, `ocr-provider-setup`, and `publish-automation-setup` to the Operations tab, updates same-page hash clicks, and scrolls/focuses the target after its tab panel is visible.
 - `renderDashboard(data, options)`: Reveals the protected shell and fans dashboard API data into metrics plus delegated Operations, Review/Data Quality/Claim, Premium, and OCR modules. `options.cached` shows a refresh-in-progress status while live data is fetched.
 - `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
 

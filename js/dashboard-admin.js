@@ -24,6 +24,14 @@
   var currentUserIsAdmin = false;
   var dashboardUtils = window.FranchiseDashboardUtils;
   var escapeHtml = dashboardUtils.escapeHtml;
+  var DASHBOARD_DEEP_LINK_TABS = {
+    "dashboard-setup-guide": "operations",
+    "google-contacts-setup": "operations",
+    "ocr-provider-setup": "operations",
+    "ocr-scheduler-setup": "operations",
+    "email-delivery-setup": "operations",
+    "publish-automation-setup": "operations"
+  };
   var dashboardOperations = window.FranchiseDashboardOperations.createOperations({
     outreachRows: document.querySelector("[data-outreach-rows]"),
     outreachCount: document.querySelector("[data-outreach-count]"),
@@ -114,6 +122,7 @@
 
   window.FRANCHISE_AUTH_DEBUG = true;
   bindDashboardTabs();
+  bindDashboardDeepLinks();
   if (authDebugRefresh) {
     authDebugRefresh.addEventListener("click", function () {
       renderAuthDebug("manual_refresh");
@@ -154,9 +163,10 @@
 
   function initialDashboardTab() {
     var hash = (window.location.hash || "").replace(/^#/, "");
-    return dashboardTabs.some(function (tab) {
+    if (dashboardTabs.some(function (tab) {
       return tab.getAttribute("data-dashboard-tab") === hash;
-    }) ? hash : "outreach";
+    })) return hash;
+    return DASHBOARD_DEEP_LINK_TABS[hash] || "outreach";
   }
 
   function activateDashboardTab(name, updateHash) {
@@ -172,6 +182,55 @@
     if (updateHash && window.history && window.history.replaceState) {
       window.history.replaceState(window.history.state, document.title, "#" + name);
     }
+  }
+
+  function bindDashboardDeepLinks() {
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest && event.target.closest("a[href]");
+      if (!link) return;
+      var url;
+      try {
+        url = new URL(link.getAttribute("href"), window.location.href);
+      } catch (_error) {
+        return;
+      }
+      if (url.origin !== window.location.origin || url.pathname.replace(/\/+$/, "") !== window.location.pathname.replace(/\/+$/, "")) return;
+      var targetId = (url.hash || "").replace(/^#/, "");
+      if (!DASHBOARD_DEEP_LINK_TABS[targetId]) return;
+      event.preventDefault();
+      if (window.history && window.history.pushState) {
+        window.history.pushState(window.history.state, document.title, url.pathname + url.search + url.hash);
+      } else {
+        window.location.hash = targetId;
+      }
+      activateDashboardDeepLink(targetId);
+    });
+
+    window.addEventListener("hashchange", function () {
+      var targetId = (window.location.hash || "").replace(/^#/, "");
+      if (dashboardTabs.some(function (tab) { return tab.getAttribute("data-dashboard-tab") === targetId; })) {
+        activateDashboardTab(targetId, false);
+        return;
+      }
+      activateDashboardDeepLink(targetId);
+    });
+  }
+
+  function activateDashboardDeepLink(targetId) {
+    var tabName = DASHBOARD_DEEP_LINK_TABS[targetId];
+    if (!tabName) return;
+    activateDashboardTab(tabName, false);
+    scrollDashboardDeepLink(targetId);
+  }
+
+  function scrollDashboardDeepLink(targetId) {
+    window.setTimeout(function () {
+      var target = document.getElementById(targetId);
+      if (!target) return;
+      if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
+      target.scrollIntoView({ block: "start", behavior: "smooth" });
+      target.focus({ preventScroll: true });
+    }, 0);
   }
 
   async function boot() {
@@ -243,6 +302,7 @@
     if (window.FranchiseTooltip && typeof window.FranchiseTooltip.refresh === "function") {
       window.FranchiseTooltip.refresh();
     }
+    activateDashboardDeepLink((window.location.hash || "").replace(/^#/, ""));
   }
 
   async function reloadDashboard() {

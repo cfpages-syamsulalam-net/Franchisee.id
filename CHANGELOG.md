@@ -4,6 +4,14 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-14 01:26 (Asia/Jakarta)
+### Added
+- `.context/session-20260714-0126.md`: Added this session continuity snapshot for dashboard documentation deep-link behavior.
+
+### Changed
+- `js/dashboard-admin.js`: Made `/dashboard/#google-contacts-setup` and other dashboard documentation anchors open the Operations tab, update the same-page hash, then scroll/focus the target section so warning links are actionable.
+- `CODEBASE.md` and `TECHNICAL_INVENTORY.md`: Documented the dashboard documentation deep-link routing contract.
+
 ## 2026-07-13 21:04 (Asia/Jakarta)
 ### Added
 - `src/components/dashboard/DashboardIntegrationGuide.astro`: Added a focused in-app dashboard documentation component with stable setup anchors for Google Contacts, OCR, email, and publish integrations.
