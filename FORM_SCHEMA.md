@@ -57,7 +57,7 @@ The field inventory is storage-provider neutral. The current frontend posts thes
 - `min_staff_count` (Number, Opt, Progressive): Jumlah staff minimum.
 - `setup_duration_days` (Number, Opt, Progressive): Estimasi waktu setup sampai siap buka.
 - `rent_cost` (Text, Opt, Progressive): Referensi biaya sewa lokasi.
-- `fee_license` (Text/Rupiah, Opt, Progressive): Biaya lisensi / kemitraan, termasuk istilah franchise fee, biaya lisensi, atau biaya kemitraan bila brand memakai istilah berbeda untuk biaya awal hak merek/sistem.
+- `fee_license` (Text/Rupiah, Opt, Progressive): Biaya kemitraan awal, termasuk istilah franchise fee, license fee, biaya lisensi, biaya franchise, biaya kemitraan, biaya join, atau joining fee bila brand memakai istilah berbeda untuk biaya awal hak merek/sistem.
 - `fee_capex` (Text/Rupiah, Opt, Progressive): Paket peralatan/stok awal/pusat.
 - `fee_construction` (Text/Rupiah, Opt, Progressive): Estimasi renovasi/booth/setup fisik.
 - `working_capital_idr` (Text/Rupiah, Opt, Progressive): Modal kerja awal.

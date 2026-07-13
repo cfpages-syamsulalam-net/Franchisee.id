@@ -9,9 +9,9 @@ Format:
 - `.context/session-20260713-1509.md`: Added this session continuity snapshot for conservative total-investment extraction and license/partnership fee wording.
 
 ### Changed
-- `functions/_proposal-knowledge.js`: Made total-investment extraction conservative so generic `Biaya Kemitraan` / `Investasi Kemitraan` rows no longer populate `total_investment_idr`; those terms now map to the license/partnership fee field, while total investment requires explicit total/nilai investasi wording.
-- `functions/_shared-schemas.js`, `src/lib/franchise-detail-summary.ts`, `src/lib/franchise-detail-tabs.ts`, `templates/detail-franchise-tpl.html`, and `FORM_SCHEMA.md`: Renamed the user-facing fee field label to `Biaya Lisensi / Kemitraan` and documented the franchise fee/license fee/partnership fee synonym policy.
-- `scripts/check-proposal-knowledge.ts`: Added regression coverage for `Biaya Kemitraan 119 Juta` not creating `total_investment_idr`, while explicit `Total Biaya Investasi` still does.
+- `functions/_proposal-knowledge.js`: Made total-investment extraction conservative so generic upfront fee rows no longer populate `total_investment_idr`; franchise fee/license fee/biaya lisensi/biaya franchise/biaya kemitraan/biaya join/joining fee/investasi kemitraan now map to the upfront partnership fee field, while ambiguous `paket kemitraan` is not auto-classified.
+- `functions/_shared-schemas.js`, `src/lib/franchise-detail-summary.ts`, `src/lib/franchise-detail-tabs.ts`, `templates/detail-franchise-tpl.html`, and `FORM_SCHEMA.md`: Renamed the user-facing fee field label to `Biaya Kemitraan Awal` and documented the synonym policy.
+- `scripts/check-proposal-knowledge.ts`: Added regression coverage for `Biaya Kemitraan 119 Juta` not creating `total_investment_idr`, `Biaya Join` mapping to the upfront partnership fee field, ambiguous `Paket Kemitraan` staying unclassified, and explicit `Total Biaya Investasi` still mapping to total investment.
 - `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, and `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Documented the conservative total-investment rule and fee synonym mapping.
 
 ## 2026-07-13 10:34 (Asia/Jakarta)

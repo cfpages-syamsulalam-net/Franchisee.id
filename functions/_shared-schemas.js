@@ -73,7 +73,7 @@ export const EDITABLE_LISTING_FIELD_DEFS = [
   { name: "setup_duration_days", label: "Estimasi waktu setup (hari)", type: "integer" },
   { name: "rent_cost_text", label: "Biaya sewa", type: "text" },
   { name: "contract_duration_months", label: "Durasi kontrak (bulan)", type: "integer" },
-  { name: "fee_license_idr", label: "Biaya lisensi / kemitraan", type: "integer" },
+  { name: "fee_license_idr", label: "Biaya kemitraan awal", type: "integer" },
   { name: "fee_capex_idr", label: "Modal peralatan", type: "integer" },
   { name: "fee_construction_idr", label: "Biaya renovasi", type: "integer" },
   { name: "working_capital_idr", label: "Modal kerja awal", type: "integer" },

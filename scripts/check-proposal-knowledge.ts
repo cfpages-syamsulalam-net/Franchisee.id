@@ -54,11 +54,19 @@ const partnershipFeeCandidates = extractProposalCandidatesFromText(`
   TABEL PERBANDINGAN TOPCOAT VS BRAND LAIN
   Biaya Kemitraan 119 Juta
   Investasi Kemitraan Rp. 119.000.000
+  Biaya Join Rp. 119.000.000
   Biaya Renovasi Rp. 40.000.000
 `);
 assert.equal(partnershipFeeCandidates.fee_license_idr, 119_000_000);
 assert.equal(partnershipFeeCandidates.fee_construction_idr, 40_000_000);
 assert.equal(partnershipFeeCandidates.total_investment_idr, undefined);
+
+const ambiguousPackageCandidates = extractProposalCandidatesFromText(`
+  Paket Kemitraan Rp 119 juta
+  Paket usaha sudah termasuk peralatan awal
+`);
+assert.equal(ambiguousPackageCandidates.fee_license_idr, undefined);
+assert.equal(ambiguousPackageCandidates.total_investment_idr, undefined);
 
 const explicitTotalCandidates = extractProposalCandidatesFromText(`
   Biaya Kemitraan Rp 119 juta

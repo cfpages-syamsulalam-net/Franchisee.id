@@ -114,9 +114,9 @@ export function extractProposalCandidatesFromText(text) {
   ]);
   addMoneyCandidate(candidates, "fee_license_idr", normalizedText, [
     /\b(?:franchise|lisensi|license|kemitraan)\s+fee\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
-    /\b(?:biaya|fee)\s+(?:franchise|lisensi|license|kemitraan)\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
-    /\b(?:investasi|paket|modal)\s+kemitraan\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
-    /\b(?:joining|initial)\s+fee\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
+    /\b(?:biaya|fee)\s+(?:franchise|lisensi|license|kemitraan|join|bergabung)\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
+    /\binvestasi\s+kemitraan\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
+    /\b(?:joining|join|initial)\s+fee\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
   ]);
   addMoneyCandidate(candidates, "fee_capex_idr", normalizedText, [
     /\b(?:biaya|modal)\s+(?:peralatan|equipment|alat|perlengkapan)\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,

@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-13 15:09 (Asia/Jakarta)
+Last updated: 2026-07-13 15:29 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -565,14 +565,14 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/lib/franchise-detail-summary.ts`
 *Shared generated franchise detail summary renderer.*
 - `generateDetailQuickFacts(row, tier)`: Returns only complementary chips such as BEP, non-Indonesia origin/target, or verified/premium status so the visible heading does not repeat the existing category/meta row.
-- `generateDetailInfoPanel(row, logoUrl, category, minimumModal)`: Builds the `Profil` tab summary panel with a compact logo card, official social links when Website/Instagram/Facebook/TikTok/YouTube/LinkedIn URLs exist, category link, shared-tooltip explanations, actionable `Tanya Admin` / `Hubungi Admin` contact-tab openers, and icon-enriched fact cards from D1/form fields such as company, `Biaya Lisensi / Kemitraan`, royalty, founding year, outlets/area, minimum area, minimum staff, setup duration, BEP range, origin/target, outlet type, location requirement, contract duration, omzet range, net-profit range, and support.
+- `generateDetailInfoPanel(row, logoUrl, category, minimumModal)`: Builds the `Profil` tab summary panel with a compact logo card, official social links when Website/Instagram/Facebook/TikTok/YouTube/LinkedIn URLs exist, category link, shared-tooltip explanations, actionable `Tanya Admin` / `Hubungi Admin` contact-tab openers, and icon-enriched fact cards from D1/form fields such as company, `Biaya Kemitraan Awal`, royalty, founding year, outlets/area, minimum area, minimum staff, setup duration, BEP range, origin/target, outlet type, location requirement, contract duration, omzet range, net-profit range, and support.
 - Shared through `src/lib/franchise-detail-tabs.ts` by both `src/lib/franchise-static.ts` and `scripts/d1-page-renderer.ts` so Astro output and the committed D1 bridge stay consistent.
 
 ### File: `src/lib/franchise-detail-tabs.ts`
 *Shared connected tab composer for generated franchise detail pages.*
 - `generateDetailTabEntries(row, options)`: Returns buyer-intent tabs from existing D1 data: `Profil`, `Detail`, `Investasi`, optional `Support`, optional Premium/media/Brosur/FAQ entries, and `Kontak`.
 - `renderDetailTabsShell(tabEntries)`: Renders the connected full-width tab heading/content shell used by both Astro detail generation and the D1 bridge.
-- `generateInvestmentTab(row, minimumModal)`: Internal helper that turns modal, `Biaya Lisensi / Kemitraan`, fee breakdown, working capital, additional-cost notes, royalty, BEP range, omzet range, and net-profit range into compact icon cards and makes unknown values open the contact tab.
+- `generateInvestmentTab(row, minimumModal)`: Internal helper that turns modal, `Biaya Kemitraan Awal`, fee breakdown, working capital, additional-cost notes, royalty, BEP range, omzet range, and net-profit range into compact icon cards and makes unknown values open the contact tab.
 
 ### File: `src/lib/franchise-contact.ts`
 *Detail contact renderer for D1-backed franchise static pages.*
@@ -934,7 +934,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Auditable proposal text and candidate extraction.*
 - `extractProposalKnowledge(arrayBuffer, listing)`: Parses selectable PDF text with UnPDF, records page count/status, marks low-text documents as `needs_ocr`, and filters deterministic candidates to fields currently missing from the canonical listing.
 - `sanitizeProposalSourceText(value)`: Normalizes OCR/PDF text and removes known source-noise watermark lines/URLs before storage, dashboard preview, or deterministic extraction.
-- `extractProposalCandidatesFromText(text)`: Extracts bounded outlet type, location requirement, minimum area, staff/setup needs, investment/fee/working-capital values, contract duration, BEP range, monthly omzet/profit, HPP, royalty basis/period, target market, and support candidates. It maps franchise fee, biaya lisensi, biaya kemitraan, and investasi kemitraan into one `fee_license_idr` field, while `total_investment_idr` requires explicit total/nilai investasi wording instead of inferring from a single fee row.
+- `extractProposalCandidatesFromText(text)`: Extracts bounded outlet type, location requirement, minimum area, staff/setup needs, investment/fee/working-capital values, contract duration, BEP range, monthly omzet/profit, HPP, royalty basis/period, target market, and support candidates. It maps franchise fee, license fee, biaya lisensi, biaya franchise, biaya kemitraan, biaya join, joining fee, and investasi kemitraan into one `fee_license_idr` field, ignores ambiguous `paket kemitraan` as a fee candidate, and requires explicit total/nilai investasi wording for `total_investment_idr` instead of inferring from a single fee row.
 - `proposalKnowledgeStatements(db, input)`: Sanitizes source text, upserts `franchise_asset_knowledge`, and creates a pending `listing_edit_suggestions` row for admin review without directly updating `franchises` only when a valid D1 user actor is available.
 
 ### File: `functions/_clerk-auth.js`
@@ -1136,7 +1136,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_shared-schemas.js`
 *Shared validation/schema constants for Pages Functions.*
-- `EDITABLE_LISTING_FIELD_DEFS`: Canonical dashboard-editable listing fields with labels, types, and select options, including brand-origin, target-market, `Biaya lisensi / kemitraan`, and progressive canonical fields for area/staff/setup/working-capital/BEP/omzet/profit ranges.
+- `EDITABLE_LISTING_FIELD_DEFS`: Canonical dashboard-editable listing fields with labels, types, and select options, including brand-origin, target-market, `Biaya kemitraan awal`, and progressive canonical fields for area/staff/setup/working-capital/BEP/omzet/profit ranges.
 - `sanitizeListingChanges(changes)` / `normalizeListingFieldValue(field, value)`: Shared dashboard listing change validation and normalization.
 - `BaseSubmissionSchema` / `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Shared form payload validators used by `/form-submit`; franchisor submissions accept optional `brand_country`, `target_market`, and the progressive field set, while submit helpers default origin/market to Indonesia/Indonesia when omitted.
 - `GetFranchisesQuerySchema`: Shared `/get-franchises` query validator.
