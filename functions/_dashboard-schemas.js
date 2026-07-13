@@ -3,6 +3,7 @@ import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
 import {
   DashboardDecisionSchema,
   EDITABLE_LISTING_FIELD_DEFS,
+  EditableListingFieldSchema,
   sanitizeListingChanges,
 } from "./_shared-schemas.js";
 import { DASHBOARD_OCR_ACTION_SCHEMAS } from "./_dashboard-ocr-schemas.js";
@@ -35,6 +36,7 @@ const ReviewEditSuggestionSchema = z.object({
   action: z.literal("review_edit_suggestion"),
   suggestion_id: z.string().trim().min(1),
   decision: DashboardDecisionSchema,
+  approved_fields: z.array(EditableListingFieldSchema).max(80).optional(),
   notes: z.string().trim().max(1200).optional().default(""),
 });
 

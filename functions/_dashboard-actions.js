@@ -135,6 +135,25 @@ export async function handleReviewEditSuggestion(db, auth, data) {
 
   const approved = data.decision === "approve";
   const status = approved ? "approved" : "rejected";
+  const requestedFields = Array.isArray(data.approved_fields) ? [...new Set(data.approved_fields)] : null;
+  if (approved && requestedFields && !requestedFields.length) {
+    return jsonResponse({ success: false, error: "NO_FIELDS_SELECTED", message: "Pilih minimal satu field untuk disetujui." }, { status: 400 });
+  }
+  const suggestedChanges = parseJson(suggestion.suggested_value, {});
+  const selectedSuggestedChanges = requestedFields
+    ? Object.fromEntries(requestedFields.filter((field) => Object.prototype.hasOwnProperty.call(suggestedChanges, field)).map((field) => [field, suggestedChanges[field]]))
+    : suggestedChanges;
+  if (approved && !Object.keys(selectedSuggestedChanges).length) {
+    return jsonResponse({ success: false, error: "NO_VALID_FIELDS_SELECTED", message: "Field yang dipilih tidak ada di suggestion ini." }, { status: 400 });
+  }
+  const skippedFields = requestedFields
+    ? Object.keys(suggestedChanges).filter((field) => !Object.prototype.hasOwnProperty.call(selectedSuggestedChanges, field))
+    : [];
+  const reviewNotes = [
+    data.notes,
+    approved && requestedFields ? `Approved fields: ${Object.keys(selectedSuggestedChanges).join(", ")}.` : "",
+    approved && skippedFields.length ? `Skipped fields: ${skippedFields.join(", ")}.` : "",
+  ].filter(Boolean).join(" ");
   const statements = [
     db
       .prepare(
@@ -142,20 +161,23 @@ export async function handleReviewEditSuggestion(db, auth, data) {
          SET status = ?, reviewed_by_user_id = ?, reviewed_at = CURRENT_TIMESTAMP, review_notes = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`
       )
-      .bind(status, auth.id, data.notes, data.suggestion_id),
+      .bind(status, auth.id, reviewNotes, data.suggestion_id),
     auditStatement(db, approved ? "dashboard.edit.approve" : "dashboard.edit.reject", "listing_edit_suggestions", data.suggestion_id, {
       franchise_id: suggestion.franchise_id,
-      notes: data.notes,
+      notes: reviewNotes,
+      fields: approved ? Object.keys(selectedSuggestedChanges) : [],
+      skipped_fields: skippedFields,
     }, auth.id),
   ];
 
   if (approved) {
-    const changes = sanitizeChanges(parseJson(suggestion.suggested_value, {}));
+    const changes = sanitizeChanges(selectedSuggestedChanges);
     statements.push(
       updateListingStatement(db, suggestion.franchise_id, changes),
       auditStatement(db, "dashboard.edit.apply", "franchise", suggestion.franchise_id, {
         suggestion_id: data.suggestion_id,
         fields: Object.keys(changes),
+        skipped_fields: skippedFields,
       }, auth.id),
       ...siteRebuildStatements(db, {
         siteId: SITE_ID,
@@ -165,7 +187,7 @@ export async function handleReviewEditSuggestion(db, auth, data) {
         entityId: data.suggestion_id,
         actorUserId: auth.id,
         source: "dashboard",
-        metadata: { fields: Object.keys(changes) },
+        metadata: { fields: Object.keys(changes), skipped_fields: skippedFields },
       }),
     );
   }

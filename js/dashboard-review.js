@@ -190,7 +190,7 @@
         var actions = isAdmin()
           ? utils.renderActionToolbar([
             utils.renderActionButton({
-              label: "Setujui edit",
+              label: "Setujui field terpilih",
               icon: "fas fa-check",
               tone: "success",
               attrs: {
@@ -200,7 +200,7 @@
               }
             }),
             utils.renderActionButton({
-              label: "Tolak edit",
+              label: "Tolak semua field",
               icon: "fas fa-times",
               tone: "danger",
               attrs: {
@@ -211,9 +211,9 @@
             })
           ], "Review edit")
           : '<span class="dash-muted">Menunggu admin.</span>';
-        return '<tr>' +
+        return '<tr data-suggestion-row="' + utils.escapeAttr(row.id) + '">' +
           '<td class="dash-review-brand"><a href="' + utils.escapeAttr(row.public_url || "#") + '" target="_blank" rel="noopener">' + utils.escapeHtml(row.brand_name) + '</a>' + renderSuggestionActor(row) + renderSuggestionType(row) + '</td>' +
-          '<td class="dash-review-diff-cell">' + renderFieldDiff(row.old_value || {}, row.suggested_value || {}) + '</td>' +
+          '<td class="dash-review-diff-cell">' + renderFieldDiff(row, row.old_value || {}, row.suggested_value || {}) + '</td>' +
           '<td class="dash-review-reason">' + utils.escapeHtml(row.reason || "-") + '</td>' +
           '<td>' + actions + '</td>' +
         '</tr>';
@@ -440,14 +440,17 @@
         : "Belum ada area untuk listing ini.";
     }
 
-    function renderFieldDiff(oldValue, suggestedValue) {
+    function renderFieldDiff(row, oldValue, suggestedValue) {
       var fields = Object.keys(suggestedValue || {});
       if (!fields.length) return '<span class="dash-muted">Tidak ada field.</span>';
       var evidenceByField = extractOcrEvidence(oldValue);
       return '<div class="dash-field-diff">' + fields.map(function (fieldName) {
         var field = getFieldDef(fieldName);
+        var fieldChoice = isAdmin()
+          ? '<label class="dash-review-field-choice"><input type="checkbox" data-review-field-select data-suggestion-id="' + utils.escapeAttr(row.id) + '" value="' + utils.escapeAttr(fieldName) + '" checked><span>Approve field ini</span></label>'
+          : "";
         return '<div class="dash-field-diff-row">' +
-          '<strong><i class="fas fa-tag" aria-hidden="true"></i>' + utils.escapeHtml(field.label || fieldName) + '</strong>' +
+          '<div class="dash-field-diff-head"><strong><i class="fas fa-tag" aria-hidden="true"></i>' + utils.escapeHtml(field.label || fieldName) + '</strong>' + fieldChoice + '</div>' +
           '<div class="dash-field-diff-values">' +
             '<span class="dash-diff-value is-old"><i class="fas fa-minus" aria-hidden="true"></i><b>Semula</b><em>' + utils.escapeHtml(formatFieldValue(fieldName, oldValue[fieldName], field)) + '</em></span>' +
             '<span class="dash-diff-arrow"><i class="fas fa-arrow-right" aria-hidden="true"></i></span>' +
@@ -477,10 +480,10 @@
       if (conflicts > 0) summary += ", " + conflicts.toLocaleString("id-ID") + " variasi lain";
       var image = source.source_url
         ? '<a class="dash-pill-action dash-review-evidence-image" href="' + utils.escapeAttr(source.source_url) + '" target="_blank" rel="noopener" data-ocr-image-preview-url="' + utils.escapeAttr(source.source_url) + '" data-ocr-image-preview-alt="' + utils.escapeAttr((field.label || fieldName) + " - " + page) + '" aria-label="' + utils.escapeAttr("Preview gambar dasar OCR untuk " + (field.label || fieldName) + ". Klik untuk membuka gambar di tab baru.") + '">' +
-          '<i class="fas fa-image" aria-hidden="true"></i><span>Gambar dasar</span></a>'
+          '<i class="fas fa-image" aria-hidden="true"></i><span>Bukti dokumen</span></a>'
         : "";
       return '<div class="dash-review-evidence">' +
-        '<span class="dash-review-evidence-text"><i class="fas fa-quote-left" aria-hidden="true"></i><b>Dasar OCR</b><em>' + excerpt + '</em></span>' +
+        '<span class="dash-review-evidence-text"><i class="fas fa-quote-left" aria-hidden="true"></i><b>Dasar dokumen</b><em>' + excerpt + '</em></span>' +
         '<span class="dash-review-evidence-meta"><i class="fas fa-file-alt" aria-hidden="true"></i>' + utils.escapeHtml(page + " - " + summary) + '</span>' +
         image +
       '</div>';
@@ -608,17 +611,40 @@
     async function reviewEditSuggestion(button) {
       try {
         button.disabled = true;
-        await options.postDashboardAction({
+        var decision = button.getAttribute("data-decision");
+        var payload = {
           action: "review_edit_suggestion",
           suggestion_id: button.getAttribute("data-suggestion-id"),
-          decision: button.getAttribute("data-decision"),
+          decision: decision,
           notes: ""
+        };
+        if (decision === "approve") {
+          payload.approved_fields = collectSelectedReviewFields(button);
+        }
+        await options.postDashboardAction({
+          action: payload.action,
+          suggestion_id: payload.suggestion_id,
+          decision: payload.decision,
+          approved_fields: payload.approved_fields,
+          notes: payload.notes
         });
         await options.reloadDashboard();
       } catch (error) {
         button.disabled = false;
         options.setStatus(error.message, true);
       }
+    }
+
+    function collectSelectedReviewFields(button) {
+      var suggestionId = button.getAttribute("data-suggestion-id") || "";
+      var row = button.closest("[data-suggestion-row]");
+      var boxes = row ? Array.from(row.querySelectorAll("[data-review-field-select]")).filter(function (box) {
+        return box.getAttribute("data-suggestion-id") === suggestionId;
+      }) : [];
+      if (!boxes.length) return undefined;
+      var selected = boxes.filter(function (box) { return box.checked; }).map(function (box) { return box.value; });
+      if (!selected.length) throw new Error("Pilih minimal satu field untuk disetujui.");
+      return selected;
     }
 
     async function reviewClaim(button) {

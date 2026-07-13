@@ -1,6 +1,6 @@
 # OCR Listing Enrichment Plan
 
-Last updated: 2026-07-12 21:32 (Asia/Jakarta)
+Last updated: 2026-07-13 10:34 (Asia/Jakarta)
 
 ## Why this exists
 
@@ -57,7 +57,9 @@ Suggestion 87 is implemented as the first review UX layer on top of the determin
 - The OCR Results dashboard renders `Kandidat Review OCR` above result cards, with shared source, public listing, pending-state, and `Buat Review` pill actions.
 - Pending document-derived suggestions render in a dedicated `Review OCR` dashboard subtab with a full-width Brand/Diff/Reason/Aksi table, separate from generic manual/staff listing review. This includes both older `proposal_extraction` suggestions and newer grouped `ocr_enrichment_bundle` suggestions.
 - New review bundles store per-field evidence under `old_value.__ocr_evidence`, including source page, OCR excerpt, and brochure image URL when available. The OCR Review diff shows the excerpt and reuses the shared image hover-preview component for the brochure source.
+- Older document suggestions that lack embedded evidence are enriched at dashboard read time from `franchise_asset_knowledge` by `_dashboard-review-evidence.js`, so each field can still show sanitized excerpt context and a brochure image hover preview when the source asset URL exists.
 - OCR Review diffs format `_idr` fields as Rupiah with Indonesian thousand separators and normalize short classification values such as outlet type/category to title case for easier admin scanning.
+- Admin approvals are granular: each field has an approval checkbox, and `/dashboard-data` applies only the selected `approved_fields` while recording skipped fields in review notes/audit metadata.
 - Review creation writes one pending `listing_edit_suggestions` row per franchise with `field_name='ocr_enrichment_bundle'`. The `suggested_value` JSON contains the actual canonical field changes, so the existing admin approval path still sanitizes and applies normal editable fields.
 - No new D1 migration was needed; this reuses `franchise_asset_knowledge`, `listing_edit_suggestions`, and the existing review/audit/public rebuild path.
 

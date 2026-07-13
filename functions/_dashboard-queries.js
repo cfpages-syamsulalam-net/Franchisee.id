@@ -1,4 +1,5 @@
 import { SITE_ID } from "./_dashboard-schemas.js";
+import { attachDocumentSuggestionEvidence } from "./_dashboard-review-evidence.js";
 import { computeQualityChecks } from "./_quality-checks.js";
 import {
   buildWhatsAppUrl,
@@ -528,14 +529,16 @@ export async function getEditSuggestions(db) {
       .all(),
   ]);
 
+  const pendingRows = (pending.results || []).map((row) => ({
+    ...row,
+    old_value: parseJson(row.old_value, {}),
+    suggested_value: parseJson(row.suggested_value, {}),
+    public_url: row.slug ? `/peluang-usaha/${row.slug}` : "",
+  }));
+
   return {
     summary: normalizeGroupedCounts(summary.results || [], "status"),
-    pending: (pending.results || []).map((row) => ({
-      ...row,
-      old_value: parseJson(row.old_value, {}),
-      suggested_value: parseJson(row.suggested_value, {}),
-      public_url: row.slug ? `/peluang-usaha/${row.slug}` : "",
-    })),
+    pending: await attachDocumentSuggestionEvidence(db, pendingRows),
   };
 }
 

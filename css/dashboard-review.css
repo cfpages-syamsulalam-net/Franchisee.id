@@ -83,6 +83,34 @@
   font-size: 12px;
 }
 
+.dash-field-diff-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dash-review-field-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  border-radius: 999px;
+  background: #f3fbf6;
+  color: #166534;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 7px;
+  white-space: nowrap;
+}
+
+.dash-review-field-choice input {
+  accent-color: #16a34a;
+  inline-size: 13px;
+  block-size: 13px;
+}
+
 .dash-field-diff-values {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -294,6 +322,7 @@
   .dash-field-row,
   .dash-field-main,
   .dash-field-diff-row,
+  .dash-field-diff-head,
   .dash-field-diff-values,
   .dash-review-evidence-text {
     display: grid;

@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-12 21:32 (Asia/Jakarta)
+Last updated: 2026-07-13 10:34 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -323,12 +323,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `window.FranchiseDashboardReview.createOperations(options)`: Creates the review controller from DOM references, current dashboard state getter, admin-state callback, and shared action/reload/status callbacks.
 - `render(data)`: Renders data-quality rows, pending claims, listing edit options, guided edit field rows, generic pending edit suggestions, OCR-only pending edit suggestions, and admin Area Listing controls.
 - `renderEditSuggestions(data)` / `renderSuggestionRows(target, pending, emptyCopy)`: Splits document-derived `proposal_extraction` and `ocr_enrichment_bundle` rows away from manual/staff Review and renders both tables with shared admin approve/reject actions, wrapped reason copy, source badges, icon-led old/new field diffs, and source-backed OCR evidence when present.
-- `renderFieldDiff(oldValue, suggestedValue)` / `renderOcrEvidence(fieldName, field, evidence)`: Renders canonical field changes and reads OCR bundle evidence from `oldValue.__ocr_evidence`, showing OCR excerpts plus brochure image preview links that reuse the shared delegated OCR image-preview component.
+- `renderFieldDiff(row, oldValue, suggestedValue)` / `renderOcrEvidence(fieldName, field, evidence)`: Renders canonical field changes, admin-only per-field approval checkboxes, and document evidence from `oldValue.__ocr_evidence`, showing sanitized excerpts plus brochure image preview links that reuse the shared delegated OCR image-preview component.
 - `formatFieldValue(fieldName, value, field)`: Formats `_idr` numeric values as `Rp` with Indonesian thousands separators, formats percentage fields with `%`, formats other numeric fields with Indonesian separators, and title-cases short classification fields such as outlet type/category in the review display.
 - `seedEditSuggestion(button)`: Seeds the guided edit form from a Data Quality warning, switches to the Review tab, scrolls to the form, and changes copy/action labels for admin direct-edit versus staff suggestion mode.
 - `submitLocationUpdate(event)`: Admin-only dashboard action that posts structured location rows to `/dashboard-data` and reloads dashboard state after rebuild queueing.
 - `refreshQualityChecks()`: Posts the protected refresh action and reloads dashboard data.
-- `submitEditSuggestion(event)` / `reviewEditSuggestion(button)` / `reviewClaim(button)`: Posts guided edit submissions and admin review decisions through the existing `/dashboard-data` contract.
+- `submitEditSuggestion(event)` / `reviewEditSuggestion(button)` / `reviewClaim(button)`: Posts guided edit submissions and admin review decisions through the existing `/dashboard-data` contract. Review approval sends `approved_fields` when per-field checkboxes are present, so admins can approve only trusted fields from multi-field proposal/OCR suggestions.
 
 ### File: `js/dashboard-operations.js`
 *General Operations client module for `/dashboard`.*
@@ -987,6 +987,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
 - `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
+- `ReviewEditSuggestionSchema`: Accepts optional `approved_fields` from shared editable field names for granular field-level approval.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
@@ -1078,18 +1079,22 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getDataQuality(db)`: Reads persisted open `franchise_quality_checks` when available, falling back to computed warnings for missing images, contact, description, category, all-caps descriptions, suspicious contacts, stale listings, and invalid URLs.
 - `getUnclaimedOutreachQueue(db)`: Reads up to 250 published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
 - `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
-- `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display and structured location rows for the admin Area Listing editor.
+- `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display and structured location rows for the admin Area Listing editor. `getEditSuggestions()` delegates document proof backfill to `_dashboard-review-evidence.js` before returning pending suggestion rows.
 - `getStructuredLocationsForListings(db, franchiseIds)`: Chunks editable listing IDs before building `IN (...)` queries so `/dashboard-data` can load the full dashboard without hitting D1's SQL variable limit.
 - `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Operations tab.
 - `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, Premium settings, recent Premium notifications, upcoming expiries, annual reports, queued-email summaries, and recent queued email rows for the Operations tab.
 - `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db, env)`: Supplies the operations tab, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, product-event counts, and a local Cloudflare Free-plan traffic guardrail summary.
 - `getTrafficGuardrails(env)`: Reports the 100,000/day Free-plan guardrail, 90,000 warning threshold, reset time, active browser throttles/caches, and the env vars needed before optional Cloudflare Analytics querying is wired.
 
+### File: `functions/_dashboard-review-evidence.js`
+*Dashboard review proof helper.*
+- `attachDocumentSuggestionEvidence(db, rows)`: Finds pending `proposal_extraction` / `ocr_enrichment_bundle` rows without embedded `old_value.__ocr_evidence`, loads matching `franchise_asset_knowledge` and asset URLs, and returns rows with sanitized per-field excerpts plus brochure image URLs for Review OCR hover proof.
+
 ### File: `functions/_dashboard-actions.js`
 *Protected dashboard write workflows.*
 - `handleLogOutreach(db, auth, data)`: Records manually confirmed WhatsApp outreach and an audit event.
 - `handleSuggestEdit(db, auth, data)`: Stores guided field changes as structured diffs in `listing_edit_suggestions`. Admin or active trusted staff suggestions apply immediately; normal staff suggestions stay pending.
-- `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs write field-by-field to whitelisted `franchises` columns, write audit events, and queue a static rebuild through `siteRebuildStatements()`.
+- `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs optionally filter to `data.approved_fields`, write selected fields to whitelisted `franchises` columns, record skipped fields in review notes/audit metadata, and queue a static rebuild through `siteRebuildStatements()`.
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.
 - `handleReviewPremiumPayment(db, auth, data)`: Admin-only approve/reject. Approval marks the order paid, creates or renews a one-year `franchise_subscriptions` row, sets the listing premium, creates missing publication rows for included network sites, publishes those rows, writes audit/events/notifications, queues owner email notifications, and queues rebuilds for each affected site.
 - `handleUpdateListingLocations(db, auth, data)`: Admin-only structured location update for one listing. Replaces owner/admin-managed `franchise_locations` rows through `functions/_location-writes.js`, writes an audit event, and queues a static rebuild.

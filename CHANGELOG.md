@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-13 10:34 (Asia/Jakarta)
+### Added
+- `functions/_dashboard-review-evidence.js`: Added a focused helper that enriches pending proposal/OCR review suggestions with sanitized source excerpts and brochure image URLs from `franchise_asset_knowledge` when the suggestion row lacks embedded evidence.
+- `.context/session-20260713-1034.md`: Added this session continuity snapshot for Review OCR proof hover and granular approval.
+
+### Changed
+- `functions/_dashboard-schemas.js` and `functions/_dashboard-actions.js`: Added optional `approved_fields` support for granular edit suggestion approval; approved reviews apply only selected fields and record skipped fields in notes/audit/rebuild metadata.
+- `functions/_dashboard-queries.js`: Delegates document-derived review proof attachment to the new evidence helper before returning pending edit suggestions.
+- `js/dashboard-review.js` and `css/dashboard-review.css`: Added admin per-field approval checkboxes, changed evidence action copy to `Bukti dokumen`, and kept document proof hover previews on the shared OCR image-preview component.
+- `scripts/check-dashboard-ocr-client.mjs` and `scripts/check-ocr-job-runner.ts`: Added regression coverage for per-field approval and document proof UI/schema fragments.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, and `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: Documented granular approval, read-time document evidence attachment, and updated long-file follow-up notes.
+
 ## 2026-07-12 21:32 (Asia/Jakarta)
 ### Added
 - `.context/session-20260712-2132.md`: Added this session continuity snapshot for OCR/manual review separation and review value formatting.

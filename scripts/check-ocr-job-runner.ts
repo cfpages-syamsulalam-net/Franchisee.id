@@ -9,6 +9,8 @@ import { getOcrWorkerUsage } from "../functions/_ocr-quota-policy.js";
 import { normalizeOcrText } from "../functions/_ocr-provider-adapters.js";
 // @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
 import { getOcrEnrichmentQueue } from "../functions/_ocr-enrichment-review.js";
+// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+import { attachDocumentSuggestionEvidence } from "../functions/_dashboard-review-evidence.js";
 
 async function main() {
   const enqueue = DashboardActionSchema.safeParse({
@@ -75,6 +77,14 @@ async function main() {
     franchise_id: "franchise_example",
   });
   assert.equal(enrichmentBundle.success, true);
+
+  const granularApproval = DashboardActionSchema.safeParse({
+    action: "review_edit_suggestion",
+    suggestion_id: "suggestion_example",
+    decision: "approve",
+    approved_fields: ["support_system", "royalty_percent"],
+  });
+  assert.equal(granularApproval.success, true);
 
   const tooWideRun = DashboardActionSchema.safeParse({
     action: "run_ocr_jobs",
@@ -168,6 +178,41 @@ async function main() {
   assert.equal(enrichment.items[0].suggested_value.min_area_sqm, 15);
   assert.equal(enrichment.items[0].suggested_value.outlet_type, "Ruko, Booth");
   assert.equal(enrichment.items[0].sources_by_field.min_area_sqm.sources[0].asset_id, "asset_1");
+
+  const evidenceDb = {
+    prepare() {
+      return {
+        bind() {
+          return this;
+        },
+        async all() {
+          return {
+            results: [
+              {
+                franchise_id: "franchise_1",
+                asset_id: "asset_1",
+                structured_data: JSON.stringify({ fee_license_idr: 119000000 }),
+                source_text_preview: "Biaya lisensi Rp 119.000.000 sudah termasuk training.",
+                display_order: 3,
+                source_url: "https://assets.franchisee.id/sample/page-3.jpg",
+              },
+            ],
+          };
+        },
+      };
+    },
+  };
+  const rowsWithEvidence = await attachDocumentSuggestionEvidence(evidenceDb, [
+    {
+      id: "suggestion_1",
+      franchise_id: "franchise_1",
+      field_name: "proposal_extraction",
+      old_value: {},
+      suggested_value: { fee_license_idr: 119000000 },
+    },
+  ]);
+  assert.equal(rowsWithEvidence[0].old_value.__ocr_evidence.fee_license_idr.sources[0].page_number, 3);
+  assert.match(rowsWithEvidence[0].old_value.__ocr_evidence.fee_license_idr.sources[0].excerpt, /119\.000\.000/);
 
   assert.equal(normalizeOcrText("A  \r\n\r\n\r\n B\t\tC"), "A\n\n B C");
 
