@@ -72,7 +72,7 @@ export function renderDetailTabsShell(tabEntries: DetailTabEntry[]) {
 function generateInvestmentTab(row: D1FranchiseRow, minimumModal: string) {
   const items = [
     ["fa-coins", "Modal Minimal", minimumModal],
-    ["fa-file-invoice-dollar", "Franchise Fee", formatRupiah(row.fee_license_idr)],
+    ["fa-file-invoice-dollar", "Biaya Lisensi / Kemitraan", formatRupiah(row.fee_license_idr)],
     row.fee_capex_idr ? ["fa-boxes-stacked", "Paket Peralatan", formatRupiah(row.fee_capex_idr)] : null,
     row.fee_construction_idr ? ["fa-hammer", "Renovasi / Booth", formatRupiah(row.fee_construction_idr)] : null,
     row.working_capital_idr ? ["fa-wallet", "Modal Kerja Awal", formatRupiah(row.working_capital_idr)] : null,

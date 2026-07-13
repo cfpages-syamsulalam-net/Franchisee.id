@@ -1,6 +1,6 @@
 # OCR Listing Enrichment Plan
 
-Last updated: 2026-07-13 10:34 (Asia/Jakarta)
+Last updated: 2026-07-13 15:09 (Asia/Jakarta)
 
 ## Why this exists
 
@@ -90,7 +90,8 @@ Suggested content:
 - Package cards: package name, price/range, duration, included items, excluded costs.
 - “Yang termasuk” and “Belum termasuk” lists.
 - Notes such as rent, renovation, shipping, trainer travel, monthly system/POS fees.
-- Existing canonical listing fields: `fee_license_idr`, `fee_capex_idr`, `fee_construction_idr`, `total_investment_idr`, `min_investment_idr`, `max_investment_idr`, `contract_duration_months`.
+- Existing canonical listing fields: `fee_license_idr` (`Biaya lisensi / kemitraan`, including franchise fee, license fee, biaya kemitraan, or investasi kemitraan wording), `fee_capex_idr`, `fee_construction_idr`, `total_investment_idr`, `min_investment_idr`, `max_investment_idr`, `contract_duration_months`.
+- `total_investment_idr` must remain conservative. Do not infer it from a single `biaya kemitraan` / license-fee row; extract it only from explicit total/nilai investasi wording or from a future reviewed calculation model that can show all included components.
 
 ### 2. Proyeksi Usaha
 
@@ -244,10 +245,10 @@ OCR/AI should propose updates for these existing fields through the existing rev
 - `location_requirement`
 - `rent_cost_text`
 - `contract_duration_months`
-- `fee_license_idr`
+- `fee_license_idr` for biaya lisensi / kemitraan / franchise fee / license fee wording.
 - `fee_capex_idr`
 - `fee_construction_idr`
-- `total_investment_idr`
+- `total_investment_idr` only when the document explicitly says total/nilai investasi or a future reviewed calculation model can prove the included cost components.
 - `min_investment_idr`
 - `max_investment_idr`
 - `estimated_bep_months`

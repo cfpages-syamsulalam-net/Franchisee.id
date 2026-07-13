@@ -107,15 +107,16 @@ export function extractProposalCandidatesFromText(text) {
   if (setup) candidates.setup_duration_days = durationToDays(setup[1], setup[2]);
 
   addMoneyRangeCandidate(candidates, "min_investment_idr", "max_investment_idr", normalizedText, [
-    /\b(?:total\s+)?(?:investasi|modal\s+(?:usaha|awal)?|biaya\s+kemitraan|paket\s+(?:usaha|kemitraan|investasi)?)\s*[:\-]?\s*(?:mulai\s+dari|start(?:ing)?\s+from)?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?\s*(?:-|–|s\/d|sd|sampai|hingga|to)\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
+    /\b(?:total\s+)?(?:investasi|modal\s+(?:usaha|awal)?|paket\s+(?:usaha|investasi)?)\s*[:\-]?\s*(?:mulai\s+dari|start(?:ing)?\s+from)?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?\s*(?:-|–|s\/d|sd|sampai|hingga|to)\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
   ]);
   addMoneyCandidate(candidates, "total_investment_idr", normalizedText, [
-    /\b(?:total|paket|nilai)\s+investasi\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
-    /\b(?:investasi|modal\s+(?:usaha|awal)?|biaya\s+kemitraan|paket\s+(?:usaha|kemitraan)?)\s*[:\-]?\s*(?:mulai\s+dari|start(?:ing)?\s+from)?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
+    /\b(?:total\s+(?:biaya\s+)?investasi|(?:perkiraan\s+)?biaya\s+investasi\s+total|nilai\s+investasi)\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
   ]);
   addMoneyCandidate(candidates, "fee_license_idr", normalizedText, [
     /\b(?:franchise|lisensi|license|kemitraan)\s+fee\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
     /\b(?:biaya|fee)\s+(?:franchise|lisensi|license|kemitraan)\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
+    /\b(?:investasi|paket|modal)\s+kemitraan\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
+    /\b(?:joining|initial)\s+fee\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,
   ]);
   addMoneyCandidate(candidates, "fee_capex_idr", normalizedText, [
     /\b(?:biaya|modal)\s+(?:peralatan|equipment|alat|perlengkapan)\s*[:\-]?\s*(?:rp\.?\s*)?([\d.,]+)\s*(juta|jt|miliar|milyar|m)?/i,

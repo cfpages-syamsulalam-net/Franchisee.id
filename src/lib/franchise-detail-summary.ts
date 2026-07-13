@@ -43,7 +43,7 @@ export function generateDetailInfoPanel(row: D1FranchiseRow, logoUrl: string, ca
       tooltip:
         "Kelompok usaha brand ini. Klik untuk melihat peluang franchise lain di kategori yang sama.",
     }),
-    detailInfoItem("fa-file-invoice-dollar", "Franchise Fee", formatRupiah(row.fee_license_idr)),
+    detailInfoItem("fa-file-invoice-dollar", "Biaya Lisensi / Kemitraan", formatRupiah(row.fee_license_idr)),
     detailInfoItem("fa-building", "Nama Perusahaan", normalizeCompanyName(row.company_name) || "Hubungi Admin"),
     detailInfoItem("fa-percent", "Biaya Royalti", formatRoyalty(row)),
     detailInfoItem("fa-calendar-alt", "Berdiri Sejak", row.year_established ? String(row.year_established) : "-"),
@@ -113,7 +113,7 @@ function infoTooltip(label: string) {
     "Nama Franchise": "Nama brand atau peluang usaha yang ditawarkan.",
     "Modal Minimal": "Perkiraan dana awal paling rendah untuk mulai menjadi mitra. Angka ini bisa mencakup paket, peralatan, bahan awal, atau kebutuhan outlet tergantung brand.",
     "Kategori Franchise": "Jenis usaha brand, misalnya makanan, minuman, pendidikan, laundry, atau jasa. Kategori membantu Anda membandingkan brand sejenis.",
-    "Franchise Fee": "Biaya lisensi awal untuk memakai merek, sistem, panduan operasional, dan hak kemitraan dari franchisor.",
+    "Biaya Lisensi / Kemitraan": "Biaya awal untuk memakai merek, sistem, panduan operasional, atau hak kemitraan dari franchisor. Sebagian brand menyebutnya franchise fee, biaya lisensi, atau biaya kemitraan.",
     "Nama Perusahaan": "Badan usaha atau pengelola resmi di balik brand.",
     "Biaya Royalti": "Biaya berkala yang biasanya dibayar mitra kepada franchisor. Bisa berupa persentase omzet, persentase profit, nominal tetap, atau tidak ada royalti.",
     "Berdiri Sejak": "Tahun brand mulai beroperasi. Brand yang lebih lama biasanya punya pengalaman operasional lebih banyak, tetapi tetap perlu dicek kualitas sistemnya.",
