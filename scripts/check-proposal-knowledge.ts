@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { extractProposalCandidatesFromText, sanitizeProposalSourceText } from "../functions/_proposal-knowledge.js";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { sourceEvidence } from "../functions/_proposal-evidence.js";
 
 const candidates = extractProposalCandidatesFromText(`

@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-13 17:43 (Asia/Jakarta)
+Last updated: 2026-07-13 18:42 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -661,6 +661,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Focused dashboard OCR browser-module regression check.*
 - `pnpm run dashboard:ocr:check`: Runs `node --check` on the browser/non-module OCR client modules plus the shared dashboard utility/review modules touched by OCR Review, and asserts provider/state/worker renderer modules, provider toggle, retry actions, job filter/pagination, grouped OCR enrichment queue/review-subtab wiring, shared pill action helpers, hover image-preview wiring, and no-active-provider disabled-state wiring remain present.
 
+*Astro template/type validation.*
+- `pnpm run astro:check`: Runs `astro check` through `@astrojs/check` so Astro templates and TypeScript diagnostics are validated without relying on an interactive install prompt.
+
 ### File: `js/product-events.js`
 *Public privacy-safe listing interaction tracker.*
 - Records detail page views and contact clicks through `/product-event`.
@@ -727,15 +730,30 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Quick links include modal, category, and city discovery pages.
 
 ### File: `src/pages/dashboard/index.astro`
-*Static protected admin/staff dashboard shell.*
+*Static protected admin/staff dashboard route assembler.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads dashboard base/auth/OCR styles plus auth/tooltips/utilities, Premium, Review, Operations, OCR, and controller client modules; shows a skeleton while the session is checked and marks the login-only staff/admin auth root with `data-auth-defer="true"` so it is only mounted when no Clerk session exists or the session must be renewed.
-- Renders the branded dashboard shell, separates direct listing edits from full-width pending edit review tables, and renders an OCR tab with guide-card navigation for Pengaturan/Eksekusi Job/Hasil OCR/Review OCR, provider selector, provider-specific password credential fields, read-only quota/free-limit metadata, priority-list enablement, icon-led grouped job rows, retry controls, dedicated OCR review table, and explicit credential clear controls. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` and loads the split OCR browser modules before the coordinator facade. Runtime authorization remains server-side.
+- Renders the branded route shell, metrics, Outreach and Data Quality tabs inline, then delegates Review, Operations, and OCR tab markup to focused Astro components. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` and loads the split OCR browser modules before the coordinator facade. Runtime authorization remains server-side.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
 - Security note: the static page is not the authorization boundary; `/dashboard-data` performs the server-side D1 role check.
+
+### File: `src/components/dashboard/DashboardReviewPanel.astro`
+*Static dashboard Review tab component.*
+- Owns Review panel HTML for direct listing edits, Pending Edit Review, claim review, and admin Area Listing controls.
+- Preserves the existing `data-*` hooks consumed by `js/dashboard-review.js`; runtime permissions and mutations remain in `/dashboard-data`.
+
+### File: `src/components/dashboard/DashboardOperationsPanel.astro`
+*Static dashboard Operations tab component.*
+- Owns Operations panel HTML for publish queue, network publications, leads, Premium Operations, system health, traffic guardrail, and staff edit policy.
+- Preserves the containers rendered by `js/dashboard-operations.js` and `js/dashboard-premium-operations.js`.
+
+### File: `src/components/dashboard/DashboardOcrPanel.astro`
+*Static dashboard OCR tab component.*
+- Owns OCR panel HTML for Pengaturan, Eksekusi Job, Hasil OCR, and Review OCR guide-card sections.
+- Preserves the existing OCR provider, scheduler, job, result, enrichment queue, and Review OCR `data-*` hooks consumed by the split OCR browser modules.
 
 ### File: `src/pages/sso-callback/index.astro`
 *Hidden Clerk OAuth callback route.*

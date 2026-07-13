@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { z } from "zod";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { extractProposalCandidatesFromText, sanitizeProposalSourceText } from "../functions/_proposal-knowledge.js";
 
 const ROOT_DIR = resolve(__dirname, "..");

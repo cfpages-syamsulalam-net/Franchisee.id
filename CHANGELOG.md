@@ -4,6 +4,21 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-13 18:42 (Asia/Jakarta)
+### Added
+- `src/components/dashboard/DashboardReviewPanel.astro`: Added focused static markup component for the dashboard Review tab.
+- `src/components/dashboard/DashboardOperationsPanel.astro`: Added focused static markup component for the dashboard Operations/Premium tab.
+- `src/components/dashboard/DashboardOcrPanel.astro`: Added focused static markup component for the dashboard OCR tab.
+- `@astrojs/check`: Added Astro template checking as a dev dependency.
+- `.context/session-20260713-1842.md`: Added this session continuity snapshot for the dashboard Astro component refactor.
+
+### Changed
+- `src/pages/dashboard/index.astro`: Reduced the route to a shell/assembler that preserves metadata, tabs, CSS load order, script order, and OCR metadata injection while delegating large panel markup to components.
+- `scripts/check-dashboard-ocr-client.mjs`: Expanded OCR dashboard regression assertions to read the extracted dashboard components.
+- `scripts/check-ocr-job-runner.ts`, `scripts/check-ocr-provider-config.ts`, `scripts/check-proposal-download.ts`, `scripts/check-proposal-knowledge.ts`, and `scripts/enrich-ocr-structured-data.ts`: Removed stale TypeScript diagnostics surfaced by `astro check` without changing runtime contracts.
+- `package.json` and `pnpm-lock.yaml`: Added `astro:check` for repeatable Astro template validation.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, and `SUGGESTION.md`: Documented the new dashboard component boundary and marked the dashboard-shell refactor complete.
+
 ## 2026-07-13 17:43 (Asia/Jakarta)
 ### Added
 - `functions/_google-contacts.js`: Added protected Google Contacts bulk-save support for dashboard outreach using Clerk-linked Google OAuth tokens, Google People API duplicate search, and batch contact creation.

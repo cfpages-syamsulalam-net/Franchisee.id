@@ -14,6 +14,7 @@
     "astro:sync": "pnpm run build:d1:franchises",
     "build": "pnpm run build:astro",
     "build:astro": "pnpm run astro:sync && astro build && pnpm run copy:legacy-static",
+    "astro:check": "astro check",
     "copy:legacy-static": "node scripts/copy-legacy-static.mjs",
     "publish:d1:poll": "node scripts/d1-static-publish-poller.mjs",
     "migrate:proposal-r2": "node scripts/migrate-blogspot-proposals-to-r2.mjs",
@@ -52,6 +53,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
     "@astrojs/cloudflare": "^12.6.13",
     "@types/node": "^20.19.25",
     "astro": "^5.18.2",

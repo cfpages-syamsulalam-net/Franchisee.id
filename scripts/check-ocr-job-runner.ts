@@ -1,16 +1,28 @@
 import assert from "node:assert/strict";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { DashboardActionSchema } from "../functions/_dashboard-schemas.js";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { getOcrJobState } from "../functions/_ocr-job-runner.js";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { getOcrWorkerUsage } from "../functions/_ocr-quota-policy.js";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { normalizeOcrText } from "../functions/_ocr-provider-adapters.js";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { getOcrEnrichmentQueue } from "../functions/_ocr-enrichment-review.js";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { attachDocumentSuggestionEvidence } from "../functions/_dashboard-review-evidence.js";
+
+type OcrEnrichmentItem = {
+  suggested_value: {
+    min_area_sqm?: number;
+    outlet_type?: string;
+  };
+  sources_by_field: {
+    min_area_sqm?: {
+      sources: Array<{ asset_id: string }>;
+    };
+  };
+};
 
 async function main() {
   const enqueue = DashboardActionSchema.safeParse({
@@ -173,11 +185,12 @@ async function main() {
     },
   };
   const enrichment = await getOcrEnrichmentQueue(enrichmentDb);
+  const enrichmentItem = enrichment.items[0] as OcrEnrichmentItem;
   assert.equal(enrichment.total, 1);
   assert.equal(enrichment.items[0].field_count, 4);
-  assert.equal(enrichment.items[0].suggested_value.min_area_sqm, 15);
-  assert.equal(enrichment.items[0].suggested_value.outlet_type, "Ruko, Booth");
-  assert.equal(enrichment.items[0].sources_by_field.min_area_sqm.sources[0].asset_id, "asset_1");
+  assert.equal(enrichmentItem.suggested_value.min_area_sqm, 15);
+  assert.equal(enrichmentItem.suggested_value.outlet_type, "Ruko, Booth");
+  assert.equal(enrichmentItem.sources_by_field.min_area_sqm?.sources[0].asset_id, "asset_1");
 
   const evidenceDb = {
     prepare() {

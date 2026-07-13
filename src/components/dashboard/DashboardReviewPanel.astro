@@ -1,0 +1,115 @@
+<section class="dash-tab-panel" id="dash-panel-review" role="tabpanel" aria-labelledby="dash-tab-review" data-dashboard-panel="review" hidden>
+  <div class="dash-panel-grid two">
+    <section class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-edit dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2 data-edit-panel-title>Listing Edit Suggestions</h2>
+            <p data-edit-panel-copy>Staff menyiapkan perubahan; admin menyetujui sebelum tampil.</p>
+          </div>
+        </div>
+      </div>
+      <form class="dash-form" data-edit-form>
+        <label>
+          Listing
+          <select data-listing-select name="franchise_id" required>
+            <option value="">Memuat listing...</option>
+          </select>
+        </label>
+        <label>
+          Reason
+          <input type="text" data-edit-reason name="reason" maxlength="1200" placeholder="Contoh: nomor kontak publik salah">
+        </label>
+        <div class="dash-form-wide dash-field-editor">
+          <div class="dash-field-editor-head">
+            <div>
+              <strong>Perubahan field</strong>
+              <span>Pilih field, isi nilai baru, lalu kirim sesuai akses akun.</span>
+            </div>
+            <button class="dash-icon-button dash-action-button" type="button" data-add-edit-field aria-label="Tambah field" data-fr-tooltip="Tambah field">
+              <i class="fas fa-plus" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="dash-field-list" data-edit-field-list></div>
+        </div>
+        <div class="dash-form-wide dash-actions dash-toolbar" role="toolbar" aria-label="Aksi edit suggestion">
+          <button class="dash-icon-button dash-action-button is-primary" type="submit" data-edit-submit aria-label="Kirim saran edit" data-fr-tooltip="Kirim saran edit">
+            <i class="fas fa-paper-plane" aria-hidden="true"></i>
+          </button>
+          <span class="dash-muted" data-edit-help>Perubahan akan masuk review admin kecuali akun ini punya izin approve langsung.</span>
+        </div>
+      </form>
+    </section>
+
+    <section class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-shield-alt dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2>Claim Review</h2>
+            <p>Admin menyetujui claim; staff hanya membantu review.</p>
+          </div>
+        </div>
+      </div>
+      <ul class="dash-list" data-claim-rows>
+        <li><span>Memuat claim pending...</span></li>
+      </ul>
+      <div class="dash-location-editor" data-location-editor>
+        <div class="dash-field-editor-head">
+          <div>
+            <strong>Area Listing</strong>
+            <span>Admin bisa memperbaiki kota tampil untuk halaman kota.</span>
+          </div>
+        </div>
+        <form class="dash-form dash-location-form" data-location-form>
+          <label class="dash-form-wide">
+            Listing
+            <select data-location-listing-select name="franchise_id">
+              <option value="">Pilih listing...</option>
+            </select>
+          </label>
+          <label class="dash-form-wide">
+            Kota dan area
+            <textarea data-location-text name="locations_text" rows="6" placeholder="Jakarta | area | DKI Jakarta&#10;Bandung | outlet | Jawa Barat"></textarea>
+          </label>
+          <p class="dash-muted dash-form-wide" data-location-help>Gunakan format: kota | jenis | provinsi. Jenis: area, outlet, kantor, asal.</p>
+          <div class="dash-form-wide dash-actions dash-toolbar" role="toolbar" aria-label="Aksi area listing">
+            <button class="dash-icon-button dash-action-button is-primary" type="submit" data-location-submit aria-label="Simpan area listing" data-fr-tooltip="Simpan area listing">
+              <i class="fas fa-map-location-dot" aria-hidden="true"></i>
+            </button>
+            <span class="dash-muted" data-location-current>Belum ada listing dipilih.</span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="dash-panel dash-panel-wide">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-clipboard-list dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2>Pending Edit Review</h2>
+            <p>Review perubahan listing umum sebelum diterapkan.</p>
+          </div>
+        </div>
+        <span class="dash-badge" data-edit-count>-</span>
+      </div>
+      <div class="dash-table-wrap dash-review-table-wrap">
+        <table class="dash-table dash-review-table">
+          <thead>
+            <tr>
+              <th>Brand</th>
+              <th>Diff</th>
+              <th>Reason</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody data-edit-rows>
+            <tr><td colspan="4" class="dash-loading">Memuat edit suggestions...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</section>

@@ -1,0 +1,288 @@
+<section class="dash-tab-panel" id="dash-panel-operations" role="tabpanel" aria-labelledby="dash-tab-operations" data-dashboard-panel="operations" hidden>
+  <div class="dash-panel-grid two">
+    <section class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-sync-alt dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2>Publish Queue</h2>
+            <p>Status pembaruan halaman franchisee.id.</p>
+          </div>
+        </div>
+      </div>
+      <ul class="dash-list" data-publish-state>
+        <li><span>Memuat publish state...</span></li>
+      </ul>
+    </section>
+
+    <section class="dash-panel dash-panel-wide">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-network-wired dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2>Publikasi Network</h2>
+            <p>Atur tampil/sembunyi listing di situs yang tersedia.</p>
+          </div>
+        </div>
+      </div>
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>Listing</th>
+              <th>Status per situs</th>
+            </tr>
+          </thead>
+          <tbody data-publication-rows>
+            <tr><td colspan="2" class="dash-empty">Memuat publikasi...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-users dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2>Leads</h2>
+            <p>Ringkasan inquiry dari Franchisee.id.</p>
+          </div>
+        </div>
+      </div>
+      <ul class="dash-list" data-lead-summary>
+        <li><span>Memuat leads...</span></li>
+      </ul>
+    </section>
+
+    <section class="dash-panel dash-panel-wide">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-chart-line dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2>Premium Operations</h2>
+            <p>Funnel, metode pembayaran, dan info Premium terbaru.</p>
+          </div>
+        </div>
+      </div>
+      <div class="dash-premium-ops">
+        <ul class="dash-list dash-premium-funnel" data-premium-funnel>
+          <li><span>Memuat funnel Premium...</span></li>
+        </ul>
+        <form class="dash-payment-form" data-payment-method-form>
+          <input type="hidden" name="code" value="manual_bca" />
+          <input type="hidden" name="qris_image_url" />
+          <label>
+            <span>Label</span>
+            <input name="label" type="text" placeholder="Transfer BCA" />
+          </label>
+          <label>
+            <span>Tipe</span>
+            <select name="method_type">
+              <option value="bank_transfer">Bank transfer</option>
+              <option value="qris">Bank + QRIS</option>
+              <option value="ewallet">E-wallet</option>
+              <option value="other">Lainnya</option>
+            </select>
+          </label>
+          <label>
+            <span>Bank/provider</span>
+            <input name="provider" type="text" placeholder="BCA" />
+          </label>
+          <label>
+            <span>Atas nama</span>
+            <input name="account_name" type="text" placeholder="Nama rekening" />
+          </label>
+          <label>
+            <span>Nomor</span>
+            <input name="account_number" type="text" placeholder="Nomor rekening" />
+          </label>
+          <label>
+            <span>Upload QRIS</span>
+            <input name="qris_image" type="file" accept="image/jpeg,image/png,image/webp" />
+          </label>
+          <label>
+            <span>Label QRIS</span>
+            <input name="qris_image_alt" type="text" placeholder="QRIS pembayaran Premium" />
+          </label>
+          <div class="dash-payment-qris-preview is-wide" data-qris-preview hidden></div>
+          <label class="is-wide">
+            <span>Instruksi</span>
+            <textarea name="instructions" rows="2" placeholder="Instruksi singkat untuk pembayar"></textarea>
+          </label>
+          <button class="dash-icon-button dash-action-button is-primary" type="submit" aria-label="Simpan metode pembayaran" data-fr-tooltip="Simpan metode pembayaran">
+            <i class="fas fa-save" aria-hidden="true"></i>
+          </button>
+        </form>
+        <form class="dash-payment-form" data-premium-settings-form>
+          <label>
+            <span>Masa tenggang</span>
+            <input name="grace_period_days" type="number" min="0" max="30" step="1" placeholder="3" />
+          </label>
+          <label>
+            <span>Email harian</span>
+            <select name="grace_daily_email_enabled">
+              <option value="1">Aktif</option>
+              <option value="0">Nonaktif</option>
+            </select>
+          </label>
+          <label>
+            <span>Laporan tahunan</span>
+            <select name="annual_report_enabled">
+              <option value="1">Aktif</option>
+              <option value="0">Nonaktif</option>
+            </select>
+          </label>
+          <label>
+            <span>Diskon multi-brand</span>
+            <select name="multi_brand_discount_enabled">
+              <option value="0">Nonaktif</option>
+              <option value="1">Aktif</option>
+            </select>
+          </label>
+          <label>
+            <span>Diskon %</span>
+            <input name="multi_brand_discount_percent" type="number" min="0" max="90" step="1" placeholder="0" />
+          </label>
+          <label>
+            <span>Minimal brand</span>
+            <input name="multi_brand_min_owned_brands" type="number" min="2" max="50" step="1" placeholder="2" />
+          </label>
+          <label>
+            <span>Promo ribbon</span>
+            <select name="promo_enabled">
+              <option value="0">Nonaktif</option>
+              <option value="1">Aktif</option>
+            </select>
+          </label>
+          <label>
+            <span>Diskon event %</span>
+            <input name="promo_discount_percent" type="number" min="0" max="90" step="1" placeholder="0" />
+          </label>
+          <label>
+            <span>Nama event</span>
+            <input name="promo_label" type="text" placeholder="Promo Hari Kemerdekaan" />
+          </label>
+          <label>
+            <span>Bonus</span>
+            <input name="promo_bonus_text" type="text" placeholder="Contoh: profil artikel gratis" />
+          </label>
+          <label class="is-wide">
+            <span>Pesan ribbon</span>
+            <input name="promo_message" type="text" placeholder="Premium Network diskon spesial bulan ini." />
+          </label>
+          <label>
+            <span>CTA ribbon</span>
+            <input name="promo_cta_label" type="text" placeholder="Lihat Premium" />
+          </label>
+          <label>
+            <span>Link CTA</span>
+            <input name="promo_cta_url" type="text" placeholder="/premium/" />
+          </label>
+          <label>
+            <span>Mulai</span>
+            <input name="promo_starts_at" type="datetime-local" />
+          </label>
+          <label>
+            <span>Berakhir</span>
+            <input name="promo_ends_at" type="datetime-local" />
+          </label>
+          <label class="is-wide">
+            <span>Batas tampil per pengunjung per hari</span>
+            <input name="promo_max_views_per_user" type="number" min="0" max="30" step="1" placeholder="1" />
+            <small>1 = tampil sekali per hari selama periode promo. 0 = tanpa batas.</small>
+          </label>
+          <button class="dash-icon-button dash-action-button is-primary" type="submit" aria-label="Simpan pengaturan Premium" data-fr-tooltip="Simpan pengaturan Premium">
+            <i class="fas fa-sliders-h" aria-hidden="true"></i>
+          </button>
+        </form>
+        <ul class="dash-list" data-premium-notifications>
+          <li><span>Memuat info Premium...</span></li>
+        </ul>
+        <ul class="dash-list" data-premium-reports>
+          <li><span>Memuat laporan Premium...</span></li>
+        </ul>
+        <ul class="dash-list" data-premium-expiring>
+          <li><span>Memuat renewal Premium...</span></li>
+        </ul>
+        <ul class="dash-list" data-premium-email-queue>
+          <li><span>Memuat antrean email...</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="dash-panel dash-panel-wide">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-crown dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2>Premium Payments</h2>
+            <p>Konfirmasi transfer Premium yang perlu dicek.</p>
+          </div>
+        </div>
+      </div>
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>Brand</th>
+              <th>Transfer</th>
+              <th>Pendaftar</th>
+              <th>Kesiapan</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody data-premium-payment-rows>
+            <tr><td colspan="5" class="dash-empty">Memuat konfirmasi Premium...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-heartbeat dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2>System Health</h2>
+            <p>Koneksi akun, data, dan publikasi.</p>
+          </div>
+        </div>
+      </div>
+      <ul class="dash-list" data-system-health>
+        <li><span>Memuat health check...</span></li>
+      </ul>
+    </section>
+
+    <section class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-gauge-high dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2>Traffic Guardrail</h2>
+            <p>Limit Function harian dan throttle publik yang aktif.</p>
+          </div>
+        </div>
+      </div>
+      <ul class="dash-list" data-traffic-guardrails>
+        <li><span>Memuat traffic guardrail...</span></li>
+      </ul>
+    </section>
+
+    <section class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <i class="fas fa-clipboard-list dash-section-icon" aria-hidden="true"></i>
+          <div>
+            <h2>Staff Edit Policy</h2>
+            <p>Default: staff menyarankan edit, admin approve.</p>
+          </div>
+        </div>
+      </div>
+      <ul class="dash-list" data-edit-policy>
+        <li><strong>Auto approve</strong><span>Hanya berlaku jika admin membuat rule aktif untuk staff tertentu.</span></li>
+        <li><strong>Area kerja</strong><span>Dashboard ini hanya untuk franchisee.id.</span></li>
+      </ul>
+    </section>
+  </div>
+</section>

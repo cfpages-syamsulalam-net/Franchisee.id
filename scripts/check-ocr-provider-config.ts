@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { DashboardActionSchema } from "../functions/_dashboard-schemas.js";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { getOcrProviderConfigs, handleUpdateOcrProviderConfig } from "../functions/_ocr-provider-config.js";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { credentialAad, credentialLooksEncrypted, decryptCredentialValue, encryptCredentialValue } from "../functions/_ocr-credential-crypto.js";
-// @ts-expect-error Shared browser/Functions metadata is a JavaScript module.
+// @ts-ignore Shared browser/Functions metadata is a JavaScript module.
 import { OCR_PROVIDER_METADATA, getOcrProviderRequirementError } from "../src/lib/ocr-provider-metadata.js";
 
 const secretKey = "ocr-secret-key-value";

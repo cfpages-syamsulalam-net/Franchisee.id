@@ -23,6 +23,9 @@ for (const file of files) {
 
 const assertionSources = files.concat([
   "src/pages/dashboard/index.astro",
+  "src/components/dashboard/DashboardOcrPanel.astro",
+  "src/components/dashboard/DashboardOperationsPanel.astro",
+  "src/components/dashboard/DashboardReviewPanel.astro",
   "css/dashboard.css",
   "css/dashboard-review.css",
   "css/dashboard-ocr-settings.css",

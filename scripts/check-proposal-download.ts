@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-// @ts-expect-error Pages Functions are JavaScript modules without generated declarations.
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { buildPdfFromJpegs } from "../functions/_proposal-pdf.js";
 import { sanitizeLegacyWordPressRuntime } from "../src/lib/franchise-text";
 
