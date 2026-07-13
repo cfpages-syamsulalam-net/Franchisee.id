@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-13 16:25 (Asia/Jakarta)
+Last updated: 2026-07-13 17:43 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -334,7 +334,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *General Operations client module for `/dashboard`.*
 - `window.FranchiseDashboardOperations.createOperations(options)`: Creates the outreach, publish, Premium payment review, publication-control, lead, health, and traffic-guardrail renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`.
 - `render(data)`: Fans dashboard API data into outreach, Premium payment review, publish queue, publication controls, leads, health, and traffic guardrail panels.
-- `renderOutreach()` / `logOutreach()`: Renders staff-personal WhatsApp outreach rows and records manually confirmed outreach through `/dashboard-data`.
+- `renderOutreach()` / `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Renders staff-personal WhatsApp outreach rows, injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, and records manually confirmed outreach through `/dashboard-data`.
 - `renderPremiumPayments()` / `reviewPremiumPayment()`: Renders icon-only admin approval/rejection controls for pending Premium confirmations.
 - `renderPublicationControls()` / `updatePublicationStatus()`: Renders network publication controls and posts admin status changes.
 - `renderLeads()` / `renderHealth()` / `renderTrafficGuardrails()`: Renders lead rows, system health summaries, and Cloudflare Free-plan limit/throttle visibility.
@@ -980,13 +980,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
 - `onRequestGet()`: Requires Clerk auth plus D1 `staff` through `requireD1UserFast()` for already-synced users; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch/enrichment-review state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
-- `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows to `_dashboard-actions.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, OCR retry/no-text job actions to `_ocr-job-actions.js`, OCR batch start/retry actions to `_ocr-batch-runs.js`, OCR enrichment bundle creation to `_ocr-enrichment-review.js`, and OCR dry-run/enqueue/run/search actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
+- `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows to `_dashboard-actions.js`, bulk outreach contact save to `_google-contacts.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, OCR retry/no-text job actions to `_ocr-job-actions.js`, OCR batch start/retry actions to `_ocr-batch-runs.js`, OCR enrichment bundle creation to `_ocr-enrichment-review.js`, and OCR dry-run/enqueue/run/search actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
 - `_ocr-batch-runs.js` owns persisted batch creation/progress/retry; `_ocr-job-actions.js` owns dashboard retry/no-text mutations; `_ocr-enrichment-review.js` owns grouped per-franchise OCR review bundles; `_ocr-job-runner.js` stays focused on job processing and OCR provider execution.
 - `requireDashboardAccess(request, env, options)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs. `options.fast` is used only for GET refreshes and falls back to full sync when needed.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
+- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions, `save_outreach_google_contacts`, plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
 - `ReviewEditSuggestionSchema`: Accepts optional `approved_fields` from shared editable field names for granular field-level approval.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
@@ -1093,6 +1093,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/_proposal-evidence.js`
 *Shared proposal/OCR evidence basis helper.*
 - `sourceEvidence(field, text, value)`: Sanitizes proposal/OCR text and returns `{ excerpt, basis }`. Field-aware basis matching prevents weak numeric evidence, such as a standalone `8` in unrelated projection text, from looking like proof for `min_staff_count`.
+
+### File: `functions/_google-contacts.js`
+*Google Contacts helper for dashboard outreach.*
+- `handleSaveOutreachGoogleContacts(db, auth, data, env)`: Staff/admin dashboard action that rebuilds the current unclaimed outreach queue server-side, selects up to 200 ready WhatsApp contacts, retrieves the staff member's linked Google OAuth token through Clerk, checks existing Google Contacts through People API `searchContacts`, calls `people:batchCreateContacts` only for non-duplicates, records an audit event, and returns setup-required errors when Google Contacts scope/token/People API access is missing.
+- `outreachRowToGoogleContact(row)` / `googleContactHasPhone(person, phone)` / `googleContactSearchUrl(query)` / `buildGoogleBatchCreatePayload(contacts)`: Pure helpers that format brand name, phone number, listing URL, organization, duplicate-check search URL, phone matching, and `readMask` into the Google People API flow covered by `pnpm run google-contacts:check`.
 
 ### File: `functions/_dashboard-actions.js`
 *Protected dashboard write workflows.*

@@ -25,6 +25,12 @@ const OutreachEventSchema = z.object({
   notes: z.string().trim().max(1000).optional().default(""),
 });
 
+const SaveOutreachGoogleContactsSchema = z.object({
+  action: z.literal("save_outreach_google_contacts"),
+  franchise_ids: z.array(z.string().trim().min(1)).max(200).optional().default([]),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(200),
+});
+
 const SuggestEditSchema = z.object({
   action: z.literal("suggest_edit"),
   franchise_id: z.string().trim().min(1),
@@ -119,6 +125,7 @@ const UpdatePremiumSettingsSchema = z.object({
 
 export const DashboardActionSchema = z.discriminatedUnion("action", [
   OutreachEventSchema,
+  SaveOutreachGoogleContactsSchema,
   SuggestEditSchema,
   ReviewEditSuggestionSchema,
   ReviewClaimSchema,

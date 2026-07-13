@@ -4,6 +4,20 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-13 17:43 (Asia/Jakarta)
+### Added
+- `functions/_google-contacts.js`: Added protected Google Contacts bulk-save support for dashboard outreach using Clerk-linked Google OAuth tokens, Google People API duplicate search, and batch contact creation.
+- `scripts/check-google-contacts.ts`: Added regression coverage for Google Contacts outreach payload generation.
+- `.context/session-20260713-1743.md`: Added this session continuity snapshot for outreach Google Contacts and public copy cleanup.
+
+### Changed
+- `functions/_dashboard-schemas.js` and `functions/dashboard-data.js`: Added and routed the `save_outreach_google_contacts` dashboard action.
+- `src/pages/dashboard/index.astro`, `js/dashboard-admin.js`, `js/dashboard-operations.js`, and `css/dashboard.css`: Added a shared-pill Outreach action for saving current outreach queue contacts to Google Contacts with busy/done/error status and duplicate-skip feedback.
+- `daftar/index.html`: Rewrote internal-sounding brand-origin helper copy into public-facing guidance without changing form fields or submit contracts.
+- `AGENTS.md`: Strengthened public-copy rules to explicitly ban internal implementation terms and require touched public surfaces to be scanned for developer-facing phrases.
+- `DASHBOARD.md`, `docs/architecture/CLERK_SETUP.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, and `SUGGESTION.md`: Documented Google Contacts outreach setup, runtime contracts, maintainability notes, and duplicate-contact prevention.
+- `package.json`: Added `google-contacts:check`.
+
 ## 2026-07-13 16:25 (Asia/Jakarta)
 ### Added
 - `functions/_proposal-evidence.js`: Added shared field-aware evidence extraction for proposal/OCR snippets, returning both excerpt and exact basis text for Review OCR highlighting.

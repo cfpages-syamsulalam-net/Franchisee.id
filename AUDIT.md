@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-13 16:25 (Asia/Jakarta)
+Last updated: 2026-07-13 17:43 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -27,6 +27,7 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 - Bank transaction matching is still manual; Premium activation is production-ready for manual review, but automatic payment matching needs a provider/API decision.
 - Legacy Google Sheets/CSV and WordPress-exported HTML remain in the transition layer. They should stay readable/importable but not regain write ownership.
 - Several blocked states are now CTA-backed, but every new public-facing error/empty/warning state should keep following the “clear next action” rule.
+- Dashboard outreach can now bulk-save unclaimed brand contacts into the staff member's linked Google Contacts before WhatsApp outreach, but production use depends on Google People API being enabled and Clerk's Google connection granting the Contacts scope.
 - Proposal uploads now preserve extracted text and reviewable missing-field candidates separately from canonical listing data. Image-only brochure OCR is handled by an admin-triggered queue so uploads stay fast and OCR-derived facts still require review.
 - OCR provider configuration is now an admin-only `/dashboard` surface backed by D1 migration 0020, with encrypted credential storage using the external Cloudflare Pages secret `OCR_KEY`. Migration 0021 is applied remotely and adds OCR jobs, attempts, content-hash cache, and provider usage events; external OCR calls only run when an admin explicitly starts a dry-run or bounded batch.
 - `src/lib/franchise-detail-assets.ts` has grown into a large mixed CSS/JS injection module. It is stable enough for the current production fixes, but should be split before the next major listing-detail feature pass.
@@ -60,6 +61,20 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 | `js/dashboard-ocr.js` OCR action coordinator | The coordinator is 1,429 lines after routing created OCR bundles to the new Review OCR subtab. Presentation is already split into focused modules, but action handlers for provider settings, scheduler batches, job retries, result search, and enrichment creation still live together. | Before adding another OCR control workflow, extract action handlers into a small `dashboard-ocr-actions.js` helper while keeping `dashboard-ocr.js` as the state/timer/subtab facade. | Medium | Planned |
 | `src/pages/dashboard/index.astro` dashboard shell | The route shell is 962 lines after adding the fourth OCR guide card, dedicated OCR Review subpanel, and full-width pending edit review table. The change improves layout without adding runtime logic, but the static shell remains large. | Before another dashboard layout feature, extract route sections into Astro components starting with `DashboardReviewPanel.astro` and `DashboardOcrPanel.astro`; keep this route as the assembler and script/style loader. | Medium | Planned |
 | `js/dashboard-review.js` review renderer | The module is 650 lines after adding per-field approval checkboxes on top of document/manual routing, value formatting, and source-backed evidence rows. It remains below the hard split threshold, but now owns quality, generic review, OCR/proposal review, claim review, and location editor rendering. | If another review/location workflow lands, extract pending review table/diff/evidence/value-format/selection rendering into `dashboard-review-table.js` so the main module can stay focused on actions and panel wiring. | Medium | Planned |
+
+## Refactor Candidates - 2026-07-13
+
+| File / area | Why it is now a refactor candidate | Proposed split | Priority | Status |
+| --- | --- | --- | --- | --- |
+| `daftar/index.html` public copy surface | The file is still a large WordPress-exported page at 1,606 lines. This session only changed two public helper-copy strings, but future copy passes remain truncation-prone when editing directly in the exported HTML. | Keep current targeted edits for urgent public copy fixes. Before a broader `/daftar` rewrite, move the active form markup into an Astro/component-owned source or at least isolate the form partial from the legacy shell. | Medium | Planned |
+| `src/pages/dashboard/index.astro` dashboard shell | The route shell remains large and now includes another Outreach header action container alongside existing OCR/Review/Premium markup. The change was small, but the file continues to be a slow review surface for dashboard layout changes. | Follow the existing planned split into dashboard Astro components, starting with Outreach/Review/OCR panels, while preserving script/style load order. | Medium | Planned |
+
+## Dashboard Outreach Google Contacts - 2026-07-13
+
+| Finding | Decision / implementation direction | Status |
+| --- | --- | --- |
+| Staff want brand names visible before WhatsApp outreach, but the current dashboard only opens `wa.me` links from raw public numbers. | Add a one-click Google Contacts bulk-save action for the current outreach queue. The server rebuilds contacts from D1, uses the staff member's linked Google OAuth token, searches existing contacts first, skips duplicate phone numbers, and calls Google People API batch create for up to 200 non-duplicate contacts. | Implemented |
+| Google Contacts write access is not part of normal Google sign-in. | Require the `https://www.googleapis.com/auth/contacts` OAuth scope and enabled People API. If the token/scope is missing, return setup guidance instead of pretending contacts were saved. | Implemented |
 
 ## OCR Execution UX Audit - 2026-07-10
 

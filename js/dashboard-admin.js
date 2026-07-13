@@ -27,6 +27,7 @@
   var dashboardOperations = window.FranchiseDashboardOperations.createOperations({
     outreachRows: document.querySelector("[data-outreach-rows]"),
     outreachCount: document.querySelector("[data-outreach-count]"),
+    outreachActions: document.querySelector("[data-outreach-actions]"),
     premiumPaymentRows: document.querySelector("[data-premium-payment-rows]"),
     publishState: document.querySelector("[data-publish-state]"),
     publicationRows: document.querySelector("[data-publication-rows]"),

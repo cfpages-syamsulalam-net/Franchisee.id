@@ -1,6 +1,6 @@
 # Clerk Setup For Franchisee.id
 
-Last updated: 2026-06-26 03:50 (Asia/Jakarta)
+Last updated: 2026-07-13 17:43 (Asia/Jakarta)
 
 ## Purpose
 Clerk is the identity/session provider. D1 remains the authorization source of truth through `users` and `user_roles`.
@@ -11,7 +11,8 @@ Clerk is the identity/session provider. D1 remains the authorization source of t
 3. Enable Google SSO as a social connection.
 4. Enable email verification by code for sign-up.
 5. Enable account linking for verified email addresses so a user who first registers with email/password can later use Google with the same email on the same Clerk account.
-6. Add allowed application URLs:
+6. For dashboard outreach contact saving, configure the Google social connection to request `https://www.googleapis.com/auth/contacts` and enable Google People API in the Google Cloud project behind that OAuth connection. Staff must login again with Google after the scope is added.
+7. Add allowed application URLs:
    - `https://franchisee.id`
    - `https://franchisee.id/login/`
    - `https://franchisee.id/sso-callback/`
@@ -45,6 +46,7 @@ Do not commit Clerk secret keys to this repository. `PUBLIC_CLERK_PUBLISHABLE_KE
 - Owner listing edits from `/profil/` apply directly to D1 but are limited to one edit per listing per 6 hours and enqueue static rebuild requests instead of publishing immediately.
 - `js/auth-navbar.js` normalizes logged-out nav links to `Masuk` and `Daftar Mitra`; `Daftar Mitra` points to protected `/daftar/`, not `/login?mode=register`, so the completion form remains the canonical CTA. Logged-in public users see their name, D1 role badge, `/profil` account link, and immediate red icon-only logout with Font Awesome icons.
 - `/dashboard/` uses the same custom auth runtime but mounts a login-only admin/staff Google/email surface on the same URL. It does not show public registration or franchisee/franchisor role choices.
+- `/dashboard/` outreach can save unclaimed outreach contacts into the staff member's linked Google Contacts through Clerk's Google OAuth access token. This only works after Google People API is enabled and the Google connection grants `https://www.googleapis.com/auth/contacts`; otherwise the dashboard shows setup guidance.
 - Admin/staff sessions can still inspect `/login` auth forms while logged in; public logged-in users see the compact already-logged-in continue state.
 - `/sso-callback/` is a hidden technical callback route for Google OAuth. It must be allowed in Clerk but is not a user-facing login page.
 - `/auth-config` returns the publishable Clerk key to the browser and prefers the Astro-style `PUBLIC_CLERK_PUBLISHABLE_KEY` variable.

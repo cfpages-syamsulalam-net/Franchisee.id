@@ -22,6 +22,7 @@
     "profile:check": "node scripts/check-profile-client.mjs",
     "contact:check": "node scripts/check-contact-parser.mjs",
     "proposal:check": "tsx scripts/check-proposal-knowledge.ts",
+    "google-contacts:check": "tsx scripts/check-google-contacts.ts",
     "proposal-download:check": "tsx scripts/check-proposal-download.ts",
     "detail-assets:check": "tsx scripts/check-franchise-detail-assets.ts",
     "ocr:check": "tsx scripts/check-ocr-provider-config.ts",

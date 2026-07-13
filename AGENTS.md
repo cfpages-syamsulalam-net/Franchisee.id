@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-07-12 04:18 (Asia/Jakarta)
+Last updated: 2026-07-13 17:43 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -17,7 +17,8 @@ Last updated: 2026-07-12 04:18 (Asia/Jakarta)
 - During each implementation session, auto-detect touched or closely related files that are long enough to be a maintainability risk, especially files over roughly 500 lines or files accumulating multiple responsibilities. If a long file does not need immediate refactor, document that finding and a concrete future refactor plan in `AUDIT.md`; if the current change materially worsens the risk and a low-risk extraction is available, do the extraction in the same session before validation.
 - Prioritize finishing the current pending task over progress narration. Keep user-facing updates minimal and reserve final reporting for work that is actually completed or genuinely blocked.
 - When an agreed task has remaining planned steps, continue implementing them before final reporting instead of stopping at the plan. If decisions are genuinely blocking, ask for confirmation using the available user-input tools when present; otherwise make a conservative, documented implementation choice and keep working. For product/UX work that needs structure, brainstorm in the appropriate `.md` tracker first, then implement the plan in the same work session unless the user explicitly asks to pause.
-- Public-facing copy must be clear, plain, and user-centered. Do not expose infrastructure or implementation terms such as D1, Clerk, onboarding flow, webhooks, static rebuilds, or internal sync in UI text; make the site mechanism handle those details and only tell users what they need to do next.
+- Public-facing copy must be clear, plain, and user-centered. Do not expose infrastructure or implementation terms such as D1, Clerk, onboarding flow, webhooks, static rebuilds, field names, hidden/collapsed/default state, internal sync, migration, backend, debug, or developer notes in UI text; make the site mechanism handle those details and only tell users what they need to do next.
+- Before editing or shipping public UI copy, scan the touched surface for internal-facing phrases such as `sistem akan`, `default`, `field`, `backend`, `debug`, `dev`, `hidden`, `collapsed`, `Clerk`, `D1`, and `Google Sheets`. Rewrite them into user-facing guidance unless the page is explicitly an internal admin/staff tool.
 - Warning, error, empty-state, and blocked-action messages must be actionable. If the user cannot continue from the current state, the UI should explain what to do next and provide an obvious CTA/link/button to do it, preferably prefilled with `next` or the relevant role/context so the user does not have to figure out the path manually.
 - Tooltips and hover hints must use the shared custom tooltip component: `data-fr-tooltip` plus `css/shared-tooltip.css` and `js/shared-tooltip.js`. Do not add browser `title` attributes for UI hints. Existing interactive `title` hints should be removed or converted so only the shared instant tooltip appears.
 - Dashboard text-pill actions that sit beside similar pill links/buttons must use the shared dashboard utility helpers (`renderPillActionButton` / `renderPillActionLink`) and shared `.dash-pill-action` styling instead of hand-built one-off pill markup.

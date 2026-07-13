@@ -12,6 +12,7 @@ import {
   handleUpdateListingLocations,
   handleUpdatePublication,
 } from "./_dashboard-actions.js";
+import { handleSaveOutreachGoogleContacts } from "./_google-contacts.js";
 import {
   getDataQuality,
   getEditableListings,
@@ -123,6 +124,7 @@ export async function onRequestPost({ request, env }) {
 
     const data = parsed.data;
     if (data.action === "log_outreach") return handleLogOutreach(env.franchise_db, auth, data);
+    if (data.action === "save_outreach_google_contacts") return handleSaveOutreachGoogleContacts(env.franchise_db, auth, data, env);
     if (data.action === "suggest_edit") return handleSuggestEdit(env.franchise_db, auth, data);
     if (data.action === "review_edit_suggestion") return handleReviewEditSuggestion(env.franchise_db, auth, data);
     if (data.action === "review_claim") return handleReviewClaim(env.franchise_db, auth, data);

@@ -7,8 +7,10 @@
     var renderActionToolbar = utils.renderActionToolbar;
     var renderActionButton = utils.renderActionButton;
     var renderActionLink = utils.renderActionLink;
+    var renderPillActionButton = utils.renderPillActionButton;
     var outreachRows = options.outreachRows;
     var outreachCount = options.outreachCount;
+    var outreachActions = options.outreachActions;
     var premiumPaymentRows = options.premiumPaymentRows;
     var publishState = options.publishState;
     var publicationRows = options.publicationRows;
@@ -37,6 +39,7 @@
         if (queueLimit && contactReady > rows.length) badge += " (limit " + queueLimit + ")";
       }
       outreachCount.textContent = badge;
+      renderOutreachActions(rows);
       if (!rows.length) {
         outreachRows.innerHTML = '<tr><td colspan="4" class="dash-empty">Tidak ada unclaimed listing dengan nomor WhatsApp/mobile.</td></tr>';
         return;
@@ -71,6 +74,29 @@
           logOutreach(link);
         });
       });
+    }
+
+    function renderOutreachActions(rows) {
+      if (!outreachActions) return;
+      var existingBadge = outreachActions.querySelector("[data-outreach-count]");
+      outreachActions.innerHTML = "";
+      if (existingBadge) outreachActions.appendChild(existingBadge);
+      if (!rows.length) return;
+      outreachActions.insertAdjacentHTML("beforeend", renderPillActionButton({
+        label: "Simpan kontak",
+        icon: "fas fa-address-book",
+        tone: "primary",
+        tooltip: "Simpan kontak outreach ke Google Contacts akun staff yang sedang login",
+        attrs: {
+          "data-save-google-contacts": "",
+        },
+      }));
+      var button = outreachActions.querySelector("[data-save-google-contacts]");
+      if (button) {
+        button.addEventListener("click", function () {
+          saveGoogleContacts(button, rows);
+        });
+      }
     }
 
     function renderPublish(state) {
@@ -244,6 +270,29 @@
         link.disabled = false;
         link.classList.remove("is-busy");
         console.warn("Outreach log failed", error);
+      }
+    }
+
+    async function saveGoogleContacts(button, rows) {
+      try {
+        button.disabled = true;
+        button.classList.add("is-busy");
+        options.setStatus("Menyimpan kontak ke Google Contacts...", false);
+        var result = await options.postDashboardAction({
+          action: "save_outreach_google_contacts",
+          franchise_ids: rows.slice(0, 200).map(function (row) { return row.id; }),
+          limit: 200,
+        });
+        button.classList.remove("is-busy");
+        button.classList.add("is-done");
+        var skipped = Number(result.duplicate_skipped || 0);
+        var message = result.message || ("Kontak tersimpan: " + Number(result.saved || 0).toLocaleString("id-ID") + " dari " + Number(result.requested || 0).toLocaleString("id-ID") + ".");
+        if (skipped) message += " " + skipped.toLocaleString("id-ID") + " dilewati karena sudah ada.";
+        options.setStatus(message, false);
+      } catch (error) {
+        button.disabled = false;
+        button.classList.remove("is-busy");
+        options.setStatus(error.message || "Kontak belum bisa disimpan ke Google.", true);
       }
     }
 
