@@ -17,6 +17,7 @@
     var leadSummary = options.leadSummary;
     var systemHealth = options.systemHealth;
     var trafficGuardrails = options.trafficGuardrails;
+    var GOOGLE_CONTACTS_SETUP_DOC = "/dashboard/#google-contacts-setup";
 
     function render(data) {
       renderOutreach(data.outreach_queue || [], data.outreach_summary || {});
@@ -292,8 +293,17 @@
       } catch (error) {
         button.disabled = false;
         button.classList.remove("is-busy");
-        options.setStatus(error.message || "Kontak belum bisa disimpan ke Google.", true);
+        options.setStatus(formatGoogleContactsError(error), true);
       }
+    }
+
+    function formatGoogleContactsError(error) {
+      var result = error && error.dashboardResult ? error.dashboardResult : {};
+      var message = error && error.message ? error.message : "Kontak belum bisa disimpan ke Google.";
+      var needsSetup = result.setup_required || result.error === "GOOGLE_CONTACTS_SCOPE_MISSING" || result.error === "GOOGLE_ACCOUNT_NOT_LINKED";
+      if (!needsSetup) return escapeHtml(message);
+      var href = result.documentation_url || GOOGLE_CONTACTS_SETUP_DOC;
+      return escapeHtml(message) + ' <a class="dash-link" href="' + escapeAttr(href) + '">Lihat panduan setup</a>.';
     }
 
     async function reviewPremiumPayment(button) {

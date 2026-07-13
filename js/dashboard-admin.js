@@ -262,7 +262,11 @@
       body: JSON.stringify(payload)
     });
     var result = await response.json().catch(function () { return {}; });
-    if (!response.ok || !result.success) throw new Error(result.message || result.error || "Dashboard action failed.");
+    if (!response.ok || !result.success) {
+      var actionError = new Error(result.message || result.error || "Dashboard action failed.");
+      actionError.dashboardResult = result;
+      throw actionError;
+    }
     return result;
   }
 

@@ -1,0 +1,33 @@
+<section class="dash-panel dash-panel-wide" id="dashboard-setup-guide" aria-labelledby="dashboard-setup-guide-title">
+  <div class="dash-panel-header">
+    <div class="dash-panel-title">
+      <i class="fas fa-plug dash-section-icon" aria-hidden="true"></i>
+      <div>
+        <h2 id="dashboard-setup-guide-title">Panduan Integrasi Dashboard</h2>
+        <p>Checklist integrasi pihak ketiga yang membuat fitur operasional dashboard berjalan penuh.</p>
+      </div>
+    </div>
+  </div>
+  <div class="dash-publication-grid" aria-label="Panduan integrasi dashboard">
+    <article class="dash-publication-cell" id="google-contacts-setup">
+      <span><strong>Google Contacts Outreach</strong></span>
+      <span>Aktifkan Google People API di project Google Cloud yang dipakai untuk OAuth. Tambahkan scope <code>https://www.googleapis.com/auth/contacts</code> ke koneksi Google di Clerk, simpan perubahan, lalu minta staff login ulang dengan Google agar token baru membawa izin kontak.</span>
+    </article>
+    <article class="dash-publication-cell" id="ocr-provider-setup">
+      <span><strong>Provider OCR</strong></span>
+      <span>Siapkan secret Cloudflare Pages <code>OCR_KEY</code>, lalu isi credential provider OCR dari tab OCR. Jalankan dry-run satu aset sebelum menjalankan batch besar.</span>
+    </article>
+    <article class="dash-publication-cell" id="ocr-scheduler-setup">
+      <span><strong>Scheduler OCR</strong></span>
+      <span>Siapkan <code>OCR_SECRET</code> dan credential scheduler yang dipilih. Untuk QStash, pastikan URL worker dan token valid sebelum mulai batch OCR besar.</span>
+    </article>
+    <article class="dash-publication-cell" id="email-delivery-setup">
+      <span><strong>Email Premium</strong></span>
+      <span>Siapkan Resend, verifikasi DNS domain pengirim, lalu isi <code>RESEND_API_KEY</code>, <code>PREMIUM_EMAIL_FROM</code>, dan <code>PREMIUM_EMAIL_WORKER_SECRET</code> sebagai secret Cloudflare/GitHub sesuai worker yang dipakai.</span>
+    </article>
+    <article class="dash-publication-cell" id="publish-automation-setup">
+      <span><strong>Publish Automation</strong></span>
+      <span>Pastikan Cloudflare Pages build command memakai <code>pnpm run build</code> atau <code>pnpm run build:astro</code>, D1 binding <code>franchise_db</code> aktif, dan deploy hook tersedia untuk poller publish.</span>
+    </article>
+  </div>
+</section>

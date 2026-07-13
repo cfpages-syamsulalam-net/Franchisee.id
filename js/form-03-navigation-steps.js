@@ -91,7 +91,7 @@
 
     window.validateStep = function (stepIndex) {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('mode') === 'preview') return true;
+        if (urlParams.get('mode') === 'preview' || urlParams.has('admin')) return true;
 
         const currentStepDiv = document.getElementById('step-' + stepIndex);
         if (!currentStepDiv) {

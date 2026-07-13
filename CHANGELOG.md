@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-13 21:04 (Asia/Jakarta)
+### Added
+- `src/components/dashboard/DashboardIntegrationGuide.astro`: Added a focused in-app dashboard documentation component with stable setup anchors for Google Contacts, OCR, email, and publish integrations.
+- `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: Added the canonical third-party integration setup guide for `/dashboard` warnings and operator setup.
+- `.context/session-20260713-2104.md`: Added this session continuity snapshot for dashboard integration docs and `/daftar?admin` QA navigation.
+
+### Changed
+- `src/components/dashboard/DashboardOperationsPanel.astro`: Replaced inline setup-guide markup with the shared dashboard documentation component.
+- `functions/_google-contacts.js`, `js/dashboard-admin.js`, and `js/dashboard-operations.js`: Added setup documentation metadata and rendered a safe `Lihat panduan setup` link for Google Contacts permission/setup failures.
+- `js/form-03-navigation-steps.js` and `js/form-08-franchisee-steps.js`: Added `?admin` as an easy alias for the existing preview-style step-validation bypass during admin QA navigation.
+- `DASHBOARD.md`, `docs/README.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Moved detailed dashboard integration documentation into the focused guide and documented the new component/anchor contract.
+
 ## 2026-07-13 18:42 (Asia/Jakarta)
 ### Added
 - `src/components/dashboard/DashboardReviewPanel.astro`: Added focused static markup component for the dashboard Review tab.

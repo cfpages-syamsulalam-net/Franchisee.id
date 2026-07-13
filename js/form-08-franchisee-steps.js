@@ -88,6 +88,9 @@
 
     // Validate franchisee form step
     function validateFranchiseeStep (stepIndex) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'preview' || urlParams.has('admin')) return true;
+
         const currentStepDiv = document.getElementById('franchisee-step-' + stepIndex);
         if (!currentStepDiv) return true;
 

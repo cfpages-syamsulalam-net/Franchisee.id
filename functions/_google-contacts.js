@@ -3,6 +3,7 @@ import { getUnclaimedOutreachQueue } from "./_dashboard-queries.js";
 import { auditStatement, jsonResponse, randomId } from "./_dashboard-utils.js";
 
 const GOOGLE_CONTACTS_SCOPE = "https://www.googleapis.com/auth/contacts";
+const GOOGLE_CONTACTS_SETUP_DOC = "/dashboard/#google-contacts-setup";
 const PEOPLE_BATCH_CREATE_URL = "https://people.googleapis.com/v1/people:batchCreateContacts";
 const PEOPLE_SEARCH_CONTACTS_URL = "https://people.googleapis.com/v1/people:searchContacts";
 const MAX_CONTACTS_PER_BATCH = 200;
@@ -28,6 +29,7 @@ export async function handleSaveOutreachGoogleContacts(db, auth, data, env) {
       message: tokenResult.message,
       setup_required: true,
       required_scope: GOOGLE_CONTACTS_SCOPE,
+      documentation_url: GOOGLE_CONTACTS_SETUP_DOC,
     }, { status: tokenResult.status || 409 });
   }
 
@@ -77,6 +79,7 @@ export async function handleSaveOutreachGoogleContacts(db, auth, data, env) {
       message: googleContactsErrorMessage(response.status, result),
       setup_required: response.status === 401 || response.status === 403,
       required_scope: GOOGLE_CONTACTS_SCOPE,
+      documentation_url: GOOGLE_CONTACTS_SETUP_DOC,
       provider_status: response.status,
     }, { status });
   }
@@ -256,6 +259,7 @@ async function getGoogleOauthAccessToken(env, clerkUserId) {
       return {
         error: "GOOGLE_CONTACTS_SCOPE_MISSING",
         message: "Izin menyimpan Google Contacts belum aktif. Tambahkan izin Google Contacts, lalu login ulang dengan Google.",
+        documentation_url: GOOGLE_CONTACTS_SETUP_DOC,
         status: 409,
       };
     }

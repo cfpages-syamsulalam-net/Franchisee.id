@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-13 18:42 (Asia/Jakarta)
+Last updated: 2026-07-13 21:04 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -33,7 +33,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `window.openTab(tabName)`: Tab switch + animated segmented-control indicator positioning + revalidation + lazy claim data fetch.
 - `window.nextStep(stepIndex)`: Step-forward navigation with progress tracking + **detailed console logging** (step index, state.currentStep, validation result, target visibility).
 - `window.prevStep(stepIndex)`: Step-back navigation with progress tracking.
-- `window.validateStep(stepIndex)`: Required-field and Rp 0 warning validation + **debug output** (invalid field names, values, validation pass/fail status). The franchisor Step 2 modal warning treats `min_capital` / `total_investment_value` as the baseline answer, so optional fee-breakdown fields can remain blank without triggering a false zero-modal warning.
+- `window.validateStep(stepIndex)`: Required-field and Rp 0 warning validation + **debug output** (invalid field names, values, validation pass/fail status). The franchisor Step 2 modal warning treats `min_capital` / `total_investment_value` as the baseline answer, so optional fee-breakdown fields can remain blank without triggering a false zero-modal warning. `?admin` and legacy `mode=preview` bypass step validation for admin QA navigation only.
 
 ### File: `js/form-04-calculation-city.js`
 *BEP calculation + minimum-capital + city autocomplete.*
@@ -85,7 +85,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `franchiseeState`: Local state for franchisee form (currentStep, totalSteps).
 - `window.franchiseeNextStep(stepIndex)`: Navigate to next step with validation.
 - `window.franchiseePrevStep(stepIndex)`: Navigate to previous step.
-- `validateFranchiseeStep(stepIndex)`: Per-step required field validation.
+- `validateFranchiseeStep(stepIndex)`: Per-step required field validation. `?admin` and legacy `mode=preview` bypass step validation for admin QA navigation only.
 - `updateFranchiseeProgressBar()`: Updates step indicators and progress bar.
 - `restoreFranchiseeStep()`: Restores saved step from localStorage on page load.
 
@@ -747,8 +747,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/components/dashboard/DashboardOperationsPanel.astro`
 *Static dashboard Operations tab component.*
-- Owns Operations panel HTML for publish queue, network publications, leads, Premium Operations, system health, traffic guardrail, and staff edit policy.
+- Owns Operations panel HTML for publish queue, network publications, leads, Premium Operations, system health, traffic guardrail, dashboard integration guide placement, and staff edit policy.
 - Preserves the containers rendered by `js/dashboard-operations.js` and `js/dashboard-premium-operations.js`.
+
+### File: `src/components/dashboard/DashboardIntegrationGuide.astro`
+*Static dashboard documentation component.*
+- Owns the in-app `/dashboard` setup guide anchors for Google Contacts, OCR provider setup, OCR scheduler setup, Premium email delivery, and publish automation.
+- The long-form canonical setup reference is `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`; dashboard warnings should link to the matching in-app anchor.
 
 ### File: `src/components/dashboard/DashboardOcrPanel.astro`
 *Static dashboard OCR tab component.*

@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-13 17:43 (Asia/Jakarta)
+Last updated: 2026-07-13 21:04 (Asia/Jakarta)
 
 ## Purpose
 
@@ -28,6 +28,10 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 - Trusted staff auto-approval: if admin grants auto-approval to a staff user, all listing fields are safe for that staff user to edit.
 - Outreach logging: opening WhatsApp does not log an event. Staff must manually confirm the message was sent with the dashboard confirmation action.
 - Outreach priority: use data completeness only for now. Add traffic/lead metrics later when reliable analytics/lead data exists.
+
+## Integration Documentation
+
+Third-party setup details for `/dashboard` live in `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`. The Operations tab renders the compact in-app version from `src/components/dashboard/DashboardIntegrationGuide.astro`, and blocked dashboard warnings should link to its stable anchors such as `/dashboard/#google-contacts-setup`.
 
 ## Progress Tracker
 
