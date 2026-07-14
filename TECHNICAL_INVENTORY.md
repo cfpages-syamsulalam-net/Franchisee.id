@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-14 16:39 (Asia/Jakarta)
+Last updated: 2026-07-14 18:52 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -288,8 +288,12 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Owns guided edit field rows, full-width pending review tables, vertically stacked brand/actor/source cells, icon-led old-to-new field diff rows, OCR/general review source badges, OCR evidence excerpt/image-preview rows, reason wrapping, and Area Listing editor layout/responsive behavior for the Review and OCR Review surfaces.
 
 ### File: `css/dashboard-operations.css`
-*Dashboard Operations/admin helper stylesheet module.*
-- Owns full-width dashboard operation panels, publication status grids/cells, and compact checkbox rows used by admin operations UI.
+*Dashboard operations/admin helper stylesheet module.*
+- Owns publication status grids/cards and compact checkbox rows used by dashboard admin UI.
+
+### File: `css/dashboard-integration.css`
+*Dashboard integration documentation stylesheet module.*
+- Owns the full-width Integrasi tab documentation layout: same-page guide navigation, step-by-step setup sections, official documentation link pills, focused section outlines, and responsive stacking.
 
 ### File: `css/dashboard-premium.css`
 *Dashboard Premium Operations stylesheet module.*
@@ -331,11 +335,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `submitEditSuggestion(event)` / `reviewEditSuggestion(button)` / `reviewClaim(button)`: Posts guided edit submissions and admin review decisions through the existing `/dashboard-data` contract. Review approval sends `approved_fields` when per-field checkboxes are present, so admins can approve only trusted fields from multi-field proposal/OCR suggestions.
 
 ### File: `js/dashboard-operations.js`
-*General Operations client module for `/dashboard`.*
-- `window.FranchiseDashboardOperations.createOperations(options)`: Creates the outreach, publish, Premium payment review, Publikasi tab, lead, health, and traffic-guardrail renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`.
-- `render(data)`: Fans dashboard API data into outreach, Premium payment review, publish queue, the separated Publikasi tab, leads, health, and traffic guardrail panels.
+*General operations-data client module for `/dashboard`.*
+- `window.FranchiseDashboardOperations.createOperations(options)`: Creates the outreach, publish queue, Publikasi tab, lead, health, and traffic-guardrail renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`.
+- `render(data)`: Fans dashboard API data into outreach, publish queue, the separated Publikasi tab, Leads tab, and Sistem tab panels.
 - `renderOutreach()` / `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Renders staff-personal WhatsApp outreach rows, injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, and records manually confirmed outreach through `/dashboard-data`.
-- `renderPremiumPayments()` / `reviewPremiumPayment()`: Renders icon-only admin approval/rejection controls for pending Premium confirmations.
 - `renderPublicationControls()` / `updatePublicationStatus()`: Renders network publication controls as per-listing cards with per-site status controls, status badges, public links, and posts admin status changes.
 - `renderLeads()` / `renderHealth()` / `renderTrafficGuardrails()`: Renders lead rows, system health summaries, and Cloudflare Free-plan limit/throttle visibility.
 
@@ -407,9 +410,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Client controller for the protected `/dashboard` shell.*
 - `boot()` / `showLoadingPanel(message)` / `showLoginPanel(message, isError)`: Initializes `window.FranchiseAuth`, shows a skeleton while auth/dashboard authorization is processing, only shows and force-mounts the login form after no usable session or an auth error is known, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
 - `readDashboardCache()` / `writeDashboardCache(data)` / `clearDashboardCache()`: Maintains a short `sessionStorage` cache for successful dashboard payloads keyed to the active Clerk user id and active session. Cached data can render immediately after Clerk init, then `/dashboard-data` refreshes live; missing/expired authorization clears the cache and relocks the protected shell.
-- `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, Operations, and OCR, including arrow/Home/End keyboard navigation.
-- `bindDashboardDeepLinks()` / `activateDashboardDeepLink(targetId)`: Maps documentation anchors such as `google-contacts-setup`, `ocr-provider-setup`, and `publish-automation-setup` to the Operations tab, updates same-page hash clicks, and scrolls/focuses the target after its tab panel is visible.
-- `renderDashboard(data, options)`: Reveals the protected shell and fans dashboard API data into metrics plus delegated Operations, Review/Data Quality/Claim, Premium, and OCR modules. `options.cached` shows a refresh-in-progress status while live data is fetched.
+- `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR, including arrow/Home/End keyboard navigation. The old `operations` hash aliases to `system`.
+- `bindDashboardDeepLinks()` / `activateDashboardDeepLink(targetId)`: Maps documentation anchors such as `google-contacts-setup`, `ocr-provider-setup`, and `publish-automation-setup` to the Integrasi tab, updates same-page hash clicks, and scrolls/focuses the target after its tab panel is visible.
+- `renderDashboard(data, options)`: Reveals the protected shell and fans dashboard API data into metrics plus delegated operations-data, Review/Data Quality/Claim, Premium, and OCR modules. `options.cached` shows a refresh-in-progress status while live data is fetched.
 - `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
 
 ### File: `js/build-listing.js`
@@ -734,8 +737,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Static protected admin/staff dashboard route assembler.*
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
-- Loads dashboard base/auth/OCR styles plus auth/tooltips/utilities, Premium, Review, Operations, OCR, and controller client modules; shows a skeleton while the session is checked and marks the login-only staff/admin auth root with `data-auth-defer="true"` so it is only mounted when no Clerk session exists or the session must be renewed.
-- Renders the branded route shell, metrics, Outreach and Data Quality tabs inline, then delegates Review, Operations, Publikasi, and OCR tab markup to focused Astro components. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` and loads the split OCR browser modules before the coordinator facade. Runtime authorization remains server-side.
+- Loads dashboard base/auth/OCR styles plus auth/tooltips/utilities, Premium, Review, operations-data, OCR, and controller client modules; shows a skeleton while the session is checked and marks the login-only staff/admin auth root with `data-auth-defer="true"` so it is only mounted when no Clerk session exists or the session must be renewed.
+- Renders the branded route shell, metrics, Outreach and Data Quality tabs inline, then delegates Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR tab markup to focused Astro components. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` and loads the split OCR browser modules before the coordinator facade. Runtime authorization remains server-side.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
@@ -746,10 +749,22 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - Owns Review panel HTML for direct listing edits, Pending Edit Review, claim review, and admin Area Listing controls.
 - Preserves the existing `data-*` hooks consumed by `js/dashboard-review.js`; runtime permissions and mutations remain in `/dashboard-data`.
 
-### File: `src/components/dashboard/DashboardOperationsPanel.astro`
-*Static dashboard Operations tab component.*
-- Owns Operations panel HTML for publish queue, leads, Premium Operations, system health, traffic guardrail, dashboard integration guide placement, and staff edit policy.
-- Preserves the containers rendered by `js/dashboard-operations.js` and `js/dashboard-premium-operations.js`.
+### File: `src/components/dashboard/DashboardLeadsPanel.astro`
+*Static dashboard Leads tab component.*
+- Owns the Leads panel and `data-lead-summary` hook rendered by `js/dashboard-operations.js`.
+
+### File: `src/components/dashboard/DashboardPremiumPanel.astro`
+*Static dashboard Premium tab component.*
+- Owns Premium Operations, payment-method/settings forms, Premium notifications/reports/renewals/email queue containers, and pending Premium payment review table.
+- Preserves the containers rendered by `js/dashboard-premium-operations.js`.
+
+### File: `src/components/dashboard/DashboardSystemPanel.astro`
+*Static dashboard Sistem tab component.*
+- Owns publish queue, system health, traffic guardrail, and staff edit-policy containers rendered by `js/dashboard-operations.js`.
+
+### File: `src/components/dashboard/DashboardIntegrationPanel.astro`
+*Static dashboard Integrasi tab component.*
+- Wraps the full-width `DashboardIntegrationGuide.astro` in a top-level dashboard tab panel.
 
 ### File: `src/components/dashboard/DashboardPublicationPanel.astro`
 *Static dashboard Publikasi tab component.*
@@ -759,6 +774,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `src/components/dashboard/DashboardIntegrationGuide.astro`
 *Static dashboard documentation component.*
 - Owns the in-app `/dashboard` setup guide anchors for Google Contacts, OCR provider setup, OCR scheduler setup, Premium email delivery, and publish automation.
+- Renders same-page navigation, newbie-friendly ordered setup steps, and official documentation links for each integration without requiring a new browser tab for the in-dashboard full view.
 - The long-form canonical setup reference is `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`; dashboard warnings should link to the matching in-app anchor.
 
 ### File: `src/components/dashboard/DashboardOcrPanel.astro`
@@ -1110,9 +1126,9 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
 - `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display and structured location rows for the admin Area Listing editor. `getEditSuggestions()` delegates document proof backfill to `_dashboard-review-evidence.js` before returning pending suggestion rows.
 - `getStructuredLocationsForListings(db, franchiseIds)`: Chunks editable listing IDs before building `IN (...)` queries so `/dashboard-data` can load the full dashboard without hitting D1's SQL variable limit.
-- `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Operations tab.
-- `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, Premium settings, recent Premium notifications, upcoming expiries, annual reports, queued-email summaries, and recent queued email rows for the Operations tab.
-- `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db, env)`: Supplies the operations tab, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, product-event counts, and a local Cloudflare Free-plan traffic guardrail summary.
+- `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Premium tab.
+- `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, Premium settings, recent Premium notifications, upcoming expiries, annual reports, queued-email summaries, and recent queued email rows for the Premium tab.
+- `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db, env)`: Supplies the Sistem, Publikasi, and Leads tabs, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, product-event counts, and a local Cloudflare Free-plan traffic guardrail summary.
 - `getTrafficGuardrails(env)`: Reports the 100,000/day Free-plan guardrail, 90,000 warning threshold, reset time, active browser throttles/caches, and the env vars needed before optional Cloudflare Analytics querying is wired.
 
 ### File: `functions/_dashboard-review-evidence.js`

@@ -1,39 +1,5 @@
----
-import DashboardIntegrationGuide from "./DashboardIntegrationGuide.astro";
----
-
-<section class="dash-tab-panel" id="dash-panel-operations" role="tabpanel" aria-labelledby="dash-tab-operations" data-dashboard-panel="operations" hidden>
-  <div class="dash-panel-grid two">
-    <section class="dash-panel">
-      <div class="dash-panel-header">
-        <div class="dash-panel-title">
-          <i class="fas fa-sync-alt dash-section-icon" aria-hidden="true"></i>
-          <div>
-            <h2>Publish Queue</h2>
-            <p>Status pembaruan halaman franchisee.id.</p>
-          </div>
-        </div>
-      </div>
-      <ul class="dash-list" data-publish-state>
-        <li><span>Memuat publish state...</span></li>
-      </ul>
-    </section>
-
-    <section class="dash-panel">
-      <div class="dash-panel-header">
-        <div class="dash-panel-title">
-          <i class="fas fa-users dash-section-icon" aria-hidden="true"></i>
-          <div>
-            <h2>Leads</h2>
-            <p>Ringkasan inquiry dari Franchisee.id.</p>
-          </div>
-        </div>
-      </div>
-      <ul class="dash-list" data-lead-summary>
-        <li><span>Memuat leads...</span></li>
-      </ul>
-    </section>
-
+<section class="dash-tab-panel" id="dash-panel-premium" role="tabpanel" aria-labelledby="dash-tab-premium" data-dashboard-panel="premium" hidden>
+  <div class="dash-panel-grid">
     <section class="dash-panel dash-panel-wide">
       <div class="dash-panel-header">
         <div class="dash-panel-title">
@@ -216,54 +182,6 @@ import DashboardIntegrationGuide from "./DashboardIntegrationGuide.astro";
           </tbody>
         </table>
       </div>
-    </section>
-
-    <section class="dash-panel">
-      <div class="dash-panel-header">
-        <div class="dash-panel-title">
-          <i class="fas fa-heartbeat dash-section-icon" aria-hidden="true"></i>
-          <div>
-            <h2>System Health</h2>
-            <p>Koneksi akun, data, dan publikasi.</p>
-          </div>
-        </div>
-      </div>
-      <ul class="dash-list" data-system-health>
-        <li><span>Memuat health check...</span></li>
-      </ul>
-    </section>
-
-    <section class="dash-panel">
-      <div class="dash-panel-header">
-        <div class="dash-panel-title">
-          <i class="fas fa-gauge-high dash-section-icon" aria-hidden="true"></i>
-          <div>
-            <h2>Traffic Guardrail</h2>
-            <p>Limit Function harian dan throttle publik yang aktif.</p>
-          </div>
-        </div>
-      </div>
-      <ul class="dash-list" data-traffic-guardrails>
-        <li><span>Memuat traffic guardrail...</span></li>
-      </ul>
-    </section>
-
-    <DashboardIntegrationGuide />
-
-    <section class="dash-panel">
-      <div class="dash-panel-header">
-        <div class="dash-panel-title">
-          <i class="fas fa-clipboard-list dash-section-icon" aria-hidden="true"></i>
-          <div>
-            <h2>Staff Edit Policy</h2>
-            <p>Default: staff menyarankan edit, admin approve.</p>
-          </div>
-        </div>
-      </div>
-      <ul class="dash-list" data-edit-policy>
-        <li><strong>Auto approve</strong><span>Hanya berlaku jika admin membuat rule aktif untuk staff tertentu.</span></li>
-        <li><strong>Area kerja</strong><span>Dashboard ini hanya untuk franchisee.id.</span></li>
-      </ul>
     </section>
   </div>
 </section>

@@ -1,8 +1,11 @@
 ---
 import DashboardOcrPanel from "../../components/dashboard/DashboardOcrPanel.astro";
-import DashboardOperationsPanel from "../../components/dashboard/DashboardOperationsPanel.astro";
+import DashboardIntegrationPanel from "../../components/dashboard/DashboardIntegrationPanel.astro";
+import DashboardLeadsPanel from "../../components/dashboard/DashboardLeadsPanel.astro";
+import DashboardPremiumPanel from "../../components/dashboard/DashboardPremiumPanel.astro";
 import DashboardPublicationPanel from "../../components/dashboard/DashboardPublicationPanel.astro";
 import DashboardReviewPanel from "../../components/dashboard/DashboardReviewPanel.astro";
+import DashboardSystemPanel from "../../components/dashboard/DashboardSystemPanel.astro";
 import { OCR_PROVIDER_FIELD_NAMES, OCR_PROVIDER_METADATA } from "../../lib/ocr-provider-metadata.js";
 
 export const prerender = true;
@@ -32,6 +35,7 @@ const ocrProviderMetadataJson = JSON.stringify({
     <link rel="stylesheet" href="/css/dashboard-auth.css">
     <link rel="stylesheet" href="/css/dashboard-review.css">
     <link rel="stylesheet" href="/css/dashboard-operations.css">
+    <link rel="stylesheet" href="/css/dashboard-integration.css">
     <link rel="stylesheet" href="/css/dashboard-premium.css">
     <link rel="stylesheet" href="/css/dashboard-ocr.css">
     <link rel="stylesheet" href="/css/dashboard-ocr-settings.css?v=20260711-ocr-css-split">
@@ -114,13 +118,25 @@ const ocrProviderMetadataJson = JSON.stringify({
             <i class="fas fa-clipboard-check dash-tab-icon" aria-hidden="true"></i>
             Review
           </button>
-          <button class="dash-tab" type="button" role="tab" id="dash-tab-operations" aria-controls="dash-panel-operations" aria-selected="false" data-dashboard-tab="operations">
-            <i class="fas fa-cogs dash-tab-icon" aria-hidden="true"></i>
-            Operations
+          <button class="dash-tab" type="button" role="tab" id="dash-tab-leads" aria-controls="dash-panel-leads" aria-selected="false" data-dashboard-tab="leads">
+            <i class="fas fa-users dash-tab-icon" aria-hidden="true"></i>
+            Leads
           </button>
           <button class="dash-tab" type="button" role="tab" id="dash-tab-publication" aria-controls="dash-panel-publication" aria-selected="false" data-dashboard-tab="publication">
             <i class="fas fa-network-wired dash-tab-icon" aria-hidden="true"></i>
             Publikasi
+          </button>
+          <button class="dash-tab" type="button" role="tab" id="dash-tab-premium" aria-controls="dash-panel-premium" aria-selected="false" data-dashboard-tab="premium">
+            <i class="fas fa-crown dash-tab-icon" aria-hidden="true"></i>
+            Premium
+          </button>
+          <button class="dash-tab" type="button" role="tab" id="dash-tab-system" aria-controls="dash-panel-system" aria-selected="false" data-dashboard-tab="system">
+            <i class="fas fa-heartbeat dash-tab-icon" aria-hidden="true"></i>
+            Sistem
+          </button>
+          <button class="dash-tab" type="button" role="tab" id="dash-tab-integration" aria-controls="dash-panel-integration" aria-selected="false" data-dashboard-tab="integration">
+            <i class="fas fa-plug dash-tab-icon" aria-hidden="true"></i>
+            Integrasi
           </button>
           <button class="dash-tab" type="button" role="tab" id="dash-tab-ocr" aria-controls="dash-panel-ocr" aria-selected="false" data-dashboard-tab="ocr">
             <i class="fas fa-file-alt dash-tab-icon" aria-hidden="true"></i>
@@ -197,9 +213,15 @@ const ocrProviderMetadataJson = JSON.stringify({
 
           <DashboardReviewPanel />
 
-          <DashboardOperationsPanel />
+          <DashboardLeadsPanel />
 
           <DashboardPublicationPanel />
+
+          <DashboardPremiumPanel />
+
+          <DashboardSystemPanel />
+
+          <DashboardIntegrationPanel />
 
           <DashboardOcrPanel />
         </section>

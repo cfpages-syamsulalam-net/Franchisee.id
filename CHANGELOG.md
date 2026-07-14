@@ -4,6 +4,22 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-14 18:52 (Asia/Jakarta)
+### Added
+- `src/components/dashboard/DashboardLeadsPanel.astro`, `src/components/dashboard/DashboardPremiumPanel.astro`, `src/components/dashboard/DashboardSystemPanel.astro`, and `src/components/dashboard/DashboardIntegrationPanel.astro`: Added focused dashboard tabs split from the former Operations tab.
+- `css/dashboard-integration.css`: Added full-width in-dashboard documentation styling for navigation, step-by-step sections, and official setup links.
+- `.context/session-20260714-1852.md`: Added this session continuity snapshot for the Operations tab revamp and dashboard integration guide rewrite.
+
+### Changed
+- `src/pages/dashboard/index.astro`: Replaced the overloaded Operations tab with Leads, Premium, Sistem, and Integrasi tabs; loaded the new integration stylesheet.
+- `src/components/dashboard/DashboardIntegrationGuide.astro` and `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: Reworked the setup guide into beginner-friendly step-by-step documentation with same-page navigation and official reference links.
+- `js/dashboard-admin.js`: Routed dashboard setup deep links to the Integrasi tab and kept the old `#operations` hash working by aliasing it to `#system`.
+- `scripts/check-dashboard-ocr-client.mjs`: Updated dashboard component assertion sources after the tab split.
+- `DASHBOARD.md`, `docs/README.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the new tab structure and full-width integration guide.
+
+### Removed
+- `src/components/dashboard/DashboardOperationsPanel.astro`: Removed the former overloaded Operations tab component after moving its content into focused tabs.
+
 ## 2026-07-14 16:39 (Asia/Jakarta)
 ### Added
 - `src/components/dashboard/DashboardPublicationPanel.astro`: Added a dedicated dashboard Publikasi tab panel for network publication controls.

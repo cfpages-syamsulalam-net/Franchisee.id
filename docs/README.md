@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-07-13 21:04 (Asia/Jakarta)
+Last updated: 2026-07-14 18:52 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -16,7 +16,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/OCR_PROVIDER_STRATEGY.md`: ranked OCR free-tier providers, quota-aware rotation policy, encrypted dashboard credentials, admin-triggered OCR job integration, and protected worker/backfill controls.
 - `docs/architecture/OCR_BATCH_SCHEDULING.md`: scheduler/cron provider ranking and recommended persisted-batch design for draining up to 100 OCR jobs with delay/rate limiting.
 - `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: OCR result sampling, AI extraction/review plan, supplemental insight data model, and dynamic public listing tab recommendations.
-- `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: focused third-party setup reference for `/dashboard` warnings and in-app integration guide anchors.
+- `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: focused step-by-step third-party setup reference for `/dashboard` warnings and in-app integration guide anchors.
 - `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: listing detail page compactness, claim CTA, and Cloudflare Pages Function request-limit tracker.

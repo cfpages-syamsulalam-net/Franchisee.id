@@ -1,33 +1,127 @@
-<section class="dash-panel dash-panel-wide" id="dashboard-setup-guide" aria-labelledby="dashboard-setup-guide-title">
+<section class="dash-panel dash-panel-wide dash-doc-panel" id="dashboard-setup-guide" aria-labelledby="dashboard-setup-guide-title">
   <div class="dash-panel-header">
     <div class="dash-panel-title">
       <i class="fas fa-plug dash-section-icon" aria-hidden="true"></i>
       <div>
         <h2 id="dashboard-setup-guide-title">Panduan Integrasi Dashboard</h2>
-        <p>Checklist integrasi pihak ketiga yang membuat fitur operasional dashboard berjalan penuh.</p>
+        <p>Langkah setup pihak ketiga yang membuat fitur dashboard berjalan penuh.</p>
       </div>
     </div>
   </div>
-  <div class="dash-publication-grid" aria-label="Panduan integrasi dashboard">
-    <article class="dash-publication-cell" id="google-contacts-setup">
-      <span><strong>Google Contacts Outreach</strong></span>
-      <span>Aktifkan Google People API di project Google Cloud yang dipakai untuk OAuth. Tambahkan scope <code>https://www.googleapis.com/auth/contacts</code> ke koneksi Google di Clerk, simpan perubahan, lalu minta staff login ulang dengan Google agar token baru membawa izin kontak.</span>
+
+  <nav class="dash-doc-nav" aria-label="Daftar panduan integrasi">
+    <a href="#google-contacts-setup"><i class="fab fa-google" aria-hidden="true"></i><span>Google Contacts</span></a>
+    <a href="#ocr-provider-setup"><i class="fas fa-file-alt" aria-hidden="true"></i><span>Provider OCR</span></a>
+    <a href="#ocr-scheduler-setup"><i class="fas fa-clock" aria-hidden="true"></i><span>Scheduler OCR</span></a>
+    <a href="#email-delivery-setup"><i class="fas fa-envelope" aria-hidden="true"></i><span>Email Premium</span></a>
+    <a href="#publish-automation-setup"><i class="fas fa-rocket" aria-hidden="true"></i><span>Publish Automation</span></a>
+  </nav>
+
+  <div class="dash-doc-sections">
+    <article class="dash-doc-section" id="google-contacts-setup">
+      <div class="dash-doc-section-head">
+        <div>
+          <h3>Google Contacts Outreach</h3>
+          <p>Dipakai tombol <strong>Simpan kontak</strong> di tab Outreach agar kontak franchisor tersimpan ke Google Contacts akun staff yang sedang login.</p>
+        </div>
+        <span class="dash-doc-status">Butuh Google + Clerk</span>
+      </div>
+      <ol class="dash-doc-steps">
+        <li>Buka <a href="https://console.cloud.google.com/apis/library/people.googleapis.com" target="_blank" rel="noopener">Google Cloud People API</a>, pilih project OAuth yang sama dengan koneksi Google di Clerk, lalu klik <strong>Enable</strong>.</li>
+        <li>Buka <a href="https://dashboard.clerk.com/last-active?path=user-authentication%2Fsso-connections" target="_blank" rel="noopener">Clerk SSO Connections</a>, pilih koneksi Google production, dan pastikan koneksi memakai custom Google credential.</li>
+        <li>Tambahkan scope <code>https://www.googleapis.com/auth/contacts</code> ke konfigurasi Google OAuth di Clerk.</li>
+        <li>Simpan konfigurasi Clerk. Setelah itu minta staff logout lalu login ulang dengan Google, karena izin baru hanya ikut di token OAuth baru.</li>
+        <li>Coba lagi tombol <strong>Simpan kontak</strong>. Jika masih gagal, pastikan akun staff login dengan Google, bukan email/password biasa.</li>
+      </ol>
+      <div class="dash-doc-links">
+        <a href="https://developers.google.com/people/api/rest/v1/people/batchCreateContacts" target="_blank" rel="noopener">Referensi People API batch create</a>
+        <a href="https://clerk.com/docs/guides/configure/auth-strategies/social-connections/google" target="_blank" rel="noopener">Panduan Google social connection Clerk</a>
+      </div>
     </article>
-    <article class="dash-publication-cell" id="ocr-provider-setup">
-      <span><strong>Provider OCR</strong></span>
-      <span>Siapkan secret Cloudflare Pages <code>OCR_KEY</code>, lalu isi credential provider OCR dari tab OCR. Jalankan dry-run satu aset sebelum menjalankan batch besar.</span>
+
+    <article class="dash-doc-section" id="ocr-provider-setup">
+      <div class="dash-doc-section-head">
+        <div>
+          <h3>Provider OCR</h3>
+          <p>Dipakai untuk membaca teks dari brosur/proposal gambar sebelum data masuk ke Review OCR.</p>
+        </div>
+        <span class="dash-doc-status">Butuh secret OCR_KEY</span>
+      </div>
+      <ol class="dash-doc-steps">
+        <li>Buka Cloudflare Pages project, masuk ke <strong>Settings</strong>, lalu buka bagian environment variables/secrets.</li>
+        <li>Tambahkan secret <code>OCR_KEY</code>. Nilainya harus stabil; jika diganti, credential OCR lama yang terenkripsi dengan key lama tidak bisa dibaca.</li>
+        <li>Buka tab OCR di dashboard, pilih provider, lalu isi credential yang diminta provider tersebut.</li>
+        <li>Aktifkan provider dari daftar prioritas provider setelah credential tersimpan.</li>
+        <li>Jalankan <strong>Dry run 1 aset</strong>. Lanjutkan batch besar hanya jika dry-run berhasil dan hasil teks masuk akal.</li>
+      </ol>
+      <div class="dash-doc-links">
+        <a href="https://developers.cloudflare.com/pages/configuration/build-configuration/#environment-variables" target="_blank" rel="noopener">Cloudflare Pages environment variables</a>
+        <a href="/dashboard/#ocr" rel="noopener">Buka tab OCR</a>
+      </div>
     </article>
-    <article class="dash-publication-cell" id="ocr-scheduler-setup">
-      <span><strong>Scheduler OCR</strong></span>
-      <span>Siapkan <code>OCR_SECRET</code> dan credential scheduler yang dipilih. Untuk QStash, pastikan URL worker dan token valid sebelum mulai batch OCR besar.</span>
+
+    <article class="dash-doc-section" id="ocr-scheduler-setup">
+      <div class="dash-doc-section-head">
+        <div>
+          <h3>Scheduler OCR</h3>
+          <p>Dipakai agar OCR batch tetap jalan lewat worker walau browser staff ditutup atau tab tidak aktif.</p>
+        </div>
+        <span class="dash-doc-status">Opsional tapi disarankan</span>
+      </div>
+      <ol class="dash-doc-steps">
+        <li>Tambahkan Cloudflare secret <code>OCR_SECRET</code>. Secret ini melindungi endpoint worker OCR.</li>
+        <li>Jika memakai QStash, buka Upstash QStash dan siapkan token yang bisa publish request ke URL worker.</li>
+        <li>Di tab OCR, buka pengaturan scheduler, pilih provider scheduler, lalu isi token dan URL tujuan.</li>
+        <li>Simpan konfigurasi. Dashboard akan menjalankan preflight sebelum membuat batch besar.</li>
+        <li>Jika preflight gagal, cek lagi token, URL worker, dan nilai <code>OCR_SECRET</code>.</li>
+      </ol>
+      <div class="dash-doc-links">
+        <a href="https://upstash.com/docs/qstash/overall/getstarted" target="_blank" rel="noopener">QStash getting started</a>
+        <a href="https://developers.cloudflare.com/pages/functions/bindings/" target="_blank" rel="noopener">Cloudflare Pages Functions bindings</a>
+      </div>
     </article>
-    <article class="dash-publication-cell" id="email-delivery-setup">
-      <span><strong>Email Premium</strong></span>
-      <span>Siapkan Resend, verifikasi DNS domain pengirim, lalu isi <code>RESEND_API_KEY</code>, <code>PREMIUM_EMAIL_FROM</code>, dan <code>PREMIUM_EMAIL_WORKER_SECRET</code> sebagai secret Cloudflare/GitHub sesuai worker yang dipakai.</span>
+
+    <article class="dash-doc-section" id="email-delivery-setup">
+      <div class="dash-doc-section-head">
+        <div>
+          <h3>Email Premium</h3>
+          <p>Dipakai untuk email pembayaran, renewal, grace period, dan laporan Premium.</p>
+        </div>
+        <span class="dash-doc-status">Butuh Resend + DNS</span>
+      </div>
+      <ol class="dash-doc-steps">
+        <li>Buka Resend, tambahkan domain pengirim, lalu ikuti instruksi DNS sampai status domain verified.</li>
+        <li>Tambahkan secret <code>RESEND_API_KEY</code> ke environment yang dipakai email worker.</li>
+        <li>Isi <code>PREMIUM_EMAIL_FROM</code>, misalnya <code>Franchisee.id &lt;premium@domainanda.id&gt;</code>.</li>
+        <li>Jika balasan harus masuk ke alamat lain, isi <code>PREMIUM_EMAIL_REPLY_TO</code>.</li>
+        <li>Tambahkan <code>PREMIUM_EMAIL_WORKER_SECRET</code>, lalu jalankan worker email atau tunggu scheduler yang memanggil worker.</li>
+      </ol>
+      <div class="dash-doc-links">
+        <a href="https://resend.com/docs/dashboard/domains/introduction" target="_blank" rel="noopener">Resend domain verification</a>
+        <a href="https://resend.com/docs/api-reference/emails/send-email" target="_blank" rel="noopener">Resend send email API</a>
+      </div>
     </article>
-    <article class="dash-publication-cell" id="publish-automation-setup">
-      <span><strong>Publish Automation</strong></span>
-      <span>Pastikan Cloudflare Pages build command memakai <code>pnpm run build</code> atau <code>pnpm run build:astro</code>, D1 binding <code>franchise_db</code> aktif, dan deploy hook tersedia untuk poller publish.</span>
+
+    <article class="dash-doc-section" id="publish-automation-setup">
+      <div class="dash-doc-section-head">
+        <div>
+          <h3>Publish Automation</h3>
+          <p>Dipakai agar edit yang sudah di-approve masuk ke halaman publik setelah build/deploy berjalan.</p>
+        </div>
+        <span class="dash-doc-status">Butuh Cloudflare Pages + D1</span>
+      </div>
+      <ol class="dash-doc-steps">
+        <li>Di Cloudflare Pages, set build command ke <code>pnpm run build</code> atau <code>pnpm run build:astro</code>.</li>
+        <li>Set output directory ke <code>dist</code>.</li>
+        <li>Pastikan binding D1 bernama <code>franchise_db</code> tersedia untuk Pages Functions.</li>
+        <li>Pastikan Pages build punya credential yang diperlukan builder untuk membaca D1 saat build.</li>
+        <li>Buat atau cek deploy hook untuk poller publish. Setelah edit publik di-approve, queue publish harus bisa memicu deploy dari hook tersebut.</li>
+      </ol>
+      <div class="dash-doc-links">
+        <a href="https://developers.cloudflare.com/pages/configuration/build-configuration/" target="_blank" rel="noopener">Cloudflare Pages build configuration</a>
+        <a href="https://developers.cloudflare.com/pages/functions/bindings/" target="_blank" rel="noopener">Cloudflare Pages bindings</a>
+        <a href="https://developers.cloudflare.com/pages/configuration/deploy-hooks/" target="_blank" rel="noopener">Cloudflare Pages deploy hooks</a>
+      </div>
     </article>
   </div>
 </section>

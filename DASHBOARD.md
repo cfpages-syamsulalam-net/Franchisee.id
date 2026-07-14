@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-13 21:04 (Asia/Jakarta)
+Last updated: 2026-07-14 18:52 (Asia/Jakarta)
 
 ## Purpose
 
@@ -31,7 +31,7 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 
 ## Integration Documentation
 
-Third-party setup details for `/dashboard` live in `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`. The Operations tab renders the compact in-app version from `src/components/dashboard/DashboardIntegrationGuide.astro`, and blocked dashboard warnings should link to its stable anchors such as `/dashboard/#google-contacts-setup`.
+Third-party setup details for `/dashboard` live in `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`. The Integrasi tab renders the full in-app step-by-step version from `src/components/dashboard/DashboardIntegrationGuide.astro`, and blocked dashboard warnings should link to its stable anchors such as `/dashboard/#google-contacts-setup`.
 
 ## Progress Tracker
 
@@ -39,7 +39,7 @@ Third-party setup details for `/dashboard` live in `docs/architecture/DASHBOARD_
 | --- | --- | --- |
 | `/dashboard` route | Implemented | `src/pages/dashboard/index.astro` builds a static protected dashboard shell. Sensitive data loads only from the protected API. |
 | Dashboard auth | Implemented | `functions/dashboard-data.js` requires D1 role `staff`; existing auth helper allows `admin` as elevated access. |
-| Dashboard tab UI | Implemented | `/dashboard` now groups detailed panels into icon-led tabs: Outreach, Data Quality, Review, and Operations. |
+| Dashboard tab UI | Implemented | `/dashboard` now groups detailed panels into icon-led tabs: Outreach, Data Quality, Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR. |
 | Overview metrics | Implemented | Total listings, unclaimed, verified/premium, missing image/contact/description, and publish queue counts come from D1. |
 | Unclaimed outreach queue | Implemented | Shows unclaimed published listings with mobile/WhatsApp-capable phone data and generates `wa.me` claim-notification links. |
 | Google Contacts bulk save | Implemented | Outreach can create up to 200 Google Contacts from the current unclaimed outreach queue in one protected action so brand names appear before staff sends WhatsApp messages. It searches existing Google Contacts first and skips duplicate phone numbers. If Google Contacts scope/token is missing, the dashboard returns setup guidance instead of silently failing. |
@@ -60,7 +60,7 @@ Third-party setup details for `/dashboard` live in `docs/architecture/DASHBOARD_
 | OCR provider activation and retry UX | In Progress | 2026-07-08 request tracker: move provider active/disabled control out of credential form and into Prioritas Provider OCR only, fix confusing autosave path that can leave providers disabled after credential tinkering, disable all OCR execution buttons when no active provider is available, make batch failed retry visually clear, and make per-row failed OCR action run OCR immediately rather than only returning the job to pending. |
 | Dashboard action-icon UX audit | In Progress | 2026-07-08 UX audit: OCR job rows should use generous status/action icons, compact action text, tooltip explanations, better row layout, and consistent button alignment. Expand this dashboard-wide pattern gradually: every ambiguous operational action should have an icon plus short label, and state should use visual symbols such as checkmark/success and x/failed where the icon improves scan speed. |
 | Dashboard auth loading skeleton | In Progress | 2026-07-08 UX audit: `/dashboard` should show a neutral loading skeleton while Clerk/session/dashboard authorization is being checked. The login form should only appear after the app knows there is no usable session or the session is expired/unauthorized. |
-| Dashboard CSS modularization | Implemented | 2026-07-08 maintainability audit: `css/dashboard.css` grew too large. Split is now done for auth loading, OCR, Review/Data Quality, Operations/admin helpers, and Premium Operations styles; `css/dashboard.css` remains the shared shell/base stylesheet. |
+| Dashboard CSS modularization | Implemented | 2026-07-08 maintainability audit: `css/dashboard.css` grew too large. Split is now done for auth loading, OCR, Review/Data Quality, operations/admin helpers, integration docs, and Premium Operations styles; `css/dashboard.css` remains the shared shell/base stylesheet. |
 | Brochure overlay navigation polish | Implemented | 2026-07-08 request tracker completed: proposal previous/next hit areas are transparent gradient overlays that appear only while the cursor is moving over the image, then auto-hide after 1 second of no pointer movement even if still hovering. OCR enqueue button alignment/icon was fixed at the same time. |
 | Listing operations editor | Implemented MVP | Listing selector plus structured JSON diff form covers all whitelisted public listing fields. A richer field-by-field drawer can be added later. |
 | Leads/commercial view | Implemented read-only MVP | Reads `franchise_leads` status counts and recent leads. Payment/subscription revenue metrics remain pending. |

@@ -25,12 +25,15 @@
   var dashboardUtils = window.FranchiseDashboardUtils;
   var escapeHtml = dashboardUtils.escapeHtml;
   var DASHBOARD_DEEP_LINK_TABS = {
-    "dashboard-setup-guide": "operations",
-    "google-contacts-setup": "operations",
-    "ocr-provider-setup": "operations",
-    "ocr-scheduler-setup": "operations",
-    "email-delivery-setup": "operations",
-    "publish-automation-setup": "operations"
+    "dashboard-setup-guide": "integration",
+    "google-contacts-setup": "integration",
+    "ocr-provider-setup": "integration",
+    "ocr-scheduler-setup": "integration",
+    "email-delivery-setup": "integration",
+    "publish-automation-setup": "integration"
+  };
+  var DASHBOARD_TAB_ALIASES = {
+    operations: "system"
   };
   var dashboardOperations = window.FranchiseDashboardOperations.createOperations({
     outreachRows: document.querySelector("[data-outreach-rows]"),
@@ -167,11 +170,13 @@
     if (dashboardTabs.some(function (tab) {
       return tab.getAttribute("data-dashboard-tab") === hash;
     })) return hash;
+    if (DASHBOARD_TAB_ALIASES[hash]) return DASHBOARD_TAB_ALIASES[hash];
     return DASHBOARD_DEEP_LINK_TABS[hash] || "outreach";
   }
 
   function activateDashboardTab(name, updateHash) {
     if (!name) name = "outreach";
+    if (DASHBOARD_TAB_ALIASES[name]) name = DASHBOARD_TAB_ALIASES[name];
     dashboardTabs.forEach(function (tab) {
       var active = tab.getAttribute("data-dashboard-tab") === name;
       tab.setAttribute("aria-selected", active ? "true" : "false");
