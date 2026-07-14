@@ -1,6 +1,6 @@
 # SUGGESTION.md - Assistant Recommendations
 
-Last updated: 2026-07-13 21:04 (Asia/Jakarta)
+Last updated: 2026-07-14 16:39 (Asia/Jakarta)
 
 ## Purpose
 This file is exclusively for Codex/assistant suggestions. It is where I record improvement ideas I notice while working on the project: product value, UX, reliability, performance, security, data quality, operations, migration safety, and developer workflow.
@@ -109,3 +109,4 @@ User decisions remain authoritative. This file is not a replacement for `AGENTS.
 | 88 | Outreach reliability | Done | Add duplicate detection before creating Google Contacts. | The new bulk-save action creates contacts in the linked Google account; repeated clicks could create duplicates if Google already has that phone number. | Implemented a People API `searchContacts` warmup/search pass before `batchCreateContacts`, normalizing `+62` and local `08...` formats, then skipping contacts whose phone number already exists or is duplicated within the current queue. |
 | 89 | Dashboard maintainability | Done | Extract large dashboard tab markup into Astro components. | The dashboard route had become a slow review surface for layout work, and moving large static panels into components reduces accidental route churn while preserving browser data hooks. | Added `DashboardReviewPanel.astro`, `DashboardOperationsPanel.astro`, and `DashboardOcrPanel.astro`; `src/pages/dashboard/index.astro` now stays a route assembler for metadata, tabs, CSS, and script order. |
 | 90 | Dashboard operations docs | Done | Centralize third-party dashboard setup documentation. | Dashboard warnings need trustworthy setup links, but keeping integration instructions inside the general dashboard plan would duplicate operational docs and make future shared UI harder. | Added `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md` plus `DashboardIntegrationGuide.astro`; Google Contacts setup warnings now link to the stable `/dashboard/#google-contacts-setup` anchor. |
+| 91 | Dashboard maintainability | Suggested | Split publication controls into a focused browser module if the new Publikasi tab gains filters, search, or bulk actions. | The UI is now a dedicated tab, but rendering still lives in `js/dashboard-operations.js` to keep this change small. More publication workflows would make that module a mixed responsibility again. | Keep as-is for the current narrow tab split; extract `js/dashboard-publication.js` when publication controls grow beyond per-site status updates. |

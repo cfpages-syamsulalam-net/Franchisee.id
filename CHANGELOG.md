@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-14 16:39 (Asia/Jakarta)
+### Added
+- `src/components/dashboard/DashboardPublicationPanel.astro`: Added a dedicated dashboard Publikasi tab panel for network publication controls.
+- `.context/session-20260714-1639.md`: Added this session continuity snapshot for the Publikasi tab split.
+
+### Changed
+- `src/pages/dashboard/index.astro`: Added the `Publikasi` dashboard tab and mounted the new publication panel component.
+- `src/components/dashboard/DashboardOperationsPanel.astro`: Removed the narrow embedded Publikasi Network table from Operations.
+- `js/dashboard-admin.js` and `js/dashboard-operations.js`: Wired the separated publication count/container hooks and rendered publication controls as per-listing cards with per-site status badges, public links, and selects.
+- `css/dashboard-operations.css`: Added responsive card/grid styling for the new Publikasi tab UI.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Documented the new tab/component boundary and publication module follow-up.
+
 ## 2026-07-14 01:26 (Asia/Jakarta)
 ### Added
 - `.context/session-20260714-0126.md`: Added this session continuity snapshot for dashboard documentation deep-link behavior.

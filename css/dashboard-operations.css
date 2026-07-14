@@ -27,6 +27,198 @@
   width: 100%;
 }
 
+.dash-publication-panel {
+  overflow: visible;
+}
+
+.dash-publication-intro {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--dash-line);
+  background: #fffaf0;
+}
+
+.dash-publication-intro div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dash-publication-intro strong {
+  color: var(--dash-ink);
+  font-size: 14px;
+}
+
+.dash-publication-intro span {
+  color: var(--dash-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dash-publication-legend {
+  align-content: start;
+  display: flex !important;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 420px;
+}
+
+.dash-publication-list {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+
+.dash-publication-item {
+  border: 1px solid var(--dash-border);
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dash-publication-item-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--dash-line);
+  background: #fffdf8;
+}
+
+.dash-publication-item-head div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dash-publication-item-head strong {
+  color: var(--dash-ink);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.dash-publication-item-head span {
+  color: var(--dash-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dash-publication-summary {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #edf7f1;
+  color: var(--dash-good) !important;
+  padding: 5px 9px;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+}
+
+.dash-publication-site-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+  padding: 12px;
+}
+
+.dash-publication-site {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  border-left: 4px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dash-publication-site.is-published {
+  border-left-color: var(--dash-good);
+}
+
+.dash-publication-site.is-hidden {
+  border-left-color: var(--dash-warn);
+}
+
+.dash-publication-site.is-archived {
+  border-left-color: var(--dash-bad);
+}
+
+.dash-publication-site.is-disabled {
+  background: #f8fafc;
+}
+
+.dash-publication-site-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dash-publication-site-head > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--dash-ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.dash-publication-site-meta {
+  color: var(--dash-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dash-publication-site-meta a {
+  color: var(--dash-ink);
+  font-weight: 900;
+}
+
+.dash-publication-site select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid rgba(17, 24, 39, 0.14);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--dash-ink);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.dash-publication-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: #eef2f7;
+  color: #475569 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  line-height: 1;
+}
+
+.dash-publication-status.is-published {
+  background: #dff3e8;
+  color: var(--dash-good) !important;
+}
+
+.dash-publication-status.is-hidden {
+  background: #fff3bf;
+  color: var(--dash-warn) !important;
+}
+
+.dash-publication-status.is-archived {
+  background: #fde3e3;
+  color: var(--dash-bad) !important;
+}
+
 .dash-check-row {
   display: flex !important;
   flex-direction: row !important;
@@ -40,4 +232,22 @@
   height: 18px;
   margin: 0;
   flex: 0 0 auto;
+}
+
+@media (max-width: 760px) {
+  .dash-publication-intro,
+  .dash-publication-item-head,
+  .dash-publication-site-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dash-publication-legend {
+    justify-content: flex-start;
+    max-width: none;
+  }
+
+  .dash-publication-site-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

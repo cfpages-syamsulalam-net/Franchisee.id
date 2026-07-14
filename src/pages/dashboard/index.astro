@@ -1,6 +1,7 @@
 ---
 import DashboardOcrPanel from "../../components/dashboard/DashboardOcrPanel.astro";
 import DashboardOperationsPanel from "../../components/dashboard/DashboardOperationsPanel.astro";
+import DashboardPublicationPanel from "../../components/dashboard/DashboardPublicationPanel.astro";
 import DashboardReviewPanel from "../../components/dashboard/DashboardReviewPanel.astro";
 import { OCR_PROVIDER_FIELD_NAMES, OCR_PROVIDER_METADATA } from "../../lib/ocr-provider-metadata.js";
 
@@ -117,6 +118,10 @@ const ocrProviderMetadataJson = JSON.stringify({
             <i class="fas fa-cogs dash-tab-icon" aria-hidden="true"></i>
             Operations
           </button>
+          <button class="dash-tab" type="button" role="tab" id="dash-tab-publication" aria-controls="dash-panel-publication" aria-selected="false" data-dashboard-tab="publication">
+            <i class="fas fa-network-wired dash-tab-icon" aria-hidden="true"></i>
+            Publikasi
+          </button>
           <button class="dash-tab" type="button" role="tab" id="dash-tab-ocr" aria-controls="dash-panel-ocr" aria-selected="false" data-dashboard-tab="ocr">
             <i class="fas fa-file-alt dash-tab-icon" aria-hidden="true"></i>
             OCR
@@ -193,6 +198,8 @@ const ocrProviderMetadataJson = JSON.stringify({
           <DashboardReviewPanel />
 
           <DashboardOperationsPanel />
+
+          <DashboardPublicationPanel />
 
           <DashboardOcrPanel />
         </section>

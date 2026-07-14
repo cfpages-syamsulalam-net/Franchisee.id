@@ -39,6 +39,7 @@
     premiumPaymentRows: document.querySelector("[data-premium-payment-rows]"),
     publishState: document.querySelector("[data-publish-state]"),
     publicationRows: document.querySelector("[data-publication-rows]"),
+    publicationCount: document.querySelector("[data-publication-count]"),
     leadSummary: document.querySelector("[data-lead-summary]"),
     systemHealth: document.querySelector("[data-system-health]"),
     trafficGuardrails: document.querySelector("[data-traffic-guardrails]"),

@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-14 01:26 (Asia/Jakarta)
+Last updated: 2026-07-14 16:39 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -332,11 +332,11 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-operations.js`
 *General Operations client module for `/dashboard`.*
-- `window.FranchiseDashboardOperations.createOperations(options)`: Creates the outreach, publish, Premium payment review, publication-control, lead, health, and traffic-guardrail renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`.
-- `render(data)`: Fans dashboard API data into outreach, Premium payment review, publish queue, publication controls, leads, health, and traffic guardrail panels.
+- `window.FranchiseDashboardOperations.createOperations(options)`: Creates the outreach, publish, Premium payment review, Publikasi tab, lead, health, and traffic-guardrail renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`.
+- `render(data)`: Fans dashboard API data into outreach, Premium payment review, publish queue, the separated Publikasi tab, leads, health, and traffic guardrail panels.
 - `renderOutreach()` / `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Renders staff-personal WhatsApp outreach rows, injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, and records manually confirmed outreach through `/dashboard-data`.
 - `renderPremiumPayments()` / `reviewPremiumPayment()`: Renders icon-only admin approval/rejection controls for pending Premium confirmations.
-- `renderPublicationControls()` / `updatePublicationStatus()`: Renders network publication controls and posts admin status changes.
+- `renderPublicationControls()` / `updatePublicationStatus()`: Renders network publication controls as per-listing cards with per-site status controls, status badges, public links, and posts admin status changes.
 - `renderLeads()` / `renderHealth()` / `renderTrafficGuardrails()`: Renders lead rows, system health summaries, and Cloudflare Free-plan limit/throttle visibility.
 
 ### File: `js/dashboard-ocr.js`
@@ -735,7 +735,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads dashboard base/auth/OCR styles plus auth/tooltips/utilities, Premium, Review, Operations, OCR, and controller client modules; shows a skeleton while the session is checked and marks the login-only staff/admin auth root with `data-auth-defer="true"` so it is only mounted when no Clerk session exists or the session must be renewed.
-- Renders the branded route shell, metrics, Outreach and Data Quality tabs inline, then delegates Review, Operations, and OCR tab markup to focused Astro components. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` and loads the split OCR browser modules before the coordinator facade. Runtime authorization remains server-side.
+- Renders the branded route shell, metrics, Outreach and Data Quality tabs inline, then delegates Review, Operations, Publikasi, and OCR tab markup to focused Astro components. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` and loads the split OCR browser modules before the coordinator facade. Runtime authorization remains server-side.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
@@ -748,8 +748,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `src/components/dashboard/DashboardOperationsPanel.astro`
 *Static dashboard Operations tab component.*
-- Owns Operations panel HTML for publish queue, network publications, leads, Premium Operations, system health, traffic guardrail, dashboard integration guide placement, and staff edit policy.
+- Owns Operations panel HTML for publish queue, leads, Premium Operations, system health, traffic guardrail, dashboard integration guide placement, and staff edit policy.
 - Preserves the containers rendered by `js/dashboard-operations.js` and `js/dashboard-premium-operations.js`.
+
+### File: `src/components/dashboard/DashboardPublicationPanel.astro`
+*Static dashboard Publikasi tab component.*
+- Owns the separated Publikasi Network panel with the count badge, status legend, and card-list container for per-listing publication controls.
+- Preserves the `data-publication-rows` and `data-publication-count` hooks rendered by `js/dashboard-operations.js`.
 
 ### File: `src/components/dashboard/DashboardIntegrationGuide.astro`
 *Static dashboard documentation component.*

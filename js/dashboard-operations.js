@@ -14,6 +14,7 @@
     var premiumPaymentRows = options.premiumPaymentRows;
     var publishState = options.publishState;
     var publicationRows = options.publicationRows;
+    var publicationCount = options.publicationCount;
     var leadSummary = options.leadSummary;
     var systemHealth = options.systemHealth;
     var trafficGuardrails = options.trafficGuardrails;
@@ -161,26 +162,41 @@
       if (!publicationRows) return;
       var sites = data.sites || [];
       var listings = data.listings || [];
+      if (publicationCount) {
+        publicationCount.textContent = listings.length ? listings.length + " listing" : "0 listing";
+      }
       if (!listings.length) {
-        publicationRows.innerHTML = '<tr><td colspan="2" class="dash-empty">Belum ada data publikasi.</td></tr>';
+        publicationRows.innerHTML = '<div class="dash-empty">Belum ada data publikasi.</div>';
         return;
       }
-      publicationRows.innerHTML = listings.slice(0, 40).map(function (row) {
+      publicationRows.innerHTML = listings.slice(0, 80).map(function (row) {
         var publications = row.publications || [];
-        return '<tr>' +
-          '<td><strong>' + escapeHtml(row.brand_name || row.franchise_id) + '</strong><br><span class="dash-muted">' + escapeHtml(row.franchise_id) + '</span></td>' +
-          '<td><div class="dash-publication-grid">' + sites.map(function (site) {
+        var publishedCount = publications.filter(function (item) { return item.publication_status === "published"; }).length;
+        return '<article class="dash-publication-item">' +
+          '<div class="dash-publication-item-head">' +
+            '<div>' +
+              '<strong>' + escapeHtml(row.brand_name || row.franchise_id) + '</strong>' +
+              '<span>' + escapeHtml(row.franchise_id) + '</span>' +
+            '</div>' +
+            '<span class="dash-publication-summary">' + escapeHtml(publishedCount + "/" + sites.length + " published") + '</span>' +
+          '</div>' +
+          '<div class="dash-publication-site-grid">' + sites.map(function (site) {
             var publication = publications.find(function (item) { return item.site_id === site.id; });
             var status = publication ? publication.publication_status : "draft";
             var disabled = !options.isAdmin() || !publication;
-            return '<label class="dash-publication-cell">' +
-              '<span>' + escapeHtml(site.domain || site.name || site.id) + '</span>' +
-              '<select data-publication-status data-last-value="' + escapeAttr(status) + '" data-franchise-id="' + escapeAttr(row.franchise_id) + '" data-site-id="' + escapeAttr(site.id) + '" ' + (disabled ? "disabled" : "") + '>' +
+            var url = publication && publication.canonical_url ? publication.canonical_url : "";
+            return '<label class="dash-publication-site is-' + escapeAttr(publicationStatusClass(status)) + (disabled ? ' is-disabled' : '') + '">' +
+              '<span class="dash-publication-site-head">' +
+                '<span>' + escapeHtml(site.domain || site.name || site.id) + '</span>' +
+                '<span class="dash-publication-status is-' + escapeAttr(publicationStatusClass(status)) + '">' + escapeHtml(publicationStatusLabel(status)) + '</span>' +
+              '</span>' +
+              '<span class="dash-publication-site-meta">' + escapeHtml(site.is_active ? "Situs aktif" : "Situs nonaktif") + (url ? ' · <a href="' + escapeAttr(url) + '" target="_blank" rel="noopener">Buka</a>' : '') + '</span>' +
+              '<select data-publication-status data-last-value="' + escapeAttr(status) + '" data-franchise-id="' + escapeAttr(row.franchise_id) + '" data-site-id="' + escapeAttr(site.id) + '" ' + (disabled ? "disabled" : "") + ' aria-label="Status publikasi ' + escapeAttr(row.brand_name || row.franchise_id) + ' di ' + escapeAttr(site.domain || site.name || site.id) + '">' +
                 publicationStatusOptions(status) +
               '</select>' +
             '</label>';
-          }).join("") + '</div></td>' +
-        '</tr>';
+          }).join("") + '</div>' +
+        '</article>';
       }).join("");
 
       publicationRows.querySelectorAll("[data-publication-status]").forEach(function (select) {
@@ -250,8 +266,26 @@
 
     function publicationStatusOptions(selected) {
       return ["draft", "published", "hidden", "archived"].map(function (status) {
-        return '<option value="' + escapeAttr(status) + '"' + (status === selected ? " selected" : "") + '>' + escapeHtml(status) + '</option>';
+        return '<option value="' + escapeAttr(status) + '"' + (status === selected ? " selected" : "") + '>' + escapeHtml(publicationStatusLabel(status)) + '</option>';
       }).join("");
+    }
+
+    function publicationStatusLabel(status) {
+      return {
+        draft: "Draft",
+        published: "Published",
+        hidden: "Hidden",
+        archived: "Archived",
+      }[status] || status || "Draft";
+    }
+
+    function publicationStatusClass(status) {
+      return {
+        draft: "draft",
+        published: "published",
+        hidden: "hidden",
+        archived: "archived",
+      }[status] || "draft";
     }
 
     async function logOutreach(link) {
