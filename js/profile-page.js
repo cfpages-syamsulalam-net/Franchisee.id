@@ -32,6 +32,10 @@
   } = ProfileUi;
   const root = document.querySelector("[data-profile-root]");
   if (!root || !Auth) return;
+  if (!window.FranchiseFetch || typeof window.FranchiseFetch.readJson !== "function") {
+    root.innerHTML = errorBox("Runtime profil belum siap. Muat ulang halaman.");
+    return;
+  }
 
   const state = {
     data: null,
@@ -156,7 +160,7 @@
   async function loadProfile() {
     const headers = await Auth.getAuthHeaders();
     const response = await fetch("/profile-data", { headers });
-    const payload = await response.json();
+    const payload = await readProfileJson(response, "Profil gagal dimuat.");
     if (!payload.success) throw new Error(payload.message || "Profil gagal dimuat.");
     state.data = payload;
     if (!state.selectedFranchiseId && payload.owned_franchises?.length) {
@@ -511,7 +515,7 @@
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify(body),
       });
-      const payload = await response.json();
+      const payload = await readProfileJson(response, "Perubahan akun belum bisa disimpan.");
       if (!payload.success) throw new Error(payload.message || "Data gagal disimpan.");
       setMessage(message, "Tersimpan.", "success");
       state.accountEditingField = "";
@@ -581,7 +585,7 @@
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({ action: "add_public_role", role }),
       });
-      const payload = await response.json();
+      const payload = await readProfileJson(response, "Akses akun belum bisa ditambahkan.");
       if (!payload.success) throw new Error(payload.message || "Akses belum bisa ditambahkan.");
       window.location.href = `/daftar/?role=${encodeURIComponent(role)}&continue=1`;
     } catch (error) {
@@ -609,7 +613,7 @@
           buyer_context: getBuyerContext(),
         }),
       });
-      const payload = await response.json();
+      const payload = await readProfileJson(response, "Akses akun belum bisa dihapus.");
       if (!payload.success) throw new Error(payload.message || "Permintaan info belum terkirim.");
       state.opportunityMessage = { type: "success", text: payload.already_sent ? "Anda sudah pernah meminta info untuk brand ini." : "Permintaan info terkirim." };
       state.opportunityBusyId = "";
@@ -732,7 +736,7 @@
           franchise_id: franchiseId,
         }),
       });
-      const payload = await response.json();
+      const payload = await readProfileJson(response, "Peluang belum bisa disimpan.");
       if (!payload.success) throw new Error(payload.message || "Peluang belum bisa disimpan.");
       state.savedOpportunities = payload.saved_opportunities || state.savedOpportunities;
       state.data.saved_opportunities = state.savedOpportunities;
@@ -777,7 +781,7 @@
         headers,
         body,
       });
-      const payload = await response.json();
+      const payload = await readProfileJson(response, "File belum bisa diunggah.");
       if (!payload.success) throw new Error(payload.message || "File belum bisa diunggah.");
       const asset = payload.asset || {};
       if (asset.field && asset.public_url) {
@@ -811,7 +815,7 @@
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({ action: "update_franchise_lead_status", lead_id: leadId, status }),
       });
-      const payload = await response.json();
+      const payload = await readProfileJson(response, "Status lead belum bisa disimpan.");
       if (!payload.success) throw new Error(payload.message || "Status lead belum bisa disimpan.");
       state.data.franchisor_leads = payload.franchisor_leads || state.data.franchisor_leads || [];
       state.leadMessage = { type: "success", text: "Status lead tersimpan." };
@@ -835,7 +839,7 @@
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({ action: "create_premium_order", franchise_id: franchiseId }),
       });
-      const payload = await response.json();
+      const payload = await readProfileJson(response, "Tagihan Premium belum bisa dibuat.");
       if (!payload.success) throw new Error(payload.message || "Tagihan Premium belum bisa dibuat.");
       const membership = state.data.premium_membership || { orders: [], subscriptions: [] };
       membership.orders = [payload.order].concat((membership.orders || []).filter((order) => order.id !== payload.order.id));
@@ -871,7 +875,7 @@
           headers,
           body: upload,
         });
-        const uploadPayload = await uploadResponse.json();
+        const uploadPayload = await readProfileJson(uploadResponse, "Bukti transfer belum bisa diunggah.");
         if (!uploadPayload.success) throw new Error(uploadPayload.message || "Bukti transfer belum bisa diunggah.");
         body.proof_asset_id = uploadPayload.asset && uploadPayload.asset.id;
       }
@@ -881,7 +885,7 @@
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify(body),
       });
-      const payload = await response.json();
+      const payload = await readProfileJson(response, "Konfirmasi belum bisa dikirim.");
       if (!payload.success) throw new Error(payload.message || "Konfirmasi belum bisa dikirim.");
       if (payload.premium_membership) state.data.premium_membership = payload.premium_membership;
       state.premiumMessage = { type: "success", text: payload.message || "Konfirmasi pembayaran sudah dikirim." };
@@ -893,6 +897,10 @@
       setBusy(form, false);
       render();
     }
+  }
+
+  async function readProfileJson(response, fallbackMessage) {
+    return window.FranchiseFetch.readJson(response, fallbackMessage || "Permintaan profil gagal.");
   }
 
   function parseLocationRows(value) {

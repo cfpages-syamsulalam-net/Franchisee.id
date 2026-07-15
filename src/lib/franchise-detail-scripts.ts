@@ -88,7 +88,9 @@ async function downloadProposalPdf(button) {
     if (!response.ok) {
       var message = "PDF belum bisa dibuat. Coba ulangi beberapa saat lagi.";
       try {
-        var payload = await response.json();
+        var payload = window.FranchiseFetch && typeof window.FranchiseFetch.readJson === "function"
+          ? await window.FranchiseFetch.readJson(response, message)
+          : null;
         if (payload && payload.message) message = payload.message;
       } catch (_jsonError) {}
       throw new Error(message);

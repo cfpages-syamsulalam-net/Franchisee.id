@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!headers.Authorization) return;
         const response = await fetch('/profile-data', { headers });
         if (!response.ok) return;
-        const profile = await response.json();
+        const profile = await window.FranchiseFetch.readJson(response, 'Profil belum bisa dicek.');
         if (!profile.success) return;
 
         const franchiseeComplete = Boolean(profile.completion && profile.completion.franchisee);

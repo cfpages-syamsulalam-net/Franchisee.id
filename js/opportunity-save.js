@@ -1,6 +1,7 @@
 (function (window, document) {
   const Auth = window.FranchiseAuth;
-  if (!Auth) return;
+  const FetchJson = window.FranchiseFetch;
+  if (!Auth || !FetchJson) return;
 
   document.addEventListener("click", async function (event) {
     const inquiryButton = event.target.closest("[data-create-franchise-inquiry]");
@@ -38,7 +39,7 @@
           franchise_id: franchiseId,
         }),
       });
-      const payload = await response.json();
+      const payload = await FetchJson.readJson(response, "Peluang belum bisa disimpan.");
       if (!payload.success) {
         setActionMessage(button, payload, "Peluang belum bisa disimpan.", "error");
         return;
@@ -79,7 +80,7 @@
           buyer_context: getBuyerContext(),
         }),
       });
-      const payload = await response.json();
+      const payload = await FetchJson.readJson(response, "Permintaan info belum terkirim.");
       if (!payload.success) {
         setActionMessage(button, payload, "Permintaan info belum terkirim.", "error");
         return;

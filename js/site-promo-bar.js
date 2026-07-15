@@ -32,7 +32,11 @@
     var cached = readCachedPromo();
     if (cached) return Promise.resolve(cached);
     return fetch("/premium-promo", { headers: { accept: "application/json" } })
-      .then(function (response) { return response.ok ? response.json() : null; })
+      .then(function (response) {
+        if (!response.ok) return null;
+        if (!window.FranchiseFetch || typeof window.FranchiseFetch.readJson !== "function") return null;
+        return window.FranchiseFetch.readJson(response, "Promo Premium belum bisa dimuat.");
+      })
       .then(function (promo) {
         writeCachedPromo(promo);
         return promo;

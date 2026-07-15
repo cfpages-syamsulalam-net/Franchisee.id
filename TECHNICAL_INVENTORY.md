@@ -122,6 +122,11 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - `window.removeErrorMsg(inputField)`: Clears validation errors.
 - `window.validateSpecificField(field)`: Detailed regex-based field validation (enhanced email, country-aware WhatsApp validation, Indonesia-only auto-formatting).
 
+### File: `js/fetch-json.js`
+*Shared browser JSON response helper.*
+- `window.FranchiseFetch.readJson(response, options)`: Reads response text before parsing JSON and returns a consistent `{ success: false, error, status, message }` payload for empty or non-JSON HTTP responses.
+- `window.FranchiseFetch.fetchJson(input, init, options)`: Convenience wrapper that returns `{ response, data }` for fetch calls that want the raw `Response` plus guarded JSON data.
+
 ### File: `js/auth-clerk-debug.js`
 *Masked auth diagnostics module for custom ClerkJS surfaces.*
 - `window.FranchiseAuthDebug.create(options)`: Creates diagnostics helpers bound to `window.FranchiseAuth` and runtime storage/redirect callbacks.
@@ -138,7 +143,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - `createClerkInstance()` / `loadClerkInstance()`: Supports both constructor-style and singleton-style ClerkJS CDN initialization.
 - `Auth.activateSession(clerk, sessionId)`: Shared created-session activation helper for email/password, reset-password, registration, and OAuth fallback flows; calls `clerk.setActive()`, refreshes Clerk resources, records masked debug state, and fails before redirect if the browser still has no active Clerk session.
 - `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
-- `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign explicit or pending self-selectable `franchisee`/`franchisor` roles.
+- `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign explicit or pending self-selectable `franchisee`/`franchisor` roles. Uses `window.FranchiseFetch.readJson()` so empty 405/non-JSON responses show an actionable auth message instead of a parser exception.
 - `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
 - `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to shared created-session activation with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
 
@@ -425,7 +430,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
-- `boot()` / `showLoadingPanel(message)` / `showLoginPanel(message, isError)`: Initializes `window.FranchiseAuth`, shows a skeleton while auth/dashboard authorization is processing, only shows and force-mounts the login form after no usable session or an auth error is known, reads auth headers, handles locked/login states, and fetches `/dashboard-data`.
+- `boot()` / `showLoadingPanel(message)` / `showLoginPanel(message, isError)`: Initializes `window.FranchiseAuth`, shows a skeleton while auth/dashboard authorization is processing, only shows and force-mounts the login form after no usable session or an auth error is known, reads auth headers, handles locked/login states, and fetches `/dashboard-data` through `window.FranchiseFetch` for empty/non-JSON HTTP responses.
 - `readDashboardCache()` / `writeDashboardCache(data)` / `clearDashboardCache()`: Maintains a short `sessionStorage` cache for successful dashboard payloads keyed to the active Clerk user id and active session. Cached data can render immediately after Clerk init, then `/dashboard-data` refreshes live; missing/expired authorization clears the cache and relocks the protected shell.
 - `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR, including arrow/Home/End keyboard navigation. The old `operations` hash aliases to `system`.
 - `bindDashboardDeepLinks()` / `activateDashboardDeepLink(targetId)`: Maps documentation anchors such as `google-contacts-setup`, `ocr-provider-setup`, and `publish-automation-setup` to the Integrasi tab, updates same-page hash clicks, and scrolls/focuses the target after its tab panel is visible.
@@ -1038,6 +1043,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 ### File: `functions/auth-sync.js`
 *Clerk-to-D1 user mapping endpoint.*
 - `onRequestPost()`: Validates optional requested role with Zod, verifies Clerk session, upserts D1 `users`, assigns allowed role, syncs Clerk metadata from D1, and returns user/role summary.
+- Unsupported methods return JSON 405 responses with `Allow: POST` so staff login never sees an empty method-error body.
 
 ### File: `functions/clerk-webhook.js`
 *Verified Clerk lifecycle webhook for Clerk-to-D1 sync.*
@@ -1055,6 +1061,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 *Thin protected Franchisee.id dashboard router.*
 - `onRequestGet()`: Requires Clerk auth plus D1 `staff` through `requireD1UserFast()` for already-synced users; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch/enrichment-review state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
 - `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows plus `update_outreach_status` to `_dashboard-actions.js`, bulk outreach contact save to `_google-contacts.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, OCR retry/no-text job actions to `_ocr-job-actions.js`, OCR batch start/retry actions to `_ocr-batch-runs.js`, OCR enrichment bundle creation to `_ocr-enrichment-review.js`, D1 migration-ledger reconciliation to `_d1-maintenance.js`, and OCR dry-run/enqueue/run/search actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
+- Unsupported write-like methods return JSON 405 responses with `Allow: GET, POST`.
 - `_ocr-batch-runs.js` owns persisted batch creation/progress/retry; `_ocr-job-actions.js` owns dashboard retry/no-text mutations; `_ocr-enrichment-review.js` owns grouped per-franchise OCR review bundles; `_ocr-job-runner.js` stays focused on job processing and OCR provider execution.
 - `requireDashboardAccess(request, env, options)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs. `options.fast` is used only for GET refreshes and falls back to full sync when needed.
 

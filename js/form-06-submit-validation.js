@@ -136,7 +136,7 @@
                 body: JSON.stringify(data)
             });
 
-            const result = await response.json();
+            const result = await window.FranchiseFetch.readJson(response, 'Pendaftaran belum bisa dikirim.');
             if (result.success) {
                 if (btn) btn.innerHTML = '<i class="fas fa-check"></i> Berhasil!';
                 const nextTarget = FF.formSuccessNextUrl();

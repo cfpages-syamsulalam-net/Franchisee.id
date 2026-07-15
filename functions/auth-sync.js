@@ -7,6 +7,22 @@ const SyncSchema = z
   })
   .passthrough();
 
+export async function onRequestGet() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPut() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPatch() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestDelete() {
+  return methodNotAllowedResponse();
+}
+
 export async function onRequestPost({ request, env }) {
   try {
     if (!env.franchise_db) {
@@ -56,6 +72,17 @@ export async function onRequestPost({ request, env }) {
       { status: 500 }
     );
   }
+}
+
+function methodNotAllowedResponse() {
+  return jsonResponse(
+    {
+      success: false,
+      error: "METHOD_NOT_ALLOWED",
+      message: "Sesi akun hanya bisa disinkronkan dari tombol login. Muat ulang halaman lalu login kembali.",
+    },
+    { status: 405, headers: { Allow: "POST" } }
+  );
 }
 
 function jsonResponse(body, init = {}) {

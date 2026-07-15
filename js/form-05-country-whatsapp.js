@@ -69,7 +69,7 @@
         try {
             const response = await fetch('/json/country-metadata.json');
             if (!response.ok) return;
-            const payload = await response.json();
+            const payload = await window.FranchiseFetch.readJson(response, 'Data negara belum bisa dimuat.');
             if (typeof FF.setCountryMetadata === 'function') FF.setCountryMetadata(payload);
             FF.applyCountryCodeOptions((payload || []).map((country) => ({
                 code: country.dialCode,

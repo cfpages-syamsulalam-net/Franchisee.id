@@ -241,7 +241,7 @@
                     })
                 });
                 
-                const result = await response.json();
+                const result = await window.FranchiseFetch.readJson(response, 'Data test belum bisa dibuat.');
                 
                 if (result.success) {
                     // Search for the brand
@@ -285,7 +285,7 @@
                     })
                 });
                 
-                const result = await response.json();
+                const result = await window.FranchiseFetch.readJson(response, 'Data test belum bisa dihapus.');
                 
                 if (result.success) {
                     this.showToast('✅ Cleared ' + (result.deleted || 0) + ' test records!');

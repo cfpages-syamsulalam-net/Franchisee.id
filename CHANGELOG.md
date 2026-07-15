@@ -4,6 +4,21 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-16 06:35 (Asia/Jakarta)
+### Added
+- `js/fetch-json.js`: Added shared browser JSON response helpers for guarded text-first parsing and fetch+JSON calls.
+
+### Changed
+- `js/auth-clerk-core.js`, `js/dashboard-admin.js`, `js/dashboard-premium-operations.js`, `js/profile-page.js`, `js/opportunity-save.js`, `js/form-02-claim-workflow.js`, `js/form-04-calculation-city.js`, `js/form-05-country-whatsapp.js`, `js/form-06-submit-validation.js`, `js/form-07-init.js`, `js/form-09-test-data-generator.js`, `js/site-promo-bar.js`, and `src/lib/franchise-detail-scripts.ts`: Replaced direct browser `response.json()` parsing with `window.FranchiseFetch.readJson()` so empty/non-JSON HTTP responses produce actionable messages.
+- `src/pages/dashboard/index.astro`, `src/pages/profil/index.astro`, `src/pages/premium/index.astro`, `src/pages/sso-callback/index.astro`, `login/index.html`, `register/index.html`, `daftar/index.html`, `templates/peluang-usaha-tpl.html`, and `templates/detail-franchise-tpl.html`: Loaded `js/fetch-json.js` before auth/profile/dashboard/form/public-save scripts that depend on guarded JSON parsing.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `SUGGESTION.md`, and `.context/session-20260715-1638.md`: Documented suggestion 96 implementation and marked it done.
+
+## 2026-07-16 06:01 (Asia/Jakarta)
+### Changed
+- `js/auth-clerk-core.js` and `js/dashboard-admin.js`: Hardened auth/dashboard response parsing so empty or non-JSON HTTP responses, including 405 responses, show actionable login/dashboard messages instead of `Unexpected end of JSON input`.
+- `functions/auth-sync.js` and `functions/dashboard-data.js`: Added JSON 405 responses for unsupported methods so browser clients always receive a machine-readable error body.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `.context/session-20260715-1638.md`, and `SUGGESTION.md`: Documented the dashboard auth 405/empty-response hardening and added follow-up suggestion 96 for a shared browser fetch/JSON helper.
+
 ## 2026-07-16 01:04 (Asia/Jakarta)
 ### Changed
 - `AGENTS.md`: Documented the firm Cloudflare two-token rule for this repository and the rule against leaving completed one-time storage backfills as normal dashboard controls.

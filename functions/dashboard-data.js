@@ -43,6 +43,18 @@ import { handleReconcileD1MigrationLedger } from "./_d1-maintenance.js";
 import { logOperationEvent } from "./_telemetry.js";
 import { OUTREACH_PIPELINE_STATUSES } from "../src/lib/outreach-pipeline.js";
 
+export async function onRequestPut() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPatch() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestDelete() {
+  return methodNotAllowedResponse();
+}
+
 export async function onRequestGet({ request, env }) {
   try {
     const auth = await requireDashboardAccess(request, env, { fast: true });
@@ -182,4 +194,15 @@ async function requireDashboardAccess(request, env, options = {}) {
     return requireD1UserFast(request, env, env.franchise_db, { requiredRole: "staff" });
   }
   return requireD1User(request, env, env.franchise_db, { requiredRole: "staff" });
+}
+
+function methodNotAllowedResponse() {
+  return jsonResponse(
+    {
+      success: false,
+      error: "METHOD_NOT_ALLOWED",
+      message: "Permintaan dashboard tidak dikenali. Muat ulang halaman lalu coba lagi.",
+    },
+    { status: 405, headers: { Allow: "GET, POST" } }
+  );
 }

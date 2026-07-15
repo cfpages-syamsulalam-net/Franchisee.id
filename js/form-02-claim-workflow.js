@@ -8,12 +8,12 @@
             console.log('🔍 Fetching unclaimed brands...');
             let response = await fetch('/json/unclaimed-brands.json');
             if (response.ok) {
-                S.unclaimedBrands = await response.json();
+                S.unclaimedBrands = await window.FranchiseFetch.readJson(response, 'Data brand belum bisa dimuat.');
                 console.log('✅ Loaded from Static JSON:', S.unclaimedBrands.length);
             } else {
                 console.log('⚠️ Static JSON not found, falling back to Live API...');
                 response = await fetch('/get-franchises?tab=UNCLAIMED&purpose=claim-search');
-                const result = await response.json();
+                const result = await window.FranchiseFetch.readJson(response, 'Data brand belum bisa dimuat.');
                 S.unclaimedBrands = result.data || [];
                 console.log('✅ Loaded from Live API:', S.unclaimedBrands.length);
             }

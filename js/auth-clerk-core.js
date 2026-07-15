@@ -35,6 +35,9 @@
     if (!window.FranchiseAuthDebug || typeof window.FranchiseAuthDebug.create !== "function") {
       throw new Error("FranchiseAuthDebug belum dimuat.");
     }
+    if (!window.FranchiseFetch || typeof window.FranchiseFetch.readJson !== "function") {
+      throw new Error("FranchiseFetch belum dimuat.");
+    }
 
     let clerkPromise = null;
     let syncedUser = null;
@@ -164,7 +167,7 @@
         },
         body: JSON.stringify(SELF_ASSIGNABLE_ROLES.has(requestedRole) ? { requested_role: requestedRole } : {}),
       });
-      const result = await response.json();
+      const result = await window.FranchiseFetch.readJson(response, "Sinkronisasi akun gagal.");
       if (!result.success) throw new Error(result.message || result.error || "Sinkronisasi akun gagal.");
       syncedUser = result.user;
       if (SELF_ASSIGNABLE_ROLES.has(requestedRole)) clearPendingRole();
@@ -240,7 +243,7 @@
         body: JSON.stringify({ requested_role: role }),
       })
         .then(async function (response) {
-          const result = await response.json();
+          const result = await window.FranchiseFetch.readJson(response, "Sinkronisasi akun gagal.");
           if (!result.success) throw new Error(result.message || result.error || "Sinkronisasi akun gagal.");
           syncedUser = result.user;
           clearPendingRole();
@@ -284,7 +287,7 @@
         const response = await fetch("/auth-config", { cache: "no-store" });
         recordDebug("config:response", { ok: response.ok, status: response.status });
         if (!response.ok) return { publishableKey: PUBLIC_CLERK_PUBLISHABLE_KEY, configured: true, source: "client-fallback" };
-        const config = await response.json();
+        const config = await window.FranchiseFetch.readJson(response, "Konfigurasi login gagal dimuat.");
         return {
           ...config,
           publishableKey: normalizePublishableKey(config.publishableKey) || PUBLIC_CLERK_PUBLISHABLE_KEY,

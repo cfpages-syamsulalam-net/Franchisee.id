@@ -1,4 +1,7 @@
 (function () {
+  if (!window.FranchiseFetch || typeof window.FranchiseFetch.readJson !== "function") {
+    throw new Error("FranchiseFetch belum dimuat.");
+  }
   var statusEl = document.querySelector("[data-dashboard-status]");
   var userEl = document.querySelector("[data-dashboard-user]");
   var mainEl = document.querySelector("[data-dashboard-protected]");
@@ -269,7 +272,7 @@
         showLoginPanel("Sesi login kedaluwarsa. Silakan login ulang.", true);
         return;
       }
-      var data = await response.json();
+      var data = await readDashboardJson(response, "Dashboard gagal dimuat.");
       if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat.");
       renderDashboard(data);
       writeDashboardCache(data);
@@ -317,7 +320,7 @@
   async function reloadDashboard() {
     var headers = await window.FranchiseAuth.getAuthHeaders();
     var response = await fetch("/dashboard-data", { headers: headers, cache: "no-store" });
-    var data = await response.json();
+    var data = await readDashboardJson(response, "Dashboard gagal dimuat ulang.");
     if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat ulang.");
     renderDashboard(data);
     writeDashboardCache(data);
@@ -330,13 +333,17 @@
       headers: Object.assign({ "Content-Type": "application/json" }, headers),
       body: JSON.stringify(payload)
     });
-    var result = await response.json().catch(function () { return {}; });
+    var result = await readDashboardJson(response, "Aksi dashboard gagal.").catch(function () { return {}; });
     if (!response.ok || !result.success) {
       var actionError = new Error(result.message || result.error || "Dashboard action failed.");
       actionError.dashboardResult = result;
       throw actionError;
     }
     return result;
+  }
+
+  async function readDashboardJson(response, fallbackMessage) {
+    return window.FranchiseFetch.readJson(response, fallbackMessage || "Permintaan dashboard gagal.");
   }
 
   function setMetric(name, value) {

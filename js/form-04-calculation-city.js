@@ -71,7 +71,7 @@
             try {
                 const res = await fetch(source);
                 if (!res.ok) continue;
-                const data = await res.json();
+                const data = await window.FranchiseFetch.readJson(res, 'Data kota belum bisa dimuat.');
                 if (Array.isArray(data) && data.length > 0) {
                     S.citiesData = data;
                     FF.initCityAutocomplete();

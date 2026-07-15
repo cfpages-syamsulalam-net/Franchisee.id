@@ -211,7 +211,7 @@
         headers: headers,
         body: uploadForm
       });
-      var result = await response.json().catch(function () { return {}; });
+      var result = await window.FranchiseFetch.readJson(response, "Gambar QRIS belum bisa diunggah.").catch(function () { return {}; });
       if (!response.ok || !result.success) throw new Error(result.message || "QRIS belum bisa diunggah.");
       return result.qris_image_url || "";
     }
