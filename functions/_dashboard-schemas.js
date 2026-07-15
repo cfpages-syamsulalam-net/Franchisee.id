@@ -7,7 +7,7 @@ import {
   sanitizeListingChanges,
 } from "./_shared-schemas.js";
 import { DASHBOARD_OCR_ACTION_SCHEMAS } from "./_dashboard-ocr-schemas.js";
-import { OUTREACH_PIPELINE_STATUS_VALUES } from "../src/lib/outreach-pipeline.js";
+import { OUTREACH_BURNED_REASON_VALUES, OUTREACH_PIPELINE_STATUS_VALUES } from "../src/lib/outreach-pipeline.js";
 
 export const SITE_ID = SITE_FRANCHISEE_ID;
 export const EDIT_FIELD_NAME = "json_diff";
@@ -32,11 +32,17 @@ const SaveOutreachGoogleContactsSchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(200),
 });
 
+const ReconcileD1MigrationLedgerSchema = z.object({
+  action: z.literal("reconcile_d1_migration_ledger"),
+});
+
 const UpdateOutreachStatusSchema = z.object({
   action: z.literal("update_outreach_status"),
   franchise_id: z.string().trim().min(1),
   status: z.enum(OUTREACH_PIPELINE_STATUS_VALUES),
   notes: z.string().trim().max(1000).optional().default(""),
+  burned_reason: z.enum(OUTREACH_BURNED_REASON_VALUES).optional().or(z.literal("")).default(""),
+  next_follow_up_at: z.string().trim().max(40).optional().or(z.literal("")).default(""),
 });
 
 const SuggestEditSchema = z.object({
@@ -134,6 +140,7 @@ const UpdatePremiumSettingsSchema = z.object({
 export const DashboardActionSchema = z.discriminatedUnion("action", [
   OutreachEventSchema,
   SaveOutreachGoogleContactsSchema,
+  ReconcileD1MigrationLedgerSchema,
   UpdateOutreachStatusSchema,
   SuggestEditSchema,
   ReviewEditSuggestionSchema,

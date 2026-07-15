@@ -1,4 +1,5 @@
 import { extractText, getDocumentProxy } from "unpdf";
+import { storeOcrTextObject } from "./_ocr-text-store.js";
 
 const MAX_STORED_TEXT_CHARS = 60_000;
 const SOURCE_NOISE_MARKERS = [String.fromCharCode(119, 97, 114, 97, 108, 97, 98, 97, 107, 117)];
@@ -28,21 +29,34 @@ export async function extractProposalKnowledge(arrayBuffer, listing) {
   };
 }
 
-export function proposalKnowledgeStatements(db, input) {
+export async function proposalKnowledgeStatements(db, input) {
   const knowledgeId = `knowledge_${randomId()}`;
   const sourceText = sanitizeProposalSourceText(input.result.sourceText || "").slice(0, MAX_STORED_TEXT_CHARS);
+  const storedText = await storeOcrTextObject(input.env, {
+    text: sourceText,
+    franchiseId: input.listing.id,
+    assetId: input.assetId,
+    contentHash: input.result.contentHash,
+    kind: input.result.method || "proposal",
+    method: input.result.method,
+  });
   const candidates = input.result.candidates || extractProposalCandidatesFromText(sourceText);
   const statements = [
     db
       .prepare(
         `INSERT INTO franchise_asset_knowledge (
            id, asset_id, franchise_id, extraction_method, extraction_status,
-           source_text, structured_data, page_count, error_message
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           source_text, source_text_r2_bucket, source_text_r2_key, source_text_preview, source_text_length,
+           structured_data, page_count, error_message
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(asset_id) DO UPDATE SET
            extraction_method = excluded.extraction_method,
            extraction_status = excluded.extraction_status,
            source_text = excluded.source_text,
+           source_text_r2_bucket = excluded.source_text_r2_bucket,
+           source_text_r2_key = excluded.source_text_r2_key,
+           source_text_preview = excluded.source_text_preview,
+           source_text_length = excluded.source_text_length,
            structured_data = excluded.structured_data,
            page_count = excluded.page_count,
            error_message = excluded.error_message,
@@ -54,7 +68,11 @@ export function proposalKnowledgeStatements(db, input) {
         input.listing.id,
         input.result.method,
         input.result.status,
-        sourceText || null,
+        storedText.legacyText || null,
+        storedText.bucket,
+        storedText.key,
+        storedText.preview || null,
+        storedText.length || 0,
         JSON.stringify(candidates),
         input.result.pageCount || null,
         input.result.errorMessage || null,

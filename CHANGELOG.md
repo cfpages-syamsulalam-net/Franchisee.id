@@ -4,6 +4,38 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-16 01:04 (Asia/Jakarta)
+### Changed
+- `AGENTS.md`: Documented the firm Cloudflare two-token rule for this repository and the rule against leaving completed one-time storage backfills as normal dashboard controls.
+- `scripts/migrate-ocr-text-to-r2.mjs`: Switched the OCR text backfill helper to use the saved `cfman` `franchise-network` token with explicit account id via `pnpm exec wrangler`, and stopped requesting unsupported remote D1 `VACUUM`.
+- `DASHBOARD.md`, `SUGGESTION.md`, `.context/session-20260715-1638.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Updated D1/R2 migration status after the remote backfill, telemetry cleanup, and migration-ledger reconciliation completed.
+- Remote D1: Migrated remaining OCR/proposal text bodies to R2 (`479` knowledge rows and `478` OCR cache rows), leaving zero legacy long-text rows in D1; pruned old `operation_events` telemetry before `2026-07-10`; reduced reported D1 size from roughly `501 MB` to `211 MB`; inserted verified `d1_migrations` ledger rows `0024` through `0032`; confirmed `wrangler d1 migrations list franchise_db --remote` reports no pending migrations.
+
+### Removed
+- `functions/_ocr-text-migration.js`, `functions/dashboard-data.js`, `functions/_dashboard-schemas.js`, `src/components/dashboard/DashboardOcrPanel.astro`, `js/dashboard-admin.js`, and `js/dashboard-ocr.js`: Removed the dashboard OCR text migration action/button after the one-time backfill completed so future OCR/proposal text storage is clearly R2-first.
+
+## 2026-07-15 21:20 (Asia/Jakarta)
+### Added
+- `functions/_ocr-text-store.js`: Added shared OCR/proposal text helpers that store long extracted text in R2 and keep only D1 preview, length, and object-key metadata.
+- `functions/_ocr-text-migration.js`: Added the admin dashboard action for migrating existing OCR/proposal text rows from D1 into R2, clearing the long D1 text fields only after each R2 write succeeds, and requesting `VACUUM` after the migration drains.
+- `functions/_d1-maintenance.js`: Added a schema-gated admin dashboard action for reconciling the D1 migration ledger through migration `0032` after live-schema verification.
+- `migrations/0031_ocr_text_r2_storage.sql`: Added R2 pointer/preview columns for `franchise_asset_knowledge` and `ocr_content_cache`.
+- `migrations/0032_sales_outreach_workflow_fields.sql`: Added measurable sales follow-up metadata to `listing_outreach_statuses`.
+- `scripts/migrate-ocr-text-to-r2.mjs`: Added a repeatable CLI helper for moving legacy OCR/proposal text from D1 to R2 when an R2-authorized Cloudflare token is available.
+
+### Changed
+- `functions/_proposal-knowledge.js`, `functions/profile-upload.js`, `functions/_ocr-job-runner.js`, `functions/_ocr-enrichment-review.js`, `functions/_dashboard-review-evidence.js`, and `scripts/enrich-ocr-structured-data.ts`: Changed new OCR/proposal text writes and reads to prefer R2-backed storage while preserving D1 previews for dashboard review/search.
+- `functions/dashboard-data.js` and `functions/_dashboard-schemas.js`: Routed the new `migrate_ocr_text_to_r2` and `reconcile_d1_migration_ledger` dashboard actions.
+- `src/components/dashboard/DashboardOcrPanel.astro`, `src/components/dashboard/DashboardSystemPanel.astro`, `js/dashboard-admin.js`, `js/dashboard-ocr.js`, and `js/dashboard-operations.js`: Added admin buttons for OCR text migration and D1 migration-ledger reconciliation.
+- `src/lib/outreach-pipeline.js`, `functions/_outreach-status.js`, `functions/_dashboard-actions.js`, `functions/_dashboard-queries.js`, `js/dashboard-outreach.js`, and `css/dashboard-operations.css`: Completed the measurable Outreach sales workflow with next-action instructions, SLA-aware follow-up dates, overdue filtering, notes, burned reasons, effective subscription/claim status, and conversion metrics.
+- `DASHBOARD.md`, `SUGGESTION.md`, `.context/session-20260715-1638.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the sales workflow, OCR R2 storage decision, and D1 cleanup path.
+- Remote D1: Applied `0031_ocr_text_r2_storage.sql` and `0032_sales_outreach_workflow_fields.sql` directly and verified their live columns. The historical OCR text backfill and migration-ledger reconciliation were completed in the 2026-07-16 follow-up entry above.
+
+## 2026-07-15 17:21 (Asia/Jakarta)
+### Added
+- `DASHBOARD.md`: Added the Sales System Operating Plan with measurable outcomes, pipeline playbook, staff instructions, follow-up cadence, measurement data needs, and an implementation tracker for the next Outreach dashboard improvements.
+- `SUGGESTION.md`: Added recommendation 95 for turning the Outreach board into a measurable staff work system.
+
 ## 2026-07-15 16:38 (Asia/Jakarta)
 ### Added
 - `src/lib/outreach-pipeline.js`: Added the shared canonical sales outreach pipeline status contract for dashboard UI and backend validation.

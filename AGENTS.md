@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-07-13 17:43 (Asia/Jakarta)
+Last updated: 2026-07-16 01:04 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -50,6 +50,8 @@ Last updated: 2026-07-13 17:43 (Asia/Jakarta)
 - Use `network_sites`, `franchise_site_publications`, subscriptions, entitlements, and `audit_events` to track where data came from and where it is published.
 - Use `cfman` for Cloudflare multi-account operations. Prefer an explicit account alias such as `franchise-network`: `npx cfman wrangler --account franchise-network d1 list`.
 - The `franchise-network` token may be valid but unable to call Cloudflare `/memberships`; for Wrangler D1 remote commands, set `CLOUDFLARE_ACCOUNT_ID=0ba63b7f0096bc267a93fe5c80b1f571` in the shell if account discovery fails with authentication error `10000`.
+- Do not conclude Cloudflare D1/R2 work is blocked after testing only the ambient `CLOUDFLARE_API_TOKEN`. This repo has two token paths: the shell env token and the saved `cfman` token for `franchise-network` in the user config. If one fails with `7403`, `10000`, account discovery, or Wrangler availability errors, test the other path directly by reading the saved `cfman` token into the child process environment without printing it, setting `CLOUDFLARE_ACCOUNT_ID=0ba63b7f0096bc267a93fe5c80b1f571`, and running `pnpm exec wrangler ...`. The 2026-07-15 OCR text migration showed the env token was unauthorized while the saved `cfman` token could access both D1 and R2.
+- Do not expose one-time data backfills as ordinary dashboard/product controls when the steady-state write path is already corrected. For storage migrations such as OCR text D1-to-R2, run the migration as an operator task/CLI, verify old rows are cleared and new writes go directly to R2, then remove or hide the temporary maintenance UI so staff do not think future data is expected to land in the wrong storage.
 - Run `cfman wrangler` commands sequentially; repeated immediate invocations can intermittently fail in this environment.
 - Never run remote `cfman`/Wrangler verification commands in parallel. Parallel remote D1 checks are known to fail with Wrangler availability/account-discovery errors; run them one by one only.
 - Do not add `account_id` to `wrangler.toml`; Cloudflare Pages config validation rejects it. Use the Cloudflare Pages project/account context, `cfman`, or GitHub `CLOUDFLARE_ACCOUNT_ID` env/vars for account selection.

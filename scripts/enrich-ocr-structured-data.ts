@@ -103,6 +103,8 @@ SELECT
   k.asset_id,
   k.franchise_id,
   k.source_text,
+  k.source_text_preview,
+  k.source_text_length,
   k.structured_data,
   f.brand_name,
   f.slug,
@@ -186,7 +188,7 @@ function buildSql(rows: KnowledgeRow[]) {
     changed++;
     changedFranchises.add(row.franchise_id);
     statements.push(
-      `UPDATE franchise_asset_knowledge SET source_text = ${sql(sourceText)}, structured_data = ${sql(nextStructured)}, updated_at = CURRENT_TIMESTAMP WHERE id = ${sql(row.id)};`,
+      `UPDATE franchise_asset_knowledge SET source_text = ${sql(sourceText)}, source_text_preview = ${sql(sourceText.slice(0, 1200))}, source_text_length = ${sourceText.length}, structured_data = ${sql(nextStructured)}, updated_at = CURRENT_TIMESTAMP WHERE id = ${sql(row.id)};`,
     );
   }
 

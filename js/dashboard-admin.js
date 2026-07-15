@@ -48,6 +48,7 @@
     leadSummary: document.querySelector("[data-lead-summary]"),
     systemHealth: document.querySelector("[data-system-health]"),
     trafficGuardrails: document.querySelector("[data-traffic-guardrails]"),
+    reconcileMigrationsButton: document.querySelector("[data-reconcile-d1-migrations]"),
     isAdmin: function () { return currentUserIsAdmin; },
     postDashboardAction: postDashboardAction,
     reloadDashboard: reloadDashboard,

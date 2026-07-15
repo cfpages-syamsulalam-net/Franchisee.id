@@ -168,10 +168,11 @@ async function loadOwnedListing(db, actor, franchiseId) {
 async function persistProposalKnowledge({ db, env, buffer, listing, assetId, actorUserId }) {
   try {
     const result = await extractProposalKnowledge(buffer, listing);
-    await db.batch(proposalKnowledgeStatements(db, {
+    await db.batch(await proposalKnowledgeStatements(db, {
       assetId,
       listing,
       result,
+      env,
       actorUserId,
       siteId: SITE_FRANCHISEE_ID,
     }));

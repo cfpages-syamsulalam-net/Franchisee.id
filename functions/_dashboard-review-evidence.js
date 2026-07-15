@@ -18,7 +18,7 @@ export async function attachDocumentSuggestionEvidence(db, rows) {
         k.franchise_id,
         k.asset_id,
         k.structured_data,
-        SUBSTR(COALESCE(k.source_text, ''), 1, 700) source_text_preview,
+        COALESCE(k.source_text_preview, SUBSTR(COALESCE(k.source_text, ''), 1, 700)) source_text_preview,
         COALESCE(a.display_order, 0) display_order,
         COALESCE(a.public_url, a.legacy_url) source_url
        FROM franchise_asset_knowledge k

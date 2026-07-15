@@ -28,6 +28,12 @@
       <ul class="dash-list" data-system-health>
         <li><span>Memuat health check...</span></li>
       </ul>
+      <div class="dash-toolbar dash-maintenance-toolbar" role="toolbar" aria-label="Aksi maintenance D1">
+        <button class="dash-icon-button dash-action-button" type="button" data-reconcile-d1-migrations data-fr-tooltip="Selaraskan ledger migrasi D1 untuk migrasi yang sudah ada di schema live agar runner tidak mencoba replay migration lama yang besar.">
+          <i class="fas fa-tasks" aria-hidden="true"></i>
+          <span>Reconcile migrations</span>
+        </button>
+      </div>
     </section>
 
     <section class="dash-panel">

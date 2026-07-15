@@ -14,10 +14,14 @@
     var leadSummary = options.leadSummary;
     var systemHealth = options.systemHealth;
     var trafficGuardrails = options.trafficGuardrails;
+    var reconcileMigrationsButton = options.reconcileMigrationsButton;
     var outreach = window.FranchiseDashboardOutreach.createOutreach(options);
+    if (reconcileMigrationsButton) {
+      reconcileMigrationsButton.addEventListener("click", reconcileD1MigrationLedger);
+    }
 
     function render(data) {
-      outreach.render(data.outreach_queue || [], data.outreach_summary || {}, data.outreach_pipeline || []);
+      outreach.render(data.outreach_queue || [], data.outreach_summary || {}, data.outreach_pipeline || [], data.user || {});
       renderPremiumPayments(data.pending_premium_payments || []);
       renderPublish(data.publish_state || {});
       renderPublicationControls(data.publication_controls || { sites: [], listings: [] });
@@ -248,6 +252,23 @@
         options.setStatus(error.message || "Status publikasi gagal diperbarui.", true);
       } finally {
         select.disabled = !options.isAdmin();
+      }
+    }
+
+    async function reconcileD1MigrationLedger() {
+      if (!options.isAdmin || !options.isAdmin()) {
+        options.setStatus("Hanya admin yang bisa reconcile ledger migrasi D1.", true);
+        return;
+      }
+      reconcileMigrationsButton.disabled = true;
+      try {
+        var result = await options.postDashboardAction({ action: "reconcile_d1_migration_ledger" });
+        options.setStatus(result.message || "Ledger migrasi D1 sudah diselaraskan.", false);
+        await options.reloadDashboard();
+      } catch (error) {
+        options.setStatus(error.message || "Ledger migrasi D1 gagal diselaraskan.", true);
+      } finally {
+        reconcileMigrationsButton.disabled = false;
       }
     }
 

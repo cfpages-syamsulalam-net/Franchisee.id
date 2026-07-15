@@ -253,8 +253,20 @@
   color: var(--dash-bad);
 }
 
+.dash-outreach-summary-pill.is-metric {
+  background: #111827;
+  color: #ffffff;
+}
+
+.dash-outreach-summary-pill.is-metric > span {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
 .dash-outreach-contact,
-.dash-outreach-meta {
+.dash-outreach-meta,
+.dash-outreach-next-action,
+.dash-outreach-reason {
   display: grid;
   gap: 5px;
 }
@@ -269,19 +281,55 @@
   overflow-wrap: anywhere;
 }
 
-.dash-outreach-status-control {
+.dash-outreach-next-action,
+.dash-outreach-reason {
+  background: #f8fafc;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.dash-outreach-next-action strong,
+.dash-outreach-reason strong {
+  color: var(--dash-ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.dash-outreach-next-action span,
+.dash-outreach-reason span {
+  color: var(--dash-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.dash-outreach-overdue {
+  color: var(--dash-bad) !important;
+  font-weight: 900 !important;
+}
+
+.dash-outreach-status-control,
+.dash-outreach-note,
+.dash-outreach-burned-reason {
   display: grid;
   gap: 5px;
 }
 
-.dash-outreach-status-control span {
+.dash-outreach-status-control span,
+.dash-outreach-note span,
+.dash-outreach-burned-reason span {
   color: var(--dash-muted);
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.dash-outreach-status-control select {
+.dash-outreach-status-control select,
+.dash-outreach-burned-reason select,
+.dash-outreach-note textarea,
+.dash-outreach-filter select {
   border: 1px solid rgba(17, 24, 39, 0.14);
   border-radius: 8px;
   color: var(--dash-ink);
@@ -291,6 +339,29 @@
   min-height: 38px;
   padding: 8px 10px;
   width: 100%;
+}
+
+.dash-outreach-note textarea {
+  min-height: 58px;
+  resize: vertical;
+}
+
+.dash-outreach-filter {
+  align-items: center;
+  display: inline-flex;
+  gap: 7px;
+}
+
+.dash-outreach-filter span {
+  color: var(--dash-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.dash-outreach-filter select {
+  min-height: 34px;
+  min-width: 132px;
+  width: auto;
 }
 
 .dash-outreach-actions .dash-toolbar {

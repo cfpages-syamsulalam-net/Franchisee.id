@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-15 16:38 (Asia/Jakarta)
+Last updated: 2026-07-15 21:20 (Asia/Jakarta)
 
 ## Purpose
 
@@ -33,6 +33,87 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 ## Integration Documentation
 
 Third-party setup details for `/dashboard` live in `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`. The Integrasi tab renders the full in-app step-by-step version from `src/components/dashboard/DashboardIntegrationGuide.astro`, and blocked dashboard warnings should link to its stable anchors such as `/dashboard/#google-contacts-setup`.
+
+## Sales System Operating Plan
+
+Goal: make Outreach a measurable staff work queue, not just a status board. Every card should tell staff what to do next, why it matters, and how success is measured.
+
+### Sales Outcomes
+
+| Outcome | Dashboard Metric | Target Behavior |
+| --- | --- | --- |
+| Contact coverage | Contact-ready brands with saved Google Contact and confirmed WhatsApp send | Staff clear `Uncontacted` and `Saved Contact` daily before starting too many deeper follow-ups. |
+| Response conversion | Brands moving from `Contacted` to `Responded` | Staff follow up overdue contacted brands before adding more first-contact volume. |
+| Claim conversion | Brands moving from `Responded` or `Qualified` to `Claim Started` and `Claimed` | Staff help interested brands finish the claim flow, not only send messages. |
+| Revenue conversion | Claimed brands moving to `Subscribed` | Staff know which claimed brands are ready for Premium or subscription outreach. |
+| Retention recovery | `Renewal Risk` brands recovered to `Subscribed` or moved to `Burned` | Staff act before a lapsed or silent brand disappears from the active funnel. |
+
+### Pipeline Playbook
+
+| Stage | Entry Criteria | Staff Next Action | Success Signal | Overdue Warning | Tool Integration |
+| --- | --- | --- | --- | --- | --- |
+| `Uncontacted` | Brand has usable WhatsApp/mobile contact and no confirmed outreach. | Click save to Google Contacts, then move/send from the saved-contact stage. | Google Contact exists for the linked staff account. | More than 1 business day in queue. | Google People API bulk save. |
+| `Saved Contact` | Contact was saved or already exists in Google Contacts. | Open WhatsApp, send the claim message, then confirm the send in dashboard. | `listing_outreach_events` records a sent WhatsApp attempt. | Same day if not sent. | Google Contacts, `wa.me`, outreach event log. |
+| `Contacted` | Staff confirmed a WhatsApp message was sent. | Wait for reply; if no reply, send follow-up using the recommended cadence. | Brand replies or asks for details. | No response after 3 business days. | Outreach history, follow-up reminder badge. |
+| `Responded` | Brand replied but qualification is incomplete. | Confirm owner/admin identity, decision maker, interest, and whether they want to claim listing or hear Premium offer. | Staff marks brand `Qualified` or moves to `Burned` with reason. | No next update after 2 business days. | Staff notes, claim link, listing profile data. |
+| `Qualified` | Brand is legitimate and there is a clear next commercial step. | Send claim link, explain free claim benefit, and prepare Premium pitch if appropriate. | Brand starts claim or requests subscription/payment steps. | No claim/payment action after 3 business days. | Claim URL, Premium readiness checklist, proposal/listing quality. |
+| `Claim Started` | Claim has been submitted or staff is actively helping the brand claim. | Help admin resolve evidence mismatch; nudge brand if evidence is incomplete. | Claim is approved and listing becomes owned/claimed. | Claim pending or incomplete after 2 business days. | Claim review queue, admin approval workflow. |
+| `Claimed` | Brand owns the listing but has no active subscription. | Pitch Premium/subscription using listing readiness and lead/traffic signals when available. | Owner submits payment confirmation or subscription becomes active. | Claimed more than 7 days without payment action. | Premium payment flow, readiness checklist, lead summary. |
+| `Subscribed` | Brand has an active paid subscription. | Monitor renewal window, listing completeness, and premium delivery issues. | Subscription remains active and renewal is prepared before expiry. | Enters renewal window with no renewal order/payment. | Premium subscription dates, notification/email queue. |
+| `Renewal Risk` | Subscription is near expiry, lapsed, or brand stopped responding. | Send renewal/recovery message, check owner concerns, then recover or mark burned. | Renewed subscription or explicit lost/no-response reason. | No response after 7 business days or grace period ends. | Premium lifecycle, queued reminders, staff notes. |
+| `Burned` | Brand is lost, unreachable, invalid, refuses, or subscription churn is confirmed. | Record concise reason and stop routine follow-up unless new evidence appears. | Clear lost reason is stored for reporting. | None; review monthly for reactivation candidates. | Outreach notes, future lost-reason report. |
+
+### Staff Dashboard Instructions
+
+- Each Outreach card should show one primary next action derived from its stage, such as "Simpan kontak", "Kirim WhatsApp", "Follow-up balasan", "Bantu klaim", "Tawarkan Premium", or "Pulihkan renewal".
+- Staff should not need to infer why a card appears in a column. Show the reason: missing claim, saved contact, last WhatsApp date, pending claim, active subscription, renewal risk, or burned reason.
+- Every manual move should allow a short note when the move needs context, especially `Responded`, `Qualified`, `Renewal Risk`, and `Burned`.
+- The Outreach tab badge should count actionable open work, excluding `Subscribed` and `Burned`.
+- Board summary should show stage counts plus conversion rates: contacted response rate, response-to-claim rate, claim-to-subscription rate, and renewal recovery rate.
+- Cards should be sortable by urgency: overdue follow-up first, then newest response, then highest commercial/readiness signal, then oldest uncontacted.
+
+### Follow-Up Cadence
+
+| Trigger | Recommended Action |
+| --- | --- |
+| New contact-ready brand | Save contact and send the first claim message within 1 business day. |
+| No reply after first contact | Follow up after 3 business days. |
+| Reply received | Qualify and set next status within 2 business days. |
+| Claim started | Check progress daily until approved, rejected, or blocked. |
+| Claimed but unpaid | Follow up with Premium/subscription value after 7 days, sooner if lead/readiness signals are strong. |
+| Subscription renewal window | Start renewal touchpoints 30 days before expiry, then 14, 7, and 1 day when email/notification queue supports it. |
+| No response after renewal risk | Move to `Burned` with reason after 7 business days or after grace-period downgrade completes. |
+
+### Sales Measurement Data Needed
+
+- `listing_outreach_statuses`: add or reuse `assigned_staff_user_id`, milestone timestamps, and notes for current stage ownership.
+- `listing_outreach_events`: continue recording every confirmed outreach, status move, follow-up, response, and lost reason as history.
+- `premium_subscriptions` and payment/order tables: provide active, expiring, lapsed, and renewed status for `Subscribed` and `Renewal Risk`.
+- `franchise_claims`: provide claim-started and claim-approved signals.
+- `premium_funnel_events`, `franchise_leads`, and product events: provide future prioritization and conversion context once signal quality is reliable.
+
+### Sales System Implementation Tracker
+
+| Work Item | Status | Notes |
+| --- | --- | --- |
+| Durable Kanban status storage | Implemented | `listing_outreach_statuses` stores current stage. |
+| Drag/drop board and status badge | Implemented | Outreach cards can move between canonical stages. |
+| Google Contacts and WhatsApp logging integration | Implemented | Contacts save to linked Google account; WhatsApp send requires staff confirmation. |
+| Stage-specific next-action copy on every card | Implemented | Cards show `Langkah berikutnya` and a stage-specific instruction from the shared pipeline contract. |
+| Overdue/follow-up SLA badges | Implemented | Status moves set `next_follow_up_at`; overdue rows show warning chips and sort ahead of lower-urgency work. |
+| Staff notes and move reason capture | Implemented | Cards include compact notes; status updates persist notes, and burned moves store a normalized burned reason. |
+| Sales conversion metrics | Implemented | Outreach summary shows response, response-to-claim, claim-to-subscription, and renewal recovery rates. |
+| Assignment and ownership filters | Implemented | Outreach filters include Hari ini, Perlu aksi, Overdue, Milik saya, Belum assigned, and Semua; status moves assign the acting staff user when empty. |
+| Lost/burned reason taxonomy | Implemented | `Burned` uses normalized reasons: no response, invalid contact, not interested, not owner, duplicate/closed, subscription churn, or other. |
+| Subscription-risk automation | Implemented | Active subscriptions render as `Subscribed`; lapsed/latest subscriptions without active status surface as `Renewal Risk` unless explicitly burned. |
+| Staff daily task view | Implemented | The default `Hari ini` filter combines overdue follow-ups, new contacts, replies/qualification, claim blockers, and renewal risks. |
+
+### D1/R2 OCR Text Storage
+
+- New OCR and proposal text writes store long extracted text in R2 under the existing `FRANCHISE_ASSETS` binding, while D1 keeps preview text, text length, and the R2 object key.
+- Historical remote D1 OCR text was migrated to R2 on 2026-07-16: `franchise_asset_knowledge.source_text` and `ocr_content_cache.text` have zero remaining long-text rows, while 479 knowledge rows and 478 cache rows now have R2 object keys.
+- The dashboard does not expose an OCR text migration button. The one-time backfill is complete, and future OCR/proposal writes should land in R2 first. The CLI helper `pnpm run ocr:text:migrate-r2 -- --all` remains only as an operator replay tool for another environment that still has legacy D1 text.
+- Remote D1 migration ledger rows `0024` through `0032` were reconciled after live-schema verification on 2026-07-16. To get below the write-size ceiling, old high-volume `operation_events` telemetry before 2026-07-10 was pruned; remote D1 dropped from roughly 501 MB to 211 MB and `wrangler d1 migrations list franchise_db --remote` reports no pending migrations.
 
 ## Progress Tracker
 
@@ -146,12 +227,14 @@ D1 additions:
 
 - `listing_outreach_events`: contact attempts, channel, number/email used, staff user, outcome, notes, message template version. Implemented in `migrations/0004_dashboard_operations.sql`.
 - `listing_outreach_statuses`: latest sales pipeline stage per listing/site, including assigned staff and milestone timestamps. Implemented in `migrations/0030_listing_outreach_statuses.sql`.
+- `listing_outreach_statuses.next_follow_up_at` / `burned_reason`: follow-up SLA and normalized lost/churn reason metadata for measurable sales operations. Implemented in `migrations/0032_sales_outreach_workflow_fields.sql`.
 - `staff_auto_approval_rules`: admin-managed staff auto-approval policy. Implemented in `migrations/0004_dashboard_operations.sql`.
 - `listing_edit_suggestions`: staff suggested edits and admin review state. Implemented in `migrations/0004_dashboard_operations.sql`.
 - `listing_quality_checks`: generated warnings and scores per listing. Pending; current MVP computes quality warnings at read time.
 - `claim_reviews`: review status, reviewer, decision reason, evidence snapshot. Pending; current MVP reuses `franchise_claims` fields.
 - `admin_notes`: internal notes attached to listing/user/claim. Pending.
 - `ocr_provider_configs`: provider priority, credentials, endpoint/model/account metadata, quota metadata, trial expiry, and health state. Implemented in `migrations/0020_ocr_provider_configs.sql`; credentials are never returned by dashboard reads.
+- `franchise_asset_knowledge.source_text_r2_*` and `ocr_content_cache.text_r2_*`: R2 pointers and previews for OCR/proposal text, keeping long text outside D1 after migration. Implemented in `migrations/0031_ocr_text_r2_storage.sql`.
 
 Existing tables to reuse:
 

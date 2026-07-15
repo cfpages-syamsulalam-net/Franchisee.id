@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-07-15 16:38 (Asia/Jakarta)
+Last updated: 2026-07-15 21:20 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -16,7 +16,7 @@ This document records stack decisions for the migration from a static WordPress 
 | Auth | Clerk for login/register and identity. | Clerk user ids map into D1 `users.clerk_user_id`. |
 | Roles | D1-authoritative roles: `franchisee`, `franchisor`, `admin`, `staff`. | Clerk metadata/session claims may cache small UI hints only; server authorization must verify D1 role/permission state. |
 | Public onboarding | Lightweight account creation happens in the custom Clerk auth UI; business/profile completion happens in `/daftar`. | Role must be selected before public registration, including Google SSO. `/daftar` keeps its URL but should be presented as profile/listing completion after login. See `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`. |
-| Assets | Cloudflare R2 for logos, covers, gallery images, proposal PDFs, and imported legacy assets. | D1 stores metadata and R2 object keys; R2 stores binary files. Proposal image downloads are composed server-side through `/proposal-download` so R2 browser CORS does not block watermarked PDFs. |
+| Assets | Cloudflare R2 for logos, covers, gallery images, proposal PDFs, imported legacy assets, and long OCR/proposal extracted text. | D1 stores metadata, previews, structured candidates, lengths, and R2 object keys; R2 stores binary files and full OCR/proposal text. Proposal image downloads are composed server-side through `/proposal-download` so R2 browser CORS does not block watermarked PDFs. |
 | Framework | Astro on Cloudflare by default. | Current workspace uses Astro 5.x because local Node is 20.19.4. Astro 6 requires Node >=22.12.0. Next.js remains an option only if dashboard complexity becomes strongly React-heavy. |
 | Styling | Existing CSS only unless explicitly approved. | Do not add a styling framework for the migration. |
 | Package manager | pnpm only. | Use `pnpm install`, `pnpm run`, and `pnpm exec`. |
@@ -190,7 +190,10 @@ Dashboard scaffold:
 - Dashboard MVP scope is Franchisee.id only (`site_franchisee_id`). Multi-site centralized dashboard work is deferred.
 - `migrations/0004_dashboard_operations.sql` adds `listing_outreach_events`, `staff_auto_approval_rules`, and `listing_edit_suggestions`.
 - `migrations/0007_contacts_quality_dashboard.sql` adds normalized contact and persistent quality-check tables for dashboard operations.
-- `migrations/0030_listing_outreach_statuses.sql` adds current sales outreach stage storage for the dashboard Kanban while keeping `listing_outreach_events` as the immutable outreach history. It was applied directly with D1 execute on 2026-07-15 because the standard migration runner was blocked by older pending migration `0024` hitting the current D1 size ceiling; the migration ledger still needs reconciliation after storage cleanup.
+- `migrations/0030_listing_outreach_statuses.sql` adds current sales outreach stage storage for the dashboard Kanban while keeping `listing_outreach_events` as the immutable outreach history. It was applied directly with D1 execute on 2026-07-15 and the migration ledger was reconciled on 2026-07-16 after live-schema verification.
+- `migrations/0031_ocr_text_r2_storage.sql` adds R2 pointer/preview columns for OCR/proposal text and was applied directly to remote `franchise_db` on 2026-07-15. New OCR/proposal text writes use R2 through `_ocr-text-store.js`; historical remote D1 OCR text was migrated to R2 on 2026-07-16, leaving zero long-text rows in D1.
+- `migrations/0032_sales_outreach_workflow_fields.sql` adds follow-up SLA and burned-reason metadata for measurable sales operations and was applied directly to remote `franchise_db` on 2026-07-15.
+- Remote D1 was cleaned on 2026-07-16 by pruning old `operation_events` telemetry before 2026-07-10, reducing reported size from roughly 501 MB to 211 MB. The `d1_migrations` ledger now includes rows through `0032`, and `wrangler d1 migrations list franchise_db --remote` reports no pending migrations.
 - Staff WhatsApp outreach uses generated `wa.me` links with prefilled text; no WhatsApp API is used. Outreach is logged only after staff manually confirms the message was sent.
 - Staff edit policy is implemented in the dashboard MVP: staff submit guided field changes backed by shared editable-field definitions; admin approve/reject applies approved values field-by-field to D1, writes audit events, and queues static rebuilds. Active `staff_auto_approval_rules` allow trusted staff edits to apply immediately while preserving the same audit/suggestion trail.
 - Data Quality can refresh persistent checks and normalized contacts from current listing/profile fields. The read path falls back to computed warnings before migration/refresh data exists.

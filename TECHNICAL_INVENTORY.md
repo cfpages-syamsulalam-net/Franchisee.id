@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-15 16:38 (Asia/Jakarta)
+Last updated: 2026-07-15 21:20 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -8,6 +8,7 @@ This file records important functions, modules, and key variables across `/js`, 
 This inventory describes the current runtime and migration bridge. Google Sheets and Cloudinary references are transition-layer behavior, not the desired final stack. New backend work should move function ownership toward D1/R2/Clerk and update `CODEBASE.md`, `AUDIT.md`, and this inventory together. `/form-submit` is now Clerk-authenticated and D1-role-authorized.
 Cloudflare Pages builds must run `pnpm run build` or `pnpm run build:astro` and output `dist`; otherwise dependency-backed Pages Functions cannot bundle imports such as `zod` and `@clerk/backend`.
 The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/copy-legacy-static.mjs` copies legacy static assets/pages into `dist` without overwriting Astro output.
+Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previews, lengths, structured candidates, and review metadata.
 
 ## 1. Directory: `/js` (Client-side & SSG Builders)
 
@@ -325,9 +326,10 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `js/dashboard-outreach.js`
 *Sales outreach Kanban client module for `/dashboard`.*
 - `window.FranchiseDashboardOutreach.createOutreach(options)`: Creates the Outreach board renderer from DOM references and shared dashboard action/reload/status callbacks supplied through `js/dashboard-operations.js`.
-- `render(rows, summary, pipelineMetadata)` / `renderOutreachCard(row, pipeline)`: Renders the sales outreach Kanban board from `outreach_queue` plus `outreach_pipeline`, groups cards by current status, shows stage/status badges, and keeps the tab badge in sync.
-- `bindOutreachDragAndDrop()` / `updateOutreachStatus(franchiseId, status, control)`: Supports drag/drop card movement plus the per-card status select fallback, posting `update_outreach_status` and reloading dashboard state after successful persistence.
+- `render(rows, summary, pipelineMetadata)` / `renderOutreachCard(row, pipeline)`: Renders the sales outreach Kanban board from `outreach_queue` plus `outreach_pipeline`, groups cards by current status, shows stage/status badges, next-action instructions, why-this-card-is-shown reasons, overdue/follow-up chips, notes, and conversion metric pills.
+- `bindOutreachDragAndDrop()` / `updateOutreachStatus(franchiseId, status, control)`: Supports drag/drop card movement plus the per-card status select fallback, posting `update_outreach_status` with notes, burned reason, and follow-up metadata before reloading dashboard state after successful persistence.
 - `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, records manually confirmed WhatsApp outreach through `/dashboard-data`, and renders setup-guidance links when Google Contacts permissions are missing.
+- Outreach filters: `today`, actionable, overdue, mine, unassigned, and all help staff see the next measurable sales action first instead of scanning every listing.
 
 ### File: `js/dashboard-review.js`
 *Review/Data Quality client module for `/dashboard`.*
@@ -417,6 +419,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `OUTREACH_PIPELINE_STATUSES`: Canonical dashboard Kanban statuses: `uncontacted`, `saved_contact`, `contacted`, `responded`, `qualified`, `claim_started`, `claimed`, `subscribed`, `renewal_risk`, and `burned`, with labels, short labels, icons, tones, and operator descriptions.
 - `OUTREACH_PIPELINE_STATUS_VALUES`: Allowed status values used by dashboard Zod validation and UI fallbacks.
 - `OUTREACH_EVENT_TO_PIPELINE_STATUS`: Maps historical `listing_outreach_events.outcome` values into the current Kanban status model.
+- `OUTREACH_BURNED_REASONS`: Normalized lost/churn reasons for measurable burned-stage reporting.
+- Per-stage metadata includes `next_action`, `next_action_detail`, and `sla_days`, used by backend follow-up defaults and the Outreach board instructions.
 - `normalizeOutreachPipelineStatus(value, fallback)` / `outreachPipelineStatusMeta(value)`: Shared status normalization helpers for backend reads/writes.
 
 ### File: `js/dashboard-admin.js`
@@ -465,8 +469,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Replayable remote D1 enrichment for OCR proposal knowledge.*
 - Fetches extracted `franchise_asset_knowledge` rows and current canonical listing fields from remote `franchise_db` through cfman/Wrangler.
 - Reuses `sanitizeProposalSourceText()` and `extractProposalCandidatesFromText()` from `functions/_proposal-knowledge.js` so upload-time, worker-time, and replay-time extraction stay aligned.
-- Writes `.context/ocr-structured-enrichment-fetch.sql` for the source query and `.context/ocr-structured-enrichment.sql` for idempotent `source_text`/`structured_data` updates.
+- Writes `.context/ocr-structured-enrichment-fetch.sql` for the source query and `.context/ocr-structured-enrichment.sql` for idempotent legacy `source_text`, preview/length, and `structured_data` updates.
 - Applies remote changes with `pnpm run ocr:enrich:structured -- --apply-remote`; a clean replay prints `changed=0` and does not emit an operation event.
+
+### File: `scripts/migrate-ocr-text-to-r2.mjs`
+*Local Cloudflare operations helper for OCR text storage migration.*
+- `pnpm run ocr:text:migrate-r2 -- --all`: Reads legacy D1 OCR/proposal text rows, uploads each full text body to R2, updates D1 preview/object-key columns, clears the long text columns after object writes, deletes local temporary files, and requests `VACUUM` after a full migration.
+- `--limit`, `--account`, and `--bucket`: Bound batch size and select the Cloudflare account alias/R2 bucket for safer operations. The command requires a token that can write both D1 and R2; the current ambient token cannot complete this locally.
 
 ### File: `scripts/d1-page-renderer.ts`
 *Pure renderer/helper module for D1-backed public page generation.*
@@ -987,13 +996,20 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `onRequestPost()`: Requires Clerk/D1 auth, validates and stores owner media, updates listing media, queues a rebuild, and schedules digital proposal text extraction with `context.waitUntil()` so the upload response is not blocked by parsing.
 - Supported files: logo and cover accept JPG/PNG/WebP; proposal accepts PDF.
 - Requires the `FRANCHISE_ASSETS` R2 binding and `FRANCHISE_ASSETS_PUBLIC_BASE_URL`; production uses the R2 custom domain `https://assets.franchisee.id`.
+- Proposal text extraction now passes the R2 binding into `_proposal-knowledge.js`, so long extracted text is not kept in D1 when R2 storage is available.
 
 ### File: `functions/_proposal-knowledge.js`
 *Auditable proposal text and candidate extraction.*
 - `extractProposalKnowledge(arrayBuffer, listing)`: Parses selectable PDF text with UnPDF, records page count/status, marks low-text documents as `needs_ocr`, and filters deterministic candidates to fields currently missing from the canonical listing.
 - `sanitizeProposalSourceText(value)`: Normalizes OCR/PDF text and removes known source-noise watermark lines/URLs before storage, dashboard preview, or deterministic extraction.
 - `extractProposalCandidatesFromText(text)`: Extracts bounded outlet type, location requirement, minimum area, staff/setup needs, investment/fee/working-capital values, contract duration, BEP range, monthly omzet/profit, HPP, royalty basis/period, target market, and support candidates. It maps franchise fee, license fee, biaya lisensi, biaya franchise, biaya kemitraan, biaya join, joining fee, and investasi kemitraan into one `fee_license_idr` field, ignores ambiguous `paket kemitraan` as a fee candidate, and requires explicit total/nilai investasi wording for `total_investment_idr` instead of inferring from a single fee row.
-- `proposalKnowledgeStatements(db, input)`: Sanitizes source text, upserts `franchise_asset_knowledge`, and creates a pending `listing_edit_suggestions` row for admin review without directly updating `franchises` only when a valid D1 user actor is available.
+- `proposalKnowledgeStatements(db, input)`: Sanitizes source text, stores long source text in R2 through `_ocr-text-store.js` when the binding is available, upserts `franchise_asset_knowledge` with D1 preview/length/object-key metadata, and creates a pending `listing_edit_suggestions` row for admin review without directly updating `franchises` only when a valid D1 user actor is available.
+
+### File: `functions/_ocr-text-store.js`
+*Shared R2 storage helper for long OCR/proposal extracted text.*
+- `storeOcrTextObject(env, input)`: Writes full extracted text to `FRANCHISE_ASSETS` R2, returning `bucket`, `key`, `preview`, `length`, and a legacy-text fallback only when R2 is unavailable.
+- `readOcrTextObject(env, row, fallbackField)`: Reads full text from the stored R2 object pointer with fallback to the legacy D1 text field for old/local copies only. Remote production historical OCR text was migrated to R2 on 2026-07-16.
+- `buildOcrTextKey(input)` / `ocrTextPreview(text, maxChars)`: Produces stable object keys under `franchises/{franchise}/ocr-text/` and bounded D1 previews.
 
 ### File: `functions/_clerk-auth.js`
 *Shared Clerk session verification, D1 user sync, and role authorization helper.*
@@ -1038,17 +1054,21 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
 - `onRequestGet()`: Requires Clerk auth plus D1 `staff` through `requireD1UserFast()` for already-synced users; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch/enrichment-review state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
-- `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows plus `update_outreach_status` to `_dashboard-actions.js`, bulk outreach contact save to `_google-contacts.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, OCR retry/no-text job actions to `_ocr-job-actions.js`, OCR batch start/retry actions to `_ocr-batch-runs.js`, OCR enrichment bundle creation to `_ocr-enrichment-review.js`, and OCR dry-run/enqueue/run/search actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
+- `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows plus `update_outreach_status` to `_dashboard-actions.js`, bulk outreach contact save to `_google-contacts.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, OCR retry/no-text job actions to `_ocr-job-actions.js`, OCR batch start/retry actions to `_ocr-batch-runs.js`, OCR enrichment bundle creation to `_ocr-enrichment-review.js`, D1 migration-ledger reconciliation to `_d1-maintenance.js`, and OCR dry-run/enqueue/run/search actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
 - `_ocr-batch-runs.js` owns persisted batch creation/progress/retry; `_ocr-job-actions.js` owns dashboard retry/no-text mutations; `_ocr-enrichment-review.js` owns grouped per-franchise OCR review bundles; `_ocr-job-runner.js` stays focused on job processing and OCR provider execution.
 - `requireDashboardAccess(request, env, options)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs. `options.fast` is used only for GET refreshes and falls back to full sync when needed.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions, `save_outreach_google_contacts`, `update_outreach_status`, plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
+- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions, `save_outreach_google_contacts`, `update_outreach_status`, D1 migration-ledger reconciliation, plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
 - `ReviewEditSuggestionSchema`: Accepts optional `approved_fields` from shared editable field names for granular field-level approval.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
 - `updateListingStatement(db, franchiseId, changes)`: Builds the whitelisted `franchises` update statement for approved dashboard listing edits.
+
+### File: `functions/_d1-maintenance.js`
+*Admin D1 migration-ledger maintenance helper.*
+- `handleReconcileD1MigrationLedger(db, auth)`: Verifies the live schema/index/table effects for migrations `0024` through `0032` before inserting missing rows in `d1_migrations`, then reports any remaining missing migration ids from `1..32`. This is the app-side cleanup path when remote Wrangler migration replay is blocked by a stale ledger.
 
 ### File: `functions/_dashboard-ocr-schemas.js`
 *OCR dashboard action validation module.*
@@ -1123,7 +1143,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `handleEnqueueOcrJobs(db, auth, data)`: Admin-only action that queues active image proposal assets into `ocr_jobs`; it does not call external OCR providers.
 - `handleRunOcrDryRun(db, auth, data, env, options)`: Admin-only action that requires `OCR_KEY` and one enabled provider, prepares at most one candidate proposal-image job, and processes only that job before broad backfills.
 - `handleRunOcrJobs(db, auth, data, env, options)`: Admin-only action that runs a bounded batch and requires `OCR_KEY` before any provider call can happen; multi-job dashboard chunks without `batch_id` must present a valid continuous-run lease.
-- `runOcrJobs(db, env, auth, options)`: Delegates pending-job claiming/release to `_ocr-job-claiming.js`, optionally scopes by `batch_id`, carries the original `requested_by_user_id` into worker-processed writes so scheduled OCR never writes synthetic user IDs into FK-backed tables, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` when available, delegates provider quota/trial state checks to `_ocr-quota-policy.js` before assigning a job, tries enabled providers in priority order, runs bounded concurrent waves across multiple active providers by rotating each job's first-choice provider, logs attempts and usage, writes successful OCR text through `proposalKnowledgeStatements()`, treats provider text-too-short responses as job review state instead of provider-health failure, pauses provider rate-limit/quota runs by moving the current job back to `pending` and releasing already-claimed unprocessed jobs, writes actionable quota-exhausted copy that suggests activating another provider or waiting for reset, and refreshes batch progress after each scoped drain.
+- `runOcrJobs(db, env, auth, options)`: Delegates pending-job claiming/release to `_ocr-job-claiming.js`, optionally scopes by `batch_id`, carries the original `requested_by_user_id` into worker-processed writes so scheduled OCR never writes synthetic user IDs into FK-backed tables, fetches the proposal image, computes the SHA-256 content hash, reuses `ocr_content_cache` from R2-backed full text or legacy D1 text when available, delegates provider quota/trial state checks to `_ocr-quota-policy.js` before assigning a job, tries enabled providers in priority order, runs bounded concurrent waves across multiple active providers by rotating each job's first-choice provider, logs attempts and usage, writes successful OCR/cache text through R2-backed storage and `proposalKnowledgeStatements()`, treats provider text-too-short responses as job review state instead of provider-health failure, pauses provider rate-limit/quota runs by moving the current job back to `pending` and releasing already-claimed unprocessed jobs, writes actionable quota-exhausted copy that suggests activating another provider or waiting for reset, and refreshes batch progress after each scoped drain.
 - `prepareRateLimit(db, provider)`: Checks provider `cooldown_until` and local request-window metadata before each external call; if the window is exhausted, the runner records a skipped attempt and updates provider cooldown instead of sending another request.
 
 ### File: `functions/ocr-worker.js`
@@ -1135,8 +1155,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Read-only D1 data model for `/dashboard-data`.*
 - `getOverview(db)`: Returns Franchisee.id listing counts and completeness counts.
 - `getDataQuality(db)`: Reads persisted open `franchise_quality_checks` when available, falling back to computed warnings for missing images, contact, description, category, all-caps descriptions, suspicious contacts, stale listings, and invalid URLs.
-- `getUnclaimedOutreachQueue(db)`: Reads up to 250 contact-ready listings for the sales board, including unclaimed rows, rows with existing outreach status, and rows with active subscriptions; joins `listing_outreach_statuses`, subscription dates, and outreach history, normalizes `current_status`, parses mobile/WhatsApp-capable numbers, and builds staff-personal `wa.me` claim-notification links.
-- `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, current outreach queue limit, and pipeline status counts for the dashboard/tab badges.
+- `getUnclaimedOutreachQueue(db)`: Reads up to 250 contact-ready listings for the sales board, including unclaimed rows, rows with existing outreach status, pending/approved claim context, and active/lapsed subscription context; joins `listing_outreach_statuses`, subscription dates, and outreach history, computes effective sales status, next action, why-this-card-is-shown reason, overdue state, and staff-personal `wa.me` claim-notification links.
+- `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, current outreach queue limit, pipeline status counts, and conversion metrics for response, claim, subscription, renewal-risk recovery, and actionable-open visibility.
 - `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display and structured location rows for the admin Area Listing editor. `getEditSuggestions()` delegates document proof backfill to `_dashboard-review-evidence.js` before returning pending suggestion rows.
 - `getStructuredLocationsForListings(db, franchiseIds)`: Chunks editable listing IDs before building `IN (...)` queries so `/dashboard-data` can load the full dashboard without hitting D1's SQL variable limit.
 - `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Premium tab.
@@ -1146,7 +1166,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_dashboard-review-evidence.js`
 *Dashboard review proof helper.*
-- `attachDocumentSuggestionEvidence(db, rows)`: Finds pending `proposal_extraction` / `ocr_enrichment_bundle` rows without complete embedded `old_value.__ocr_evidence`, loads matching `franchise_asset_knowledge` and asset URLs, and returns rows with sanitized per-field excerpts, field-specific basis snippets, and brochure image URLs for Review OCR hover proof.
+- `attachDocumentSuggestionEvidence(db, rows)`: Finds pending `proposal_extraction` / `ocr_enrichment_bundle` rows without complete embedded `old_value.__ocr_evidence`, loads matching `franchise_asset_knowledge` previews and asset URLs, and returns rows with sanitized per-field excerpts, field-specific basis snippets, and brochure image URLs for Review OCR hover proof.
 
 ### File: `functions/_proposal-evidence.js`
 *Shared proposal/OCR evidence basis helper.*

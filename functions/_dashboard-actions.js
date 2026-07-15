@@ -43,6 +43,8 @@ export async function handleLogOutreach(db, auth, data) {
       status,
       staffUserId: auth.id,
       notes: data.notes,
+      burnedReason: data.burned_reason,
+      nextFollowUpAt: data.next_follow_up_at || null,
     }),
     auditStatement(db, "dashboard.outreach.log", "franchise", data.franchise_id, {
       outcome: data.outcome,
@@ -91,6 +93,8 @@ export async function handleUpdateOutreachStatus(db, auth, data) {
     auditStatement(db, "dashboard.outreach.status.update", "franchise", data.franchise_id, {
       status,
       notes: data.notes,
+      burned_reason: data.burned_reason || "",
+      next_follow_up_at: data.next_follow_up_at || "",
       brand_name: listing.brand_name,
     }, auth.id),
   ]);

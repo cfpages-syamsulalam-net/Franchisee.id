@@ -13,43 +13,63 @@
     var outreachTabBadge = options.outreachTabBadge;
     var outreachActions = options.outreachActions;
     var GOOGLE_CONTACTS_SETUP_DOC = "/dashboard/#google-contacts-setup";
+    var lastRows = [];
+    var lastSummary = {};
+    var lastPipeline = [];
+    var currentUser = {};
+    var currentFilter = "today";
+    var BURNED_REASONS = [
+      { value: "", label: "Pilih alasan..." },
+      { value: "no_response", label: "Tidak respons" },
+      { value: "invalid_contact", label: "Kontak tidak valid" },
+      { value: "not_interested", label: "Tidak berminat" },
+      { value: "not_owner", label: "Bukan owner/decision maker" },
+      { value: "duplicate_or_closed", label: "Duplikat / brand tutup" },
+      { value: "subscription_churn", label: "Tidak renew subscription" },
+      { value: "other", label: "Lainnya" },
+    ];
     var FALLBACK_OUTREACH_PIPELINE = [
-      { value: "uncontacted", label: "Uncontacted", short_label: "Uncontacted", description: "Belum ada kontak yang dicatat.", icon: "fas fa-inbox", tone: "neutral" },
-      { value: "saved_contact", label: "Saved Contact", short_label: "Saved", description: "Nama dan nomor sudah disimpan ke kontak staff.", icon: "fas fa-address-book", tone: "info" },
-      { value: "contacted", label: "Contacted", short_label: "Contacted", description: "Pesan pertama sudah dikirim.", icon: "fas fa-paper-plane", tone: "info" },
-      { value: "responded", label: "Responded", short_label: "Responded", description: "Franchisor sudah membalas.", icon: "fas fa-reply", tone: "good" },
-      { value: "qualified", label: "Qualified", short_label: "Qualified", description: "Kontak valid dan punya peluang lanjut.", icon: "fas fa-filter", tone: "good" },
-      { value: "claim_started", label: "Claim Started", short_label: "Claim", description: "Proses klaim listing sudah dimulai.", icon: "fas fa-flag", tone: "warning" },
-      { value: "claimed", label: "Claimed", short_label: "Claimed", description: "Listing sudah diklaim atau punya owner.", icon: "fas fa-store", tone: "good" },
-      { value: "subscribed", label: "Subscribed", short_label: "Subscribed", description: "Brand sedang punya subscription aktif.", icon: "fas fa-crown", tone: "premium" },
-      { value: "renewal_risk", label: "Renewal Risk", short_label: "Risk", description: "Subscription perlu follow-up renewal.", icon: "fas fa-hourglass-half", tone: "warning" },
-      { value: "burned", label: "Burned", short_label: "Burned", description: "Tidak lanjut, tidak respons, atau tidak renew.", icon: "fas fa-ban", tone: "bad" },
+      { value: "uncontacted", label: "Uncontacted", short_label: "Uncontacted", description: "Belum ada kontak yang dicatat.", next_action: "Simpan kontak", next_action_detail: "Simpan nama dan nomor ke Google Contacts.", icon: "fas fa-inbox", tone: "neutral" },
+      { value: "saved_contact", label: "Saved Contact", short_label: "Saved", description: "Nama dan nomor sudah disimpan ke kontak staff.", next_action: "Kirim WhatsApp", next_action_detail: "Kirim pesan klaim listing lalu catat terkirim.", icon: "fas fa-address-book", tone: "info" },
+      { value: "contacted", label: "Contacted", short_label: "Contacted", description: "Pesan pertama sudah dikirim.", next_action: "Follow-up balasan", next_action_detail: "Follow-up jika belum ada balasan.", icon: "fas fa-paper-plane", tone: "info" },
+      { value: "responded", label: "Responded", short_label: "Responded", description: "Franchisor sudah membalas.", next_action: "Kualifikasi brand", next_action_detail: "Pastikan owner, decision maker, dan minat lanjut.", icon: "fas fa-reply", tone: "good" },
+      { value: "qualified", label: "Qualified", short_label: "Qualified", description: "Kontak valid dan punya peluang lanjut.", next_action: "Dorong klaim", next_action_detail: "Kirim link klaim dan bantu brand melanjutkan.", icon: "fas fa-filter", tone: "good" },
+      { value: "claim_started", label: "Claim Started", short_label: "Claim", description: "Proses klaim listing sudah dimulai.", next_action: "Bantu klaim", next_action_detail: "Pantau bukti dan bantu admin menyelesaikan review.", icon: "fas fa-flag", tone: "warning" },
+      { value: "claimed", label: "Claimed", short_label: "Claimed", description: "Listing sudah diklaim atau punya owner.", next_action: "Tawarkan Premium", next_action_detail: "Pitch Premium/subscription saat listing siap.", icon: "fas fa-store", tone: "good" },
+      { value: "subscribed", label: "Subscribed", short_label: "Subscribed", description: "Brand sedang punya subscription aktif.", next_action: "Monitor renewal", next_action_detail: "Jaga listing lengkap dan siapkan renewal.", icon: "fas fa-crown", tone: "premium" },
+      { value: "renewal_risk", label: "Renewal Risk", short_label: "Risk", description: "Subscription perlu follow-up renewal.", next_action: "Pulihkan renewal", next_action_detail: "Hubungi owner untuk renewal atau catat alasan burned.", icon: "fas fa-hourglass-half", tone: "warning" },
+      { value: "burned", label: "Burned", short_label: "Burned", description: "Tidak lanjut, tidak respons, atau tidak renew.", next_action: "Tutup dengan alasan", next_action_detail: "Pastikan alasan burned tercatat.", icon: "fas fa-ban", tone: "bad" },
     ];
 
-    function render(rows, summary, pipelineMetadata) {
+    function render(rows, summary, pipelineMetadata, user) {
       rows = rows || [];
       summary = summary || {};
+      lastRows = rows;
+      lastSummary = summary;
+      currentUser = user || {};
       var contactReady = Number(summary.contact_ready || 0);
       var publishedUnclaimed = Number(summary.published_unclaimed || 0);
       var queueLimit = Number(summary.queue_limit || 0);
       var pipeline = normalizePipeline(pipelineMetadata || window.FranchiseOutreachPipeline || []);
+      lastPipeline = pipeline;
+      var filteredRows = filterRows(rows);
       var counts = countRowsByStatus(rows, pipeline, summary.by_pipeline_status || {});
-      var badge = rows.length + " listing";
+      var badge = filteredRows.length + " / " + rows.length + " listing";
       if (contactReady || publishedUnclaimed) {
-        badge = rows.length + " dari " + contactReady + " kontak siap";
+        badge = filteredRows.length + " tampil dari " + contactReady + " kontak siap";
         if (publishedUnclaimed > contactReady) badge += " / " + publishedUnclaimed + " unclaimed published";
         if (queueLimit && contactReady > rows.length) badge += " (limit " + queueLimit + ")";
       }
       outreachCount.textContent = badge;
       renderOutreachTabBadge(counts);
-      renderOutreachSummary(pipeline, counts);
+      renderOutreachSummary(pipeline, counts, summary.conversion_metrics || {});
       renderOutreachActions(rows);
-      if (!rows.length) {
+      if (!filteredRows.length) {
         outreachBoard.innerHTML = '<div class="dash-empty">Tidak ada listing dengan nomor WhatsApp/mobile untuk sales outreach.</div>';
         return;
       }
       outreachBoard.innerHTML = pipeline.map(function (status) {
-        var stageRows = rows.filter(function (row) { return normalizeOutreachStatus(row.current_status) === status.value; });
+        var stageRows = filteredRows.filter(function (row) { return normalizeOutreachStatus(row.current_status) === status.value; });
         return '<section class="dash-outreach-column" data-outreach-drop-status="' + escapeAttr(status.value) + '" aria-label="' + escapeAttr(status.label) + '">' +
           '<div class="dash-outreach-column-head">' +
             '<div><i class="' + escapeAttr(status.icon || "fas fa-circle") + '" aria-hidden="true"></i><strong>' + escapeHtml(status.label) + '</strong></div>' +
@@ -69,9 +89,11 @@
       });
       outreachBoard.querySelectorAll("[data-outreach-status-select]").forEach(function (select) {
         select.addEventListener("change", function () {
+          toggleBurnedReason(select);
           updateOutreachStatus(select.getAttribute("data-franchise-id"), select.value, select);
         });
       });
+      outreachBoard.querySelectorAll("[data-outreach-status-select]").forEach(toggleBurnedReason);
       bindOutreachDragAndDrop();
     }
 
@@ -86,6 +108,8 @@
         : row.latest_subscription_ends_at
           ? '<span><i class="fas fa-hourglass-end" aria-hidden="true"></i> Subscription terakhir ' + escapeHtml(row.latest_subscription_ends_at) + '</span>'
           : "";
+      var overdue = row.is_overdue ? '<span class="dash-outreach-overdue"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> ' + escapeHtml(row.overdue_label || "Overdue") + '</span>' : "";
+      var assigned = row.assigned_staff_user_id ? '<span><i class="fas fa-user-check" aria-hidden="true"></i> Staff assigned</span>' : '<span><i class="fas fa-user-plus" aria-hidden="true"></i> Belum assigned</span>';
       return '<article class="dash-outreach-card is-' + escapeAttr(meta.tone || "neutral") + '" draggable="true" data-outreach-card data-franchise-id="' + escapeAttr(row.id) + '">' +
         '<div class="dash-outreach-card-head">' +
           '<div>' +
@@ -95,13 +119,32 @@
           renderOutreachStatusBadge(meta) +
         '</div>' +
         '<div class="dash-outreach-contact">' + (contact ? '<i class="fab fa-whatsapp" aria-hidden="true"></i><span>' + escapeHtml(contact.label + ": " + contact.display) + '</span>' : '<span class="dash-badge bad">Tidak ada WA</span>') + '</div>' +
+        '<div class="dash-outreach-next-action">' +
+          '<strong><i class="' + escapeAttr(meta.icon || "fas fa-arrow-right") + '" aria-hidden="true"></i> ' + escapeHtml(row.sales_next_action || meta.next_action || "Langkah berikutnya") + '</strong>' +
+          '<span>' + escapeHtml(row.sales_next_action_detail || meta.next_action_detail || "") + '</span>' +
+        '</div>' +
+        '<div class="dash-outreach-reason">' +
+          '<strong>Kenapa muncul di sini</strong>' +
+          '<span>' + escapeHtml(row.sales_reason || meta.description || "") + '</span>' +
+        '</div>' +
         '<div class="dash-outreach-meta">' +
           '<span><i class="fas fa-clock" aria-hidden="true"></i> ' + escapeHtml(row.last_outreach_at ? "Terakhir " + row.last_outreach_at : "Belum pernah dikontak") + '</span>' +
+          (row.next_follow_up_at ? '<span><i class="fas fa-calendar-day" aria-hidden="true"></i> Follow-up ' + escapeHtml(row.next_follow_up_at) + '</span>' : "") +
+          overdue +
+          assigned +
           subscription +
         '</div>' +
         '<label class="dash-outreach-status-control">' +
           '<span>Status</span>' +
           '<select data-outreach-status-select data-last-value="' + escapeAttr(status) + '" data-franchise-id="' + escapeAttr(row.id) + '">' + renderOutreachStatusOptions(pipeline, status) + '</select>' +
+        '</label>' +
+        '<label class="dash-outreach-note">' +
+          '<span>Catatan / alasan move</span>' +
+          '<textarea data-outreach-note data-franchise-id="' + escapeAttr(row.id) + '" rows="2" maxlength="1000" placeholder="Tulis konteks singkat agar staff lain paham next step.">' + escapeHtml(row.outreach_notes || "") + '</textarea>' +
+        '</label>' +
+        '<label class="dash-outreach-burned-reason" data-burned-reason-wrap>' +
+          '<span>Alasan burned</span>' +
+          '<select data-outreach-burned-reason data-franchise-id="' + escapeAttr(row.id) + '">' + renderBurnedReasonOptions(row.burned_reason || "") + '</select>' +
         '</label>' +
         '<div class="dash-outreach-actions">' + renderActionToolbar([
           waUrl ? renderActionLink({ href: waUrl, label: "Buka WhatsApp", icon: "fab fa-whatsapp", tone: "success" }) : "",
@@ -133,9 +176,23 @@
       }).join("");
     }
 
-    function renderOutreachSummary(pipeline, counts) {
+    function renderBurnedReasonOptions(selected) {
+      return BURNED_REASONS.map(function (reason) {
+        return '<option value="' + escapeAttr(reason.value) + '"' + (reason.value === selected ? " selected" : "") + '>' + escapeHtml(reason.label) + '</option>';
+      }).join("");
+    }
+
+    function renderOutreachSummary(pipeline, counts, metrics) {
       if (!outreachStageSummary) return;
-      outreachStageSummary.innerHTML = pipeline.map(function (status) {
+      var metricItems = [
+        ["Response", metrics.response_rate],
+        ["Claim", metrics.response_to_claim_rate],
+        ["Sub", metrics.claim_to_subscription_rate],
+        ["Recovery", metrics.renewal_recovery_rate],
+      ].map(function (item) {
+        return '<span class="dash-outreach-summary-pill is-metric"><i class="fas fa-chart-line" aria-hidden="true"></i><strong>' + escapeHtml(item[0]) + '</strong><span>' + escapeHtml(Number(item[1] || 0).toLocaleString("id-ID") + "%") + '</span></span>';
+      }).join("");
+      outreachStageSummary.innerHTML = metricItems + pipeline.map(function (status) {
         return '<span class="dash-outreach-summary-pill is-' + escapeAttr(status.tone || "neutral") + '">' +
           '<i class="' + escapeAttr(status.icon || "fas fa-circle") + '" aria-hidden="true"></i>' +
           '<strong>' + escapeHtml(status.short_label || status.label) + '</strong>' +
@@ -151,6 +208,19 @@
       }, 0);
       outreachTabBadge.textContent = activeCount > 99 ? "99+" : String(activeCount);
       outreachTabBadge.hidden = activeCount <= 0;
+    }
+
+    function filterRows(rows) {
+      var userId = currentUser && currentUser.id ? currentUser.id : "";
+      return (rows || []).filter(function (row) {
+        var status = normalizeOutreachStatus(row.current_status);
+        if (currentFilter === "all") return true;
+        if (currentFilter === "mine") return userId && row.assigned_staff_user_id === userId;
+        if (currentFilter === "unassigned") return !row.assigned_staff_user_id;
+        if (currentFilter === "overdue") return Boolean(row.is_overdue);
+        if (currentFilter === "today") return Boolean(row.is_overdue) || ["uncontacted", "saved_contact", "responded", "qualified", "claim_started", "renewal_risk"].includes(status);
+        return !["subscribed", "burned"].includes(status);
+      });
     }
 
     function bindOutreachDragAndDrop() {
@@ -196,6 +266,8 @@
           label: status.label || status.value,
           short_label: status.short_label || status.label || status.value,
           description: status.description || "",
+          next_action: status.next_action || "",
+          next_action_detail: status.next_action_detail || "",
           icon: status.icon || "fas fa-circle",
           tone: status.tone || "neutral",
         };
@@ -223,6 +295,23 @@
       var existingBadge = outreachActions.querySelector("[data-outreach-count]");
       outreachActions.innerHTML = "";
       if (existingBadge) outreachActions.appendChild(existingBadge);
+      outreachActions.insertAdjacentHTML("beforeend",
+        '<label class="dash-outreach-filter"><i class="fas fa-filter" aria-hidden="true"></i><span>Filter</span>' +
+        '<select data-outreach-filter>' +
+          '<option value="today"' + (currentFilter === "today" ? " selected" : "") + '>Hari ini</option>' +
+          '<option value="actionable"' + (currentFilter === "actionable" ? " selected" : "") + '>Perlu aksi</option>' +
+          '<option value="overdue"' + (currentFilter === "overdue" ? " selected" : "") + '>Overdue</option>' +
+          '<option value="mine"' + (currentFilter === "mine" ? " selected" : "") + '>Milik saya</option>' +
+          '<option value="unassigned"' + (currentFilter === "unassigned" ? " selected" : "") + '>Belum assigned</option>' +
+          '<option value="all"' + (currentFilter === "all" ? " selected" : "") + '>Semua</option>' +
+        '</select></label>');
+      var filter = outreachActions.querySelector("[data-outreach-filter]");
+      if (filter) {
+        filter.addEventListener("change", function () {
+          currentFilter = filter.value || "today";
+          render(lastRows, lastSummary, lastPipeline, currentUser);
+        });
+      }
       if (!rows.length) return;
       outreachActions.insertAdjacentHTML("beforeend", renderPillActionButton({
         label: "Simpan kontak",
@@ -265,6 +354,7 @@
     async function updateOutreachStatus(franchiseId, status, control) {
       if (!franchiseId || !status) return;
       var previousValue = control && control.tagName === "SELECT" ? control.getAttribute("data-last-value") || "" : "";
+      var context = collectStatusContext(franchiseId, status);
       try {
         if (control && "disabled" in control) control.disabled = true;
         if (control && control.classList) control.classList.add("is-busy");
@@ -272,7 +362,9 @@
           action: "update_outreach_status",
           franchise_id: franchiseId,
           status: status,
-          notes: "",
+          notes: context.notes,
+          burned_reason: context.burnedReason,
+          next_follow_up_at: context.nextFollowUpAt,
         });
         options.setStatus("Status outreach diperbarui.", false);
         await options.reloadDashboard();
@@ -283,6 +375,31 @@
         if (control && "disabled" in control) control.disabled = false;
         if (control && control.classList) control.classList.remove("is-busy");
       }
+    }
+
+    function collectStatusContext(franchiseId, status) {
+      var card = outreachBoard.querySelector('[data-outreach-card][data-franchise-id="' + cssEscape(franchiseId) + '"]');
+      var notes = card && card.querySelector("[data-outreach-note]") ? card.querySelector("[data-outreach-note]").value.trim() : "";
+      var burnedReason = card && card.querySelector("[data-outreach-burned-reason]") ? card.querySelector("[data-outreach-burned-reason]").value : "";
+      if (status === "burned" && !burnedReason) burnedReason = "no_response";
+      return {
+        notes: notes,
+        burnedReason: burnedReason,
+        nextFollowUpAt: "",
+      };
+    }
+
+    function toggleBurnedReason(select) {
+      var franchiseId = select.getAttribute("data-franchise-id") || "";
+      var card = outreachBoard.querySelector('[data-outreach-card][data-franchise-id="' + cssEscape(franchiseId) + '"]');
+      var wrap = card && card.querySelector("[data-burned-reason-wrap]");
+      if (!wrap) return;
+      wrap.hidden = select.value !== "burned";
+    }
+
+    function cssEscape(value) {
+      if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(value);
+      return String(value || "").replace(/["\\]/g, "\\$&");
     }
 
     async function saveGoogleContacts(button, rows) {

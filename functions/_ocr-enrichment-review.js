@@ -27,7 +27,7 @@ export async function getOcrEnrichmentQueue(db, options = {}) {
         k.asset_id,
         k.franchise_id,
         k.structured_data,
-        SUBSTR(COALESCE(k.source_text, ''), 1, 700) source_text_preview,
+        COALESCE(k.source_text_preview, SUBSTR(COALESCE(k.source_text, ''), 1, 700)) source_text_preview,
         k.updated_at,
         f.brand_name,
         f.slug,

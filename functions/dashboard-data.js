@@ -39,6 +39,7 @@ import { handleMarkOcrJobNoText, handleRetryFailedOcrJobs, handleRetryOcrJob } f
 import { getOcrJobState, handleEnqueueOcrJobs, handleRunOcrDryRun, handleRunOcrJobs, handleSearchOcrJobs, handleSearchOcrResults } from "./_ocr-job-runner.js";
 import { handleCreateOcrEnrichmentSuggestion } from "./_ocr-enrichment-review.js";
 import { handleAcquireOcrRunLease, handleHeartbeatOcrRunLease, handleReleaseOcrRunLease } from "./_ocr-run-lease.js";
+import { handleReconcileD1MigrationLedger } from "./_d1-maintenance.js";
 import { logOperationEvent } from "./_telemetry.js";
 import { OUTREACH_PIPELINE_STATUSES } from "../src/lib/outreach-pipeline.js";
 
@@ -128,6 +129,7 @@ export async function onRequestPost({ request, env }) {
     const data = parsed.data;
     if (data.action === "log_outreach") return handleLogOutreach(env.franchise_db, auth, data);
     if (data.action === "save_outreach_google_contacts") return handleSaveOutreachGoogleContacts(env.franchise_db, auth, data, env);
+    if (data.action === "reconcile_d1_migration_ledger") return handleReconcileD1MigrationLedger(env.franchise_db, auth);
     if (data.action === "update_outreach_status") return handleUpdateOutreachStatus(env.franchise_db, auth, data);
     if (data.action === "suggest_edit") return handleSuggestEdit(env.franchise_db, auth, data);
     if (data.action === "review_edit_suggestion") return handleReviewEditSuggestion(env.franchise_db, auth, data);

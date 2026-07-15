@@ -1,4 +1,5 @@
 import { proposalKnowledgeStatements, extractProposalCandidatesFromText, sanitizeProposalSourceText } from "./_proposal-knowledge.js";
+import { readOcrTextObject, storeOcrTextObject } from "./_ocr-text-store.js";
 import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, randomId } from "./_dashboard-utils.js";
 import { callOcrProvider } from "./_ocr-provider-adapters.js";
@@ -52,8 +53,8 @@ export async function getOcrJobState(db, auth, env = {}) {
       db
         .prepare(
           `SELECT k.id, k.asset_id, k.franchise_id, k.extraction_method, k.extraction_status,
-                  SUBSTR(COALESCE(k.source_text, ''), 1, 900) source_text_preview,
-                  LENGTH(COALESCE(k.source_text, '')) text_length,
+                  COALESCE(k.source_text_preview, SUBSTR(COALESCE(k.source_text, ''), 1, 900)) source_text_preview,
+                  COALESCE(NULLIF(k.source_text_length, 0), LENGTH(COALESCE(k.source_text, ''))) text_length,
                   k.structured_data, k.updated_at, f.brand_name, f.slug,
                   COALESCE(a.display_order, 0) display_order, a.public_url, a.legacy_url,
                   (
@@ -273,9 +274,10 @@ export async function handleSearchOcrResults(db, auth, data) {
     where.push(`(
       LOWER(COALESCE(f.brand_name, '')) LIKE ?
       OR LOWER(COALESCE(f.slug, '')) LIKE ?
-      OR LOWER(COALESCE(k.source_text, '')) LIKE ?
+      OR LOWER(COALESCE(k.source_text_preview, k.source_text, '')) LIKE ?
+      OR LOWER(COALESCE(k.structured_data, '')) LIKE ?
     )`);
-    binds.push(like, like, like);
+    binds.push(like, like, like, like);
   }
 
   const whereSql = where.join(" AND ");
@@ -291,8 +293,8 @@ export async function handleSearchOcrResults(db, auth, data) {
   const rows = await bindStatement(db
     .prepare(
       `SELECT k.id, k.asset_id, k.franchise_id, k.extraction_method, k.extraction_status,
-              SUBSTR(COALESCE(k.source_text, ''), 1, 900) source_text_preview,
-              LENGTH(COALESCE(k.source_text, '')) text_length,
+              COALESCE(k.source_text_preview, SUBSTR(COALESCE(k.source_text, ''), 1, 900)) source_text_preview,
+              COALESCE(NULLIF(k.source_text_length, 0), LENGTH(COALESCE(k.source_text, ''))) text_length,
               k.structured_data, k.updated_at, f.brand_name, f.slug,
               COALESCE(a.display_order, 0) display_order, a.public_url, a.legacy_url,
               (
@@ -606,13 +608,15 @@ async function processJob(db, env, auth, job, providerState, options) {
     const contentHash = await sha256Base64Url(image.bytes);
     const cacheHit = await db.prepare("SELECT * FROM ocr_content_cache WHERE content_hash = ? LIMIT 1").bind(contentHash).first();
     if (cacheHit) {
+      const cacheText = await readOcrTextObject(env, cacheHit, "text");
+      if (cacheText.length < MIN_OCR_TEXT_CHARS) throw new Error("Cache OCR tidak memiliki teks yang bisa dipakai.");
       await db.batch([
         db.prepare("UPDATE ocr_content_cache SET last_used_at = CURRENT_TIMESTAMP WHERE content_hash = ?").bind(contentHash),
         attemptStatement(db, job.id, cacheHit.provider_key, "cache_hit", null, null, Number(cacheHit.text_length || 0), null, null),
-        ...await successStatements(db, auth, job, {
+        ...await successStatements(db, env, auth, job, {
           contentHash,
           providerKey: cacheHit.provider_key,
-          text: cacheHit.text,
+          text: cacheText,
           textLength: Number(cacheHit.text_length || 0),
           method: `ocr_cache_${cacheHit.provider_key}`,
         }),
@@ -669,27 +673,50 @@ async function processJob(db, env, auth, job, providerState, options) {
           throw providerAttemptError("OCR_TEXT_TOO_SHORT", "Provider tidak mengembalikan teks yang cukup untuk dipakai.", result.httpStatus, result.textLength);
         }
         const text = result.text.slice(0, CACHE_TEXT_CHARS);
+        const storedText = await storeOcrTextObject(env, {
+          text,
+          franchiseId: job.franchise_id,
+          assetId: job.asset_id,
+          contentHash,
+          kind: "ocr-cache",
+          method: `ocr_${provider.provider_key}_v1`,
+        });
         await db.batch([
           db
             .prepare(
               `INSERT INTO ocr_content_cache (
-                 content_hash, source_url, mime_type, text, provider_key, confidence, text_length
-               ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                 content_hash, source_url, mime_type, text, text_r2_bucket, text_r2_key,
+                 text_preview, provider_key, confidence, text_length
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(content_hash) DO UPDATE SET
                  source_url = excluded.source_url,
                  mime_type = excluded.mime_type,
                  text = excluded.text,
+                 text_r2_bucket = excluded.text_r2_bucket,
+                 text_r2_key = excluded.text_r2_key,
+                 text_preview = excluded.text_preview,
                  provider_key = excluded.provider_key,
                  confidence = excluded.confidence,
                  text_length = excluded.text_length,
                  last_used_at = CURRENT_TIMESTAMP`,
             )
-            .bind(contentHash, job.source_url, image.mimeType, text, provider.provider_key, null, text.length),
+            .bind(
+              contentHash,
+              job.source_url,
+              image.mimeType,
+              storedText.legacyText,
+              storedText.bucket,
+              storedText.key,
+              storedText.preview,
+              provider.provider_key,
+              null,
+              storedText.length,
+            ),
           attemptStatement(db, job.id, provider.provider_key, "succeeded", result.httpStatus || null, latency, text.length, null, null),
           usageStatement(db, provider.provider_key, job.id, contentHash, 1, "counted"),
           quotaIncrementStatement(db, provider.provider_key),
           providerHealthStatement(db, provider.provider_key, "ready", null),
-          ...await successStatements(db, auth, job, {
+          ...await successStatements(db, env, auth, job, {
             contentHash,
             providerKey: provider.provider_key,
             text,
@@ -770,21 +797,23 @@ async function processJob(db, env, auth, job, providerState, options) {
   }
 }
 
-async function successStatements(db, auth, job, result) {
+async function successStatements(db, env, auth, job, result) {
   const listing = await loadListing(db, job.franchise_id);
   const candidates = extractProposalCandidatesFromText(result.text);
   const actorUserId = effectiveActorUserId(auth, job);
   return [
-    ...proposalKnowledgeStatements(db, {
+    ...await proposalKnowledgeStatements(db, {
       assetId: job.asset_id,
       listing,
       result: {
         method: result.method,
         status: "extracted",
         sourceText: result.text,
+        contentHash: result.contentHash,
         pageCount: 1,
         candidates: onlyMissingCandidates(candidates, listing),
       },
+      env,
       actorUserId,
       siteId: SITE_FRANCHISEE_ID,
     }),
