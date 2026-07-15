@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 
 const files = [
   "js/dashboard-utils.js",
+  "js/dashboard-outreach.js",
   "js/dashboard-review.js",
   "js/dashboard-ocr-state.js",
   "js/dashboard-ocr-providers.js",

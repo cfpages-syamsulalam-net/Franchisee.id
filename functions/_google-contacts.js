@@ -1,5 +1,6 @@
 import { createClerkClient } from "@clerk/backend";
 import { getUnclaimedOutreachQueue } from "./_dashboard-queries.js";
+import { outreachStatusStatement } from "./_outreach-status.js";
 import { auditStatement, jsonResponse, randomId } from "./_dashboard-utils.js";
 
 const GOOGLE_CONTACTS_SCOPE = "https://www.googleapis.com/auth/contacts";
@@ -46,6 +47,12 @@ export async function handleSaveOutreachGoogleContacts(db, auth, data, env) {
   const contactsToCreate = duplicateResult.contacts;
   if (!contactsToCreate.length) {
     await db.batch([
+      ...contacts.map((contact) => outreachStatusStatement(db, {
+        franchiseId: contact.franchise_id,
+        status: "saved_contact",
+        staffUserId: auth.id,
+        notes: "Kontak sudah ada di Google Contacts.",
+      })),
       auditStatement(db, "dashboard.outreach.google_contacts.skip_duplicates", "user", auth.id, {
         requested: contacts.length,
         duplicate_skipped: duplicateResult.duplicate_skipped,
@@ -86,6 +93,12 @@ export async function handleSaveOutreachGoogleContacts(db, auth, data, env) {
 
   const createdCount = Array.isArray(result.createdPeople) ? result.createdPeople.length : contactsToCreate.length;
   await db.batch([
+    ...contacts.map((contact) => outreachStatusStatement(db, {
+      franchiseId: contact.franchise_id,
+      status: "saved_contact",
+      staffUserId: auth.id,
+      notes: "Kontak disimpan ke Google Contacts.",
+    })),
     auditStatement(db, "dashboard.outreach.google_contacts.save", "user", auth.id, {
       requested: contacts.length,
       created: createdCount,

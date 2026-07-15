@@ -10,6 +10,7 @@ import {
   handleUpdatePaymentMethod,
   handleUpdatePremiumSettings,
   handleUpdateListingLocations,
+  handleUpdateOutreachStatus,
   handleUpdatePublication,
 } from "./_dashboard-actions.js";
 import { handleSaveOutreachGoogleContacts } from "./_google-contacts.js";
@@ -39,6 +40,7 @@ import { getOcrJobState, handleEnqueueOcrJobs, handleRunOcrDryRun, handleRunOcrJ
 import { handleCreateOcrEnrichmentSuggestion } from "./_ocr-enrichment-review.js";
 import { handleAcquireOcrRunLease, handleHeartbeatOcrRunLease, handleReleaseOcrRunLease } from "./_ocr-run-lease.js";
 import { logOperationEvent } from "./_telemetry.js";
+import { OUTREACH_PIPELINE_STATUSES } from "../src/lib/outreach-pipeline.js";
 
 export async function onRequestGet({ request, env }) {
   try {
@@ -84,6 +86,7 @@ export async function onRequestGet({ request, env }) {
       publication_controls: publicationControls,
       outreach_queue: outreachQueue,
       outreach_summary: outreachSummary,
+      outreach_pipeline: OUTREACH_PIPELINE_STATUSES,
       pending_claims: pendingClaims,
       pending_premium_payments: pendingPremiumPayments,
       premium_operations: premiumOperations,
@@ -125,6 +128,7 @@ export async function onRequestPost({ request, env }) {
     const data = parsed.data;
     if (data.action === "log_outreach") return handleLogOutreach(env.franchise_db, auth, data);
     if (data.action === "save_outreach_google_contacts") return handleSaveOutreachGoogleContacts(env.franchise_db, auth, data, env);
+    if (data.action === "update_outreach_status") return handleUpdateOutreachStatus(env.franchise_db, auth, data);
     if (data.action === "suggest_edit") return handleSuggestEdit(env.franchise_db, auth, data);
     if (data.action === "review_edit_suggestion") return handleReviewEditSuggestion(env.franchise_db, auth, data);
     if (data.action === "review_claim") return handleReviewClaim(env.franchise_db, auth, data);

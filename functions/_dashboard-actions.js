@@ -13,38 +13,89 @@ import { manualLocationSummary, manualLocationWriteStatements } from "./_locatio
 import { refreshDashboardQualityChecks } from "./_quality-checks.js";
 import { siteRebuildStatements } from "./_site-publish-queue.js";
 import { createPremiumNotification, queueNotificationEmail, recordPremiumEvent, updatePremiumSettings } from "./_premium-ops.js";
+import { OUTREACH_EVENT_TO_PIPELINE_STATUS, normalizeOutreachPipelineStatus } from "../src/lib/outreach-pipeline.js";
+import { outreachEventOutcomeForStatus, outreachStatusStatement } from "./_outreach-status.js";
 
 export async function handleLogOutreach(db, auth, data) {
   const eventId = `outreach_${randomId()}`;
-  await db
-    .prepare(
-      `INSERT INTO listing_outreach_events (
-        id, franchise_id, site_id, staff_user_id, channel, contact_label, contact_value,
-        message_template_key, message_text, outcome, notes
-      ) VALUES (?, ?, ?, ?, 'whatsapp', ?, ?, 'unclaimed_claim_notice_v1', ?, ?, ?)`,
-    )
-    .bind(
-      eventId,
-      data.franchise_id,
-      SITE_ID,
-      auth.id,
-      data.contact_label,
-      data.contact_value,
-      data.message_text,
-      data.outcome,
-      data.notes,
-    )
-    .run();
-
-  await db
-    .prepare(
-      `INSERT INTO audit_events (id, actor_user_id, source_site_id, action, entity_type, entity_id, metadata)
-       VALUES (?, ?, ?, 'dashboard.outreach.log', 'franchise', ?, ?)`,
-    )
-    .bind(`audit_${randomId()}`, auth.id, SITE_ID, data.franchise_id, JSON.stringify({ outcome: data.outcome, contact: data.contact_value }))
-    .run();
+  const status = OUTREACH_EVENT_TO_PIPELINE_STATUS[data.outcome] || "contacted";
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO listing_outreach_events (
+          id, franchise_id, site_id, staff_user_id, channel, contact_label, contact_value,
+          message_template_key, message_text, outcome, notes
+        ) VALUES (?, ?, ?, ?, 'whatsapp', ?, ?, 'unclaimed_claim_notice_v1', ?, ?, ?)`,
+      )
+      .bind(
+        eventId,
+        data.franchise_id,
+        SITE_ID,
+        auth.id,
+        data.contact_label,
+        data.contact_value,
+        data.message_text,
+        data.outcome,
+        data.notes,
+      ),
+    outreachStatusStatement(db, {
+      franchiseId: data.franchise_id,
+      status,
+      staffUserId: auth.id,
+      notes: data.notes,
+    }),
+    auditStatement(db, "dashboard.outreach.log", "franchise", data.franchise_id, {
+      outcome: data.outcome,
+      status,
+      contact: data.contact_value,
+    }, auth.id),
+  ]);
 
   return jsonResponse({ success: true, event_id: eventId });
+}
+
+export async function handleUpdateOutreachStatus(db, auth, data) {
+  const listing = await db
+    .prepare("SELECT id, brand_name FROM franchises WHERE id = ? LIMIT 1")
+    .bind(data.franchise_id)
+    .first();
+  if (!listing) return jsonResponse({ success: false, error: "LISTING_NOT_FOUND" }, { status: 404 });
+
+  const status = normalizeOutreachPipelineStatus(data.status);
+  const eventOutcome = outreachEventOutcomeForStatus(status);
+  const eventId = `outreach_${randomId()}`;
+  await db.batch([
+    outreachStatusStatement(db, {
+      franchiseId: data.franchise_id,
+      status,
+      staffUserId: auth.id,
+      notes: data.notes,
+    }),
+    db
+      .prepare(
+        `INSERT INTO listing_outreach_events (
+          id, franchise_id, site_id, staff_user_id, channel, contact_label, contact_value,
+          message_template_key, message_text, outcome, notes
+        ) VALUES (?, ?, ?, ?, 'note', 'Pipeline', ?, 'sales_pipeline_status', ?, ?, ?)`,
+      )
+      .bind(
+        eventId,
+        data.franchise_id,
+        SITE_ID,
+        auth.id,
+        status,
+        `Status pipeline diubah ke ${status}.`,
+        eventOutcome,
+        data.notes,
+      ),
+    auditStatement(db, "dashboard.outreach.status.update", "franchise", data.franchise_id, {
+      status,
+      notes: data.notes,
+      brand_name: listing.brand_name,
+    }, auth.id),
+  ]);
+
+  return jsonResponse({ success: true, franchise_id: data.franchise_id, status });
 }
 
 export async function handleSuggestEdit(db, auth, data) {

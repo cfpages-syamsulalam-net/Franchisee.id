@@ -109,6 +109,7 @@ const ocrProviderMetadataJson = JSON.stringify({
           <button class="dash-tab" type="button" role="tab" id="dash-tab-outreach" aria-controls="dash-panel-outreach" aria-selected="true" data-dashboard-tab="outreach">
             <i class="fas fa-comments dash-tab-icon" aria-hidden="true"></i>
             Outreach
+            <span class="dash-tab-badge" data-outreach-tab-badge hidden>0</span>
           </button>
           <button class="dash-tab" type="button" role="tab" id="dash-tab-quality" aria-controls="dash-panel-quality" aria-selected="false" data-dashboard-tab="quality">
             <i class="fas fa-check-circle dash-tab-icon" aria-hidden="true"></i>
@@ -151,28 +152,19 @@ const ocrProviderMetadataJson = JSON.stringify({
                 <div class="dash-panel-title">
                   <i class="fas fa-comments dash-section-icon" aria-hidden="true"></i>
                   <div>
-                    <h2>Unclaimed Outreach</h2>
-                    <p>WhatsApp memakai nomor personal staff melalui link wa.me.</p>
+                    <h2>Sales Outreach Board</h2>
+                    <p>Geser brand sesuai tahap follow-up, klaim, dan subscription.</p>
                   </div>
                 </div>
                 <div class="dash-panel-actions" data-outreach-actions>
                   <span class="dash-badge" data-outreach-count>-</span>
                 </div>
               </div>
-              <div class="dash-table-wrap">
-                <table class="dash-table">
-                  <thead>
-                    <tr>
-                      <th>Brand</th>
-                      <th>Kontak</th>
-                      <th>Status</th>
-                      <th>Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody data-outreach-rows>
-                    <tr><td colspan="4" class="dash-loading">Memuat antrean outreach...</td></tr>
-                  </tbody>
-                </table>
+              <div class="dash-outreach-summary" data-outreach-stage-summary aria-label="Ringkasan sales outreach">
+                <span class="dash-loading">Memuat ringkasan outreach...</span>
+              </div>
+              <div class="dash-outreach-board" data-outreach-board aria-label="Kanban sales outreach">
+                <div class="dash-loading">Memuat sales board...</div>
               </div>
             </section>
           </section>
@@ -236,6 +228,7 @@ const ocrProviderMetadataJson = JSON.stringify({
     <script src="/js/dashboard-utils.js" is:inline></script>
     <script src="/js/dashboard-premium-operations.js" is:inline></script>
     <script src="/js/dashboard-review.js" is:inline></script>
+    <script src="/js/dashboard-outreach.js" is:inline></script>
     <script src="/js/dashboard-operations.js" is:inline></script>
     <script is:inline set:html={`window.FranchiseOcrProviderMetadata = ${ocrProviderMetadataJson};`}></script>
     <script src="/js/dashboard-ocr-schedulers.js" is:inline></script>

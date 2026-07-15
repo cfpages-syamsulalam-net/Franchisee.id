@@ -4,6 +4,23 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-15 16:38 (Asia/Jakarta)
+### Added
+- `src/lib/outreach-pipeline.js`: Added the shared canonical sales outreach pipeline status contract for dashboard UI and backend validation.
+- `functions/_outreach-status.js`: Added a shared current-status upsert helper for outreach pipeline mutations and compatible event-history mapping.
+- `js/dashboard-outreach.js`: Added a focused browser module for the Outreach Kanban board, Google Contacts save, WhatsApp logging, and pipeline status changes.
+- `migrations/0030_listing_outreach_statuses.sql`: Added the D1 table for current per-listing/site outreach pipeline stage, staff assignment, notes, and milestone timestamps.
+- `.context/session-20260715-1638.md`: Added this session continuity snapshot for the sales outreach Kanban implementation.
+
+### Changed
+- `src/pages/dashboard/index.astro`: Replaced the Outreach table with sales board containers and added an Outreach tab badge hook.
+- `js/dashboard-admin.js`, `js/dashboard-outreach.js`, and `js/dashboard-operations.js`: Render Outreach as a drag-and-drop Kanban board with status badges, dropdown fallback status changes, WhatsApp logging, Google Contacts save, and the `update_outreach_status` dashboard action, while keeping the operations module below the long-file threshold by delegating Outreach behavior.
+- `css/dashboard-operations.css`: Added Outreach Kanban layout, cards, status badges, stage summary pills, and drag/drop states.
+- `functions/dashboard-data.js`, `functions/_dashboard-schemas.js`, `functions/_dashboard-queries.js`, `functions/_dashboard-actions.js`, and `functions/_google-contacts.js`: Exposed outreach pipeline metadata, validated/status-routed Kanban updates, joined current pipeline/subscription state into the outreach read model, updated status after WhatsApp confirmation, and marked saved Google Contacts as `saved_contact`.
+- `scripts/check-dashboard-ocr-client.mjs`: Added the new Outreach browser module to the dashboard client syntax/assertion source list.
+- `DASHBOARD.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/TECH_STACK_DECISIONS.md`, and `SUGGESTION.md`: Documented the sales outreach Kanban, shared status contract, D1 status table, and remaining dashboard read-model split risk.
+- Remote D1: Applied `0030_listing_outreach_statuses.sql` directly with `wrangler d1 execute` and verified the table/indexes. Standard `wrangler d1 migrations apply` is currently blocked before `0030` by older pending migration `0024` failing with `Exceeded maximum DB size`.
+
 ## 2026-07-14 18:52 (Asia/Jakarta)
 ### Added
 - `src/components/dashboard/DashboardLeadsPanel.astro`, `src/components/dashboard/DashboardPremiumPanel.astro`, `src/components/dashboard/DashboardSystemPanel.astro`, and `src/components/dashboard/DashboardIntegrationPanel.astro`: Added focused dashboard tabs split from the former Operations tab.

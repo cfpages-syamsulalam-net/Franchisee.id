@@ -7,6 +7,7 @@ import {
   sanitizeListingChanges,
 } from "./_shared-schemas.js";
 import { DASHBOARD_OCR_ACTION_SCHEMAS } from "./_dashboard-ocr-schemas.js";
+import { OUTREACH_PIPELINE_STATUS_VALUES } from "../src/lib/outreach-pipeline.js";
 
 export const SITE_ID = SITE_FRANCHISEE_ID;
 export const EDIT_FIELD_NAME = "json_diff";
@@ -29,6 +30,13 @@ const SaveOutreachGoogleContactsSchema = z.object({
   action: z.literal("save_outreach_google_contacts"),
   franchise_ids: z.array(z.string().trim().min(1)).max(200).optional().default([]),
   limit: z.coerce.number().int().min(1).max(200).optional().default(200),
+});
+
+const UpdateOutreachStatusSchema = z.object({
+  action: z.literal("update_outreach_status"),
+  franchise_id: z.string().trim().min(1),
+  status: z.enum(OUTREACH_PIPELINE_STATUS_VALUES),
+  notes: z.string().trim().max(1000).optional().default(""),
 });
 
 const SuggestEditSchema = z.object({
@@ -126,6 +134,7 @@ const UpdatePremiumSettingsSchema = z.object({
 export const DashboardActionSchema = z.discriminatedUnion("action", [
   OutreachEventSchema,
   SaveOutreachGoogleContactsSchema,
+  UpdateOutreachStatusSchema,
   SuggestEditSchema,
   ReviewEditSuggestionSchema,
   ReviewClaimSchema,

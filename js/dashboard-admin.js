@@ -36,8 +36,10 @@
     operations: "system"
   };
   var dashboardOperations = window.FranchiseDashboardOperations.createOperations({
-    outreachRows: document.querySelector("[data-outreach-rows]"),
+    outreachBoard: document.querySelector("[data-outreach-board]"),
+    outreachStageSummary: document.querySelector("[data-outreach-stage-summary]"),
     outreachCount: document.querySelector("[data-outreach-count]"),
+    outreachTabBadge: document.querySelector("[data-outreach-tab-badge]"),
     outreachActions: document.querySelector("[data-outreach-actions]"),
     premiumPaymentRows: document.querySelector("[data-premium-payment-rows]"),
     publishState: document.querySelector("[data-publish-state]"),

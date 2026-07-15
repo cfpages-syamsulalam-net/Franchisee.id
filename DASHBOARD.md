@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-14 18:52 (Asia/Jakarta)
+Last updated: 2026-07-15 16:38 (Asia/Jakarta)
 
 ## Purpose
 
@@ -24,6 +24,7 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 - Staff edit policy: staff can suggest listing edits only. Admin approval is required unless an admin creates an active auto-approval rule for that staff user.
 - WhatsApp outreach: no WhatsApp API for now. The dashboard generates a `wa.me` link with a prefilled message, and the staff member sends it from their own WhatsApp account.
 - Google Contacts outreach prep: staff can save ready outreach contacts to the currently linked Google account before opening WhatsApp, using Google People API with the `https://www.googleapis.com/auth/contacts` scope. This requires People API and the Clerk Google connection to be configured with that scope, then staff must login again with Google.
+- Sales outreach pipeline: outreach now uses a Kanban board with canonical stages `Uncontacted`, `Saved Contact`, `Contacted`, `Responded`, `Qualified`, `Claim Started`, `Claimed`, `Subscribed`, `Renewal Risk`, and `Burned`. `Saved Contact` tracks the pre-WhatsApp Google Contacts step; `Renewal Risk` gives staff a stage between active subscription and burned/lost.
 - Edit storage policy: use structured JSON diffs for suggestion/review snapshots; once approved into D1, apply the accepted values field-by-field to canonical D1 columns.
 - Trusted staff auto-approval: if admin grants auto-approval to a staff user, all listing fields are safe for that staff user to edit.
 - Outreach logging: opening WhatsApp does not log an event. Staff must manually confirm the message was sent with the dashboard confirmation action.
@@ -41,9 +42,10 @@ Third-party setup details for `/dashboard` live in `docs/architecture/DASHBOARD_
 | Dashboard auth | Implemented | `functions/dashboard-data.js` requires D1 role `staff`; existing auth helper allows `admin` as elevated access. |
 | Dashboard tab UI | Implemented | `/dashboard` now groups detailed panels into icon-led tabs: Outreach, Data Quality, Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR. |
 | Overview metrics | Implemented | Total listings, unclaimed, verified/premium, missing image/contact/description, and publish queue counts come from D1. |
-| Unclaimed outreach queue | Implemented | Shows unclaimed published listings with mobile/WhatsApp-capable phone data and generates `wa.me` claim-notification links. |
+| Sales outreach board | Implemented | Shows contact-ready unclaimed/pipeline/subscribed listings as a drag-and-drop Kanban board with stage badges, WhatsApp actions, claim links, and dropdown fallback status controls. |
 | Google Contacts bulk save | Implemented | Outreach can create up to 200 Google Contacts from the current unclaimed outreach queue in one protected action so brand names appear before staff sends WhatsApp messages. It searches existing Google Contacts first and skips duplicate phone numbers. If Google Contacts scope/token is missing, the dashboard returns setup guidance instead of silently failing. |
 | Outreach event logging | Implemented | `listing_outreach_events` records staff, contact, message, outcome, and timestamp only after staff manually confirms the WA message was sent. |
+| Outreach current status | Implemented | `listing_outreach_statuses` stores the current sales pipeline stage per listing/site, while `listing_outreach_events` remains the history log. |
 | Claim review workflow | Implemented | Shows pending D1 `franchise_claims`; admin can approve/reject. Approval attaches ownership/profile data, moves unclaimed listings to free/claimed state, writes audit events, and queues a static rebuild. |
 | Data quality panel | Implemented read-only | Shows listings with missing image/contact/description/category or likely all-caps description. |
 | Publish queue panel | Implemented read-only | Shows `site_publish_state` and `site_rebuild_requests` counts. |
@@ -84,11 +86,11 @@ Third-party setup details for `/dashboard` live in `docs/architecture/DASHBOARD_
 - Preview link to public listing.
 - Queue static publish when a public-page-affecting field changes.
 
-### 3. Unclaimed Outreach
+### 3. Sales Outreach
 
 - Dedicated queue of unclaimed listings that have public WhatsApp/mobile contacts.
 - One-click WhatsApp outreach link using a consistent claim-notification message.
-- Outreach status: not contacted, contacted, replied, claim started, claimed, invalid contact.
+- Outreach status: uncontacted, saved contact, contacted, responded, qualified, claim started, claimed, subscribed, renewal risk, burned.
 - Contact attempt history with staff user, timestamp, number used, message template version, and notes.
 - Prioritization score using listing completeness, popularity, category value, investment size, and contact confidence.
 
@@ -143,6 +145,7 @@ Mohon tim/pemilik {brand_name} klaim listing ini agar data publiknya bisa diperb
 D1 additions:
 
 - `listing_outreach_events`: contact attempts, channel, number/email used, staff user, outcome, notes, message template version. Implemented in `migrations/0004_dashboard_operations.sql`.
+- `listing_outreach_statuses`: latest sales pipeline stage per listing/site, including assigned staff and milestone timestamps. Implemented in `migrations/0030_listing_outreach_statuses.sql`.
 - `staff_auto_approval_rules`: admin-managed staff auto-approval policy. Implemented in `migrations/0004_dashboard_operations.sql`.
 - `listing_edit_suggestions`: staff suggested edits and admin review state. Implemented in `migrations/0004_dashboard_operations.sql`.
 - `listing_quality_checks`: generated warnings and scores per listing. Pending; current MVP computes quality warnings at read time.

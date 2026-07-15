@@ -19,6 +19,7 @@ import {
   loadPremiumSettings,
   premiumReadinessForListing,
 } from "./_premium-ops.js";
+import { normalizeOutreachPipelineStatus } from "../src/lib/outreach-pipeline.js";
 
 const OUTREACH_QUEUE_LIMIT = 250;
 const LOCATION_QUERY_CHUNK_SIZE = 80;
@@ -301,27 +302,71 @@ export async function getPremiumOperations(db) {
 export async function getUnclaimedOutreachQueue(db) {
   const result = await db
     .prepare(
-      `SELECT
+      `WITH active_subscriptions AS (
+        SELECT franchise_id, MAX(ends_at) AS active_subscription_ends_at
+        FROM franchise_subscriptions
+        WHERE status = 'active' AND ends_at > CURRENT_TIMESTAMP
+        GROUP BY franchise_id
+      ),
+      latest_subscriptions AS (
+        SELECT franchise_id, MAX(ends_at) AS latest_subscription_ends_at
+        FROM franchise_subscriptions
+        GROUP BY franchise_id
+      )
+      SELECT
         f.id,
         p.slug,
         f.brand_name,
         f.category,
+        f.status AS listing_status,
+        f.verification_tier,
         f.phone,
         f.office_address,
         f.total_investment_idr,
         f.min_investment_idr,
         f.updated_at,
+        los.status AS outreach_status,
+        los.notes AS outreach_notes,
+        los.last_status_changed_at,
+        los.last_contacted_at,
+        los.last_response_at,
+        los.last_claimed_at,
+        los.last_subscribed_at,
+        active_subscriptions.active_subscription_ends_at,
+        latest_subscriptions.latest_subscription_ends_at,
         MAX(loe.created_at) AS last_outreach_at,
         COUNT(loe.id) AS outreach_count
       FROM franchise_site_publications p
       JOIN franchises f ON f.id = p.franchise_id
       LEFT JOIN listing_outreach_events loe ON loe.franchise_id = f.id AND loe.site_id = p.site_id
+      LEFT JOIN listing_outreach_statuses los ON los.franchise_id = f.id AND los.site_id = p.site_id
+      LEFT JOIN active_subscriptions ON active_subscriptions.franchise_id = f.id
+      LEFT JOIN latest_subscriptions ON latest_subscriptions.franchise_id = f.id
       WHERE p.site_id = ?
         AND p.publication_status = 'published'
-        AND (f.source_sheet = 'UNCLAIMED' OR f.verification_tier = 'unclaimed' OR f.status = 'unclaimed')
+        AND (
+          f.source_sheet = 'UNCLAIMED'
+          OR f.verification_tier = 'unclaimed'
+          OR f.status = 'unclaimed'
+          OR los.franchise_id IS NOT NULL
+          OR active_subscriptions.franchise_id IS NOT NULL
+        )
         AND COALESCE(f.phone, '') != ''
       GROUP BY f.id, p.slug
       ORDER BY
+        CASE COALESCE(los.status, CASE WHEN active_subscriptions.franchise_id IS NOT NULL THEN 'subscribed' ELSE 'uncontacted' END)
+          WHEN 'uncontacted' THEN 0
+          WHEN 'saved_contact' THEN 1
+          WHEN 'contacted' THEN 2
+          WHEN 'responded' THEN 3
+          WHEN 'qualified' THEN 4
+          WHEN 'claim_started' THEN 5
+          WHEN 'claimed' THEN 6
+          WHEN 'subscribed' THEN 7
+          WHEN 'renewal_risk' THEN 8
+          WHEN 'burned' THEN 9
+          ELSE 10
+        END,
         CASE WHEN last_outreach_at IS NULL THEN 0 ELSE 1 END,
         f.total_investment_idr DESC,
         f.updated_at DESC
@@ -332,8 +377,13 @@ export async function getUnclaimedOutreachQueue(db) {
 
   return (result.results || []).map((row) => {
     const contacts = parseWhatsAppContacts(row.phone);
+    const defaultStatus = row.active_subscription_ends_at ? "subscribed" : "uncontacted";
+    const currentStatus = normalizeOutreachPipelineStatus(row.outreach_status, defaultStatus);
     return {
       ...row,
+      current_status: currentStatus,
+      status_badge: currentStatus,
+      subscription_health: row.active_subscription_ends_at ? "active" : row.latest_subscription_ends_at ? "not_active" : "none",
       public_url: `/peluang-usaha/${row.slug}`,
       claim_url: `/daftar?claim=${row.slug}`,
       contacts,
@@ -343,7 +393,8 @@ export async function getUnclaimedOutreachQueue(db) {
 }
 
 export async function getUnclaimedOutreachSummary(db) {
-  const row = await db
+  const [row, statusRows] = await Promise.all([
+    db
     .prepare(
       `SELECT
         COUNT(*) AS published_unclaimed,
@@ -356,10 +407,40 @@ export async function getUnclaimedOutreachSummary(db) {
         AND (f.source_sheet = 'UNCLAIMED' OR f.verification_tier = 'unclaimed' OR f.status = 'unclaimed')`,
     )
     .bind(SITE_ID)
-    .first();
+    .first(),
+    safeAll(
+      db,
+      `WITH active_subscriptions AS (
+        SELECT franchise_id
+        FROM franchise_subscriptions
+        WHERE status = 'active' AND ends_at > CURRENT_TIMESTAMP
+        GROUP BY franchise_id
+      )
+      SELECT
+        COALESCE(los.status, CASE WHEN active_subscriptions.franchise_id IS NOT NULL THEN 'subscribed' ELSE 'uncontacted' END) AS status,
+        COUNT(*) AS count
+      FROM franchise_site_publications p
+      JOIN franchises f ON f.id = p.franchise_id
+      LEFT JOIN listing_outreach_statuses los ON los.franchise_id = f.id AND los.site_id = p.site_id
+      LEFT JOIN active_subscriptions ON active_subscriptions.franchise_id = f.id
+      WHERE p.site_id = ?
+        AND p.publication_status = 'published'
+        AND COALESCE(f.phone, '') != ''
+        AND (
+          f.source_sheet = 'UNCLAIMED'
+          OR f.verification_tier = 'unclaimed'
+          OR f.status = 'unclaimed'
+          OR los.franchise_id IS NOT NULL
+          OR active_subscriptions.franchise_id IS NOT NULL
+        )
+      GROUP BY status`,
+      [SITE_ID],
+    ),
+  ]);
 
   return {
     ...normalizeNumberObject(row),
+    by_pipeline_status: normalizeGroupedCounts(statusRows || [], "status"),
     queue_limit: OUTREACH_QUEUE_LIMIT,
   };
 }

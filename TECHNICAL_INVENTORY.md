@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-14 18:52 (Asia/Jakarta)
+Last updated: 2026-07-15 16:38 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -289,7 +289,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `css/dashboard-operations.css`
 *Dashboard operations/admin helper stylesheet module.*
-- Owns publication status grids/cards and compact checkbox rows used by dashboard admin UI.
+- Owns the sales outreach Kanban board, stage summary pills, drag/drop states, outreach status badges, publication status grids/cards, and compact checkbox rows used by dashboard admin UI.
 
 ### File: `css/dashboard-integration.css`
 *Dashboard integration documentation stylesheet module.*
@@ -322,6 +322,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `submitPaymentMethod(event)` / `submitPremiumSettings(event)`: Posts admin settings actions through the shared dashboard action callback.
 - Queued email retry/cancel controls stay icon-only and call the same `/dashboard-data` action contract through the injected callback.
 
+### File: `js/dashboard-outreach.js`
+*Sales outreach Kanban client module for `/dashboard`.*
+- `window.FranchiseDashboardOutreach.createOutreach(options)`: Creates the Outreach board renderer from DOM references and shared dashboard action/reload/status callbacks supplied through `js/dashboard-operations.js`.
+- `render(rows, summary, pipelineMetadata)` / `renderOutreachCard(row, pipeline)`: Renders the sales outreach Kanban board from `outreach_queue` plus `outreach_pipeline`, groups cards by current status, shows stage/status badges, and keeps the tab badge in sync.
+- `bindOutreachDragAndDrop()` / `updateOutreachStatus(franchiseId, status, control)`: Supports drag/drop card movement plus the per-card status select fallback, posting `update_outreach_status` and reloading dashboard state after successful persistence.
+- `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, records manually confirmed WhatsApp outreach through `/dashboard-data`, and renders setup-guidance links when Google Contacts permissions are missing.
+
 ### File: `js/dashboard-review.js`
 *Review/Data Quality client module for `/dashboard`.*
 - `window.FranchiseDashboardReview.createOperations(options)`: Creates the review controller from DOM references, current dashboard state getter, admin-state callback, and shared action/reload/status callbacks.
@@ -336,9 +343,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `js/dashboard-operations.js`
 *General operations-data client module for `/dashboard`.*
-- `window.FranchiseDashboardOperations.createOperations(options)`: Creates the outreach, publish queue, Publikasi tab, lead, health, and traffic-guardrail renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`.
-- `render(data)`: Fans dashboard API data into outreach, publish queue, the separated Publikasi tab, Leads tab, and Sistem tab panels.
-- `renderOutreach()` / `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Renders staff-personal WhatsApp outreach rows, injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, and records manually confirmed outreach through `/dashboard-data`.
+- `window.FranchiseDashboardOperations.createOperations(options)`: Creates the operations-data renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`; Outreach-specific rendering is delegated to `js/dashboard-outreach.js`.
+- `render(data)`: Fans dashboard API data into Outreach, publish queue, the separated Publikasi tab, Leads tab, and Sistem tab panels.
 - `renderPublicationControls()` / `updatePublicationStatus()`: Renders network publication controls as per-listing cards with per-site status controls, status badges, public links, and posts admin status changes.
 - `renderLeads()` / `renderHealth()` / `renderTrafficGuardrails()`: Renders lead rows, system health summaries, and Cloudflare Free-plan limit/throttle visibility.
 
@@ -405,6 +411,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `OCR_PROVIDER_FIELD_NAMES`: Shared field list used by the dashboard browser module for visibility toggling.
 - `getOcrProviderRequirementError(providerKey, config)`: Server-side activation prerequisite helper used by `functions/_ocr-provider-config.js`.
 - `getOcrProviderLimitMetadata(providerKey)`: Returns normalized limit metadata for `_ocr-provider-config.js` so dashboard reads can show provider limit sources/details without storing that narrative in D1.
+
+### File: `src/lib/outreach-pipeline.js`
+*Shared sales outreach pipeline contract.*
+- `OUTREACH_PIPELINE_STATUSES`: Canonical dashboard Kanban statuses: `uncontacted`, `saved_contact`, `contacted`, `responded`, `qualified`, `claim_started`, `claimed`, `subscribed`, `renewal_risk`, and `burned`, with labels, short labels, icons, tones, and operator descriptions.
+- `OUTREACH_PIPELINE_STATUS_VALUES`: Allowed status values used by dashboard Zod validation and UI fallbacks.
+- `OUTREACH_EVENT_TO_PIPELINE_STATUS`: Maps historical `listing_outreach_events.outcome` values into the current Kanban status model.
+- `normalizeOutreachPipelineStatus(value, fallback)` / `outreachPipelineStatusMeta(value)`: Shared status normalization helpers for backend reads/writes.
 
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
@@ -738,7 +751,7 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 - `prerender = true`.
 - Builds `/dashboard/index.html` with `noindex,nofollow`.
 - Loads dashboard base/auth/OCR styles plus auth/tooltips/utilities, Premium, Review, operations-data, OCR, and controller client modules; shows a skeleton while the session is checked and marks the login-only staff/admin auth root with `data-auth-defer="true"` so it is only mounted when no Clerk session exists or the session must be renewed.
-- Renders the branded route shell, metrics, Outreach and Data Quality tabs inline, then delegates Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR tab markup to focused Astro components. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` and loads the split OCR browser modules before the coordinator facade. Runtime authorization remains server-side.
+- Renders the branded route shell, metrics, Outreach Kanban containers and Data Quality tabs inline, then delegates Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR tab markup to focused Astro components. Injects `src/lib/ocr-provider-metadata.js` into `window.FranchiseOcrProviderMetadata` and loads the split OCR browser modules before the coordinator facade. Runtime authorization remains server-side.
 - Loads the existing Font Awesome asset used by legacy pages so dashboard icons use the same icon family as `/daftar`.
 - Staff edit UI submits structured JSON diffs; the API performs the field whitelist and role enforcement.
 - Does not load `/wp-content/uploads/astra/astra-theme-dynamic-css-post-6.css` because that legacy dynamic CSS file is absent and returns HTML/404 in production.
@@ -1025,13 +1038,13 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
 - `onRequestGet()`: Requires Clerk auth plus D1 `staff` through `requireD1UserFast()` for already-synced users; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch/enrichment-review state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
-- `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows to `_dashboard-actions.js`, bulk outreach contact save to `_google-contacts.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, OCR retry/no-text job actions to `_ocr-job-actions.js`, OCR batch start/retry actions to `_ocr-batch-runs.js`, OCR enrichment bundle creation to `_ocr-enrichment-review.js`, and OCR dry-run/enqueue/run/search actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
+- `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows plus `update_outreach_status` to `_dashboard-actions.js`, bulk outreach contact save to `_google-contacts.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, OCR retry/no-text job actions to `_ocr-job-actions.js`, OCR batch start/retry actions to `_ocr-batch-runs.js`, OCR enrichment bundle creation to `_ocr-enrichment-review.js`, and OCR dry-run/enqueue/run/search actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
 - `_ocr-batch-runs.js` owns persisted batch creation/progress/retry; `_ocr-job-actions.js` owns dashboard retry/no-text mutations; `_ocr-enrichment-review.js` owns grouped per-franchise OCR review bundles; `_ocr-job-runner.js` stays focused on job processing and OCR provider execution.
 - `requireDashboardAccess(request, env, options)`: Requires `env.franchise_db` and D1 `staff` access before any dashboard query/action runs. `options.fast` is used only for GET refreshes and falls back to full sync when needed.
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions, `save_outreach_google_contacts`, plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
+- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions, `save_outreach_google_contacts`, `update_outreach_status`, plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
 - `ReviewEditSuggestionSchema`: Accepts optional `approved_fields` from shared editable field names for granular field-level approval.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
@@ -1122,8 +1135,8 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 *Read-only D1 data model for `/dashboard-data`.*
 - `getOverview(db)`: Returns Franchisee.id listing counts and completeness counts.
 - `getDataQuality(db)`: Reads persisted open `franchise_quality_checks` when available, falling back to computed warnings for missing images, contact, description, category, all-caps descriptions, suspicious contacts, stale listings, and invalid URLs.
-- `getUnclaimedOutreachQueue(db)`: Reads up to 250 published unclaimed listings with public phone data, parses mobile/WhatsApp-capable Indonesian numbers, and builds staff-personal `wa.me` claim-notification links.
-- `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, and the current outreach queue limit for the dashboard badge.
+- `getUnclaimedOutreachQueue(db)`: Reads up to 250 contact-ready listings for the sales board, including unclaimed rows, rows with existing outreach status, and rows with active subscriptions; joins `listing_outreach_statuses`, subscription dates, and outreach history, normalizes `current_status`, parses mobile/WhatsApp-capable numbers, and builds staff-personal `wa.me` claim-notification links.
+- `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, current outreach queue limit, and pipeline status counts for the dashboard/tab badges.
 - `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display and structured location rows for the admin Area Listing editor. `getEditSuggestions()` delegates document proof backfill to `_dashboard-review-evidence.js` before returning pending suggestion rows.
 - `getStructuredLocationsForListings(db, franchiseIds)`: Chunks editable listing IDs before building `IN (...)` queries so `/dashboard-data` can load the full dashboard without hitting D1's SQL variable limit.
 - `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Premium tab.
@@ -1141,12 +1154,18 @@ The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/co
 
 ### File: `functions/_google-contacts.js`
 *Google Contacts helper for dashboard outreach.*
-- `handleSaveOutreachGoogleContacts(db, auth, data, env)`: Staff/admin dashboard action that rebuilds the current unclaimed outreach queue server-side, selects up to 200 ready WhatsApp contacts, retrieves the staff member's linked Google OAuth token through Clerk, checks existing Google Contacts through People API `searchContacts`, calls `people:batchCreateContacts` only for non-duplicates, records an audit event, and returns setup-required errors when Google Contacts scope/token/People API access is missing.
+- `handleSaveOutreachGoogleContacts(db, auth, data, env)`: Staff/admin dashboard action that rebuilds the current outreach queue server-side, selects up to 200 ready WhatsApp contacts, retrieves the staff member's linked Google OAuth token through Clerk, checks existing Google Contacts through People API `searchContacts`, calls `people:batchCreateContacts` only for non-duplicates, marks processed rows as `saved_contact`, records an audit event, and returns setup-required errors when Google Contacts scope/token/People API access is missing.
 - `outreachRowToGoogleContact(row)` / `googleContactHasPhone(person, phone)` / `googleContactSearchUrl(query)` / `buildGoogleBatchCreatePayload(contacts)`: Pure helpers that format brand name, phone number, listing URL, organization, duplicate-check search URL, phone matching, and `readMask` into the Google People API flow covered by `pnpm run google-contacts:check`.
+
+### File: `functions/_outreach-status.js`
+*Shared outreach current-status write helper.*
+- `outreachStatusStatement(db, input)`: Builds the upsert statement for `listing_outreach_statuses`, preserving milestone timestamps and keeping notes/staff assignment current without duplicating SQL across dashboard actions and Google Contacts.
+- `outreachEventOutcomeForStatus(status)`: Maps canonical Kanban stages back to allowed `listing_outreach_events.outcome` values so current status changes still have compatible history rows.
 
 ### File: `functions/_dashboard-actions.js`
 *Protected dashboard write workflows.*
-- `handleLogOutreach(db, auth, data)`: Records manually confirmed WhatsApp outreach and an audit event.
+- `handleLogOutreach(db, auth, data)`: Records manually confirmed WhatsApp outreach, maps the event outcome into the current outreach pipeline status, upserts `listing_outreach_statuses`, and writes an audit event.
+- `handleUpdateOutreachStatus(db, auth, data)`: Staff/admin Kanban status mutation. Validates the listing, normalizes the requested pipeline stage, upserts `listing_outreach_statuses`, writes a matching lightweight `listing_outreach_events` history row, and records an audit event.
 - `handleSuggestEdit(db, auth, data)`: Stores guided field changes as structured diffs in `listing_edit_suggestions`. Admin or active trusted staff suggestions apply immediately; normal staff suggestions stay pending.
 - `handleReviewEditSuggestion(db, auth, data)`: Admin-only approve/reject. Approved diffs optionally filter to `data.approved_fields`, write selected fields to whitelisted `franchises` columns, record skipped fields in review notes/audit metadata, and queue a static rebuild through `siteRebuildStatements()`.
 - `handleReviewClaim(db, auth, data)`: Admin-only approve/reject. Approval attaches ownership/profile data, moves unclaimed rows to free claimed state, writes audit events, and queues static rebuild.

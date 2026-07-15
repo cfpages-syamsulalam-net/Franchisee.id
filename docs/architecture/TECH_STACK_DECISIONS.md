@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-07-12 03:42 (Asia/Jakarta)
+Last updated: 2026-07-15 16:38 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -190,6 +190,7 @@ Dashboard scaffold:
 - Dashboard MVP scope is Franchisee.id only (`site_franchisee_id`). Multi-site centralized dashboard work is deferred.
 - `migrations/0004_dashboard_operations.sql` adds `listing_outreach_events`, `staff_auto_approval_rules`, and `listing_edit_suggestions`.
 - `migrations/0007_contacts_quality_dashboard.sql` adds normalized contact and persistent quality-check tables for dashboard operations.
+- `migrations/0030_listing_outreach_statuses.sql` adds current sales outreach stage storage for the dashboard Kanban while keeping `listing_outreach_events` as the immutable outreach history. It was applied directly with D1 execute on 2026-07-15 because the standard migration runner was blocked by older pending migration `0024` hitting the current D1 size ceiling; the migration ledger still needs reconciliation after storage cleanup.
 - Staff WhatsApp outreach uses generated `wa.me` links with prefilled text; no WhatsApp API is used. Outreach is logged only after staff manually confirms the message was sent.
 - Staff edit policy is implemented in the dashboard MVP: staff submit guided field changes backed by shared editable-field definitions; admin approve/reject applies approved values field-by-field to D1, writes audit events, and queues static rebuilds. Active `staff_auto_approval_rules` allow trusted staff edits to apply immediately while preserving the same audit/suggestion trail.
 - Data Quality can refresh persistent checks and normalized contacts from current listing/profile fields. The read path falls back to computed warnings before migration/refresh data exists.

@@ -7,10 +7,6 @@
     var renderActionToolbar = utils.renderActionToolbar;
     var renderActionButton = utils.renderActionButton;
     var renderActionLink = utils.renderActionLink;
-    var renderPillActionButton = utils.renderPillActionButton;
-    var outreachRows = options.outreachRows;
-    var outreachCount = options.outreachCount;
-    var outreachActions = options.outreachActions;
     var premiumPaymentRows = options.premiumPaymentRows;
     var publishState = options.publishState;
     var publicationRows = options.publicationRows;
@@ -18,87 +14,16 @@
     var leadSummary = options.leadSummary;
     var systemHealth = options.systemHealth;
     var trafficGuardrails = options.trafficGuardrails;
-    var GOOGLE_CONTACTS_SETUP_DOC = "/dashboard/#google-contacts-setup";
+    var outreach = window.FranchiseDashboardOutreach.createOutreach(options);
 
     function render(data) {
-      renderOutreach(data.outreach_queue || [], data.outreach_summary || {});
+      outreach.render(data.outreach_queue || [], data.outreach_summary || {}, data.outreach_pipeline || []);
       renderPremiumPayments(data.pending_premium_payments || []);
       renderPublish(data.publish_state || {});
       renderPublicationControls(data.publication_controls || { sites: [], listings: [] });
       renderLeads(data.lead_summary || { by_status: {}, recent: [] });
       renderHealth(data.system_health || {});
       renderTrafficGuardrails(data.system_health && data.system_health.traffic_guardrails ? data.system_health.traffic_guardrails : {});
-    }
-
-    function renderOutreach(rows, summary) {
-      var contactReady = Number(summary.contact_ready || 0);
-      var publishedUnclaimed = Number(summary.published_unclaimed || 0);
-      var queueLimit = Number(summary.queue_limit || 0);
-      var badge = rows.length + " listing";
-      if (contactReady || publishedUnclaimed) {
-        badge = rows.length + " dari " + contactReady + " kontak siap";
-        if (publishedUnclaimed > contactReady) badge += " / " + publishedUnclaimed + " unclaimed published";
-        if (queueLimit && contactReady > rows.length) badge += " (limit " + queueLimit + ")";
-      }
-      outreachCount.textContent = badge;
-      renderOutreachActions(rows);
-      if (!rows.length) {
-        outreachRows.innerHTML = '<tr><td colspan="4" class="dash-empty">Tidak ada unclaimed listing dengan nomor WhatsApp/mobile.</td></tr>';
-        return;
-      }
-      outreachRows.innerHTML = rows.map(function (row) {
-        var contact = row.contacts && row.contacts[0];
-        var waUrl = row.primary_whatsapp_url || "";
-        var message = waUrl.indexOf("text=") >= 0 ? decodeURIComponent(waUrl.split("text=")[1] || "") : "";
-        return '<tr>' +
-          '<td><a href="' + escapeAttr(row.public_url) + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a><br><span class="dash-badge">' + escapeHtml(row.category || "Tanpa kategori") + '</span></td>' +
-          '<td>' + (contact ? escapeHtml(contact.label + ": " + contact.display) : '<span class="dash-badge bad">Tidak ada WA</span>') + '</td>' +
-          '<td>' + (row.last_outreach_at ? 'Terakhir: ' + escapeHtml(row.last_outreach_at) : '<span class="dash-badge good">Belum pernah</span>') + '</td>' +
-          '<td>' + renderActionToolbar([
-            waUrl ? renderActionLink({ href: waUrl, label: "Buka WhatsApp", icon: "fab fa-whatsapp", tone: "success" }) : "",
-            waUrl ? renderActionButton({
-              label: "Catat outreach terkirim",
-              icon: "fas fa-check",
-              attrs: {
-                "data-log-outreach": "",
-                "data-franchise-id": row.id,
-                "data-contact": contact.display,
-                "data-message": message,
-              },
-            }) : "",
-            renderActionLink({ href: row.claim_url, label: "Buka halaman claim", icon: "fas fa-link" }),
-          ], "Aksi outreach") + '</td>' +
-        '</tr>';
-      }).join("");
-
-      outreachRows.querySelectorAll("[data-log-outreach]").forEach(function (link) {
-        link.addEventListener("click", function () {
-          logOutreach(link);
-        });
-      });
-    }
-
-    function renderOutreachActions(rows) {
-      if (!outreachActions) return;
-      var existingBadge = outreachActions.querySelector("[data-outreach-count]");
-      outreachActions.innerHTML = "";
-      if (existingBadge) outreachActions.appendChild(existingBadge);
-      if (!rows.length) return;
-      outreachActions.insertAdjacentHTML("beforeend", renderPillActionButton({
-        label: "Simpan kontak",
-        icon: "fas fa-address-book",
-        tone: "primary",
-        tooltip: "Simpan kontak outreach ke Google Contacts akun staff yang sedang login",
-        attrs: {
-          "data-save-google-contacts": "",
-        },
-      }));
-      var button = outreachActions.querySelector("[data-save-google-contacts]");
-      if (button) {
-        button.addEventListener("click", function () {
-          saveGoogleContacts(button, rows);
-        });
-      }
     }
 
     function renderPublish(state) {
@@ -286,58 +211,6 @@
         hidden: "hidden",
         archived: "archived",
       }[status] || "draft";
-    }
-
-    async function logOutreach(link) {
-      try {
-        link.disabled = true;
-        link.classList.add("is-busy");
-        await options.postDashboardAction({
-          action: "log_outreach",
-          franchise_id: link.getAttribute("data-franchise-id"),
-          contact_value: link.getAttribute("data-contact") || "",
-          message_text: link.getAttribute("data-message") || "",
-          outcome: "contacted",
-        });
-        link.classList.remove("is-busy");
-        link.classList.add("is-done");
-      } catch (error) {
-        link.disabled = false;
-        link.classList.remove("is-busy");
-        console.warn("Outreach log failed", error);
-      }
-    }
-
-    async function saveGoogleContacts(button, rows) {
-      try {
-        button.disabled = true;
-        button.classList.add("is-busy");
-        options.setStatus("Menyimpan kontak ke Google Contacts...", false);
-        var result = await options.postDashboardAction({
-          action: "save_outreach_google_contacts",
-          franchise_ids: rows.slice(0, 200).map(function (row) { return row.id; }),
-          limit: 200,
-        });
-        button.classList.remove("is-busy");
-        button.classList.add("is-done");
-        var skipped = Number(result.duplicate_skipped || 0);
-        var message = result.message || ("Kontak tersimpan: " + Number(result.saved || 0).toLocaleString("id-ID") + " dari " + Number(result.requested || 0).toLocaleString("id-ID") + ".");
-        if (skipped) message += " " + skipped.toLocaleString("id-ID") + " dilewati karena sudah ada.";
-        options.setStatus(message, false);
-      } catch (error) {
-        button.disabled = false;
-        button.classList.remove("is-busy");
-        options.setStatus(formatGoogleContactsError(error), true);
-      }
-    }
-
-    function formatGoogleContactsError(error) {
-      var result = error && error.dashboardResult ? error.dashboardResult : {};
-      var message = error && error.message ? error.message : "Kontak belum bisa disimpan ke Google.";
-      var needsSetup = result.setup_required || result.error === "GOOGLE_CONTACTS_SCOPE_MISSING" || result.error === "GOOGLE_ACCOUNT_NOT_LINKED";
-      if (!needsSetup) return escapeHtml(message);
-      var href = result.documentation_url || GOOGLE_CONTACTS_SETUP_DOC;
-      return escapeHtml(message) + ' <a class="dash-link" href="' + escapeAttr(href) + '">Lihat panduan setup</a>.';
     }
 
     async function reviewPremiumPayment(button) {
