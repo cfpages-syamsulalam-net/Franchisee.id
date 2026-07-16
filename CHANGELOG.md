@@ -4,6 +4,11 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-16 06:55 (Asia/Jakarta)
+### Changed
+- `functions/auth-sync.js`: Replaced method-specific POST export with a single `onRequest` dispatcher so Cloudflare Pages consistently routes POST `/auth-sync` into application code and still returns JSON 405 for unsupported methods.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `.context/session-20260715-1638.md`, and `SUGGESTION.md`: Documented the auth-sync route dispatcher hardening and added a follow-up QA recommendation for Pages Functions method smoke tests.
+
 ## 2026-07-16 06:35 (Asia/Jakarta)
 ### Added
 - `js/fetch-json.js`: Added shared browser JSON response helpers for guarded text-first parsing and fetch+JSON calls.

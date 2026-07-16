@@ -7,23 +7,14 @@ const SyncSchema = z
   })
   .passthrough();
 
-export async function onRequestGet() {
-  return methodNotAllowedResponse();
+export async function onRequest(context) {
+  if (context.request.method !== "POST") {
+    return methodNotAllowedResponse();
+  }
+  return handlePost(context);
 }
 
-export async function onRequestPut() {
-  return methodNotAllowedResponse();
-}
-
-export async function onRequestPatch() {
-  return methodNotAllowedResponse();
-}
-
-export async function onRequestDelete() {
-  return methodNotAllowedResponse();
-}
-
-export async function onRequestPost({ request, env }) {
+async function handlePost({ request, env }) {
   try {
     if (!env.franchise_db) {
       return jsonResponse(

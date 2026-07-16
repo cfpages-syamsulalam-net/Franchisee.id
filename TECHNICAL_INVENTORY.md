@@ -1042,7 +1042,8 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `functions/auth-sync.js`
 *Clerk-to-D1 user mapping endpoint.*
-- `onRequestPost()`: Validates optional requested role with Zod, verifies Clerk session, upserts D1 `users`, assigns allowed role, syncs Clerk metadata from D1, and returns user/role summary.
+- `onRequest(context)`: Dispatches POST requests to the sync workflow and returns JSON 405 for every other method, avoiding a Cloudflare Pages method-export fallback that can produce an empty 405 before application code runs.
+- `handlePost({ request, env })`: Validates optional requested role with Zod, verifies Clerk session, upserts D1 `users`, assigns allowed role, syncs Clerk metadata from D1, and returns user/role summary.
 - Unsupported methods return JSON 405 responses with `Allow: POST` so staff login never sees an empty method-error body.
 
 ### File: `functions/clerk-webhook.js`
