@@ -69,6 +69,24 @@
   scroll-snap-type: x proximity;
 }
 
+.dash-outreach-worklist {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px 20px;
+}
+
+.dash-outreach-worklist .dash-outreach-card {
+  grid-template-columns: minmax(220px, 1.1fr) minmax(180px, 0.9fr) minmax(220px, 1fr);
+}
+
+.dash-outreach-card.is-worklist-card {
+  cursor: default;
+}
+
+.dash-outreach-card.is-board-card {
+  cursor: grab;
+}
+
 .dash-outreach-column {
   background: #f8fafc;
   border: 1px solid var(--dash-border);
@@ -151,7 +169,6 @@
   border: 1px solid rgba(17, 24, 39, 0.12);
   border-left: 4px solid #64748b;
   border-radius: 8px;
-  cursor: grab;
   display: grid;
   gap: 10px;
   padding: 10px;
@@ -604,6 +621,14 @@
   .dash-outreach-board {
     grid-auto-columns: minmax(260px, 88vw);
     padding: 14px;
+  }
+
+  .dash-outreach-worklist {
+    padding: 14px;
+  }
+
+  .dash-outreach-worklist .dash-outreach-card {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .dash-outreach-summary {

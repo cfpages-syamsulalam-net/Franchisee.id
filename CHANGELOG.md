@@ -4,6 +4,25 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-16 07:35 (Asia/Jakarta)
+### Added
+- `functions/_dashboard-outreach-queries.js`: Extracted the Outreach/Pipeline dashboard read model, including queue rows, summary counts, sales-status derivation, urgency, overdue, and conversion metric helpers.
+
+### Changed
+- `functions/_dashboard-queries.js`: Re-exported the Outreach/Pipeline read functions from the focused module and removed the inline sales read-model implementation, reducing the file to 681 lines.
+- `AGENTS.md`: Made the same-session maintainability extraction rule explicit for touched files over roughly 500 lines when the extraction boundary is obvious and behavior-preserving.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, and `.context/session-20260715-1638.md`: Documented suggestion 98 as implemented and updated dashboard read-model ownership.
+
+## 2026-07-16 07:20 (Asia/Jakarta)
+### Added
+- `src/pages/dashboard/index.astro`: Added a separate Pipeline tab so Kanban progress tracking is no longer mixed into the Outreach work queue.
+
+### Changed
+- `js/dashboard-outreach.js` and `css/dashboard-operations.css`: Split sales rendering into an actionable Outreach worklist and a Pipeline Kanban board while keeping both tabs on the same status update action and dashboard payload.
+- `js/dashboard-admin.js`: Wired the new Outreach worklist container and added `#kanban` as an alias for the Pipeline tab.
+- `functions/_dashboard-queries.js`: Included non-archived registered/owned listings with usable contact data in the shared Outreach/Pipeline payload, so new franchisors can appear in the appropriate sales stage even when they are not yet published.
+- `DASHBOARD.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, and `.context/session-20260715-1638.md`: Documented the Outreach/Pipeline split, registered-franchisor visibility, and follow-up read-model extraction suggestion.
+
 ## 2026-07-16 06:55 (Asia/Jakarta)
 ### Changed
 - `functions/auth-sync.js`: Replaced method-specific POST export with a single `onRequest` dispatcher so Cloudflare Pages consistently routes POST `/auth-sync` into application code and still returns JSON 405 for unsupported methods.

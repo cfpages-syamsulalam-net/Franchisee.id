@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-15 21:20 (Asia/Jakarta)
+Last updated: 2026-07-16 07:20 (Asia/Jakarta)
 
 ## Purpose
 
@@ -24,7 +24,7 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 - Staff edit policy: staff can suggest listing edits only. Admin approval is required unless an admin creates an active auto-approval rule for that staff user.
 - WhatsApp outreach: no WhatsApp API for now. The dashboard generates a `wa.me` link with a prefilled message, and the staff member sends it from their own WhatsApp account.
 - Google Contacts outreach prep: staff can save ready outreach contacts to the currently linked Google account before opening WhatsApp, using Google People API with the `https://www.googleapis.com/auth/contacts` scope. This requires People API and the Clerk Google connection to be configured with that scope, then staff must login again with Google.
-- Sales outreach pipeline: outreach now uses a Kanban board with canonical stages `Uncontacted`, `Saved Contact`, `Contacted`, `Responded`, `Qualified`, `Claim Started`, `Claimed`, `Subscribed`, `Renewal Risk`, and `Burned`. `Saved Contact` tracks the pre-WhatsApp Google Contacts step; `Renewal Risk` gives staff a stage between active subscription and burned/lost.
+- Sales outreach workflow: Outreach and Pipeline are separate dashboard tabs. Outreach is the staff work queue for saving contacts, sending WhatsApp, and recording follow-up; Pipeline is the Kanban visualization for progress tracking. Both tabs read/write the same canonical stages: `Uncontacted`, `Saved Contact`, `Contacted`, `Responded`, `Qualified`, `Claim Started`, `Claimed`, `Subscribed`, `Renewal Risk`, and `Burned`.
 - Edit storage policy: use structured JSON diffs for suggestion/review snapshots; once approved into D1, apply the accepted values field-by-field to canonical D1 columns.
 - Trusted staff auto-approval: if admin grants auto-approval to a staff user, all listing fields are safe for that staff user to edit.
 - Outreach logging: opening WhatsApp does not log an event. Staff must manually confirm the message was sent with the dashboard confirmation action.
@@ -36,7 +36,7 @@ Third-party setup details for `/dashboard` live in `docs/architecture/DASHBOARD_
 
 ## Sales System Operating Plan
 
-Goal: make Outreach a measurable staff work queue, not just a status board. Every card should tell staff what to do next, why it matters, and how success is measured.
+Goal: make Outreach a measurable staff work queue and keep Pipeline as the visual progress tracker. Every Outreach card should tell staff what to do next, why it matters, and how success is measured; every Pipeline card should make the current stage easy to scan and move.
 
 ### Sales Outcomes
 
@@ -66,6 +66,9 @@ Goal: make Outreach a measurable staff work queue, not just a status board. Ever
 ### Staff Dashboard Instructions
 
 - Each Outreach card should show one primary next action derived from its stage, such as "Simpan kontak", "Kirim WhatsApp", "Follow-up balasan", "Bantu klaim", "Tawarkan Premium", or "Pulihkan renewal".
+- Outreach is for doing the work: bulk Google Contacts save, WhatsApp links, send confirmation, notes, and status updates.
+- Pipeline is for seeing/tracking progress: stage counts, conversion metrics, Kanban columns, and drag/drop moves.
+- A status change in either tab must update `listing_outreach_statuses` and reload the shared dashboard payload so the other tab reflects the same stage.
 - Staff should not need to infer why a card appears in a column. Show the reason: missing claim, saved contact, last WhatsApp date, pending claim, active subscription, renewal risk, or burned reason.
 - Every manual move should allow a short note when the move needs context, especially `Responded`, `Qualified`, `Renewal Risk`, and `Burned`.
 - The Outreach tab badge should count actionable open work, excluding `Subscribed` and `Burned`.
@@ -107,6 +110,8 @@ Goal: make Outreach a measurable staff work queue, not just a status board. Ever
 | Lost/burned reason taxonomy | Implemented | `Burned` uses normalized reasons: no response, invalid contact, not interested, not owner, duplicate/closed, subscription churn, or other. |
 | Subscription-risk automation | Implemented | Active subscriptions render as `Subscribed`; lapsed/latest subscriptions without active status surface as `Renewal Risk` unless explicitly burned. |
 | Staff daily task view | Implemented | The default `Hari ini` filter combines overdue follow-ups, new contacts, replies/qualification, claim blockers, and renewal risks. |
+| Separate Outreach and Pipeline tabs | Implemented | Outreach renders the actionable worklist; Pipeline renders the Kanban board and stage/conversion summary. Both use the same dashboard payload and status mutation action. |
+| Registered franchisor visibility | Implemented | Outreach/Pipeline includes non-archived registered/owned listings with usable contact data, not only already-published unclaimed listings, so new franchisors can be reached and tracked. |
 
 ### D1/R2 OCR Text Storage
 
@@ -121,9 +126,10 @@ Goal: make Outreach a measurable staff work queue, not just a status board. Ever
 | --- | --- | --- |
 | `/dashboard` route | Implemented | `src/pages/dashboard/index.astro` builds a static protected dashboard shell. Sensitive data loads only from the protected API. |
 | Dashboard auth | Implemented | `functions/dashboard-data.js` requires D1 role `staff`; existing auth helper allows `admin` as elevated access. |
-| Dashboard tab UI | Implemented | `/dashboard` now groups detailed panels into icon-led tabs: Outreach, Data Quality, Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR. |
+| Dashboard tab UI | Implemented | `/dashboard` now groups detailed panels into icon-led tabs: Outreach, Pipeline, Data Quality, Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR. |
 | Overview metrics | Implemented | Total listings, unclaimed, verified/premium, missing image/contact/description, and publish queue counts come from D1. |
-| Sales outreach board | Implemented | Shows contact-ready unclaimed/pipeline/subscribed listings as a drag-and-drop Kanban board with stage badges, WhatsApp actions, claim links, and dropdown fallback status controls. |
+| Sales outreach work queue | Implemented | Outreach shows contact-ready unclaimed/registered/pipeline/subscribed listings as an actionable worklist with status badges, WhatsApp actions, claim links, notes, and dropdown status controls. |
+| Sales pipeline board | Implemented | Pipeline shows the same rows as a drag-and-drop Kanban board with stage/conversion summary and shared status updates. |
 | Google Contacts bulk save | Implemented | Outreach can create up to 200 Google Contacts from the current unclaimed outreach queue in one protected action so brand names appear before staff sends WhatsApp messages. It searches existing Google Contacts first and skips duplicate phone numbers. If Google Contacts scope/token is missing, the dashboard returns setup guidance instead of silently failing. |
 | Outreach event logging | Implemented | `listing_outreach_events` records staff, contact, message, outcome, and timestamp only after staff manually confirms the WA message was sent. |
 | Outreach current status | Implemented | `listing_outreach_statuses` stores the current sales pipeline stage per listing/site, while `listing_outreach_events` remains the history log. |

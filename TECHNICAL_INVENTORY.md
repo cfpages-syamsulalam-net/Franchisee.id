@@ -295,7 +295,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `css/dashboard-operations.css`
 *Dashboard operations/admin helper stylesheet module.*
-- Owns the sales outreach Kanban board, stage summary pills, drag/drop states, outreach status badges, publication status grids/cards, and compact checkbox rows used by dashboard admin UI.
+- Owns the separated Outreach worklist, Pipeline Kanban board, stage summary pills, drag/drop states, outreach status badges, publication status grids/cards, and compact checkbox rows used by dashboard admin UI.
 
 ### File: `css/dashboard-integration.css`
 *Dashboard integration documentation stylesheet module.*
@@ -329,10 +329,10 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - Queued email retry/cancel controls stay icon-only and call the same `/dashboard-data` action contract through the injected callback.
 
 ### File: `js/dashboard-outreach.js`
-*Sales outreach Kanban client module for `/dashboard`.*
-- `window.FranchiseDashboardOutreach.createOutreach(options)`: Creates the Outreach board renderer from DOM references and shared dashboard action/reload/status callbacks supplied through `js/dashboard-operations.js`.
-- `render(rows, summary, pipelineMetadata)` / `renderOutreachCard(row, pipeline)`: Renders the sales outreach Kanban board from `outreach_queue` plus `outreach_pipeline`, groups cards by current status, shows stage/status badges, next-action instructions, why-this-card-is-shown reasons, overdue/follow-up chips, notes, and conversion metric pills.
-- `bindOutreachDragAndDrop()` / `updateOutreachStatus(franchiseId, status, control)`: Supports drag/drop card movement plus the per-card status select fallback, posting `update_outreach_status` with notes, burned reason, and follow-up metadata before reloading dashboard state after successful persistence.
+*Sales Outreach and Pipeline client module for `/dashboard`.*
+- `window.FranchiseDashboardOutreach.createOutreach(options)`: Creates the Outreach worklist and Pipeline board renderer from DOM references and shared dashboard action/reload/status callbacks supplied through `js/dashboard-operations.js`.
+- `render(rows, summary, pipelineMetadata)` / `renderOutreachWorklist()` / `renderPipelineBoard()` / `renderOutreachCard(row, pipeline, mode)`: Renders Outreach as an actionable worklist and Pipeline as the grouped Kanban board from the same `outreach_queue` plus `outreach_pipeline`; both show stage/status badges, next-action instructions, why-this-card-is-shown reasons, overdue/follow-up chips, and notes, while the Pipeline tab also owns conversion/stage summary pills.
+- `bindOutreachDragAndDrop()` / `updateOutreachStatus(franchiseId, status, control)`: Supports Pipeline drag/drop card movement plus status-select fallback in both Outreach and Pipeline, posting `update_outreach_status` with notes, burned reason, and follow-up metadata before reloading dashboard state after successful persistence.
 - `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, records manually confirmed WhatsApp outreach through `/dashboard-data`, and renders setup-guidance links when Google Contacts permissions are missing.
 - Outreach filters: `today`, actionable, overdue, mine, unassigned, and all help staff see the next measurable sales action first instead of scanning every listing.
 
@@ -432,7 +432,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 *Client controller for the protected `/dashboard` shell.*
 - `boot()` / `showLoadingPanel(message)` / `showLoginPanel(message, isError)`: Initializes `window.FranchiseAuth`, shows a skeleton while auth/dashboard authorization is processing, only shows and force-mounts the login form after no usable session or an auth error is known, reads auth headers, handles locked/login states, and fetches `/dashboard-data` through `window.FranchiseFetch` for empty/non-JSON HTTP responses.
 - `readDashboardCache()` / `writeDashboardCache(data)` / `clearDashboardCache()`: Maintains a short `sessionStorage` cache for successful dashboard payloads keyed to the active Clerk user id and active session. Cached data can render immediately after Clerk init, then `/dashboard-data` refreshes live; missing/expired authorization clears the cache and relocks the protected shell.
-- `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Data Quality, Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR, including arrow/Home/End keyboard navigation. The old `operations` hash aliases to `system`.
+- `bindDashboardTabs()` / `activateDashboardTab(name, updateHash)`: Controls icon-led dashboard tabs for Outreach, Pipeline, Data Quality, Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR, including arrow/Home/End keyboard navigation. The old `operations` hash aliases to `system`; `#kanban` aliases to `#pipeline`.
 - `bindDashboardDeepLinks()` / `activateDashboardDeepLink(targetId)`: Maps documentation anchors such as `google-contacts-setup`, `ocr-provider-setup`, and `publish-automation-setup` to the Integrasi tab, updates same-page hash clicks, and scrolls/focuses the target after its tab panel is visible.
 - `renderDashboard(data, options)`: Reveals the protected shell and fans dashboard API data into metrics plus delegated operations-data, Review/Data Quality/Claim, Premium, and OCR modules. `options.cached` shows a refresh-in-progress status while live data is fetched.
 - `renderAuthDebug(stage, extra)` / `copyAuthDebug()`: Renders and copies masked debug JSON from `window.FranchiseAuth.getDebugSnapshot()`.
@@ -1163,14 +1163,19 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 *Read-only D1 data model for `/dashboard-data`.*
 - `getOverview(db)`: Returns Franchisee.id listing counts and completeness counts.
 - `getDataQuality(db)`: Reads persisted open `franchise_quality_checks` when available, falling back to computed warnings for missing images, contact, description, category, all-caps descriptions, suspicious contacts, stale listings, and invalid URLs.
-- `getUnclaimedOutreachQueue(db)`: Reads up to 250 contact-ready listings for the sales board, including unclaimed rows, rows with existing outreach status, pending/approved claim context, and active/lapsed subscription context; joins `listing_outreach_statuses`, subscription dates, and outreach history, computes effective sales status, next action, why-this-card-is-shown reason, overdue state, and staff-personal `wa.me` claim-notification links.
-- `getUnclaimedOutreachSummary(db)`: Counts published unclaimed listings, contact-ready rows, missing-phone rows, current outreach queue limit, pipeline status counts, and conversion metrics for response, claim, subscription, renewal-risk recovery, and actionable-open visibility.
+- `getUnclaimedOutreachQueue(db)` / `getUnclaimedOutreachSummary(db)`: Re-export the focused Outreach/Pipeline read model from `functions/_dashboard-outreach-queries.js` so `/dashboard-data` does not need an import change.
 - `getPendingClaims(db)` / `getEditSuggestions(db)` / `getEditableListings(db)`: Supplies the review tab, including full editable listing snapshots for guided old-value display and structured location rows for the admin Area Listing editor. `getEditSuggestions()` delegates document proof backfill to `_dashboard-review-evidence.js` before returning pending suggestion rows.
 - `getStructuredLocationsForListings(db, franchiseIds)`: Chunks editable listing IDs before building `IN (...)` queries so `/dashboard-data` can load the full dashboard without hitting D1's SQL variable limit.
 - `getPendingPremiumPayments(db)`: Supplies pending premium payment confirmations with order, franchise, owner, receipt proof URL, and readiness context for the Premium tab.
 - `getPremiumOperations(db)`: Supplies Premium funnel counts, payment method rows, Premium settings, recent Premium notifications, upcoming expiries, annual reports, queued-email summaries, and recent queued email rows for the Premium tab.
 - `getPublishState(db)` / `getPublicationControls(db)` / `getLeadSummary(db)` / `getSystemHealth(db, env)`: Supplies the Sistem, Publikasi, and Leads tabs, including multi-site publication rows, operation-event counts, webhook summaries, recent audit events, rebuild state, product-event counts, and a local Cloudflare Free-plan traffic guardrail summary.
 - `getTrafficGuardrails(env)`: Reports the 100,000/day Free-plan guardrail, 90,000 warning threshold, reset time, active browser throttles/caches, and the env vars needed before optional Cloudflare Analytics querying is wired.
+
+### File: `functions/_dashboard-outreach-queries.js`
+*Focused Outreach/Pipeline read model for `/dashboard-data`.*
+- `getUnclaimedOutreachQueue(db)`: Reads up to 250 contact-ready listings for the shared Outreach/Pipeline payload, including unclaimed rows, non-archived registered/owned rows, rows with existing outreach status, pending/approved claim context, active/lapsed subscription context, and pending Premium order context; joins `listing_outreach_statuses`, subscription dates, and outreach history, computes effective sales status, next action, why-this-card-is-shown reason, overdue state, publication status, urgency rank, and staff-personal `wa.me` claim-notification links.
+- `getUnclaimedOutreachSummary(db)`: Counts eligible unclaimed/registered rows, contact-ready rows, missing-phone rows, current outreach queue limit, pipeline status counts, and conversion metrics for response, claim, subscription, renewal-risk recovery, and actionable-open visibility.
+- `defaultOutreachStatus()` / `effectiveOutreachStatus()` / `nextActionDetail()` / `salesReason()` / `urgencyRank()`: Keep sales-stage derivation and staff next-action copy close to the query that shapes dashboard rows.
 
 ### File: `functions/_dashboard-review-evidence.js`
 *Dashboard review proof helper.*

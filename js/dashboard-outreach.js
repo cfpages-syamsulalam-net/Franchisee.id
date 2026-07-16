@@ -7,6 +7,7 @@
     var renderActionButton = utils.renderActionButton;
     var renderActionLink = utils.renderActionLink;
     var renderPillActionButton = utils.renderPillActionButton;
+    var outreachWorklist = options.outreachWorklist;
     var outreachBoard = options.outreachBoard;
     var outreachStageSummary = options.outreachStageSummary;
     var outreachCount = options.outreachCount;
@@ -57,17 +58,32 @@
       var badge = filteredRows.length + " / " + rows.length + " listing";
       if (contactReady || publishedUnclaimed) {
         badge = filteredRows.length + " tampil dari " + contactReady + " kontak siap";
-        if (publishedUnclaimed > contactReady) badge += " / " + publishedUnclaimed + " unclaimed published";
+        if (publishedUnclaimed > contactReady) badge += " / " + publishedUnclaimed + " listing eligible";
         if (queueLimit && contactReady > rows.length) badge += " (limit " + queueLimit + ")";
       }
       outreachCount.textContent = badge;
       renderOutreachTabBadge(counts);
       renderOutreachSummary(pipeline, counts, summary.conversion_metrics || {});
-      renderOutreachActions(rows);
+      renderOutreachActions(filteredRows);
       if (!filteredRows.length) {
-        outreachBoard.innerHTML = '<div class="dash-empty">Tidak ada listing dengan nomor WhatsApp/mobile untuk sales outreach.</div>';
+        if (outreachWorklist) outreachWorklist.innerHTML = '<div class="dash-empty">Tidak ada listing dengan nomor WhatsApp/mobile untuk sales outreach.</div>';
+        if (outreachBoard) outreachBoard.innerHTML = '<div class="dash-empty">Tidak ada listing dengan nomor WhatsApp/mobile untuk pipeline sales.</div>';
         return;
       }
+      renderOutreachWorklist(filteredRows, pipeline);
+      renderPipelineBoard(filteredRows, pipeline);
+    }
+
+    function renderOutreachWorklist(rows, pipeline) {
+      if (!outreachWorklist) return;
+      outreachWorklist.innerHTML = rows.map(function (row) {
+        return renderOutreachCard(row, pipeline, "worklist");
+      }).join("");
+      bindOutreachInteractions(outreachWorklist);
+    }
+
+    function renderPipelineBoard(filteredRows, pipeline) {
+      if (!outreachBoard) return;
       outreachBoard.innerHTML = pipeline.map(function (status) {
         var stageRows = filteredRows.filter(function (row) { return normalizeOutreachStatus(row.current_status) === status.value; });
         return '<section class="dash-outreach-column" data-outreach-drop-status="' + escapeAttr(status.value) + '" aria-label="' + escapeAttr(status.label) + '">' +
@@ -77,32 +93,38 @@
           '</div>' +
           '<p>' + escapeHtml(status.description || "") + '</p>' +
           '<div class="dash-outreach-card-list">' +
-            (stageRows.length ? stageRows.map(function (row) { return renderOutreachCard(row, pipeline); }).join("") : '<div class="dash-outreach-empty">Kosong</div>') +
+            (stageRows.length ? stageRows.map(function (row) { return renderOutreachCard(row, pipeline, "board"); }).join("") : '<div class="dash-outreach-empty">Kosong</div>') +
           '</div>' +
         '</section>';
       }).join("");
 
-      outreachBoard.querySelectorAll("[data-log-outreach]").forEach(function (link) {
+      bindOutreachInteractions(outreachBoard);
+      bindOutreachDragAndDrop();
+    }
+
+    function bindOutreachInteractions(root) {
+      if (!root) return;
+      root.querySelectorAll("[data-log-outreach]").forEach(function (link) {
         link.addEventListener("click", function () {
           logOutreach(link);
         });
       });
-      outreachBoard.querySelectorAll("[data-outreach-status-select]").forEach(function (select) {
+      root.querySelectorAll("[data-outreach-status-select]").forEach(function (select) {
         select.addEventListener("change", function () {
           toggleBurnedReason(select);
           updateOutreachStatus(select.getAttribute("data-franchise-id"), select.value, select);
         });
       });
-      outreachBoard.querySelectorAll("[data-outreach-status-select]").forEach(toggleBurnedReason);
-      bindOutreachDragAndDrop();
+      root.querySelectorAll("[data-outreach-status-select]").forEach(toggleBurnedReason);
     }
 
-    function renderOutreachCard(row, pipeline) {
+    function renderOutreachCard(row, pipeline, mode) {
       var contact = row.contacts && row.contacts[0];
       var waUrl = row.primary_whatsapp_url || "";
       var message = waUrl.indexOf("text=") >= 0 ? decodeURIComponent(waUrl.split("text=")[1] || "") : "";
       var status = normalizeOutreachStatus(row.current_status);
       var meta = pipeline.find(function (item) { return item.value === status; }) || pipeline[0];
+      var isBoard = mode === "board";
       var subscription = row.active_subscription_ends_at
         ? '<span><i class="fas fa-crown" aria-hidden="true"></i> Aktif sampai ' + escapeHtml(row.active_subscription_ends_at) + '</span>'
         : row.latest_subscription_ends_at
@@ -110,7 +132,8 @@
           : "";
       var overdue = row.is_overdue ? '<span class="dash-outreach-overdue"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> ' + escapeHtml(row.overdue_label || "Overdue") + '</span>' : "";
       var assigned = row.assigned_staff_user_id ? '<span><i class="fas fa-user-check" aria-hidden="true"></i> Staff assigned</span>' : '<span><i class="fas fa-user-plus" aria-hidden="true"></i> Belum assigned</span>';
-      return '<article class="dash-outreach-card is-' + escapeAttr(meta.tone || "neutral") + '" draggable="true" data-outreach-card data-franchise-id="' + escapeAttr(row.id) + '">' +
+      var publication = row.publication_status ? '<span><i class="fas fa-network-wired" aria-hidden="true"></i> Publikasi ' + escapeHtml(row.publication_status) + '</span>' : "";
+      return '<article class="dash-outreach-card ' + (isBoard ? 'is-board-card' : 'is-worklist-card') + ' is-' + escapeAttr(meta.tone || "neutral") + '"' + (isBoard ? ' draggable="true"' : '') + ' data-outreach-card data-franchise-id="' + escapeAttr(row.id) + '">' +
         '<div class="dash-outreach-card-head">' +
           '<div>' +
             '<a href="' + escapeAttr(row.public_url) + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a>' +
@@ -132,6 +155,7 @@
           (row.next_follow_up_at ? '<span><i class="fas fa-calendar-day" aria-hidden="true"></i> Follow-up ' + escapeHtml(row.next_follow_up_at) + '</span>' : "") +
           overdue +
           assigned +
+          publication +
           subscription +
         '</div>' +
         '<label class="dash-outreach-status-control">' +
@@ -225,6 +249,7 @@
 
     function bindOutreachDragAndDrop() {
       var draggedId = "";
+      if (!outreachBoard) return;
       outreachBoard.querySelectorAll("[data-outreach-card]").forEach(function (card) {
         card.addEventListener("dragstart", function (event) {
           draggedId = card.getAttribute("data-franchise-id") || "";
@@ -378,7 +403,7 @@
     }
 
     function collectStatusContext(franchiseId, status) {
-      var card = outreachBoard.querySelector('[data-outreach-card][data-franchise-id="' + cssEscape(franchiseId) + '"]');
+      var card = findOutreachCard(franchiseId);
       var notes = card && card.querySelector("[data-outreach-note]") ? card.querySelector("[data-outreach-note]").value.trim() : "";
       var burnedReason = card && card.querySelector("[data-outreach-burned-reason]") ? card.querySelector("[data-outreach-burned-reason]").value : "";
       if (status === "burned" && !burnedReason) burnedReason = "no_response";
@@ -391,10 +416,15 @@
 
     function toggleBurnedReason(select) {
       var franchiseId = select.getAttribute("data-franchise-id") || "";
-      var card = outreachBoard.querySelector('[data-outreach-card][data-franchise-id="' + cssEscape(franchiseId) + '"]');
+      var card = select.closest("[data-outreach-card]") || findOutreachCard(franchiseId);
       var wrap = card && card.querySelector("[data-burned-reason-wrap]");
       if (!wrap) return;
       wrap.hidden = select.value !== "burned";
+    }
+
+    function findOutreachCard(franchiseId) {
+      var selector = '[data-outreach-card][data-franchise-id="' + cssEscape(franchiseId) + '"]';
+      return (outreachWorklist && outreachWorklist.querySelector(selector)) || (outreachBoard && outreachBoard.querySelector(selector));
     }
 
     function cssEscape(value) {

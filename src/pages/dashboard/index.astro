@@ -111,6 +111,10 @@ const ocrProviderMetadataJson = JSON.stringify({
             Outreach
             <span class="dash-tab-badge" data-outreach-tab-badge hidden>0</span>
           </button>
+          <button class="dash-tab" type="button" role="tab" id="dash-tab-pipeline" aria-controls="dash-panel-pipeline" aria-selected="false" data-dashboard-tab="pipeline">
+            <i class="fas fa-columns dash-tab-icon" aria-hidden="true"></i>
+            Pipeline
+          </button>
           <button class="dash-tab" type="button" role="tab" id="dash-tab-quality" aria-controls="dash-panel-quality" aria-selected="false" data-dashboard-tab="quality">
             <i class="fas fa-check-circle dash-tab-icon" aria-hidden="true"></i>
             Data Quality
@@ -152,19 +156,36 @@ const ocrProviderMetadataJson = JSON.stringify({
                 <div class="dash-panel-title">
                   <i class="fas fa-comments dash-section-icon" aria-hidden="true"></i>
                   <div>
-                    <h2>Sales Outreach Board</h2>
-                    <p>Geser brand sesuai tahap follow-up, klaim, dan subscription.</p>
+                    <h2>Outreach</h2>
+                    <p>Daftar kerja untuk menyimpan kontak, menghubungi franchisor, dan mencatat tindak lanjut.</p>
                   </div>
                 </div>
                 <div class="dash-panel-actions" data-outreach-actions>
                   <span class="dash-badge" data-outreach-count>-</span>
                 </div>
               </div>
-              <div class="dash-outreach-summary" data-outreach-stage-summary aria-label="Ringkasan sales outreach">
-                <span class="dash-loading">Memuat ringkasan outreach...</span>
+              <div class="dash-outreach-worklist" data-outreach-worklist aria-label="Daftar kerja outreach">
+                <div class="dash-loading">Memuat daftar kerja outreach...</div>
               </div>
-              <div class="dash-outreach-board" data-outreach-board aria-label="Kanban sales outreach">
-                <div class="dash-loading">Memuat sales board...</div>
+            </section>
+          </section>
+
+          <section class="dash-tab-panel" id="dash-panel-pipeline" role="tabpanel" aria-labelledby="dash-tab-pipeline" data-dashboard-panel="pipeline" hidden>
+            <section class="dash-panel">
+              <div class="dash-panel-header">
+                <div class="dash-panel-title">
+                  <i class="fas fa-columns dash-section-icon" aria-hidden="true"></i>
+                  <div>
+                    <h2>Pipeline Progress</h2>
+                    <p>Visualisasi tahap sales dari belum dikontak sampai subscribed atau burned.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="dash-outreach-summary" data-outreach-stage-summary aria-label="Ringkasan pipeline sales">
+                <span class="dash-loading">Memuat ringkasan pipeline...</span>
+              </div>
+              <div class="dash-outreach-board" data-outreach-board aria-label="Kanban pipeline sales">
+                <div class="dash-loading">Memuat pipeline board...</div>
               </div>
             </section>
           </section>

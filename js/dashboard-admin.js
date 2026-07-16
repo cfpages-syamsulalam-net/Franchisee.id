@@ -36,9 +36,11 @@
     "publish-automation-setup": "integration"
   };
   var DASHBOARD_TAB_ALIASES = {
-    operations: "system"
+    operations: "system",
+    kanban: "pipeline"
   };
   var dashboardOperations = window.FranchiseDashboardOperations.createOperations({
+    outreachWorklist: document.querySelector("[data-outreach-worklist]"),
     outreachBoard: document.querySelector("[data-outreach-board]"),
     outreachStageSummary: document.querySelector("[data-outreach-stage-summary]"),
     outreachCount: document.querySelector("[data-outreach-count]"),
