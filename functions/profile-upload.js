@@ -24,6 +24,22 @@ const ASSET_TYPES = {
   },
 };
 
+export async function onRequestGet() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPut() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPatch() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestDelete() {
+  return methodNotAllowedResponse();
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
@@ -260,4 +276,15 @@ function jsonResponse(payload, init = {}) {
       ...(init.headers || {}),
     },
   });
+}
+
+function methodNotAllowedResponse() {
+  return jsonResponse(
+    {
+      success: false,
+      error: "METHOD_NOT_ALLOWED",
+      message: "Upload hanya bisa dilakukan dari halaman profil. Muat ulang halaman lalu coba lagi.",
+    },
+    { status: 405, headers: { Allow: "POST" } },
+  );
 }

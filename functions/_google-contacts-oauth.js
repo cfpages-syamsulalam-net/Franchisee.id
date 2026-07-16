@@ -17,6 +17,8 @@ export async function createGoogleContactsAuthorization(db, auth, request, env) 
   const expiresAt = new Date(Date.now() + STATE_TTL_SECONDS * 1000).toISOString();
   const returnPath = safeReturnPath(new URL(request.url).searchParams.get("return") || "/dashboard/#outreach");
 
+  await cleanupGoogleContactsOAuthStates(db, auth.id);
+
   await db
     .prepare(
       `INSERT INTO staff_google_oauth_states (state, user_id, clerk_user_id, return_path, expires_at)
@@ -48,7 +50,10 @@ export async function completeGoogleContactsAuthorization(db, request, env) {
   const code = url.searchParams.get("code") || "";
   const error = url.searchParams.get("error") || "";
 
-  if (error) return redirectToDashboard("/dashboard/?google_contacts=denied#outreach");
+  if (error) {
+    if (state) await consumeGoogleContactsOAuthState(db, state, "denied");
+    return redirectToDashboard("/dashboard/?google_contacts=denied#outreach");
+  }
   if (!state || !code) return redirectToDashboard("/dashboard/?google_contacts=invalid#outreach");
 
   const row = await db
@@ -62,7 +67,12 @@ export async function completeGoogleContactsAuthorization(db, request, env) {
     .bind(state)
     .first();
 
-  if (!row || Date.parse(row.expires_at || "") < Date.now()) {
+  if (!row) {
+    return redirectToDashboard("/dashboard/?google_contacts=expired#outreach");
+  }
+
+  if (Date.parse(row.expires_at || "") < Date.now()) {
+    await consumeGoogleContactsOAuthState(db, state, "expired", row);
     return redirectToDashboard("/dashboard/?google_contacts=expired#outreach");
   }
 
@@ -234,6 +244,34 @@ export async function revokeStaffGoogleContactsConnection(db, auth) {
     .bind(auth.id, PROVIDER)
     .run();
   return jsonResponse({ success: true, message: "Koneksi Google Contacts diputus." });
+}
+
+async function cleanupGoogleContactsOAuthStates(db, userId) {
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  await db
+    .prepare(
+      `DELETE FROM staff_google_oauth_states
+       WHERE user_id = ?
+         AND (consumed_at IS NOT NULL OR expires_at <= ?)`,
+    )
+    .bind(userId, cutoff)
+    .run();
+}
+
+async function consumeGoogleContactsOAuthState(db, state, reason, existingRow = null) {
+  const row = existingRow || await db
+    .prepare("SELECT * FROM staff_google_oauth_states WHERE state = ? AND consumed_at IS NULL LIMIT 1")
+    .bind(state)
+    .first()
+    .catch(() => null);
+  if (!row) return;
+  await db.batch([
+    db.prepare("UPDATE staff_google_oauth_states SET consumed_at = CURRENT_TIMESTAMP WHERE state = ? AND consumed_at IS NULL").bind(state),
+    auditStatement(db, `dashboard.google_contacts.oauth_${reason}`, "user", row.user_id, {
+      return_path: row.return_path || "",
+      expires_at: row.expires_at || "",
+    }, row.user_id),
+  ]);
 }
 
 function reconnectRequired(message) {

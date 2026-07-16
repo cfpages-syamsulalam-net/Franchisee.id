@@ -16,6 +16,18 @@ import { MutationSchema } from "./_profile-schemas.js";
 import { getDb, jsonResponse, validationError } from "./_profile-utils.js";
 import { logOperationEvent } from "./_telemetry.js";
 
+export async function onRequestPut() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPatch() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestDelete() {
+  return methodNotAllowedResponse();
+}
+
 export async function onRequestGet({ request, env }) {
   try {
     const db = getDb(env);
@@ -33,6 +45,17 @@ export async function onRequestGet({ request, env }) {
     });
     return jsonResponse({ success: false, message: error.message || "Profil gagal dimuat." }, { status: 500 });
   }
+}
+
+function methodNotAllowedResponse() {
+  return jsonResponse(
+    {
+      success: false,
+      error: "METHOD_NOT_ALLOWED",
+      message: "Permintaan profil tidak dikenali. Muat ulang halaman lalu coba lagi.",
+    },
+    { status: 405, headers: { Allow: "GET, POST" } },
+  );
 }
 
 export async function onRequestPost({ request, env }) {

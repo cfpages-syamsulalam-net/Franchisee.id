@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-16 19:54 (Asia/Jakarta)
+Last updated: 2026-07-17 00:28 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -27,7 +27,7 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 - Bank transaction matching is still manual; Premium activation is production-ready for manual review, but automatic payment matching needs a provider/API decision.
 - Legacy Google Sheets/CSV and WordPress-exported HTML remain in the transition layer. They should stay readable/importable but not regain write ownership.
 - Several blocked states are now CTA-backed, but every new public-facing error/empty/warning state should keep following the “clear next action” rule.
-- State transitions now have a dedicated cross-system tracker at `docs/architecture/STATE_TRANSITION_AUDIT.md`. The highest open risks are production-style Pages Function method testing, Google Contacts OAuth expired/denied cleanup, outreach backward-move timestamp policy, publish queue coalescing/reconciliation, Premium lifecycle tests, and OCR stale-running/batch terminal semantics.
+- State transitions now have a dedicated cross-system tracker at `docs/architecture/STATE_TRANSITION_AUDIT.md`. The first P0/P1 pass added Pages Function method checks, Google Contacts OAuth expired/denied cleanup, and Premium lifecycle/email queue transition checks. Remaining open risks include outreach backward-move timestamp policy, publish queue coalescing/reconciliation, and OCR stale-running/batch terminal semantics.
 - Dashboard outreach can now bulk-save unclaimed brand contacts into the staff member's linked Google Contacts before WhatsApp outreach. The Contacts scope is intentionally not part of Clerk login; production use depends on the separate dashboard-only Google OAuth client, People API setup, Google verification, and Cloudflare secrets for the staff/admin Contacts flow.
 - Proposal uploads now preserve extracted text and reviewable missing-field candidates separately from canonical listing data. Image-only brochure OCR is handled by an admin-triggered queue so uploads stay fast and OCR-derived facts still require review.
 - OCR provider configuration is now an admin-only `/dashboard` surface backed by D1 migration 0020, with encrypted credential storage using the external Cloudflare Pages secret `OCR_KEY`. Migration 0021 is applied remotely and adds OCR jobs, attempts, content-hash cache, and provider usage events; external OCR calls only run when an admin explicitly starts a dry-run or bounded batch.
@@ -43,11 +43,11 @@ The new canonical state-transition tracker is `docs/architecture/STATE_TRANSITIO
 
 | Priority | Open item | Reason |
 | --- | --- | --- |
-| P0 | Production-style Pages Functions route-method smoke test | Prevents empty 405 or wrong-method regressions on protected routes from reaching production auth/dashboard flows again. |
-| P0 | Google Contacts OAuth expired/denied/revoked cleanup and regression coverage | Staff outreach depends on a separate OAuth state machine with short-lived state rows and refreshable tokens. |
+| Done | Production-style Pages Functions route-method smoke test | Added JSON 405 handlers for protected write/upload routes plus `pnpm run functions:methods:check`. |
+| Done | Google Contacts OAuth expired/denied/revoked cleanup and regression coverage | OAuth starts clean stale rows; denied/expired callbacks consume/audit state; `pnpm run google-contacts:check` covers the wiring. |
 | P1 | Outreach backward-move timestamp policy | Pipeline analytics must distinguish historical milestone dates from current stage after a brand moves backward. |
 | P1 | Static publish queue coalescing/reconciliation audit | Review/claim/listing approvals can enqueue repeated rebuilds for the same listing/site; counters should stay trustworthy. |
-| P1 | Premium lifecycle transition tests | Payment, renewal, expiry, grace, downgrade, email, and rebuild states affect revenue and public listing visibility. |
+| Done | Premium lifecycle transition tests | `pnpm run premium:lifecycle:check` covers email queue lock behavior plus order/confirmation/renewal/grace/rebuild source assertions. |
 | P1 | OCR stale-running and terminal batch semantics | Long OCR batches depend on scheduler/worker/quota state and need predictable recovery from stale running jobs. |
 
 ## Refactor Candidates - 2026-07-08

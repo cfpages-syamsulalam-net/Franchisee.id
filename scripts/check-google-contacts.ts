@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 // @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { buildGoogleBatchCreatePayload, googleContactHasPhone, googleContactSearchUrl, outreachRowToGoogleContact } from "../functions/_google-contacts.js";
 // @ts-ignore Pages Functions are JavaScript modules without generated declarations.
@@ -30,5 +31,12 @@ assert.equal(googleContactHasPhone({ phoneNumbers: [{ canonicalForm: "+62 812-34
 assert.equal(googleContactHasPhone({ phoneNumbers: [{ value: "0812-3456-7890" }] }, "+6281234567890"), true);
 assert.match(googleContactSearchUrl("+6281234567890"), /people:searchContacts\?/);
 assert.match(googleContactSearchUrl("+6281234567890"), /readMask=names%2CphoneNumbers/);
+
+const oauthSource = readFileSync("functions/_google-contacts-oauth.js", "utf8");
+assert.match(oauthSource, /cleanupGoogleContactsOAuthStates\(db, auth\.id\)/);
+assert.match(oauthSource, /consumeGoogleContactsOAuthState\(db, state, "denied"\)/);
+assert.match(oauthSource, /consumeGoogleContactsOAuthState\(db, state, "expired", row\)/);
+assert.match(oauthSource, /DELETE FROM staff_google_oauth_states/);
+assert.match(oauthSource, /dashboard\.google_contacts\.oauth_\$\{reason\}/);
 
 console.log("Google Contacts outreach check passed.");

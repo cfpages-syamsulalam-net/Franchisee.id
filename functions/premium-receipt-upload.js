@@ -5,6 +5,22 @@ import { logOperationEvent } from "./_telemetry.js";
 const MAX_RECEIPT_BYTES = 6 * 1024 * 1024;
 const RECEIPT_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
+export async function onRequestGet() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPut() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPatch() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestDelete() {
+  return methodNotAllowedResponse();
+}
+
 export async function onRequestPost({ request, env }) {
   try {
     const db = getDb(env);
@@ -158,4 +174,15 @@ function jsonResponse(payload, init = {}) {
       ...(init.headers || {}),
     },
   });
+}
+
+function methodNotAllowedResponse() {
+  return jsonResponse(
+    {
+      success: false,
+      error: "METHOD_NOT_ALLOWED",
+      message: "Upload bukti transfer hanya bisa dilakukan dari halaman membership. Muat ulang halaman lalu coba lagi.",
+    },
+    { status: 405, headers: { Allow: "POST" } },
+  );
 }

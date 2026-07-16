@@ -5,6 +5,22 @@ import { logOperationEvent } from "./_telemetry.js";
 const MAX_QRIS_BYTES = 3 * 1024 * 1024;
 const QRIS_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+export async function onRequestGet() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPut() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPatch() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestDelete() {
+  return methodNotAllowedResponse();
+}
+
 export async function onRequestPost({ request, env }) {
   try {
     const db = getDb(env);
@@ -124,4 +140,15 @@ function jsonResponse(payload, init = {}) {
       ...(init.headers || {}),
     },
   });
+}
+
+function methodNotAllowedResponse() {
+  return jsonResponse(
+    {
+      success: false,
+      error: "METHOD_NOT_ALLOWED",
+      message: "Upload QRIS hanya bisa dilakukan dari dashboard. Muat ulang halaman lalu coba lagi.",
+    },
+    { status: 405, headers: { Allow: "POST" } },
+  );
 }

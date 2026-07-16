@@ -4,6 +4,18 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-17 00:28 (Asia/Jakarta)
+### Added
+- `scripts/check-pages-functions-methods.ts` and `package.json`: Added `pnpm run functions:methods:check` to assert protected app write/upload routes return non-empty JSON 405 responses with expected `Allow` headers for unsupported methods.
+- `scripts/check-premium-lifecycle.ts` and `package.json`: Added `pnpm run premium:lifecycle:check` for Premium lifecycle guardrails, including email queue lock claiming, stale lock retryability, order expiry reuse guard, duplicate payment confirmation guard, renewal-window wiring, approval/source-order guard, grace downgrade, publication hiding, and rebuild queue coupling.
+
+### Changed
+- `functions/form-submit.js`, `functions/profile-data.js`, `functions/profile-upload.js`, `functions/premium-receipt-upload.js`, and `functions/payment-method-upload.js`: Added explicit JSON 405 handlers so unsupported methods do not fall through to empty Cloudflare method responses.
+- `functions/_google-contacts-oauth.js`: Added stale OAuth state cleanup before starting a new Google Contacts connection and consumed/audited denied or expired OAuth callbacks.
+- `functions/_premium-email-worker.js`: Claimed due email queue rows with `locked_at` before sending, skipped rows claimed by concurrent worker runs, and treated locks older than 15 minutes as retryable.
+- `scripts/check-google-contacts.ts`: Added source assertions for Google Contacts OAuth cleanup, denied callback consumption, and expired callback consumption.
+- `docs/architecture/STATE_TRANSITION_AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Marked the scoped P0/P1 transition fixes done and documented the new checks/runtime contracts.
+
 ## 2026-07-16 19:54 (Asia/Jakarta)
 ### Added
 - `docs/architecture/STATE_TRANSITION_AUDIT.md`: Added a cross-system state-transition audit with scenario matrix, transition inventory, and priority fix board for auth, dashboard Google Contacts OAuth, Google Contacts bulk save, outreach Pipeline, claims/review, OCR, Premium, publish queue, forms, and R2/D1 migration flows.

@@ -11,6 +11,22 @@ import { handleClearTestData, handleCreateUnclaimed } from "./_form-submit-test-
 import { jsonResponse, validationError } from "./_form-submit-utils.js";
 import { logOperationEvent } from "./_telemetry.js";
 
+export async function onRequestGet() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPut() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestPatch() {
+  return methodNotAllowedResponse();
+}
+
+export async function onRequestDelete() {
+  return methodNotAllowedResponse();
+}
+
 export async function onRequestPost({ request, env }) {
   try {
     if (!env.franchise_db) {
@@ -79,4 +95,15 @@ export async function onRequestPost({ request, env }) {
       { status: 500 }
     );
   }
+}
+
+function methodNotAllowedResponse() {
+  return jsonResponse(
+    {
+      success: false,
+      error: "METHOD_NOT_ALLOWED",
+      message: "Form hanya bisa dikirim dari halaman pendaftaran. Muat ulang halaman lalu coba lagi.",
+    },
+    { status: 405, headers: { Allow: "POST" } },
+  );
 }

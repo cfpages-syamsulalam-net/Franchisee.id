@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-16 19:54 (Asia/Jakarta)
+Last updated: 2026-07-17 00:28 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -866,6 +866,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 *Protected profile read/write API for `/profil`.*
 - `onRequestGet()`: Requires a Clerk bearer token, maps the user into D1, and delegates the profile response payload to `functions/_profile-read-model.js`.
 - `onRequestPost()`: Dispatches mutations validated by `functions/_profile-schemas.js` for `update_account`, `update_franchisee_profile`, `update_franchisor_profile`, `update_listing`, `update_listing_locations`, `add_public_role`, `create_franchise_inquiry`, `save_franchise_opportunity`, `remove_franchise_opportunity`, `update_franchise_lead_status`, `create_premium_order`, and `confirm_premium_payment`.
+- Unsupported write-like methods return non-empty JSON 405 responses with `Allow: GET, POST`; covered by `pnpm run functions:methods:check`.
 - Account and role-add mutations are delegated to `functions/_profile-account.js`.
 - Franchisee profile, inquiry, save, and remove mutations are delegated to `functions/_profile-franchisee-actions.js`.
 - Franchisor profile, owner listing update, publication distribution reads, and lead status mutations are delegated to `functions/_profile-franchisor-actions.js`.
@@ -982,8 +983,10 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 ### File: `functions/_premium-email-worker.js`
 *Premium email delivery worker service.*
 - `processPremiumEmailWorker(env, options)`: Runs Premium lifecycle jobs, queues renewal reminders, sends due email rows when `RESEND_API_KEY` is configured, and returns delivery counts.
+- `loadDueEmails(db, limit)`: Selects due `pending`/`failed` email rows, claims each row by setting `locked_at = CURRENT_TIMESTAMP` before delivery, skips rows claimed by another worker run, and treats locks older than 15 minutes as retryable.
 - `sendWithResend(env, row)`: Sends a text email through Resend using `PREMIUM_EMAIL_FROM` and optional `PREMIUM_EMAIL_REPLY_TO`.
 - Queue updates store `provider='resend'`, `provider_message_id`, `attempt_count`, `next_attempt_at`, `last_error`, and `sent_at`; `body_html` is sent when present.
+- `pnpm run premium:lifecycle:check` covers due-email lock claiming plus key Premium order/confirmation/subscription/grace downgrade lifecycle contracts.
 
 ### File: `functions/_profile-premium.js`
 *Profile-owned premium workflow module.*
@@ -1008,10 +1011,12 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 ### File: `functions/premium-receipt-upload.js`
 *Protected Premium proof-of-payment upload endpoint.*
 - `onRequestPost()`: Requires Clerk/D1 auth, verifies the selected Premium order belongs to the actor, validates JPG/PNG/WebP/PDF files up to 6 MB, stores the receipt in R2, creates a `franchise_assets` row, and writes an audit event.
+- Unsupported methods return non-empty JSON 405 responses with `Allow: POST`; covered by `pnpm run functions:methods:check`.
 
 ### File: `functions/payment-method-upload.js`
 *Admin-only payment method QRIS upload endpoint.*
 - `onRequestPost()`: Requires Clerk auth plus D1 `admin`, validates JPG/PNG/WebP QRIS images up to 3 MB, stores the file in R2 under `payment-methods/{code}/`, returns the public URL for `payment_methods.qris_image_url`, and writes an audit event.
+- Unsupported methods return non-empty JSON 405 responses with `Allow: POST`; covered by `pnpm run functions:methods:check`.
 
 ### File: `js/franchise-compare.js`
 *Buyer comparison runtime.*
@@ -1037,6 +1042,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 - `onRequestPost()`: Requires Clerk/D1 auth, validates and stores owner media, updates listing media, queues a rebuild, and schedules digital proposal text extraction with `context.waitUntil()` so the upload response is not blocked by parsing.
 - Supported files: logo and cover accept JPG/PNG/WebP; proposal accepts PDF.
 - Requires the `FRANCHISE_ASSETS` R2 binding and `FRANCHISE_ASSETS_PUBLIC_BASE_URL`; production uses the R2 custom domain `https://assets.franchisee.id`.
+- Unsupported methods return non-empty JSON 405 responses with `Allow: POST`; covered by `pnpm run functions:methods:check`.
 - Proposal text extraction now passes the R2 binding into `_proposal-knowledge.js`, so long extracted text is not kept in D1 when R2 storage is available.
 
 ### File: `functions/_proposal-knowledge.js`
@@ -1228,8 +1234,8 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `functions/_google-contacts-oauth.js`
 *Dashboard-only Google Contacts OAuth/token helper.*
-- `createGoogleContactsAuthorization(db, auth, request, env)`: Validates `GOOGLE_CONTACTS_CLIENT_ID`, `GOOGLE_CONTACTS_CLIENT_SECRET`, and a token encryption key, writes a short-lived `staff_google_oauth_states` row for the D1-authorized staff/admin user, and returns a Google OAuth URL requesting `openid email profile` plus `https://www.googleapis.com/auth/contacts`.
-- `completeGoogleContactsAuthorization(db, request, env)`: Validates the returned OAuth state, exchanges the Google code for tokens, verifies the Contacts scope, fetches Google userinfo, encrypts access/refresh tokens, upserts `staff_google_connections`, marks the state consumed, audits the connection, and redirects back to `/dashboard/#outreach`.
+- `createGoogleContactsAuthorization(db, auth, request, env)`: Validates `GOOGLE_CONTACTS_CLIENT_ID`, `GOOGLE_CONTACTS_CLIENT_SECRET`, and a token encryption key, cleans old consumed/expired `staff_google_oauth_states` rows for the staff/admin user, writes a new short-lived OAuth state, and returns a Google OAuth URL requesting `openid email profile` plus `https://www.googleapis.com/auth/contacts`.
+- `completeGoogleContactsAuthorization(db, request, env)`: Validates the returned OAuth state, consumes/audits denied or expired states, exchanges valid Google codes for tokens, verifies the Contacts scope, fetches Google userinfo, encrypts access/refresh tokens, upserts `staff_google_connections`, marks the state consumed, audits the connection, and redirects back to `/dashboard/#outreach`.
 - `getStaffGoogleContactsState(db, auth, env)`: Returns the masked dashboard connection state, including setup/migration flags, linked Google email, token health, last error, and timestamps when available.
 - `getStaffGoogleContactsAccessToken(db, auth, env)`: Returns a usable access token for People API calls, refreshing with the stored refresh token when needed and marking the connection reauth-required if refresh fails.
 - `revokeStaffGoogleContactsConnection(db, auth)`: Marks the staff member's current Google Contacts connection revoked so Outreach can reconnect a different account without requiring Clerk logout.
@@ -1329,6 +1335,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 ### File: `functions/form-submit.js` (v2.6)
 *Clerk-authenticated D1-backed form-submit router.*
 - `onRequestPost()`: Main entry point; requires `env.franchise_db`, validates base payload with Zod, requires Clerk/D1 role authorization, routes franchisee/franchisor/claim/test actions to focused modules, records operation telemetry for server failures, and returns the legacy success/error JSON envelope.
+- Unsupported methods return non-empty JSON 405 responses with `Allow: POST`; covered by `pnpm run functions:methods:check`.
 - `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Imported shared Zod runtime validation for form payloads before delegated D1 writes.
 
 ### File: `functions/_form-submit-franchisee.js`

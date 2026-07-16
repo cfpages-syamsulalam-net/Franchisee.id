@@ -6,6 +6,7 @@ import {
 
 const DEFAULT_BATCH_LIMIT = 20;
 const MAX_ATTEMPTS = 5;
+const EMAIL_LOCK_STALE_MINUTES = 15;
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
 export async function processPremiumEmailWorker(env, options = {}) {
@@ -49,7 +50,7 @@ export async function processPremiumEmailWorker(env, options = {}) {
   return summary;
 }
 
-async function loadDueEmails(db, limit) {
+export async function loadDueEmails(db, limit) {
   const result = await db
     .prepare(
       `SELECT id, to_email, subject, body_text, body_html, category, attempt_count
@@ -57,12 +58,31 @@ async function loadDueEmails(db, limit) {
        WHERE status IN ('pending', 'failed')
          AND COALESCE(attempt_count, 0) < ?
          AND (next_attempt_at IS NULL OR next_attempt_at <= CURRENT_TIMESTAMP)
+         AND (locked_at IS NULL OR locked_at <= datetime('now', ?))
        ORDER BY created_at ASC
        LIMIT ?`,
     )
-    .bind(MAX_ATTEMPTS, Math.max(1, Math.min(Number(limit || DEFAULT_BATCH_LIMIT), 50)))
+    .bind(MAX_ATTEMPTS, `-${EMAIL_LOCK_STALE_MINUTES} minutes`, Math.max(1, Math.min(Number(limit || DEFAULT_BATCH_LIMIT), 50)))
     .all();
-  return result.results || [];
+  const candidates = result.results || [];
+  const claimed = [];
+  for (const row of candidates) {
+    const update = await db
+      .prepare(
+        `UPDATE notification_email_queue
+         SET locked_at = CURRENT_TIMESTAMP,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?
+           AND status IN ('pending', 'failed')
+           AND COALESCE(attempt_count, 0) < ?
+           AND (next_attempt_at IS NULL OR next_attempt_at <= CURRENT_TIMESTAMP)
+           AND (locked_at IS NULL OR locked_at <= datetime('now', ?))`,
+      )
+      .bind(row.id, MAX_ATTEMPTS, `-${EMAIL_LOCK_STALE_MINUTES} minutes`)
+      .run();
+    if (Number(update?.meta?.changes || 0) > 0) claimed.push(row);
+  }
+  return claimed;
 }
 
 async function countDueEmails(db) {
@@ -72,8 +92,10 @@ async function countDueEmails(db) {
         `SELECT COUNT(*) AS count
          FROM notification_email_queue
          WHERE status IN ('pending', 'failed')
-           AND (next_attempt_at IS NULL OR next_attempt_at <= CURRENT_TIMESTAMP)`,
+           AND (next_attempt_at IS NULL OR next_attempt_at <= CURRENT_TIMESTAMP)
+           AND (locked_at IS NULL OR locked_at <= datetime('now', ?))`,
       )
+      .bind(`-${EMAIL_LOCK_STALE_MINUTES} minutes`)
       .first();
     return Number(row?.count || 0);
   } catch (_error) {
