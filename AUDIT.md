@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-16 15:21 (Asia/Jakarta)
+Last updated: 2026-07-16 15:46 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -34,7 +34,7 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 - OCR operations now include provider config, encrypted scheduler config, batch-run orchestration, and worker draining. The first maintainability split is done: batch-run orchestration lives in `_ocr-batch-runs.js`, scheduler browser metadata lives in `dashboard-ocr-schedulers.js`, and the remaining runner/client modules should be split further only before adding deeper provider adapters or richer batch controls.
 - OCR execution UX audit: OCR execution must not depend on an active browser tab. The main dashboard run CTA now prefers the persisted server-side scheduler batch when a scheduler is active, with the visible continuous dashboard loop kept only as a no-scheduler fallback that clearly warns admins to keep the tab open.
 - OCR result sampling shows the extracted brochure text is rich enough for AI-assisted listing enrichment. The next product/data milestone is converting per-franchise OCR text into reviewed canonical field suggestions plus supplemental proposal insights for dynamic public tabs. See `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`. Long OCR/proposal text now writes to R2 so D1 keeps only previews, structured candidates, and object pointers; the historical remote backfill completed on 2026-07-16.
-- Public legal pages for Google verification are now reachable through normal footer navigation: Astro/D1 templates include Privacy Policy and Terms of Service in the `Informasi` footer list, and the legacy static copier injects the same links into copied legacy HTML that lacks them.
+- Public legal pages for Google verification are now reachable through normal footer navigation and visually match the Franchisee.id site: Astro/D1 templates include Privacy Policy and Terms of Service in the `Informasi` footer list, the legal routes use a branded header/footer shell, and the legacy static copier injects a high-contrast legal strip into copied legacy HTML that lacks those links.
 
 ## Refactor Candidates - 2026-07-08
 
@@ -562,7 +562,7 @@ These items are ongoing production QA, business decisions, or future enhancement
 - Manual urgent trigger: an authenticated admin-only endpoint can trigger the deploy hook for time-sensitive edits, but this should be exceptional.
 - Build behavior: Pages build runs `pnpm run build:astro`, reads current D1, emits `dist/`, and Cloudflare serves the new static HTML.
 - Deployment config: Pages output directory is `dist` in `wrangler.toml`; Cloudflare Pages project settings must define a build command (`pnpm run build` preferred, or `pnpm run build:astro`) so dependencies are installed before Pages Functions are bundled.
-- Hybrid output rule: after Astro builds, `scripts/copy-legacy-static.mjs` copies legacy static pages/assets into `dist` while skipping legacy `/peluang-usaha` and duplicate archive/category route folders. It also rewrites copied HTML links to canonical `/peluang-usaha` query URLs. This preserves old CSS/JS/images and lets Astro own the D1-backed directory route.
+- Hybrid output rule: after Astro builds, `scripts/copy-legacy-static.mjs` copies legacy static pages/assets into `dist` while skipping legacy `/peluang-usaha` and duplicate archive/category route folders. It also rewrites copied HTML links to canonical `/peluang-usaha` query URLs and injects a readable Franchisee.id legal footer strip into copied HTML that lacks Privacy Policy or Terms links. This preserves old CSS/JS/images and lets Astro own the D1-backed directory route.
 - Build-time D1 access: `pnpm run build` reads remote D1 through the Cloudflare D1 HTTP API. Cloudflare Pages must have `CLOUDFLARE_API_TOKEN` as a secret; `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` are optional because current defaults are in the builder.
 - Pages config rule: do not put `account_id` in `wrangler.toml`; Cloudflare Pages rejects it during config validation. Use the connected Pages project account, `cfman`, or GitHub env/vars for account context instead.
 - Freshness target: normal edits appear on the next scheduled publish window or poll window; urgent admin-triggered edits can appear sooner.

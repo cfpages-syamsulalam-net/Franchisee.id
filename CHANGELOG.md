@@ -11,6 +11,8 @@ Format:
 - `src/pages/terms-of-service.astro`: Added the public Terms of Service route for Google OAuth verification and general service terms.
 
 ### Changed
+- `src/components/LegalPage.astro`: Reworked the legal shell into a Franchisee.id-themed page with branded header, hero, document card, and footer so Privacy Policy and Terms of Service look like part of the public site.
+- `scripts/copy-legacy-static.mjs`: Changed the injected legacy legal footer row to a high-contrast black/yellow Franchisee.id strip so Privacy Policy and Terms of Service links remain readable on copied legacy footers.
 - `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: Documented the exact Privacy Policy and Terms URLs to use in Google Auth Platform Branding.
 - `templates/peluang-usaha-tpl.html` and `templates/detail-franchise-tpl.html`: Added Privacy Policy and Terms of Service links to the public footer `Informasi` list for generated franchise pages.
 - `scripts/copy-legacy-static.mjs`: Added build-time Privacy Policy and Terms of Service footer-link injection for copied legacy HTML pages that do not already expose those links.

@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-16 15:21 (Asia/Jakarta)
+Last updated: 2026-07-16 15:46 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -544,7 +544,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - Skips source/control directories such as `src`, `scripts`, `functions`, `docs`, `.github`, `node_modules`, `migrations`, and `dist`.
 - Skips top-level `peluang-usaha`, duplicate directory archives, and known category aliases so legacy pages cannot compete with Astro's flat `/peluang-usaha/[slug].html` output or canonical `/peluang-usaha` directory.
 - Rewrites copied legacy HTML links from `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known top-level category aliases to `/peluang-usaha` query-param URLs.
-- Injects a compact Privacy Policy and Terms of Service footer row into copied legacy HTML when those links are missing, so direct-copy pages remain reviewable and navigable for normal users.
+- Injects a high-contrast black/yellow Franchisee.id Privacy Policy and Terms of Service footer strip into copied legacy HTML when those links are missing, so direct-copy pages remain readable, reviewable, and navigable for normal users.
 - Copies `node_modules/@clerk/clerk-js/dist` into `dist/clerk` so browser auth can load ClerkJS locally before trying CDN fallbacks.
 
 ### File: `scripts/check-profile-client.mjs`
@@ -584,8 +584,8 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `src/components/LegalPage.astro`
 *Shared public legal document shell.*
-- Provides the static legal-page layout, favicon metadata, absolute canonical URL metadata, readable responsive CSS, and reciprocal navigation between homepage, Privacy Policy, Terms of Service, and contact page.
-- Used by Google OAuth verification-facing legal pages so the Privacy/Terms presentation stays consistent.
+- Provides the static legal-page layout, Franchisee.id header/footer, favicon metadata, absolute canonical URL metadata, readable responsive CSS, and reciprocal navigation between homepage, Privacy Policy, Terms of Service, and contact page.
+- Used by Google OAuth verification-facing legal pages so the Privacy/Terms presentation stays consistent with the public site theme.
 
 ### File: `src/pages/privacy-policy.astro`
 *Public Privacy Policy route.*
