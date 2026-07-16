@@ -544,7 +544,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - Skips source/control directories such as `src`, `scripts`, `functions`, `docs`, `.github`, `node_modules`, `migrations`, and `dist`.
 - Skips top-level `peluang-usaha`, duplicate directory archives, and known category aliases so legacy pages cannot compete with Astro's flat `/peluang-usaha/[slug].html` output or canonical `/peluang-usaha` directory.
 - Rewrites copied legacy HTML links from `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known top-level category aliases to `/peluang-usaha` query-param URLs.
-- Injects a high-contrast black/yellow Franchisee.id Privacy Policy and Terms of Service footer strip into copied legacy HTML when those links are missing, so direct-copy pages remain readable, reviewable, and navigable for normal users.
+- Injects a flush high-contrast black/yellow Franchisee.id Privacy Policy and Terms of Service footer strip into copied legacy HTML when those links are missing, so direct-copy pages remain readable, reviewable, and navigable for normal users.
 - Copies `node_modules/@clerk/clerk-js/dist` into `dist/clerk` so browser auth can load ClerkJS locally before trying CDN fallbacks.
 
 ### File: `scripts/check-profile-client.mjs`
