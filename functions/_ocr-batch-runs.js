@@ -1,4 +1,5 @@
 import { assertAdmin, jsonResponse, randomId, auditStatement } from "./_dashboard-utils.js";
+import { releaseStaleRunningJobs } from "./_ocr-job-claiming.js";
 import { preflightOcrScheduler, triggerOcrScheduler } from "./_ocr-scheduler-config.js";
 
 const MAX_BATCH_TARGET = 100;
@@ -143,6 +144,7 @@ export async function refreshBatchProgress(db, batchId, options = {}) {
   if (!id) return null;
   const current = await db.prepare("SELECT * FROM ocr_batch_runs WHERE id = ? LIMIT 1").bind(id).first();
   if (!current) return null;
+  const releasedStale = await releaseStaleRunningJobs(db, id);
   const counts = await db
     .prepare(
       `SELECT status, COUNT(*) count
@@ -166,7 +168,9 @@ export async function refreshBatchProgress(db, batchId, options = {}) {
     ? "Batch OCR selesai."
     : overdue
       ? "Scheduler tidak mengirim update setelah jadwal lewat. Klik Retry untuk menjadwalkan ulang, atau pakai Jalankan OCR beruntun dari dashboard."
-      : "Batch OCR masih berjalan.");
+      : releasedStale
+        ? `${releasedStale} job OCR stale dikembalikan ke antrean.`
+        : "Batch OCR masih berjalan.");
   await db
     .prepare(
       `UPDATE ocr_batch_runs
@@ -185,7 +189,7 @@ export async function refreshBatchProgress(db, batchId, options = {}) {
       Number(byStatus.failed || 0),
       Number(byStatus.needs_review || 0),
       noText + Number(byStatus.cancelled || 0),
-      (completed || overdue) ? 1 : 0,
+      completed ? 1 : 0,
       message,
       id,
     )

@@ -1,8 +1,11 @@
 import { normalizeOcrText } from "./_ocr-provider-adapters.js";
 
+export const STALE_RUNNING_JOB_MINUTES = 15;
+
 export async function claimPendingJobs(db, maxJobs, jobId = "", batchId = "") {
   const scopedJobId = textOrNull(jobId);
   const scopedBatchId = textOrNull(batchId);
+  await releaseStaleRunningJobs(db, scopedBatchId, scopedJobId);
   if (scopedJobId) {
     const exact = await db
       .prepare(
@@ -69,6 +72,34 @@ export async function releaseUnprocessedJobs(db, jobs, reason) {
        WHERE id = ? AND status = 'running'`,
     )
     .bind(cleanOcrError(reason), job.id)));
+}
+
+export async function releaseStaleRunningJobs(db, batchId = "", jobId = "") {
+  const scopedBatchId = textOrNull(batchId);
+  const scopedJobId = textOrNull(jobId);
+  const result = await db
+    .prepare(
+      `UPDATE ocr_jobs
+       SET status = 'pending',
+           provider_key = NULL,
+           error_message = ?,
+           started_at = NULL,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE status = 'running'
+         AND started_at <= datetime('now', ?)
+         AND (? IS NULL OR batch_id = ?)
+         AND (? IS NULL OR id = ?)`,
+    )
+    .bind(
+      `Job running lebih dari ${STALE_RUNNING_JOB_MINUTES} menit; otomatis dikembalikan ke antrean.`,
+      `-${STALE_RUNNING_JOB_MINUTES} minutes`,
+      scopedBatchId,
+      scopedBatchId,
+      scopedJobId,
+      scopedJobId,
+    )
+    .run();
+  return Number(result?.meta?.changes || 0);
 }
 
 export function retryJobStatement(db, jobId, userId) {

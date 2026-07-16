@@ -27,6 +27,7 @@
     "proposal:check": "tsx scripts/check-proposal-knowledge.ts",
     "google-contacts:check": "tsx scripts/check-google-contacts.ts",
     "premium:lifecycle:check": "tsx scripts/check-premium-lifecycle.ts",
+    "state-transitions:check": "tsx scripts/check-state-transitions.ts",
     "proposal-download:check": "tsx scripts/check-proposal-download.ts",
     "detail-assets:check": "tsx scripts/check-franchise-detail-assets.ts",
     "ocr:check": "tsx scripts/check-ocr-provider-config.ts",

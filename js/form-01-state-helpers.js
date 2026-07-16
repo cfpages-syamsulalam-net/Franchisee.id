@@ -14,6 +14,7 @@
         CLAIM_STORAGE_TTL_MS: 24 * 60 * 60 * 1000,
         FRANCHISOR_DRAFT_KEY: 'franchisor_form_draft',
         FRANCHISOR_DRAFT_TTL_MS: 72 * 60 * 60 * 1000,
+        FRANCHISOR_DRAFT_SCHEMA_VERSION: 2,
         COUNTRY_METADATA: [
             { name: 'Indonesia', iso2: 'ID', flag: '🇮🇩', dialCode: '+62', whatsappDigits: [9, 13] },
             { name: 'Malaysia', iso2: 'MY', flag: '🇲🇾', dialCode: '+60', whatsappDigits: [8, 10] },
@@ -210,7 +211,14 @@
     FF.saveFranchisorDraft = function (form) {
         if (!form) return;
         try {
-            const payload = { fields: {}, saved_at: Date.now() };
+            const claimInput = form.querySelector('[name="unclaimed_id"]');
+            const payload = {
+                fields: {},
+                saved_at: Date.now(),
+                schema_version: FF.constants.FRANCHISOR_DRAFT_SCHEMA_VERSION,
+                page_url: window.location ? `${window.location.pathname}${window.location.search}` : '',
+                claim_brand_id: claimInput ? (claimInput.value || '').toString() : ''
+            };
             const fd = new FormData(form);
 
             for (const [key, value] of fd.entries()) {
@@ -264,6 +272,11 @@
         if (!form) return;
         const draft = FF.getFranchisorDraft();
         if (!draft || !draft.fields) return;
+        const claimInput = form.querySelector('[name="unclaimed_id"]');
+        const currentClaimBrandId = claimInput ? (claimInput.value || '').toString() : '';
+        if (draft.claim_brand_id && currentClaimBrandId && draft.claim_brand_id !== currentClaimBrandId) {
+            return;
+        }
 
         Object.entries(draft.fields).forEach(([name, val]) => {
             const nodes = form.querySelectorAll(`[name="${name}"]`);

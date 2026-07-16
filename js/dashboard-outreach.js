@@ -185,6 +185,7 @@
       var chips = [];
       if (contact) chips.push(renderMetaChip("fab fa-whatsapp", contact.display, contact.label + ": " + contact.display, "good"));
       else chips.push(renderMetaChip("fas fa-phone-slash", "No WA", "Tidak ada nomor WhatsApp/mobile", "bad"));
+      if (row.stage_changed_at) chips.push(renderMetaChip("fas fa-route", "Stage", "Stage saat ini sejak " + row.stage_changed_at + ". " + (row.milestone_policy || ""), ""));
       chips.push(renderMetaChip("fas fa-clock", row.last_outreach_at ? "Last" : "New", row.last_outreach_at ? "Outreach terakhir " + row.last_outreach_at : "Belum pernah dikontak", ""));
       if (row.next_follow_up_at) chips.push(renderMetaChip("fas fa-calendar-day", "FU", "Follow-up " + row.next_follow_up_at, row.is_overdue ? "bad" : ""));
       if (row.is_overdue) chips.push(renderMetaChip("fas fa-exclamation-triangle", "Due", row.overdue_label || "Overdue", "bad"));

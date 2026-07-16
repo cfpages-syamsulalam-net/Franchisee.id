@@ -16,12 +16,12 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 ### File: `js/form-01-state-helpers.js`
 *Shared state + helper/sanitization + localStorage persistence layer.*
 - `FF.state`: Shared runtime state (brands cache, step tracker, city list).
-- `FF.constants`: Shared constants (`franchise_claim_state`, `franchisor_form_draft`, fallback country metadata, and derived default country-code list). Country metadata includes Indonesia plus supported SEA/nearby Asia markets, US, and Australia so regional franchisors can submit local mobile numbers without being forced into +62.
+- `FF.constants`: Shared constants (`franchise_claim_state`, `franchisor_form_draft`, `FRANCHISOR_DRAFT_SCHEMA_VERSION`, fallback country metadata, and derived default country-code list). Country metadata includes Indonesia plus supported SEA/nearby Asia markets, US, and Australia so regional franchisors can submit local mobile numbers without being forced into +62.
 - `FF.setCountryMetadata(metadata)`, `FF.countryNameFromDialCode(value)`, and `FF.whatsappDigitRangeForDialCode(value)`: Browser helpers fed by `json/country-metadata.json` so origin inference and WhatsApp validation use the same country metadata.
 - `FF.utils.*`: Shared helpers (`slugify`, URL/phone/address/contact/entity filters, clean brand-name normalizer).
 - `FF.buildSearchableClaimBrands(brands)`: Claim-search sanitizer/deduper.
 - `FF.saveClaimModeState/getClaimModeState/clearClaimModeState`: Claim context persistence with TTL.
-- `FF.saveFranchisorDraft/getFranchisorDraft/restoreFranchisorDraft/clearFranchisorDraft`: Draft persistence with TTL + visual feedback indicator.
+- `FF.saveFranchisorDraft/getFranchisorDraft/restoreFranchisorDraft/clearFranchisorDraft`: Draft persistence with TTL + visual feedback indicator, schema/page/claim-brand metadata, and stale-claim restore guard when the saved claim brand differs from the active claim brand.
 
 ### File: `js/form-02-claim-workflow.js`
 *Claim-mode fetch/search/fill/reset behavior.*
@@ -1144,7 +1144,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 *Persisted OCR batch-run orchestration module.*
 - `handleStartOcrBatchRun(db, auth, data, env, options)`: Admin-only action that first runs scheduler preflight, then ensures enough pending proposal-image jobs, creates an `ocr_batch_runs` row up to 100 assigned jobs, tags those jobs with `batch_id`, and asks `_ocr-scheduler-config.js` to trigger the first third-party scheduler message with structured ETA/status fields. If preflight fails, no batch/jobs are created.
 - `handleRetryOcrBatchRun(db, auth, data, env, options)`: Admin-only action that skips `succeeded` jobs, resets failed and stale running jobs in an existing non-completed batch back to `pending`, refreshes batch counts immediately, then reschedules that batch through the active scheduler provider after credential/URL fixes.
-- `refreshBatchProgress(db, batchId, options)`: Recomputes assigned/processed/succeeded/failed/needs-review counts from `ocr_jobs`, updates `ocr_batch_runs`, supports `paused_rate_limit`/`paused_quota` while work remains pending, and returns the masked batch row. Batch start/retry provider gating treats `cooldown` providers as runnable again once `cooldown_until` has passed.
+- `refreshBatchProgress(db, batchId, options)`: Releases stale `running` jobs for the batch, recomputes assigned/processed/succeeded/failed/needs-review counts from `ocr_jobs`, updates `ocr_batch_runs`, supports `paused_rate_limit`/`paused_quota` while work remains pending, marks scheduler-overdue batches failed without setting `completed_at`, and returns the masked batch row. Batch start/retry provider gating treats `cooldown` providers as runnable again once `cooldown_until` has passed.
 - `maskBatchRow(row)`: Produces the dashboard-safe batch progress contract, including non-secret scheduler provider, external message id, trigger status, trigger delay, trigger due timestamp, and last-trigger timestamp.
 
 ### File: `functions/_ocr-job-actions.js`
@@ -1155,8 +1155,9 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `functions/_ocr-job-claiming.js`
 *OCR pending-job claiming and retry-state helper.*
-- `claimPendingJobs(db, maxJobs, jobId, batchId)`: Selects and marks pending proposal jobs as `running`, preserving franchise-first ordering and supporting exact job or batch scopes.
+- `claimPendingJobs(db, maxJobs, jobId, batchId)`: Releases stale `running` jobs older than `STALE_RUNNING_JOB_MINUTES`, then selects and marks pending proposal jobs as `running`, preserving franchise-first ordering and supporting exact job or batch scopes.
 - `releaseUnprocessedJobs(db, jobs, reason)`: Returns already claimed but unprocessed jobs to `pending` when provider rate/quota pauses stop a drain early.
+- `releaseStaleRunningJobs(db, batchId, jobId)`: Returns jobs stuck in `running` for more than 15 minutes to `pending` with an actionable error note so workers/browser tabs can recover after interruption.
 - `retryJobStatement(db, jobId, userId)`: Shared reset statement used by retry actions.
 - `cleanOcrError(value)` / `textOrNull(value)`: Small normalization helpers shared by runner/action paths.
 
@@ -1215,7 +1216,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `functions/_dashboard-outreach-queries.js`
 *Focused Outreach/Pipeline read model for `/dashboard-data`.*
-- `getUnclaimedOutreachQueue(db)`: Reads up to 250 contact-ready listings for the shared Outreach/Pipeline payload, including unclaimed rows, non-archived registered/owned rows, rows with existing outreach status, pending/approved claim context, active/lapsed subscription context, and pending Premium order context; joins `listing_outreach_statuses`, subscription dates, and outreach history, computes effective sales status, next action, why-this-card-is-shown reason, overdue state, publication status, urgency rank, and staff-personal `wa.me` claim-notification links.
+- `getUnclaimedOutreachQueue(db)`: Reads up to 250 contact-ready listings for the shared Outreach/Pipeline payload, including unclaimed rows, non-archived registered/owned rows, rows with existing outreach status, pending/approved claim context, active/lapsed subscription context, and pending Premium order context; joins `listing_outreach_statuses`, subscription dates, and outreach history, computes effective sales status, current-stage timestamp (`stage_changed_at`), milestone-history policy text, next action, why-this-card-is-shown reason, overdue state, publication status, urgency rank, and staff-personal `wa.me` claim-notification links.
 - `getUnclaimedOutreachSummary(db)`: Counts eligible unclaimed/registered rows, contact-ready rows, missing-phone rows, current outreach queue limit, pipeline status counts, and conversion metrics for response, claim, subscription, renewal-risk recovery, and actionable-open visibility.
 - `defaultOutreachStatus()` / `effectiveOutreachStatus()` / `nextActionDetail()` / `salesReason()` / `urgencyRank()`: Keep sales-stage derivation and staff next-action copy close to the query that shapes dashboard rows.
 
@@ -1225,11 +1226,11 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `functions/_proposal-evidence.js`
 *Shared proposal/OCR evidence basis helper.*
-- `sourceEvidence(field, text, value)`: Sanitizes proposal/OCR text and returns `{ excerpt, basis }`. Field-aware basis matching prevents weak numeric evidence, such as a standalone `8` in unrelated projection text, from looking like proof for `min_staff_count`.
+- `sourceEvidence(field, text, value)`: Sanitizes proposal/OCR text and returns `{ excerpt, basis }`. Field-aware basis matching uses `src/lib/franchise-field-dictionary.js` for sensitive field evidence keywords and prevents weak numeric evidence, such as a standalone `8` in unrelated projection text, from looking like proof for `min_staff_count`.
 
 ### File: `functions/_google-contacts.js`
 *Google Contacts helper for dashboard outreach.*
-- `handleSaveOutreachGoogleContacts(db, auth, data, env)`: Staff/admin dashboard action that rebuilds the current outreach queue server-side, selects up to 200 ready WhatsApp contacts, retrieves the staff member's dashboard-linked Google Contacts access token from `staff_google_connections`, refreshes it when possible through `_google-contacts-oauth.js`, checks existing Google Contacts through People API `searchContacts`, calls `people:batchCreateContacts` only for non-duplicates, marks processed rows as `saved_contact`, records an audit event, and returns setup/connect/reauth-required errors when the separate dashboard OAuth connection is missing or stale.
+- `handleSaveOutreachGoogleContacts(db, auth, data, env)`: Staff/admin dashboard action that rebuilds the current outreach queue server-side, selects up to 200 ready WhatsApp contacts, retrieves the staff member's dashboard-linked Google Contacts access token from `staff_google_connections`, refreshes it when possible through `_google-contacts-oauth.js`, checks existing Google Contacts through People API `searchContacts`, calls `people:batchCreateContacts` only for non-duplicates, marks only created or duplicate-confirmed rows as `saved_contact`, records per-contact `created`/`duplicate`/`unconfirmed`/`skipped` summaries, audits unconfirmed counts, and returns setup/connect/reauth-required errors when the separate dashboard OAuth connection is missing or stale.
 - `outreachRowToGoogleContact(row)` / `googleContactHasPhone(person, phone)` / `googleContactSearchUrl(query)` / `buildGoogleBatchCreatePayload(contacts)`: Pure helpers that format brand name, phone number, listing URL, organization, duplicate-check search URL, phone matching, and `readMask` into the Google People API flow covered by `pnpm run google-contacts:check`.
 
 ### File: `functions/_google-contacts-oauth.js`
@@ -1251,7 +1252,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `functions/_outreach-status.js`
 *Shared outreach current-status write helper.*
-- `outreachStatusStatement(db, input)`: Builds the upsert statement for `listing_outreach_statuses`, preserving milestone timestamps and keeping notes/staff assignment current without duplicating SQL across dashboard actions and Google Contacts.
+- `outreachStatusStatement(db, input)`: Builds the upsert statement for `listing_outreach_statuses`, preserving milestone timestamps, updating `last_status_changed_at` for the current stage, and keeping notes/staff assignment current without duplicating SQL across dashboard actions and Google Contacts.
 - `outreachEventOutcomeForStatus(status)`: Maps canonical Kanban stages back to allowed `listing_outreach_events.outcome` values so current status changes still have compatible history rows.
 
 ### File: `functions/_dashboard-actions.js`
@@ -1301,12 +1302,17 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `functions/_shared-schemas.js`
 *Shared validation/schema constants for Pages Functions.*
-- `EDITABLE_LISTING_FIELD_DEFS`: Canonical dashboard-editable listing fields with labels, types, and select options, including brand-origin, target-market, `Biaya kemitraan awal`, and progressive canonical fields for area/staff/setup/working-capital/BEP/omzet/profit ranges.
+- `EDITABLE_LISTING_FIELD_DEFS`: Canonical dashboard-editable listing fields with labels, types, and select options, including brand-origin, target-market, dictionary-backed `Biaya Lisensi / Kemitraan`, and progressive canonical fields for area/staff/setup/working-capital/BEP/omzet/profit ranges.
 - `sanitizeListingChanges(changes)` / `normalizeListingFieldValue(field, value)`: Shared dashboard listing change validation and normalization.
 - `BaseSubmissionSchema` / `FranchiseeSubmissionSchema` / `FranchisorSubmissionSchema` / `CreateUnclaimedSubmissionSchema`: Shared form payload validators used by `/form-submit`; franchisor submissions accept optional `brand_country`, `target_market`, and the progressive field set, while submit helpers default origin/market to Indonesia/Indonesia when omitted.
 - `GetFranchisesQuerySchema`: Shared `/get-franchises` query validator.
 - Role/source/form/contact/quality-check enum schemas: Shared Zod enums for public/internal roles, source sheets, form types, test actions, contact types, quality-check statuses, and dashboard review decisions.
 - `normalizeListingStatusValue()` / `normalizeVerificationTierValue()` / `normalizeRoyaltyBasisValue()` / `normalizeHakiStatusValue()`: Shared value normalizers for Function write paths.
+
+### File: `src/lib/franchise-field-dictionary.js`
+*Shared franchise field label/synonym/proof dictionary.*
+- `FRANCHISE_FIELD_DICTIONARY`: Canonical labels, accepted brochure wording, OCR evidence keywords, and no-infer/review notes for sensitive fields such as `fee_license_idr`, `total_investment_idr`, royalty, support, and outlet type.
+- `getFranchiseFieldDefinition(fieldName)` / `franchiseFieldLabel(fieldName, fallback)` / `franchiseFieldEvidenceKeywords(fieldName, fallback)`: Runtime helpers used by shared schemas and OCR evidence matching so review labels and proof snippets do not drift.
 
 ### File: `functions/_country-metadata.js`
 *Shared country metadata adapter for Pages Functions.*

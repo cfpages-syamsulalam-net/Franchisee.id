@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-07-16 19:54 (Asia/Jakarta)
+Last updated: 2026-07-17 00:28 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -18,6 +18,8 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: OCR result sampling, AI extraction/review plan, supplemental insight data model, and dynamic public listing tab recommendations.
 - `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: focused step-by-step third-party setup reference for `/dashboard` warnings and in-app integration guide anchors.
 - `docs/architecture/STATE_TRANSITION_AUDIT.md`: cross-system audit tracker for auth, OAuth, dashboard actions, OCR, Premium, outreach, claims, publishing, and migration state transitions.
+- `docs/architecture/R2_D1_MIGRATION_RUNBOOK.md`: replayable checklist for one-time moves of large D1 payloads into R2 with verification and cleanup.
+- `docs/data/FRANCHISE_FIELD_DICTIONARY.md`: canonical labels, aliases, proof rules, and no-infer notes for ambiguous franchise listing fields.
 - `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: listing detail page compactness, claim CTA, and Cloudflare Pages Function request-limit tracker.
@@ -40,11 +42,13 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: plan for converting OCR/proposal text into reviewed listing fields, supplemental insight records, and optional public listing tabs.
 - `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: Google Contacts, OCR provider/scheduler, Premium email, and publish automation setup guide for dashboard operations.
 - `docs/architecture/STATE_TRANSITION_AUDIT.md`: state-machine inventory, high-risk scenario matrix, and priority fix board for transition-heavy runtime paths.
+- `docs/architecture/R2_D1_MIGRATION_RUNBOOK.md`: D1-to-R2 migration checklist for large OCR/proposal text payloads.
 - `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: premium network membership, `/premium` page, manual payment operations, conversion tracking, payment confirmation, traffic growth, and renewal roadmap.
 - `docs/architecture/RESEND_EMAIL_DELIVERY.md`: Resend/Cloudflare Pages email delivery setup for queued Premium emails, reports, and reminders.
 
 ## Forms
 - `docs/forms/AUTO_SAVE.md`: franchisor draft autosave behavior.
+- `docs/forms/CLAIM_TRANSITION_MATRIX.md`: claim-review state matrix for duplicate claims, owner assignment, rejection, and publish queue behavior.
 - `docs/forms/CLAIM_WORKFLOW.md`: claim-search and claim submission behavior.
 - `docs/forms/FRANCHISEE_MULTISTEP.md`: franchisee multi-step form behavior.
 - `docs/forms/FORM_VALIDATION_FIXES.md`: form validation and formatting behavior.

@@ -8,13 +8,24 @@ Format:
 ### Added
 - `scripts/check-pages-functions-methods.ts` and `package.json`: Added `pnpm run functions:methods:check` to assert protected app write/upload routes return non-empty JSON 405 responses with expected `Allow` headers for unsupported methods.
 - `scripts/check-premium-lifecycle.ts` and `package.json`: Added `pnpm run premium:lifecycle:check` for Premium lifecycle guardrails, including email queue lock claiming, stale lock retryability, order expiry reuse guard, duplicate payment confirmation guard, renewal-window wiring, approval/source-order guard, grace downgrade, publication hiding, and rebuild queue coupling.
+- `scripts/check-state-transitions.ts` and `package.json`: Added `pnpm run state-transitions:check` to assert publish queue coalescing, outreach stage timestamp semantics, claim matrix/docs, field dictionary, provider health docs, autosave stale-claim guard, and R2/D1 migration runbook contracts.
+- `src/lib/franchise-field-dictionary.js` and `docs/data/FRANCHISE_FIELD_DICTIONARY.md`: Added a shared canonical field dictionary for ambiguous franchise review/OCR fields such as Biaya Lisensi / Kemitraan, total investasi, royalty, support, and outlet type.
+- `docs/forms/CLAIM_TRANSITION_MATRIX.md`: Added the claim workflow transition matrix for duplicate claims, owner conflicts, rejection behavior, and publish queue coupling.
+- `docs/architecture/R2_D1_MIGRATION_RUNBOOK.md`: Added a replayable R2/D1 migration checklist for future large-payload migrations.
 
 ### Changed
 - `functions/form-submit.js`, `functions/profile-data.js`, `functions/profile-upload.js`, `functions/premium-receipt-upload.js`, and `functions/payment-method-upload.js`: Added explicit JSON 405 handlers so unsupported methods do not fall through to empty Cloudflare method responses.
 - `functions/_google-contacts-oauth.js`: Added stale OAuth state cleanup before starting a new Google Contacts connection and consumed/audited denied or expired OAuth callbacks.
 - `functions/_premium-email-worker.js`: Claimed due email queue rows with `locked_at` before sending, skipped rows claimed by concurrent worker runs, and treated locks older than 15 minutes as retryable.
+- `functions/_site-publish-queue.js`: Coalesced active matching publish rebuild requests and recalculated `site_publish_state.pending_count` from queue rows instead of blindly incrementing on every enqueue.
+- `functions/_dashboard-outreach-queries.js` and `js/dashboard-outreach.js`: Added current-stage timestamp metadata and a compact Stage chip so preserved milestone dates do not confuse current pipeline recency.
+- `functions/_ocr-job-claiming.js`, `functions/_ocr-batch-runs.js`, and `scripts/check-ocr-job-runner.ts`: Added 15-minute stale-running OCR job recovery and changed batch progress so scheduler-overdue failed batches do not set `completed_at`.
+- `functions/_google-contacts.js` and `scripts/check-google-contacts.ts`: Added per-contact Google Contacts save results and partial-success reconciliation so only created or duplicate-confirmed contacts move to `saved_contact`.
+- `functions/_shared-schemas.js` and `functions/_proposal-evidence.js`: Wired sensitive review labels and OCR evidence keywords to the shared franchise field dictionary.
+- `js/form-01-state-helpers.js` and `docs/forms/AUTO_SAVE.md`: Added draft schema/page/claim-brand metadata and skipped stale claim draft restore when the saved claim brand differs from the active claim brand.
+- `docs/architecture/OCR_PROVIDER_STRATEGY.md`: Documented provider health transitions for unconfigured, ready, cooldown, exhausted, blocked, and disabled states.
 - `scripts/check-google-contacts.ts`: Added source assertions for Google Contacts OAuth cleanup, denied callback consumption, and expired callback consumption.
-- `docs/architecture/STATE_TRANSITION_AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Marked the scoped P0/P1 transition fixes done and documented the new checks/runtime contracts.
+- `docs/architecture/STATE_TRANSITION_AUDIT.md`, `docs/README.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `SUGGESTION.md`: Marked all remaining state-transition audit rows done for this pass and documented the new runtime/docs/check contracts.
 
 ## 2026-07-16 19:54 (Asia/Jakarta)
 ### Added

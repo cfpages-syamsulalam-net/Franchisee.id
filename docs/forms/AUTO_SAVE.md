@@ -8,6 +8,12 @@ The Franchisor form now features **aggressive multi-layer auto-save** to ensure 
 ## Migration Direction
 Auto-save currently uses browser `localStorage` only. During the D1/R2/Clerk migration, keep local auto-save as the immediate safety net and consider adding Clerk-authenticated server-side drafts in D1 for cross-device continuity. Do not introduce Supabase as the draft-sync target.
 
+## Multi-Tab And Stale Draft Policy
+- Franchisor drafts carry `schema_version`, `page_url`, and `claim_brand_id` metadata.
+- A draft may restore into a normal Franchisor form while it is inside the 72-hour TTL.
+- A claim draft must not restore into a different active claim brand. If the saved `claim_brand_id` and current hidden `unclaimed_id` are both present and different, restore is skipped.
+- Server-side listing/profile data remains authoritative after submission. Local drafts are only pre-submit recovery and are cleared after successful submit.
+
 ## Auto-Save Triggers (6 Independent Layers)
 
 ### 1. **Debounced Input/Change Save** (300ms delay)
@@ -160,6 +166,9 @@ FF.saveFranchisorDraft = function (form) {
 ### Data Structure
 ```javascript
 {
+    schema_version: 2,
+    page_url: "/daftar?claim=sample-brand",
+    claim_brand_id: "franchise_123",
     fields: {
         brand_name: "Kopi Kenangan",
         company_name: "PT. Kopi Maju Jaya",
@@ -200,6 +209,7 @@ FF.saveFranchisorDraft = function (form) {
 - Automatic on page load via `FF.restoreFranchisorDraft(lForm)`
 - Restores all field values from localStorage
 - Respects TTL (ignores drafts older than 72 hours)
+- Skips restore when a saved claim draft belongs to a different active claim brand.
 
 ## User Experience Scenarios
 
@@ -278,6 +288,7 @@ try {
 - [ ] Fill form, close browser, reopen within 72 hours, verify restore
 - [ ] Fill form rapidly, verify debounce prevents excessive saves
 - [ ] Submit form successfully, verify draft is cleared
+- [ ] Save a claim draft for Brand A, open claim form for Brand B, verify Brand A draft does not overwrite Brand B
 - [ ] Switch between tabs (Franchisee/Franchisor/Klaim), verify saves
 - [ ] Use claim workflow, verify pre-filled data is saved
 - [ ] Wait 5 seconds without input, verify periodic save

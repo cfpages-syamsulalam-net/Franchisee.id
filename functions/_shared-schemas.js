@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { franchiseFieldLabel } from "../src/lib/franchise-field-dictionary.js";
 
 export const DASHBOARD_DECISIONS = ["approve", "reject"];
 export const PUBLIC_ROLES = ["franchisee", "franchisor"];
@@ -73,12 +74,12 @@ export const EDITABLE_LISTING_FIELD_DEFS = [
   { name: "setup_duration_days", label: "Estimasi waktu setup (hari)", type: "integer" },
   { name: "rent_cost_text", label: "Biaya sewa", type: "text" },
   { name: "contract_duration_months", label: "Durasi kontrak (bulan)", type: "integer" },
-  { name: "fee_license_idr", label: "Biaya kemitraan awal", type: "integer" },
+  { name: "fee_license_idr", label: franchiseFieldLabel("fee_license_idr", "Biaya Lisensi / Kemitraan"), type: "integer" },
   { name: "fee_capex_idr", label: "Modal peralatan", type: "integer" },
   { name: "fee_construction_idr", label: "Biaya renovasi", type: "integer" },
   { name: "working_capital_idr", label: "Modal kerja awal", type: "integer" },
   { name: "additional_cost_notes", label: "Catatan biaya tambahan", type: "textarea" },
-  { name: "total_investment_idr", label: "Total investasi", type: "integer" },
+  { name: "total_investment_idr", label: franchiseFieldLabel("total_investment_idr", "Total investasi"), type: "integer" },
   { name: "min_investment_idr", label: "Investasi minimum", type: "integer" },
   { name: "max_investment_idr", label: "Investasi maksimum", type: "integer" },
   { name: "estimated_bep_months", label: "Estimasi balik modal (bulan)", type: "integer" },
@@ -91,12 +92,12 @@ export const EDITABLE_LISTING_FIELD_DEFS = [
   { name: "net_profit_percent", label: "Laba bersih (%)", type: "number" },
   { name: "net_profit_monthly_min_idr", label: "Laba bersih bulanan minimum", type: "integer" },
   { name: "net_profit_monthly_max_idr", label: "Laba bersih bulanan maksimum", type: "integer" },
-  { name: "royalty_percent", label: "Royalti (%)", type: "number" },
-  { name: "royalty_basis", label: "Dasar royalti", type: "select", options: ROYALTY_BASIS_VALUES },
+  { name: "royalty_percent", label: franchiseFieldLabel("royalty_percent", "Royalti (%)"), type: "number" },
+  { name: "royalty_basis", label: franchiseFieldLabel("royalty_basis", "Dasar royalti"), type: "select", options: ROYALTY_BASIS_VALUES },
   { name: "royalty_period", label: "Periode royalti", type: "text" },
   { name: "short_desc", label: "Deskripsi singkat", type: "textarea" },
   { name: "full_desc", label: "Deskripsi lengkap", type: "textarea" },
-  { name: "support_system", label: "Dukungan mitra", type: "textarea" },
+  { name: "support_system", label: franchiseFieldLabel("support_system", "Dukungan mitra"), type: "textarea" },
   { name: "phone", label: "Telepon/WhatsApp", type: "text" },
   { name: "office_address", label: "Alamat kantor", type: "textarea" },
   { name: "outlets_location", label: "Lokasi outlet", type: "textarea" },

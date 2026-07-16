@@ -41,6 +41,19 @@ Free limits change frequently. Verify the provider console before enabling produ
 10. Keep human approval mandatory before OCR-derived values update canonical listing fields.
 11. Apply local short-window provider rate guards before each external call. If a provider reaches its configured request window, mark it `cooldown`, set `cooldown_until`, and try the next eligible provider instead of firing another request immediately.
 
+## Provider Health Transitions
+
+| Current state | Return-to-ready policy | Admin visibility |
+| --- | --- | --- |
+| `unconfigured` | Save the required credential fields and enable the provider. | Dashboard shows missing credential/config requirement before enablement. |
+| `disabled` | Admin explicitly enables the provider after required credentials exist. | Dashboard keeps the provider out of rotation. |
+| `ready` | Stays eligible until a quota, rate, credential, or adapter error changes health. | Dashboard shows remaining known quota and last checked metadata. |
+| `cooldown` | Automatically eligible again after `cooldown_until <= CURRENT_TIMESTAMP`; no manual reset needed unless the provider keeps failing. | Dashboard shows cooldown time and the latest provider error without exposing credentials. |
+| `exhausted` | Eligible after the configured `quota_reset_at` passes or an admin corrects quota metadata. Do not retry during the same quota window. | Dashboard should show quota used/reset info and tell admin to wait for reset or disable the provider. |
+| `blocked` | Admin must fix credential, endpoint, account, billing, or provider-console access, then save/toggle the provider to reset health to `ready`. | Dashboard shows copyable `last_error` and must not keep spending requests on this provider. |
+
+Failed health checks should set `last_error`, `last_checked_at`, and one of `cooldown`, `exhausted`, or `blocked` depending on whether the recovery is time-based, quota-reset-based, or admin-action-based.
+
 ## D1 and dashboard implementation plan
 
 - [x] Research and rank ten providers with official source links and free-limit caveats.

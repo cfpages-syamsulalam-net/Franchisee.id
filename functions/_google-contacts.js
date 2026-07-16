@@ -51,7 +51,7 @@ export async function handleSaveOutreachGoogleContacts(db, auth, data, env) {
   const contactsToCreate = duplicateResult.contacts;
   if (!contactsToCreate.length) {
     await db.batch([
-      ...contacts.map((contact) => outreachStatusStatement(db, {
+      ...duplicateResult.duplicate_contacts.map((contact) => outreachStatusStatement(db, {
         franchiseId: contact.franchise_id,
         status: "saved_contact",
         staffUserId: auth.id,
@@ -68,6 +68,7 @@ export async function handleSaveOutreachGoogleContacts(db, auth, data, env) {
       saved: 0,
       skipped: contacts.length,
       duplicate_skipped: duplicateResult.duplicate_skipped,
+      results: contactResultSummary(contacts, duplicateResult.duplicate_contacts, [], []),
       message: "Semua kontak outreach sudah ada di Google Contacts akun ini.",
     });
   }
@@ -96,28 +97,40 @@ export async function handleSaveOutreachGoogleContacts(db, auth, data, env) {
     }, { status });
   }
 
-  const createdCount = Array.isArray(result.createdPeople) ? result.createdPeople.length : contactsToCreate.length;
+  const createdPeopleKnown = Array.isArray(result.createdPeople);
+  const createdCount = createdPeopleKnown ? result.createdPeople.length : contactsToCreate.length;
+  const createdContacts = contactsToCreate.slice(0, createdCount);
+  const unconfirmedContacts = createdPeopleKnown ? contactsToCreate.slice(createdCount) : [];
+  const savedContacts = [...duplicateResult.duplicate_contacts, ...createdContacts];
   await db.batch([
-    ...contacts.map((contact) => outreachStatusStatement(db, {
+    ...savedContacts.map((contact) => outreachStatusStatement(db, {
       franchiseId: contact.franchise_id,
       status: "saved_contact",
       staffUserId: auth.id,
-      notes: "Kontak disimpan ke Google Contacts.",
+      notes: duplicateResult.duplicate_contacts.some((duplicate) => duplicate.franchise_id === contact.franchise_id)
+        ? "Kontak sudah ada di Google Contacts."
+        : "Kontak disimpan ke Google Contacts.",
     })),
     auditStatement(db, "dashboard.outreach.google_contacts.save", "user", auth.id, {
       requested: contacts.length,
       created: createdCount,
       duplicate_skipped: duplicateResult.duplicate_skipped,
+      unconfirmed: unconfirmedContacts.length,
       franchise_ids: contactsToCreate.map((contact) => contact.franchise_id),
     }, auth.id),
   ]);
 
   return jsonResponse({
     success: true,
+    partial_success: unconfirmedContacts.length > 0,
     requested: contacts.length,
-    saved: createdCount,
-    skipped: contacts.length - createdCount,
+    saved: savedContacts.length,
+    skipped: contacts.length - savedContacts.length,
     duplicate_skipped: duplicateResult.duplicate_skipped,
+    results: contactResultSummary(contacts, duplicateResult.duplicate_contacts, createdContacts, unconfirmedContacts),
+    message: unconfirmedContacts.length
+      ? "Sebagian kontak berhasil disimpan. Cek detail hasil dan coba ulang untuk kontak yang belum terkonfirmasi."
+      : "Kontak outreach berhasil disimpan ke Google Contacts.",
   });
 }
 
@@ -167,9 +180,11 @@ export function googleContactSearchUrl(query) {
 }
 
 async function filterExistingGoogleContacts(token, contacts) {
-  const uniqueContacts = dedupeContactsByPhone(contacts);
+  const deduped = dedupeContactsByPhone(contacts);
+  const uniqueContacts = deduped.unique;
   const remaining = [];
-  let duplicateSkipped = contacts.length - uniqueContacts.length;
+  const duplicateContacts = [...deduped.duplicates];
+  let duplicateSkipped = duplicateContacts.length;
 
   const warmup = await googlePeopleGet(token, googleContactSearchUrl(""));
   if (!warmup.ok) return warmup;
@@ -179,6 +194,7 @@ async function filterExistingGoogleContacts(token, contacts) {
     if (!search.ok) return search;
     if (search.exists) {
       duplicateSkipped += 1;
+      duplicateContacts.push(contact);
     } else {
       remaining.push(contact);
     }
@@ -188,6 +204,7 @@ async function filterExistingGoogleContacts(token, contacts) {
     ok: true,
     contacts: remaining,
     duplicate_skipped: duplicateSkipped,
+    duplicate_contacts: duplicateContacts,
   };
 }
 
@@ -228,13 +245,35 @@ async function googlePeopleGet(token, url) {
 function dedupeContactsByPhone(contacts) {
   const seen = new Set();
   const unique = [];
+  const duplicates = [];
   for (const contact of contacts) {
     const key = normalizePhoneDigits(contact.phone);
-    if (!key || seen.has(key)) continue;
+    if (!key || seen.has(key)) {
+      duplicates.push(contact);
+      continue;
+    }
     seen.add(key);
     unique.push(contact);
   }
-  return unique;
+  return { unique, duplicates };
+}
+
+function contactResultSummary(allContacts, duplicateContacts, createdContacts, unconfirmedContacts) {
+  const duplicateIds = new Set(duplicateContacts.map((contact) => contact.franchise_id));
+  const createdIds = new Set(createdContacts.map((contact) => contact.franchise_id));
+  const unconfirmedIds = new Set(unconfirmedContacts.map((contact) => contact.franchise_id));
+  return allContacts.map((contact) => ({
+    franchise_id: contact.franchise_id,
+    name: contact.name,
+    phone: contact.phone,
+    status: createdIds.has(contact.franchise_id)
+      ? "created"
+      : duplicateIds.has(contact.franchise_id)
+        ? "duplicate"
+        : unconfirmedIds.has(contact.franchise_id)
+          ? "unconfirmed"
+          : "skipped",
+  }));
 }
 
 function normalizePhoneDigits(value) {

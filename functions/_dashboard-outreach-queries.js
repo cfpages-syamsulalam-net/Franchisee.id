@@ -130,6 +130,8 @@ export async function getUnclaimedOutreachQueue(db) {
       ...row,
       current_status: effectiveStatus,
       status_badge: effectiveStatus,
+      stage_changed_at: row.last_status_changed_at || row.updated_at || "",
+      milestone_policy: "Tanggal milestone adalah riwayat; stage saat ini memakai perubahan status terakhir.",
       subscription_health: row.active_subscription_ends_at ? "active" : row.latest_subscription_ends_at ? "not_active" : "none",
       sales_next_action: stageMeta.next_action || "",
       sales_next_action_detail: nextActionDetail(stageMeta, row, effectiveStatus),

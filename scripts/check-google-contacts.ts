@@ -39,4 +39,10 @@ assert.match(oauthSource, /consumeGoogleContactsOAuthState\(db, state, "expired"
 assert.match(oauthSource, /DELETE FROM staff_google_oauth_states/);
 assert.match(oauthSource, /dashboard\.google_contacts\.oauth_\$\{reason\}/);
 
+const contactsSource = readFileSync("functions/_google-contacts.js", "utf8");
+assert.match(contactsSource, /partial_success: unconfirmedContacts\.length > 0/);
+assert.match(contactsSource, /results: contactResultSummary/);
+assert.match(contactsSource, /duplicate_contacts/);
+assert.match(contactsSource, /status: createdIds\.has/);
+
 console.log("Google Contacts outreach check passed.");

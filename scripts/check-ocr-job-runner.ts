@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 // @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { DashboardActionSchema } from "../functions/_dashboard-schemas.js";
 // @ts-ignore Pages Functions are JavaScript modules without generated declarations.
@@ -228,6 +229,17 @@ async function main() {
   assert.match(rowsWithEvidence[0].old_value.__ocr_evidence.fee_license_idr.sources[0].excerpt, /119\.000\.000/);
 
   assert.equal(normalizeOcrText("A  \r\n\r\n\r\n B\t\tC"), "A\n\n B C");
+
+  const claimingSource = readFileSync("functions/_ocr-job-claiming.js", "utf8");
+  assert.match(claimingSource, /STALE_RUNNING_JOB_MINUTES = 15/);
+  assert.match(claimingSource, /releaseStaleRunningJobs/);
+  assert.match(claimingSource, /status = 'running'/);
+  assert.match(claimingSource, /started_at <= datetime\('now', \?\)/);
+
+  const batchSource = readFileSync("functions/_ocr-batch-runs.js", "utf8");
+  assert.match(batchSource, /releaseStaleRunningJobs\(db, id\)/);
+  assert.match(batchSource, /completed \? 1 : 0/);
+  assert.doesNotMatch(batchSource, /\(completed \|\| overdue\) \? 1 : 0/);
 
   console.log("OCR job runner contract check passed.");
 }

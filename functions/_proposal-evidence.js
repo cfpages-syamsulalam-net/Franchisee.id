@@ -1,4 +1,5 @@
 import { sanitizeProposalSourceText } from "./_proposal-knowledge.js";
+import { franchiseFieldEvidenceKeywords } from "../src/lib/franchise-field-dictionary.js";
 
 export function sourceEvidence(field, text, value) {
   const normalized = normalizeText(sanitizeProposalSourceText(text));
@@ -31,11 +32,11 @@ function findBasis(field, text, value) {
   const amount = moneyPattern(value);
   const number = numberPattern(value);
   const patterns = {
-    fee_license_idr: moneyLabelPatterns(amount, ["franchise fee", "license fee", "lisensi", "franchise", "kemitraan", "join", "joining fee", "investasi kemitraan"]),
+    fee_license_idr: moneyLabelPatterns(amount, franchiseFieldEvidenceKeywords("fee_license_idr")),
     fee_construction_idr: moneyLabelPatterns(amount, ["renovasi", "booth", "konstruksi", "interior", "fit out"]),
     fee_capex_idr: moneyLabelPatterns(amount, ["peralatan", "equipment", "alat", "perlengkapan"]),
     working_capital_idr: moneyLabelPatterns(amount, ["modal kerja", "working capital", "stok awal", "bahan baku awal"]),
-    total_investment_idr: moneyLabelPatterns(amount, ["total investasi", "total biaya investasi", "nilai investasi"]),
+    total_investment_idr: moneyLabelPatterns(amount, franchiseFieldEvidenceKeywords("total_investment_idr", ["total investasi", "total biaya investasi", "nilai investasi"])),
     min_investment_idr: moneyLabelPatterns(amount, ["investasi", "modal", "modal awal"]),
     max_investment_idr: moneyLabelPatterns(amount, ["investasi", "modal", "modal awal"]),
     min_staff_count: [
@@ -46,7 +47,7 @@ function findBasis(field, text, value) {
       new RegExp(`\\b(?:luas|ukuran|area)[^\\n.]{0,80}${number}(?:[.,]\\d+)?\\s*(?:x\\s*\\d+(?:[.,]\\d+)?\\s*)?m(?:2|²|eter)?[^\\n.]{0,80}`, "i"),
     ],
     royalty_percent: [
-      new RegExp(`\\b(?:royalty|royalti)[^\\n.]{0,80}${number}\\s*%`, "i"),
+      new RegExp(`\\b(?:${franchiseFieldEvidenceKeywords("royalty_percent", ["royalty", "royalti"]).map(escapeRegExp).join("|")})[^\\n.]{0,80}${number}\\s*%`, "i"),
       /\b(?:tanpa|bebas|gratis|free)\s+royalt(?:y|i)\b/i,
     ],
     royalty_basis: [
