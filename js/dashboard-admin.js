@@ -46,6 +46,7 @@
     outreachCount: document.querySelector("[data-outreach-count]"),
     outreachTabBadge: document.querySelector("[data-outreach-tab-badge]"),
     outreachActions: document.querySelector("[data-outreach-actions]"),
+    googleContactsNotice: document.querySelector("[data-google-contacts-notice]"),
     premiumPaymentRows: document.querySelector("[data-premium-payment-rows]"),
     publishState: document.querySelector("[data-publish-state]"),
     publicationRows: document.querySelector("[data-publication-rows]"),
@@ -339,6 +340,7 @@
     if (!response.ok || !result.success) {
       var actionError = new Error(result.message || result.error || "Dashboard action failed.");
       actionError.dashboardResult = result;
+      actionError.dashboardStatus = response.status;
       throw actionError;
     }
     return result;

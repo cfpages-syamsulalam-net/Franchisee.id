@@ -4,6 +4,15 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-16 08:20 (Asia/Jakarta)
+### Added
+- `src/pages/dashboard/index.astro` and `css/dashboard-outreach.css`: Added an inline Outreach Google Contacts reauth alert container and responsive styling.
+
+### Changed
+- `js/dashboard-admin.js` and `js/dashboard-outreach.js`: Surface Google Contacts 409/scope conflicts as a clear staff-facing alert that explains the current Google session still has the old scope, offers a `Logout & login Google ulang` action, and links to the dashboard integration guide.
+- `functions/_google-contacts.js`: Marked Google OAuth token/scope/People API permission conflicts as `reauth_required` and changed the response copy to tell staff to logout from the dashboard and login again with Google.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, and `.context/session-20260715-1638.md`: Documented the Google Contacts stale-session reauth behavior.
+
 ## 2026-07-16 07:55 (Asia/Jakarta)
 ### Added
 - `css/dashboard-outreach.css`: Added a focused Outreach/Pipeline stylesheet for compact worklist cards, Kanban columns, icon-only metadata chips, one-line notes, status badges, drag/drop states, and responsive containment rules.

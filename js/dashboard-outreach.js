@@ -13,6 +13,7 @@
     var outreachCount = options.outreachCount;
     var outreachTabBadge = options.outreachTabBadge;
     var outreachActions = options.outreachActions;
+    var googleContactsNotice = options.googleContactsNotice;
     var GOOGLE_CONTACTS_SETUP_DOC = "/dashboard/#google-contacts-setup";
     var lastRows = [];
     var lastSummary = {};
@@ -437,6 +438,7 @@
       try {
         button.disabled = true;
         button.classList.add("is-busy");
+        hideGoogleContactsNotice();
         options.setStatus("Menyimpan kontak ke Google Contacts...", false);
         var result = await options.postDashboardAction({
           action: "save_outreach_google_contacts",
@@ -449,20 +451,78 @@
         var message = result.message || ("Kontak tersimpan: " + Number(result.saved || 0).toLocaleString("id-ID") + " dari " + Number(result.requested || 0).toLocaleString("id-ID") + ".");
         if (skipped) message += " " + skipped.toLocaleString("id-ID") + " dilewati karena sudah ada.";
         options.setStatus(message, false);
+        hideGoogleContactsNotice();
       } catch (error) {
         button.disabled = false;
         button.classList.remove("is-busy");
-        options.setStatus(formatGoogleContactsError(error), true);
+        var formatted = formatGoogleContactsError(error);
+        options.setStatus(formatted.message, true);
+        if (formatted.showNotice) showGoogleContactsNotice(formatted);
       }
     }
 
     function formatGoogleContactsError(error) {
       var result = error && error.dashboardResult ? error.dashboardResult : {};
       var message = error && error.message ? error.message : "Kontak belum bisa disimpan ke Google.";
-      var needsSetup = result.setup_required || result.error === "GOOGLE_CONTACTS_SCOPE_MISSING" || result.error === "GOOGLE_ACCOUNT_NOT_LINKED";
-      if (!needsSetup) return escapeHtml(message);
+      var needsSetup = result.setup_required || result.reauth_required || result.error === "GOOGLE_CONTACTS_SCOPE_MISSING" || result.error === "GOOGLE_ACCOUNT_NOT_LINKED";
+      if (!needsSetup) return { message: escapeHtml(message), showNotice: false };
       var href = result.documentation_url || GOOGLE_CONTACTS_SETUP_DOC;
-      return escapeHtml(message) + ' <a class="dash-link" href="' + escapeAttr(href) + '">Lihat panduan setup</a>.';
+      var reauthMessage = "Izin Google Contacts sudah disiapkan, tetapi sesi Google staff yang sedang aktif belum membawa izin baru. Logout dari dashboard lalu login ulang dengan Google, kemudian coba simpan kontak lagi.";
+      var statusMessage = escapeHtml(reauthMessage) + ' <a class="dash-link" href="' + escapeAttr(href) + '">Lihat panduan setup</a>.';
+      return {
+        message: statusMessage,
+        showNotice: true,
+        detail: message,
+        documentationUrl: href,
+      };
+    }
+
+    function showGoogleContactsNotice(details) {
+      if (!googleContactsNotice) return;
+      googleContactsNotice.hidden = false;
+      googleContactsNotice.innerHTML =
+        '<div class="dash-outreach-alert-icon"><i class="fab fa-google" aria-hidden="true"></i></div>' +
+        '<div class="dash-outreach-alert-body">' +
+          '<strong>Izin Google Contacts perlu login ulang</strong>' +
+          '<p>Scope Google Contacts sudah diperbarui, tetapi sesi Google staff saat ini masih memakai izin lama. Logout dulu, lalu login ulang dengan Google dan pilih akun staff yang sama.</p>' +
+          (details.detail ? '<p class="dash-outreach-alert-detail">' + escapeHtml(details.detail) + '</p>' : "") +
+        '</div>' +
+        '<div class="dash-outreach-alert-actions">' +
+          '<button class="dash-pill-action primary" type="button" data-google-contacts-reauth data-fr-tooltip="Logout lalu login ulang dengan Google">' +
+            '<i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Logout & login Google ulang</span>' +
+          '</button>' +
+          '<a class="dash-pill-action" href="' + escapeAttr(details.documentationUrl || GOOGLE_CONTACTS_SETUP_DOC) + '" data-fr-tooltip="Buka panduan Google Contacts">' +
+            '<i class="fas fa-book-open" aria-hidden="true"></i><span>Panduan</span>' +
+          '</a>' +
+        '</div>';
+      var reauthButton = googleContactsNotice.querySelector("[data-google-contacts-reauth]");
+      if (reauthButton) reauthButton.addEventListener("click", reauthGoogleContacts);
+      if (window.FranchiseTooltip && typeof window.FranchiseTooltip.refresh === "function") {
+        window.FranchiseTooltip.refresh();
+      }
+    }
+
+    function hideGoogleContactsNotice() {
+      if (!googleContactsNotice) return;
+      googleContactsNotice.hidden = true;
+      googleContactsNotice.innerHTML = "";
+    }
+
+    async function reauthGoogleContacts() {
+      try {
+        options.setStatus("Logout dari sesi lama. Setelah itu login ulang dengan Google.", false);
+        var clerk = window.FranchiseAuth && window.FranchiseAuth.clerk;
+        if (!clerk && window.FranchiseAuth && typeof window.FranchiseAuth.init === "function") {
+          clerk = await window.FranchiseAuth.init();
+        }
+        if (clerk && typeof clerk.signOut === "function") {
+          await clerk.signOut();
+        }
+      } catch (error) {
+        options.setStatus("Logout otomatis gagal. Klik tombol login Google lagi setelah halaman dimuat ulang.", true);
+      } finally {
+        window.location.href = "/dashboard/";
+      }
     }
 
     return { render: render };

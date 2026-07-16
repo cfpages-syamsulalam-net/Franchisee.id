@@ -299,7 +299,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `css/dashboard-outreach.css`
 *Dashboard Outreach/Pipeline stylesheet module.*
-- Owns compact Outreach worklist cards, Pipeline Kanban columns, stage summary pills, drag/drop states, status badges, icon-only metadata chips, one-line note inputs, and responsive grid/ellipsis containment so dense franchise rows stay inside their parent cards.
+- Owns compact Outreach worklist cards, Pipeline Kanban columns, Google Contacts reauth alert, stage summary pills, drag/drop states, status badges, icon-only metadata chips, one-line note inputs, and responsive grid/ellipsis containment so dense franchise rows stay inside their parent cards.
 
 ### File: `css/dashboard-integration.css`
 *Dashboard integration documentation stylesheet module.*
@@ -337,7 +337,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - `window.FranchiseDashboardOutreach.createOutreach(options)`: Creates the Outreach worklist and Pipeline board renderer from DOM references and shared dashboard action/reload/status callbacks supplied through `js/dashboard-operations.js`.
 - `render(rows, summary, pipelineMetadata)` / `renderOutreachWorklist()` / `renderPipelineBoard()` / `renderOutreachCard(row, pipeline, mode)`: Renders Outreach as a compact actionable worklist and Pipeline as the grouped Kanban board from the same `outreach_queue` plus `outreach_pipeline`; both show stage/status badges, tooltip-backed next-action/reason context, icon-only metadata chips, overdue/follow-up chips, and compact notes, while the Pipeline tab also owns conversion/stage summary pills.
 - `bindOutreachDragAndDrop()` / `updateOutreachStatus(franchiseId, status, control)`: Supports Pipeline drag/drop card movement plus status-select fallback in both Outreach and Pipeline, posting `update_outreach_status` with notes, burned reason, and follow-up metadata before reloading dashboard state after successful persistence.
-- `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, records manually confirmed WhatsApp outreach through `/dashboard-data`, and renders setup-guidance links when Google Contacts permissions are missing.
+- `renderOutreachActions()` / `saveGoogleContacts()` / `showGoogleContactsNotice()` / `logOutreach()`: Injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, records manually confirmed WhatsApp outreach through `/dashboard-data`, and renders a persistent Google Contacts reauth alert with logout/login-Google and setup-guide actions when permissions are missing or the staff session still has the old OAuth scope.
 - Outreach filters: `today`, actionable, overdue, mine, unassigned, and all help staff see the next measurable sales action first instead of scanning every listing.
 
 ### File: `js/dashboard-review.js`
@@ -1191,7 +1191,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `functions/_google-contacts.js`
 *Google Contacts helper for dashboard outreach.*
-- `handleSaveOutreachGoogleContacts(db, auth, data, env)`: Staff/admin dashboard action that rebuilds the current outreach queue server-side, selects up to 200 ready WhatsApp contacts, retrieves the staff member's linked Google OAuth token through Clerk, checks existing Google Contacts through People API `searchContacts`, calls `people:batchCreateContacts` only for non-duplicates, marks processed rows as `saved_contact`, records an audit event, and returns setup-required errors when Google Contacts scope/token/People API access is missing.
+- `handleSaveOutreachGoogleContacts(db, auth, data, env)`: Staff/admin dashboard action that rebuilds the current outreach queue server-side, selects up to 200 ready WhatsApp contacts, retrieves the staff member's linked Google OAuth token through Clerk, checks existing Google Contacts through People API `searchContacts`, calls `people:batchCreateContacts` only for non-duplicates, marks processed rows as `saved_contact`, records an audit event, and returns setup/reauth-required errors when Google Contacts scope/token/People API access is missing or the staff session still carries the old Google OAuth grant.
 - `outreachRowToGoogleContact(row)` / `googleContactHasPhone(person, phone)` / `googleContactSearchUrl(query)` / `buildGoogleBatchCreatePayload(contacts)`: Pure helpers that format brand name, phone number, listing URL, organization, duplicate-check search URL, phone matching, and `readMask` into the Google People API flow covered by `pnpm run google-contacts:check`.
 
 ### File: `functions/_outreach-status.js`

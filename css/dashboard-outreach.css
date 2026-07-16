@@ -55,6 +55,63 @@
   padding: 12px 14px 16px;
 }
 
+.dash-outreach-alert {
+  align-items: flex-start;
+  background: #fff7d6;
+  border-bottom: 1px solid #facc15;
+  color: #713f12;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 12px 14px;
+}
+
+.dash-outreach-alert[hidden] {
+  display: none;
+}
+
+.dash-outreach-alert-icon {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(113, 63, 18, 0.16);
+  border-radius: 999px;
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.dash-outreach-alert-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dash-outreach-alert-body strong {
+  color: #3f2a05;
+  font-size: 13px;
+}
+
+.dash-outreach-alert-body p {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.dash-outreach-alert-detail {
+  color: #92400e;
+}
+
+.dash-outreach-alert-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
 .dash-outreach-column {
   background: #f8fafc;
   border: 1px solid var(--dash-border);
@@ -441,6 +498,15 @@
 
   .dash-outreach-worklist {
     padding: 14px;
+  }
+
+  .dash-outreach-alert {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .dash-outreach-alert-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 
   .dash-outreach-worklist .dash-outreach-card {
