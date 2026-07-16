@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-16 07:55 (Asia/Jakarta)
+### Added
+- `css/dashboard-outreach.css`: Added a focused Outreach/Pipeline stylesheet for compact worklist cards, Kanban columns, icon-only metadata chips, one-line notes, status badges, drag/drop states, and responsive containment rules.
+
+### Changed
+- `css/dashboard.css`: Made the `/dashboard` top tab menu horizontally scrollable on desktop and mobile so the growing tab set no longer wraps into tall rows.
+- `js/dashboard-outreach.js`: Reworked Outreach and Pipeline cards to use compact status badges, icon-only shared-tooltip metadata, one-line note inputs, tooltip-backed reasons/next-action details, and shorter Pipeline column headers.
+- `css/dashboard-operations.css`: Removed Outreach/Pipeline-specific rules so operations styling only owns general operations helpers, publication cards, and compact checkbox rows.
+- `src/pages/dashboard/index.astro`: Loaded the new `dashboard-outreach.css` module with the existing dashboard CSS stack.
+- `scripts/check-dashboard-ocr-client.mjs`, `DASHBOARD.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, and `.context/session-20260715-1638.md`: Documented the compact dashboard tabs/card layout and the new CSS module ownership.
+
 ## 2026-07-16 07:35 (Asia/Jakarta)
 ### Added
 - `functions/_dashboard-outreach-queries.js`: Extracted the Outreach/Pipeline dashboard read model, including queue rows, summary counts, sales-status derivation, urgency, overdue, and conversion metric helpers.

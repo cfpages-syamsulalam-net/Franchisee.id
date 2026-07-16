@@ -88,10 +88,9 @@
         var stageRows = filteredRows.filter(function (row) { return normalizeOutreachStatus(row.current_status) === status.value; });
         return '<section class="dash-outreach-column" data-outreach-drop-status="' + escapeAttr(status.value) + '" aria-label="' + escapeAttr(status.label) + '">' +
           '<div class="dash-outreach-column-head">' +
-            '<div><i class="' + escapeAttr(status.icon || "fas fa-circle") + '" aria-hidden="true"></i><strong>' + escapeHtml(status.label) + '</strong></div>' +
+            '<div><i class="' + escapeAttr(status.icon || "fas fa-circle") + '" aria-hidden="true"></i><strong>' + escapeHtml(status.label) + '</strong>' + renderInfoIcon(status.label, status.description || "", "fas fa-info-circle") + '</div>' +
             '<span class="dash-outreach-count">' + escapeHtml(stageRows.length) + '</span>' +
           '</div>' +
-          '<p>' + escapeHtml(status.description || "") + '</p>' +
           '<div class="dash-outreach-card-list">' +
             (stageRows.length ? stageRows.map(function (row) { return renderOutreachCard(row, pipeline, "board"); }).join("") : '<div class="dash-outreach-empty">Kosong</div>') +
           '</div>' +
@@ -125,50 +124,29 @@
       var status = normalizeOutreachStatus(row.current_status);
       var meta = pipeline.find(function (item) { return item.value === status; }) || pipeline[0];
       var isBoard = mode === "board";
-      var subscription = row.active_subscription_ends_at
-        ? '<span><i class="fas fa-crown" aria-hidden="true"></i> Aktif sampai ' + escapeHtml(row.active_subscription_ends_at) + '</span>'
-        : row.latest_subscription_ends_at
-          ? '<span><i class="fas fa-hourglass-end" aria-hidden="true"></i> Subscription terakhir ' + escapeHtml(row.latest_subscription_ends_at) + '</span>'
-          : "";
-      var overdue = row.is_overdue ? '<span class="dash-outreach-overdue"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> ' + escapeHtml(row.overdue_label || "Overdue") + '</span>' : "";
-      var assigned = row.assigned_staff_user_id ? '<span><i class="fas fa-user-check" aria-hidden="true"></i> Staff assigned</span>' : '<span><i class="fas fa-user-plus" aria-hidden="true"></i> Belum assigned</span>';
-      var publication = row.publication_status ? '<span><i class="fas fa-network-wired" aria-hidden="true"></i> Publikasi ' + escapeHtml(row.publication_status) + '</span>' : "";
+      var nextAction = row.sales_next_action || meta.next_action || "Langkah berikutnya";
+      var nextDetail = row.sales_next_action_detail || meta.next_action_detail || "";
+      var reason = row.sales_reason || meta.description || "";
       return '<article class="dash-outreach-card ' + (isBoard ? 'is-board-card' : 'is-worklist-card') + ' is-' + escapeAttr(meta.tone || "neutral") + '"' + (isBoard ? ' draggable="true"' : '') + ' data-outreach-card data-franchise-id="' + escapeAttr(row.id) + '">' +
         '<div class="dash-outreach-card-head">' +
           '<div>' +
             '<a href="' + escapeAttr(row.public_url) + '" target="_blank" rel="noopener">' + escapeHtml(row.brand_name) + '</a>' +
-            '<span>' + escapeHtml(row.category || "Tanpa kategori") + '</span>' +
+            '<span class="dash-outreach-category">' + escapeHtml(row.category || "Tanpa kategori") + '</span>' +
           '</div>' +
           renderOutreachStatusBadge(meta) +
         '</div>' +
-        '<div class="dash-outreach-contact">' + (contact ? '<i class="fab fa-whatsapp" aria-hidden="true"></i><span>' + escapeHtml(contact.label + ": " + contact.display) + '</span>' : '<span class="dash-badge bad">Tidak ada WA</span>') + '</div>' +
-        '<div class="dash-outreach-next-action">' +
-          '<strong><i class="' + escapeAttr(meta.icon || "fas fa-arrow-right") + '" aria-hidden="true"></i> ' + escapeHtml(row.sales_next_action || meta.next_action || "Langkah berikutnya") + '</strong>' +
-          '<span>' + escapeHtml(row.sales_next_action_detail || meta.next_action_detail || "") + '</span>' +
+        '<div class="dash-outreach-compact-line">' +
+          '<span class="dash-outreach-next-badge" data-fr-tooltip="' + escapeAttr(nextDetail || nextAction) + '"><i class="' + escapeAttr(meta.icon || "fas fa-arrow-right") + '" aria-hidden="true"></i><span>' + escapeHtml(nextAction) + '</span></span>' +
+          renderInfoIcon("Kenapa muncul", reason, "fas fa-info-circle") +
         '</div>' +
-        '<div class="dash-outreach-reason">' +
-          '<strong>Kenapa muncul di sini</strong>' +
-          '<span>' + escapeHtml(row.sales_reason || meta.description || "") + '</span>' +
+        renderOutreachMetaChips(row, contact) +
+        '<div class="dash-outreach-controls">' +
+          '<select class="dash-outreach-status-select" data-outreach-status-select data-last-value="' + escapeAttr(status) + '" data-franchise-id="' + escapeAttr(row.id) + '" aria-label="Status outreach ' + escapeAttr(row.brand_name || "") + '">' + renderOutreachStatusOptions(pipeline, status) + '</select>' +
+          (!isBoard ? '<input class="dash-outreach-note-input" data-outreach-note data-franchise-id="' + escapeAttr(row.id) + '" maxlength="1000" placeholder="Catatan singkat" aria-label="Catatan outreach ' + escapeAttr(row.brand_name || "") + '" value="' + escapeAttr(row.outreach_notes || "") + '">' : "") +
         '</div>' +
-        '<div class="dash-outreach-meta">' +
-          '<span><i class="fas fa-clock" aria-hidden="true"></i> ' + escapeHtml(row.last_outreach_at ? "Terakhir " + row.last_outreach_at : "Belum pernah dikontak") + '</span>' +
-          (row.next_follow_up_at ? '<span><i class="fas fa-calendar-day" aria-hidden="true"></i> Follow-up ' + escapeHtml(row.next_follow_up_at) + '</span>' : "") +
-          overdue +
-          assigned +
-          publication +
-          subscription +
-        '</div>' +
-        '<label class="dash-outreach-status-control">' +
-          '<span>Status</span>' +
-          '<select data-outreach-status-select data-last-value="' + escapeAttr(status) + '" data-franchise-id="' + escapeAttr(row.id) + '">' + renderOutreachStatusOptions(pipeline, status) + '</select>' +
-        '</label>' +
-        '<label class="dash-outreach-note">' +
-          '<span>Catatan / alasan move</span>' +
-          '<textarea data-outreach-note data-franchise-id="' + escapeAttr(row.id) + '" rows="2" maxlength="1000" placeholder="Tulis konteks singkat agar staff lain paham next step.">' + escapeHtml(row.outreach_notes || "") + '</textarea>' +
-        '</label>' +
-        '<label class="dash-outreach-burned-reason" data-burned-reason-wrap>' +
-          '<span>Alasan burned</span>' +
-          '<select data-outreach-burned-reason data-franchise-id="' + escapeAttr(row.id) + '">' + renderBurnedReasonOptions(row.burned_reason || "") + '</select>' +
+        '<label class="dash-outreach-burned-reason" data-burned-reason-wrap hidden>' +
+          '<span>Burned</span>' +
+          '<select data-outreach-burned-reason data-franchise-id="' + escapeAttr(row.id) + '" aria-label="Alasan burned ' + escapeAttr(row.brand_name || "") + '">' + renderBurnedReasonOptions(row.burned_reason || "") + '</select>' +
         '</label>' +
         '<div class="dash-outreach-actions">' + renderActionToolbar([
           waUrl ? renderActionLink({ href: waUrl, label: "Buka WhatsApp", icon: "fab fa-whatsapp", tone: "success" }) : "",
@@ -188,10 +166,33 @@
     }
 
     function renderOutreachStatusBadge(status) {
-      return '<span class="dash-outreach-status-badge is-' + escapeAttr(status.tone || "neutral") + '">' +
+      return '<span class="dash-outreach-status-badge is-' + escapeAttr(status.tone || "neutral") + '" data-fr-tooltip="' + escapeAttr(status.description || status.label || status.value) + '">' +
         '<i class="' + escapeAttr(status.icon || "fas fa-circle") + '" aria-hidden="true"></i>' +
         '<span>' + escapeHtml(status.short_label || status.label || status.value) + '</span>' +
       '</span>';
+    }
+
+    function renderOutreachMetaChips(row, contact) {
+      var chips = [];
+      if (contact) chips.push(renderMetaChip("fab fa-whatsapp", contact.display, contact.label + ": " + contact.display, "good"));
+      else chips.push(renderMetaChip("fas fa-phone-slash", "No WA", "Tidak ada nomor WhatsApp/mobile", "bad"));
+      chips.push(renderMetaChip("fas fa-clock", row.last_outreach_at ? "Last" : "New", row.last_outreach_at ? "Outreach terakhir " + row.last_outreach_at : "Belum pernah dikontak", ""));
+      if (row.next_follow_up_at) chips.push(renderMetaChip("fas fa-calendar-day", "FU", "Follow-up " + row.next_follow_up_at, row.is_overdue ? "bad" : ""));
+      if (row.is_overdue) chips.push(renderMetaChip("fas fa-exclamation-triangle", "Due", row.overdue_label || "Overdue", "bad"));
+      chips.push(renderMetaChip(row.assigned_staff_user_id ? "fas fa-user-check" : "fas fa-user-plus", row.assigned_staff_user_id ? "Staff" : "Open", row.assigned_staff_user_id ? "Sudah assigned ke staff" : "Belum assigned", ""));
+      if (row.publication_status) chips.push(renderMetaChip("fas fa-network-wired", row.publication_status, "Publikasi " + row.publication_status, ""));
+      if (row.active_subscription_ends_at) chips.push(renderMetaChip("fas fa-crown", "Sub", "Subscription aktif sampai " + row.active_subscription_ends_at, "premium"));
+      else if (row.latest_subscription_ends_at) chips.push(renderMetaChip("fas fa-hourglass-end", "Risk", "Subscription terakhir " + row.latest_subscription_ends_at, "warning"));
+      return '<div class="dash-outreach-meta">' + chips.join("") + '</div>';
+    }
+
+    function renderMetaChip(icon, text, tooltip, tone) {
+      return '<span class="dash-outreach-chip ' + (tone ? 'is-' + escapeAttr(tone) : '') + '" data-fr-tooltip="' + escapeAttr(tooltip || text) + '"><i class="' + escapeAttr(icon || "fas fa-circle") + '" aria-hidden="true"></i><span>' + escapeHtml(text || "") + '</span></span>';
+    }
+
+    function renderInfoIcon(label, tooltip, icon) {
+      if (!tooltip) return "";
+      return '<span class="dash-outreach-info" role="img" aria-label="' + escapeAttr(label) + '" data-fr-tooltip="' + escapeAttr(tooltip) + '"><i class="' + escapeAttr(icon || "fas fa-info-circle") + '" aria-hidden="true"></i></span>';
     }
 
     function renderOutreachStatusOptions(pipeline, selected) {
@@ -321,8 +322,8 @@
       outreachActions.innerHTML = "";
       if (existingBadge) outreachActions.appendChild(existingBadge);
       outreachActions.insertAdjacentHTML("beforeend",
-        '<label class="dash-outreach-filter"><i class="fas fa-filter" aria-hidden="true"></i><span>Filter</span>' +
-        '<select data-outreach-filter>' +
+        '<label class="dash-outreach-filter" data-fr-tooltip="Filter daftar outreach"><i class="fas fa-filter" aria-hidden="true"></i><span>Filter daftar outreach</span>' +
+        '<select data-outreach-filter aria-label="Filter daftar outreach">' +
           '<option value="today"' + (currentFilter === "today" ? " selected" : "") + '>Hari ini</option>' +
           '<option value="actionable"' + (currentFilter === "actionable" ? " selected" : "") + '>Perlu aksi</option>' +
           '<option value="overdue"' + (currentFilter === "overdue" ? " selected" : "") + '>Overdue</option>' +

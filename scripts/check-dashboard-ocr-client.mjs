@@ -35,6 +35,7 @@ const assertionSources = files.concat([
   "css/dashboard.css",
   "css/dashboard-integration.css",
   "css/dashboard-operations.css",
+  "css/dashboard-outreach.css",
   "css/dashboard-review.css",
   "css/dashboard-ocr-settings.css",
   "css/dashboard-ocr-execution.css",

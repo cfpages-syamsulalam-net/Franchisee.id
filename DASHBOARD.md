@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-16 07:20 (Asia/Jakarta)
+Last updated: 2026-07-16 07:55 (Asia/Jakarta)
 
 ## Purpose
 
@@ -70,6 +70,7 @@ Goal: make Outreach a measurable staff work queue and keep Pipeline as the visua
 - Pipeline is for seeing/tracking progress: stage counts, conversion metrics, Kanban columns, and drag/drop moves.
 - A status change in either tab must update `listing_outreach_statuses` and reload the shared dashboard payload so the other tab reflects the same stage.
 - Staff should not need to infer why a card appears in a column. Show the reason: missing claim, saved contact, last WhatsApp date, pending claim, active subscription, renewal risk, or burned reason.
+- Sales cards must stay compact because the brand queue can be large: use status badges, icon-only controls, one-line notes, and shared tooltip details instead of long visible paragraphs inside every card.
 - Every manual move should allow a short note when the move needs context, especially `Responded`, `Qualified`, `Renewal Risk`, and `Burned`.
 - The Outreach tab badge should count actionable open work, excluding `Subscribed` and `Burned`.
 - Board summary should show stage counts plus conversion rates: contacted response rate, response-to-claim rate, claim-to-subscription rate, and renewal recovery rate.
@@ -111,6 +112,7 @@ Goal: make Outreach a measurable staff work queue and keep Pipeline as the visua
 | Subscription-risk automation | Implemented | Active subscriptions render as `Subscribed`; lapsed/latest subscriptions without active status surface as `Renewal Risk` unless explicitly burned. |
 | Staff daily task view | Implemented | The default `Hari ini` filter combines overdue follow-ups, new contacts, replies/qualification, claim blockers, and renewal risks. |
 | Separate Outreach and Pipeline tabs | Implemented | Outreach renders the actionable worklist; Pipeline renders the Kanban board and stage/conversion summary. Both use the same dashboard payload and status mutation action. |
+| Compact sales card layout | Implemented | Dashboard tabs scroll horizontally; Outreach and Pipeline cards use compact status badges, icon-only tooltip metadata, one-line notes, and responsive containment so many brands fit without card collisions. |
 | Registered franchisor visibility | Implemented | Outreach/Pipeline includes non-archived registered/owned listings with usable contact data, not only already-published unclaimed listings, so new franchisors can be reached and tracked. |
 
 ### D1/R2 OCR Text Storage
@@ -149,7 +151,7 @@ Goal: make Outreach a measurable staff work queue and keep Pipeline as the visua
 | OCR provider activation and retry UX | In Progress | 2026-07-08 request tracker: move provider active/disabled control out of credential form and into Prioritas Provider OCR only, fix confusing autosave path that can leave providers disabled after credential tinkering, disable all OCR execution buttons when no active provider is available, make batch failed retry visually clear, and make per-row failed OCR action run OCR immediately rather than only returning the job to pending. |
 | Dashboard action-icon UX audit | In Progress | 2026-07-08 UX audit: OCR job rows should use generous status/action icons, compact action text, tooltip explanations, better row layout, and consistent button alignment. Expand this dashboard-wide pattern gradually: every ambiguous operational action should have an icon plus short label, and state should use visual symbols such as checkmark/success and x/failed where the icon improves scan speed. |
 | Dashboard auth loading skeleton | In Progress | 2026-07-08 UX audit: `/dashboard` should show a neutral loading skeleton while Clerk/session/dashboard authorization is being checked. The login form should only appear after the app knows there is no usable session or the session is expired/unauthorized. |
-| Dashboard CSS modularization | Implemented | 2026-07-08 maintainability audit: `css/dashboard.css` grew too large. Split is now done for auth loading, OCR, Review/Data Quality, operations/admin helpers, integration docs, and Premium Operations styles; `css/dashboard.css` remains the shared shell/base stylesheet. |
+| Dashboard CSS modularization | Implemented | 2026-07-08 maintainability audit: `css/dashboard.css` grew too large. Split is now done for auth loading, OCR, Review/Data Quality, Outreach/Pipeline, operations/admin helpers, integration docs, and Premium Operations styles; `css/dashboard.css` remains the shared shell/base stylesheet. |
 | Brochure overlay navigation polish | Implemented | 2026-07-08 request tracker completed: proposal previous/next hit areas are transparent gradient overlays that appear only while the cursor is moving over the image, then auto-hide after 1 second of no pointer movement even if still hovering. OCR enqueue button alignment/icon was fixed at the same time. |
 | Listing operations editor | Implemented MVP | Listing selector plus structured JSON diff form covers all whitelisted public listing fields. A richer field-by-field drawer can be added later. |
 | Leads/commercial view | Implemented read-only MVP | Reads `franchise_leads` status counts and recent leads. Payment/subscription revenue metrics remain pending. |

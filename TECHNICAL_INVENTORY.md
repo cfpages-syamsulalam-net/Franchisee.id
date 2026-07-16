@@ -282,7 +282,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `css/dashboard.css`
 *Protected admin/staff dashboard base stylesheet.*
-- Owns the `/dashboard` warm yellow/black/cream app shell, dark sticky header, readable user/session chip, rounded metric cards, tab controls, panels, dashboard tables/forms/buttons/badges, generic icon action toolbars, shared text-pill actions, debug panel, and shared responsive dashboard behavior.
+- Owns the `/dashboard` warm yellow/black/cream app shell, dark sticky header, readable user/session chip, rounded metric cards, horizontally scrollable tab controls, panels, dashboard tables/forms/buttons/badges, generic icon action toolbars, shared text-pill actions, debug panel, and shared responsive dashboard behavior.
 - Keeps dashboard styling visually aligned with `/profil` while preserving the existing dashboard DOM/data/action modules. Feature-heavy auth loading, review, operations, premium, and OCR styles are extracted to focused CSS modules.
 
 ### File: `css/dashboard-auth.css`
@@ -295,7 +295,11 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `css/dashboard-operations.css`
 *Dashboard operations/admin helper stylesheet module.*
-- Owns the separated Outreach worklist, Pipeline Kanban board, stage summary pills, drag/drop states, outreach status badges, publication status grids/cards, and compact checkbox rows used by dashboard admin UI.
+- Owns full-width operations helper panels, publication status grids/cards, and compact checkbox rows used by dashboard admin UI.
+
+### File: `css/dashboard-outreach.css`
+*Dashboard Outreach/Pipeline stylesheet module.*
+- Owns compact Outreach worklist cards, Pipeline Kanban columns, stage summary pills, drag/drop states, status badges, icon-only metadata chips, one-line note inputs, and responsive grid/ellipsis containment so dense franchise rows stay inside their parent cards.
 
 ### File: `css/dashboard-integration.css`
 *Dashboard integration documentation stylesheet module.*
@@ -331,7 +335,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 ### File: `js/dashboard-outreach.js`
 *Sales Outreach and Pipeline client module for `/dashboard`.*
 - `window.FranchiseDashboardOutreach.createOutreach(options)`: Creates the Outreach worklist and Pipeline board renderer from DOM references and shared dashboard action/reload/status callbacks supplied through `js/dashboard-operations.js`.
-- `render(rows, summary, pipelineMetadata)` / `renderOutreachWorklist()` / `renderPipelineBoard()` / `renderOutreachCard(row, pipeline, mode)`: Renders Outreach as an actionable worklist and Pipeline as the grouped Kanban board from the same `outreach_queue` plus `outreach_pipeline`; both show stage/status badges, next-action instructions, why-this-card-is-shown reasons, overdue/follow-up chips, and notes, while the Pipeline tab also owns conversion/stage summary pills.
+- `render(rows, summary, pipelineMetadata)` / `renderOutreachWorklist()` / `renderPipelineBoard()` / `renderOutreachCard(row, pipeline, mode)`: Renders Outreach as a compact actionable worklist and Pipeline as the grouped Kanban board from the same `outreach_queue` plus `outreach_pipeline`; both show stage/status badges, tooltip-backed next-action/reason context, icon-only metadata chips, overdue/follow-up chips, and compact notes, while the Pipeline tab also owns conversion/stage summary pills.
 - `bindOutreachDragAndDrop()` / `updateOutreachStatus(franchiseId, status, control)`: Supports Pipeline drag/drop card movement plus status-select fallback in both Outreach and Pipeline, posting `update_outreach_status` with notes, burned reason, and follow-up metadata before reloading dashboard state after successful persistence.
 - `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, records manually confirmed WhatsApp outreach through `/dashboard-data`, and renders setup-guidance links when Google Contacts permissions are missing.
 - Outreach filters: `today`, actionable, overdue, mine, unassigned, and all help staff see the next measurable sales action first instead of scanning every listing.
