@@ -24,18 +24,22 @@
           <h3>Google Contacts Outreach</h3>
           <p>Dipakai tombol <strong>Simpan kontak</strong> di tab Outreach agar kontak franchisor tersimpan ke Google Contacts akun staff yang sedang login.</p>
         </div>
-        <span class="dash-doc-status">Butuh Google + Clerk</span>
+        <span class="dash-doc-status">Butuh Google OAuth staff</span>
       </div>
       <ol class="dash-doc-steps">
-        <li>Buka <a href="https://console.cloud.google.com/apis/library/people.googleapis.com" target="_blank" rel="noopener">Google Cloud People API</a>, pilih project OAuth yang sama dengan koneksi Google di Clerk, lalu klik <strong>Enable</strong>.</li>
-        <li>Buka <a href="https://dashboard.clerk.com/last-active?path=user-authentication%2Fsso-connections" target="_blank" rel="noopener">Clerk SSO Connections</a>, pilih koneksi Google production, dan pastikan koneksi memakai custom Google credential.</li>
-        <li>Tambahkan scope <code>https://www.googleapis.com/auth/contacts</code> ke konfigurasi Google OAuth di Clerk.</li>
-        <li>Simpan konfigurasi Clerk. Setelah itu minta staff logout lalu login ulang dengan Google, karena izin baru hanya ikut di token OAuth baru.</li>
-        <li>Coba lagi tombol <strong>Simpan kontak</strong>. Jika masih gagal, pastikan akun staff login dengan Google, bukan email/password biasa.</li>
+        <li>Pastikan scope <code>https://www.googleapis.com/auth/contacts</code> tidak dipasang di login Google utama Clerk. Login publik cukup memakai scope dasar.</li>
+        <li>Buka <a href="https://console.cloud.google.com/apis/library/people.googleapis.com" target="_blank" rel="noopener">Google Cloud People API</a>, pilih project untuk dashboard Contacts, lalu klik <strong>Enable</strong>.</li>
+        <li>Buka Google Auth Platform, buat OAuth client tipe <strong>Web application</strong>, lalu tambahkan redirect URI <code>https://franchisee.id/google-contacts-callback</code>.</li>
+        <li>Lengkapi Branding dan Data Access di Google Auth Platform. Tambahkan scope <code>https://www.googleapis.com/auth/contacts</code>, lalu submit verifikasi Google untuk production.</li>
+        <li>Tambahkan Cloudflare Pages secrets <code>GOOGLE_CONTACTS_CLIENT_ID</code>, <code>GOOGLE_CONTACTS_CLIENT_SECRET</code>, dan <code>GOOGLE_CONTACTS_TOKEN_KEY</code>.</li>
+        <li>Apply migrasi D1 <code>0033_staff_google_contacts_oauth.sql</code>.</li>
+        <li>Staff/admin buka tab Outreach, klik <strong>Hubungkan Google Contacts</strong>, setujui consent Google, lalu coba lagi <strong>Simpan kontak</strong>.</li>
+        <li>Jika staff mengganti akun Google atau consent dicabut, gunakan tombol reconnect/putuskan koneksi di sebelah pill akun Google pada tab Outreach.</li>
       </ol>
       <div class="dash-doc-links">
         <a href="https://developers.google.com/people/api/rest/v1/people/batchCreateContacts" target="_blank" rel="noopener">Referensi People API batch create</a>
-        <a href="https://clerk.com/docs/guides/configure/auth-strategies/social-connections/google" target="_blank" rel="noopener">Panduan Google social connection Clerk</a>
+        <a href="https://support.google.com/cloud/answer/13463073" target="_blank" rel="noopener">Panduan verifikasi OAuth Google</a>
+        <a href="https://developers.google.com/identity/protocols/oauth2/resources/best-practices" target="_blank" rel="noopener">Best practice incremental auth</a>
       </div>
     </article>
 

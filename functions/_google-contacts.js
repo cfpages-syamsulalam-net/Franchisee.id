@@ -1,10 +1,8 @@
-import { createClerkClient } from "@clerk/backend";
 import { getUnclaimedOutreachQueue } from "./_dashboard-queries.js";
+import { getStaffGoogleContactsAccessToken, GOOGLE_CONTACTS_SCOPE, GOOGLE_CONTACTS_SETUP_DOC } from "./_google-contacts-oauth.js";
 import { outreachStatusStatement } from "./_outreach-status.js";
 import { auditStatement, jsonResponse, randomId } from "./_dashboard-utils.js";
 
-const GOOGLE_CONTACTS_SCOPE = "https://www.googleapis.com/auth/contacts";
-const GOOGLE_CONTACTS_SETUP_DOC = "/dashboard/#google-contacts-setup";
 const PEOPLE_BATCH_CREATE_URL = "https://people.googleapis.com/v1/people:batchCreateContacts";
 const PEOPLE_SEARCH_CONTACTS_URL = "https://people.googleapis.com/v1/people:searchContacts";
 const MAX_CONTACTS_PER_BATCH = 200;
@@ -22,13 +20,14 @@ export async function handleSaveOutreachGoogleContacts(db, auth, data, env) {
     return jsonResponse({ success: false, error: "NO_CONTACTS_READY", message: "Belum ada kontak WhatsApp yang siap disimpan." }, { status: 400 });
   }
 
-  const tokenResult = await getGoogleOauthAccessToken(env, auth.clerk_user_id);
+  const tokenResult = await getStaffGoogleContactsAccessToken(db, auth, env);
   if (!tokenResult.token) {
     return jsonResponse({
       success: false,
       error: tokenResult.error,
       message: tokenResult.message,
       setup_required: true,
+      connect_required: tokenResult.connect_required || false,
       reauth_required: tokenResult.reauth_required || tokenResult.error === "GOOGLE_CONTACTS_SCOPE_MISSING" || tokenResult.error === "GOOGLE_ACCOUNT_NOT_LINKED",
       required_scope: GOOGLE_CONTACTS_SCOPE,
       documentation_url: GOOGLE_CONTACTS_SETUP_DOC,
@@ -244,71 +243,18 @@ function normalizePhoneDigits(value) {
   return digits;
 }
 
-async function getGoogleOauthAccessToken(env, clerkUserId) {
-  if (!env.CLERK_SECRET_KEY) {
-    return {
-      error: "CLERK_SECRET_MISSING",
-      message: "Konfigurasi login belum lengkap untuk mengambil izin Google.",
-      status: 503,
-    };
-  }
-  if (!clerkUserId) {
-    return {
-        error: "GOOGLE_ACCOUNT_NOT_LINKED",
-        message: "Akun staff belum punya sesi Google aktif. Logout dari dashboard lalu login ulang dengan Google sebelum menyimpan kontak.",
-        status: 409,
-        reauth_required: true,
-      };
-  }
-
-  try {
-    const clerk = createClerkClient({ secretKey: env.CLERK_SECRET_KEY });
-    const response = await clerk.users.getUserOauthAccessToken(clerkUserId, "google");
-    const tokens = Array.isArray(response?.data) ? response.data : [];
-    const token = tokens.find((item) => item?.token || item?.accessToken || item?.access_token);
-    if (!token) {
-      return {
-        error: "GOOGLE_ACCOUNT_NOT_LINKED",
-        message: "Akun staff belum terhubung ke Google. Logout dari dashboard lalu login ulang dengan Google, kemudian coba simpan kontak lagi.",
-        status: 409,
-        reauth_required: true,
-      };
-    }
-    const tokenValue = token.token || token.accessToken || token.access_token;
-    const scopes = Array.isArray(token.scopes) ? token.scopes : String(token.scope || "").split(/\s+/).filter(Boolean);
-    if (scopes.length && !scopes.includes(GOOGLE_CONTACTS_SCOPE)) {
-      return {
-        error: "GOOGLE_CONTACTS_SCOPE_MISSING",
-        message: "Sesi Google staff masih memakai izin lama. Logout dari dashboard lalu login ulang dengan Google agar izin Google Contacts yang baru aktif.",
-        documentation_url: GOOGLE_CONTACTS_SETUP_DOC,
-        status: 409,
-        reauth_required: true,
-      };
-    }
-    return { token: tokenValue };
-  } catch (error) {
-    return {
-      error: "GOOGLE_OAUTH_TOKEN_UNAVAILABLE",
-      message: "Token Google belum tersedia untuk akun ini. Logout dari dashboard lalu login ulang dengan Google setelah izin kontak diaktifkan.",
-      status: 409,
-      reauth_required: true,
-      detail: error?.message || String(error),
-    };
-  }
-}
-
 function googleContactsErrorMessage(status, result) {
   const providerMessage = result?.error?.message || result?.message || "";
-  if (status === 401) return "Sesi Google untuk kontak sudah kedaluwarsa. Logout dari dashboard lalu login ulang dengan Google, kemudian coba lagi.";
-  if (status === 403) return "Sesi Google staff belum membawa izin Google Contacts. Logout dari dashboard lalu login ulang dengan Google; jika masih gagal, cek People API di panduan.";
+  if (status === 401) return "Sesi Google Contacts sudah kedaluwarsa. Hubungkan Google Contacts ulang dari tab Outreach, kemudian coba lagi.";
+  if (status === 403) return "Koneksi Google Contacts staff belum membawa izin kontak. Hubungkan Google Contacts ulang dari tab Outreach; jika masih gagal, cek People API di panduan.";
   if (providerMessage) return providerMessage;
   return "Kontak belum bisa disimpan ke Google. Coba lagi setelah konfigurasi Google Contacts dicek.";
 }
 
 function googleContactsSearchErrorMessage(status, result) {
   const providerMessage = result?.error?.message || result?.message || "";
-  if (status === 401) return "Sesi Google untuk membaca kontak sudah kedaluwarsa. Logout dari dashboard lalu login ulang dengan Google, kemudian coba lagi.";
-  if (status === 403) return "Sesi Google staff belum membawa izin membaca Google Contacts. Logout dari dashboard lalu login ulang dengan Google; jika masih gagal, cek People API di panduan.";
+  if (status === 401) return "Sesi Google Contacts untuk membaca kontak sudah kedaluwarsa. Hubungkan Google Contacts ulang dari tab Outreach, kemudian coba lagi.";
+  if (status === 403) return "Koneksi Google Contacts staff belum membawa izin membaca kontak. Hubungkan Google Contacts ulang dari tab Outreach; jika masih gagal, cek People API di panduan.";
   if (providerMessage) return providerMessage;
   return "Pengecekan duplikat Google Contacts gagal. Kontak belum dibuat agar tidak menambah duplikat.";
 }

@@ -14,6 +14,7 @@ import {
   handleUpdatePublication,
 } from "./_dashboard-actions.js";
 import { handleSaveOutreachGoogleContacts } from "./_google-contacts.js";
+import { getStaffGoogleContactsState, revokeStaffGoogleContactsConnection } from "./_google-contacts-oauth.js";
 import {
   getDataQuality,
   getEditableListings,
@@ -60,13 +61,14 @@ export async function onRequestGet({ request, env }) {
     const auth = await requireDashboardAccess(request, env, { fast: true });
     const db = env.franchise_db;
 
-    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, pendingClaims, pendingPremiumPayments, premiumOperations, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth, ocrProviders, ocrJobs, ocrSchedulers] = await Promise.all([
+    const [overview, dataQuality, publishState, publicationControls, outreachQueue, outreachSummary, googleContacts, pendingClaims, pendingPremiumPayments, premiumOperations, recentOutreach, editSuggestions, editableListings, leadSummary, systemHealth, ocrProviders, ocrJobs, ocrSchedulers] = await Promise.all([
       getOverview(db),
       getDataQuality(db),
       getPublishState(db),
       getPublicationControls(db),
       getUnclaimedOutreachQueue(db),
       getUnclaimedOutreachSummary(db),
+      getStaffGoogleContactsState(db, auth, env),
       getPendingClaims(db),
       getPendingPremiumPayments(db),
       getPremiumOperations(db),
@@ -100,6 +102,7 @@ export async function onRequestGet({ request, env }) {
       outreach_queue: outreachQueue,
       outreach_summary: outreachSummary,
       outreach_pipeline: OUTREACH_PIPELINE_STATUSES,
+      google_contacts: googleContacts,
       pending_claims: pendingClaims,
       pending_premium_payments: pendingPremiumPayments,
       premium_operations: premiumOperations,
@@ -141,6 +144,7 @@ export async function onRequestPost({ request, env }) {
     const data = parsed.data;
     if (data.action === "log_outreach") return handleLogOutreach(env.franchise_db, auth, data);
     if (data.action === "save_outreach_google_contacts") return handleSaveOutreachGoogleContacts(env.franchise_db, auth, data, env);
+    if (data.action === "disconnect_google_contacts") return revokeStaffGoogleContactsConnection(env.franchise_db, auth);
     if (data.action === "reconcile_d1_migration_ledger") return handleReconcileD1MigrationLedger(env.franchise_db, auth);
     if (data.action === "update_outreach_status") return handleUpdateOutreachStatus(env.franchise_db, auth, data);
     if (data.action === "suggest_edit") return handleSuggestEdit(env.franchise_db, auth, data);

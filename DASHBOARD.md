@@ -1,6 +1,6 @@
 # Admin & Staff Dashboard Plan
 
-Last updated: 2026-07-16 07:55 (Asia/Jakarta)
+Last updated: 2026-07-16 09:55 (Asia/Jakarta)
 
 ## Purpose
 
@@ -23,7 +23,7 @@ D1 remains authoritative for roles and permissions. Clerk provides identity/sess
 - Site scope: start with Franchisee.id only (`site_franchisee_id`). A centralized multi-site dashboard can be built later for Franchise.id/Waralaba.id/network operations.
 - Staff edit policy: staff can suggest listing edits only. Admin approval is required unless an admin creates an active auto-approval rule for that staff user.
 - WhatsApp outreach: no WhatsApp API for now. The dashboard generates a `wa.me` link with a prefilled message, and the staff member sends it from their own WhatsApp account.
-- Google Contacts outreach prep: staff can save ready outreach contacts to the currently linked Google account before opening WhatsApp, using Google People API with the `https://www.googleapis.com/auth/contacts` scope. This requires People API and the Clerk Google connection to be configured with that scope, then staff must login again with Google.
+- Google Contacts outreach prep: staff can save ready outreach contacts to a staff-connected Google Contacts account before opening WhatsApp. The main Clerk Google login must stay basic-scope only; `/dashboard` has a separate staff/admin-only Google OAuth flow for the `https://www.googleapis.com/auth/contacts` scope after D1 has already authorized the user.
 - Sales outreach workflow: Outreach and Pipeline are separate dashboard tabs. Outreach is the staff work queue for saving contacts, sending WhatsApp, and recording follow-up; Pipeline is the Kanban visualization for progress tracking. Both tabs read/write the same canonical stages: `Uncontacted`, `Saved Contact`, `Contacted`, `Responded`, `Qualified`, `Claim Started`, `Claimed`, `Subscribed`, `Renewal Risk`, and `Burned`.
 - Edit storage policy: use structured JSON diffs for suggestion/review snapshots; once approved into D1, apply the accepted values field-by-field to canonical D1 columns.
 - Trusted staff auto-approval: if admin grants auto-approval to a staff user, all listing fields are safe for that staff user to edit.
@@ -132,7 +132,7 @@ Goal: make Outreach a measurable staff work queue and keep Pipeline as the visua
 | Overview metrics | Implemented | Total listings, unclaimed, verified/premium, missing image/contact/description, and publish queue counts come from D1. |
 | Sales outreach work queue | Implemented | Outreach shows contact-ready unclaimed/registered/pipeline/subscribed listings as an actionable worklist with status badges, WhatsApp actions, claim links, notes, and dropdown status controls. |
 | Sales pipeline board | Implemented | Pipeline shows the same rows as a drag-and-drop Kanban board with stage/conversion summary and shared status updates. |
-| Google Contacts bulk save | Implemented | Outreach can create up to 200 Google Contacts from the current unclaimed outreach queue in one protected action so brand names appear before staff sends WhatsApp messages. It searches existing Google Contacts first and skips duplicate phone numbers. If Google Contacts scope/token is missing, the dashboard returns setup guidance instead of silently failing. |
+| Google Contacts bulk save | Implemented | Outreach can create up to 200 Google Contacts from the current unclaimed outreach queue in one protected action so brand names appear before staff sends WhatsApp messages. Staff/admin first connect Google Contacts through the dashboard-only OAuth flow; regular users never receive the Contacts scope. Existing Google Contacts are searched first and duplicate phone numbers are skipped. Outreach also shows token health and compact reconnect/disconnect controls for account changes or revoked consent. |
 | Outreach event logging | Implemented | `listing_outreach_events` records staff, contact, message, outcome, and timestamp only after staff manually confirms the WA message was sent. |
 | Outreach current status | Implemented | `listing_outreach_statuses` stores the current sales pipeline stage per listing/site, while `listing_outreach_events` remains the history log. |
 | Claim review workflow | Implemented | Shows pending D1 `franchise_claims`; admin can approve/reject. Approval attaches ownership/profile data, moves unclaimed listings to free/claimed state, writes audit events, and queues a static rebuild. |

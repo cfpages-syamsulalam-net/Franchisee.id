@@ -21,7 +21,7 @@
     }
 
     function render(data) {
-      outreach.render(data.outreach_queue || [], data.outreach_summary || {}, data.outreach_pipeline || [], data.user || {});
+      outreach.render(data.outreach_queue || [], data.outreach_summary || {}, data.outreach_pipeline || [], data.user || {}, data.google_contacts || {});
       renderPremiumPayments(data.pending_premium_payments || []);
       renderPublish(data.publish_state || {});
       renderPublicationControls(data.publication_controls || { sites: [], listings: [] });

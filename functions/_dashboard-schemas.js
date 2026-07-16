@@ -32,6 +32,10 @@ const SaveOutreachGoogleContactsSchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(200),
 });
 
+const DisconnectGoogleContactsSchema = z.object({
+  action: z.literal("disconnect_google_contacts"),
+});
+
 const ReconcileD1MigrationLedgerSchema = z.object({
   action: z.literal("reconcile_d1_migration_ledger"),
 });
@@ -140,6 +144,7 @@ const UpdatePremiumSettingsSchema = z.object({
 export const DashboardActionSchema = z.discriminatedUnion("action", [
   OutreachEventSchema,
   SaveOutreachGoogleContactsSchema,
+  DisconnectGoogleContactsSchema,
   ReconcileD1MigrationLedgerSchema,
   UpdateOutreachStatusSchema,
   SuggestEditSchema,

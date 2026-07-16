@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 
 const files = [
   "js/dashboard-utils.js",
+  "js/dashboard-google-contacts.js",
   "js/dashboard-outreach.js",
   "js/dashboard-review.js",
   "js/dashboard-ocr-state.js",
@@ -129,6 +130,10 @@ const requiredFragments = [
   "Rp ",
   "dash-review-source is-manual",
   "fa-clipboard-list",
+  "disconnect_google_contacts",
+  "data-disconnect-google-contacts",
+  "dash-outreach-google-health",
+  "renderHealthPill",
 ];
 
 for (const fragment of requiredFragments) {

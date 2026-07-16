@@ -1,6 +1,6 @@
 # Dashboard Integration Guide
 
-Last updated: 2026-07-14 18:52 (Asia/Jakarta)
+Last updated: 2026-07-16 15:11 (Asia/Jakarta)
 
 ## Purpose
 
@@ -22,28 +22,46 @@ Dashboard warnings should link to the matching anchor when a staff/admin action 
 
 Used by the Outreach `Simpan kontak` action to save franchisor names and phone numbers into the currently linked Google account for the logged-in staff member.
 
+Implementation decision:
+
+- Do not put `https://www.googleapis.com/auth/contacts` on the main Clerk Google login.
+- Normal login stays `openid email profile` only for all users.
+- `/dashboard` uses a separate staff/admin-only Google Contacts OAuth flow. Staff connect Contacts from the Outreach tab after D1 has already confirmed their `staff` or `admin` role.
+- Contacts tokens are stored in D1 as encrypted envelopes in `staff_google_connections`; transient OAuth state is stored in `staff_google_oauth_states`.
+
 Steps:
 
 1. Open the Google Cloud People API page: <https://console.cloud.google.com/apis/library/people.googleapis.com>.
-2. Select the same Google Cloud project used by the Clerk Google OAuth connection.
+2. Select the Google Cloud project used for the dashboard Contacts integration.
 3. Enable the People API.
-4. Open Clerk SSO Connections: <https://dashboard.clerk.com/last-active?path=user-authentication%2Fsso-connections>.
-5. Open the production Google connection and confirm it uses the intended custom Google OAuth credential.
-6. Add this OAuth scope: `https://www.googleapis.com/auth/contacts`.
-7. Save the Clerk connection settings.
-8. Ask staff to logout and login again with Google. Existing sessions will not automatically receive the new Contacts permission.
-9. Retry `Simpan kontak` from the Outreach tab.
+4. Open Google Auth Platform > Clients and create a Web application OAuth client for dashboard Contacts.
+5. Add this authorized redirect URI: `https://franchisee.id/google-contacts-callback`.
+6. In Google Auth Platform > Branding, add the production homepage `https://franchisee.id/`, privacy policy `https://franchisee.id/privacy-policy`, terms URL `https://franchisee.id/terms-of-service`, support email `email@franchisee.id`, and authorized domain `franchisee.id`.
+7. In Google Auth Platform > Data Access, add only this extra scope for the dashboard Contacts client: `https://www.googleapis.com/auth/contacts`.
+8. Submit Google verification for the Contacts scope before broad production use. While unverified/testing, add staff email addresses as test users.
+9. In Cloudflare Pages production secrets/variables, set:
+   - `GOOGLE_CONTACTS_CLIENT_ID`
+   - `GOOGLE_CONTACTS_CLIENT_SECRET`
+   - `GOOGLE_CONTACTS_TOKEN_KEY`
+   - Optional override: `GOOGLE_CONTACTS_REDIRECT_URI` if it differs from `https://franchisee.id/google-contacts-callback`.
+10. Apply migration `0033_staff_google_contacts_oauth.sql` to D1.
+11. Ask staff to open `/dashboard/#outreach`, click `Hubungkan Google Contacts`, approve the Google consent, then retry `Simpan kontak`.
+12. If staff needs to change Google accounts or consent is revoked, use the Outreach reconnect/disconnect controls next to the connected Google account pill.
 
 Useful references:
 
 - Google People API `people.batchCreateContacts`: <https://developers.google.com/people/api/rest/v1/people/batchCreateContacts>
-- Clerk Google social connection guide: <https://clerk.com/docs/guides/configure/auth-strategies/social-connections/google>
+- Google OAuth app verification: <https://support.google.com/cloud/answer/13463073>
+- Google OAuth production audience/testing: <https://support.google.com/cloud/answer/15549945>
+- Google OAuth incremental authorization best practice: <https://developers.google.com/identity/protocols/oauth2/resources/best-practices>
 
 Runtime behavior:
 
-- `/dashboard-data` routes `save_outreach_google_contacts` to `functions/_google-contacts.js`.
+- `/google-contacts-start` requires the Clerk session and D1 `staff`/`admin` role, creates a short-lived OAuth state row, and returns a Google authorization URL.
+- `/google-contacts-callback` exchanges the Google code, encrypts the access/refresh tokens with `GOOGLE_CONTACTS_TOKEN_KEY`, and redirects back to `/dashboard/#outreach`.
+- `/dashboard-data` returns `google_contacts` connection state, token health, last connection error/timestamps, routes `save_outreach_google_contacts` to `functions/_google-contacts.js`, and routes `disconnect_google_contacts` to the revoke helper in `functions/_google-contacts-oauth.js`.
 - The server reads the current unclaimed outreach queue from D1.
-- The server retrieves the staff member's linked Google OAuth access token through Clerk.
+- The server retrieves the staff member's encrypted dashboard Contacts token from D1 and refreshes it when possible.
 - Existing Google Contacts are searched first with Google People API.
 - Duplicate phone numbers are skipped before `people:batchCreateContacts`.
 - Setup-required failures return `documentation_url: "/dashboard/#google-contacts-setup"` so the dashboard warning can show a direct setup link.

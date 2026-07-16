@@ -51,7 +51,7 @@
     var attrs = Object.assign({}, config.attrs || {}, {
       type: "button",
       "aria-label": config.label || "Aksi",
-      "data-fr-tooltip": config.label || "Aksi"
+      "data-fr-tooltip": config.tooltip || config.label || "Aksi"
     });
     return '<button class="' + escapeAttr(actionClass(config.tone)) + '"' + renderAttrs(attrs) + '><i class="' + escapeAttr(config.icon || "fas fa-circle") + '" aria-hidden="true"></i></button>';
   }

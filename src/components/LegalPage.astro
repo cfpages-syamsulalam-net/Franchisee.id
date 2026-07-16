@@ -1,0 +1,193 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  updatedAt: string;
+}
+
+const { title, description, updatedAt } = Astro.props;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? "https://franchisee.id").toString();
+---
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{title} - Franchisee.id</title>
+    <meta name="description" content={description}>
+    <link rel="canonical" href={canonicalUrl}>
+    <link rel="icon" href="/wp-content/uploads/2025/09/franchise.id-favicon-logo.png">
+    <link rel="apple-touch-icon" href="/wp-content/uploads/2025/09/franchise.id-favicon-logo.png">
+    <style>
+      :root {
+        color-scheme: light;
+        --legal-bg: #f7f8fb;
+        --legal-card: #ffffff;
+        --legal-ink: #172033;
+        --legal-muted: #5d687b;
+        --legal-border: #dfe4ed;
+        --legal-accent: #0f766e;
+        --legal-accent-soft: #e7f5f2;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--legal-bg);
+        color: var(--legal-ink);
+        font-family: Arial, Helvetica, sans-serif;
+        line-height: 1.65;
+      }
+
+      a {
+        color: var(--legal-accent);
+      }
+
+      .legal-shell {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      .legal-topnav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        color: var(--legal-muted);
+        font-size: 14px;
+      }
+
+      .legal-brand {
+        color: var(--legal-ink);
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .legal-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .legal-card {
+        background: var(--legal-card);
+        border: 1px solid var(--legal-border);
+        border-radius: 8px;
+        box-shadow: 0 18px 48px rgba(23, 32, 51, 0.08);
+        padding: 34px;
+      }
+
+      .legal-kicker {
+        display: inline-flex;
+        width: fit-content;
+        margin: 0 0 14px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: var(--legal-accent-soft);
+        color: var(--legal-accent);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(32px, 5vw, 48px);
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      .legal-description {
+        margin: 14px 0 0;
+        max-width: 720px;
+        color: var(--legal-muted);
+        font-size: 18px;
+      }
+
+      .legal-updated {
+        margin: 12px 0 28px;
+        color: var(--legal-muted);
+        font-size: 14px;
+      }
+
+      .legal-content {
+        border-top: 1px solid var(--legal-border);
+        padding-top: 26px;
+      }
+
+      .legal-content :global(h2) {
+        margin: 30px 0 10px;
+        font-size: 22px;
+        line-height: 1.25;
+      }
+
+      .legal-content :global(h2:first-child) {
+        margin-top: 0;
+      }
+
+      .legal-content :global(p) {
+        margin: 0 0 14px;
+      }
+
+      .legal-content :global(ul) {
+        margin: 0 0 16px;
+        padding-left: 22px;
+      }
+
+      .legal-content :global(li) {
+        margin: 7px 0;
+      }
+
+      .legal-note {
+        margin-top: 28px;
+        padding: 16px;
+        border: 1px solid var(--legal-border);
+        border-radius: 8px;
+        background: #fbfcfe;
+        color: var(--legal-muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 640px) {
+        .legal-shell {
+          padding: 22px 14px 36px;
+        }
+
+        .legal-card {
+          padding: 24px 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="legal-shell">
+      <nav class="legal-topnav" aria-label="Navigasi legal">
+        <a class="legal-brand" href="/">Franchisee.id</a>
+        <span class="legal-links">
+          <a href="/privacy-policy">Privacy Policy</a>
+          <a href="/terms-of-service">Terms of Service</a>
+          <a href="/kontak-kami/">Kontak</a>
+        </span>
+      </nav>
+
+      <article class="legal-card">
+        <p class="legal-kicker">Dokumen legal</p>
+        <h1>{title}</h1>
+        <p class="legal-description">{description}</p>
+        <p class="legal-updated">Pembaruan terakhir: {updatedAt}</p>
+        <section class="legal-content">
+          <slot />
+        </section>
+        <p class="legal-note">
+          Jika ada pertanyaan tentang dokumen ini atau penggunaan data di Franchisee.id,
+          hubungi kami melalui <a href="mailto:email@franchisee.id">email@franchisee.id</a>.
+        </p>
+      </article>
+    </main>
+  </body>
+</html>

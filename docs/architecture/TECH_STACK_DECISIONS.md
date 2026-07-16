@@ -1,6 +1,6 @@
 # Franchisee.id Tech Stack Decisions
 
-Last updated: 2026-07-15 21:20 (Asia/Jakarta)
+Last updated: 2026-07-16 09:55 (Asia/Jakarta)
 
 ## Purpose
 This document records stack decisions for the migration from a static WordPress export with Google Sheets storage into an authenticated franchise directory application. Treat it as the implementation compass for new backend, data, auth, and validation work.
@@ -15,12 +15,13 @@ This document records stack decisions for the migration from a static WordPress 
 | Migrations | Source-controlled SQL migrations from the beginning. | Use Wrangler D1 migrations or Drizzle-generated SQL, but keep migration files committed and reviewable. |
 | Auth | Clerk for login/register and identity. | Clerk user ids map into D1 `users.clerk_user_id`. |
 | Roles | D1-authoritative roles: `franchisee`, `franchisor`, `admin`, `staff`. | Clerk metadata/session claims may cache small UI hints only; server authorization must verify D1 role/permission state. |
+| Google Contacts OAuth | Keep `https://www.googleapis.com/auth/contacts` out of the main Clerk Google login and use a separate `/dashboard` staff/admin-only Google OAuth flow. | Regular users should never be asked for Contacts access. Staff/admin connect Contacts only after D1 role authorization; encrypted access/refresh tokens live in D1 `staff_google_connections` and are used only by Outreach bulk-save. |
 | Public onboarding | Lightweight account creation happens in the custom Clerk auth UI; business/profile completion happens in `/daftar`. | Role must be selected before public registration, including Google SSO. `/daftar` keeps its URL but should be presented as profile/listing completion after login. See `docs/architecture/AUTH_ONBOARDING_NAV_PLAN.md`. |
 | Assets | Cloudflare R2 for logos, covers, gallery images, proposal PDFs, imported legacy assets, and long OCR/proposal extracted text. | D1 stores metadata, previews, structured candidates, lengths, and R2 object keys; R2 stores binary files and full OCR/proposal text. Proposal image downloads are composed server-side through `/proposal-download` so R2 browser CORS does not block watermarked PDFs. |
 | Framework | Astro on Cloudflare by default. | Current workspace uses Astro 5.x because local Node is 20.19.4. Astro 6 requires Node >=22.12.0. Next.js remains an option only if dashboard complexity becomes strongly React-heavy. |
 | Styling | Existing CSS only unless explicitly approved. | Do not add a styling framework for the migration. |
 | Package manager | pnpm only. | Use `pnpm install`, `pnpm run`, and `pnpm exec`. |
-| Secrets | Keep root secrets outside D1. | Dashboard-managed OCR credential values are encrypted before D1 storage with Cloudflare Pages secret `OCR_KEY`; D1 may store ciphertext envelopes, not plaintext credentials. Protected OCR worker triggers use separate shared secret `OCR_SECRET`. |
+| Secrets | Keep root secrets outside D1. | Dashboard-managed OCR credential values are encrypted before D1 storage with Cloudflare Pages secret `OCR_KEY`; staff Google Contacts OAuth tokens are encrypted with `GOOGLE_CONTACTS_TOKEN_KEY`; D1 may store ciphertext envelopes, not plaintext credentials. Protected OCR worker triggers use separate shared secret `OCR_SECRET`. |
 
 ## Shared Network Database
 `franchise_db` is designed to be shared by the owned franchise network, including:

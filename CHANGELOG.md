@@ -4,6 +4,34 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-16 15:11 (Asia/Jakarta)
+### Added
+- `src/components/LegalPage.astro`: Added a shared public legal-document shell for Privacy Policy and Terms of Service pages.
+- `src/pages/privacy-policy.astro`: Added the public Privacy Policy route for Google OAuth verification and user privacy disclosure, including staff/admin-only Google Contacts usage and Limited Use language.
+- `src/pages/terms-of-service.astro`: Added the public Terms of Service route for Google OAuth verification and general service terms.
+
+### Changed
+- `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: Documented the exact Privacy Policy and Terms URLs to use in Google Auth Platform Branding.
+- `templates/peluang-usaha-tpl.html` and `templates/detail-franchise-tpl.html`: Added Privacy Policy and Terms of Service links to the public footer `Informasi` list for generated franchise pages.
+- `scripts/copy-legacy-static.mjs`: Added build-time Privacy Policy and Terms of Service footer-link injection for copied legacy HTML pages that do not already expose those links.
+- `AGENTS.md`: Made same-session discoverability/linking work mandatory when a newly added public page, policy page, integration guide, warning, or action depends on users/admins reaching it through the normal path.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, `CHANGELOG.md`, and `.context/session-20260715-1638.md`: Documented the new legal routes, footer reachability, and marked suggestion 100 implemented.
+
+## 2026-07-16 09:55 (Asia/Jakarta)
+### Added
+- `migrations/0033_staff_google_contacts_oauth.sql`: Added `staff_google_connections` and `staff_google_oauth_states` for dashboard-only Google Contacts OAuth.
+- `functions/_google-contacts-oauth.js`: Added staff/admin Google Contacts OAuth start, callback, encrypted token storage, refresh, connection-state, and revoke helpers.
+- `functions/google-contacts-start.js` and `functions/google-contacts-callback.js`: Added protected start and callback Pages Functions for the separate Google Contacts authorization flow.
+- `js/dashboard-google-contacts.js`: Added a focused browser helper for starting Google Contacts authorization, showing the connected account pill, and rendering setup/connect/reauth notices.
+
+### Changed
+- `functions/_google-contacts.js`: Switched Outreach bulk contact save from Clerk-linked Google OAuth tokens to the new dashboard-linked `staff_google_connections` token flow while preserving duplicate search and People API batch create.
+- `functions/dashboard-data.js`, `functions/_dashboard-schemas.js`, `js/dashboard-operations.js`, `js/dashboard-outreach.js`, `js/dashboard-google-contacts.js`, `js/dashboard-utils.js`, `src/pages/dashboard/index.astro`, and `css/dashboard-outreach.css`: Added Google Contacts connection-state payload/rendering, token-health visibility, connected-account UI, reconnect/disconnect controls, and the `Hubungkan Google Contacts` action before bulk saving contacts.
+- `scripts/check-dashboard-ocr-client.mjs` and `scripts/check-google-contacts.ts`: Added the Contacts helper to browser syntax checks and kept the required Contacts scope covered by the focused regression check.
+- `DASHBOARD.md`, `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`, `src/components/dashboard/DashboardIntegrationGuide.astro`, and `docs/architecture/TECH_STACK_DECISIONS.md`: Documented the implementation decision that Contacts scope stays out of Clerk login and is requested only through the staff/admin dashboard OAuth flow.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, `CHANGELOG.md`, and `.context/session-20260715-1638.md`: Updated runtime ownership, migration notes, audit status, and marked recommendation 99 implemented.
+- Remote D1: Applied `0033_staff_google_contacts_oauth.sql` using the saved `cfman` `franchise-network` token after the ambient token failed with Cloudflare authentication error `10000`; inserted the verified `d1_migrations` ledger row and confirmed `wrangler d1 migrations list franchise_db --remote` reports no pending migrations.
+
 ## 2026-07-16 08:20 (Asia/Jakarta)
 ### Added
 - `src/pages/dashboard/index.astro` and `css/dashboard-outreach.css`: Added an inline Outreach Google Contacts reauth alert container and responsive styling.

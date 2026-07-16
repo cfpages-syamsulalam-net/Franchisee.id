@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-16 07:20 (Asia/Jakarta)
+Last updated: 2026-07-16 15:21 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -27,13 +27,14 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 - Bank transaction matching is still manual; Premium activation is production-ready for manual review, but automatic payment matching needs a provider/API decision.
 - Legacy Google Sheets/CSV and WordPress-exported HTML remain in the transition layer. They should stay readable/importable but not regain write ownership.
 - Several blocked states are now CTA-backed, but every new public-facing error/empty/warning state should keep following the “clear next action” rule.
-- Dashboard outreach can now bulk-save unclaimed brand contacts into the staff member's linked Google Contacts before WhatsApp outreach, but production use depends on Google People API being enabled and Clerk's Google connection granting the Contacts scope.
+- Dashboard outreach can now bulk-save unclaimed brand contacts into the staff member's linked Google Contacts before WhatsApp outreach. The Contacts scope is intentionally not part of Clerk login; production use depends on the separate dashboard-only Google OAuth client, People API setup, Google verification, and Cloudflare secrets for the staff/admin Contacts flow.
 - Proposal uploads now preserve extracted text and reviewable missing-field candidates separately from canonical listing data. Image-only brochure OCR is handled by an admin-triggered queue so uploads stay fast and OCR-derived facts still require review.
 - OCR provider configuration is now an admin-only `/dashboard` surface backed by D1 migration 0020, with encrypted credential storage using the external Cloudflare Pages secret `OCR_KEY`. Migration 0021 is applied remotely and adds OCR jobs, attempts, content-hash cache, and provider usage events; external OCR calls only run when an admin explicitly starts a dry-run or bounded batch.
 - `src/lib/franchise-detail-assets.ts` has grown into a large mixed CSS/JS injection module. It is stable enough for the current production fixes, but should be split before the next major listing-detail feature pass.
 - OCR operations now include provider config, encrypted scheduler config, batch-run orchestration, and worker draining. The first maintainability split is done: batch-run orchestration lives in `_ocr-batch-runs.js`, scheduler browser metadata lives in `dashboard-ocr-schedulers.js`, and the remaining runner/client modules should be split further only before adding deeper provider adapters or richer batch controls.
 - OCR execution UX audit: OCR execution must not depend on an active browser tab. The main dashboard run CTA now prefers the persisted server-side scheduler batch when a scheduler is active, with the visible continuous dashboard loop kept only as a no-scheduler fallback that clearly warns admins to keep the tab open.
 - OCR result sampling shows the extracted brochure text is rich enough for AI-assisted listing enrichment. The next product/data milestone is converting per-franchise OCR text into reviewed canonical field suggestions plus supplemental proposal insights for dynamic public tabs. See `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`. Long OCR/proposal text now writes to R2 so D1 keeps only previews, structured candidates, and object pointers; the historical remote backfill completed on 2026-07-16.
+- Public legal pages for Google verification are now reachable through normal footer navigation: Astro/D1 templates include Privacy Policy and Terms of Service in the `Informasi` footer list, and the legacy static copier injects the same links into copied legacy HTML that lacks them.
 
 ## Refactor Candidates - 2026-07-08
 
@@ -74,13 +75,15 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 | File / area | Why it is now a refactor candidate | Proposed split | Priority | Status |
 | --- | --- | --- | --- | --- |
 | `functions/_dashboard-queries.js` Outreach/Pipeline read model | The file was about 975 lines and owned eligibility rules for unclaimed, registered/owned, subscription, claim, and pipeline rows. | Extracted `getUnclaimedOutreachQueue`, `getUnclaimedOutreachSummary`, and related sales-status helpers into `functions/_dashboard-outreach-queries.js` while preserving the current `outreach_queue`, `outreach_summary`, and `outreach_pipeline` payload contracts. `_dashboard-queries.js` now re-exports the functions for compatibility. | Medium | Done |
+| `js/dashboard-outreach.js` Google Contacts connection UI | Moving Contacts permission out of Clerk login added connection-state rendering, setup errors, and OAuth-start behavior to an already dense Outreach/Pipeline module. | Extracted the Contacts connection flow, connected-account pill, and setup/connect/reauth notices into `js/dashboard-google-contacts.js`; `js/dashboard-outreach.js` is now 465 lines and remains focused on sales cards/status actions. | Medium | Done |
 
 ## Dashboard Outreach Google Contacts - 2026-07-13
 
 | Finding | Decision / implementation direction | Status |
 | --- | --- | --- |
-| Staff want brand names visible before WhatsApp outreach, but the current dashboard only opens `wa.me` links from raw public numbers. | Add a one-click Google Contacts bulk-save action for the current outreach queue. The server rebuilds contacts from D1, uses the staff member's linked Google OAuth token, searches existing contacts first, skips duplicate phone numbers, and calls Google People API batch create for up to 200 non-duplicate contacts. | Implemented |
-| Google Contacts write access is not part of normal Google sign-in. | Require the `https://www.googleapis.com/auth/contacts` OAuth scope and enabled People API. If the token/scope is missing, return setup guidance instead of pretending contacts were saved. | Implemented |
+| Staff want brand names visible before WhatsApp outreach, but the current dashboard only opens `wa.me` links from raw public numbers. | Add a one-click Google Contacts bulk-save action for the current outreach queue. The server rebuilds contacts from D1, uses the staff member's separately connected dashboard Google Contacts token, searches existing contacts first, skips duplicate phone numbers, and calls Google People API batch create for up to 200 non-duplicate contacts. | Implemented |
+| Google Contacts write access must not affect public login. | Keep Clerk Google login at basic sign-in scopes. Request `https://www.googleapis.com/auth/contacts` only from the staff/admin dashboard after D1 role authorization, store encrypted tokens in `staff_google_connections`, and return setup/connect guidance if the dashboard connection is missing. | Implemented with migration `0033_staff_google_contacts_oauth.sql` |
+| Staff need a recovery path after Google account changes, revoked consent, or refresh-token failures. | Surface token health, last error, and compact reconnect/disconnect controls in Outreach. Disconnect marks the dashboard Contacts connection revoked without touching Clerk login or deleting Google Contacts. | Implemented |
 
 ## OCR Execution UX Audit - 2026-07-10
 

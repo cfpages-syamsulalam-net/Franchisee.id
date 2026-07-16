@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-15 21:20 (Asia/Jakarta)
+Last updated: 2026-07-16 15:21 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -299,7 +299,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `css/dashboard-outreach.css`
 *Dashboard Outreach/Pipeline stylesheet module.*
-- Owns compact Outreach worklist cards, Pipeline Kanban columns, Google Contacts reauth alert, stage summary pills, drag/drop states, status badges, icon-only metadata chips, one-line note inputs, and responsive grid/ellipsis containment so dense franchise rows stay inside their parent cards.
+- Owns compact Outreach worklist cards, Pipeline Kanban columns, Google Contacts connection alerts, connected-account pills, stage summary pills, drag/drop states, status badges, icon-only metadata chips, one-line note inputs, and responsive grid/ellipsis containment so dense franchise rows stay inside their parent cards.
 
 ### File: `css/dashboard-integration.css`
 *Dashboard integration documentation stylesheet module.*
@@ -337,8 +337,16 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - `window.FranchiseDashboardOutreach.createOutreach(options)`: Creates the Outreach worklist and Pipeline board renderer from DOM references and shared dashboard action/reload/status callbacks supplied through `js/dashboard-operations.js`.
 - `render(rows, summary, pipelineMetadata)` / `renderOutreachWorklist()` / `renderPipelineBoard()` / `renderOutreachCard(row, pipeline, mode)`: Renders Outreach as a compact actionable worklist and Pipeline as the grouped Kanban board from the same `outreach_queue` plus `outreach_pipeline`; both show stage/status badges, tooltip-backed next-action/reason context, icon-only metadata chips, overdue/follow-up chips, and compact notes, while the Pipeline tab also owns conversion/stage summary pills.
 - `bindOutreachDragAndDrop()` / `updateOutreachStatus(franchiseId, status, control)`: Supports Pipeline drag/drop card movement plus status-select fallback in both Outreach and Pipeline, posting `update_outreach_status` with notes, burned reason, and follow-up metadata before reloading dashboard state after successful persistence.
-- `renderOutreachActions()` / `saveGoogleContacts()` / `showGoogleContactsNotice()` / `logOutreach()`: Injects the shared pill button for bulk Google Contacts save, posts `save_outreach_google_contacts` for up to 200 current queue rows, records manually confirmed WhatsApp outreach through `/dashboard-data`, and renders a persistent Google Contacts reauth alert with logout/login-Google and setup-guide actions when permissions are missing or the staff session still has the old OAuth scope.
+- `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Injects the shared pill button for bulk Google Contacts save, shows the connected-account pill or `Hubungkan Google Contacts` action from `js/dashboard-google-contacts.js`, posts `save_outreach_google_contacts` for up to 200 current queue rows, records manually confirmed WhatsApp outreach through `/dashboard-data`, and renders persistent setup/connect/reauth alerts through the dedicated Contacts helper when the dashboard OAuth connection is missing or stale.
 - Outreach filters: `today`, actionable, overdue, mine, unassigned, and all help staff see the next measurable sales action first instead of scanning every listing.
+
+### File: `js/dashboard-google-contacts.js`
+*Google Contacts connection helper for dashboard Outreach.*
+- `window.FranchiseDashboardGoogleContacts.create(options)`: Returns a helper bound to the Outreach notice container and dashboard status callback.
+- `connect(button)`: Starts the staff/admin dashboard-only OAuth flow by POSTing to `/google-contacts-start` with the active Clerk bearer token, then redirects to the returned Google authorization URL.
+- `renderConnectedPill(connection)` / `renderHealthPill(connection)`: Shows the linked Google email plus a compact token-health pill with last error/update context from `/dashboard-data`.
+- `disconnect(button)`: Posts `disconnect_google_contacts` to `/dashboard-data`, marks the connection revoked server-side, and reloads dashboard state so staff can reconnect with the same or another Google account.
+- `formatError(error)` / `showNotice(details)` / `hideNotice()`: Centralizes setup-required, connect-required, and reauth-required UI copy with the stable `/dashboard/#google-contacts-setup` guide link. This module is intentionally separate from Clerk login because public users must not receive the Contacts scope.
 
 ### File: `js/dashboard-review.js`
 *Review/Data Quality client module for `/dashboard`.*
@@ -355,7 +363,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 ### File: `js/dashboard-operations.js`
 *General operations-data client module for `/dashboard`.*
 - `window.FranchiseDashboardOperations.createOperations(options)`: Creates the operations-data renderer from DOM references and callbacks supplied by `js/dashboard-admin.js`; Outreach-specific rendering is delegated to `js/dashboard-outreach.js`.
-- `render(data)`: Fans dashboard API data into Outreach, publish queue, the separated Publikasi tab, Leads tab, and Sistem tab panels.
+- `render(data)`: Fans dashboard API data into Outreach, including `google_contacts` connection state, publish queue, the separated Publikasi tab, Leads tab, and Sistem tab panels.
 - `renderPublicationControls()` / `updatePublicationStatus()`: Renders network publication controls as per-listing cards with per-site status controls, status badges, public links, and posts admin status changes.
 - `renderLeads()` / `renderHealth()` / `renderTrafficGuardrails()`: Renders lead rows, system health summaries, and Cloudflare Free-plan limit/throttle visibility.
 
@@ -536,6 +544,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - Skips source/control directories such as `src`, `scripts`, `functions`, `docs`, `.github`, `node_modules`, `migrations`, and `dist`.
 - Skips top-level `peluang-usaha`, duplicate directory archives, and known category aliases so legacy pages cannot compete with Astro's flat `/peluang-usaha/[slug].html` output or canonical `/peluang-usaha` directory.
 - Rewrites copied legacy HTML links from `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known top-level category aliases to `/peluang-usaha` query-param URLs.
+- Injects a compact Privacy Policy and Terms of Service footer row into copied legacy HTML when those links are missing, so direct-copy pages remain reviewable and navigable for normal users.
 - Copies `node_modules/@clerk/clerk-js/dist` into `dist/clerk` so browser auth can load ClerkJS locally before trying CDN fallbacks.
 
 ### File: `scripts/check-profile-client.mjs`
@@ -572,6 +581,21 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - Loads Font Awesome, `css/premium.css`, `js/site-promo-bar.js`, and `js/premium-page.js`; the promo ribbon respects the dashboard-configured per-day view cap.
 - CTAs point to `/login/?mode=register` and `/profil/?tab=membership` without exposing internal infrastructure terms, and include `data-premium-cta` attributes for coarse funnel tracking.
 - Public copy leads with outcomes such as trust, easier discovery, and better follow-up rather than feature-first language.
+
+### File: `src/components/LegalPage.astro`
+*Shared public legal document shell.*
+- Provides the static legal-page layout, favicon metadata, absolute canonical URL metadata, readable responsive CSS, and reciprocal navigation between homepage, Privacy Policy, Terms of Service, and contact page.
+- Used by Google OAuth verification-facing legal pages so the Privacy/Terms presentation stays consistent.
+
+### File: `src/pages/privacy-policy.astro`
+*Public Privacy Policy route.*
+- Static Astro route at `/privacy-policy`.
+- Documents account/profile/listing/payment/operational data handling, staff/admin-only Google Contacts usage, duplicate-contact checking, disconnect choice, and Google API Services User Data Policy Limited Use compliance.
+
+### File: `src/pages/terms-of-service.astro`
+*Public Terms of Service route.*
+- Static Astro route at `/terms-of-service`.
+- Documents account responsibilities, listing ownership, lead forwarding, Premium payment review, third-party integrations, prohibited use, and business-decision disclaimers.
 
 ### File: `scripts/shared-csv.cjs`
 *Shared quote-aware CSV parser for legacy Node builders.*
@@ -1064,7 +1088,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `functions/dashboard-data.js`
 *Thin protected Franchisee.id dashboard router.*
-- `onRequestGet()`: Requires Clerk auth plus D1 `staff` through `requireD1UserFast()` for already-synced users; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch/enrichment-review state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
+- `onRequestGet()`: Requires Clerk auth plus D1 `staff` through `requireD1UserFast()` for already-synced users; returns the staff member's dashboard Google Contacts connection status from `_google-contacts-oauth.js`; elevated admin additionally receives masked OCR provider configuration from `_ocr-provider-config.js`, masked scheduler configuration from `_ocr-scheduler-config.js`, and OCR queue/batch/enrichment-review state from `_ocr-job-runner.js`. Stored key/secret values are never selected by the read query.
 - `onRequestPost()`: Uses full `requireD1User()` sync before mutations, validates the discriminated action payload, and routes normal workflows plus `update_outreach_status` to `_dashboard-actions.js`, bulk outreach contact save to `_google-contacts.js`, OCR configuration/provider toggles to `_ocr-provider-config.js`, OCR scheduler configuration/toggles to `_ocr-scheduler-config.js`, OCR retry/no-text job actions to `_ocr-job-actions.js`, OCR batch start/retry actions to `_ocr-batch-runs.js`, OCR enrichment bundle creation to `_ocr-enrichment-review.js`, D1 migration-ledger reconciliation to `_d1-maintenance.js`, and OCR dry-run/enqueue/run/search actions to `_ocr-job-runner.js`, passing `env.OCR_KEY` only when OCR execution, provider activation, scheduler dispatch, or credential encryption needs it.
 - Unsupported write-like methods return JSON 405 responses with `Allow: GET, POST`.
 - `_ocr-batch-runs.js` owns persisted batch creation/progress/retry; `_ocr-job-actions.js` owns dashboard retry/no-text mutations; `_ocr-enrichment-review.js` owns grouped per-franchise OCR review bundles; `_ocr-job-runner.js` stays focused on job processing and OCR provider execution.
@@ -1072,7 +1096,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions, `save_outreach_google_contacts`, `update_outreach_status`, D1 migration-ledger reconciliation, plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
+- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions, `save_outreach_google_contacts`, `disconnect_google_contacts`, `update_outreach_status`, D1 migration-ledger reconciliation, plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
 - `ReviewEditSuggestionSchema`: Accepts optional `approved_fields` from shared editable field names for granular field-level approval.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.
@@ -1191,8 +1215,25 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 
 ### File: `functions/_google-contacts.js`
 *Google Contacts helper for dashboard outreach.*
-- `handleSaveOutreachGoogleContacts(db, auth, data, env)`: Staff/admin dashboard action that rebuilds the current outreach queue server-side, selects up to 200 ready WhatsApp contacts, retrieves the staff member's linked Google OAuth token through Clerk, checks existing Google Contacts through People API `searchContacts`, calls `people:batchCreateContacts` only for non-duplicates, marks processed rows as `saved_contact`, records an audit event, and returns setup/reauth-required errors when Google Contacts scope/token/People API access is missing or the staff session still carries the old Google OAuth grant.
+- `handleSaveOutreachGoogleContacts(db, auth, data, env)`: Staff/admin dashboard action that rebuilds the current outreach queue server-side, selects up to 200 ready WhatsApp contacts, retrieves the staff member's dashboard-linked Google Contacts access token from `staff_google_connections`, refreshes it when possible through `_google-contacts-oauth.js`, checks existing Google Contacts through People API `searchContacts`, calls `people:batchCreateContacts` only for non-duplicates, marks processed rows as `saved_contact`, records an audit event, and returns setup/connect/reauth-required errors when the separate dashboard OAuth connection is missing or stale.
 - `outreachRowToGoogleContact(row)` / `googleContactHasPhone(person, phone)` / `googleContactSearchUrl(query)` / `buildGoogleBatchCreatePayload(contacts)`: Pure helpers that format brand name, phone number, listing URL, organization, duplicate-check search URL, phone matching, and `readMask` into the Google People API flow covered by `pnpm run google-contacts:check`.
+
+### File: `functions/_google-contacts-oauth.js`
+*Dashboard-only Google Contacts OAuth/token helper.*
+- `createGoogleContactsAuthorization(db, auth, request, env)`: Validates `GOOGLE_CONTACTS_CLIENT_ID`, `GOOGLE_CONTACTS_CLIENT_SECRET`, and a token encryption key, writes a short-lived `staff_google_oauth_states` row for the D1-authorized staff/admin user, and returns a Google OAuth URL requesting `openid email profile` plus `https://www.googleapis.com/auth/contacts`.
+- `completeGoogleContactsAuthorization(db, request, env)`: Validates the returned OAuth state, exchanges the Google code for tokens, verifies the Contacts scope, fetches Google userinfo, encrypts access/refresh tokens, upserts `staff_google_connections`, marks the state consumed, audits the connection, and redirects back to `/dashboard/#outreach`.
+- `getStaffGoogleContactsState(db, auth, env)`: Returns the masked dashboard connection state, including setup/migration flags, linked Google email, token health, last error, and timestamps when available.
+- `getStaffGoogleContactsAccessToken(db, auth, env)`: Returns a usable access token for People API calls, refreshing with the stored refresh token when needed and marking the connection reauth-required if refresh fails.
+- `revokeStaffGoogleContactsConnection(db, auth)`: Marks the staff member's current Google Contacts connection revoked so Outreach can reconnect a different account without requiring Clerk logout.
+
+### File: `functions/google-contacts-start.js`
+*Dashboard Google Contacts OAuth start route.*
+- `onRequestPost({ request, env })`: Requires D1 `staff` access through `requireD1User()`, then delegates to `createGoogleContactsAuthorization()` and returns the authorization URL as JSON.
+- `onRequestGet()`: Returns JSON 405 guidance so direct visits do not produce empty method responses.
+
+### File: `functions/google-contacts-callback.js`
+*Dashboard Google Contacts OAuth callback route.*
+- `onRequestGet({ request, env })`: Delegates OAuth completion to `_google-contacts-oauth.js` and redirects to `/dashboard/#outreach` with a compact connection status query flag.
 
 ### File: `functions/_outreach-status.js`
 *Shared outreach current-status write helper.*

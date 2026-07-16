@@ -86,6 +86,12 @@ const CANONICAL_ROUTE_MAP = new Map([
 const ROOT_FILE_NAMES = new Set(["robots.txt", "sitemap.xml", "sitemap_index.xml", "sitemap-complete.xml", "main-sitemap.xsl"]);
 const ROOT_FILE_EXTENSIONS = new Set([".html", ".xml", ".xsl"]);
 
+const LEGAL_FOOTER_LINKS = `<div class="fr-legal-footer-links" style="border-top:1px solid rgba(255,255,255,.18);margin:24px auto 0;max-width:1200px;padding:16px 20px;text-align:center;color:#ffffff;font-size:14px;">
+  <a href="/privacy-policy" style="color:#ffffff;text-decoration:none;">Privacy Policy</a>
+  <span aria-hidden="true" style="display:inline-block;margin:0 10px;color:rgba(255,255,255,.55);">|</span>
+  <a href="/terms-of-service" style="color:#ffffff;text-decoration:none;">Terms of Service</a>
+</div>`;
+
 const stats = {
   directories: 0,
   filesCopied: 0,
@@ -160,7 +166,7 @@ function copyFileNoOverwrite(sourcePath, targetPath) {
 
   mkdirSync(dirname(targetPath), { recursive: true });
   if (sourcePath.toLowerCase().endsWith(".html")) {
-    writeFileSync(targetPath, sanitizeLegacyWordPressRuntime(rewriteLegacyHtmlLinks(readFileSync(sourcePath, "utf8"))));
+    writeFileSync(targetPath, addLegacyLegalFooterLinks(sanitizeLegacyWordPressRuntime(rewriteLegacyHtmlLinks(readFileSync(sourcePath, "utf8")))));
   } else {
     copyFileSync(sourcePath, targetPath);
   }
@@ -204,6 +210,13 @@ function sanitizeLegacyWordPressRuntime(html) {
     .replace(/<script\b[^>]*\bid=(["'])analyticswp-js-extra\1[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<script\b[^>]*\bsrc=(["'])[^"']*analyticswp\.min\.js[^"']*\1[^>]*>\s*<\/script>/gi, "")
     .replace(/\\?\/wp-admin\\?\/admin-ajax\.php/g, "");
+}
+
+function addLegacyLegalFooterLinks(html) {
+  if (html.includes("/privacy-policy") || html.includes("/terms-of-service")) return html;
+  if (!/<\/footer>/i.test(html)) return html;
+
+  return html.replace(/<\/footer>/i, `${LEGAL_FOOTER_LINKS}\n</footer>`);
 }
 
 function normalizePath(path, slash = "") {

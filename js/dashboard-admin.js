@@ -318,6 +318,7 @@
       window.FranchiseTooltip.refresh();
     }
     activateDashboardDeepLink((window.location.hash || "").replace(/^#/, ""));
+    consumeGoogleContactsCallbackStatus();
   }
 
   async function reloadDashboard() {
@@ -358,6 +359,24 @@
   function setStatus(message, isError) {
     statusEl.innerHTML = message;
     statusEl.classList.toggle("dash-error", Boolean(isError));
+  }
+
+  function consumeGoogleContactsCallbackStatus() {
+    var params = new URLSearchParams(window.location.search || "");
+    var status = params.get("google_contacts");
+    if (!status) return;
+    var messages = {
+      connected: ["Google Contacts terhubung. Tombol Simpan kontak sekarang memakai koneksi khusus staff ini.", false],
+      denied: ["Koneksi Google Contacts dibatalkan. Hubungkan lagi dari tab Outreach saat siap.", true],
+      expired: ["Sesi koneksi Google Contacts kedaluwarsa. Coba hubungkan lagi dari tab Outreach.", true],
+      invalid: ["Balikan Google Contacts tidak valid. Coba hubungkan lagi dari tab Outreach.", true],
+      failed: ["Koneksi Google Contacts gagal. Cek konfigurasi OAuth dan coba lagi dari tab Outreach.", true],
+    };
+    var entry = messages[status] || messages.failed;
+    setStatus(entry[0], entry[1]);
+    params.delete("google_contacts");
+    var clean = window.location.pathname + (params.toString() ? "?" + params.toString() : "") + (window.location.hash || "");
+    window.history.replaceState({}, "", clean);
   }
 
   function showLoginPanel(message, isError) {

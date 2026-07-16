@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 // @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { buildGoogleBatchCreatePayload, googleContactHasPhone, googleContactSearchUrl, outreachRowToGoogleContact } from "../functions/_google-contacts.js";
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
+import { GOOGLE_CONTACTS_SCOPE } from "../functions/_google-contacts-oauth.js";
+
+assert.equal(GOOGLE_CONTACTS_SCOPE, "https://www.googleapis.com/auth/contacts");
 
 const contact = outreachRowToGoogleContact({
   id: "fr_123",
