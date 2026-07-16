@@ -128,7 +128,7 @@
         window.location.reload();
       });
     } catch (error) {
-      showMessage(root, error.message, "error");
+      showMessage(root, clerkErrorMessage(error), "error");
     }
   }
 

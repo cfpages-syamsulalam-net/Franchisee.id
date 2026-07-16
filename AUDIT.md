@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-16 15:46 (Asia/Jakarta)
+Last updated: 2026-07-16 19:54 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -27,6 +27,7 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 - Bank transaction matching is still manual; Premium activation is production-ready for manual review, but automatic payment matching needs a provider/API decision.
 - Legacy Google Sheets/CSV and WordPress-exported HTML remain in the transition layer. They should stay readable/importable but not regain write ownership.
 - Several blocked states are now CTA-backed, but every new public-facing error/empty/warning state should keep following the “clear next action” rule.
+- State transitions now have a dedicated cross-system tracker at `docs/architecture/STATE_TRANSITION_AUDIT.md`. The highest open risks are production-style Pages Function method testing, Google Contacts OAuth expired/denied cleanup, outreach backward-move timestamp policy, publish queue coalescing/reconciliation, Premium lifecycle tests, and OCR stale-running/batch terminal semantics.
 - Dashboard outreach can now bulk-save unclaimed brand contacts into the staff member's linked Google Contacts before WhatsApp outreach. The Contacts scope is intentionally not part of Clerk login; production use depends on the separate dashboard-only Google OAuth client, People API setup, Google verification, and Cloudflare secrets for the staff/admin Contacts flow.
 - Proposal uploads now preserve extracted text and reviewable missing-field candidates separately from canonical listing data. Image-only brochure OCR is handled by an admin-triggered queue so uploads stay fast and OCR-derived facts still require review.
 - OCR provider configuration is now an admin-only `/dashboard` surface backed by D1 migration 0020, with encrypted credential storage using the external Cloudflare Pages secret `OCR_KEY`. Migration 0021 is applied remotely and adds OCR jobs, attempts, content-hash cache, and provider usage events; external OCR calls only run when an admin explicitly starts a dry-run or bounded batch.
@@ -35,6 +36,19 @@ Recommended target: keep the Cloudflare hosting model, preserve existing styling
 - OCR execution UX audit: OCR execution must not depend on an active browser tab. The main dashboard run CTA now prefers the persisted server-side scheduler batch when a scheduler is active, with the visible continuous dashboard loop kept only as a no-scheduler fallback that clearly warns admins to keep the tab open.
 - OCR result sampling shows the extracted brochure text is rich enough for AI-assisted listing enrichment. The next product/data milestone is converting per-franchise OCR text into reviewed canonical field suggestions plus supplemental proposal insights for dynamic public tabs. See `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`. Long OCR/proposal text now writes to R2 so D1 keeps only previews, structured candidates, and object pointers; the historical remote backfill completed on 2026-07-16.
 - Public legal pages for Google verification are now reachable through normal footer navigation and visually match the Franchisee.id site: Astro/D1 templates include Privacy Policy and Terms of Service in the `Informasi` footer list, the legal routes use a branded header/footer shell, and the legacy static copier injects a flush high-contrast legal strip into copied legacy HTML that lacks those links.
+
+## State Transition Audit - 2026-07-16
+
+The new canonical state-transition tracker is `docs/architecture/STATE_TRANSITION_AUDIT.md`. It inventories transition-heavy surfaces across Clerk/D1 auth, dashboard Google Contacts OAuth, Google Contacts bulk save, sales outreach Pipeline, claims, pending edit/OCR enrichment review, OCR provider/job/batch flows, Premium orders/subscriptions/email queue, form drafts, static publish queue, and R2/D1 OCR text migration.
+
+| Priority | Open item | Reason |
+| --- | --- | --- |
+| P0 | Production-style Pages Functions route-method smoke test | Prevents empty 405 or wrong-method regressions on protected routes from reaching production auth/dashboard flows again. |
+| P0 | Google Contacts OAuth expired/denied/revoked cleanup and regression coverage | Staff outreach depends on a separate OAuth state machine with short-lived state rows and refreshable tokens. |
+| P1 | Outreach backward-move timestamp policy | Pipeline analytics must distinguish historical milestone dates from current stage after a brand moves backward. |
+| P1 | Static publish queue coalescing/reconciliation audit | Review/claim/listing approvals can enqueue repeated rebuilds for the same listing/site; counters should stay trustworthy. |
+| P1 | Premium lifecycle transition tests | Payment, renewal, expiry, grace, downgrade, email, and rebuild states affect revenue and public listing visibility. |
+| P1 | OCR stale-running and terminal batch semantics | Long OCR batches depend on scheduler/worker/quota state and need predictable recovery from stale running jobs. |
 
 ## Refactor Candidates - 2026-07-08
 

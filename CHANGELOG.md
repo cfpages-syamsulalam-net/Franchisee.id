@@ -4,6 +4,25 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-16 19:54 (Asia/Jakarta)
+### Added
+- `docs/architecture/STATE_TRANSITION_AUDIT.md`: Added a cross-system state-transition audit with scenario matrix, transition inventory, and priority fix board for auth, dashboard Google Contacts OAuth, Google Contacts bulk save, outreach Pipeline, claims/review, OCR, Premium, publish queue, forms, and R2/D1 migration flows.
+
+### Changed
+- `docs/README.md`, `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Linked the new state-transition audit from the documentation index, main audit, codebase map, and technical inventory.
+- `SUGGESTION.md`: Marked suggestion 107 done and added follow-up suggestions 108-110 for Google Contacts OAuth cleanup, publish queue reconciliation, and Premium lifecycle transition coverage.
+
+## 2026-07-16 19:10 (Asia/Jakarta)
+### Added
+- `SYAMSULALAM.md`: Added a conversation-based reflection document summarizing inferred work style, product instincts, operational strengths, possible blind spots, and practical improvement habits from this repository's coding/product conversations.
+- `scripts/check-auth-client.mjs` and `package.json`: Added `pnpm run auth:check` to syntax-check custom auth browser modules and assert the expired Google OAuth callback guard remains wired.
+
+### Changed
+- `AGENTS.md`: Added a Syamsul collaboration calibration section that turns `SYAMSULALAM.md` into concrete agent behavior around inferred acceptance criteria, scope control, admin/staff workflow proof, franchise data trust, visual cohesion, and suggestion quality.
+- `AGENTS.md`: Added mandatory scenario-matrix rules for stateful/external flows so auth, payments, migrations, OCR/data enrichment, dashboard actions, storage, publication, and sales workflow changes consider stale sessions, missing scopes, retries, old data, quota, and related edge cases before implementation.
+- `SUGGESTION.md`: Added suggestions 101-105 for acceptance criteria, franchise field dictionary, dashboard tab job statements, UI reference mapping, and P0/P1/P2 scope triage; added and completed suggestion 106 for a focused auth client regression check; added suggestion 107 for a reusable high-risk scenario matrix template.
+- `js/auth-clerk-core.js` and `js/auth-clerk.js`: Normalized expired Google OAuth callback errors so Clerk's raw `Response: expired not supported yet` message becomes an actionable login-retry message, and prevented stale expired callback parameters from being passed into Clerk's redirect handler.
+
 ## 2026-07-16 15:11 (Asia/Jakarta)
 ### Added
 - `src/components/LegalPage.astro`: Added a shared public legal-document shell for Privacy Policy and Terms of Service pages.

@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-16 15:46 (Asia/Jakarta)
+Last updated: 2026-07-16 19:54 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -9,6 +9,7 @@ This inventory describes the current runtime and migration bridge. Google Sheets
 Cloudflare Pages builds must run `pnpm run build` or `pnpm run build:astro` and output `dist`; otherwise dependency-backed Pages Functions cannot bundle imports such as `zod` and `@clerk/backend`.
 The Pages output is hybrid: Astro writes D1-backed pages first, then `scripts/copy-legacy-static.mjs` copies legacy static assets/pages into `dist` without overwriting Astro output.
 Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previews, lengths, structured candidates, and review metadata.
+Stateful flows that move rows, jobs, sessions, queues, or integrations between statuses are tracked in `docs/architecture/STATE_TRANSITION_AUDIT.md`; update that audit when changing auth, dashboard OAuth, OCR, Premium, outreach, claims/review, publication, form draft, or migration transition behavior.
 
 ## 1. Directory: `/js` (Client-side & SSG Builders)
 
@@ -145,7 +146,8 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - `Auth.getToken()` / `Auth.getAuthHeaders()`: Returns the active Clerk session token for protected Pages Functions.
 - `Auth.syncUser(role)`: Calls `/auth-sync` to map Clerk users into D1, apply pending email grants, and optionally assign explicit or pending self-selectable `franchisee`/`franchisor` roles. Uses `window.FranchiseFetch.readJson()` so empty 405/non-JSON responses show an actionable auth message instead of a parser exception.
 - `Auth.getAuthHeaders()`: Also syncs a pending public OAuth registration role from `sessionStorage` before protected form submissions use the bearer token.
-- `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query parameters or the dedicated `/sso-callback/` route itself, calls `clerk.handleRedirectCallback()`, falls back to shared created-session activation with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
+- `handleOAuthRedirectIfNeeded(clerk)` / `navigateAfterOAuth(target)`: Detects Clerk OAuth callback query/hash parameters or the dedicated `/sso-callback/` route itself, intercepts `__clerk_status=expired` before Clerk's redirect handler can show raw unsupported-state errors, calls `clerk.handleRedirectCallback()` for valid callbacks, falls back to shared created-session activation with `__clerk_created_session` when needed, refreshes Clerk resources, clears pending destination state, and either removes callback params in place or navigates to the saved completion URL before protected dashboard/form token checks continue.
+- `clerkErrorMessage(error)`: Normalizes Clerk API/browser errors, including expired Google OAuth callback messages, into actionable Indonesian UI copy.
 
 ### File: `js/auth-clerk.js`
 *Custom ClerkJS auth page facade using existing site CSS.*
@@ -154,7 +156,7 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - `mountAuthPage(options)`: Replaces `/login` legacy WPForms markup with public `Masuk`/`Buat Akun`/forgot-password/forgot-email/verification forms; supports Google OAuth buttons and `data-auth-variant="staff"` for login-only internal dashboard auth that returns to `/dashboard/`. A root with `data-auth-defer="true"` is skipped until callers pass `{ force: true }`, preventing the hidden dashboard login form from doing redundant session-state rendering while the dashboard skeleton is active.
 - `showInitialAuthMessage(root)`: Shows CTA-backed info messages when anonymous `/daftar` or `/profil` visitors are redirected to `/login?next=...`.
 - `showMessage(root, message, type)`: Renders plain or structured auth messages with optional hint text and CTA buttons/links, including panel switches for register/reset recovery.
-- `renderSessionState(root)`: Shows a logged-in status for public users and hides auth forms, while admin/staff users keep the forms visible for manual auth UI inspection.
+- `renderSessionState(root)`: Shows a logged-in status for public users and hides auth forms, while admin/staff users keep the forms visible for manual auth UI inspection; errors use the shared Clerk normalizer instead of raw browser messages.
 - `switchMode(root, mode)` / `normalizeAuthMode()`: Switches login/register/recovery/verification panels, updates tab active state, and keeps inactive panels hidden with matching `aria-hidden` state.
 - `handleLogin()` / `handleRegister()` / `handleVerification()`: Custom email/password Clerk flows without Clerk prebuilt UI; public registration redirects to `/daftar/?role=...&continue=1` after account creation.
 - `handleForgotPassword()` / `handleResetPassword()`: Sends Clerk reset-password email codes, shows a direct "Masukkan kode" recovery CTA, verifies the code, saves the new password, activates the resulting session, and returns to the normal next URL.
@@ -552,6 +554,12 @@ Long OCR/proposal extracted text now belongs in R2; D1 keeps object keys, previe
 - Runs `node --check` against `js/profile-page.js`, `js/profile-premium.js`, `js/profile-franchisee.js`, and `js/profile-franchisor.js`.
 - Fails if stale undefined profile helper calls such as `selectedFranchise()` reappear.
 - Exposed through `pnpm run profile:check`.
+
+### File: `scripts/check-auth-client.mjs`
+*Focused custom auth browser regression check.*
+- Runs `node --check` against `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, `js/auth-clerk.js`, and `js/fetch-json.js`.
+- Fails if expired Google OAuth callback interception or shared Clerk error normalization wiring is removed.
+- Exposed through `pnpm run auth:check`.
 
 ### File: `scripts/check-contact-parser.mjs`
 *Focused imported-contact parser regression check.*

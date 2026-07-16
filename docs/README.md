@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-07-14 18:52 (Asia/Jakarta)
+Last updated: 2026-07-16 19:54 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -17,6 +17,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/OCR_BATCH_SCHEDULING.md`: scheduler/cron provider ranking and recommended persisted-batch design for draining up to 100 OCR jobs with delay/rate limiting.
 - `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: OCR result sampling, AI extraction/review plan, supplemental insight data model, and dynamic public listing tab recommendations.
 - `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: focused step-by-step third-party setup reference for `/dashboard` warnings and in-app integration guide anchors.
+- `docs/architecture/STATE_TRANSITION_AUDIT.md`: cross-system audit tracker for auth, OAuth, dashboard actions, OCR, Premium, outreach, claims, publishing, and migration state transitions.
 - `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: listing detail page compactness, claim CTA, and Cloudflare Pages Function request-limit tracker.
@@ -38,6 +39,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/OCR_BATCH_SCHEDULING.md`: official scheduler free-tier research, provider ranking, and batch-run architecture for one-click OCR backfills up to 100 jobs.
 - `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: plan for converting OCR/proposal text into reviewed listing fields, supplemental insight records, and optional public listing tabs.
 - `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: Google Contacts, OCR provider/scheduler, Premium email, and publish automation setup guide for dashboard operations.
+- `docs/architecture/STATE_TRANSITION_AUDIT.md`: state-machine inventory, high-risk scenario matrix, and priority fix board for transition-heavy runtime paths.
 - `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`: premium network membership, `/premium` page, manual payment operations, conversion tracking, payment confirmation, traffic growth, and renewal roadmap.
 - `docs/architecture/RESEND_EMAIL_DELIVERY.md`: Resend/Cloudflare Pages email delivery setup for queued Premium emails, reports, and reminders.
 

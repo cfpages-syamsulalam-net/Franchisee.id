@@ -334,14 +334,24 @@
       const redirectUrlComplete = getPendingNext() || nextUrlFromSearch() || currentAuthUrl();
       let callbackTarget = redirectUrlComplete;
       const createdSessionId = getClerkRedirectParam("__clerk_created_session");
+      const clerkStatus = getClerkRedirectParam("__clerk_status");
       recordDebug("oauth_callback:start", {
         redirectUrlComplete,
         hasRedirectParams,
         isCallbackPath,
+        clerkStatus,
         hasCreatedSessionId: Boolean(createdSessionId),
         createdSessionHint: sessionHint(createdSessionId),
         before: summarizeClerk(clerk),
       });
+      if (isExpiredClerkStatus(clerkStatus)) {
+        clearPendingNext();
+        const cleanUrl = new URL(window.location.href);
+        removeClerkRedirectParamsFromUrl(cleanUrl);
+        window.history.replaceState(window.history.state, document.title, cleanUrl.href);
+        recordDebug("oauth_callback:expired", { clerkStatus });
+        throw new Error(expiredOAuthMessage());
+      }
       await clerk.handleRedirectCallback({ redirectUrlComplete }, async function (target) {
         callbackTarget = target || redirectUrlComplete;
         recordDebug("oauth_callback:navigate_target", { target: callbackTarget });
@@ -362,7 +372,7 @@
       clearPendingNext();
       const targetUrl = new URL(target || currentAuthUrl(), window.location.origin);
       const currentUrl = new URL(window.location.href);
-      removeClerkRedirectParams(currentUrl.searchParams);
+      removeClerkRedirectParamsFromUrl(currentUrl);
 
       if (
         targetUrl.origin === currentUrl.origin &&
@@ -418,9 +428,23 @@
       });
     }
 
+    function removeClerkRedirectParamsFromUrl(url) {
+      removeClerkRedirectParams(url.searchParams);
+      if (!url.hash) return;
+
+      const normalizedHash = url.hash.replace(/^#\/?/, "");
+      const hashParams = new URLSearchParams(normalizedHash);
+      const before = hashParams.toString();
+      removeClerkRedirectParams(hashParams);
+      const after = hashParams.toString();
+      if (before !== after) {
+        url.hash = after ? "#" + after : "";
+      }
+    }
+
     function currentAuthUrl() {
       const url = new URL(window.location.href);
-      removeClerkRedirectParams(url.searchParams);
+      removeClerkRedirectParamsFromUrl(url);
       return url.href;
     }
 
@@ -482,7 +506,23 @@
 
     function clerkErrorMessage(error) {
       const apiError = error?.errors?.[0];
-      return apiError?.longMessage || apiError?.message || error.message || "Proses autentikasi gagal.";
+      const raw = apiError?.longMessage || apiError?.message || error?.message || String(error || "");
+      if (isExpiredClerkStatus(apiError?.code) || isExpiredClerkStatus(apiError?.meta?.paramName) || isExpiredClerkError(raw)) {
+        return expiredOAuthMessage();
+      }
+      return raw || "Proses autentikasi gagal.";
+    }
+
+    function isExpiredClerkStatus(value) {
+      return String(value || "").toLowerCase() === "expired";
+    }
+
+    function isExpiredClerkError(message) {
+      return /(?:^|\b)(?:response:\s*)?expired(?:\b|$)/i.test(String(message || ""));
+    }
+
+    function expiredOAuthMessage() {
+      return "Sesi login Google sudah kedaluwarsa. Silakan mulai login Google lagi dari halaman login atau dashboard.";
     }
 
     function nextUrl(root) {
@@ -510,7 +550,7 @@
 
     function sanitizedLocation() {
       const url = new URL(window.location.href);
-      removeClerkRedirectParams(url.searchParams);
+      removeClerkRedirectParamsFromUrl(url);
       return url.pathname + url.search + url.hash;
     }
   }
