@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-07-17 00:28 (Asia/Jakarta)
+Last updated: 2026-07-17 12:24 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -20,6 +20,10 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/STATE_TRANSITION_AUDIT.md`: cross-system audit tracker for auth, OAuth, dashboard actions, OCR, Premium, outreach, claims, publishing, and migration state transitions.
 - `docs/architecture/R2_D1_MIGRATION_RUNBOOK.md`: replayable checklist for one-time moves of large D1 payloads into R2 with verification and cleanup.
 - `docs/data/FRANCHISE_FIELD_DICTIONARY.md`: canonical labels, aliases, proof rules, and no-infer notes for ambiguous franchise listing fields.
+- `docs/product/SCOPE_TRIAGE.md`: P0/P1/P2 triage format for compound product requests.
+- `docs/ux/UI_REFERENCE_MAP.md`: visual reference map for public, directory, profile, dashboard, and review surfaces.
+- `docs/seo/TOPICAL_AUTHORITY_AND_DIRECTORY_SEO_PLAN.md`: SEO/topical-authority plan for `/peluang-usaha`, category pages, personas, and content clusters.
+- `docs/seo/CATEGORY_CONTENT_BACKLOG.md`: P2 editorial tracker with canonical category decisions, article ideas, intent, funnel stage, status, CTA, and evidence guardrails.
 - `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: listing detail page compactness, claim CTA, and Cloudflare Pages Function request-limit tracker.
@@ -63,6 +67,14 @@ This repository previously accumulated many root-level Markdown files. Going for
 ## UX And Conversion
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: readiness verdict, code-path evidence, visual critique, and implementation tracker for the homepage, free member, `/profil`, and Premium funnel.
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: official Cloudflare limit references, likely public Function request drivers, implemented throttling, and listing detail UX improvement tracker.
+- `docs/ux/UI_REFERENCE_MAP.md`: preferred UI references and page-job guardrails before styling public or internal surfaces.
+
+## SEO And Content Strategy
+- `docs/seo/TOPICAL_AUTHORITY_AND_DIRECTORY_SEO_PLAN.md`: user-first SEO plan for franchise buyers, franchisors, `/peluang-usaha`, category URLs, directory cards, and topical authority clusters.
+- `docs/seo/CATEGORY_CONTENT_BACKLOG.md`: category-by-category article brainstorming and editorial status tracker.
+
+## Product Workflow
+- `docs/product/SCOPE_TRIAGE.md`: P0/P1/P2 session triage template for broad requests that mix product, UI, backend, SEO, migration, and docs.
 
 ## Compatibility Pointer Files
 `GEMINI.md`, `KNOWLEDGE.md`, `QWEN.md`, and `PRD.md` may remain as compatibility entry points for other tools or older workflows. Do not let them become independent sources of truth. They should point back to the canonical files above when project direction changes.

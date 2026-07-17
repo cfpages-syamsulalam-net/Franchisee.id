@@ -1,6 +1,6 @@
 # AGENTS.md - Working Rules
 
-Last updated: 2026-07-16 19:42 (Asia/Jakarta)
+Last updated: 2026-07-17 12:24 (Asia/Jakarta)
 
 ## Persistent Rules
 - Every file create/update/delete in this repository must be recorded in `CHANGELOG.md` in the same work session.
@@ -34,15 +34,15 @@ Last updated: 2026-07-16 19:42 (Asia/Jakarta)
 - `SYAMSULALAM.md` is a project-work calibration note, not a personal profile. Use it to anticipate the user's preferred product/engineering standards for this repository, while treating direct user instructions and `AGENTS.md` as authoritative.
 - When the user gives a short or broad product request, infer a compact acceptance contract before implementing: goal, primary user, must show, must not show, failure/blocked state, and done condition. Do not stop to ask unless a wrong assumption would be risky; state the inferred contract briefly when it affects scope or UX.
 - Pair the acceptance contract with an edge-case contract for the touched flow. If the request is short, infer the likely edge cases from adjacent code and prior incidents; do not wait for the user to enumerate callback expiry, stale permissions, storage limits, duplicate actions, or old data shapes.
-- Protect scope actively. When a request combines product policy, UI, backend, data migration, and docs, mentally classify work as `P0` must ship now, `P1` same-session low-risk related work, and `P2` backlog. Implement `P0` and appropriate `P1`; put `P2` into `SUGGESTION.md` instead of letting the task sprawl.
+- Protect scope actively. When a request combines product policy, UI, backend, data migration, SEO, and docs, classify work with `docs/product/SCOPE_TRIAGE.md`: `P0` must ship now, `P1` same-session low-risk related work, and `P2` documented backlog. Implement `P0` and appropriate `P1`; record `P2` in the relevant tracker or `SUGGESTION.md` instead of letting the task sprawl.
 - Treat direct critical feedback as clarified acceptance criteria, not merely a complaint. If the feedback reveals a repeatable failure mode, update `AGENTS.md`, `SUGGESTION.md`, or the relevant tracker so the same mistake is less likely to recur.
 - For admin/staff workflows, optimize for operational usefulness: what to do next, why it matters, who owns it, proof/evidence, granular action controls, status/metrics, and recovery instructions. Do not treat internal tools as secondary UI.
 - For OCR, enrichment, and franchise canonical data, default to trust-first behavior. Every proposed canonical value should have visible source basis when reviewed; ambiguous business terms need canonical definitions and accepted synonyms; do not infer totals or convert source text into facts unless the source or an explicit formula supports it.
-- For public or legal/compliance pages, pick the closest existing Franchisee.id visual pattern before styling. New pages should look like part of the same site, include reachable navigation/footer links when appropriate, and avoid detached one-off page shells unless explicitly requested.
+- For public, legal/compliance, directory, profile, or dashboard UI work, pick the closest existing Franchisee.id visual pattern from `docs/ux/UI_REFERENCE_MAP.md` before styling. New pages should look like part of the same site, include reachable navigation/footer links when appropriate, and avoid detached one-off page shells unless explicitly requested.
 - When adding assistant-owned suggestions, compensate for the user's likely blind spots: add concrete acceptance criteria, data-definition work, proof requirements, UI-reference guidance, or scope-control steps instead of vague "improve UX" notes.
 
 ## Current Stack Direction
-- Astro static routes are the target for public SEO pages. `/peluang-usaha/` is the canonical directory route with query-param states for recommendation, popularity, alphabetical sorting, and category filtering; `/peluang-usaha/[slug]` is the canonical detail route.
+- Astro static routes are the target for public SEO pages. `/peluang-usaha/` is the canonical directory hub with query-param states for temporary recommendation, popularity, alphabetical sorting, search, and mixed filters; `/peluang-usaha/kategori/[slug]` is the canonical indexable category landing route; `/peluang-usaha/[slug]` is the canonical detail route.
 - Cloudflare D1 `franchise_db` is the shared source of truth across Franchisee.id, Franchisor.id, Franchise.id, Waralaba.id, Franchise.co.id, Waralaba.co.id, and future owned network sites.
 - Cloudflare R2 is the target for franchise media and proposal assets.
 - Clerk handles login/register and identity; D1 authorizes roles and permissions.
@@ -81,7 +81,7 @@ Last updated: 2026-07-16 19:42 (Asia/Jakarta)
 - Public franchise listing/detail pages must be generated from D1 for SEO.
 - Current bridge: `scripts/build-d1-franchise-pages.ts` queries D1, renders legacy template HTML, writes `json/d1-franchise-static-data.json`, updates `json/d1-generated-pages-manifest.json`, and refreshes `json/unclaimed-brands.json`.
 - Astro target: `src/pages/peluang-usaha/index.astro` and `src/pages/peluang-usaha/[slug].astro` consume the D1 snapshot through `src/lib/franchise-static.ts` and generate static HTML during `pnpm run build:astro`.
-- Directory permalink policy: `/peluang-usaha` owns directory/search/filter states. Legacy `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/kategori/*`, `/category/*`, and known top-level category aliases redirect to `/peluang-usaha` with `sort`, `view`, or `kategori` query params. Do not add new duplicate indexable archive routes for the same directory data.
+- Directory permalink policy: `/peluang-usaha` owns general directory/search/sort/mixed-filter states. Category discovery that is meant to be indexable must use `/peluang-usaha/kategori/[slug]`, not `/peluang-usaha?kategori=...`. Legacy `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/kategori/*`, `/category/*`, and known top-level category aliases should redirect to the closest canonical `/peluang-usaha`, `/peluang-usaha/kategori/`, or `/peluang-usaha/kategori/[slug]` route instead of creating duplicate indexable archives.
 - Dashboard route policy: `/dashboard` is the Franchisee.id admin/staff operations surface and internal login surface. It is static HTML that shows a login-only Clerk form for unauthenticated users, keeps operational panels hidden until authorization succeeds, and loads protected data from `/dashboard-data`; server-side access requires D1 role `staff` or elevated `admin`. Staff edit suggestions use guided field rows backed by shared editable-field definitions, admin approvals apply field-by-field to D1, and approved public listing/claim changes must enqueue static rebuild requests.
 - Auth UI policy: `/login` and `/register` use custom Clerk forms with existing CSS for public franchisee/franchisor users, including Google sign-in/sign-up. Public Google registration only proves identity and syncs the selected self-assignable D1 role; the user still must complete the relevant profile/listing form before becoming a complete member. `/dashboard` uses the same custom Clerk runtime but only the login panel, with no register tab and no franchisee/franchisor role picker. Login, daftar, and verification panels must remain mutually exclusive; preserve explicit `[hidden]` handling because legacy display rules can otherwise expose inactive panels.
 - Directory list cards must use the CSS-only placeholder from `src/lib/franchise-static.ts` when a franchise has no cover/logo URL. Do not point missing images at legacy WooCommerce placeholder assets unless that asset is restored and intentionally owned.
@@ -114,6 +114,10 @@ Last updated: 2026-07-16 19:42 (Asia/Jakarta)
 - `FORM_SCHEMA.md`: canonical form input inventory.
 - `FORM_PRESERVATION_MANDATE.md`: binding form preservation constraints.
 - `TECHNICAL_INVENTORY.md`: key functions/variables in `/js`, `/functions`, `/scripts`, and `/src`.
+- `docs/product/SCOPE_TRIAGE.md`: P0/P1/P2 triage format for compound product requests.
+- `docs/ux/UI_REFERENCE_MAP.md`: visual reference map for public pages, generated franchise pages, profile, dashboard, and review surfaces.
+- `docs/seo/TOPICAL_AUTHORITY_AND_DIRECTORY_SEO_PLAN.md`: SEO and topical-authority plan for `/peluang-usaha`, category pages, personas, and content clusters.
+- `docs/seo/CATEGORY_CONTENT_BACKLOG.md`: category/article editorial tracker with canonical taxonomy decisions, status, audience, intent, funnel stage, CTA, and evidence guardrails.
 - `docs/forms/*.md`: detailed form behavior, claim flow, validation, autosave, and franchise form UX references.
 - `docs/testing/*.md`: debug/test-data references.
 - `README.md`: currently generated sitemap URL listing; treat as generated artifact.

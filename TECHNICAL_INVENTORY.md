@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-17 00:28 (Asia/Jakarta)
+Last updated: 2026-07-17 12:24 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -545,7 +545,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 - Does not overwrite existing files, so Astro-generated D1 pages remain authoritative.
 - Skips source/control directories such as `src`, `scripts`, `functions`, `docs`, `.github`, `node_modules`, `migrations`, and `dist`.
 - Skips top-level `peluang-usaha`, duplicate directory archives, and known category aliases so legacy pages cannot compete with Astro's flat `/peluang-usaha/[slug].html` output or canonical `/peluang-usaha` directory.
-- Rewrites copied legacy HTML links from `/direktori-franchise`, `/rekomendasi`, `/populer`, `/abjad`, `/kategori`, `/category`, and known top-level category aliases to `/peluang-usaha` query-param URLs.
+- Rewrites copied legacy HTML links from old directory states to `/peluang-usaha` and old category paths/aliases to canonical `/peluang-usaha/kategori/[slug]` URLs.
 - Injects a flush high-contrast black/yellow Franchisee.id Privacy Policy and Terms of Service footer strip into copied legacy HTML when those links are missing, so direct-copy pages remain readable, reviewable, and navigable for normal users.
 - Copies `node_modules/@clerk/clerk-js/dist` into `dist/clerk` so browser auth can load ClerkJS locally before trying CDN fallbacks.
 
@@ -620,14 +620,24 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 *Astro D1 snapshot validator and template renderer.*
 - `FranchiseStaticRowSchema`: Re-export of the shared D1 row schema for rows in `json/d1-franchise-static-data.json`.
 - `loadFranchiseStaticRows()`: Reads and validates the generated D1 snapshot.
-- `renderListingPage(rows, options)`: Renders the existing listing template from snapshot rows with canonical `/peluang-usaha` controls for search, sort, status filtering, category filtering, a benefit-led franchisor CTA, and internal links to modal/category/city/tools pages.
+- `renderListingPage(rows, options)`: Removes the obsolete legacy search/content section, renders one compact search/filter surface before results, keeps temporary `q`/`sort`/`status` state, and places category guidance plus buyer/franchisor CTAs after the compact result grid.
 - Directory cards link to franchise information pages with a neutral `Info Franchise` CTA; unclaimed-specific claim CTAs remain on detail pages.
-- `renderCategoryIndexPage(rows)`: Legacy helper that renders category cards, but canonical category browsing is now `/peluang-usaha?view=kategori` or `/peluang-usaha?kategori=[slug]`.
+- `renderCategoryIndexPage(rows)`: Renders the canonical `/peluang-usaha/kategori/` category-card hub.
 - `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including complementary quick facts, information-section save/compare actions, a promoted H1 detail heading, non-Indonesia brand-origin/target-market facts with flag labels from `src/lib/country-metadata.ts`, connected buyer-intent tabs from `src/lib/franchise-detail-tabs.ts`, dynamic Premium Galeri/Brosur/FAQ entries when the row has premium/media/proposal data, and a post-tabs franchisor CTA for free brand creation plus Premium education.
 - `renderCityIndexPage(rows)` / `renderCityLandingPage(entry, rows)`: Render static city discovery pages from structured D1 location rows with text inference fallback.
 - `applySiteBranding(html)`: Normalizes legacy template public brand text from Franchise.id to Franchisee.id, updates logo alt text, and rewrites old support mailbox references to `email@franchisee.id`.
-- Text normalization, escaping, URL cleanup, generated HTML cleanup, and legacy link canonicalization are delegated to `src/lib/franchise-text.ts`; detail quick facts and the profile summary panel are delegated to `src/lib/franchise-detail-summary.ts`; connected detail tab composition is delegated to `src/lib/franchise-detail-tabs.ts`; Premium detail CTA/media/Brosur/FAQ rendering is delegated to `src/lib/franchise-premium-detail.ts`; contact parsing/rendering is delegated to `src/lib/franchise-contact.ts`; directory ranking is delegated to `src/lib/franchise-ranking.ts`; category route helpers are delegated to `src/lib/franchise-category.ts`; city route helpers are delegated to `src/lib/franchise-city.ts` and `src/lib/franchise-location-normalization.ts`.
-- Remaining local helper functions focus on template composition: JSON-LD serialization, owner CTAs, cards, breadcrumbs, disclaimers, sticky claim CTA, listing status badges/tooltips, card fact chips, `generateStatusBadge()`, `generateFactChips()`, `generateBreadcrumbJsonLd()`, and `applyDetailEnhancements()` metadata/breadcrumb cleanup.
+- Directory route/page types and document metadata/schema/template/editorial rendering are delegated to `src/lib/franchise-directory-types.ts` and `src/lib/franchise-directory-document.ts`; typed category copy profiles live in `src/lib/franchise-category-content.ts`.
+- Remaining local helper functions focus on template composition: owner CTAs, cards, controls, breadcrumbs, disclaimers, listing status badges/tooltips, card fact chips, detail JSON-LD, and detail enhancement cleanup.
+
+### File: `src/lib/franchise-directory-document.ts` and `src/lib/franchise-directory-types.ts`
+*Generated directory document and route contracts.*
+- `prepareDirectoryTemplate(html)`: Removes the legacy long-copy/search section so only the generated directory search remains primary.
+- `applyDirectoryMeta(html, options, rows)`: Applies title/meta/H1/supporting copy, canonical URL, index/noindex policy, and replaces legacy WordPress Article/admin schema with CollectionPage, ItemList, and BreadcrumbList JSON-LD.
+- `renderCategoryEditorialContent(content)`: Renders category decision points, related category/tool links, and the franchisee registration CTA after results.
+
+### File: `src/lib/franchise-category-content.ts`
+*Typed category landing content profiles.*
+- `getFranchiseCategoryContent(slug, label, count)`: Returns evidence-safe dynamic SEO copy, real count, decision points, related categories, and article/tool links for 13 canonical categories plus fallback content.
 
 ### File: `src/lib/franchise-detail-summary.ts`
 *Shared generated franchise detail summary renderer.*
@@ -658,9 +668,9 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `src/lib/franchise-category.ts`
 *Category route and summary helper for generated directory pages.*
-- `categorySlug(value)` and `canonicalCategoryHref(category)`: Normalize category links into canonical `/peluang-usaha?kategori=...` URLs.
-- `getCategoryRouteEntries(rows)`: Legacy helper for category aliases; do not add new indexable category archive routes without changing the canonical route policy.
-- `getCategorySummaries(rows)`: Aggregates counts and representative rows for category browsing.
+- `categorySlug(row)` and `canonicalCategoryHref(category)`: Normalize category links into canonical `/peluang-usaha/kategori/[slug]` URLs and merge `FnB`/legacy aliases into their canonical destination.
+- `getCategoryRouteEntries(rows)`: Builds canonical category routes plus intentional `jasa-layanan` aggregate hub and carries the indexability flag used for sparse/catch-all noindex behavior.
+- `getCategorySummaries(rows)`: Aggregates canonical counts and rows, including `FnB` under Makanan & Minuman.
 
 ### File: `src/lib/franchise-location-normalization.ts`
 *Shared city/location normalization helper.*
@@ -697,9 +707,11 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 - `extractUrls(value)`: Parses proposal/gallery values from JSON arrays, raw URL lists, HTML `src` attributes, legacy Blogspot/Blogger text, and comma/newline-separated values.
 - Proposal tab output stores image URLs and renders one-page-at-a-time brochure controls with in-image top bar download/status controls plus left/right overlay hit areas.
 
-### File: `src/lib/franchise-static-assets.ts`
-*Generated directory CSS/JS and placeholder helper for D1-backed Astro pages.*
-- `injectDirectoryAssets(html)`: Injects the generated directory CSS plus client-side query-param filtering/sorting script, including owner CTA styling and overflow/z-index overrides so card badge tooltips render above card parents and neighboring elements.
+### File: `src/lib/franchise-static-assets.ts` and `src/lib/franchise-directory-*.ts`
+*Generated directory asset facade and focused modules.*
+- `injectDirectoryAssets(html)`: Injects base compact directory CSS, category-content CSS, and browser behavior from focused modules while keeping idempotent style/script markers.
+- `FRANCHISE_DIRECTORY_CLIENT`: Initializes the current category from the path, navigates category changes to canonical static routes, preserves only temporary search/sort/status query state, applies sorting/filtering, and renders an actionable empty state.
+- `FRANCHISE_DIRECTORY_STYLES` / `FRANCHISE_DIRECTORY_CONTENT_STYLES`: Define compact stable card/media/control dimensions plus responsive category guidance and buyer/owner CTA presentation.
 - `generateCssPlaceholder(label, className)`: Renders the CSS-only missing-logo placeholder used by directory cards, category cards, and detail pages.
 - Re-exports `injectDetailAssets(html)` from `src/lib/franchise-detail-assets.ts` so existing imports remain stable.
 - Extracted from `src/lib/franchise-static.ts` on 2026-06-22, then split again on 2026-07-03 so directory and detail generated assets can evolve independently.
@@ -724,6 +736,10 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 *Focused generated-detail asset regression check.*
 - `pnpm run detail-assets:check`: Verifies `injectDetailAssets()` is idempotent and injects the expected detail CSS/JS hooks for tabs, side-specific proposal overlay/download/navigation, contact floats, compare actions, and WordPress-runtime cleanup.
 
+### File: `scripts/check-franchise-directory.ts`
+*Focused generated-directory/category regression check.*
+- `pnpm run directory:check`: Verifies primary search count, result/CTA order, canonical alias routing, unique category titles, sparse-category noindex, CollectionPage schema, actual count copy, canonical filter behavior, directory asset injection, and copied-legacy link policy.
+
 ### File: `scripts/check-dashboard-ocr-client.mjs`
 *Focused dashboard OCR browser-module regression check.*
 - `pnpm run dashboard:ocr:check`: Runs `node --check` on the browser/non-module OCR client modules plus the shared dashboard utility/review modules touched by OCR Review, and asserts provider/state/worker renderer modules, provider toggle, retry actions, job filter/pagination, grouped OCR enrichment queue/review-subtab wiring, shared pill action helpers, hover image-preview wiring, and no-active-provider disabled-state wiring remain present.
@@ -747,7 +763,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 *Astro static listing page.*
 - `prerender = true`.
 - Loads rows with `loadFranchiseStaticRows()`.
-- Outputs full listing HTML with `renderListingPage(rows)`, including client-side query-param controls for `q`, `sort`, `kategori`, and `status`, a free-brand/Premium franchisor CTA, plus quick links to static category/modal pages, buyer tools, and comparison.
+- Outputs full listing HTML with `renderListingPage(rows)`, including one primary search, compact controls/cards, canonical category navigation, temporary query state for `q`/`sort`/`status`, and post-result buyer/owner conversion paths.
 
 ### File: `src/pages/peluang-usaha/[slug].astro`
 *Astro static franchise detail pages with flat `.html` output under `build.format: "preserve"`.*
@@ -762,8 +778,8 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `src/pages/peluang-usaha/kategori/[slug].astro`
 *Astro static category landing pages.*
-- `getStaticPaths()`: Builds one page per populated category/alias from the D1 snapshot.
-- Outputs filtered listing pages with category intro copy, SEO metadata, and standard directory controls.
+- `getStaticPaths()`: Builds canonical populated category pages plus the intentional `jasa-layanan` aggregate; legacy aliases do not generate duplicate pages.
+- Outputs filtered listings with actual counts, category-specific metadata/decision content, related links, CollectionPage schema, and `noindex, follow` for sparse or catch-all categories.
 
 ### File: `src/pages/peluang-usaha/modal/index.astro`
 *Astro static capital-range index page.*
@@ -857,7 +873,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 *Cloudflare Pages redirects.*
 - Redirects legacy duplicate directory URLs to canonical `/peluang-usaha` states:
   `/direktori-franchise`, `/rekomendasi`, `/populer`, and `/abjad`.
-- Redirects legacy category URLs and known top-level category aliases to static `/peluang-usaha/kategori/[slug]` landing pages.
+- Redirects legacy category URLs and known top-level aliases, including `fnb`, F&B, travel, property, and technology variants, to their consolidated canonical `/peluang-usaha/kategori/[slug]` landing pages.
 - Prevents duplicate generated directory/category permalink families while preserving old external links.
 
 ## 3. Directory: `/functions` (Cloudflare Edge Logic)

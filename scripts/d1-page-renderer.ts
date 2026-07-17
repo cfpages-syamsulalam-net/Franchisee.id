@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { generateDetailQuickFacts } from "../src/lib/franchise-detail-summary";
 import { generateDetailTabEntries, renderDetailTabsShell } from "../src/lib/franchise-detail-tabs";
 import { replaceLegacyFloatingContacts } from "../src/lib/franchise-contact";
+import { canonicalCategoryHref } from "../src/lib/franchise-category";
 import { generatePremiumLeadPanel } from "../src/lib/franchise-premium-detail";
 import { injectDetailAssets } from "../src/lib/franchise-static-assets";
 import type { D1FranchiseRow } from "../src/lib/shared-schemas";
@@ -139,7 +140,7 @@ function generateCard(row: D1FranchiseRow, index: number) {
                     </div>
                     <div class="ue-meta-data">
                         <span class="ue-grid-item-category">
-                            <a href="/peluang-usaha?kategori=${escapeAttr(slugify(category))}">${escapeHtml(category)}</a>
+                            <a href="${escapeAttr(canonicalCategoryHref(category))}">${escapeHtml(category)}</a>
                         </span>
                         <span style="font-size:11px; color:#666; display:block; width:100%; margin-top:5px;">
                             Modal: <b>${escapeHtml(modal)}</b>
@@ -179,7 +180,7 @@ function generateBreadcrumbs(row: D1FranchiseRow) {
             <ul class="trail-items">
                 <li class="trail-item"><a href="/">Home</a></li>
                 <li class="trail-item"><a href="/peluang-usaha">Peluang Usaha</a></li>
-                <li class="trail-item"><a href="/peluang-usaha?kategori=${escapeAttr(slugify(category))}">${escapeHtml(category)}</a></li>
+                <li class="trail-item"><a href="${escapeAttr(canonicalCategoryHref(category))}">${escapeHtml(category)}</a></li>
                 <li class="trail-item"><span>${escapeHtml(row.brand_name)}</span></li>
             </ul>
         </div>
@@ -368,8 +369,10 @@ function canonicalizeLegacyLinks(html: string) {
     .replace(/\bhref=(["'])\/rekomendasi\/?\1/g, "href=$1/peluang-usaha?sort=rekomendasi$1")
     .replace(/\bhref=(["'])\/populer\/?\1/g, "href=$1/peluang-usaha?sort=populer$1")
     .replace(/\bhref=(["'])\/abjad\/?\1/g, "href=$1/peluang-usaha?sort=abjad$1")
-    .replace(/\bhref=(["'])\/kategori\/?\1/g, "href=$1/peluang-usaha?view=kategori$1")
-    .replace(/\bhref=(["'])\/category\/?\1/g, "href=$1/peluang-usaha?view=kategori$1")
-    .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha?kategori=$2$1")
-    .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha?kategori=$2$1");
+    .replace(/\bhref=(["'])\/kategori\/?\1/g, "href=$1/peluang-usaha/kategori/$1")
+    .replace(/\bhref=(["'])\/category\/?\1/g, "href=$1/peluang-usaha/kategori/$1")
+    .replace(
+      /\bhref=(["'])\/(?:kategori|category)\/([^"'#?]+)\/?\1/g,
+      (_match, quote: string, slug: string) => `href=${quote}${canonicalCategoryHref(slug)}${quote}`,
+    );
 }

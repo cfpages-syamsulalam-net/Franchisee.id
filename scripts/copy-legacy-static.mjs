@@ -60,27 +60,27 @@ const CANONICAL_ROUTE_MAP = new Map([
   ["/rekomendasi", "/peluang-usaha?sort=rekomendasi"],
   ["/populer", "/peluang-usaha?sort=populer"],
   ["/abjad", "/peluang-usaha?sort=abjad"],
-  ["/kategori", "/peluang-usaha?view=kategori"],
-  ["/category", "/peluang-usaha?view=kategori"],
-  ["/anak-balita", "/peluang-usaha?kategori=anak-balita"],
-  ["/bisnis-jasa", "/peluang-usaha?kategori=bisnis-jasa"],
-  ["/fnb", "/peluang-usaha?kategori=fnb"],
-  ["/furnitur-konstruksi-properti", "/peluang-usaha?kategori=furnitur-konstruksi-properti"],
-  ["/hiburan-hobi", "/peluang-usaha?kategori=hiburan-hobi"],
-  ["/jasa-layanan", "/peluang-usaha?kategori=jasa-layanan"],
-  ["/kesehatan-kecantikan", "/peluang-usaha?kategori=kesehatan-kecantikan"],
-  ["/komputer-teknologi", "/peluang-usaha?kategori=komputer-teknologi"],
-  ["/lainnya", "/peluang-usaha?kategori=lainnya"],
-  ["/laundry-jasa-kebersihan", "/peluang-usaha?kategori=laundry-jasa-kebersihan"],
-  ["/makanan-minuman", "/peluang-usaha?kategori=makanan-minuman"],
-  ["/makanan-minuman-fb", "/peluang-usaha?kategori=makanan-minuman-fb"],
-  ["/otomotif", "/peluang-usaha?kategori=otomotif"],
-  ["/pendidikan-kursus-pelatihan", "/peluang-usaha?kategori=pendidikan-kursus-pelatihan"],
-  ["/penginapan-agen-travel", "/peluang-usaha?kategori=penginapan-agen-travel"],
-  ["/perhotelan-travel", "/peluang-usaha?kategori=perhotelan-travel"],
-  ["/properti-furniture", "/peluang-usaha?kategori=properti-furniture"],
-  ["/retail-minimarket", "/peluang-usaha?kategori=retail-minimarket"],
-  ["/teknologi-digital", "/peluang-usaha?kategori=teknologi-digital"],
+  ["/kategori", "/peluang-usaha/kategori/"],
+  ["/category", "/peluang-usaha/kategori/"],
+  ["/anak-balita", "/peluang-usaha/kategori/anak-balita"],
+  ["/bisnis-jasa", "/peluang-usaha/kategori/bisnis-jasa"],
+  ["/fnb", "/peluang-usaha/kategori/makanan-minuman"],
+  ["/furnitur-konstruksi-properti", "/peluang-usaha/kategori/furnitur-konstruksi-properti"],
+  ["/hiburan-hobi", "/peluang-usaha/kategori/hiburan-hobi"],
+  ["/jasa-layanan", "/peluang-usaha/kategori/jasa-layanan"],
+  ["/kesehatan-kecantikan", "/peluang-usaha/kategori/kesehatan-kecantikan"],
+  ["/komputer-teknologi", "/peluang-usaha/kategori/komputer-teknologi"],
+  ["/lainnya", "/peluang-usaha/kategori/lainnya"],
+  ["/laundry-jasa-kebersihan", "/peluang-usaha/kategori/laundry-jasa-kebersihan"],
+  ["/makanan-minuman", "/peluang-usaha/kategori/makanan-minuman"],
+  ["/makanan-minuman-fb", "/peluang-usaha/kategori/makanan-minuman"],
+  ["/otomotif", "/peluang-usaha/kategori/otomotif"],
+  ["/pendidikan-kursus-pelatihan", "/peluang-usaha/kategori/pendidikan-kursus-pelatihan"],
+  ["/penginapan-agen-travel", "/peluang-usaha/kategori/penginapan-agen-travel"],
+  ["/perhotelan-travel", "/peluang-usaha/kategori/penginapan-agen-travel"],
+  ["/properti-furniture", "/peluang-usaha/kategori/furnitur-konstruksi-properti"],
+  ["/retail-minimarket", "/peluang-usaha/kategori/retail-minimarket"],
+  ["/teknologi-digital", "/peluang-usaha/kategori/komputer-teknologi"],
 ]);
 
 const ROOT_FILE_NAMES = new Set(["robots.txt", "sitemap.xml", "sitemap_index.xml", "sitemap-complete.xml", "main-sitemap.xsl"]);
@@ -228,7 +228,17 @@ function mapCanonicalHref(path) {
   if (CANONICAL_ROUTE_MAP.has(path)) return CANONICAL_ROUTE_MAP.get(path);
 
   const categoryMatch = path.match(/^\/(?:kategori|category)\/([^/]+)$/);
-  if (categoryMatch) return `/peluang-usaha?kategori=${encodeURIComponent(categoryMatch[1])}`;
+  if (categoryMatch) {
+    const aliases = new Map([
+      ["fnb", "makanan-minuman"],
+      ["makanan-minuman-fb", "makanan-minuman"],
+      ["perhotelan-travel", "penginapan-agen-travel"],
+      ["properti-furniture", "furnitur-konstruksi-properti"],
+      ["teknologi-digital", "komputer-teknologi"],
+    ]);
+    const slug = aliases.get(categoryMatch[1]) || categoryMatch[1];
+    return `/peluang-usaha/kategori/${encodeURIComponent(slug)}`;
+  }
 
   return "";
 }

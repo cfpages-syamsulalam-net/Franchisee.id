@@ -3,6 +3,9 @@ import { join, resolve } from "node:path";
 import { z } from "zod";
 import { capitalIndexCopy, capitalLandingCopy, getCapitalRouteEntries, getCapitalSummaries } from "./franchise-capital";
 import { canonicalCategoryHref, categorySlug, getCategoryRouteEntries, getCategorySummaries } from "./franchise-category";
+import { getFranchiseCategoryContent } from "./franchise-category-content";
+import { applyDirectoryMeta, prepareDirectoryTemplate, renderCategoryEditorialContent } from "./franchise-directory-document";
+import type { CategoryRouteEntry, DirectoryPageOptions } from "./franchise-directory-types";
 import { cityIndexCopy, cityLandingCopy, getCityRouteEntries, getCitySummaries, type CityRouteEntry } from "./franchise-city";
 import { generateContactBlock, replaceLegacyFloatingContacts } from "./franchise-contact";
 import { countryDisplay, normalizeCountryName } from "./country-metadata";
@@ -29,6 +32,7 @@ import {
 import { D1FranchiseRowSchema } from "./shared-schemas";
 export { slugify } from "./franchise-text";
 export { getAlphabeticalRows, getCapitalRouteEntries, getCategoryRouteEntries, getCityRouteEntries, getPopularRows, getRecommendedRows };
+export type { CategoryRouteEntry, DirectoryPageOptions } from "./franchise-directory-types";
 
 const ROOT_DIR = resolve(process.cwd());
 const DETAIL_TEMPLATE_PATH = join(ROOT_DIR, "templates", "detail-franchise-tpl.html");
@@ -41,53 +45,50 @@ export const FranchiseStaticRowSchema = D1FranchiseRowSchema;
 
 export type FranchiseStaticRow = z.infer<typeof FranchiseStaticRowSchema>;
 
-export interface DirectoryPageOptions {
-  title: string;
-  description: string;
-  canonicalPath: string;
-  rows?: FranchiseStaticRow[];
-  introHtml?: string;
-}
-
-export interface CategoryRouteEntry {
-  slug: string;
-  label: string;
-  rows: FranchiseStaticRow[];
-  canonicalPath: string;
-}
-
 export function loadFranchiseStaticRows() {
   const parsed = JSON.parse(readFileSync(STATIC_DATA_PATH, "utf8"));
   return z.array(FranchiseStaticRowSchema).parse(parsed);
 }
 
 export function renderListingPage(rows: FranchiseStaticRow[], options?: DirectoryPageOptions) {
-  const template = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
-  const sortedRows = options?.rows || [...rows].sort(compareFranchises);
+  const pageOptions = options || {
+    title: "Cari Franchise dan Peluang Usaha",
+    description: `Temukan dan bandingkan ${rows.length} peluang franchise berdasarkan kategori, modal, status, dan kebutuhan operasional Anda.`,
+    canonicalPath: "/peluang-usaha",
+  };
+  const template = prepareDirectoryTemplate(readFileSync(LISTING_TEMPLATE_PATH, "utf8"));
+  const sortedRows = pageOptions.rows || [...rows].sort(compareFranchises);
   const cards = sortedRows.map((row, index) => generateCard(row, index + 1)).join("");
   const html = template
     .replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)
     .replace(
       '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
-      `${generateDirectoryIntro(options)}${generateDirectoryControls(rows)}${generateFranchisorDirectoryCta()}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
-    );
-  return normalizeGeneratedHtml(applySiteBranding(injectDirectoryAssets(applyCanonicalLegacyLinks(applyDirectoryMeta(html, options)))));
+      `${generateDirectoryControls(rows, pageOptions)}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+    )
+    .replace("<!-- end Post Grid -->", `<!-- end Post Grid -->${generateDirectoryIntro(pageOptions)}${generateFranchisorDirectoryCta()}`);
+  return normalizeGeneratedHtml(
+    applySiteBranding(injectDirectoryAssets(applyCanonicalLegacyLinks(applyDirectoryMeta(html, pageOptions, sortedRows)))),
+  );
 }
 
 export function renderCategoryIndexPage(rows: FranchiseStaticRow[]) {
-  const template = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
+  const template = prepareDirectoryTemplate(readFileSync(LISTING_TEMPLATE_PATH, "utf8"));
   const summaries = getCategorySummaries(rows);
   const cards = summaries.map((summary, index) => generateCategoryCard(summary, index + 1)).join("");
   const html = template
     .replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)
     .replace(
       '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
-      `${generateDirectoryIntro({
+      `<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+    )
+    .replace(
+      "<!-- end Post Grid -->",
+      `<!-- end Post Grid -->${generateDirectoryIntro({
         title: "Kategori Franchise",
         description: "Jelajahi peluang franchise berdasarkan kategori bisnis, mulai dari makanan minuman, pendidikan, jasa, retail, otomotif, hingga kesehatan.",
         canonicalPath: "/peluang-usaha/kategori/",
         introHtml: "<p>Pilih kategori bisnis untuk melihat listing yang lebih relevan dengan minat, pengalaman, dan target lokasi Anda.</p>",
-      })}${generateFranchisorDirectoryCta()}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+      })}${generateFranchisorDirectoryCta()}`,
     );
   return normalizeGeneratedHtml(
     applySiteBranding(injectDirectoryAssets(
@@ -95,39 +96,41 @@ export function renderCategoryIndexPage(rows: FranchiseStaticRow[]) {
         title: "Kategori Franchise",
         description: "Jelajahi peluang franchise berdasarkan kategori bisnis, mulai dari makanan minuman, pendidikan, jasa, retail, otomotif, hingga kesehatan.",
         canonicalPath: "/peluang-usaha/kategori/",
-      })),
+      }, [])),
     )),
   );
 }
 
 export function renderCategoryLandingPage(entry: CategoryRouteEntry, allRows: FranchiseStaticRow[]) {
-  const label = normalizeText(entry.label) || "Bisnis Umum";
-  const introHtml = [
-    `<p>Temukan ${escapeHtml(entry.rows.length)} peluang franchise kategori ${escapeHtml(label)}. Gunakan filter modal, status, dan pencarian brand agar pilihan lebih cepat mengerucut.</p>`,
-    "<p>Daftar ini diperbarui berkala agar calon mitra bisa melihat pilihan yang lebih relevan dan pemilik brand punya ruang tampil yang lebih rapi.</p>",
-  ].join("");
+  const content = getFranchiseCategoryContent(entry.slug, entry.label, entry.rows.length);
   return renderListingPage(allRows, {
-    title: `Franchise ${label}`,
-    description: `Cari peluang franchise kategori ${label}. Bandingkan modal, BEP, status listing, dan detail brand sebelum menghubungi franchisor.`,
+    title: content.seoTitle,
+    description: content.metaDescription,
     canonicalPath: entry.canonicalPath,
     rows: entry.rows,
-    introHtml,
+    introHtml: renderCategoryEditorialContent(content),
+    subheading: content.subheading,
+    indexable: entry.indexable,
   });
 }
 
 export function renderCapitalIndexPage(rows: FranchiseStaticRow[]) {
-  const template = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
+  const template = prepareDirectoryTemplate(readFileSync(LISTING_TEMPLATE_PATH, "utf8"));
   const cards = getCapitalSummaries(rows).map((summary, index) => generateCapitalCard(summary, index + 1)).join("");
   const html = template
     .replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)
     .replace(
       '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
-      `${generateDirectoryIntro({
+      `<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+    )
+    .replace(
+      "<!-- end Post Grid -->",
+      `<!-- end Post Grid -->${generateDirectoryIntro({
         title: "Franchise Berdasarkan Modal",
         description: "Pilih peluang franchise berdasarkan kisaran modal investasi agar pencarian lebih sesuai budget.",
         canonicalPath: "/peluang-usaha/modal/",
         introHtml: capitalIndexCopy(rows),
-      })}${generateFranchisorDirectoryCta()}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+      })}${generateFranchisorDirectoryCta()}`,
     );
   return normalizeGeneratedHtml(
     applySiteBranding(injectDirectoryAssets(
@@ -135,7 +138,7 @@ export function renderCapitalIndexPage(rows: FranchiseStaticRow[]) {
         title: "Franchise Berdasarkan Modal",
         description: "Pilih peluang franchise berdasarkan kisaran modal investasi agar pencarian lebih sesuai budget.",
         canonicalPath: "/peluang-usaha/modal/",
-      })),
+      }, [])),
     )),
   );
 }
@@ -151,18 +154,22 @@ export function renderCapitalLandingPage(entry: ReturnType<typeof getCapitalRout
 }
 
 export function renderCityIndexPage(rows: FranchiseStaticRow[]) {
-  const template = readFileSync(LISTING_TEMPLATE_PATH, "utf8");
+  const template = prepareDirectoryTemplate(readFileSync(LISTING_TEMPLATE_PATH, "utf8"));
   const cards = getCitySummaries(rows).map((summary, index) => generateCityCard(summary, index + 1)).join("");
   const html = template
     .replace("<!-- DYNAMIC_FRANCHISE_LISTING -->", cards)
     .replace(
       '<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">',
-      `${generateDirectoryIntro({
+      `<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+    )
+    .replace(
+      "<!-- end Post Grid -->",
+      `<!-- end Post Grid -->${generateDirectoryIntro({
         title: "Franchise Berdasarkan Kota",
         description: "Temukan peluang franchise berdasarkan data kota, kantor, outlet, atau ekspansi yang tersedia di listing.",
         canonicalPath: "/peluang-usaha/kota/",
         introHtml: cityIndexCopy(rows),
-      })}${generateFranchisorDirectoryCta()}<div class="uc_post_grid_style_one " id="uc_post_grid_elementor_d0f4a5f">`,
+      })}${generateFranchisorDirectoryCta()}`,
     );
   return normalizeGeneratedHtml(
     applySiteBranding(injectDirectoryAssets(
@@ -170,7 +177,7 @@ export function renderCityIndexPage(rows: FranchiseStaticRow[]) {
         title: "Franchise Berdasarkan Kota",
         description: "Temukan peluang franchise berdasarkan data kota, kantor, outlet, atau ekspansi yang tersedia di listing.",
         canonicalPath: "/peluang-usaha/kota/",
-      })),
+      }, [])),
     )),
   );
 }
@@ -417,9 +424,9 @@ function generateFranchisorDirectoryCta() {
   return `
     <section class="fr-owner-cta fr-owner-cta--directory" aria-label="Untuk pemilik brand franchise">
       <div class="fr-owner-cta__content">
-        <span class="fr-owner-cta__eyebrow">Punya brand franchise?</span>
-        <h2>Tampilkan brand gratis, lalu tingkatkan saat siap menarik calon mitra.</h2>
-        <p>Buat halaman brand agar orang lebih mudah memahami peluang Anda. Setelah data rapi, Premium membantu brand tampil lebih meyakinkan.</p>
+        <span class="fr-owner-cta__eyebrow">Untuk pemilik brand</span>
+        <h2>Punya peluang usaha franchise? Tampilkan brand franchise Anda gratis di Franchisee.id.</h2>
+        <p>Lengkapi profil brand agar calon mitra dapat memahami penawaran, modal, dukungan, dan cara menghubungi tim Anda.</p>
       </div>
       <div class="fr-owner-cta__actions">
         <a class="fr-owner-cta__primary" href="/login/?mode=register&amp;role=franchisor&amp;next=%2Fdaftar%2F%3Frole%3Dfranchisor%26continue%3D1">Tampilkan Brand Gratis</a>
@@ -458,14 +465,14 @@ function generateSaveOpportunityButton(row: FranchiseStaticRow, variant: "card" 
     </span>`;
 }
 
-function generateDirectoryControls(rows: FranchiseStaticRow[]) {
+function generateDirectoryControls(rows: FranchiseStaticRow[], options: DirectoryPageOptions) {
   const categories = getCategorySummaries(rows);
   const categoryOptions = categories
     .map((summary) => `<option value="${escapeAttr(summary.slug)}">${escapeHtml(summary.label)} (${escapeHtml(summary.count)})</option>`)
     .join("");
 
   return `
-    <form class="franchise-directory-controls" id="franchise-directory-controls" action="/peluang-usaha" method="get" data-directory-controls>
+    <form class="franchise-directory-controls" id="franchise-directory-controls" action="${escapeAttr(options.canonicalPath)}" method="get" data-directory-controls data-directory-path="${escapeAttr(options.canonicalPath)}">
       <div class="franchise-directory-control-row">
         <label class="franchise-directory-search">
           <span>Cari franchise</span>
@@ -501,7 +508,7 @@ function generateDirectoryControls(rows: FranchiseStaticRow[]) {
         </label>
         <div class="franchise-directory-actions">
           <button type="submit">Terapkan</button>
-          <a href="/peluang-usaha">Reset</a>
+          <a href="${escapeAttr(options.canonicalPath)}" data-directory-reset>Reset</a>
         </div>
       </div>
       <div class="franchise-directory-quicklinks" aria-label="Tampilan cepat">
@@ -673,22 +680,6 @@ function generateTabs(
             ${generatePremiumLeadPanel(row)}
             ${renderDetailTabsShell(tabEntries)}
             ${generateFranchisorDetailCta()}`;
-}
-
-function applyDirectoryMeta(html: string, options?: DirectoryPageOptions) {
-  if (!options) return html;
-  const title = `${options.title} - Franchisee.id`;
-  return html
-    .replace(/<title>.*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
-    .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${escapeAttr(options.description)}">`)
-    .replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${escapeAttr(options.canonicalPath)}">`)
-    .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${escapeAttr(title)}">`)
-    .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${escapeAttr(options.description)}">`)
-    .replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${escapeAttr(options.canonicalPath)}">`)
-    .replace(/<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${escapeAttr(title)}">`)
-    .replace(/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${escapeAttr(options.description)}">`)
-    .replace(/<h1 class="elementor-heading-title elementor-size-default">.*?<\/h1>/, `<h1 class="elementor-heading-title elementor-size-default">${escapeHtml(options.title)}</h1>`)
-    .replace(/<h2 class="elementor-heading-title elementor-size-default">.*?<\/h2>/, `<h2 class="elementor-heading-title elementor-size-default">${escapeHtml(options.title)}</h2>`);
 }
 
 function applySiteBranding(html: string) {

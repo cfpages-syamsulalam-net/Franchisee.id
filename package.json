@@ -30,6 +30,7 @@
     "state-transitions:check": "tsx scripts/check-state-transitions.ts",
     "proposal-download:check": "tsx scripts/check-proposal-download.ts",
     "detail-assets:check": "tsx scripts/check-franchise-detail-assets.ts",
+    "directory:check": "tsx scripts/check-franchise-directory.ts",
     "ocr:check": "tsx scripts/check-ocr-provider-config.ts",
     "ocr:runner:check": "tsx scripts/check-ocr-job-runner.ts",
     "ocr:enrich:structured": "tsx scripts/enrich-ocr-structured-data.ts",

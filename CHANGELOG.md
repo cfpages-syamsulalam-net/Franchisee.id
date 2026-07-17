@@ -4,6 +4,37 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-17 12:24 (Asia/Jakarta)
+### Added
+- `src/lib/franchise-category-content.ts`: Added typed, evidence-safe SEO/content profiles for 13 canonical franchise categories with dynamic counts, decision points, related categories, tool/article links, and fallback copy.
+- `src/lib/franchise-directory-types.ts` and `src/lib/franchise-directory-document.ts`: Added shared directory route/page contracts, legacy directory cleanup, category editorial rendering, indexability handling, and CollectionPage/ItemList/breadcrumb metadata.
+- `src/lib/franchise-directory-assets.ts`, `src/lib/franchise-directory-styles.ts`, `src/lib/franchise-directory-content-styles.ts`, and `src/lib/franchise-directory-client.ts`: Split compact directory styling and canonical filter behavior into focused generated-asset modules.
+- `scripts/check-franchise-directory.ts` and `package.json`: Added `pnpm run directory:check` for search, layout order, category routing, alias, metadata/schema, noindex, count, asset, and legacy-link regressions.
+- `docs/seo/CATEGORY_CONTENT_BACKLOG.md`: Added the requested P2 category/article brainstorm tracker with 35 ideas, status, audience, intent, funnel stage, CTA, evidence guardrails, taxonomy decisions, and next actions.
+
+### Changed
+- `src/lib/franchise-static.ts`: Removed the duplicate legacy directory search/content section, placed controls before compact results and conversion guidance after results, added direct buyer/franchisor CTAs, generated category-specific content, and delegated document/content responsibilities to focused modules.
+- `src/lib/franchise-category.ts`: Consolidated `FnB` and legacy aliases into canonical category slugs, retained `jasa-layanan` as an intentional aggregate hub, and added sparse/catch-all indexability flags.
+- `src/lib/franchise-static-assets.ts`: Reduced the file to a placeholder/helper compatibility facade that re-exports focused directory/detail injectors.
+- `src/lib/franchise-detail-summary.ts`, `scripts/d1-page-renderer.ts`, `scripts/copy-legacy-static.mjs`, and `public/_redirects`: Replaced query-based category links with canonical static category routes and redirected old aliases to their consolidated destinations across Astro, bridge, copied legacy, and redirect paths.
+- `docs/seo/TOPICAL_AUTHORITY_AND_DIRECTORY_SEO_PLAN.md`: Marked suggestion 111 P1/P2 implementation complete, documented the shipped directory/indexing contract, and linked the editorial backlog.
+- `SUGGESTION.md`: Marked suggestion 111 Done with the implemented UX, SEO, routing, schema, content, and regression-check result.
+- `AGENTS.md`, `docs/README.md`, `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `.context/session-20260717-0028.md`, and `CHANGELOG.md`: Recorded the new modules, canonical category policy, P2 tracker, maintainability status, validation, and session continuity.
+
+### Removed
+- Build-only `dist/` and `.astro/` artifacts after local Astro validation so generated output does not consume repository storage.
+
+## 2026-07-17 10:22 (Asia/Jakarta)
+### Added
+- `docs/ux/UI_REFERENCE_MAP.md`: Added a visual reference map for public pages, generated franchise directory/detail pages, protected profile pages, dashboard tools, and proof/review surfaces.
+- `docs/product/SCOPE_TRIAGE.md`: Added a P0/P1/P2 scope triage template for compound requests that mix product, UI, backend, SEO, migration, operations, and docs.
+- `docs/seo/TOPICAL_AUTHORITY_AND_DIRECTORY_SEO_PLAN.md`: Added the requested `/peluang-usaha` SEO/UX and topical-authority plan, including category URL policy, buyer/franchisor personas, category content requirements, directory-card findings, CTA direction, and implementation backlog.
+
+### Changed
+- `AGENTS.md`: Wired UI work to the new reference map, scope control to the new triage doc, and updated the `/peluang-usaha` permalink policy so indexable category pages use `/peluang-usaha/kategori/[slug]` instead of query-only category filtering.
+- `docs/README.md`, `CODEBASE.md`, and `AUDIT.md`: Linked the new UI, product-triage, and SEO planning docs; refreshed stale state-transition audit summary rows; and recorded the `/peluang-usaha` SEO implementation backlog.
+- `SUGGESTION.md`: Marked suggestions 104 and 105 done, and added suggestion 111 for the future `/peluang-usaha` directory/category SEO implementation.
+
 ## 2026-07-17 00:28 (Asia/Jakarta)
 ### Added
 - `scripts/check-pages-functions-methods.ts` and `package.json`: Added `pnpm run functions:methods:check` to assert protected app write/upload routes return non-empty JSON 405 responses with expected `Allow` headers for unsupported methods.

@@ -1,6 +1,7 @@
 import type { D1FranchiseRow } from "./shared-schemas";
 import { countryDisplay, normalizeCountryName } from "./country-metadata";
 import { generateCssPlaceholder } from "./franchise-static-assets";
+import { canonicalCategoryHref } from "./franchise-category";
 import {
   escapeAttr,
   escapeHtml,
@@ -9,7 +10,6 @@ import {
   normalizeCompanyName,
   normalizeExternalUrl,
   normalizeText,
-  slugify,
   truncate,
 } from "./franchise-text";
 
@@ -39,7 +39,7 @@ export function generateDetailInfoPanel(row: D1FranchiseRow, logoUrl: string, ca
     detailInfoItem("fa-store", "Nama Franchise", brandName),
     detailInfoItem("fa-coins", "Modal Minimal", minimumModal),
     detailInfoItem("fa-tags", "Kategori Franchise", category, {
-      href: `/peluang-usaha?kategori=${slugify(category)}`,
+      href: canonicalCategoryHref(category),
       tooltip:
         "Kelompok usaha brand ini. Klik untuk melihat peluang franchise lain di kategori yang sama.",
     }),
