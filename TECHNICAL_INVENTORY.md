@@ -1,6 +1,6 @@
 # Technical Inventory: Franchise.id Codebase
 
-Last updated: 2026-07-17 12:24 (Asia/Jakarta)
+Last updated: 2026-07-18 02:35 (Asia/Jakarta)
 
 This file records important functions, modules, and key variables across `/js`, `/functions`, `/scripts`, and `/src` to prevent logic loss during rapid development.
 
@@ -668,9 +668,16 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `src/lib/franchise-category.ts`
 *Category route and summary helper for generated directory pages.*
-- `categorySlug(row)` and `canonicalCategoryHref(category)`: Normalize category links into canonical `/peluang-usaha/kategori/[slug]` URLs and merge `FnB`/legacy aliases into their canonical destination.
+- `categorySlug(row)` and `canonicalCategoryHref(category)`: Normalize category links into canonical `/peluang-usaha/kategori/[slug]` URLs through the runtime-neutral shared route contract.
 - `getCategoryRouteEntries(rows)`: Builds canonical category routes plus intentional `jasa-layanan` aggregate hub and carries the indexability flag used for sparse/catch-all noindex behavior.
 - `getCategorySummaries(rows)`: Aggregates canonical counts and rows, including `FnB` under Makanan & Minuman.
+
+### File: `src/shared/franchise-category-route.mjs`
+*Runtime-neutral category permalink and alias contract.*
+- `CATEGORY_ROUTE_ALIASES`: Defines every accepted legacy category slug and its canonical slug/label once for Astro, browser asset generation, and the Pages Function.
+- `categoryRouteSlug(value)` / `resolveCategoryRoute(value)`: Decode, normalize, and consolidate category values without importing Node-only or Astro-only modules.
+- `canonicalCategoryPath(value)`: Returns the final `/peluang-usaha/kategori/[slug]` path or the directory hub for an empty value.
+- `franchise-category-route.d.mts`: Provides strict TypeScript declarations while keeping the executable module directly importable by Cloudflare Pages Functions.
 
 ### File: `src/lib/franchise-location-normalization.ts`
 *Shared city/location normalization helper.*
@@ -697,7 +704,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 - `normalizeText()` / `normalizeBrandName()` / `normalizeCompanyName()` / `normalizeDescriptionText()`: Presentation-normalize imported brand/company/description text without changing raw D1 data.
 - `formatRupiah()` / `getThumb()` / `paragraphs()` / `truncate()` / `slugify()`: Shared display helpers used by directory/detail rendering.
 - `normalizeUrl()` / `normalizeExternalUrl()` / `escapeHtml()` / `escapeAttr()`: Shared URL and HTML output safety helpers.
-- `sanitizeLegacyWordPressRuntime()` / `normalizeGeneratedHtml()` / `applyCanonicalLegacyLinks()`: Remove unused WordPress runtime snippets (`analyticswp`, emoji, LatePoint, and `admin-ajax`) from generated output, cleanup template whitespace, and rewrite legacy directory/category links to canonical `/peluang-usaha` query URLs.
+- `sanitizeLegacyWordPressRuntime()` / `normalizeGeneratedHtml()` / `applyCanonicalLegacyLinks()`: Remove unused WordPress runtime snippets (`analyticswp`, emoji, LatePoint, and `admin-ajax`) from generated output, clean template whitespace, and rewrite old archive/path/query category links to canonical `/peluang-usaha` states and `/peluang-usaha/kategori/[slug]` routes.
 
 ### File: `src/lib/franchise-premium-detail.ts`
 *Premium detail-page renderer helper for D1-backed franchise static pages.*
@@ -710,7 +717,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 ### File: `src/lib/franchise-static-assets.ts` and `src/lib/franchise-directory-*.ts`
 *Generated directory asset facade and focused modules.*
 - `injectDirectoryAssets(html)`: Injects base compact directory CSS, category-content CSS, and browser behavior from focused modules while keeping idempotent style/script markers.
-- `FRANCHISE_DIRECTORY_CLIENT`: Initializes the current category from the path, navigates category changes to canonical static routes, preserves only temporary search/sort/status query state, applies sorting/filtering, and renders an actionable empty state.
+- `FRANCHISE_DIRECTORY_CLIENT`: Initializes the current category from the path, navigates category changes to canonical static routes, preserves only temporary search/sort/status query state, applies sorting/filtering, renders an actionable empty state, and provides a browser fallback from old `kategori` query URLs when the server redirect is unavailable locally.
 - `FRANCHISE_DIRECTORY_STYLES` / `FRANCHISE_DIRECTORY_CONTENT_STYLES`: Define compact stable card/media/control dimensions plus responsive category guidance and buyer/owner CTA presentation.
 - `generateCssPlaceholder(label, className)`: Renders the CSS-only missing-logo placeholder used by directory cards, category cards, and detail pages.
 - Re-exports `injectDetailAssets(html)` from `src/lib/franchise-detail-assets.ts` so existing imports remain stable.
@@ -738,7 +745,11 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `scripts/check-franchise-directory.ts`
 *Focused generated-directory/category regression check.*
-- `pnpm run directory:check`: Verifies primary search count, result/CTA order, canonical alias routing, unique category titles, sparse-category noindex, CollectionPage schema, actual count copy, canonical filter behavior, directory asset injection, and copied-legacy link policy.
+- `pnpm run directory:check`: Verifies primary search count, result/CTA order, canonical alias routing, unique category titles, sparse-category noindex, CollectionPage schema, actual count copy, canonical filter behavior, directory asset injection, server 301 target/query preservation, static fallthrough, browser fallback, and copied-legacy link policy.
+
+### File: `functions/peluang-usaha/index.js`
+*Exact Pages Function compatibility handler for the static directory hub.*
+- `onRequest(context)`: For GET/HEAD only, redirects old `/peluang-usaha?kategori=...` requests to the shared canonical category path with HTTP 301, removes only `kategori`, preserves other query state, and falls through through `context.next()` for ordinary static directory requests.
 
 ### File: `scripts/check-dashboard-ocr-client.mjs`
 *Focused dashboard OCR browser-module regression check.*

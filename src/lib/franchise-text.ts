@@ -155,8 +155,12 @@ export function applyCanonicalLegacyLinks(html: string) {
     .replace(/\bhref=(["'])\/abjad\/?\1/g, "href=$1/peluang-usaha?sort=abjad$1")
     .replace(/\bhref=(["'])\/kategori\/?\1/g, "href=$1/peluang-usaha/kategori/$1")
     .replace(/\bhref=(["'])\/category\/?\1/g, "href=$1/peluang-usaha/kategori/$1")
-    .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha/kategori/$2$1")
-    .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, "href=$1/peluang-usaha/kategori/$2$1");
+    .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, (_match, quote: string, slug: string) => `href=${quote}${canonicalCategoryPath(slug)}${quote}`)
+    .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, (_match, quote: string, slug: string) => `href=${quote}${canonicalCategoryPath(slug)}${quote}`)
+    .replace(/\bhref=(["'])\/peluang-usaha\/?\?kategori=([^"'&#]+)(?:&amp;|&)?([^"']*)\1/g, (_match, quote: string, slug: string, rest: string) => {
+      const suffix = rest ? `?${rest.replace(/^amp;/, "")}` : "";
+      return `href=${quote}${canonicalCategoryPath(slug)}${suffix}${quote}`;
+    });
 }
 
 function normalizeTitleLikeName(value: unknown): string {
@@ -258,3 +262,4 @@ function ensureFinalPunctuation(text: string) {
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+import { canonicalCategoryPath } from "../shared/franchise-category-route.mjs";

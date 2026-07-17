@@ -1,6 +1,6 @@
 # Topical Authority And Directory SEO Plan
 
-Last updated: 2026-07-17 12:24 (Asia/Jakarta)
+Last updated: 2026-07-18 02:35 (Asia/Jakarta)
 
 This plan captures the requested direction for improving Franchisee.id organic growth, especially `/peluang-usaha` and category landing pages. Implementation is intentionally staged so the directory UI, static routes, generated metadata, and broader content strategy can be changed without losing the product intent.
 
@@ -32,7 +32,7 @@ The site wins when more good franchisors and more qualified franchisees can find
 | `/peluang-usaha/kategori/` | Category hub | Indexable if it helps users choose categories. |
 | `/peluang-usaha/kategori/[slug]` | Category landing page | Generated for navigation. Indexable when it has at least three listings, unique useful copy, and is not the catch-all `lainnya`; sparse/catch-all pages use `noindex, follow`. |
 | `/peluang-usaha?sort=...` | Temporary sort state | Prefer canonical to `/peluang-usaha`; not a separate SEO landing page. |
-| `/peluang-usaha?kategori=...` | Temporary fallback/filter state | Avoid using as the primary category path. Category selection should navigate to `/peluang-usaha/kategori/[slug]`. |
+| `/peluang-usaha?kategori=...` | Legacy compatibility URL | Permanently redirect to `/peluang-usaha/kategori/[slug]`, preserving unrelated search/sort/status parameters. Never emit this shape in internal links. |
 | Combined filters/search | User session state | Useful for users, but not intended as thin indexable pages. |
 
 ## Category Page Content Requirements
@@ -87,6 +87,7 @@ Example direction for Makanan & Minuman:
 | Expand category landing copy with dynamic count and category-specific paragraphs. | P1 | Done | Typed content profiles cover 13 canonical categories with decision points, real snapshot counts, buyer CTA, and evidence-safe fallback copy. |
 | Add richer internal links from category pages to related category/tool pages. | P2 | Done | Related categories, Franchisepedia, budget tool, and comparison links render below category results. |
 | Build broader topical authority content calendar. | P2 | Tracker ready | `docs/seo/CATEGORY_CONTENT_BACKLOG.md` contains 35 categorized article ideas with status, intent, funnel stage, CTA, and evidence guardrails. Editorial research/publication remains separate work. |
+| Migrate old category query URLs and every internal producer. | P1 | Done | An exact Pages Function returns 301 for `?kategori=...`; aliases share one route contract, other query state is preserved, generators/templates/tracked snapshots emit canonical paths, and the focused check covers redirect/fallthrough behavior. |
 
 ## Implemented Directory Contract - 2026-07-17
 
@@ -98,6 +99,7 @@ Example direction for Makanan & Minuman:
 - Directory JSON-LD is now `CollectionPage` plus `ItemList`/breadcrumbs; the legacy WordPress `Article` and `admin` author schema is removed.
 - Sparse categories and `lainnya` remain reachable for users but use `noindex, follow` until they meet the content/indexability rule.
 - Focused regression coverage is available through `pnpm run directory:check`.
+- Legacy `/peluang-usaha?kategori=...` requests receive a server-side 301 to the canonical category path. A browser fallback handles static/local contexts, and a repository scan prevents old query-category links from returning in runtime sources or tracked snapshots.
 
 ## Acceptance Criteria For Future `/peluang-usaha` Implementation
 

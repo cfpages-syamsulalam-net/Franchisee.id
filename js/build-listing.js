@@ -148,7 +148,7 @@ function generateCard(item, index) {
                     </div>
                     <div class="ue-meta-data">
                         <span class="ue-grid-item-category">
-                            <a href="/peluang-usaha?kategori=${slugify(kategori)}">${kategori}</a>
+                            <a href="/peluang-usaha/kategori/${slugify(kategori)}">${kategori}</a>
                         </span>
                         <span style="font-size:11px; color:#666; display:block; width:100%; margin-top:5px;">
                             Modal: <b>${modal}</b>
@@ -276,6 +276,7 @@ function canonicalizeLegacyLinks(html) {
         .replace(/\bhref=(["'])\/abjad\/?\1/g, 'href=$1/peluang-usaha?sort=abjad$1')
         .replace(/\bhref=(["'])\/kategori\/?\1/g, 'href=$1/peluang-usaha?view=kategori$1')
         .replace(/\bhref=(["'])\/category\/?\1/g, 'href=$1/peluang-usaha?view=kategori$1')
-        .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, 'href=$1/peluang-usaha?kategori=$2$1')
-        .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, 'href=$1/peluang-usaha?kategori=$2$1');
+        .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, 'href=$1/peluang-usaha/kategori/$2$1')
+        .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, 'href=$1/peluang-usaha/kategori/$2$1')
+        .replace(/\bhref=(["'])\/peluang-usaha\/?\?kategori=([^"'&#]+)\1/g, 'href=$1/peluang-usaha/kategori/$2$1');
 }

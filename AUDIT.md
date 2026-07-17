@@ -1,6 +1,6 @@
 # Franchisee.id Technology Audit & Migration Tracker
 
-Last updated: 2026-07-17 12:24 (Asia/Jakarta)
+Last updated: 2026-07-18 02:35 (Asia/Jakarta)
 
 ## Executive Summary
 The current site is now a hybrid Cloudflare Pages application: Astro owns the canonical D1-backed franchise directory pages, legacy static pages/assets are copied into `dist`, Cloudflare Pages Functions own protected app writes, D1 is the transactional source of truth, R2 stores first-party uploads, and Clerk handles identity. Google Sheets has moved to archive/import-only transition behavior.
@@ -53,7 +53,7 @@ The new canonical state-transition tracker is `docs/architecture/STATE_TRANSITIO
 
 ## Directory SEO And Topical Authority - 2026-07-17
 
-`docs/seo/TOPICAL_AUTHORITY_AND_DIRECTORY_SEO_PLAN.md` is the canonical implementation record for the `/peluang-usaha` SEO/UX pass. The duplicate legacy search/content section is removed, controls and compact cards appear earlier, category selection uses canonical static routes, owner/buyer CTAs follow results, and category pages now use typed content profiles with actual counts, decision points, internal links, and collection schema. `docs/seo/CATEGORY_CONTENT_BACKLOG.md` tracks the P2 editorial pipeline.
+`docs/seo/TOPICAL_AUTHORITY_AND_DIRECTORY_SEO_PLAN.md` is the canonical implementation record for the `/peluang-usaha` SEO/UX pass. The duplicate legacy search/content section is removed, controls and compact cards appear earlier, category selection uses canonical static routes, owner/buyer CTAs follow results, and category pages now use typed content profiles with actual counts, decision points, internal links, and collection schema. The 2026-07-18 completion pass added server-side 301 migration for legacy `?kategori=` URLs, centralized aliases, migrated all runtime producers and 198 tracked HTML snapshots, and extended focused redirect/link checks. `docs/seo/CATEGORY_CONTENT_BACKLOG.md` tracks the P2 editorial pipeline.
 
 | Priority | Item | Status |
 | --- | --- | --- |
@@ -589,7 +589,7 @@ These items are ongoing production QA, business decisions, or future enhancement
 - Manual urgent trigger: an authenticated admin-only endpoint can trigger the deploy hook for time-sensitive edits, but this should be exceptional.
 - Build behavior: Pages build runs `pnpm run build:astro`, reads current D1, emits `dist/`, and Cloudflare serves the new static HTML.
 - Deployment config: Pages output directory is `dist` in `wrangler.toml`; Cloudflare Pages project settings must define a build command (`pnpm run build` preferred, or `pnpm run build:astro`) so dependencies are installed before Pages Functions are bundled.
-- Hybrid output rule: after Astro builds, `scripts/copy-legacy-static.mjs` copies legacy static pages/assets into `dist` while skipping legacy `/peluang-usaha` and duplicate archive/category route folders. It also rewrites copied HTML links to canonical `/peluang-usaha` query URLs and injects a flush readable Franchisee.id legal footer strip into copied HTML that lacks Privacy Policy or Terms links. This preserves old CSS/JS/images and lets Astro own the D1-backed directory route.
+- Hybrid output rule: after Astro builds, `scripts/copy-legacy-static.mjs` copies legacy static pages/assets into `dist` while skipping legacy `/peluang-usaha` and duplicate archive/category route folders. It rewrites copied HTML links to canonical `/peluang-usaha` states and `/peluang-usaha/kategori/[slug]` category routes, then injects a flush readable Franchisee.id legal footer strip into copied HTML that lacks Privacy Policy or Terms links. This preserves old CSS/JS/images and lets Astro own the D1-backed directory route.
 - Build-time D1 access: `pnpm run build` reads remote D1 through the Cloudflare D1 HTTP API. Cloudflare Pages must have `CLOUDFLARE_API_TOKEN` as a secret; `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_DATABASE_ID` are optional because current defaults are in the builder.
 - Pages config rule: do not put `account_id` in `wrangler.toml`; Cloudflare Pages rejects it during config validation. Use the connected Pages project account, `cfman`, or GitHub env/vars for account context instead.
 - Freshness target: normal edits appear on the next scheduled publish window or poll window; urgent admin-triggered edits can appear sooner.

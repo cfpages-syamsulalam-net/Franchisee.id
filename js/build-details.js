@@ -54,7 +54,7 @@ function generateBreadcrumbs(item) {
             <ul class="trail-items">
                 <li class="trail-item"><a href="/">Home</a></li>
                 <li class="trail-item"><a href="/peluang-usaha">Peluang Usaha</a></li>
-                <li class="trail-item"><a href="/peluang-usaha?kategori=${catSlug}">${category}</a></li>
+                <li class="trail-item"><a href="/peluang-usaha/kategori/${catSlug}">${category}</a></li>
                 <li class="trail-item"><span>${item.brand_name}</span></li>
             </ul>
         </div>
@@ -210,6 +210,7 @@ function canonicalizeLegacyLinks(html) {
         .replace(/\bhref=(["'])\/abjad\/?\1/g, 'href=$1/peluang-usaha?sort=abjad$1')
         .replace(/\bhref=(["'])\/kategori\/?\1/g, 'href=$1/peluang-usaha?view=kategori$1')
         .replace(/\bhref=(["'])\/category\/?\1/g, 'href=$1/peluang-usaha?view=kategori$1')
-        .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, 'href=$1/peluang-usaha?kategori=$2$1')
-        .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, 'href=$1/peluang-usaha?kategori=$2$1');
+        .replace(/\bhref=(["'])\/kategori\/([^"'#?]+)\/?\1/g, 'href=$1/peluang-usaha/kategori/$2$1')
+        .replace(/\bhref=(["'])\/category\/([^"'#?]+)\/?\1/g, 'href=$1/peluang-usaha/kategori/$2$1')
+        .replace(/\bhref=(["'])\/peluang-usaha\/?\?kategori=([^"'&#]+)\1/g, 'href=$1/peluang-usaha/kategori/$2$1');
 }

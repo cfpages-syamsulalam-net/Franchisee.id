@@ -1,5 +1,12 @@
+import { CATEGORY_ROUTE_ALIASES } from "../shared/franchise-category-route.mjs";
+
+const CATEGORY_ROUTE_ALIAS_TARGETS = Object.fromEntries(
+  Object.entries(CATEGORY_ROUTE_ALIASES).map(([alias, route]) => [alias, route.slug]),
+);
+
 export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-generated-js">
 (function () {
+  var categoryRouteAliases = ${JSON.stringify(CATEGORY_ROUTE_ALIAS_TARGETS)};
   var form = document.querySelector("[data-directory-controls]");
   var grid = document.querySelector("#uc_post_grid_elementor_d0f4a5f .uc-items-wrapper");
   var directoryEmpty = document.querySelector("#uc_post_grid_elementor_d0f4a5f_empty_message");
@@ -15,6 +22,14 @@ export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-gener
   var cards = Array.prototype.slice.call(grid.querySelectorAll("[data-franchise-card]"));
   var count = form.querySelector(".franchise-directory-result-count");
   var params = new URLSearchParams(window.location.search);
+  var legacyCategory = !currentCategory ? params.get("kategori") : "";
+  if (legacyCategory) {
+    params.delete("kategori");
+    var legacyTarget = categoryPath(legacyCategory);
+    var legacyQuery = params.toString();
+    window.location.replace(legacyTarget + (legacyQuery ? "?" + legacyQuery : ""));
+    return;
+  }
   var reset = form.querySelector("[data-directory-reset]") || form.querySelector(".franchise-directory-actions a");
   var inputs = {
     q: form.querySelector('[name="q"]'),
@@ -58,7 +73,12 @@ export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-gener
   }
 
   function categoryPath(slug) {
-    return "/peluang-usaha/kategori/" + encodeURIComponent(slug);
+    var normalized = String(slug || "").trim().toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return "/peluang-usaha/kategori/" + encodeURIComponent(categoryRouteAliases[normalized] || normalized);
   }
 
   function asNumber(card, attr) {

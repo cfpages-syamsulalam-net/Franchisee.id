@@ -4,6 +4,25 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-18 02:35 (Asia/Jakarta)
+### Added
+- `src/shared/franchise-category-route.mjs` and `.d.mts`: Added one runtime-neutral category slug, alias, label, and canonical-path contract shared by Astro rendering, generated browser code, and Cloudflare Pages Functions.
+- `functions/peluang-usaha/index.js`: Added an exact directory compatibility handler that permanently redirects legacy `?kategori=...` requests to `/peluang-usaha/kategori/[slug]`, preserves unrelated query parameters, and falls through to the static asset for normal requests.
+- `.context/session-20260718-0235.md`: Added the session continuity record for the category permalink migration completion.
+
+### Changed
+- `src/lib/franchise-category.ts`, `src/lib/franchise-text.ts`, and `src/lib/franchise-directory-client.ts`: Centralized category aliases, canonicalized old path/query links, and added a static/local browser fallback without making client JavaScript the primary redirect.
+- `js/build-details.js`, `js/build-listing.js`, and `templates/detail-franchise-tpl.html`: Replaced remaining query-category producers with canonical category paths and taught legacy canonicalizers to remove the old shape.
+- `peluang-usaha/*.html`: Mechanically migrated all 198 tracked directory/detail snapshots, removing 795 old query-category link occurrences without changing unrelated page content.
+- `public/_redirects`: Added permanent redirects for alias-shaped paths inside `/peluang-usaha/kategori/` in addition to existing archive and top-level aliases.
+- `scripts/check-franchise-directory.ts`: Added server 301 destination/query-preservation checks, normal static fallthrough coverage, shared contract coverage, and browser-fallback assertions.
+- `AGENTS.md`: Made suggestion passes dependency-aware and established canonical route changes as migrations that require producer/consumer inventory, redirects, artifact cleanup, repo-wide scans, and focused checks before completion.
+- `SUGGESTION.md`: Added and completed suggestion 112 for the category permalink migration work that should have accompanied suggestion 111, and added suggestion 113 for post-deploy production/Search Console verification that cannot be completed locally.
+- `docs/seo/TOPICAL_AUTHORITY_AND_DIRECTORY_SEO_PLAN.md`, `docs/ux/LISTING_DETAIL_UX_AUDIT.md`, `AUDIT.md`, `CODEBASE.md`, and `TECHNICAL_INVENTORY.md`: Recorded the final URL migration policy, server/browser responsibilities, shared contract, tracked snapshot migration, and regression coverage.
+
+### Removed
+- Build-only `dist/`, `.astro/`, and temporary Wrangler Functions bundle/route artifacts after successful validation.
+
 ## 2026-07-17 12:24 (Asia/Jakarta)
 ### Added
 - `src/lib/franchise-category-content.ts`: Added typed, evidence-safe SEO/content profiles for 13 canonical franchise categories with dynamic counts, decision points, related categories, tool/article links, and fallback copy.

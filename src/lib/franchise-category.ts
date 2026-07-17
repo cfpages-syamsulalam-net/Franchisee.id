@@ -1,6 +1,7 @@
 import type { CategoryRouteEntry } from "./franchise-directory-types";
 import type { D1FranchiseRow as FranchiseStaticRow } from "./shared-schemas";
-import { normalizeText, slugify } from "./franchise-text";
+import { normalizeText } from "./franchise-text";
+import { canonicalCategoryPath, resolveCategoryRoute } from "../shared/franchise-category-route.mjs";
 
 export function getCategoryRouteEntries(rows: FranchiseStaticRow[]) {
   const summaries = getCategorySummaries(rows);
@@ -38,7 +39,7 @@ export function getCategorySummaries(rows: FranchiseStaticRow[]) {
 }
 
 export function canonicalCategoryHref(categoryOrSlug: string) {
-  return `/peluang-usaha/kategori/${canonicalCategory(categoryOrSlug).slug}`;
+  return canonicalCategoryPath(categoryOrSlug);
 }
 
 function addCategoryHub(
@@ -64,13 +65,6 @@ export function categorySlug(row: FranchiseStaticRow) {
 }
 
 function canonicalCategory(value: string) {
-  const slug = slugify(value);
-  const aliases: Record<string, { slug: string; label: string }> = {
-    fnb: { slug: "makanan-minuman", label: "Makanan & Minuman" },
-    "makanan-minuman-fb": { slug: "makanan-minuman", label: "Makanan & Minuman" },
-    "perhotelan-travel": { slug: "penginapan-agen-travel", label: "Penginapan & Agen Travel" },
-    "properti-furniture": { slug: "furnitur-konstruksi-properti", label: "Furnitur, Konstruksi, Properti" },
-    "teknologi-digital": { slug: "komputer-teknologi", label: "Komputer & Teknologi" },
-  };
-  return aliases[slug] || { slug, label: normalizeText(value) || "Bisnis Umum" };
+  const route = resolveCategoryRoute(value);
+  return { slug: route.slug, label: route.label || normalizeText(value) || "Bisnis Umum" };
 }
