@@ -474,6 +474,12 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 - Manual D1 role SQL must be followed by `/sync-clerk-metadata`; normal role changes should go through `/user-role`.
 - `/form-submit` must remain D1-only. Do not restore Google Sheets write helpers unless the user explicitly asks for archive/export tooling.
 
+## Editorial Authority Planning
+
+- `TOPICAL_AUTHORITY.md` is the canonical complete buyer/operator knowledge map. It records repository and sitemap evidence, existing-route ownership, same-domain boundaries, Indonesian regulatory and professional-review gates, consolidation decisions, internal-link architecture, and the bounded first publication cluster.
+- `ARTICLE_CATALOG.md` is the validated 96-brief implementation inventory across 16 parent topics. It keeps directory, listing, category, city, comparison, calculator, account, and commercial routes as their own intent owners and does not authorize bulk publication.
+- Franchisor.id remains an independent operator/network-owner publisher. Shared D1 data and Franchise Network infrastructure do not make cross-domain editorial overlap a cannibalization problem or permit cloned pages.
+
 ## Known Implementation Gaps
 - Email delivery is queued in `notification_email_queue`, but no outbound email provider is connected yet.
 - Google Sheets auth and parsing logic is duplicated in builders and functions.

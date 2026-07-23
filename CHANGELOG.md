@@ -4,6 +4,16 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-23 23:36 (Asia/Jakarta)
+### Added
+- `TOPICAL_AUTHORITY.md`: Added the audited Franchisee.id buyer/operator authority map with 16 complete lifecycle topics, existing-route ownership, sitemap/consolidation risks, primary Indonesian regulatory sources, qualified legal/financial review gates, internal-link architecture, and a bounded 12-asset first cluster.
+- `ARTICLE_CATALOG.md`: Added 96 unique briefs, exactly six per topic, with the required intent, reader, promise, boundary, evidence, related-ID, priority, wave, anti-cannibalization, and coverage-ledger schemas.
+- `.context/session-20260723-2336.md`: Added the session continuity record for the topical-authority audit, artifacts, validation, and remaining publication gates.
+
+### Changed
+- `docs/README.md` and `CODEBASE.md`: Registered the two canonical editorial planning artifacts and clarified their relationship to existing product routes and the separate Franchisor.id authority surface.
+- `SUGGESTION.md`: Added suggestion 114 to replace competing legacy sitemap artifacts and missing child references with one validated build-derived sitemap owner before publication.
+
 ## 2026-07-18 02:35 (Asia/Jakarta)
 ### Added
 - `src/shared/franchise-category-route.mjs` and `.d.mts`: Added one runtime-neutral category slug, alias, label, and canonical-path contract shared by Astro rendering, generated browser code, and Cloudflare Pages Functions.

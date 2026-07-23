@@ -24,6 +24,8 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/ux/UI_REFERENCE_MAP.md`: visual reference map for public, directory, profile, dashboard, and review surfaces.
 - `docs/seo/TOPICAL_AUTHORITY_AND_DIRECTORY_SEO_PLAN.md`: SEO/topical-authority plan for `/peluang-usaha`, category pages, personas, and content clusters.
 - `docs/seo/CATEGORY_CONTENT_BACKLOG.md`: P2 editorial tracker with canonical category decisions, article ideas, intent, funnel stage, status, CTA, and evidence guardrails.
+- `TOPICAL_AUTHORITY.md`: complete buyer/operator authority map, audited route/sitemap risks, legal/financial evidence gates, consolidation decisions, and bounded first publication cluster.
+- `ARTICLE_CATALOG.md`: 96 non-cannibalizing buyer/operator briefs across 16 lifecycle topics, with explicit intent, scope, evidence, links, priority, and wave.
 - `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: listing detail page compactness, claim CTA, and Cloudflare Pages Function request-limit tracker.
@@ -72,6 +74,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 ## SEO And Content Strategy
 - `docs/seo/TOPICAL_AUTHORITY_AND_DIRECTORY_SEO_PLAN.md`: user-first SEO plan for franchise buyers, franchisors, `/peluang-usaha`, category URLs, directory cards, and topical authority clusters.
 - `docs/seo/CATEGORY_CONTENT_BACKLOG.md`: category-by-category article brainstorming and editorial status tracker.
+- `TOPICAL_AUTHORITY.md` and `ARTICLE_CATALOG.md`: canonical complete authority plan and validated article inventory. Publication remains a separate, bounded editorial decision.
 
 ## Product Workflow
 - `docs/product/SCOPE_TRIAGE.md`: P0/P1/P2 session triage template for broad requests that mix product, UI, backend, SEO, migration, and docs.
