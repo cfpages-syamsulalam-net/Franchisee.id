@@ -478,6 +478,7 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 
 - `TOPICAL_AUTHORITY.md` is the canonical complete buyer/operator knowledge map. It records repository and sitemap evidence, existing-route ownership, same-domain boundaries, Indonesian regulatory and professional-review gates, consolidation decisions, internal-link architecture, and the bounded first publication cluster.
 - `ARTICLE_CATALOG.md` is the validated 96-brief implementation inventory across 16 parent topics. It keeps directory, listing, category, city, comparison, calculator, account, and commercial routes as their own intent owners and does not authorize bulk publication.
+- `GLOBAL_RESEARCH.md` is the validated pre-writing evidence foundation for all 16 parent topics. Its direct official sources, grounded facts, applicability limits, 12 unresolved gates, and refresh triggers constrain future outlines; it does not authorize drafting, publication, individualized advice, endorsements, or profitability claims.
 - Franchisor.id remains an independent operator/network-owner publisher. Shared D1 data and Franchise Network infrastructure do not make cross-domain editorial overlap a cannibalization problem or permit cloned pages.
 
 ## Known Implementation Gaps

@@ -4,6 +4,15 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-07-25 23:40 (Asia/Jakarta)
+### Added
+- `GLOBAL_RESEARCH.md`: Added the project-wide pre-writing evidence foundation with 20 direct-source research records, exact 16/16 topic-family coverage, 12 explicit legal/financial/sector/offer gates, source-refresh triggers, and article-use boundaries.
+- `.context/session-20260725-2340.md`: Added the session continuity record for the research stage, current-law changes, validation, and remaining evidence gates.
+
+### Changed
+- `CODEBASE.md`: Registered `GLOBAL_RESEARCH.md` as the evidence layer between the frozen catalog and the separately authorized outline/drafting stages.
+- `SUGGESTION.md`: Added suggestion 115 to reconcile legacy franchise-law and guaranteed-profit copy against the current evidence foundation before publication expansion.
+
 ## 2026-07-23 23:36 (Asia/Jakarta)
 ### Added
 - `TOPICAL_AUTHORITY.md`: Added the audited Franchisee.id buyer/operator authority map with 16 complete lifecycle topics, existing-route ownership, sitemap/consolidation risks, primary Indonesian regulatory sources, qualified legal/financial review gates, internal-link architecture, and a bounded 12-asset first cluster.
