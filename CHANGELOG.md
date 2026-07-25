@@ -3248,3 +3248,22 @@ Format:
 - 2026-03-07 14:00: Logic inventory creation and refactor.
 - 2026-03-07 15:00: Unified claim workflow merge.
 - 2026-03-07 15:30: Final verification marked TODO (end-to-end claim process).
+
+## 2026-07-25 17:54 (Asia/Jakarta)
+
+### Added
+
+- `ARTICLE-GUIDE.md`: repository-local one-article-at-a-time writing instructions.
+- `artikel/*.md` (96 files): source-constrained article outlines appointed by `ARTICLE_CATALOG.md`.
+- `.context/session-20260725-1754.md`: recorded this bounded handoff session.
+
+### Changed
+
+- `ARTICLE_CATALOG.md`: assigned unique historical CMS publication dates.
+- `AGENTS.md`: appended the managed repository-local article workflow without replacing existing rules.
+- `CODEBASE.md`: recorded the outline-only article handoff and publication boundary.
+- `CHANGELOG.md`: recorded every path class changed by this handoff.
+
+### Removed
+
+- None.

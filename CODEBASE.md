@@ -488,3 +488,12 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 - Login/register now exist as custom Clerk surfaces, but deployed Clerk environment variables and dashboard settings still need production verification.
 - D1 write behavior still needs deployed Pages verification against the real binding after frontend submission testing.
 - GitHub Actions publish polling needs repository secrets before it can run: `CLOUDFLARE_API_TOKEN` and `PAGES_DEPLOY_HOOK_FRANCHISEE_ID`; optional vars are `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_D1_DATABASE_ID`, and `PAGES_PROJECT_NAME`.
+
+<!-- BEGIN MANAGED LOCAL ARTICLE HANDOFF MAP -->
+## Repository-local article writing handoff
+
+- `ARTICLE_CATALOG.md` appoints historical CMS publication dates for 96 planned articles.
+- `artikel/` contains 96 constrained Markdown writing packets; these are outlines, not published pages.
+- `ARTICLE-GUIDE.md` and the managed block in `AGENTS.md` instruct one-file-at-a-time expansion.
+- The eventual public route contract is `/artikel/[slug].html`; no HTML, sitemap, deployment, or D1 publication state is changed by this handoff.
+<!-- END MANAGED LOCAL ARTICLE HANDOFF MAP -->
