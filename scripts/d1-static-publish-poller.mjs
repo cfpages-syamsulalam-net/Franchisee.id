@@ -1,307 +1,110 @@
 #!/usr/bin/env node
+/** Shared, deliberately non-transactional D1 queue poller. */
+import process from 'node:process';
+import fs from 'node:fs';
 
-import { appendFileSync } from "node:fs";
+const REPOS = {
+  'cfpages-admtravelbos/Franchisor.id': { site:'site_franchisor_id', project:'franchisor-id', account:'0ba63b7f0096bc267a93fe5c80b1f571', database:'812cd8ac-edd0-45d9-981f-c9a15358317b', hook:'PAGES_DEPLOY_HOOK_FRANCHISOR_ID' },
+  'cfpages-syamsulalam-net/Franchisee.id': { site:'site_franchisee_id', project:'franchisee-id', account:'0ba63b7f0096bc267a93fe5c80b1f571', database:'812cd8ac-edd0-45d9-981f-c9a15358317b', hook:'PAGES_DEPLOY_HOOK_FRANCHISEE_ID' }
+};
+export class PollerError extends Error {}
+export class ConflictError extends PollerError {}
 
-const DEFAULT_SITE_ID = "site_franchisee_id";
-const DEFAULT_DATABASE_ID = "812cd8ac-edd0-45d9-981f-c9a15358317b";
-
-const args = new Set(process.argv.slice(2));
-const siteId = process.env.SITE_ID || DEFAULT_SITE_ID;
-const forcePublish = process.env.FORCE_PUBLISH === "true" || args.has("--force");
-const command = args.has("--mark-deployed")
-  ? "mark-deployed"
-  : args.has("--mark-failed")
-    ? "mark-failed"
-    : "poll";
-
-try {
-  if (command === "mark-deployed") {
-    await markDeployed();
-  } else if (command === "mark-failed") {
-    await markFailed(process.env.FAILURE_MESSAGE || "Direct GitHub deploy failed.");
-  } else {
-    await pollAndMaybePublish();
-  }
-} catch (error) {
-  console.error(error);
-  setOutput("should_publish", "false");
-  setOutput("error", error.message || "UNKNOWN_ERROR");
-  process.exit(1);
+function fail(message) { throw new PollerError(message); }
+export function validateConfiguration(env = process.env, { requireHook = false } = {}) {
+  const repo = env.GITHUB_REPOSITORY, cfg = REPOS[repo];
+  if (!cfg) fail('repository is not approved');
+  const required = ['GITHUB_REPOSITORY','SITE_ID','PAGES_PROJECT_NAME','TARGET_REF','CLOUDFLARE_ACCOUNT_ID','CLOUDFLARE_D1_DATABASE_ID','CLOUDFLARE_API_TOKEN','DEPLOY_HOOK_URL'];
+  for (const key of required) if (!env[key]) fail(`missing configuration: ${key}`);
+  if (env.SITE_ID !== cfg.site || env.PAGES_PROJECT_NAME !== cfg.project || env.CLOUDFLARE_ACCOUNT_ID !== cfg.account || env.CLOUDFLARE_D1_DATABASE_ID !== cfg.database) fail('configuration does not match repository allowlist');
+  if (env.GITHUB_REF_TYPE && env.GITHUB_REF_TYPE !== 'branch') fail('ref must be a branch');
+  if (env.GITHUB_DEFAULT_BRANCH && env.TARGET_REF !== env.GITHUB_DEFAULT_BRANCH) fail('ref is not the default branch');
+  if (env.GITHUB_REF_NAME && env.TARGET_REF !== env.GITHUB_REF_NAME) fail('target ref mismatch');
+  if (!/^[A-Za-z0-9._/-]+$/.test(env.TARGET_REF) || env.TARGET_REF.includes('..')) fail('unsafe target ref');
+  if (requireHook && env.DEPLOY_HOOK_URL.includes('\n')) fail('unsafe deploy hook value');
+  return cfg;
 }
 
-async function pollAndMaybePublish() {
-  await expireStaleQueuedRequests();
-
-  const state = await first(
-    `SELECT site_id, publish_mode, is_enabled, last_publish_triggered_at,
-            daily_publish_count, daily_publish_date, daily_publish_limit,
-            min_publish_interval_minutes
-     FROM site_publish_state
-     WHERE site_id = ?`,
-    [siteId]
-  );
-
-  if (!state) {
-    throw new Error(`Missing site_publish_state row for ${siteId}. Apply migrations first.`);
-  }
-
-  const counts = await first(
-    `SELECT
-       SUM(CASE WHEN status IN ('pending', 'failed_retryable') THEN 1 ELSE 0 END) AS pending_count,
-       SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued_count
-     FROM site_rebuild_requests
-     WHERE site_id = ?`,
-    [siteId]
-  );
-
-  const pendingCount = Number(counts?.pending_count || 0);
-  const queuedCount = Number(counts?.queued_count || 0);
-  await recalculateStateCounts();
-
-  setOutput("site_id", siteId);
-  setOutput("pending_count", String(pendingCount));
-  setOutput("queued_count", String(queuedCount));
-  setOutput("publish_mode", state.publish_mode || "cloudflare_deploy_hook");
-
-  if (!pendingCount && !forcePublish) {
-    console.log(`No pending D1 publish work for ${siteId}.`);
-    setOutput("should_publish", "false");
-    setOutput("skip_reason", "clean");
-    return;
-  }
-
-  if (!forcePublish && Number(state.is_enabled) !== 1) {
-    console.log(`Publishing is disabled for ${siteId}.`);
-    setOutput("should_publish", "false");
-    setOutput("skip_reason", "disabled");
-    return;
-  }
-
-  const guardrail = evaluateGuardrails(state);
-  if (!forcePublish && !guardrail.allowed) {
-    console.log(`Publish skipped for ${siteId}: ${guardrail.reason}`);
-    setOutput("should_publish", "false");
-    setOutput("skip_reason", guardrail.reason);
-    return;
-  }
-
-  const publishMode = state.publish_mode || "cloudflare_deploy_hook";
-  setOutput("should_publish", "true");
-
-  if (publishMode === "github_direct_deploy") {
-    await markPendingAsQueued();
-    await recordPublishTrigger(state);
-    console.log(`D1 is dirty for ${siteId}; direct GitHub deploy requested.`);
-    setOutput("should_direct_deploy", "true");
-    setOutput("should_call_deploy_hook", "false");
-    return;
-  }
-
-  console.log(`D1 is dirty for ${siteId}; calling Cloudflare Pages Deploy Hook.`);
-  await callDeployHook();
-  await markPendingAsQueued();
-  await recordPublishTrigger(state);
-  setOutput("should_direct_deploy", "false");
-  setOutput("should_call_deploy_hook", "true");
+export async function d1Request(env, sql, params = [], fetchImpl = globalThis.fetch) {
+  if (typeof fetchImpl !== 'function') fail('fetch is unavailable');
+  const url = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/d1/database/${env.CLOUDFLARE_D1_DATABASE_ID}/query`;
+  let response;
+  try { response = await fetchImpl(url, { method:'POST', headers:{'Authorization':`Bearer ${env.CLOUDFLARE_API_TOKEN}`,'Content-Type':'application/json'}, body:JSON.stringify({ sql, params }) }); }
+  catch { fail('D1 request failed'); }
+  let body; try { body = await response.json(); } catch { fail('malformed D1 response'); }
+  if (!response.ok || !body || body.success !== true || !Array.isArray(body.result) || !body.result[0]) fail(`D1 request failed (${response.status || 0})`);
+  const first = body.result[0];
+  if (first?.result?.[0]) return { ...first.result[0], success: first.success };
+  return first?.success === undefined ? { ...first, success: body.success } : first; // retains rows and meta exactly
 }
 
-async function expireStaleQueuedRequests() {
-  await run(
-    `UPDATE site_rebuild_requests
-     SET status = 'failed_retryable',
-         failed_at = CURRENT_TIMESTAMP,
-         updated_at = CURRENT_TIMESTAMP,
-         error_message = 'Queued publish did not report completion before stale timeout.'
-     WHERE site_id = ?
-       AND status = 'queued'
-       AND queued_at <= datetime(
-         'now',
-         '-' || COALESCE(
-           (SELECT stale_queued_after_minutes FROM site_publish_state WHERE site_id = ?),
-           120
-         ) || ' minutes'
-       )`,
-    [siteId, siteId]
-  );
+export async function queryD1(env, sql, params = [], fetchImpl = globalThis.fetch) { return d1Request(env, sql, params, fetchImpl); }
+export async function mutateD1(env, sql, params = [], fetchImpl = globalThis.fetch) {
+  const result = await d1Request(env, sql, params, fetchImpl);
+  if (result.success !== true || !result.meta || Number(result.meta.changes) !== 1) throw new ConflictError('compare-and-set conflict');
+  return result;
 }
 
-async function markPendingAsQueued() {
-  await run(
-    `UPDATE site_rebuild_requests
-     SET status = 'queued',
-         queued_at = CURRENT_TIMESTAMP,
-         updated_at = CURRENT_TIMESTAMP,
-         error_message = NULL
-     WHERE site_id = ?
-       AND status IN ('pending', 'failed_retryable')`,
-    [siteId]
-  );
+function rows(result) { return Array.isArray(result?.results) ? result.results : Array.isArray(result) ? result : []; }
+export function selectEligible(state, requests, now = Date.now()) {
+  const force = state.force === true;
+  if (!force && state.is_enabled === 0) return { requests:[], skip_reason:'disabled' };
+  if (!force && Number(state.daily_publish_limit) > 0 && Number(state.published_today || 0) >= Number(state.daily_publish_limit)) return { requests:[], skip_reason:'daily_limit' };
+  if (!force && state.last_published_at && Number(state.min_publish_interval_minutes) > 0 && now - Date.parse(state.last_published_at) < Number(state.min_publish_interval_minutes) * 60000) return { requests:[], skip_reason:'interval_limit' };
+  return { requests: requests.filter(r => r.status === 'pending' || r.status === 'failed_retryable').sort((a,b) => Number(a.id)-Number(b.id)), skip_reason:'' };
 }
 
-async function recordPublishTrigger(state) {
-  const today = utcDate();
-  const currentCount = state.daily_publish_date === today ? Number(state.daily_publish_count || 0) : 0;
-  await run(
-    `UPDATE site_publish_state
-     SET last_publish_triggered_at = CURRENT_TIMESTAMP,
-         daily_publish_count = ?,
-         daily_publish_date = ?,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE site_id = ?`,
-    [currentCount + 1, today, siteId]
-  );
-  await recalculateStateCounts();
+export async function claimRequest(env, id, priorStatus, fetchImpl = globalThis.fetch) {
+  const sql = `UPDATE site_publish_requests SET status = 'queued', queued_at = CURRENT_TIMESTAMP WHERE id = ? AND site_id = ? AND status = ?`;
+  return mutateD1(env, sql, [id, env.SITE_ID, priorStatus], fetchImpl);
+}
+export async function markDeployed(env = process.env, ids = [], fetchImpl = globalThis.fetch) {
+  validateConfiguration(env);
+  const unique = [...new Set(ids.map(String))];
+  const out = [];
+  for (const id of unique) out.push(await mutateD1(env, `UPDATE site_publish_requests SET status = 'deployed', deployed_at = CURRENT_TIMESTAMP WHERE id = ? AND site_id = ? AND status = 'queued'`, [id, env.SITE_ID], fetchImpl));
+  return out;
+}
+export async function markFailed(env = process.env, ids = [], message = 'provider operation failed', fetchImpl = globalThis.fetch) {
+  validateConfiguration(env);
+  const safe = String(message).replace(/[\r\n\t]+/g,' ').replace(/https?:\/\/\S+/gi,'[redacted]').slice(0,200);
+  const out = [];
+  for (const id of [...new Set(ids.map(String))]) out.push(await mutateD1(env, `UPDATE site_publish_requests SET status = 'failed_retryable', last_error = ? WHERE id = ? AND site_id = ? AND status = 'queued'`, [safe,id,env.SITE_ID], fetchImpl));
+  return out;
+}
+export async function recoverStaleQueue(env, fetchImpl = globalThis.fetch) {
+  validateConfiguration(env);
+  return mutateD1(env, `UPDATE site_publish_requests SET status = 'failed_retryable' WHERE site_id = ? AND status = 'queued' AND queued_at < datetime('now', '-' || (SELECT stale_queued_after_minutes FROM site_publish_state WHERE site_id = ?) || ' minutes')`, [env.SITE_ID, env.SITE_ID], fetchImpl);
+}
+export async function reconcileCounts(env, fetchImpl = globalThis.fetch) {
+  validateConfiguration(env);
+  return queryD1(env, `SELECT COUNT(*) AS pending_count FROM site_publish_requests WHERE site_id = ? AND status IN ('pending','failed_retryable')`, [env.SITE_ID], fetchImpl);
 }
 
-async function markDeployed() {
-  await run(
-    `UPDATE site_rebuild_requests
-     SET status = 'deployed',
-         deployed_at = CURRENT_TIMESTAMP,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE site_id = ?
-       AND status = 'queued'`,
-    [siteId]
-  );
-  await run(
-    `UPDATE site_publish_state
-     SET dirty_since = NULL,
-         last_published_at = CURRENT_TIMESTAMP,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE site_id = ?`,
-    [siteId]
-  );
-  await recalculateStateCounts();
-  setOutput("marked_deployed", "true");
+function output(name, value) {
+  const text = String(value ?? '').replace(/[\r\n%]/g, c => c === '%' ? '%25' : c === '\r' ? '%0D' : '%0A').replace(/\t/g,'%09');
+  const file = process.env.GITHUB_OUTPUT; if (file) fs.appendFileSync(file, `${name}=${text}\n`, 'utf8');
+}
+export async function run(env = process.env, fetchImpl = globalThis.fetch) {
+  const cfg = validateConfiguration(env);
+  const force = String(env.FORCE_PUBLISH || 'false').toLowerCase() === 'true';
+  const stateResult = await queryD1(env, `SELECT * FROM site_publish_state WHERE site_id = ?`, [env.SITE_ID], fetchImpl);
+  const state = rows(stateResult)[0] || { site_id:env.SITE_ID, is_enabled:1, daily_publish_limit:0, min_publish_interval_minutes:0, publish_mode:'hook' };
+  state.force = force;
+  const reqResult = await queryD1(env, `SELECT id, site_id, status, created_at FROM site_publish_requests WHERE site_id = ? AND status IN ('pending','failed_retryable') ORDER BY id ASC`, [env.SITE_ID], fetchImpl);
+  const eligible = selectEligible(state, rows(reqResult));
+  const queued = [];
+  for (const item of eligible.requests) { await claimRequest(env, item.id, item.status, fetchImpl); queued.push(String(item.id)); }
+  const mode = state.publish_mode === 'direct' ? 'direct' : 'hook';
+  const should = queued.length > 0;
+  if (should && mode === 'hook' && !env.DEPLOY_HOOK_URL) fail('missing configuration: DEPLOY_HOOK_URL');
+  output('should_publish', should ? 'true':'false'); output('should_direct_deploy', should && mode === 'direct' ? 'true':'false'); output('should_call_deploy_hook', should && mode === 'hook' ? 'true':'false'); output('site_id', cfg.site); output('pending_count', rows(reqResult).length); output('queued_count', queued.length); output('publish_mode', mode); output('skip_reason', should ? '' : eligible.skip_reason || 'no_change'); output('queued_request_ids', queued.join(','));
+  return { should_publish:should, should_direct_deploy:should&&mode==='direct', should_call_deploy_hook:should&&mode==='hook', queued_request_ids:queued, skip_reason:should?'':eligible.skip_reason||'no_change' };
 }
 
-async function markFailed(message) {
-  await run(
-    `UPDATE site_rebuild_requests
-     SET status = 'failed_retryable',
-         failed_at = CURRENT_TIMESTAMP,
-         updated_at = CURRENT_TIMESTAMP,
-         error_message = ?
-     WHERE site_id = ?
-       AND status = 'queued'`,
-    [message.slice(0, 500), siteId]
-  );
-  await run(
-    `UPDATE site_publish_state
-     SET dirty_since = COALESCE(dirty_since, CURRENT_TIMESTAMP),
-         updated_at = CURRENT_TIMESTAMP
-     WHERE site_id = ?`,
-    [siteId]
-  );
-  await recalculateStateCounts();
-  setOutput("marked_failed", "true");
-}
-
-async function recalculateStateCounts() {
-  await run(
-    `UPDATE site_publish_state
-     SET pending_count = (
-           SELECT COUNT(*) FROM site_rebuild_requests
-           WHERE site_id = ? AND status IN ('pending', 'failed_retryable')
-         ),
-         queued_count = (
-           SELECT COUNT(*) FROM site_rebuild_requests
-           WHERE site_id = ? AND status = 'queued'
-         ),
-         dirty_since = CASE
-           WHEN (
-             SELECT COUNT(*) FROM site_rebuild_requests
-             WHERE site_id = ? AND status IN ('pending', 'failed_retryable')
-           ) = 0 THEN dirty_since
-           ELSE COALESCE(dirty_since, CURRENT_TIMESTAMP)
-         END,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE site_id = ?`,
-    [siteId, siteId, siteId, siteId]
-  );
-}
-
-function evaluateGuardrails(state) {
-  const today = utcDate();
-  const dailyLimit = Number(state.daily_publish_limit || 12);
-  const dailyCount = state.daily_publish_date === today ? Number(state.daily_publish_count || 0) : 0;
-  if (dailyCount >= dailyLimit) {
-    return { allowed: false, reason: "daily_limit_reached" };
-  }
-
-  const minIntervalMinutes = Number(state.min_publish_interval_minutes || 30);
-  const lastTriggeredAt = state.last_publish_triggered_at ? Date.parse(`${state.last_publish_triggered_at}Z`) : 0;
-  if (lastTriggeredAt) {
-    const elapsedMinutes = (Date.now() - lastTriggeredAt) / 60000;
-    if (elapsedMinutes < minIntervalMinutes) {
-      return { allowed: false, reason: "min_interval_active" };
-    }
-  }
-
-  return { allowed: true };
-}
-
-async function callDeployHook() {
-  const url = process.env.PAGES_DEPLOY_HOOK_FRANCHISEE_ID;
-  if (!url) {
-    throw new Error("Missing PAGES_DEPLOY_HOOK_FRANCHISEE_ID secret containing the full Cloudflare Pages Deploy Hook URL.");
-  }
-
-  const response = await fetch(url, { method: "POST" });
-  const text = await response.text();
-  if (!response.ok) {
-    throw new Error(`Deploy hook failed with ${response.status}: ${text.slice(0, 500)}`);
-  }
-
-  console.log(`Deploy hook accepted: ${response.status}`);
-}
-
-async function first(sql, params = []) {
-  const rows = await query(sql, params);
-  return rows[0] || null;
-}
-
-async function run(sql, params = []) {
-  await query(sql, params);
-}
-
-async function query(sql, params = []) {
-  const accountId = requiredEnv("CLOUDFLARE_ACCOUNT_ID");
-  const databaseId = process.env.CLOUDFLARE_D1_DATABASE_ID || DEFAULT_DATABASE_ID;
-  const token = requiredEnv("CLOUDFLARE_API_TOKEN");
-  const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/query`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ sql, params }),
-  });
-
-  const payload = await response.json().catch(() => null);
-  if (!response.ok || !payload?.success) {
-    const message = payload?.errors?.map((error) => error.message).join("; ") || response.statusText;
-    throw new Error(`D1 query failed: ${message}`);
-  }
-
-  const result = Array.isArray(payload.result) ? payload.result[0] : payload.result;
-  return result?.results || [];
-}
-
-function requiredEnv(name) {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required environment variable: ${name}`);
-  return value;
-}
-
-function utcDate() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function setOutput(name, value) {
-  if (process.env.GITHUB_OUTPUT) {
-    const line = `${name}=${String(value).replace(/\r?\n/g, " ")}\n`;
-    appendFileSync(process.env.GITHUB_OUTPUT, line);
-  }
-  console.log(`${name}=${value}`);
+if (import.meta.url === `file://${process.argv[1]?.replaceAll('\\','/')}`) {
+  const ids = (process.env.QUEUED_REQUEST_IDS || '').split(',').map(x=>x.trim()).filter(Boolean);
+  const mode = process.argv[2];
+  const task = mode === '--mark-deployed' ? markDeployed(process.env, ids) : mode === '--mark-failed' ? markFailed(process.env, ids, process.env.FAILURE_MESSAGE) : run(process.env);
+  task.catch(err => { console.error(`poller failed: ${err instanceof PollerError ? err.message : 'internal error'}`); process.exitCode = 1; });
 }
