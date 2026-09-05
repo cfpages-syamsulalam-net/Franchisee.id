@@ -1,28 +1,54 @@
-name: Premium Email Worker
+name: Premium email worker
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "12,42 * * * *"
+    - cron: '12,42 * * * *'
 
 permissions:
   contents: read
 
+concurrency:
+  group: premium-email-worker-franchisee-id
+  cancel-in-progress: false
+
 jobs:
-  run-worker:
-    runs-on: ubuntu-latest
+  premium-email-worker:
+    if: github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
+    env:
+      SITE_URL: ${{ vars.FRANCHISEE_SITE_URL || 'https://franchisee.id' }}
+      PREMIUM_EMAIL_WORKER_SECRET: ${{ secrets.PREMIUM_EMAIL_WORKER_SECRET }}
     steps:
-      - name: Trigger protected email worker
-        env:
-          SITE_URL: ${{ vars.FRANCHISEE_SITE_URL || 'https://franchisee.id' }}
-          PREMIUM_EMAIL_WORKER_SECRET: ${{ secrets.PREMIUM_EMAIL_WORKER_SECRET }}
+      - name: POST premium email worker
+        shell: bash
         run: |
-          if [ -z "$PREMIUM_EMAIL_WORKER_SECRET" ]; then
-            echo "PREMIUM_EMAIL_WORKER_SECRET is not set."
+          set -euo pipefail
+          expected='https://franchisee.id'
+          if [[ -z "${PREMIUM_EMAIL_WORKER_SECRET:-}" ]]; then
+            echo 'Configuration error: required secret is missing.' >&2
+            exit 2
+          fi
+          if [[ "${SITE_URL:-}" != "$expected" ]]; then
+            echo 'Configuration error: SITE_URL does not match the approved origin.' >&2
+            exit 2
+          fi
+          payload='{"source":"github-actions"}'
+          status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --request POST \
+            --connect-timeout 10 --max-time 60 --fail-with-body \
+            --header 'Authorization: Bearer '"$PREMIUM_EMAIL_WORKER_SECRET" \
+            --header 'Content-Type: application/json' --data "$payload" \
+            "${SITE_URL}/premium-email-worker" 2>/dev/null)" || {
+              rc=$?
+              if [[ "$rc" -eq 22 && "$status" =~ ^[0-9]{3}$ ]]; then
+                echo "Premium email worker endpoint returned HTTP ${status}." >&2
+              else
+                echo 'Premium email worker request failed during transport.' >&2
+              fi
+              exit 1
+            }
+          if [[ "$status" != 2* ]]; then
+            echo "Premium email worker endpoint returned HTTP ${status}." >&2
             exit 1
           fi
-          curl -fsS -X POST "$SITE_URL/premium-email-worker" \
-            -H "Authorization: Bearer $PREMIUM_EMAIL_WORKER_SECRET" \
-            -H "Content-Type: application/json" \
-            --data '{"source":"github-actions"}'
