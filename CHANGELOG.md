@@ -4,6 +4,17 @@ Format:
 - Header: `## YYYY-MM-DD HH:mm (Asia/Jakarta)`
 - Sections: `### Added`, `### Changed`, `### Removed`
 
+## 2026-09-21 13:40 (Asia/Jakarta)
+
+### Added
+- Runtime privacy and OAuth regression checks, static export privacy fixture, shared legacy shell stylesheet, static security headers and a real 404 page.
+
+### Changed
+- Block anonymous applicant exports, keep internal snapshots outside public output, and bind Google Contacts refresh tokens to the correct Google account with single-use callback state and current staff authorization.
+- Improve mobile navigation and directory hierarchy without changing form fields or directory URLs.
+- Replace speculative release blockers with verified environment evidence and actionable interactive checks.
+
+
 ## 2026-07-25 23:40 (Asia/Jakarta)
 ### Added
 - `GLOBAL_RESEARCH.md`: Added the project-wide pre-writing evidence foundation with 20 direct-source research records, exact 16/16 topic-family coverage, 12 explicit legal/financial/sector/offer gates, source-refresh triggers, and article-use boundaries.

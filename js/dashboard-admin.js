@@ -368,6 +368,7 @@
     var messages = {
       connected: ["Google Contacts terhubung. Tombol Simpan kontak sekarang memakai koneksi khusus staff ini.", false],
       denied: ["Koneksi Google Contacts dibatalkan. Hubungkan lagi dari tab Outreach saat siap.", true],
+      forbidden: ["Akun Anda tidak lagi memiliki izin staf. Hubungi admin untuk memulihkan akses sebelum menghubungkan Google Contacts.", true],
       expired: ["Sesi koneksi Google Contacts kedaluwarsa. Coba hubungkan lagi dari tab Outreach.", true],
       invalid: ["Balikan Google Contacts tidak valid. Coba hubungkan lagi dari tab Outreach.", true],
       failed: ["Koneksi Google Contacts gagal. Cek konfigurasi OAuth dan coba lagi dari tab Outreach.", true],

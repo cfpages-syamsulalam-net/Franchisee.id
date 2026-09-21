@@ -1,0 +1,40 @@
+/* Shared legacy shell guardrails. HFE opens the nav by adding menu-is-active. */
+.hfe-dropdown:not(.menu-is-active) {
+  display: none !important;
+}
+
+.elementor-element-1da8de2d {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 1024px) {
+  body:not(.rtl) .elementor-1649 .elementor-element.elementor-element-66d02b6 {
+    left: auto;
+    right: 15px;
+    width: 44px;
+    max-width: 44px;
+  }
+
+  .elementor-element-66d02b6 .hfe-dropdown.menu-is-active {
+    display: block !important;
+    position: absolute;
+    right: 0;
+    left: auto !important;
+    width: calc(100vw - 30px) !important;
+    max-width: calc(100vw - 30px);
+    max-height: calc(100dvh - 100px);
+    overflow-y: auto;
+  }
+
+  .elementor-element-66d02b6 .hfe-dropdown.menu-is-active > ul.hfe-nav-menu {
+    display: block !important;
+    width: 100%;
+  }
+
+  .elementor-element-66d02b6 .hfe-dropdown.menu-is-active li.menu-item {
+    float: none;
+    width: 100%;
+    flex-shrink: 0;
+  }
+}

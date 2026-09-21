@@ -655,3 +655,39 @@ When editing any `.md` file, distinguish between:
 - **Target architecture:** Astro on Cloudflare, D1, R2, Clerk, and protected role-aware app routes.
 
 Do not describe Google Sheets, Supabase, or Cloudinary as the future application stack.
+
+## Production hardening and UI/UX audit — 2026-09-21
+
+This section supersedes the preliminary documentation-only pass from earlier in this session. That pass incorrectly treated existing configuration as missing and did not constitute a completed security or visual audit.
+
+### Verified environment
+
+The saved cfman `franchise-network` credential can read the actual Cloudflare Pages project `franchisee-id`. Production already has the Clerk secret and webhook signing secret, Cloudflare build token, Google Contacts client ID/client secret/token key, D1 `franchise_db` and R2 `FRANCHISE_ASSETS` bindings. Pages uses `pnpm run build:astro` with `dist`. A fresh build successfully read remote D1; no secrets need to be sent in chat. Secret presence does not prove each external OAuth consent or email provider setting works.
+
+The serving deployment at audit start was `1ef72e9c-ee63-47d9-adc7-880dacf9a42d` (2026-09-05, success); the latest listed deployment was queued. The local checkout was behind remote infrastructure/article commits; those were fast-forwarded before publication planning.
+
+### Findings and fixes
+
+| Severity | Evidence | Action and verification |
+| --- | --- | --- |
+| P0 privacy | Browser request to `/get-franchises?tab=FRANCHISEE&source=d1&limit=1` returned 200, applicant field names and `public, max-age=3600` without login. No applicant values were copied into audit artifacts. | Reject this public export with 403 and `no-store` before D1 or Sheets access. Mocked runtime regression covers both sources and preserves public claim search. |
+| P0 export boundary | `/json/d1-franchise-static-data.json` was publicly downloadable; the snapshot includes build-only raw source payloads and contact fields. | Allowlist reviewed browser JSON datasets, exclude internal snapshots/manifests and nonpublic source artifacts, remove exact stale excluded exports, and test the real copy script in a disposable fixture. |
+| P1 OAuth identity | Callback could retain account A refresh token while recording account B identity/access token. | Bind reuse to the same nonrevoked Google subject; reject unsafe switches, missing subject and invalid expiry. Recheck active staff/admin permission and atomically consume callback state before exchange. |
+| P1 navigation | Browser checks found horizontal page overflow on home, directory and login at 390px and 1440px. Hidden HFE menus retained layout width. | Shared legacy-shell CSS fixes closed-menu layout; generated and copied pages load the same stylesheet. Validate both closed and open menu states, not just scroll width. |
+| P1 route correctness | Unknown paths could return a 200 HTML fallback, obscuring removed/private paths and broken links. | Add a proper `404.html` via Astro with useful directory/home recovery links. |
+| P2 visual hierarchy | Directory hero placed text over a busy shop image, mobile filters filled most of the first screen, sort quicklinks duplicated the selector. | Warm brand-colored hero, compact responsive filters, remove redundant sort links while preserving category/capital/city/tools/compare navigation. |
+| P2 browser headers | Live static pages lacked a frame restriction. | Add SAMEORIGIN, nosniff and strict-origin-when-cross-origin headers without introducing an untested restrictive resource CSP. |
+
+### Validation and evidence boundaries
+
+The source researcher read all tracked Markdown in its checkout and reported coverage in `.context/production-source-audit.md`. Local browser evidence is saved under the task's browser audit directory, with before/after screenshots and route results. Full production build passed, as did Astro diagnostics (zero errors, five existing hints). Focused privacy, Google Contacts and export checks run actual handlers or copy behavior, not only source-string matching. Independent review and final deployed URL checks determine release acceptance; local results alone are not a launch claim.
+
+The built dashboard login and unauthenticated API denial can be checked automatically. An authenticated Google consent/account switch and writing a contact to a real staff account still need the account holder's interactive consent. Public login must remain basic identity-only; moving Contacts to staff OAuth does not by itself prove Google's separate Contacts app is exempt from verification.
+
+### Video-derived audit method
+
+Original English automatic captions were retrieved for https://www.youtube.com/watch?v=Ksx9C2-3yMo and https://www.youtube.com/watch?v=GGg61sdEjeI. The reusable `youtube-subtitle-evidence` skill records the retrieval workflow and bounded paraphrased lessons. Application to this site: let data/state drive dashboard hierarchy, design denied/loading/error states, maintain contrast independent of images, simplify repeated controls, and keep meaningful trust information near decisions. These principles were checked against real browser evidence rather than assumed from video titles.
+
+### Continuation failure and correction
+
+The earlier assistant ended after discovering available credentials and treated a source-history lookup as the parent task's completion. The existing continuation instructions already prohibit that. The practical correction is to retain the original audit/fix/deploy finish condition through status questions and dependency discoveries, and continue the next executable action in the same turn. A future hook test should reproduce `implementation -> credentials question -> credentials found -> attempted final`, reject release while runnable parent work remains, and allow explicit cancellation, verified completion or a real blocker. A stronger hook is useful only if it validates the durable parent state, not an arbitrary prose `TERMINAL_RELEASE` line. No hook code was changed or claimed fixed in this project pass.

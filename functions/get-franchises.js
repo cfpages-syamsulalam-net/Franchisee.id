@@ -26,6 +26,22 @@ export async function onRequestGet({ request, env }) {
     }
 
     const query = parsedQuery.data;
+    if (query.tab === "FRANCHISEE") {
+      return jsonResponse(
+        {
+          success: false,
+          error: "PUBLIC_FRANCHISEE_EXPORT_UNAVAILABLE",
+        },
+        {
+          status: 403,
+          headers: {
+            "Cache-Control": "no-store",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
+      );
+    }
+
     const useSheets = query.source === "sheets" || (!env.franchise_db && query.source !== "d1");
     const result = useSheets ? await getFranchisesFromSheets(env, query) : await getFranchisesFromD1(env, query);
 

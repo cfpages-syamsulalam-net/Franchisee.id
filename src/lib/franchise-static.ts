@@ -513,9 +513,6 @@ function generateDirectoryControls(rows: FranchiseStaticRow[], options: Director
       </div>
       <div class="franchise-directory-quicklinks" aria-label="Tampilan cepat">
         <a href="/peluang-usaha">Semua</a>
-        <a href="/peluang-usaha?sort=rekomendasi">Rekomendasi</a>
-        <a href="/peluang-usaha?sort=populer">Populer</a>
-        <a href="/peluang-usaha?sort=abjad">Abjad</a>
         <a href="/peluang-usaha/kategori/">Kategori</a>
         <a href="/peluang-usaha/modal/">Modal</a>
         <a href="/peluang-usaha/kota/">Kota</a>

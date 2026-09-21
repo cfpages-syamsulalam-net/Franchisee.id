@@ -127,7 +127,14 @@ export function escapeAttr(value: unknown) {
 }
 
 export function normalizeGeneratedHtml(html: string) {
-  return sanitizeLegacyWordPressRuntime(html)
+  const normalized = sanitizeLegacyWordPressRuntime(html)
+    .replace(/<link\b[^>]*id=(['"])legacy-shell-css\1[^>]*>\s*/gi, "");
+  const withLegacyShell = normalized.replace(
+    /<\/head>/i,
+    '  <link id="legacy-shell-css" rel="stylesheet" href="/css/legacy-shell.css">\n</head>',
+  );
+
+  return withLegacyShell
     .replace(/^[\t ]+/gm, (indent) => {
       let normalized = indent;
       while (normalized.includes(" \t")) normalized = normalized.replace(/ \t/g, "\t");

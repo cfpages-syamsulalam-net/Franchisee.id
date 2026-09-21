@@ -1,5 +1,15 @@
 # Franchisee.id Codebase Map
 
+## 2026-09-21 production hardening
+
+- `get-franchises.js` is a public business/claim-search API only. `tab=FRANCHISEE` returns 403/no-store before selecting D1 or Sheets; member data stays behind protected profile/dashboard APIs.
+- `scripts/static-export-policy.mjs` allowlists browser JSON datasets. The D1 static snapshot and generated bridge manifest remain build inputs, never deployed public files. `scripts/check-static-export.mjs` executes the copy script in a disposable fixture and verifies stale snapshot removal.
+- Google Contacts callback checks current active staff/admin permission and atomically consumes state before Google exchange. Stored refresh tokens can be reused only for the same nonrevoked Google subject. Behavioral tests verify persisted identity/token, cancelled/expired/replayed state and revoked roles.
+- `css/legacy-shell.css` is shared by generated pages through `normalizeGeneratedHtml()` and copied legacy HTML through `copy-legacy-static.mjs`. It owns closed mobile menu layout and responsive header bounds. Directory filters retain the existing query contract; duplicate sort shortcuts are removed.
+- `src/pages/404.astro` creates a real static 404 recovery page. `public/_headers` applies basic browser headers and noindex to JSON assets.
+- The current launch checklist is at the top of `progress/summary-20260328.md`; the original March record is historical. Production environment secrets were verified by name/type only, never copied into this repository.
+
+
 Last updated: 2026-07-18 02:35 (Asia/Jakarta)
 
 ## Purpose

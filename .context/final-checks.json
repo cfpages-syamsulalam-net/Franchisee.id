@@ -1,0 +1,42 @@
+[
+  {
+    "command": "pnpm exec tsx scripts/check-public-franchise-privacy.ts",
+    "exit_code": 0
+  },
+  {
+    "command": "pnpm run google-contacts:check",
+    "exit_code": 0
+  },
+  {
+    "command": "pnpm exec node scripts/check-static-export.mjs",
+    "exit_code": 0
+  },
+  {
+    "command": "pnpm run auth:check",
+    "exit_code": 0
+  },
+  {
+    "command": "pnpm run functions:methods:check",
+    "exit_code": 0
+  },
+  {
+    "command": "pnpm run directory:check",
+    "exit_code": 0
+  },
+  {
+    "command": "pnpm run detail-assets:check",
+    "exit_code": 0
+  },
+  {
+    "command": "pnpm run profile:check",
+    "exit_code": 0
+  },
+  {
+    "command": "pnpm run state-transitions:check",
+    "exit_code": 1
+  },
+  {
+    "command": "pnpm run astro:check",
+    "exit_code": 0
+  }
+]

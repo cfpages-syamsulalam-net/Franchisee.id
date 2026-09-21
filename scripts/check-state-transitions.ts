@@ -40,8 +40,8 @@ async function main() {
   assert.match(prepared[2].sql, /status IN \('pending', 'failed_retryable'\)/);
 
   const pollerSource = readFileSync("scripts/d1-static-publish-poller.mjs", "utf8");
-  assert.match(pollerSource, /pending_count = \(/);
-  assert.match(pollerSource, /queued_count = \(/);
+  assert.match(pollerSource, /(?:pending_count\s*=\s*\(|output\(['\"]pending_count['\"])/);
+  assert.match(pollerSource, /(?:queued_count\s*=\s*\(|output\(['\"]queued_count['\"])/);
 
   const outreachStatusSource = readFileSync("functions/_outreach-status.js", "utf8");
   assert.match(outreachStatusSource, /last_status_changed_at = CURRENT_TIMESTAMP/);

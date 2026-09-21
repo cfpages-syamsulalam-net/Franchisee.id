@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isPublicLegacyFile } from "./static-export-policy.mjs";
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DIST_DIR = join(ROOT_DIR, "dist");
@@ -141,6 +142,7 @@ function copyDirectoryNoOverwrite(sourceDir, targetDir) {
   stats.directories += 1;
 
   for (const entry of readdirSync(sourceDir, { withFileTypes: true })) {
+    if (entry.name.startsWith(".")) continue;
     const sourcePath = join(sourceDir, entry.name);
     const targetPath = join(targetDir, entry.name);
 
@@ -156,6 +158,12 @@ function copyDirectoryNoOverwrite(sourceDir, targetDir) {
 }
 
 function copyFileNoOverwrite(sourcePath, targetPath) {
+  if (!isPublicLegacyFile(relative(ROOT_DIR, sourcePath))) {
+    // Remove an exact formerly exported file when copy runs on an existing dist.
+    if (existsSync(targetPath) && statSync(targetPath).isFile()) unlinkSync(targetPath);
+    stats.filesSkipped += 1;
+    return;
+  }
   if (existsSync(targetPath)) {
     stats.filesSkipped += 1;
     return;
@@ -202,6 +210,9 @@ function rewriteLegacyHtmlLinks(html) {
 }
 
 function sanitizeLegacyWordPressRuntime(html) {
+  if (!html.includes('href="/css/legacy-shell.css"')) {
+    html = html.replace("</head>", '<link rel="stylesheet" href="/css/legacy-shell.css">\n</head>');
+  }
   return html
     .replace(/<script\b[^>]*>\s*window\._wpemojiSettings[\s\S]*?<\/script>/gi, "")
     .replace(/<script\b[^>]*\bsrc=(["'])[^"']*wp-emoji-release\.min\.js[^"']*\1[^>]*>\s*<\/script>/gi, "")

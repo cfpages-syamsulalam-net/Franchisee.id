@@ -65,3 +65,8 @@ Apply this checklist to every high-risk stateful change.
 - For every queue or batch state, define idempotent retry behavior and terminal recovery behavior.
 - For every reviewed data suggestion, show the source proof and the exact field-level basis before approval.
 - For every migration/cleanup state, keep the operation replayable and verify remote schema/data before removing compatibility paths.
+
+
+## 2026-09-21 Google Contacts callback hardening
+
+Pending state now transitions to consumed through a conditional UPDATE before provider exchange. Concurrent/replayed callbacks cannot exchange twice. Invalid expiry and inactive/nonstaff actors cannot connect. A successful reconnect may retain an existing refresh token only when the Google subject matches and the stored connection is not revoked; switching accounts without a new refresh token fails without replacing the existing connection. The dashboard explains permission revocation with a recoverable admin-contact message. `pnpm run google-contacts:check` executes persisted subject/token and simultaneous-callback fixtures.

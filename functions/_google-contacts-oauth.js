@@ -71,10 +71,19 @@ export async function completeGoogleContactsAuthorization(db, request, env) {
     return redirectToDashboard("/dashboard/?google_contacts=expired#outreach");
   }
 
-  if (Date.parse(row.expires_at || "") < Date.now()) {
+  const expiresAtMs = Date.parse(row.expires_at || "");
+  if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
     await consumeGoogleContactsOAuthState(db, state, "expired", row);
     return redirectToDashboard("/dashboard/?google_contacts=expired#outreach");
   }
+
+  if (!(await hasActiveStaffRole(db, row.user_id))) {
+    await consumeGoogleContactsOAuthState(db, state, "forbidden", row);
+    return redirectToDashboard("/dashboard/?google_contacts=forbidden#outreach");
+  }
+
+  const claimedState = await claimGoogleContactsOAuthState(db, state, row.expires_at);
+  if (!claimedState) return redirectToDashboard("/dashboard/?google_contacts=expired#outreach");
 
   const config = googleContactsOAuthConfig(env, request);
   try {
@@ -86,11 +95,21 @@ export async function completeGoogleContactsAuthorization(db, request, env) {
 
     const userinfo = await fetchGoogleUserinfo(token.access_token);
     const current = await getRawGoogleContactsConnection(db, row.user_id);
+    const googleSubject = String(userinfo.sub || "").trim();
+    if (!googleSubject) throw new Error("GOOGLE_USERINFO_SUB_MISSING");
     const encryptedAccess = await encryptGoogleContactsToken(env, token.access_token, row.user_id, "access_token");
-    const refreshToken = token.refresh_token || "";
-    const encryptedRefresh = refreshToken
-      ? await encryptGoogleContactsToken(env, refreshToken, row.user_id, "refresh_token")
-      : current?.refresh_token_encrypted || null;
+    const sameActiveAccount = Boolean(
+      current &&
+      !current.revoked_at &&
+      current.google_sub &&
+      current.google_sub === googleSubject,
+    );
+    if (!token.refresh_token && current?.refresh_token_encrypted && !sameActiveAccount) {
+      throw new Error("GOOGLE_REFRESH_TOKEN_REQUIRED_FOR_ACCOUNT_SWITCH");
+    }
+    const encryptedRefresh = token.refresh_token
+      ? await encryptGoogleContactsToken(env, token.refresh_token, row.user_id, "refresh_token")
+      : sameActiveAccount ? current.refresh_token_encrypted || null : null;
     const expiresAt = token.expires_in ? new Date(Date.now() + Number(token.expires_in) * 1000).toISOString() : null;
 
     await db.batch([
@@ -118,7 +137,7 @@ export async function completeGoogleContactsAuthorization(db, request, env) {
           current?.id || `google_contacts_${randomId()}`,
           row.user_id,
           PROVIDER,
-          userinfo.sub || "",
+          googleSubject,
           userinfo.email || "",
           encryptedAccess,
           encryptedRefresh,
@@ -126,7 +145,6 @@ export async function completeGoogleContactsAuthorization(db, request, env) {
           token.token_type || "Bearer",
           expiresAt,
         ),
-      db.prepare("UPDATE staff_google_oauth_states SET consumed_at = CURRENT_TIMESTAMP WHERE state = ?").bind(state),
       auditStatement(db, "dashboard.google_contacts.connect", "user", row.user_id, {
         google_email: userinfo.email || "",
         scopes,
@@ -272,6 +290,33 @@ async function consumeGoogleContactsOAuthState(db, state, reason, existingRow = 
       expires_at: row.expires_at || "",
     }, row.user_id),
   ]);
+}
+
+async function claimGoogleContactsOAuthState(db, state, expiresAt) {
+  const result = await db
+    .prepare(
+      `UPDATE staff_google_oauth_states
+       SET consumed_at = CURRENT_TIMESTAMP
+       WHERE state = ? AND consumed_at IS NULL AND expires_at = ? AND expires_at > ?
+       RETURNING state, user_id, return_path, expires_at`,
+    )
+    .bind(state, expiresAt, new Date().toISOString())
+    .first();
+  return result || null;
+}
+
+async function hasActiveStaffRole(db, userId) {
+  const result = await db
+    .prepare(
+      `SELECT u.status, ur.role
+       FROM users u
+       LEFT JOIN user_roles ur ON ur.user_id = u.id AND ur.scope_type = 'network' AND ur.scope_id = 'network'
+       WHERE u.id = ?`,
+    )
+    .bind(userId)
+    .all();
+  const rows = result.results || [];
+  return rows.some((item) => item.status === "active" && (item.role === "staff" || item.role === "admin"));
 }
 
 function reconnectRequired(message) {

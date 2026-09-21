@@ -262,6 +262,11 @@ export const FRANCHISE_DIRECTORY_STYLES = `<style id="franchise-directory-genera
   --padding-left: 16px !important;
   --padding-right: 16px !important;
 }
+.elementor-2184 .elementor-element.elementor-element-19b8c8c,
+.elementor-2184 .elementor-element.elementor-element-19b8c8c::before {
+  background: #fffaf0 !important;
+  background-image: none !important;
+}
 .elementor-2184 .elementor-element.elementor-element-19b8c8c .elementor-heading-title {
   font-size: 38px;
   line-height: 1.15;
@@ -568,8 +573,11 @@ export const FRANCHISE_DIRECTORY_STYLES = `<style id="franchise-directory-genera
     padding: 12px;
   }
   .franchise-directory-control-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+  .franchise-directory-search,
+  .franchise-directory-actions {
+    grid-column: 1 / -1;
   }
 }
 </style>`;
-
