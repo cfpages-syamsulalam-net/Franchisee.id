@@ -662,6 +662,29 @@ When editing any `.md` file, distinguish between:
 
 Do not describe Google Sheets, Supabase, or Cloudinary as the future application stack.
 
+## Dashboard failure-message audit — 2026-09-21
+
+Status: **implemented locally; validation and deployment pending**. This section is the progress tracker for the signed-in dashboard incident.
+
+### Reproduced cause
+
+The browser correctly had a Clerk session and bearer token, but `/dashboard-data` returned an unavailable or authorization response while the dashboard catch path showed a generic signed-in warning. The existing client already kept the session and exposed retry/logout controls, but it did not distinguish database unavailability, missing role, server failure, malformed JSON, or network failure. The live symptom therefore made a D1 outage and a role denial look identical.
+
+### Scope audit
+
+| Scenario | Server signal | User message/action | State |
+| --- | --- | --- | --- |
+| Expired or missing session | `401` / `AUTH_REQUIRED` | Ask the user to log in again | Existing behavior retained |
+| Signed in but no staff/admin role | `403` / `ROLE_FORBIDDEN` | Explain access is missing; sign out and use the authorized account | Added |
+| D1/account data unavailable | `503` / `ACCOUNT_DATA_UNAVAILABLE` | Explain temporary account-data outage or usage limit; retry later and contact admin if persistent | Added |
+| Dashboard server failure | `5xx` | Explain server retrieval failure; retry later and report occurrence time | Added |
+| Invalid or unexpected response | non-success without known code | Show server message/error when safe, otherwise the route fallback | Added |
+| Browser/network failure | fetch/read exception | Existing retry/logout panel remains; follow-up should add network-specific classification if the fetch wrapper exposes a stable code | Tracked |
+
+### Implementation and proof
+
+`js/dashboard-admin.js` now maps dashboard response status/error codes to specific Indonesian recovery messages and preserves the authenticated session during all non-401 failures. The focused outage regression remains the poison check for session preservation and no fallback authorization. Required next checks: syntax/regression suite, production deployment, and live dashboard response verification after D1 quota recovery.
+
 ## Production hardening and UI/UX audit — 2026-09-21
 
 This section supersedes the preliminary documentation-only pass from earlier in this session. That pass incorrectly treated existing configuration as missing and did not constitute a completed security or visual audit.

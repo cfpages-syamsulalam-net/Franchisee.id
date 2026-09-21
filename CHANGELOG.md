@@ -1,3 +1,7 @@
+## 2026-09-21 15:00 (Asia/Jakarta)
+### Changed
+- Corrected signed-in dashboard failure handling so database outages and missing roles no longer look like a login failure; added cause-specific recovery messages.
+
 2026-09-21: Added D1_QUOTA_OPERATIONS.md and routed it from CODEBASE/AUDIT/SUGGESTION; corrected quota attribution and recovery claim. Moved cross-project hook lessons out of repository AUDIT/SUGGESTION into the canonical global hook runbook; global access locator stores paths and permissions only, no secret values.
 
 

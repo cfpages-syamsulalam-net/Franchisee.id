@@ -272,7 +272,7 @@
         return;
       }
       var data = await readDashboardJson(response, "Dashboard gagal dimuat.");
-      if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat.");
+      if (!response.ok || !data.success) throw dashboardLoadError(response, data, "Dashboard gagal dimuat.");
       renderDashboard(data);
       writeDashboardCache(data);
     } catch (error) {
@@ -330,7 +330,7 @@
     var headers = await window.FranchiseAuth.getAuthHeaders();
     var response = await fetch("/dashboard-data", { headers: headers, cache: "no-store" });
     var data = await readDashboardJson(response, "Dashboard gagal dimuat ulang.");
-    if (!response.ok || !data.success) throw new Error(data.message || data.error || "Dashboard gagal dimuat ulang.");
+    if (!response.ok || !data.success) throw dashboardLoadError(response, data, "Dashboard gagal dimuat ulang.");
     renderDashboard(data);
     writeDashboardCache(data);
   }
@@ -354,6 +354,21 @@
 
   async function readDashboardJson(response, fallbackMessage) {
     return window.FranchiseFetch.readJson(response, fallbackMessage || "Permintaan dashboard gagal.");
+  }
+
+  function dashboardLoadError(response, data, fallbackMessage) {
+    var error = new Error(dashboardErrorMessage(response, data, fallbackMessage));
+    error.dashboardCode = data && data.error;
+    error.dashboardStatus = response.status;
+    return error;
+  }
+
+  function dashboardErrorMessage(response, data, fallbackMessage) {
+    var code = data && data.error;
+    if (response.status === 403 || code === "ROLE_FORBIDDEN") return "Akun Anda sudah login, tetapi belum memiliki akses admin/staff ke dashboard. Keluar lalu masuk dengan akun yang memiliki akses.";
+    if (response.status === 503 || code === "ACCOUNT_DATA_UNAVAILABLE") return "Sesi login Anda aktif, tetapi data akun sedang tidak tersedia. Ini biasanya berarti layanan database sedang pulih atau batas pemakaian sementara tercapai. Coba lagi setelah beberapa menit; jika tetap gagal, hubungi admin.";
+    if (response.status >= 500) return "Sesi login Anda aktif, tetapi server dashboard mengalami gangguan saat mengambil data. Coba lagi setelah beberapa menit. Jika tetap gagal, kirim waktu kejadian kepada admin.";
+    return (data && (data.message || data.error)) || fallbackMessage;
   }
 
   function setMetric(name, value) {
