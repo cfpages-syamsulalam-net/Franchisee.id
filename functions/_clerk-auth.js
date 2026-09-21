@@ -92,7 +92,7 @@ export async function syncD1User(request, env, db, requestedRole) {
 export async function syncWebhookUserToD1(env, db, clerkUser) {
   const user = await upsertD1User(db, clerkUser);
   const roles = await getUserRoles(db, user.id);
-  await syncClerkMetadataFromD1(env, user, roles);
+  // Webhooks are inbound only: metadata writes emit another user.updated webhook.
   return { ...user, roles };
 }
 

@@ -38,6 +38,11 @@ const requiredFragments = [
 ];
 
 const failures = [];
+const webhookBody = readFileSync("functions/_clerk-auth.js", "utf8")
+  .split("export async function syncWebhookUserToD1(")[1]?.split("\n}")[0];
+if (!webhookBody || webhookBody.includes("syncClerkMetadataFromD1(")) {
+  failures.push("Inbound Clerk webhook must not write metadata back and recursively emit user.updated.");
+}
 
 for (const file of authClientFiles) {
   execFileSync(process.execPath, ["--check", file], { stdio: "inherit" });

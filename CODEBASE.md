@@ -510,3 +510,5 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 - `ARTICLE-GUIDE.md` and the managed block in `AGENTS.md` instruct one-file-at-a-time expansion.
 - The eventual public route contract is `/artikel/[slug].html`; no HTML, sitemap, deployment, or D1 publication state is changed by this handoff.
 <!-- END MANAGED LOCAL ARTICLE HANDOFF MAP -->
+## D1 storage incident — 2026-09-21
+`operation_events` reached 1,424,476 rows (mostly Clerk webhook success/failure telemetry from 2026-07-10 through 2026-08-09), filling the 500 MB D1 allocation. Business tables were not the source. Migration `0034_operation_events_retention.sql` bounds telemetry to 30 days; `scripts/d1-clean-operation-events.sql` is the one-time cleanup statement.

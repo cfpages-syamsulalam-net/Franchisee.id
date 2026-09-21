@@ -1,3 +1,7 @@
+
+## D1 login outage resolved — 2026-09-21
+Production D1 was 500,154,368 bytes. Removed 1,424,476 operational telemetry rows older than 2026-08-10 in bounded batches; final measured size 6,279,168 bytes. Retained 197 franchises, 3 users and 572 audit events. No business or OAuth tables were deleted. Unbounded deletion hit CPU limits; bounded deletes succeeded. Applied migration 0034 with indexed 30-day retention trigger (100 expired rows per insert). Root cause: inbound user.updated webhook wrote Clerk metadata, emitting another webhook. Removed write-back from syncWebhookUserToD1; normal explicit D1-to-Clerk synchronization remains. Auth regression check prevents reintroducing the loop. Signed-in browser login still needs real session confirmation.
+
 ## 2026-09-21 navbar follow-through
 Done: reuse authenticated navbar in dashboard and prioritize staff/admin roles. Regression check covers missing integration and mixed roles.
 
