@@ -1,0 +1,44 @@
+{
+  "schema_version": "skill-equipped-delegation-v1",
+  "phase": "dispatch",
+  "task_name": "franchisee_source_audit",
+  "role": "evidence-researcher",
+  "requested_model": "gpt-5.6-luna",
+  "requested_effort": "medium",
+  "requested_tier": "default",
+  "host": "Windows",
+  "skills": [
+    {
+      "name": "franchisee-ui-ux-audit",
+      "source": "C:\\Users\\THINKPAD\\.codex\\skills\\franchisee-ui-ux-audit\\SKILL.md",
+      "sha256": "6d1b205e1eb3802e4370896d3e5e01e4eb2e4ee9bd9652eff017a2a3ac1e64a2",
+      "trigger_reason": "Audit migrated site source and documentation against production/UI user journeys."
+    }
+  ],
+  "no_applicable_skill_reason": "",
+  "scope": {
+    "owned_paths": [
+      "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\production-source-audit.md"
+    ],
+    "allowed_mutation": "Create only production-source-audit.md and compiled terminal receipt. Read all tracked project Markdown, then inspect source for concrete security and UX defects; no repo implementation edits.",
+    "forbidden_operations": [
+      "git commit",
+      "git push",
+      "remote mutation",
+      "printing secrets",
+      "editing other repository files"
+    ],
+    "terminal_output_path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\production-source-audit-terminal.json",
+    "terminal_predicate": "Read every tracked Markdown file fully; report exact evidence and prioritized source-backed findings, distinguish docs claims from verified code and include Markdown coverage; compile terminal."
+  },
+  "required_terminal_outputs": [
+    {
+      "terminal_field": "report_path",
+      "path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\production-source-audit.md"
+    },
+    {
+      "terminal_field": "terminal_output_path",
+      "path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\production-source-audit-terminal.json"
+    }
+  ]
+}

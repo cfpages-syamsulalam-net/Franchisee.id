@@ -255,12 +255,8 @@
       renderAuthDebug("boot:start");
       await window.FranchiseAuth.init();
       renderAuthDebug("boot:after_init");
-      var cached = readDashboardCache();
-      if (cached) {
-        renderDashboard(cached, { cached: true });
-      }
-
-      var headers = await window.FranchiseAuth.getAuthHeaders();
+      // Cached roles cannot authorize access during a database outage.
+      var headers = await window.FranchiseAuth.getAuthHeaders({ skipPendingRoleSync: true });
       renderAuthDebug("boot:after_headers", { hasAuthorization: Boolean(headers.Authorization) });
       if (!headers.Authorization) {
         clearDashboardCache();
@@ -280,11 +276,20 @@
       renderDashboard(data);
       writeDashboardCache(data);
     } catch (error) {
-      if (dashboardState) {
+      clearDashboardCache();
+      dashboardState = null;
+      currentUserIsAdmin = false;
+      if (mainEl) mainEl.setAttribute("data-dashboard-protected", "locked");
+      if (window.FranchiseAuth?.clerk?.session) {
         if (loadingEl) loadingEl.hidden = true;
         if (loginEl) loginEl.hidden = true;
-        setStatus("Dashboard cache tampil, tetapi refresh data terbaru gagal: " + escapeHtml(error.message || String(error)), true);
-        renderAuthDebug("boot:refresh_error_after_cache", { message: error.message || String(error) });
+        userEl.textContent = "Anda sudah login. Akses dashboard belum dapat diperiksa.";
+        setStatus('Data dashboard belum tersedia. Sesi login Anda tetap aktif. Coba lagi nanti. <button type="button" data-dashboard-retry>Coba lagi</button> <button type="button" data-dashboard-signout>Keluar</button>', true);
+        statusEl.querySelector("[data-dashboard-retry]").addEventListener("click", boot);
+        statusEl.querySelector("[data-dashboard-signout]").addEventListener("click", async function () {
+          await window.FranchiseAuth.clerk.signOut();
+          window.location.reload();
+        });
         return;
       }
       if (loadingEl) loadingEl.hidden = true;

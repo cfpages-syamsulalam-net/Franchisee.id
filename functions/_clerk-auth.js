@@ -153,6 +153,13 @@ export async function syncClerkMetadataForD1User(env, db, user) {
 }
 
 export function authErrorResponse(error) {
+  if (/D1_ERROR|D1_EXEC_ERROR/i.test(String(error?.message || ""))) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: "ACCOUNT_DATA_UNAVAILABLE",
+      message: "Layanan data akun sedang tidak tersedia. Sesi login Anda tetap aktif. Silakan coba lagi nanti.",
+    }), { status: 503, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Retry-After": "300" } });
+  }
   if (!(error instanceof AuthError)) return null;
   return new Response(
     JSON.stringify({

@@ -31,7 +31,7 @@
       }
       if (!clerk?.session) return;
 
-      const user = typeof Auth.syncUser === "function" ? await Auth.syncUser() : null;
+      const user = typeof Auth.syncSessionUser === "function" ? await Auth.syncSessionUser() : null;
       replaceAuthLinks(pairs, clerk, user);
     } catch (error) {
       if (typeof Auth.recordDebug === "function") {

@@ -1,0 +1,57 @@
+{
+  "schema_version": "skill-equipped-delegation-v1",
+  "task_name": "oauth_fix",
+  "role": "worker",
+  "requested_model": "gpt-5.6-luna",
+  "requested_effort": "medium",
+  "requested_tier": "default",
+  "host": "Windows",
+  "skills": [
+    {
+      "name": "franchisee-ui-ux-audit",
+      "source": "C:\\Users\\THINKPAD\\.codex\\skills\\franchisee-ui-ux-audit\\SKILL.md",
+      "sha256": "6d1b205e1eb3802e4370896d3e5e01e4eb2e4ee9bd9652eff017a2a3ac1e64a2",
+      "trigger_reason": "Protect privacy, role boundaries and recoverable OAuth states during migrated-site production audit."
+    }
+  ],
+  "no_applicable_skill_reason": "",
+  "scope": {
+    "owned_paths": [
+      "C:\\Users\\THINKPAD\\Franchisee.id\\functions\\_google-contacts-oauth.js",
+      "C:\\Users\\THINKPAD\\Franchisee.id\\scripts\\check-google-contacts.ts",
+      "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\oauth_fix-report.md"
+    ],
+    "allowed_mutation": "Fix OAuth account switch retaining another Google subjects refresh token. Enforce same subject for reuse, deny changed/missing subject without fresh token. Recheck user active status and D1 staff/admin role at callback before provider exchange. Atomically claim valid unexpired state to stop concurrent callback replay before exchanging code. Add behavioral fixtures for account switching, same subject reuse, revoked role, invalid expiry, replay. No new dependencies. Edit only named source/tests/report. Parent owns docs and deployment.",
+    "forbidden_operations": [
+      "git commit",
+      "git push",
+      "remote mutation",
+      "printing secrets",
+      "editing another worker files"
+    ],
+    "terminal_output_path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\oauth_fix-terminal.json",
+    "terminal_predicate": "Proven root cause fixed, focused behavior test passes, no scope drift; report reproduction/check commands and exact files then compile terminal."
+  },
+  "required_terminal_outputs": [
+    {
+      "terminal_field": "report_path",
+      "path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\oauth_fix-report.md"
+    },
+    {
+      "terminal_field": "terminal_output_path",
+      "path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\oauth_fix-terminal.json"
+    }
+  ],
+  "phase": "terminal",
+  "dispatch_packet_path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\oauth_fix-dispatch.json",
+  "dispatch_packet_sha256": "0d73b94b3c028deaaf608daa83f397752bc6576699de97d1f8f0803796a34b40",
+  "terminal_output_path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\oauth_fix-terminal.json",
+  "terminal_ownership": "compiler-only",
+  "output_hashes": [
+    {
+      "path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\oauth_fix-report.md",
+      "sha256": "ca1462dcca20f865225db9abf1e15cf210c91c2be27557296e34ad8afd0f6fa4"
+    }
+  ],
+  "report_path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\oauth_fix-report.md"
+}

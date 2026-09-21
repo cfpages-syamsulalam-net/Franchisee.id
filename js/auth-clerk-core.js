@@ -64,6 +64,7 @@
     Auth.getToken = getToken;
     Auth.getAuthHeaders = getAuthHeaders;
     Auth.syncUser = syncUser;
+    Auth.syncSessionUser = syncSessionUser;
     Auth.ensureSignedIn = ensureSignedIn;
     Auth.activateSession = activateSession;
     Auth.debugEvents = Debug.initEvents(Auth.debugEvents || []);
@@ -168,10 +169,28 @@
         body: JSON.stringify(SELF_ASSIGNABLE_ROLES.has(requestedRole) ? { requested_role: requestedRole } : {}),
       });
       const result = await window.FranchiseFetch.readJson(response, "Sinkronisasi akun gagal.");
-      if (!result.success) throw new Error(result.message || result.error || "Sinkronisasi akun gagal.");
+      if (!response.ok || !result.success) {
+        const error = new Error(result.message || result.error || "Sinkronisasi akun gagal.");
+        error.code = result.error;
+        error.status = response.status;
+        throw error;
+      }
       syncedUser = result.user;
       if (SELF_ASSIGNABLE_ROLES.has(requestedRole)) clearPendingRole();
       return syncedUser;
+    }
+
+    // Presentation-only fallback. Never use this result to authorize data or actions.
+    async function syncSessionUser(role) {
+      if (SELF_ASSIGNABLE_ROLES.has(role)) setPendingRole(role);
+      try {
+        return await syncUser(role);
+      } catch (error) {
+        if (error.code !== "ACCOUNT_DATA_UNAVAILABLE" && ![502, 503, 504].includes(error.status) && error.name !== "TypeError") throw error;
+        const clerk = await initClerk();
+        if (!clerk.session) throw error;
+        return { email: clerk.user?.primaryEmailAddress?.emailAddress || "", display_name: clerk.user?.fullName || "", roles: [], sync_pending: true };
+      }
     }
 
     function setPendingRole(role) {
@@ -269,6 +288,7 @@
       Debug,
       initClerk,
       syncUser,
+      syncSessionUser,
       activateSession,
       setPendingRole,
       getPendingRole,

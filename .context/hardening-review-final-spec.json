@@ -1,0 +1,42 @@
+{
+  "schema_version": "skill-equipped-dispatch-compiler-input-v1",
+  "task_name": "hardening_review_final",
+  "role": "worker",
+  "requested_model": "gpt-5.6-terra",
+  "requested_effort": "high",
+  "requested_tier": "default",
+  "host": "Windows",
+  "skills": [
+    {
+      "name": "franchisee-ui-ux-audit",
+      "source": "C:\\Users\\THINKPAD\\.codex\\skills\\franchisee-ui-ux-audit\\SKILL.md",
+      "trigger_reason": "Independent fresh review of production and UI boundary repairs."
+    }
+  ],
+  "no_applicable_skill_reason": "",
+  "scope": {
+    "owned_paths": [
+      "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\hardening-review-final.md"
+    ],
+    "allowed_mutation": "Create only final review report and terminal; frozen hashes hardening-review-final-hashes.json. Recheck prior blockers: OAuth persisted identity/token fixtures and CSS mobile toggle plus expanded menu. All original review targets still included.",
+    "forbidden_operations": [
+      "git commit",
+      "git push",
+      "remote mutation",
+      "printing secrets",
+      "editing frozen targets",
+      "astro build"
+    ],
+    "terminal_predicate": "Frozen hashes unchanged; independent findings exact and reproducible; relevant focused checks executed or limitations explicit; compiled terminal."
+  },
+  "required_terminal_outputs": [
+    {
+      "terminal_field": "report_path",
+      "path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\hardening-review-final.md"
+    },
+    {
+      "terminal_field": "terminal_output_path",
+      "path": "C:\\Users\\THINKPAD\\Franchisee.id\\.context\\hardening-review-final-terminal.json"
+    }
+  ]
+}

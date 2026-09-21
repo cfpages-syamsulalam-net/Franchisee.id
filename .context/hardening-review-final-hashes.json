@@ -1,0 +1,16 @@
+{
+  "functions/get-franchises.js": "f0e13a56f44852ae48990b4677e1a1e4fef7b2a84e32794e38bffca0eae235e2",
+  "functions/_google-contacts-oauth.js": "ed32453bd635e8f120ff081f465db75569c4bf6b0b9912803be210a0d18f1489",
+  "scripts/check-public-franchise-privacy.ts": "50e0dacf5eb57c70e8cf2edecaf0423836c7a55c507a624400b2b4d4799ea326",
+  "scripts/check-google-contacts.ts": "894a7a8ce965928e381c9fa611a495a029aacb93fb2bac001b57679b2a9ffcbd",
+  "scripts/copy-legacy-static.mjs": "34f77b8c80fe506a512fbbb270c4c419a72bef42ab3c22caa7acec614a4c0fe3",
+  "scripts/static-export-policy.mjs": "adf83cf07c1ecde40353685b1fcba039e56ecc2efde3dc01f806f21c2516d5c6",
+  "scripts/check-static-export.mjs": "8294b825597dbd5bd8b0e0266be67bdfa4d23f16e8803b0e34ebce8149a6c0de",
+  "css/legacy-shell.css": "2195e8edf850760d9a9cc9e6637323fd23ffee7128a22ce4eff86cf7889e1ade",
+  "src/lib/franchise-text.ts": "e0a65fb1585cfa769339bdbdf00904fdf0b340dbaaf4be89e01b9960d1505e4c",
+  "src/lib/franchise-directory-styles.ts": "ad29349aa833356d1ced09b7747e0c2464e25921016f6def2e1e7d4d8dc9e2eb",
+  "src/lib/franchise-static.ts": "669bcaa7d29a7e01cf0943da74530cea056a0a2259f8dbbc968118d599b185e2",
+  "js/dashboard-admin.js": "f2297ae9c227830891ce34bec938ddc3ebceb25a92b42c939901daf309539d09",
+  "public/_headers": "c3feac66120294621909e97a3fbc66f72d7e8c3b0dbe6da773d6a1de294db38e",
+  "src/pages/404.astro": "f87c1a1bf84e92ae8d4d612e84196cf0ff97b3475a29301162abe3100d35e70c"
+}

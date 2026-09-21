@@ -6,7 +6,7 @@
   const AuthCore = window.FranchiseAuthCore.create(Auth);
   const SELF_ASSIGNABLE_ROLES = AuthCore.SELF_ASSIGNABLE_ROLES;
   const initClerk = AuthCore.initClerk;
-  const syncUser = AuthCore.syncUser;
+  const syncUser = AuthCore.syncSessionUser;
   const activateSession = AuthCore.activateSession;
   const setPendingRole = AuthCore.setPendingRole;
   const clearPendingRole = AuthCore.clearPendingRole;
@@ -114,6 +114,7 @@
         <div class="fr-auth-status ${privileged ? "is-inspectable" : ""}">
           <div>
             <strong><i class="fas fa-user-check" aria-hidden="true"></i> Anda sudah login.</strong>
+            ${user?.sync_pending ? '<p role="status">Layanan data akun sedang tidak tersedia. Anda tetap login; hak akses akan diperiksa saat layanan pulih.</p>' : ""}
             <div class="fr-auth-muted">${escapeHtml(user?.email || clerk.user?.primaryEmailAddress?.emailAddress || "")}</div>
           </div>
           <div class="fr-auth-actions">
@@ -347,8 +348,8 @@
 
   async function finishRegistration(root, clerk, sessionId, role) {
     await activateSession(clerk, sessionId);
-    await syncUser(role);
-    clearPendingRole();
+    const user = await syncUser(role);
+    if (!user?.sync_pending) clearPendingRole();
     clearPendingNext();
     showMessage(root, "Akun berhasil dibuat.", "success");
     window.location.href = registrationNextUrl(role);
