@@ -168,3 +168,6 @@ Last updated: 2026-07-18 02:35 (Asia/Jakarta)
 - Never erase useful earlier notes. Tracker edits must preserve article IDs, titles, and paths from `ARTICLE_CATALOG.md`.
 - Tracker status does not by itself prove publication or acceptance; receipts, Git history, remote parity, and the portfolio ledger remain authoritative.
 <!-- END ARTICLE PROGRESS REVIEW RULE -->
+
+## Delivery
+- When repository work is complete and verified, commit the changes so the owner can deploy and check the live result. Report the commit hash and any remaining deployment or account checks.
