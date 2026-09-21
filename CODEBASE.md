@@ -1,3 +1,5 @@
+D1 capacity and safe maintenance: `docs/architecture/D1_QUOTA_OPERATIONS.md` (read/write/storage limits, shared account budget, incident evidence, deployed protections and remaining risks).
+
 ## Dashboard authenticated navigation
 `src/pages/dashboard/index.astro` loads `js/auth-navbar.js`. Navbar resolves D1 roles through auth-sync, prioritizes admin/staff, and reloads when Clerk session identity changes. Role labels do not grant authorization.
 

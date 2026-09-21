@@ -1,3 +1,5 @@
+Quota correction: storage cleanup did not restore the daily allowance. Three diagnostic scans alone consumed 4,273,433 reads, and cleanup added more. See `docs/architecture/D1_QUOTA_OPERATIONS.md`; signed-in recovery remains unverified until quota reset.
+
 
 ## D1 login outage resolved — 2026-09-21
 Production D1 was 500,154,368 bytes. Removed 1,424,476 operational telemetry rows older than 2026-08-10 in bounded batches; final measured size 6,279,168 bytes. Retained 197 franchises, 3 users and 572 audit events. No business or OAuth tables were deleted. Unbounded deletion hit CPU limits; bounded deletes succeeded. Applied migration 0034 with indexed 30-day retention trigger (100 expired rows per insert). Root cause: inbound user.updated webhook wrote Clerk metadata, emitting another webhook. Removed write-back from syncWebhookUserToD1; normal explicit D1-to-Clerk synchronization remains. Auth regression check prevents reintroducing the loop. Signed-in browser login still needs real session confirmation.
@@ -691,7 +693,3 @@ The built dashboard login and unauthenticated API denial can be checked automati
 ### Video-derived audit method
 
 Original English automatic captions were retrieved for https://www.youtube.com/watch?v=Ksx9C2-3yMo and https://www.youtube.com/watch?v=GGg61sdEjeI. The reusable `youtube-subtitle-evidence` skill records the retrieval workflow and bounded paraphrased lessons. Application to this site: let data/state drive dashboard hierarchy, design denied/loading/error states, maintain contrast independent of images, simplify repeated controls, and keep meaningful trust information near decisions. These principles were checked against real browser evidence rather than assumed from video titles.
-
-### Continuation failure and correction
-
-The earlier assistant ended after discovering available credentials and treated a source-history lookup as the parent task's completion. The existing continuation instructions already prohibit that. The practical correction is to retain the original audit/fix/deploy finish condition through status questions and dependency discoveries, and continue the next executable action in the same turn. A future hook test should reproduce `implementation -> credentials question -> credentials found -> attempted final`, reject release while runnable parent work remains, and allow explicit cancellation, verified completion or a real blocker. A stronger hook is useful only if it validates the durable parent state, not an arbitrary prose `TERMINAL_RELEASE` line. No hook code was changed or claimed fixed in this project pass.
