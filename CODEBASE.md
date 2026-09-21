@@ -1,3 +1,6 @@
+## Dashboard authenticated navigation
+`src/pages/dashboard/index.astro` loads `js/auth-navbar.js`. Navbar resolves D1 roles through auth-sync, prioritizes admin/staff, and reloads when Clerk session identity changes. Role labels do not grant authorization.
+
 # Franchisee.id Codebase Map
 
 ## 2026-09-21 production hardening

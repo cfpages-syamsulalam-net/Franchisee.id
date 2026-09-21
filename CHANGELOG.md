@@ -1,3 +1,6 @@
+## 2026-09-21 Dashboard navbar correction
+- Load shared authenticated navigation in dashboard; show highest authorized role, route staff/admin to dashboard, refresh on session change. Added scripts/check-auth-navbar.cjs regression check.
+
 # CHANGELOG
 
 Format:

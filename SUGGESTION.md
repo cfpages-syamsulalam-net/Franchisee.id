@@ -1,3 +1,6 @@
+## 2026-09-21 navbar follow-through
+Done: reuse authenticated navbar in dashboard and prioritize staff/admin roles. Regression check covers missing integration and mixed roles.
+
 # SUGGESTION.md - Assistant Recommendations
 
 Last updated: 2026-07-25 23:40 (Asia/Jakarta)

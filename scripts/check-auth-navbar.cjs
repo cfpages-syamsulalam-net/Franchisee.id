@@ -1,0 +1,13 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const vm = require("node:vm");
+const source = fs.readFileSync("js/auth-navbar.js", "utf8");
+const roleFunction = source.slice(source.indexOf("  function primaryRole("), source.indexOf("  function displayName("));
+const priority = source.match(/const ROLE_PRIORITY = [^;]+;/)[0];
+const choose = vm.runInNewContext(priority + roleFunction + ";primaryRole");
+assert.equal(choose(["franchisee", "admin"]), "admin");
+assert.equal(choose([{role:"franchisor"}, {role:"staff"}]), "staff");
+assert.equal(choose(["franchisee"]), "franchisee");
+assert.equal(choose([]), "");
+assert.match(fs.readFileSync("src/pages/dashboard/index.astro", "utf8"), /src="\/js\/auth-navbar.js"/);
+console.log("Dashboard navbar integration and role precedence passed.");

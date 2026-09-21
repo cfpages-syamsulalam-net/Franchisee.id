@@ -1,6 +1,6 @@
 (function (window, document) {
   const Auth = window.FranchiseAuth;
-  const PUBLIC_ROLES = ["franchisee", "franchisor"];
+  const ROLE_PRIORITY = ["admin", "staff", "franchisor", "franchisee"];
   const ROLE_LABELS = {
     franchisee: "Franchisee",
     franchisor: "Franchisor",
@@ -23,6 +23,12 @@
       normalizeLoggedOutLinks(pairs);
 
       const clerk = await Auth.init();
+      const initialSessionId = clerk?.session?.id || null;
+      if (typeof clerk?.addListener === "function") {
+        clerk.addListener(function (state) {
+          if ((state.session?.id || null) !== initialSessionId) window.location.reload();
+        });
+      }
       if (!clerk?.session) return;
 
       const user = typeof Auth.syncUser === "function" ? await Auth.syncUser() : null;
@@ -93,7 +99,7 @@
     const item = document.createElement("li");
     item.className = "menu-item menu-item-type-custom menu-item-object-custom parent hfe-creative-menu fr-auth-nav-account";
     item.innerHTML = `
-      <a href="/profil/" class="hfe-menu-item fr-auth-nav-link">
+      <a href="${role === "admin" || role === "staff" ? "/dashboard/" : "/profil/"}" class="hfe-menu-item fr-auth-nav-link">
         <i class="fas fa-user-circle fr-auth-nav-icon" aria-hidden="true"></i>
         <span class="fr-auth-nav-name">${escapeHtml(name)}</span>
         <span class="fr-auth-nav-role">${escapeHtml(ROLE_LABELS[role] || "Akun")}</span>
@@ -121,9 +127,9 @@
     const names = roles.map(function (role) {
       return typeof role === "string" ? role : role?.role;
     });
-    return PUBLIC_ROLES.find(function (role) {
+    return ROLE_PRIORITY.find(function (role) {
       return names.includes(role);
-    }) || (names.includes("admin") ? "admin" : names.includes("staff") ? "staff" : "");
+    }) || "";
   }
 
   function displayName(user, clerk) {
