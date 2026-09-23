@@ -1,3 +1,7 @@
+## 2026-09-24 Premium dashboard follow-up
+
+The prior source-only dashboard audit missed a reported Premium field collision. The three-column operations grid compressed the settings form, while 100% wide fields with padding exceeded their cells. The CSS now uses two outer columns, a full-width settings row, and border-box controls. The Premium CSS (85 lines), panel component (187 lines), and dashboard page (289 lines) are below the long-file extraction threshold; no extraction is needed. See `docs/ux/DASHBOARD_UI_UX_AUDIT_2026-09-24.md` for UX evidence and verification.
+
 Quota correction: storage cleanup did not restore the daily allowance. Three diagnostic scans alone consumed 4,273,433 reads, and cleanup added more. See `docs/architecture/D1_QUOTA_OPERATIONS.md`; signed-in recovery remains unverified until quota reset.
 
 

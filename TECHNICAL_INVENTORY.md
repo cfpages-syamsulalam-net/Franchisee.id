@@ -1,5 +1,11 @@
 # Technical Inventory: Franchise.id Codebase
 
+## 2026-09-24 Premium layout
+
+- `css/dashboard-premium.css`: `.dash-premium-ops` uses two columns, `.dash-payment-form[data-premium-settings-form]` spans the row, and controls use border-box sizing.
+- `src/pages/dashboard/index.astro`: cache-versions the Premium stylesheet link.
+
+
 ## 2026-09-21 production hardening
 
 - `get-franchises.js` is a public business/claim-search API only. `tab=FRANCHISEE` returns 403/no-store before selecting D1 or Sheets; member data stays behind protected profile/dashboard APIs.

@@ -1,5 +1,12 @@
 # Dashboard UI/UX audit, 2026-09-24
 
+## Premium follow-up
+
+| Priority | Journey | Evidence | Change | Verification |
+| --- | --- | --- | --- | --- |
+| P1 | Admin edits Premium payment and offer settings | The three-column `dash-premium-ops` grid gives the long settings form a narrow column; inputs at `width: 100%` add padding outside their grid cells. This explains the reported field collisions. | Use two outer columns, give settings a full row, and keep all form controls within their grid cells. | Headless Chrome fixture at 1184, 984, 704, and 500 CSS px found no fields outside labels or forms and no page overflow; Astro build and asset copy passed. Live signed-in check remains pending. |
+
+
 Scope: all ten `/dashboard` tabs. The attached signed-in 1264 px screenshot is direct visual evidence for Outreach. Other tabs and mobile behavior were reviewed from Astro, browser JavaScript, and responsive CSS because the authenticated browser session is not available to this workspace.
 
 | Priority | Surface | Evidence and affected journey | Change | Verification |
@@ -11,6 +18,6 @@ Scope: all ten `/dashboard` tabs. The attached signed-in 1264 px screenshot is d
 | P2 | Shared dashboard shell | The sticky header is translucent, so scrolled tabs show through its title area. Tabs also remove the keyboard focus outline. This affects every tab. | Use an opaque header and a visible focus ring. | Implemented in shared CSS; live signed-in check pending |
 | P2 | OCR | Four large navigation cards each repeat a sentence before the actual settings or work area. This pushes the task below the fold. | Keep icon and title visible, move the extra explanation into the shared tooltip and accessible text, and make the cards compact. | Implemented; Astro build passes; live signed-in check pending |
 | P2 | Publikasi | The panel header and introduction both explain the same publication task before the listing cards. | Keep the status legend and shorten the repeated introduction. | Implemented; Astro build passes; live signed-in check pending |
-| Checked | Quality, Review, Leads, Premium, Sistem, Integrasi | The source shows a clear panel heading, reachable controls, and necessary field or evidence labels. Review and Premium require visible text for consequential edits; Integrasi is a guide. No supported shared defect calls for removing those labels. | Keep their task labels and apply the shared shell fixes above. | Source review; signed-in visual check still needed |
+| Checked | Quality, Review, Leads, Sistem, Integrasi | The source shows a clear panel heading, reachable controls, and necessary field or evidence labels. Review requires visible text for consequential edits; Integrasi is a guide. No supported shared defect calls for removing those labels. | Keep their task labels and apply the shared shell fixes above. | Source review; signed-in visual check still needed |
 
 Mobile boundary: at 760 px the Outreach worklist changes to a compact stacked grid and OCR navigation has responsive rules. The local 500 px fixture exposed a note input overflow, corrected with border-box sizing. The fixed worklist CSS lives in `css/dashboard-outreach-worklist.css`; shared card, Pipeline, and Contacts rules remain in `css/dashboard-outreach.css`. After deployment, check the signed-in worklist and a Burned selection at desktop and mobile widths.

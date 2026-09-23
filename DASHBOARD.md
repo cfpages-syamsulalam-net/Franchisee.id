@@ -8,6 +8,23 @@ Build an internal dashboard for admin and staff to see the full franchise networ
 
 This dashboard should not replace the public `/peluang-usaha` directory. It is the operations layer for the shared D1 database that powers Franchisee.id and the wider network: Franchisor.id, Franchise.id, Waralaba.id, Franchise.co.id, Waralaba.co.id, and future owned sites.
 
+## Tab jobs
+
+Use these one-sentence jobs to decide where a new control belongs; a control belongs in the tab where staff complete its primary task, while other tabs may link to it.
+
+| Tab | Job |
+| --- | --- |
+| Outreach | Prepare, send, and record the next contact action for a franchise listing. |
+| Pipeline | See and update each listing's commercial stage across the sales journey. |
+| Data Quality | Find franchise records that need clearer or more complete source-backed data. |
+| Review | Decide pending listing edits and claims using the submitted evidence. |
+| Leads | Inspect incoming franchisee inquiries and identify follow-up work. |
+| Publication | Control where listings appear across network sites and inspect their publication state. |
+| Premium | Configure Premium offers and payment methods, confirm payments, and track renewal work. |
+| System | Inspect publishing queues, service health, and operational recovery signals. |
+| Integration | Set up and repair external connections used by dashboard workflows. |
+| OCR | Configure brochure extraction and review candidate facts before they enter listings. |
+
 ## Access Model
 
 - `admin`: full access to users, roles, listings, claims, publishing, payments, audit logs, and destructive actions.

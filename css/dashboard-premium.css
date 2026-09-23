@@ -1,10 +1,12 @@
 .dash-premium-ops {
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1.2fr) minmax(220px, 0.75fr);
+  grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1.35fr);
   padding: 16px 18px;
 }
 
+.dash-premium-ops > * { min-width: 0; }
+.dash-payment-form[data-premium-settings-form] { grid-column: 1 / -1; }
 .dash-payment-form {
   display: grid;
   gap: 10px;
@@ -12,6 +14,7 @@
 }
 
 .dash-payment-form label {
+  min-width: 0;
   color: var(--dash-muted);
   display: grid;
   font-size: 12px;
@@ -27,6 +30,7 @@
 .dash-payment-form input,
 .dash-payment-form textarea,
 .dash-payment-form select {
+  box-sizing: border-box;
   border: 1px solid rgba(17, 24, 39, 0.14);
   border-radius: 12px;
   color: #111111;
@@ -44,7 +48,7 @@
   border-radius: 14px;
   display: grid;
   gap: 8px 12px;
-  grid-template-columns: 72px 1fr;
+  grid-template-columns: 72px minmax(0, 1fr);
   padding: 10px;
 }
 

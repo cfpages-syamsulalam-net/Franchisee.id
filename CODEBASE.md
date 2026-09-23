@@ -1,3 +1,8 @@
+## 2026-09-24 Premium dashboard layout
+
+- `css/dashboard-premium.css` lays out the Premium funnel and payment form in two columns, gives the longer settings form a full row, and sizes fields within their grid cells. `src/pages/dashboard/index.astro` versions that stylesheet so deployed browsers load the fix.
+- `DASHBOARD.md` defines one job for each of the ten dashboard tabs and the control-placement rule used for future additions.
+
 D1 capacity and safe maintenance: `docs/architecture/D1_QUOTA_OPERATIONS.md` (read/write/storage limits, shared account budget, incident evidence, deployed protections and remaining risks).
 
 ## Dashboard authenticated navigation
