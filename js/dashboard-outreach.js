@@ -135,6 +135,7 @@
       var isBoard = mode === "board";
       var nextAction = row.sales_next_action || meta.next_action || "Langkah berikutnya";
       var nextDetail = row.sales_next_action_detail || meta.next_action_detail || "";
+      var nextTooltip = nextDetail ? nextAction + ": " + nextDetail : nextAction;
       var reason = row.sales_reason || meta.description || "";
       return '<article class="dash-outreach-card ' + (isBoard ? 'is-board-card' : 'is-worklist-card') + ' is-' + escapeAttr(meta.tone || "neutral") + '"' + (isBoard ? ' draggable="true"' : '') + ' data-outreach-card data-franchise-id="' + escapeAttr(row.id) + '">' +
         '<div class="dash-outreach-card-head">' +
@@ -145,7 +146,7 @@
           renderOutreachStatusBadge(meta) +
         '</div>' +
         '<div class="dash-outreach-compact-line">' +
-          '<span class="dash-outreach-next-badge" data-fr-tooltip="' + escapeAttr(nextDetail || nextAction) + '"><i class="' + escapeAttr(meta.icon || "fas fa-arrow-right") + '" aria-hidden="true"></i><span>' + escapeHtml(nextAction) + '</span></span>' +
+          '<span class="dash-outreach-next-badge" role="img" tabindex="0" aria-label="' + escapeAttr(nextTooltip) + '" data-fr-tooltip="' + escapeAttr(nextTooltip) + '"><i class="fas fa-arrow-right" aria-hidden="true"></i></span>' +
           renderInfoIcon("Kenapa muncul", reason, "fas fa-info-circle") +
         '</div>' +
         renderOutreachMetaChips(row, contact) +
@@ -175,9 +176,9 @@
     }
 
     function renderOutreachStatusBadge(status) {
-      return '<span class="dash-outreach-status-badge is-' + escapeAttr(status.tone || "neutral") + '" data-fr-tooltip="' + escapeAttr(status.description || status.label || status.value) + '">' +
+      var hint = (status.label || status.value) + (status.description ? ': ' + status.description : '');
+      return '<span class="dash-outreach-status-badge is-' + escapeAttr(status.tone || "neutral") + '" role="img" tabindex="0" aria-label="' + escapeAttr(hint) + '" data-fr-tooltip="' + escapeAttr(hint) + '">' +
         '<i class="' + escapeAttr(status.icon || "fas fa-circle") + '" aria-hidden="true"></i>' +
-        '<span>' + escapeHtml(status.short_label || status.label || status.value) + '</span>' +
       '</span>';
     }
 
@@ -197,7 +198,8 @@
     }
 
     function renderMetaChip(icon, text, tooltip, tone) {
-      return '<span class="dash-outreach-chip ' + (tone ? 'is-' + escapeAttr(tone) : '') + '" data-fr-tooltip="' + escapeAttr(tooltip || text) + '"><i class="' + escapeAttr(icon || "fas fa-circle") + '" aria-hidden="true"></i><span>' + escapeHtml(text || "") + '</span></span>';
+      var hint = tooltip && text && !tooltip.includes(text) ? text + ": " + tooltip : (tooltip || text);
+      return '<span class="dash-outreach-chip ' + (tone ? 'is-' + escapeAttr(tone) : '') + '" role="img" tabindex="0" aria-label="' + escapeAttr(hint) + '" data-fr-tooltip="' + escapeAttr(hint) + '"><i class="' + escapeAttr(icon || "fas fa-circle") + '" aria-hidden="true"></i></span>';
     }
 
     function renderInfoIcon(label, tooltip, icon) {
@@ -380,7 +382,7 @@
             "data-disconnect-google-contacts": "",
           },
         }));
-        outreachActions.insertAdjacentHTML("beforeend", renderPillActionButton({
+        outreachActions.insertAdjacentHTML("beforeend", renderActionButton({
           label: "Simpan kontak",
           icon: "fas fa-address-book",
           tone: "primary",

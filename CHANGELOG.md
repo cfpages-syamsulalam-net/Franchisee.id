@@ -1,3 +1,12 @@
+## 2026-09-24 02:00 (Asia/Jakarta)
+
+### Changed
+- `js/dashboard-outreach.js`: made the save-contact action and next-action, status, and metadata row indicators icon-only while preserving their labels in shared tooltips and accessible names.
+- `src/pages/dashboard/index.astro`: expanded the Outreach legend for compact row indicators and the save-contact icon.
+- `scripts/check-dashboard-outreach-icons.cjs`: added a focused rendered-row regression check for the reported labels.
+- `CODEBASE.md` and `AUDIT.md`: documented the indicator contract, check, and the Outreach module's long-file extraction boundary.
+- `.context/session-20260924-0200.md` and `CHANGELOG.md`: recorded the correction and validation.
+
 ## 2026-09-24 00:03 (Asia/Jakarta)
 
 ### Changed

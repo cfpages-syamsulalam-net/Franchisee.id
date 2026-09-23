@@ -443,7 +443,8 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 
 ### 7b. Admin/Staff Dashboard Flow
 
-The Outreach worklist shows an action legend above its rows. Its icon-only row actions use `js/dashboard-utils.js` and the shared `data-fr-tooltip` component for hover and keyboard-focus labels.
+The Outreach worklist shows action and indicator legends above its rows. Its action buttons use `js/dashboard-utils.js`; next-action, status, and metadata indicators keep their former text in shared `data-fr-tooltip` hints and accessible labels. The status selector remains readable for editing.
+`scripts/check-dashboard-outreach-icons.cjs` renders a sample row and checks that the former visible labels remain available as accessible tooltip text without appearing inside the row or save-contact button.
 
 1. `/dashboard` is a static Astro route and should be treated as an internal operations surface for Franchisee.id only.
 2. The page loads `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, `js/auth-clerk.js`, shared tooltip support, dashboard utility modules, Premium Operations module, Review module, operations-data module, OCR modules, and `js/dashboard-admin.js`; the login-only staff/admin form is deferred and only mounted on the same `/dashboard` URL after the controller confirms login is needed.
