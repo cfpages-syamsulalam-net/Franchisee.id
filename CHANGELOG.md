@@ -1,3 +1,11 @@
+## 2026-09-24 00:03 (Asia/Jakarta)
+
+### Changed
+- `src/pages/dashboard/index.astro`: added a visible legend above the Outreach worklist for its existing icon-only, shared-tooltip actions.
+- `CODEBASE.md`: documented the Outreach action legend and tooltip contract.
+- `SUGGESTION.md`: tracked the unrelated existing Astro check errors for later repair.
+- `.context/session-20260924-0003.md` and `CHANGELOG.md`: recorded the session and validation result.
+
 ## 2026-09-21 15:00 (Asia/Jakarta)
 ### Changed
 - Corrected signed-in dashboard failure handling so database outages and missing roles no longer look like a login failure; added cause-specific recovery messages.

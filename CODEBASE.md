@@ -442,6 +442,9 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 10. Manual `workflow_dispatch` can force a publish, but normal franchisor edits should wait for the next poll window.
 
 ### 7b. Admin/Staff Dashboard Flow
+
+The Outreach worklist shows an action legend above its rows. Its icon-only row actions use `js/dashboard-utils.js` and the shared `data-fr-tooltip` component for hover and keyboard-focus labels.
+
 1. `/dashboard` is a static Astro route and should be treated as an internal operations surface for Franchisee.id only.
 2. The page loads `js/auth-clerk-debug.js`, `js/auth-clerk-ui.js`, `js/auth-clerk-core.js`, `js/auth-clerk.js`, shared tooltip support, dashboard utility modules, Premium Operations module, Review module, operations-data module, OCR modules, and `js/dashboard-admin.js`; the login-only staff/admin form is deferred and only mounted on the same `/dashboard` URL after the controller confirms login is needed.
 3. `js/dashboard-admin.js` calls `/dashboard-data` with a Clerk bearer token and presents Outreach, Pipeline, Data Quality, Review, Leads, Publikasi, Premium, Sistem, Integrasi, and OCR tabs. When the same Clerk user/session has a fresh per-tab cache, the dashboard renders that cached payload immediately and then refreshes live data in the background. Focused modules own Premium, review, operations-data, Outreach/Pipeline, and OCR credential workflows.
