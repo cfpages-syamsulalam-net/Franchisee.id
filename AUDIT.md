@@ -1,3 +1,7 @@
+## 2026-09-24 Google Contacts save failure
+
+`Simpan kontak` could perform more than 50 Google lookups for a 200-contact queue before batch creation. A focused mock reproduced the excess request count. The handler now lists existing saved contacts in bounded pages and matches phone numbers locally; invalid or unusually large responses stop before creating contacts. The touched helper (305 lines) and regression check (182 lines) are below the long-file extraction threshold. `content.js` and `chrome.runtime` are absent from site sources, so the repeated console traces are most likely browser extension activity. Signed-in production contact creation still needs a staff retry after deployment.
+
 ## 2026-09-24 Premium dashboard follow-up
 
 The prior source-only dashboard audit missed a reported Premium field collision. The three-column operations grid compressed the settings form, while 100% wide fields with padding exceeded their cells. The CSS now uses two outer columns, a full-width settings row, and border-box controls. The Premium CSS (85 lines), panel component (187 lines), and dashboard page (289 lines) are below the long-file extraction threshold; no extraction is needed. See `docs/ux/DASHBOARD_UI_UX_AUDIT_2026-09-24.md` for UX evidence and verification.

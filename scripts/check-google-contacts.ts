@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildGoogleBatchCreatePayload, googleContactHasPhone, googleContactSearchUrl, outreachRowToGoogleContact } from "../functions/_google-contacts.js";
+import { buildGoogleBatchCreatePayload, filterExistingGoogleContacts, googleContactHasPhone, googleContactsConnectionUrl, outreachRowToGoogleContact } from "../functions/_google-contacts.js";
 import { completeGoogleContactsAuthorization, GOOGLE_CONTACTS_SCOPE } from "../functions/_google-contacts-oauth.js";
 
 assert.equal(GOOGLE_CONTACTS_SCOPE, "https://www.googleapis.com/auth/contacts");
@@ -16,8 +16,8 @@ assert.equal(payload.contacts[0].contactPerson.organizations[0].name, "Franchise
 assert.equal(payload.contacts[0].contactPerson.urls[0].value, "https://franchisee.id/peluang-usaha/contoh-franchise");
 assert.equal(googleContactHasPhone({ phoneNumbers: [{ canonicalForm: "+62 812-3456-7890" }] }, "+6281234567890"), true);
 assert.equal(googleContactHasPhone({ phoneNumbers: [{ value: "0812-3456-7890" }] }, "+6281234567890"), true);
-assert.match(googleContactSearchUrl("+6281234567890"), /people:searchContacts\?/);
-assert.match(googleContactSearchUrl("+6281234567890"), /readMask=names%2CphoneNumbers/);
+assert.match(googleContactsConnectionUrl(), /people\/me\/connections\?/);
+assert.match(googleContactsConnectionUrl("next"), /personFields=phoneNumbers.*pageSize=1000.*sources=READ_SOURCE_TYPE_CONTACT.*pageToken=next/);
 
 import { encryptCredentialValue, decryptCredentialValue } from "../functions/_ocr-credential-crypto.js";
 
@@ -64,7 +64,49 @@ const env = { GOOGLE_CONTACTS_CLIENT_ID: "client", GOOGLE_CONTACTS_CLIENT_SECRET
 const request = (suffix = "&code=code") => new Request("https://franchisee.id/google-contacts-callback?state=gco_state" + suffix);
 const aad = "staff_google_connections:user_1:refresh_token";
 
+async function checkBulkDuplicateLookup() {
+  const originalFetch = globalThis.fetch;
+  const contacts = Array.from({ length: 200 }, (_, index) => ({
+    franchise_id: `fr_${index}`,
+    phone: `+62812${String(index).padStart(8, "0")}`,
+  }));
+  const urls: string[] = [];
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    urls.push(String(input));
+    if (urls.length > 50) throw new Error("Too many subrequests in one contact save");
+    const next = new URL(String(input)).searchParams.get("pageToken");
+    const body = next
+      ? { connections: [{ phoneNumbers: [{ value: "0812-0000-0001" }] }] }
+      : { connections: [{ phoneNumbers: [{ canonicalForm: contacts[0].phone }] }], nextPageToken: "next" };
+    return new Response(JSON.stringify(body), { status: 200 });
+  }) as typeof fetch;
+  try {
+    const result = await filterExistingGoogleContacts("token", contacts);
+    assert.equal(result.ok, true);
+    assert.equal(result.duplicate_skipped, 2);
+    assert.equal(result.contacts.length, 198);
+    assert.equal(urls.length, 2);
+    assert.ok(urls.every((url) => url.includes("people/me/connections")));
+
+    globalThis.fetch = (async () => new Response("not-json", { status: 200 })) as typeof fetch;
+    const malformed = await filterExistingGoogleContacts("token", contacts);
+    assert.equal(malformed.error, "GOOGLE_CONTACTS_INVALID_RESPONSE");
+
+    let pages = 0;
+    globalThis.fetch = (async () => {
+      pages++;
+      return new Response(JSON.stringify({ connections: [], nextPageToken: `page_${pages}` }), { status: 200 });
+    }) as typeof fetch;
+    const oversized = await filterExistingGoogleContacts("token", contacts);
+    assert.equal(oversized.error, "GOOGLE_CONTACTS_LIST_TOO_LARGE");
+    assert.equal(pages, 10);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
 async function main() {
+  await checkBulkDuplicateLookup();
   const originalFetch = globalThis.fetch;
   let calls = 0;
   let subject = "google-b";
@@ -134,7 +176,7 @@ async function main() {
     const beforeReplay = calls;
     assert.match((await callback(concurrent)).headers.get("Location")!, /google_contacts=expired/);
     assert.equal(calls, beforeReplay);
-    console.log("Google Contacts payload, identity persistence, revocation and concurrent-state checks passed.");
+    console.log("Google Contacts bulk lookup, payload, identity persistence, revocation and concurrent-state checks passed.");
   } finally { globalThis.fetch = originalFetch; }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

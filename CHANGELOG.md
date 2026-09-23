@@ -1,3 +1,17 @@
+## 2026-09-24 06:41 (Asia/Jakarta)
+
+### Fixed
+
+- `functions/_google-contacts.js`: replaced per-contact Google searches with bounded paged contact reads and local phone matching, preventing the bulk save request from exceeding Cloudflare's external request limit. Invalid and oversized responses stop before creation.
+- `scripts/check-google-contacts.ts`: reproduced the 200-contact request fanout and covered pagination, duplicate matching, malformed responses, and the page bound.
+- `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`: updated the Google Contacts request and duplicate-check contract.
+- `AUDIT.md`, `.context/session-20260924-0641.md`, `CHANGELOG.md`: recorded cause, verification, extension-console boundary, and session continuity.
+
+### Verified
+
+- `pnpm run google-contacts:check`, Pages Functions bundle, and `pnpm exec astro build` passed.
+- `pnpm exec tsc --noEmit --pretty false` remains blocked by existing declaration and implicit-any errors in check scripts.
+
 ## 2026-09-24 05:54 (Asia/Jakarta)
 
 ### Changed

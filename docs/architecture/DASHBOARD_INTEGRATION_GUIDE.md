@@ -62,7 +62,7 @@ Runtime behavior:
 - `/dashboard-data` returns `google_contacts` connection state, token health, last connection error/timestamps, routes `save_outreach_google_contacts` to `functions/_google-contacts.js`, and routes `disconnect_google_contacts` to the revoke helper in `functions/_google-contacts-oauth.js`.
 - The server reads the current unclaimed outreach queue from D1.
 - The server retrieves the staff member's encrypted dashboard Contacts token from D1 and refreshes it when possible.
-- Existing Google Contacts are searched first with Google People API.
+- Existing Google Contacts are read in pages through Google People API `people/me/connections` before creating new contacts. An unreadable or unusually large address book stops safely before the create request.
 - Duplicate phone numbers are skipped before `people:batchCreateContacts`.
 - Setup-required failures return `documentation_url: "/dashboard/#google-contacts-setup"` so the dashboard warning can show a direct setup link.
 

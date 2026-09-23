@@ -4,8 +4,10 @@ import { outreachStatusStatement } from "./_outreach-status.js";
 import { auditStatement, jsonResponse, randomId } from "./_dashboard-utils.js";
 
 const PEOPLE_BATCH_CREATE_URL = "https://people.googleapis.com/v1/people:batchCreateContacts";
-const PEOPLE_SEARCH_CONTACTS_URL = "https://people.googleapis.com/v1/people:searchContacts";
+const PEOPLE_CONNECTIONS_URL = "https://people.googleapis.com/v1/people/me/connections";
 const MAX_CONTACTS_PER_BATCH = 200;
+// Leave room for token refresh and contact creation within the Workers Free subrequest limit.
+const MAX_CONNECTION_PAGES = 10;
 
 export async function handleSaveOutreachGoogleContacts(db, auth, data, env) {
   const rows = await getUnclaimedOutreachQueue(db);
@@ -170,68 +172,72 @@ export function googleContactHasPhone(person, phone) {
   });
 }
 
-export function googleContactSearchUrl(query) {
+export function googleContactsConnectionUrl(pageToken = "") {
   const params = new URLSearchParams({
-    query,
-    pageSize: "10",
-    readMask: "names,phoneNumbers",
+    personFields: "phoneNumbers",
+    pageSize: "1000",
+    sources: "READ_SOURCE_TYPE_CONTACT",
   });
-  return `${PEOPLE_SEARCH_CONTACTS_URL}?${params.toString()}`;
+  if (pageToken) params.set("pageToken", pageToken);
+  return PEOPLE_CONNECTIONS_URL + "?" + params.toString();
 }
 
-async function filterExistingGoogleContacts(token, contacts) {
+export async function filterExistingGoogleContacts(token, contacts) {
   const deduped = dedupeContactsByPhone(contacts);
-  const uniqueContacts = deduped.unique;
   const remaining = [];
   const duplicateContacts = [...deduped.duplicates];
-  let duplicateSkipped = duplicateContacts.length;
+  const existingPhones = new Set();
+  let pageToken = "";
 
-  const warmup = await googlePeopleGet(token, googleContactSearchUrl(""));
-  if (!warmup.ok) return warmup;
+  for (let page = 0; page < MAX_CONNECTION_PAGES; page++) {
+    const result = await googlePeopleGet(token, googleContactsConnectionUrl(pageToken));
+    if (!result.ok) return result;
+    const people = result.body?.connections;
+    if (!result.body || typeof result.body !== "object" || Array.isArray(result.body) || (people != null && !Array.isArray(people))) {
+      return {
+        ok: false,
+        error: "GOOGLE_CONTACTS_INVALID_RESPONSE",
+        message: "Daftar Google Contacts belum bisa dibaca. Coba lagi nanti.",
+        status: 502,
+      };
+    }
+    for (const person of people || []) {
+      for (const number of person?.phoneNumbers || []) {
+        const digits = normalizePhoneDigits(number?.canonicalForm || number?.value);
+        if (digits) existingPhones.add(digits);
+      }
+    }
+    pageToken = result.body.nextPageToken || "";
+    if (!pageToken) break;
+    if (page === MAX_CONNECTION_PAGES - 1) {
+      return {
+        ok: false,
+        error: "GOOGLE_CONTACTS_LIST_TOO_LARGE",
+        message: "Daftar Google Contacts akun ini terlalu besar untuk diperiksa. Hubungi admin untuk bantuan menyimpan kontak outreach.",
+        status: 409,
+      };
+    }
+  }
 
-  for (const contact of uniqueContacts) {
-    const search = await searchGoogleContactByPhone(token, contact.phone);
-    if (!search.ok) return search;
-    if (search.exists) {
-      duplicateSkipped += 1;
+  for (const contact of deduped.unique) {
+    if (existingPhones.has(normalizePhoneDigits(contact.phone))) {
       duplicateContacts.push(contact);
     } else {
       remaining.push(contact);
     }
   }
-
   return {
     ok: true,
     contacts: remaining,
-    duplicate_skipped: duplicateSkipped,
+    duplicate_skipped: duplicateContacts.length,
     duplicate_contacts: duplicateContacts,
   };
 }
-
-async function searchGoogleContactByPhone(token, phone) {
-  for (const query of phoneSearchQueries(phone)) {
-    const search = await googlePeopleGet(token, googleContactSearchUrl(query));
-    if (!search.ok) return search;
-    const people = Array.isArray(search.body?.results) ? search.body.results.map((item) => item.person).filter(Boolean) : [];
-    if (people.some((person) => googleContactHasPhone(person, phone))) {
-      return { ok: true, exists: true };
-    }
-  }
-  return { ok: true, exists: false };
-}
-
-function phoneSearchQueries(phone) {
-  const digits = normalizePhoneDigits(phone);
-  const queries = [phone];
-  if (/^62\d{8,13}$/.test(digits)) queries.push(`0${digits.slice(2)}`);
-  return [...new Set(queries.filter(Boolean))];
-}
-
 async function googlePeopleGet(token, url) {
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  const body = await response.json().catch(() => ({}));
+  const body = await response.json().catch(() => null);
   if (response.ok) return { ok: true, body };
   return {
     ok: false,
