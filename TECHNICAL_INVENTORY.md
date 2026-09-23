@@ -311,7 +311,11 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `css/dashboard-outreach.css`
 *Dashboard Outreach/Pipeline stylesheet module.*
-- Owns compact Outreach worklist cards, Pipeline Kanban columns, Google Contacts connection alerts, connected-account pills, stage summary pills, drag/drop states, status badges, icon-only metadata chips, one-line note inputs, and responsive grid/ellipsis containment so dense franchise rows stay inside their parent cards.
+- Owns shared Outreach/Pipeline cards, Kanban columns, Google Contacts alerts, stage summary pills, drag/drop states, circular icon indicators, stable action slots, form controls, and the explicit hidden Burned-reason state.
+
+### File: `css/dashboard-outreach-worklist.css`
+*Compact Outreach worklist layout stylesheet.*
+- Owns inline desktop row columns, concise legend, count badge, fixed metadata positions, Burned-reason placement, and tablet/mobile layouts.
 
 ### File: `css/dashboard-integration.css`
 *Dashboard integration documentation stylesheet module.*
@@ -347,9 +351,9 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 ### File: `js/dashboard-outreach.js`
 *Sales Outreach and Pipeline client module for `/dashboard`.*
 - `window.FranchiseDashboardOutreach.createOutreach(options)`: Creates the Outreach worklist and Pipeline board renderer from DOM references and shared dashboard action/reload/status callbacks supplied through `js/dashboard-operations.js`.
-- `render(rows, summary, pipelineMetadata)` / `renderOutreachWorklist()` / `renderPipelineBoard()` / `renderOutreachCard(row, pipeline, mode)`: Renders Outreach as a compact actionable worklist and Pipeline as the grouped Kanban board from the same `outreach_queue` plus `outreach_pipeline`; both show stage/status badges, tooltip-backed next-action/reason context, icon-only metadata chips, overdue/follow-up chips, and compact notes, while the Pipeline tab also owns conversion/stage summary pills.
-- `bindOutreachDragAndDrop()` / `updateOutreachStatus(franchiseId, status, control)`: Supports Pipeline drag/drop card movement plus status-select fallback in both Outreach and Pipeline, posting `update_outreach_status` with notes, burned reason, and follow-up metadata before reloading dashboard state after successful persistence.
-- `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Injects the shared pill button for bulk Google Contacts save, shows the connected-account pill or `Hubungkan Google Contacts` action from `js/dashboard-google-contacts.js`, posts `save_outreach_google_contacts` for up to 200 current queue rows, records manually confirmed WhatsApp outreach through `/dashboard-data`, and renders persistent setup/connect/reauth alerts through the dedicated Contacts helper when the dashboard OAuth connection is missing or stale.
+- `render(rows, summary, pipelineMetadata)` / `renderOutreachWorklist()` / `renderPipelineBoard()` / `renderOutreachCard(row, pipeline, mode)`: Renders compact Outreach rows and Pipeline Kanban cards with circular tooltip indicators, fixed worklist metadata/action slots, notes, and conversion/stage summaries. The count badge shows a compact shown/ready ratio.
+- `bindOutreachDragAndDrop()` / `updateOutreachStatus(franchiseId, status, control)`: Supports Pipeline drag/drop and status selects. Burned reveals a reason field and waits for an explicit choice before posting; successful writes reload dashboard state, while failed writes restore the prior selection.
+- `renderOutreachActions()` / `saveGoogleContacts()` / `logOutreach()`: Injects the shared icon button for bulk Google Contacts save, shows connection state or setup actions from `js/dashboard-google-contacts.js`, saves up to 200 current queue rows, records confirmed WhatsApp outreach, and shows recovery notices for missing or stale OAuth.
 - Outreach filters: `today`, actionable, overdue, mine, unassigned, and all help staff see the next measurable sales action first instead of scanning every listing.
 
 ### File: `js/dashboard-google-contacts.js`
@@ -1147,7 +1151,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 
 ### File: `functions/_dashboard-schemas.js`
 *Dashboard action validation and editable field contract.*
-- `DashboardActionSchema`: Zod discriminated union for dashboard review/operations/Premium actions, `save_outreach_google_contacts`, `disconnect_google_contacts`, `update_outreach_status`, D1 migration-ledger reconciliation, plus the OCR action schema list imported from `_dashboard-ocr-schemas.js`, including OCR result search filters; keeps dashboard-wide validation as a facade while OCR operation schemas live in the OCR module.
+- `DashboardActionSchema`: Zod dashboard action union for review, operations, Premium, Outreach, maintenance, and OCR. Burned status updates require an explicit `burned_reason` before the D1 write.
 - `ReviewEditSuggestionSchema`: Accepts optional `approved_fields` from shared editable field names for granular field-level approval.
 - `EDITABLE_LISTING_FIELD_DEFS`: Server-provided guided listing field definitions sourced from `_shared-schemas.js`.
 - `sanitizeChanges(changes)`: Uses shared listing-field normalization to enforce the editable field whitelist and normalize integer/real/enumerated values before D1 writes.

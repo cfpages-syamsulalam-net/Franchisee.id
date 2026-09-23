@@ -1,3 +1,16 @@
+## 2026-09-24 03:40 (Asia/Jakarta)
+
+### Changed
+- `docs/ux/DASHBOARD_UI_UX_AUDIT_2026-09-24.md`: audited all ten dashboard tabs, recorded screenshot/source evidence, priorities, fixes, and the signed-in visual check boundary.
+- `js/dashboard-outreach.js` and `functions/_dashboard-schemas.js`: shortened the count, fixed metadata slots, and required an explicit Burned reason before saving from status selects or Pipeline drag/drop.
+- `css/dashboard-outreach.css` and new `css/dashboard-outreach-worklist.css`: made icon indicators circular, kept action slots aligned, hid the Burned control unless selected, and compacted worklist rows at desktop, tablet, and mobile widths.
+- `css/dashboard.css`: made the sticky header opaque and restored keyboard focus outlines.
+- `css/dashboard-ocr-settings.css` and `src/components/dashboard/DashboardOcrPanel.astro`: compacted OCR navigation while retaining guidance in shared tooltips and accessible text.
+- `src/components/dashboard/DashboardPublicationPanel.astro`: shortened repeated introduction text.
+- `src/pages/dashboard/index.astro`: shortened Outreach copy and legend, loaded the worklist stylesheet, and versioned changed assets for browser cache refresh.
+- `scripts/check-dashboard-outreach-icons.cjs`: covered count, icon labels, aligned action slots, and the explicit Burned reason flow.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, `.context/session-20260924-0340.md`, and `CHANGELOG.md`: updated implementation maps, long-file note, suggestion status, and session continuity.
+
 ## 2026-09-24 02:00 (Asia/Jakarta)
 
 ### Changed

@@ -49,12 +49,6 @@
   scroll-snap-type: x proximity;
 }
 
-.dash-outreach-worklist {
-  display: grid;
-  gap: 8px;
-  padding: 12px 14px 16px;
-}
-
 .dash-outreach-alert {
   align-items: flex-start;
   background: #fff7d6;
@@ -192,14 +186,6 @@
   padding: 8px;
 }
 
-.dash-outreach-worklist .dash-outreach-card {
-  align-items: center;
-  grid-template-areas:
-    "head meta controls actions"
-    "line meta burned actions";
-  grid-template-columns: minmax(190px, 1.25fr) minmax(210px, 1fr) minmax(210px, 0.9fr) auto;
-}
-
 .dash-outreach-card.is-worklist-card {
   cursor: default;
 }
@@ -282,7 +268,10 @@
   flex: 0 0 auto;
   font-size: 11px;
   font-weight: 900;
-  padding: 3px 7px;
+  justify-content: center;
+  height: 28px;
+  padding: 0;
+  width: 28px;
 }
 
 .dash-outreach-status-badge.is-info,
@@ -341,8 +330,12 @@
   border-radius: 999px;
   display: inline-flex;
   gap: 5px;
-  min-height: 26px;
-  min-width: 0;
+  box-sizing: border-box;
+  height: 28px;
+  justify-content: center;
+  min-height: 28px;
+  min-width: 28px;
+  width: 28px;
 }
 
 .dash-outreach-next-badge {
@@ -351,7 +344,7 @@
   font-size: 11px;
   font-weight: 900;
   max-width: 100%;
-  padding: 3px 8px;
+  padding: 0;
 }
 
 .dash-outreach-next-badge span,
@@ -368,7 +361,7 @@
   flex: 0 0 auto;
   font-size: 12px;
   justify-content: center;
-  width: 26px;
+  width: 28px;
 }
 
 .dash-outreach-chip {
@@ -377,7 +370,7 @@
   font-size: 11px;
   font-weight: 900;
   max-width: 100%;
-  padding: 3px 7px;
+  padding: 0;
 }
 
 .dash-outreach-chip.is-good {
@@ -432,6 +425,10 @@
   min-width: 0;
 }
 
+.dash-outreach-burned-reason[hidden] {
+  display: none;
+}
+
 .dash-outreach-burned-reason span {
   color: var(--dash-muted);
   font-size: 11px;
@@ -445,6 +442,7 @@
 .dash-outreach-note-input {
   border: 1px solid rgba(17, 24, 39, 0.14);
   border-radius: 8px;
+  box-sizing: border-box;
   color: var(--dash-ink);
   font: inherit;
   font-size: 12px;
@@ -542,18 +540,19 @@
 }
 
 .dash-outreach-actions .dash-toolbar {
-  flex-wrap: nowrap;
-  justify-content: flex-start;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(3, 36px);
+}
+
+.dash-outreach-actions [data-outreach-claim] {
+  grid-column: 3;
 }
 
 @media (max-width: 760px) {
   .dash-outreach-board {
     grid-auto-columns: minmax(230px, 86vw);
     padding: 12px;
-  }
-
-  .dash-outreach-worklist {
-    padding: 14px;
   }
 
   .dash-outreach-alert {
@@ -563,17 +562,6 @@
   .dash-outreach-alert-actions {
     grid-column: 1 / -1;
     justify-content: flex-start;
-  }
-
-  .dash-outreach-worklist .dash-outreach-card {
-    grid-template-areas:
-      "head"
-      "line"
-      "meta"
-      "controls"
-      "burned"
-      "actions";
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .dash-outreach-controls {

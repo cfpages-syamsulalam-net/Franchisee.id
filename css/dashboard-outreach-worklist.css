@@ -1,0 +1,111 @@
+.dash-outreach-legend {
+  gap: 6px 18px;
+  padding: 8px 14px;
+}
+
+.dash-outreach-legend-group {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.dash-outreach-legend-group > strong {
+  color: var(--dash-ink);
+  font-size: 11px;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.dash-outreach-legend .dash-outreach-summary-pill {
+  background: transparent;
+  border: 0;
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 4px;
+}
+
+.dash-outreach-legend .dash-outreach-summary-pill strong {
+  font-size: 11px;
+}
+
+.dash-outreach-count-badge {
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.dash-outreach-worklist {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px 16px;
+}
+
+.dash-outreach-worklist .dash-outreach-card {
+  align-items: center;
+  grid-template-areas: "head line meta controls actions";
+  grid-template-columns: minmax(150px, 1fr) auto minmax(180px, 1.1fr) minmax(245px, 1.2fr) auto;
+}
+
+.dash-outreach-worklist .dash-outreach-burned-reason {
+  grid-area: auto;
+  grid-column: 4;
+  grid-row: 2;
+}
+
+.dash-outreach-worklist .dash-outreach-meta {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(8, 28px);
+}
+
+@media (max-width: 1100px) and (min-width: 761px) {
+  .dash-outreach-worklist .dash-outreach-card {
+    grid-template-areas:
+      "head line actions"
+      "meta meta controls";
+    grid-template-columns: minmax(0, 1fr) auto minmax(245px, 0.6fr);
+  }
+
+  .dash-outreach-worklist .dash-outreach-actions {
+    justify-self: end;
+  }
+
+  .dash-outreach-worklist .dash-outreach-burned-reason {
+    grid-column: 3;
+    grid-row: 3;
+  }
+}
+
+@media (max-width: 760px) {
+  .dash-outreach-worklist {
+    padding: 14px;
+  }
+
+  .dash-outreach-worklist .dash-outreach-card {
+    grid-template-areas:
+      "head head"
+      "line actions"
+      "meta meta"
+      "controls controls"
+      "burned burned";
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .dash-outreach-worklist .dash-outreach-meta {
+    display: flex;
+  }
+
+  .dash-outreach-worklist .dash-outreach-burned-reason {
+    grid-area: burned;
+  }
+
+  .dash-outreach-worklist .dash-outreach-controls {
+    grid-template-columns: minmax(125px, 0.8fr) minmax(0, 1fr);
+  }
+
+  .dash-outreach-legend-group {
+    flex: 1 1 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}

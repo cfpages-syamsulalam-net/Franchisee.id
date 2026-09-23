@@ -158,7 +158,11 @@ export const DashboardActionSchema = z.discriminatedUnion("action", [
   ManageNotificationEmailSchema,
   UpdatePremiumSettingsSchema,
   ...DASHBOARD_OCR_ACTION_SCHEMAS,
-]);
+]).superRefine((data, context) => {
+  if (data.action === "update_outreach_status" && data.status === "burned" && !data.burned_reason) {
+    context.addIssue({ code: "custom", path: ["burned_reason"], message: "Pilih alasan Burned." });
+  }
+});
 
 export function sanitizeChanges(changes) {
   return sanitizeListingChanges(changes);

@@ -64,13 +64,17 @@
       lastPipeline = pipeline;
       var filteredRows = filterRows(rows);
       var counts = countRowsByStatus(rows, pipeline, summary.by_pipeline_status || {});
-      var badge = filteredRows.length + " / " + rows.length + " listing";
+      var badge = filteredRows.length + " / " + (contactReady || rows.length);
+      var badgeHint = filteredRows.length + " tampil dari " + rows.length + " listing";
       if (contactReady || publishedUnclaimed) {
-        badge = filteredRows.length + " tampil dari " + contactReady + " kontak siap";
-        if (publishedUnclaimed > contactReady) badge += " / " + publishedUnclaimed + " listing eligible";
-        if (queueLimit && contactReady > rows.length) badge += " (limit " + queueLimit + ")";
+        badgeHint = filteredRows.length + " tampil dari " + contactReady + " kontak siap";
+        if (publishedUnclaimed > contactReady) badgeHint += " / " + publishedUnclaimed + " listing eligible";
+        if (queueLimit && contactReady > rows.length) badgeHint += " (limit " + queueLimit + ")";
       }
-      outreachCount.textContent = badge;
+      outreachCount.innerHTML = '<i class="fas fa-address-book" aria-hidden="true"></i> ' + escapeHtml(badge);
+      outreachCount.setAttribute("data-fr-tooltip", badgeHint);
+      outreachCount.setAttribute("aria-label", badgeHint);
+      outreachCount.tabIndex = 0;
       renderOutreachTabBadge(counts);
       renderOutreachSummary(pipeline, counts, summary.conversion_metrics || {});
       renderOutreachActions(filteredRows);
@@ -123,6 +127,15 @@
           updateOutreachStatus(select.getAttribute("data-franchise-id"), select.value, select);
         });
       });
+      root.querySelectorAll("[data-outreach-burned-reason]").forEach(function (reason) {
+        reason.addEventListener("change", function () {
+          var card = reason.closest("[data-outreach-card]");
+          var statusSelect = card && card.querySelector("[data-outreach-status-select]");
+          if (reason.value && statusSelect && statusSelect.value === "burned") {
+            updateOutreachStatus(statusSelect.getAttribute("data-franchise-id"), "burned", statusSelect);
+          }
+        });
+      });
       root.querySelectorAll("[data-outreach-status-select]").forEach(toggleBurnedReason);
     }
 
@@ -170,7 +183,7 @@
               "data-message": message,
             },
           }) : "",
-          renderActionLink({ href: row.claim_url, label: "Buka claim", icon: "fas fa-link" }),
+          renderActionLink({ href: row.claim_url, label: "Buka claim", icon: "fas fa-link", attrs: { "data-outreach-claim": "" } }),
         ], "Aksi outreach") + '</div>' +
       '</article>';
     }
@@ -184,22 +197,22 @@
 
     function renderOutreachMetaChips(row, contact) {
       var chips = [];
-      if (contact) chips.push(renderMetaChip("fab fa-whatsapp", contact.display, contact.label + ": " + contact.display, "good"));
-      else chips.push(renderMetaChip("fas fa-phone-slash", "No WA", "Tidak ada nomor WhatsApp/mobile", "bad"));
-      if (row.stage_changed_at) chips.push(renderMetaChip("fas fa-route", "Stage", "Stage saat ini sejak " + row.stage_changed_at + ". " + (row.milestone_policy || ""), ""));
-      chips.push(renderMetaChip("fas fa-clock", row.last_outreach_at ? "Last" : "New", row.last_outreach_at ? "Outreach terakhir " + row.last_outreach_at : "Belum pernah dikontak", ""));
-      if (row.next_follow_up_at) chips.push(renderMetaChip("fas fa-calendar-day", "FU", "Follow-up " + row.next_follow_up_at, row.is_overdue ? "bad" : ""));
-      if (row.is_overdue) chips.push(renderMetaChip("fas fa-exclamation-triangle", "Due", row.overdue_label || "Overdue", "bad"));
-      chips.push(renderMetaChip(row.assigned_staff_user_id ? "fas fa-user-check" : "fas fa-user-plus", row.assigned_staff_user_id ? "Staff" : "Open", row.assigned_staff_user_id ? "Sudah assigned ke staff" : "Belum assigned", ""));
-      if (row.publication_status) chips.push(renderMetaChip("fas fa-network-wired", row.publication_status, "Publikasi " + row.publication_status, ""));
-      if (row.active_subscription_ends_at) chips.push(renderMetaChip("fas fa-crown", "Sub", "Subscription aktif sampai " + row.active_subscription_ends_at, "premium"));
-      else if (row.latest_subscription_ends_at) chips.push(renderMetaChip("fas fa-hourglass-end", "Risk", "Subscription terakhir " + row.latest_subscription_ends_at, "warning"));
+      if (contact) chips.push(renderMetaChip("fab fa-whatsapp", contact.display, contact.label + ": " + contact.display, "good", 1));
+      else chips.push(renderMetaChip("fas fa-phone-slash", "No WA", "Tidak ada nomor WhatsApp/mobile", "bad", 1));
+      if (row.stage_changed_at) chips.push(renderMetaChip("fas fa-route", "Stage", "Stage saat ini sejak " + row.stage_changed_at + ". " + (row.milestone_policy || ""), "", 2));
+      chips.push(renderMetaChip("fas fa-clock", row.last_outreach_at ? "Last" : "New", row.last_outreach_at ? "Outreach terakhir " + row.last_outreach_at : "Belum pernah dikontak", "", 3));
+      if (row.next_follow_up_at) chips.push(renderMetaChip("fas fa-calendar-day", "FU", "Follow-up " + row.next_follow_up_at, row.is_overdue ? "bad" : "", 4));
+      if (row.is_overdue) chips.push(renderMetaChip("fas fa-exclamation-triangle", "Due", row.overdue_label || "Overdue", "bad", 5));
+      chips.push(renderMetaChip(row.assigned_staff_user_id ? "fas fa-user-check" : "fas fa-user-plus", row.assigned_staff_user_id ? "Staff" : "Open", row.assigned_staff_user_id ? "Sudah assigned ke staff" : "Belum assigned", "", 6));
+      if (row.publication_status) chips.push(renderMetaChip("fas fa-network-wired", row.publication_status, "Publikasi " + row.publication_status, "", 7));
+      if (row.active_subscription_ends_at) chips.push(renderMetaChip("fas fa-crown", "Sub", "Subscription aktif sampai " + row.active_subscription_ends_at, "premium", 8));
+      else if (row.latest_subscription_ends_at) chips.push(renderMetaChip("fas fa-hourglass-end", "Risk", "Subscription terakhir " + row.latest_subscription_ends_at, "warning", 8));
       return '<div class="dash-outreach-meta">' + chips.join("") + '</div>';
     }
 
-    function renderMetaChip(icon, text, tooltip, tone) {
+    function renderMetaChip(icon, text, tooltip, tone, slot) {
       var hint = tooltip && text && !tooltip.includes(text) ? text + ": " + tooltip : (tooltip || text);
-      return '<span class="dash-outreach-chip ' + (tone ? 'is-' + escapeAttr(tone) : '') + '" role="img" tabindex="0" aria-label="' + escapeAttr(hint) + '" data-fr-tooltip="' + escapeAttr(hint) + '"><i class="' + escapeAttr(icon || "fas fa-circle") + '" aria-hidden="true"></i></span>';
+      return '<span class="dash-outreach-chip ' + (tone ? 'is-' + escapeAttr(tone) : '') + '" style="grid-column:' + slot + '" role="img" tabindex="0" aria-label="' + escapeAttr(hint) + '" data-fr-tooltip="' + escapeAttr(hint) + '"><i class="' + escapeAttr(icon || "fas fa-circle") + '" aria-hidden="true"></i></span>';
     }
 
     function renderInfoIcon(label, tooltip, icon) {
@@ -441,10 +454,26 @@
 
     async function updateOutreachStatus(franchiseId, status, control) {
       if (!franchiseId || !status) return;
+      if (control && control.classList && control.classList.contains("is-busy")) return;
       var previousValue = control && control.tagName === "SELECT" ? control.getAttribute("data-last-value") || "" : "";
-      var context = collectStatusContext(franchiseId, status);
+      var card = control && control.closest ? control.closest("[data-outreach-card]") : null;
+      if (!card && outreachBoard) card = outreachBoard.querySelector('[data-outreach-card][data-franchise-id="' + cssEscape(franchiseId) + '"]');
+      if (!card) card = findOutreachCard(franchiseId);
+      var context = collectStatusContext(card);
+      var reasonControl = status === "burned" && card ? card.querySelector("[data-outreach-burned-reason]") : null;
+      if (status === "burned" && !context.burnedReason) {
+        var statusSelect = card && card.querySelector("[data-outreach-status-select]");
+        if (statusSelect) {
+          statusSelect.value = "burned";
+          toggleBurnedReason(statusSelect);
+        }
+        if (reasonControl) reasonControl.focus();
+        options.setStatus("Pilih alasan Burned untuk menyimpan status.", true);
+        return;
+      }
       try {
         if (control && "disabled" in control) control.disabled = true;
+        if (reasonControl) reasonControl.disabled = true;
         if (control && control.classList) control.classList.add("is-busy");
         await options.postDashboardAction({
           action: "update_outreach_status",
@@ -457,19 +486,21 @@
         options.setStatus("Status outreach diperbarui.", false);
         await options.reloadDashboard();
       } catch (error) {
-        if (control && control.tagName === "SELECT" && previousValue) control.value = previousValue;
+        if (control && control.tagName === "SELECT" && previousValue) {
+          control.value = previousValue;
+          toggleBurnedReason(control);
+        }
         options.setStatus(error.message || "Status outreach gagal diperbarui.", true);
       } finally {
         if (control && "disabled" in control) control.disabled = false;
+        if (reasonControl) reasonControl.disabled = false;
         if (control && control.classList) control.classList.remove("is-busy");
       }
     }
 
-    function collectStatusContext(franchiseId, status) {
-      var card = findOutreachCard(franchiseId);
+    function collectStatusContext(card) {
       var notes = card && card.querySelector("[data-outreach-note]") ? card.querySelector("[data-outreach-note]").value.trim() : "";
       var burnedReason = card && card.querySelector("[data-outreach-burned-reason]") ? card.querySelector("[data-outreach-burned-reason]").value : "";
-      if (status === "burned" && !burnedReason) burnedReason = "no_response";
       return {
         notes: notes,
         burnedReason: burnedReason,

@@ -31,15 +31,16 @@ const ocrProviderMetadataJson = JSON.stringify({
     <link rel="stylesheet" href="/wp-content/plugins/elementor/assets/lib/font-awesome/css/all.min.css?ver=3.32.3">
     <link rel="stylesheet" href="/css/auth-clerk.css">
     <link rel="stylesheet" href="/css/shared-tooltip.css">
-    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/dashboard.css?v=20260924-ui-audit">
     <link rel="stylesheet" href="/css/dashboard-auth.css">
     <link rel="stylesheet" href="/css/dashboard-review.css">
     <link rel="stylesheet" href="/css/dashboard-operations.css">
-    <link rel="stylesheet" href="/css/dashboard-outreach.css">
+    <link rel="stylesheet" href="/css/dashboard-outreach.css?v=20260924-ui-audit">
+    <link rel="stylesheet" href="/css/dashboard-outreach-worklist.css?v=20260924-ui-audit">
     <link rel="stylesheet" href="/css/dashboard-integration.css">
     <link rel="stylesheet" href="/css/dashboard-premium.css">
     <link rel="stylesheet" href="/css/dashboard-ocr.css">
-    <link rel="stylesheet" href="/css/dashboard-ocr-settings.css?v=20260711-ocr-css-split">
+    <link rel="stylesheet" href="/css/dashboard-ocr-settings.css?v=20260924-ui-audit">
     <link rel="stylesheet" href="/css/dashboard-ocr-execution.css?v=20260711-ocr-css-split">
     <link rel="stylesheet" href="/css/dashboard-ocr-results.css?v=20260711-ocr-css-split">
   </head>
@@ -158,27 +159,31 @@ const ocrProviderMetadataJson = JSON.stringify({
                   <i class="fas fa-comments dash-section-icon" aria-hidden="true"></i>
                   <div>
                     <h2>Outreach</h2>
-                    <p>Daftar kerja untuk menyimpan kontak, menghubungi franchisor, dan mencatat tindak lanjut.</p>
+                    <p>Kontak, kirim pesan, lalu catat tindak lanjut.</p>
                   </div>
                 </div>
                 <div class="dash-panel-actions" data-outreach-actions>
-                  <span class="dash-badge" data-outreach-count>-</span>
+                  <span class="dash-badge dash-outreach-count-badge" data-outreach-count>-</span>
                 </div>
               </div>
               <div class="dash-outreach-alert" data-google-contacts-notice hidden></div>
-              <div class="dash-outreach-summary" role="group" aria-label="Legenda aksi outreach">
-                <strong>Aksi per listing</strong>
-                <span class="dash-outreach-summary-pill"><i class="fas fa-address-book" aria-hidden="true"></i><strong>Simpan kontak</strong></span>
-                <span class="dash-outreach-summary-pill"><i class="fab fa-whatsapp" aria-hidden="true"></i><strong>Buka WhatsApp</strong></span>
-                <span class="dash-outreach-summary-pill"><i class="fas fa-check" aria-hidden="true"></i><strong>Catat terkirim</strong></span>
-                <span class="dash-outreach-summary-pill"><i class="fas fa-link" aria-hidden="true"></i><strong>Buka claim</strong></span>
-                <strong>Penanda baris</strong>
-                <span class="dash-outreach-summary-pill"><i class="fas fa-arrow-right" aria-hidden="true"></i><strong>Langkah berikutnya</strong></span>
-                <span class="dash-outreach-summary-pill"><i class="fas fa-phone-slash" aria-hidden="true"></i><strong>No WA</strong></span>
-                <span class="dash-outreach-summary-pill"><i class="fas fa-route" aria-hidden="true"></i><strong>Stage</strong></span>
-                <span class="dash-outreach-summary-pill"><i class="fas fa-clock" aria-hidden="true"></i><strong>New / Last</strong></span>
-                <span class="dash-outreach-summary-pill"><i class="fas fa-user-plus" aria-hidden="true"></i><strong>Open / belum ditugaskan</strong></span>
-                <span class="dash-outreach-summary-pill"><i class="fas fa-network-wired" aria-hidden="true"></i><strong>Status publikasi</strong></span>
+              <div class="dash-outreach-summary dash-outreach-legend" role="group" aria-label="Legenda outreach">
+                <div class="dash-outreach-legend-group" role="group" aria-label="Aksi">
+                  <strong>Aksi</strong>
+                  <span class="dash-outreach-summary-pill"><i class="fas fa-address-book" aria-hidden="true"></i><strong>Simpan</strong></span>
+                  <span class="dash-outreach-summary-pill"><i class="fab fa-whatsapp" aria-hidden="true"></i><strong>WA</strong></span>
+                  <span class="dash-outreach-summary-pill"><i class="fas fa-check" aria-hidden="true"></i><strong>Terkirim</strong></span>
+                  <span class="dash-outreach-summary-pill"><i class="fas fa-link" aria-hidden="true"></i><strong>Klaim</strong></span>
+                </div>
+                <div class="dash-outreach-legend-group" role="group" aria-label="Penanda baris">
+                  <strong>Penanda</strong>
+                  <span class="dash-outreach-summary-pill"><i class="fas fa-arrow-right" aria-hidden="true"></i><strong>Berikutnya</strong></span>
+                  <span class="dash-outreach-summary-pill"><i class="fas fa-phone-slash" aria-hidden="true"></i><strong>No WA</strong></span>
+                  <span class="dash-outreach-summary-pill"><i class="fas fa-route" aria-hidden="true"></i><strong>Stage</strong></span>
+                  <span class="dash-outreach-summary-pill"><i class="fas fa-clock" aria-hidden="true"></i><strong>Aktivitas</strong></span>
+                  <span class="dash-outreach-summary-pill"><i class="fas fa-user-plus" aria-hidden="true"></i><strong>Penugasan</strong></span>
+                  <span class="dash-outreach-summary-pill"><i class="fas fa-network-wired" aria-hidden="true"></i><strong>Publikasi</strong></span>
+                </div>
               </div>
               <div class="dash-outreach-worklist" data-outreach-worklist aria-label="Daftar kerja outreach">
                 <div class="dash-loading">Memuat daftar kerja outreach...</div>
@@ -268,7 +273,7 @@ const ocrProviderMetadataJson = JSON.stringify({
     <script src="/js/dashboard-premium-operations.js" is:inline></script>
     <script src="/js/dashboard-review.js" is:inline></script>
     <script src="/js/dashboard-google-contacts.js" is:inline></script>
-    <script src="/js/dashboard-outreach.js?v=20260924-outreach-icons" is:inline></script>
+    <script src="/js/dashboard-outreach.js?v=20260924-ui-audit" is:inline></script>
     <script src="/js/dashboard-operations.js" is:inline></script>
     <script is:inline set:html={`window.FranchiseOcrProviderMetadata = ${ocrProviderMetadataJson};`}></script>
     <script src="/js/dashboard-ocr-schedulers.js" is:inline></script>
