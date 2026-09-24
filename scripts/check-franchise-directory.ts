@@ -77,6 +77,9 @@ const assetSource = readFileSync(resolve(root, "src/lib/franchise-directory-clie
 assert.ok(assetSource.includes('"/peluang-usaha/kategori/"'), "directory controller must build canonical category routes");
 assert.ok(!assetSource.includes('next.set("kategori"'), "directory controller must not write category query params");
 assert.ok(assetSource.includes('params.get("kategori")'), "directory controller must retain a browser fallback for legacy category URLs");
+const emittedClient = directoryHtml.split('<script id="franchise-directory-generated-js">')[1]?.split('</script>')[0] || '';
+assert.ok(emittedClient.includes('.replace(/\\s+/g, "-")'), "emitted browser script must retain whitespace regex escapes");
+assert.ok(emittedClient.includes('.replace(/[^\\w-]+/g, "")'), "emitted browser script must retain category slug regex escapes");
 
 async function checkLegacyRedirect() {
   const request = new Request("https://franchisee.id/peluang-usaha?kategori=fnb&q=kopi&sort=populer");

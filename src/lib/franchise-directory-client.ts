@@ -80,8 +80,8 @@ export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-gener
 
   function categoryPath(slug) {
     var normalized = String(slug || "").trim().toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]+/g, "")
+      .replace(/\\s+/g, "-")
+      .replace(/[^\\w-]+/g, "")
       .replace(/--+/g, "-")
       .replace(/^-+|-+$/g, "");
     return "/peluang-usaha/kategori/" + encodeURIComponent(categoryRouteAliases[normalized] || normalized);

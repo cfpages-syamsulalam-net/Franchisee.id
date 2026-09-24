@@ -5,6 +5,8 @@
 - Recorded UI/UX decisions in `docs/ux/DIRECTORY_FILTER_UI_UX_AUDIT_2026-09-24.md`; updated `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, and `.context/session-20260924-1706.md`.
 ### Verified
 - Directory check passed with 197 listings and 14 category routes, including category alias and investment boundary cases. Full Astro build and legacy asset copy passed. Headless desktop and 390 px device emulation checked form layout without document overflow. Production interactions and deployment parity pending push.
+### Follow-up: category navigation regression
+- Fixed the generated browser script's escaped regex so selecting a category opens its canonical slug route instead of the category index. Added generated-script regression assertions. Directory check and full Astro build passed again; live stacked-filter check pending deployment of this follow-up.
 ## 2026-09-24 09:37 (Asia/Jakarta)
 
 ### Changed
