@@ -1,3 +1,9 @@
+## 2026-09-24 Directory card UX follow-up
+
+- Live 1440px review confirmed five cramped cards per row, prominent gradient missing-logo blocks, and `Belum diklaim` truncation. A 390px device-emulated check measured a 390px document and 366px card, so the earlier narrow desktop screenshot did not establish mobile horizontal overflow. The legacy rule for all card descendants instead made the status badge 16px despite its 10px component rule.
+- Listing cards now use a neutral missing-logo area, fewer columns, a full quiet status below the facts, and save/compare actions beside `Lihat detail`. Directory result and quicklink copy is more compact. The two legacy floating contact pills are hidden on directory pages; detail pages still provide contact paths.
+- Card and compare rules were extracted without reordering into `src/lib/franchise-directory-card-styles.ts`; `src/lib/franchise-directory-styles.ts` is now 386 lines instead of 667. The split keeps controls and page chrome separate from card styling.
+
 ## 2026-09-24 Google Contacts save failure
 
 `Simpan kontak` could perform more than 50 Google lookups for a 200-contact queue before batch creation. A focused mock reproduced the excess request count. The handler now lists existing saved contacts in bounded pages and matches phone numbers locally; invalid or unusually large responses stop before creating contacts. The touched helper (305 lines) and regression check (182 lines) are below the long-file extraction threshold. `content.js` and `chrome.runtime` are absent from site sources, so the repeated console traces are most likely browser extension activity. Signed-in production contact creation still needs a staff retry after deployment.

@@ -1,3 +1,14 @@
+## 2026-09-24 09:37 (Asia/Jakarta)
+
+### Changed
+- `src/lib/franchise-static.ts`, `src/lib/franchise-directory-styles.ts`, `src/lib/franchise-directory-card-styles.ts`, `src/lib/franchise-directory-client.ts`: made directory cards less crowded with a neutral missing-logo treatment, readable secondary status, simpler facts, footer save/compare actions, four-column desktop grid, `Lihat detail` CTA, compact result count, and quieter browse links. Removed floating contact pills from the directory view while keeping detail-page contact paths. Extracted card CSS from the long directory style module without changing rule order.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `.context/session-20260924-0937.md`, `CHANGELOG.md`: recorded the card contract, corrected mobile audit finding, card-style extraction, and session continuity.
+
+### Verified
+- `pnpm run directory:check` passed for 197 listings and 14 category routes.
+- `pnpm run build:astro` passed, including legacy static copy.
+- Generated directory HTML contains the neutral placeholder CSS, full card status before the description, footer actions, and `Lihat detail` label.
+
 ## 2026-09-24 06:41 (Asia/Jakarta)
 
 ### Fixed

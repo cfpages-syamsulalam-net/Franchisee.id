@@ -279,14 +279,12 @@ function generateCard(row: FranchiseStaticRow, index: number) {
                 <div class="uc_post_image_overlay"></div>
             </div>
         </a>
-        ${generateSaveOpportunityButton(row, "card")}
-        ${generateCompareButton(row, "card")}
         <div class="uc_content">
             <div class="uc_content_inner">
                 <div class="uc_content-info-wrapper">
                     <div class="uc_post_title">
                         <a href="${escapeAttr(link)}" class="ue_p_title franchise-card-title">
-                            ${escapeHtml(brandName)} ${badge}
+                            ${escapeHtml(brandName)}
                         </a>
                     </div>
                     <div class="ue-meta-data">
@@ -295,12 +293,17 @@ function generateCard(row: FranchiseStaticRow, index: number) {
                         </span>
                         ${factChips}
                     </div>
+                    <div class="franchise-card-status">${badge}</div>
                     <div class="uc_post_text">${escapeHtml(desc)}</div>
                 </div>
                 <div class="uc_post_button">
                     <a class="uc_more_btn" href="${escapeAttr(link)}">
-                        <div class="uc_btn_inner"><div class="uc_btn_txt">Info Franchise</div></div>
+                        <div class="uc_btn_inner"><div class="uc_btn_txt">Lihat detail</div></div>
                     </a>
+                    <span class="franchise-card-tools">
+                        ${generateSaveOpportunityButton(row, "card")}
+                        ${generateCompareButton(row, "card")}
+                    </span>
                 </div>
             </div>
         </div>
@@ -512,7 +515,6 @@ function generateDirectoryControls(rows: FranchiseStaticRow[], options: Director
         </div>
       </div>
       <div class="franchise-directory-quicklinks" aria-label="Tampilan cepat">
-        <a href="/peluang-usaha">Semua</a>
         <a href="/peluang-usaha/kategori/">Kategori</a>
         <a href="/peluang-usaha/modal/">Modal</a>
         <a href="/peluang-usaha/kota/">Kota</a>

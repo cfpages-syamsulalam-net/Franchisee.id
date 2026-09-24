@@ -1,3 +1,5 @@
+import { FRANCHISE_DIRECTORY_CARD_STYLES } from "./franchise-directory-card-styles";
+
 export const FRANCHISE_DIRECTORY_STYLES = `<style id="franchise-directory-generated-css">
 .franchise-directory-controls {
   max-width: 1200px;
@@ -148,22 +150,19 @@ export const FRANCHISE_DIRECTORY_STYLES = `<style id="franchise-directory-genera
 .franchise-directory-quicklinks {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px 16px;
   margin-top: 10px;
 }
 .franchise-directory-quicklinks a {
-  border: 1px solid #e3d083;
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: #fff8d7;
-  color: #2b2100 !important;
+  border-bottom: 1px solid #b8b8b8;
+  padding: 3px 0;
+  color: #4d4d4d !important;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none !important;
 }
 .franchise-directory-quicklinks a.is-active {
-  background: #f0ca00;
-  border-color: #c28d00;
+  border-color: #111111;
   color: #111111 !important;
 }
 .franchise-directory-result-count {
@@ -280,207 +279,11 @@ export const FRANCHISE_DIRECTORY_STYLES = `<style id="franchise-directory-genera
   --padding-left: 16px !important;
   --padding-right: 16px !important;
 }
-#uc_post_grid_elementor_d0f4a5f .uc-items-wrapper {
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)) !important;
-  gap: 14px !important;
-  align-items: stretch;
+.whatsapp-floating,
+.tlp-floating {
+  display: none !important;
 }
-#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_item {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #e5e5e5;
-  background: #ffffff;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_image {
-  display: block;
-  flex: 0 0 auto;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_post_image {
-  width: 100%;
-  height: auto !important;
-  aspect-ratio: 16 / 9;
-  display: grid;
-  place-items: center;
-  background: #ffffff;
-  border: 0 !important;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_post_image img {
-  width: 100%;
-  height: 100% !important;
-  padding: 10px;
-  object-fit: contain !important;
-  object-position: center !important;
-  transform: none !important;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_post_image_overlay {
-  display: none;
-}
-#uc_post_grid_elementor_d0f4a5f .franchise-css-placeholder {
-  min-height: 0;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_content {
-  min-width: 0;
-  flex: 1 1 auto;
-  padding: 13px !important;
-  background: #fafafa !important;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_content_inner,
-#uc_post_grid_elementor_d0f4a5f .uc_content-info-wrapper {
-  min-width: 0;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_post_title,
-#uc_post_grid_elementor_d0f4a5f .uc_post_title a,
-#uc_post_grid_elementor_d0f4a5f .uc_post_title a > * {
-  font-size: 16px !important;
-  line-height: 1.25 !important;
-}
-#uc_post_grid_elementor_d0f4a5f .ue-meta-data {
-  gap: 6px !important;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_post_text {
-  min-height: 36px;
-  margin-top: 7px !important;
-  display: -webkit-box;
-  overflow: hidden;
-  color: #555555 !important;
-  font-size: 12px !important;
-  line-height: 1.5 !important;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_more_btn {
-  margin-top: 9px !important;
-  padding: 8px 11px !important;
-  font-size: 11px !important;
-  line-height: 1.2 !important;
-}
-#uc_post_grid_elementor_d0f4a5f,
-#uc_post_grid_elementor_d0f4a5f .uc-items-wrapper,
-#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_wrap,
-#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_item,
-#uc_post_grid_elementor_d0f4a5f .uc_content,
-#uc_post_grid_elementor_d0f4a5f .uc_content_inner,
-#uc_post_grid_elementor_d0f4a5f .uc_post_title {
-  overflow: visible !important;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_item {
-  position: relative;
-}
-#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_item:has(.franchise-status-badge:hover),
-#uc_post_grid_elementor_d0f4a5f .uc_post_grid_style_one_item:has(.franchise-status-badge:focus-within) {
-  z-index: 20;
-}
-.franchise-card-title {
-  display: flex !important;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 8px;
-  color: #111111 !important;
-  line-height: 1.24;
-  text-decoration: none !important;
-}
-.franchise-card-title:hover {
-  color: #c28d00 !important;
-}
-.franchise-status-badge {
-  position: relative;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  max-width: 118px;
-  min-height: 22px;
-  padding: 3px 7px;
-  border-radius: 999px;
-  font-size: 10px;
-  line-height: 1;
-  font-weight: 700;
-  white-space: nowrap;
-  flex: 0 0 auto;
-}
-.franchise-status-badge:hover,
-.franchise-status-badge:focus-within {
-  z-index: 30;
-}
-.franchise-status-verified {
-  color: #0f5132;
-  background: #d1f1dc;
-  border: 1px solid rgba(15, 81, 50, 0.18);
-}
-.franchise-status-unclaimed {
-  color: #6a4a00;
-  background: #fff2bd;
-  border: 1px solid rgba(194, 141, 0, 0.28);
-}
-.franchise-status-badge > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.franchise-card-facts {
-  display: flex;
-  width: 100%;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 6px;
-}
-.franchise-fact-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 6px;
-  border-radius: 4px;
-  background: #f6f6f6;
-  color: #222222;
-  font-size: 11px;
-  line-height: 1.2;
-}
-.franchise-fact-chip span {
-  color: #767676;
-}
-.franchise-fact-chip strong {
-  font-weight: 700;
-}
-.fr-compare-wrap--card {
-  position: absolute;
-  left: 52px;
-  top: 8px;
-  z-index: 6;
-}
-.fr-compare-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  border: 1px solid rgba(17, 17, 17, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #111111;
-  font-family: Outfit, "DM Sans", Arial, sans-serif;
-  font-weight: 800;
-  cursor: pointer;
-}
-.fr-compare-button--card {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
-}
-.fr-compare-button--card span {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-}
-.fr-compare-button--detail {
-  min-height: 42px;
-  padding: 8px 13px;
-}
-.fr-compare-button.is-added {
-  background: #f0ca00;
-  color: #111111;
-}
+${FRANCHISE_DIRECTORY_CARD_STYLES}
 .fr-compare-floating {
   position: fixed;
   right: 18px;

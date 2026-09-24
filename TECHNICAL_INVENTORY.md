@@ -641,7 +641,7 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 - `FranchiseStaticRowSchema`: Re-export of the shared D1 row schema for rows in `json/d1-franchise-static-data.json`.
 - `loadFranchiseStaticRows()`: Reads and validates the generated D1 snapshot.
 - `renderListingPage(rows, options)`: Removes the obsolete legacy search/content section, renders one compact search/filter surface before results, keeps temporary `q`/`sort`/`status` state, and places category guidance plus buyer/franchisor CTAs after the compact result grid.
-- Directory cards link to franchise information pages with a neutral `Info Franchise` CTA; unclaimed-specific claim CTAs remain on detail pages.
+- Directory cards link to franchise information pages with `Lihat detail`, show neutral missing-logo artwork and compact status/facts, and place save/compare buttons beside the detail action; unclaimed-specific claim CTAs remain on detail pages.
 - `renderCategoryIndexPage(rows)`: Renders the canonical `/peluang-usaha/kategori/` category-card hub.
 - `renderDetailPage(row)`: Renders the existing franchise detail template for one snapshot row, including complementary quick facts, information-section save/compare actions, a promoted H1 detail heading, non-Indonesia brand-origin/target-market facts with flag labels from `src/lib/country-metadata.ts`, connected buyer-intent tabs from `src/lib/franchise-detail-tabs.ts`, dynamic Premium Galeri/Brosur/FAQ entries when the row has premium/media/proposal data, and a post-tabs franchisor CTA for free brand creation plus Premium education.
 - `renderCityIndexPage(rows)` / `renderCityLandingPage(entry, rows)`: Render static city discovery pages from structured D1 location rows with text inference fallback.

@@ -113,7 +113,7 @@ export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-gener
       card.style.display = "";
       grid.appendChild(card);
     });
-    if (count) count.textContent = visible.length + " franchise ditampilkan dari " + cards.length + " listing.";
+    if (count) count.textContent = visible.length === cards.length ? visible.length + " hasil" : visible.length + " / " + cards.length + " hasil";
     if (directoryEmpty) directoryEmpty.style.display = visible.length ? "none" : "grid";
   }
 
