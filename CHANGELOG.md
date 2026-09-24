@@ -1,3 +1,8 @@
+## 2026-09-24 18:40 UTC — public franchise export restriction
+
+- `functions/get-franchises.js` now reads named published-listing columns from D1 and returns only mapped public fields; anonymous Sheets exports are refused and backend errors are not exposed. Claim-search fallback remains available. Removed unused private-member and Sheets-read helpers.
+- `scripts/build-d1-franchise-pages.ts` stops selecting private `raw_payload`; `src/lib/shared-schemas.ts` strips it, and regenerated `json/d1-franchise-static-data.json` omits it. Extended `scripts/check-public-franchise-privacy.ts` to cover source denial, private-field exclusion and static-row projection. Updated `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, `docs/product/NEXT_STEPS.md` and a session snapshot. Logged historical public-repository payload exposure as suggestion 119; removal from HEAD does not erase prior commits. Focused privacy check and Astro build pass.
+
 ## 2026-09-24 17:52 UTC — existing-brand registration choices
 
 - `functions/brand-match.js` and `functions/_form-submit-utils.js` expose one live, exact-name lookup that only returns public listing details; PIC/phone require an approved owner claim and published listing. `functions/_form-submit-franchisor.js` reuses it to give actionable duplicate feedback while refusing a second listing. Claim lookup now accepts both the generated listing ID and legacy ID and records the actual legacy ID.

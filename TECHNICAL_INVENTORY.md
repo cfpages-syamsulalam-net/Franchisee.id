@@ -1424,11 +1424,10 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 - Does not commit generated output back to `main`.
 
 ### File: `functions/get-franchises.js`
-- `onRequestGet()`: API to fetch franchise data with shared Zod query validation, D1-first reads, legacy Cloudinary URL optimization, and a Sheets read fallback only when D1 is unavailable or explicitly requested.
+- `onRequestGet()`: Reads named D1-published franchise fields with shared Zod query validation; denies FRANCHISEE and Sheets exports, and returns sanitized outage responses.
 - `getFranchiseRowsFromD1()`: Reads published `site_franchisee_id` franchise rows from D1 with optional `q`, `category`, `limit`, and `offset` filters.
-- `getFranchiseeProfilesFromD1()`: Reads franchisee profile rows from D1 for operational/admin query compatibility.
 - `filterClaimSearchRows()`: Preserves strict `UNCLAIMED` claim-search sanitization and deduplication.
-- `getFranchisesFromSheets()`: Transition-only read fallback; do not add new Sheets writes.
+- `src/lib/shared-schemas.ts` excludes private `raw_payload` from the D1 static listing row contract; `scripts/build-d1-franchise-pages.ts` does not select it.
 
 ---
 ## 4. Logic Safety Audit

@@ -2,6 +2,10 @@
 
 Reviewed 24 September 2026. Read [user journeys](USER_JOURNEYS.md) first. This is a decision and verification queue for the current codebase, not a promise that code paths already work in every production account. `P0` means protect ownership or prove a core path before expanding traffic; `P1` means close a known operational gap; `P2` means improve acquisition once the core paths are sound. The order below is intentional.
 
+**Immediate data-safety follow-up:** [suggestion 119](../../SUGGESTION.md) documents historical public Git blobs with raw applicant payloads. The current checked-in snapshot is clean, but old commits remain accessible; inventory and coordinate historical cleanup before treating the exposure as resolved.
+
+**Next coding gate before persona testing:** [suggestion 117](../../SUGGESTION.md): a new-brand submission currently publishes applicant-supplied contact details without independent ownership verification. Keep it pending until admin verifies brand authority through an independent source; then use disposable accounts to test both new listings and existing-brand claims. The current public `/get-franchises` response, Sheets route and generated snapshot are corrected under suggestion 118.
+
 ## Start here: three decisions for Syamsul
 
 1. **Brand claims:** code now keeps existing-brand claims `pending` and ownerless until an admin records independent verification. [Claim transition matrix](../forms/CLAIM_TRANSITION_MATRIX.md) explains the rule. Run a controlled production test with a disposable listing and separate accounts before inviting real owners to claim brands.

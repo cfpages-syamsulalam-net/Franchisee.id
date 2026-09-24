@@ -76,7 +76,6 @@ export const D1FranchiseRowSchema = z.object({
   gallery_urls: nullableString,
   video_url: nullableString,
   proposal_url: nullableString,
-  raw_payload: nullableString,
   company_name: nullableString,
   pic_name: nullableString,
   email_contact: nullableString,

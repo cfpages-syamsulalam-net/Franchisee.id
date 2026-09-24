@@ -42,8 +42,14 @@ export async function onRequestGet({ request, env }) {
       );
     }
 
-    const useSheets = query.source === "sheets" || (!env.franchise_db && query.source !== "d1");
-    const result = useSheets ? await getFranchisesFromSheets(env, query) : await getFranchisesFromD1(env, query);
+    if (query.source === "sheets") {
+      return jsonResponse(
+        { success: false, error: "PUBLIC_SHEETS_EXPORT_UNAVAILABLE" },
+        { status: 403, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    const result = await getFranchisesFromD1(env, query);
 
     return jsonResponse(
       {
@@ -63,31 +69,18 @@ export async function onRequestGet({ request, env }) {
         },
       }
     );
-  } catch (err) {
+  } catch {
     return jsonResponse(
-      {
-        success: false,
-        error: err.message,
-      },
-      { status: 500 }
+      { success: false, error: "PUBLIC_DATA_UNAVAILABLE" },
+      { status: 503, headers: { "Cache-Control": "no-store" } }
     );
   }
 }
 
 async function getFranchisesFromD1(env, query) {
-  if (!env.franchise_db) {
-    throw new Error("Data franchise belum tersedia. Silakan coba lagi nanti.");
-  }
-
-  const data =
-    query.tab === "FRANCHISEE"
-      ? await getFranchiseeProfilesFromD1(env.franchise_db, query)
-      : await getFranchiseRowsFromD1(env.franchise_db, query);
-
-  return {
-    source: "d1",
-    data: filterClaimSearchRows(data, query),
-  };
+  if (!env.franchise_db) throw new Error("D1 unavailable");
+  const data = await getFranchiseRowsFromD1(env.franchise_db, query);
+  return { source: "d1", data: filterClaimSearchRows(data, query) };
 }
 
 async function getFranchiseRowsFromD1(db, query) {
@@ -113,7 +106,12 @@ async function getFranchiseRowsFromD1(db, query) {
 
   const sql = `
     SELECT
-      f.*,
+      f.id, f.legacy_row_id, f.slug, f.brand_name, f.category,
+        f.subcategory, f.label, f.source_sheet, f.status, f.verification_tier,
+        f.min_investment_idr, f.max_investment_idr, f.total_investment_idr,
+        f.short_desc, f.full_desc, f.phone, f.office_address, f.logo_url,
+        f.cover_url, f.gallery_urls, f.video_url, f.proposal_url, f.source_type,
+        f.legacy_timestamp, f.created_at, f.updated_at,
       p.slug AS site_slug,
       p.canonical_url,
       p.publication_status,
@@ -146,39 +144,9 @@ async function getFranchiseRowsFromD1(db, query) {
   return (result.results || []).map(mapD1FranchiseRow);
 }
 
-async function getFranchiseeProfilesFromD1(db, query) {
-  const where = [];
-  const params = [];
-
-  if (query.q) {
-    where.push(
-      "(LOWER(COALESCE(name, '')) LIKE LOWER(?) OR LOWER(COALESCE(email, '')) LIKE LOWER(?) OR LOWER(COALESCE(whatsapp, '')) LIKE LOWER(?))"
-    );
-    const like = `%${query.q}%`;
-    params.push(like, like, like);
-  }
-
-  const sql = `
-    SELECT *
-    FROM franchisee_profiles
-    ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-    ORDER BY created_at DESC
-    LIMIT ? OFFSET ?
-  `;
-
-  const result = await db
-    .prepare(sql)
-    .bind(...params, query.limit, query.offset)
-    .all();
-
-  return (result.results || []).map(mapD1FranchiseeProfileRow);
-}
-
 function mapD1FranchiseRow(row) {
-  const rawPayload = parseRawPayload(row.raw_payload);
   const minCapital = row.min_investment_idr || row.package_min_idr;
   const item = {
-    ...rawPayload,
     id: row.legacy_row_id || row.id,
     franchise_id: row.id,
     slug: row.site_slug || row.slug,
@@ -189,13 +157,13 @@ function mapD1FranchiseRow(row) {
     status: row.source_sheet === "UNCLAIMED" ? "UNCLAIMED" : (row.status || "").toString().toUpperCase(),
     verification_tier: row.verification_tier,
     is_verified: row.verification_tier === "verified" || row.verification_tier === "premium" ? "TRUE" : "FALSE",
-    min_capital: rawPayload.min_capital || formatIdr(minCapital),
+    min_capital: formatIdr(minCapital),
     min_investment_idr: row.min_investment_idr,
     max_investment_idr: row.max_investment_idr,
     total_investment_idr: row.total_investment_idr,
     full_desc: row.full_desc,
     short_desc: row.short_desc,
-    company_name: rawPayload.company_name || row.brand_name,
+    company_name: row.brand_name,
     phone: row.phone,
     office_address: row.office_address,
     logo_url: row.logo_url,
@@ -211,84 +179,7 @@ function mapD1FranchiseRow(row) {
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
-
   return addOptimizedMediaUrls(item);
-}
-
-function mapD1FranchiseeProfileRow(row) {
-  return {
-    ...parseRawPayload(row.raw_payload),
-    id: row.legacy_row_id || row.id,
-    franchisee_profile_id: row.id,
-    name: row.name,
-    email: row.email,
-    country_code: row.country_code,
-    whatsapp: row.whatsapp,
-    city: row.city_origin,
-    city_origin: row.city_origin,
-    interest_category: row.interest_category,
-    budget_range: row.budget_range,
-    location_plan: row.location_plan,
-    message: row.message,
-    timestamp: row.legacy_timestamp || row.created_at,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-  };
-}
-
-async function getFranchisesFromSheets(env, query) {
-  const tab = query.tab;
-
-  const token = await getGoogleAuthToken(env.G_CLIENT_EMAIL, env.G_PRIVATE_KEY);
-  const spreadsheetId = env.G_SHEET_ID;
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${tab}!A1:Z1000?valueRenderOption=UNFORMATTED_VALUE`;
-
-  const resp = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!resp.ok) {
-    const errJson = await resp.json();
-    throw new Error(`Gagal mengambil data dari Google Sheet: ${errJson.error.message}`);
-  }
-
-  const data = await resp.json();
-  const rows = data.values;
-
-  if (!rows || rows.length < 2) {
-    return {
-      source: "sheets",
-      data: [],
-    };
-  }
-
-  const headers = rows[0];
-  const rawData = rows.slice(1);
-  let franchises = rawData.map((row) => {
-    const item = {};
-    headers.forEach((header, index) => {
-      item[header] = row[index] !== undefined ? row[index] : null;
-    });
-    return addOptimizedMediaUrls(item);
-  });
-
-  if (query.q) {
-    const needle = query.q.toLowerCase();
-    franchises = franchises.filter((item) =>
-      [item.brand_name, item.category, item.full_desc]
-        .map((value) => normalizeText(value).toLowerCase())
-        .some((value) => value.includes(needle))
-    );
-  }
-
-  if (query.category) {
-    franchises = franchises.filter((item) => normalizeText(item.category).toLowerCase() === query.category.toLowerCase());
-  }
-
-  return {
-    source: "sheets",
-    data: filterClaimSearchRows(franchises, query).slice(query.offset, query.offset + query.limit),
-  };
 }
 
 function addOptimizedMediaUrls(item) {
@@ -327,16 +218,6 @@ function filterClaimSearchRows(franchises, query) {
       seen.add(key);
       return true;
     });
-}
-
-function parseRawPayload(rawPayload) {
-  if (!rawPayload) return {};
-  try {
-    const parsed = JSON.parse(rawPayload);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-  } catch {
-    return {};
-  }
 }
 
 const normalizeText = (value) => (value || "").toString().replace(/\s+/g, " ").trim();
@@ -393,51 +274,3 @@ function jsonResponse(body, init = {}) {
 }
 
 // --- HELPER AUTH (Sama persis dengan form-submit.js) ---
-async function getGoogleAuthToken(clientEmail, privateKey) {
-  const header = { alg: "RS256", typ: "JWT" };
-  const now = Math.floor(Date.now() / 1000);
-  const claim = {
-    iss: clientEmail,
-    scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
-    aud: "https://oauth2.googleapis.com/token",
-    exp: now + 3600,
-    iat: now,
-  };
-
-  const encodedHeader = btoa(JSON.stringify(header));
-  const encodedClaim = btoa(JSON.stringify(claim));
-
-  const pemContents = privateKey
-    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
-    .replace(/-----END PRIVATE KEY-----/g, "")
-    .replace(/\s/g, "")
-    .replace(/\\n/g, "");
-
-  const binaryDerString = atob(pemContents);
-  const binaryDer = new Uint8Array(binaryDerString.length);
-  for (let i = 0; i < binaryDerString.length; i++) {
-    binaryDer[i] = binaryDerString.charCodeAt(i);
-  }
-
-  const key = await crypto.subtle.importKey(
-    "pkcs8", binaryDer.buffer, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]
-  );
-
-  const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(encodedHeader + "." + encodedClaim)
-  );
-
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-
-  const jwt = `${encodedHeader}.${encodedClaim}.${encodedSignature}`;
-
-  const tokenResp = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
-  });
-
-  const tokenData = await tokenResp.json();
-  return tokenData.access_token;
-}
