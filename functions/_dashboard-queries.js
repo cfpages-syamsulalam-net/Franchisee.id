@@ -304,6 +304,8 @@ export async function getPendingClaims(db) {
         fc.status,
         fc.evidence_text,
         fc.created_at,
+        fp.company_name, fp.pic_name, fp.nib_number, fp.haki_status, fp.haki_number,
+        fp.email_contact, fp.whatsapp, fp.website_url,
         f.brand_name,
         p.slug,
         u.primary_email AS claimant_email,
@@ -312,6 +314,7 @@ export async function getPendingClaims(db) {
       JOIN franchises f ON f.id = fc.franchise_id
       LEFT JOIN franchise_site_publications p ON p.franchise_id = f.id AND p.site_id = ?
       LEFT JOIN users u ON u.id = fc.claimant_user_id
+      LEFT JOIN franchisor_profiles fp ON fp.id = fc.franchisor_profile_id
       WHERE fc.source_site_id = ? AND fc.status = 'pending'
       ORDER BY fc.created_at DESC
       LIMIT 25`,

@@ -21,13 +21,20 @@ import {
 } from "./_form-submit-utils.js";
 
 export async function handleFranchisorSubmit(db, data, isClaim, actor) {
-  const duplicate = await hasDuplicateFranchisor(db, data.email_contact, data.whatsapp);
-  if (duplicate) return duplicateResponse();
+  if (!isClaim) {
+    const duplicate = await hasDuplicateFranchisor(db, data.email_contact, data.whatsapp);
+    if (duplicate) return duplicateResponse();
+  }
 
   const publicId = shortPublicId();
   const profileId = `franchisor_profile_${randomId()}`;
   const payload = cleanPayload(data);
   const claimSource = isClaim ? await findClaimSource(db, data) : null;
+  if (isClaim && !claimSource) return jsonResponse({ success: false, error: "CLAIM_NOT_AVAILABLE", message: "Brand tidak tersedia untuk diklaim. Periksa nama dan pilih lagi listing yang belum diklaim." }, { status: 409 });
+  if (isClaim) {
+    const pending = await db.prepare("SELECT id FROM franchise_claims WHERE franchise_id = ? AND status = 'pending' LIMIT 1").bind(claimSource.id).first();
+    if (pending) return jsonResponse({ success: false, error: "CLAIM_PENDING", message: "Klaim brand ini sedang ditinjau admin." }, { status: 409 });
+  }
   const franchiseId = claimSource?.id || `franchise_${randomId()}`;
   const slug = claimSource?.slug || (await uniqueSlug(db, data.brand_name, publicId));
   const investment = moneyOrNull(data.total_investment_value) || moneyOrNull(data.min_capital) || moneyOrNull(data.pkg_price_1);
@@ -67,103 +74,69 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
       ),
   ];
 
-  if (claimSource) {
+  if (isClaim) {
+    const claimId = `claim_${randomId()}`;
     statements.push(
-      db
-        .prepare(
-        `UPDATE franchises
-          SET owner_user_id = ?,
-              franchisor_profile_id = ?,
-              source_site_id = ?,
-              brand_name = ?,
-              category = ?,
-              status = 'free',
-              verification_tier = 'free',
-              source_type = 'claim',
-              source_sheet = 'FRANCHISOR',
-              legacy_row_id = ?,
-              legacy_timestamp = ?,
-              year_established = ?,
-              city_origin = ?,
-              brand_country = ?,
-              outlet_type = ?,
-              target_market = ?,
-              location_requirement = ?,
-              min_area_sqm = ?,
-              min_staff_count = ?,
-              setup_duration_days = ?,
-              rent_cost_text = ?,
-              fee_license_idr = ?,
-              fee_capex_idr = ?,
-              fee_construction_idr = ?,
-              working_capital_idr = ?,
-              additional_cost_notes = ?,
-              total_investment_idr = ?,
-              min_investment_idr = ?,
-              estimated_bep_months = ?,
-              estimated_bep_min_months = ?,
-              estimated_bep_max_months = ?,
-              omzet_monthly_idr = ?,
-              omzet_monthly_min_idr = ?,
-              omzet_monthly_max_idr = ?,
-              net_profit_percent = ?,
-              net_profit_monthly_min_idr = ?,
-              net_profit_monthly_max_idr = ?,
-              royalty_percent = ?,
-              royalty_basis = ?,
-              short_desc = ?,
-              full_desc = ?,
-              support_system = ?,
-              phone = ?,
-              logo_url = ?,
-              cover_url = ?,
-              gallery_urls = ?,
-              video_url = ?,
-              proposal_url = ?,
-              raw_payload = ?,
-              updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?`
-        )
-        .bind(actor.id, ...franchiseBindValues(data, profileId, publicId, now, investment), franchiseId)
+      db.prepare(`INSERT INTO franchise_claims (
+        id, franchise_id, claimant_user_id, franchisor_profile_id, source_site_id,
+        unclaimed_legacy_row_id, status, evidence_text
+      ) SELECT ?, id, ?, ?, ?, ?, 'pending', ? FROM franchises
+        WHERE id = ? AND owner_user_id IS NULL AND status = 'unclaimed' AND source_sheet = 'UNCLAIMED'
+          AND NOT EXISTS (SELECT 1 FROM franchise_claims WHERE franchise_id = ? AND status = 'pending')`)
+        .bind(claimId, actor.id, profileId, SITE_FRANCHISEE_ID, textOrNull(data.unclaimed_id),
+          `Pernyataan pengaju (belum diverifikasi): ${normalizeText(data.brand_name)}; perusahaan: ${normalizeText(data.company_name) || '-'}; PIC: ${normalizeText(data.pic_name) || '-'}; NIB: ${normalizeText(data.nib_number) || '-'}; HAKI: ${normalizeText(data.haki_number) || '-'}; kontak: ${lowerOrNull(data.email_contact) || '-'} / ${normalizeWhatsapp(data.whatsapp) || '-'}`,
+          franchiseId, franchiseId),
     );
-  } else {
-    statements.push(
-      db
-        .prepare(
-          `INSERT INTO franchises (
-            id, owner_user_id, franchisor_profile_id, source_site_id, brand_name, slug, category,
-            status, verification_tier, source_type, source_sheet, legacy_row_id,
-            legacy_timestamp, year_established, city_origin, brand_country, outlet_type,
-            target_market, location_requirement, min_area_sqm, min_staff_count, setup_duration_days,
-            rent_cost_text, fee_license_idr, fee_capex_idr, fee_construction_idr,
-            working_capital_idr, additional_cost_notes, total_investment_idr, min_investment_idr,
-            estimated_bep_months, estimated_bep_min_months, estimated_bep_max_months,
-            omzet_monthly_idr, omzet_monthly_min_idr, omzet_monthly_max_idr,
-            net_profit_percent, net_profit_monthly_min_idr, net_profit_monthly_max_idr,
-            royalty_percent, royalty_basis,
-            short_desc, full_desc, support_system, phone, logo_url, cover_url,
-            gallery_urls, video_url, proposal_url, raw_payload
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, 'free', 'free', 'franchisor_form', 'FRANCHISOR', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .bind(franchiseId, actor.id, profileId, "site_franchisee_id", normalizeText(data.brand_name), slug, textOrNull(data.category), ...franchiseBindValues(data, profileId, publicId, now, investment).slice(4))
-    );
-
-    statements.push(
-      db
-        .prepare(
-          `INSERT INTO franchise_site_publications (
-            id, franchise_id, site_id, slug, canonical_url, publication_status, is_primary, first_published_at, last_synced_at
-          ) VALUES (?, ?, ?, ?, ?, 'published', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-        )
-        .bind(
-          `publication_${randomId()}`,
-          franchiseId,
-          "site_franchisee_id",
-          slug,
-          `https://franchisee.id/peluang-usaha/${slug}`
-        )
-    );
+    let result;
+    try {
+      result = await db.batch(statements);
+    } catch (error) {
+      if (/claim_(already_pending|target_not_unclaimed)/.test(String(error)))
+        return jsonResponse({ success: false, error: "CLAIM_NOT_AVAILABLE", message: "Brand sudah diklaim atau sedang ditinjau. Muat ulang dan pilih lagi." }, { status: 409 });
+      throw error;
+    }
+    if (result[1]?.meta?.changes !== 1) {
+      return jsonResponse({ success: false, error: "CLAIM_NOT_AVAILABLE", message: "Brand sudah diklaim atau sedang ditinjau. Muat ulang dan pilih lagi." }, { status: 409 });
+    }
+    return jsonResponse({ success: true, status: "pending", claim_id: claimId, franchise_id: franchiseId });
   }
+
+  statements.push(
+    db
+      .prepare(
+        `INSERT INTO franchises (
+          id, owner_user_id, franchisor_profile_id, source_site_id, brand_name, slug, category,
+          status, verification_tier, source_type, source_sheet, legacy_row_id,
+          legacy_timestamp, year_established, city_origin, brand_country, outlet_type,
+          target_market, location_requirement, min_area_sqm, min_staff_count, setup_duration_days,
+          rent_cost_text, fee_license_idr, fee_capex_idr, fee_construction_idr,
+          working_capital_idr, additional_cost_notes, total_investment_idr, min_investment_idr,
+          estimated_bep_months, estimated_bep_min_months, estimated_bep_max_months,
+          omzet_monthly_idr, omzet_monthly_min_idr, omzet_monthly_max_idr,
+          net_profit_percent, net_profit_monthly_min_idr, net_profit_monthly_max_idr,
+          royalty_percent, royalty_basis,
+          short_desc, full_desc, support_system, phone, logo_url, cover_url,
+          gallery_urls, video_url, proposal_url, raw_payload
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'free', 'free', 'franchisor_form', 'FRANCHISOR', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(franchiseId, actor.id, profileId, "site_franchisee_id", normalizeText(data.brand_name), slug, textOrNull(data.category), ...franchiseBindValues(data, profileId, publicId, now, investment).slice(4))
+  );
+
+  statements.push(
+    db
+      .prepare(
+        `INSERT INTO franchise_site_publications (
+          id, franchise_id, site_id, slug, canonical_url, publication_status, is_primary, first_published_at, last_synced_at
+        ) VALUES (?, ?, ?, ?, ?, 'published', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+      )
+      .bind(
+        `publication_${randomId()}`,
+        franchiseId,
+        "site_franchisee_id",
+        slug,
+        `https://franchisee.id/peluang-usaha/${slug}`
+      )
+  );
 
   const packagePrice = moneyOrNull(data.pkg_price_1) || investment;
   if (packagePrice) {
@@ -186,18 +159,6 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
     );
   }
 
-  if (isClaim) {
-    statements.push(
-      db
-        .prepare(
-          `INSERT INTO franchise_claims (
-            id, franchise_id, claimant_user_id, franchisor_profile_id, source_site_id, unclaimed_legacy_row_id,
-            status, evidence_text, reviewed_at
-          ) VALUES (?, ?, ?, ?, ?, ?, 'approved', ?, CURRENT_TIMESTAMP)`
-        )
-        .bind(`claim_${randomId()}`, franchiseId, actor.id, profileId, "site_franchisee_id", textOrNull(data.unclaimed_id), `Claim submitted from /daftar for ${normalizeText(data.brand_name)}`)
-    );
-  }
 
   statements.push(
     legacySourceStatement(db, "FRANCHISOR", publicId, data.brand_name, "franchises", franchiseId, payload),

@@ -255,7 +255,7 @@ export async function handleReviewClaim(db, auth, data) {
   assertAdmin(auth);
   const claim = await db
     .prepare(
-      `SELECT fc.*, f.brand_name, f.status AS franchise_status, f.verification_tier
+      `SELECT fc.*, f.brand_name, f.status AS franchise_status, f.verification_tier, f.owner_user_id, f.source_sheet
        FROM franchise_claims fc
        JOIN franchises f ON f.id = fc.franchise_id
        WHERE fc.id = ? AND fc.source_site_id = ?
@@ -270,6 +270,10 @@ export async function handleReviewClaim(db, auth, data) {
   }
 
   const approved = data.decision === "approve";
+  if (approved && (!data.notes?.trim() || !claim.claimant_user_id || !claim.franchisor_profile_id))
+    return jsonResponse({ success: false, error: "CLAIM_EVIDENCE_REQUIRED", message: "Catat bukti verifikasi independen sebelum menyetujui klaim." }, { status: 400 });
+  if (approved && (claim.owner_user_id || claim.franchise_status !== "unclaimed" || claim.source_sheet !== "UNCLAIMED"))
+    return jsonResponse({ success: false, error: "CLAIM_OWNER_CONFLICT", message: "Listing tidak lagi tersedia untuk diklaim. Periksa pemilik dan statusnya." }, { status: 409 });
   const status = approved ? "approved" : "rejected";
   const statements = [
     db
@@ -297,9 +301,10 @@ export async function handleReviewClaim(db, auth, data) {
                verification_tier = CASE WHEN verification_tier = 'unclaimed' THEN 'free' ELSE verification_tier END,
                source_sheet = 'FRANCHISOR',
                updated_at = CURRENT_TIMESTAMP
-           WHERE id = ?`
+           WHERE id = ? AND owner_user_id IS NULL AND status = 'unclaimed' AND source_sheet = 'UNCLAIMED'
+              AND EXISTS (SELECT 1 FROM franchise_claims WHERE id = ? AND status = 'approved' AND claimant_user_id = ?)`
         )
-        .bind(claim.claimant_user_id, claim.franchisor_profile_id, claim.franchise_id),
+        .bind(claim.claimant_user_id, claim.franchisor_profile_id, claim.franchise_id, data.claim_id, claim.claimant_user_id),
       auditStatement(db, "dashboard.claim.apply_owner", "franchise", claim.franchise_id, {
         claim_id: data.claim_id,
         claimant_user_id: claim.claimant_user_id,
@@ -317,7 +322,15 @@ export async function handleReviewClaim(db, auth, data) {
     );
   }
 
-  await db.batch(statements);
+  try {
+    const result = await db.batch(statements);
+    if (result[0]?.meta?.changes !== 1 || (approved && result[2]?.meta?.changes !== 1))
+      return jsonResponse({ success: false, error: "CLAIM_OWNER_CONFLICT", message: "Klaim atau pemilik berubah saat ditinjau. Muat ulang dashboard." }, { status: 409 });
+  } catch (error) {
+    if (/claim_(target_not_unclaimed|already_pending|already_reviewed)/.test(String(error)))
+      return jsonResponse({ success: false, error: "CLAIM_OWNER_CONFLICT", message: "Listing tidak lagi tersedia untuk diklaim. Muat ulang dashboard." }, { status: 409 });
+    throw error;
+  }
   return jsonResponse({ success: true, status });
 }
 

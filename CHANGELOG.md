@@ -1,3 +1,10 @@
+## 2026-09-24 brand claim protection and adversarial journeys
+
+- Updated `docs/product/USER_JOURNEYS.md`, `docs/product/NEXT_STEPS.md`, `docs/forms/CLAIM_TRANSITION_MATRIX.md`, `FORM_SCHEMA.md` with fraud scenarios, pending claim rules and independent owner verification.
+- `functions/_form-submit-utils.js` and `functions/_form-submit-franchisor.js` require an exact ownerless unclaimed listing and store a pending claim plus private profile without changing the listing, owner or public rebuild queue.
+- `functions/_dashboard-actions.js` requires admin verification notes and applies ownership only while still unclaimed; `functions/_dashboard-queries.js` and `js/dashboard-review.js` present self-reported applicant information with a warning. `js/form-06-submit-validation.js` explains pending status.
+- `migrations/0035_guard_franchise_claims.sql` adds D1 concurrency guards (applied to active remote D1); `scripts/check-claim-workflow.ts` exercises submission and review branches. Updated `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md` (new-brand ownership risk) and `.context/session-20260924-claim-guard.md`.
+
 ## 2026-09-24 user journey documentation
 ### Added
 - `docs/product/USER_JOURNEYS.md`: current public buyer, registered franchisee, new/claiming franchisor, staff and admin routes with confidence and handoff boundaries.

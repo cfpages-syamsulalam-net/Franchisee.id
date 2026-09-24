@@ -1434,3 +1434,11 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 ## 4. Logic Safety Audit
 - **Status**: Verified.
 - **Lost logic recovered**: BEP calculations, multi-step progress, and media URL preview behavior (refactored into modular `form-0x-*.js` files and `form-utils.js`).
+
+## Brand claim review boundary (2026-09-24)
+- `functions/_form-submit-utils.js`: claim lookup requires exact unclaimed legacy ID and brand name plus no owner.
+- `functions/_form-submit-franchisor.js`: pending claim stores applicant profile and self-reported fields privately; existing franchise and static queue remain untouched.
+- `functions/_dashboard-queries.js`, `js/dashboard-review.js`, `functions/_dashboard-actions.js`: admin sees claimant contact/NIB/HAKI as unverified assertions, records independent verification before one-time approval; rejection keeps listing unchanged.
+- `js/form-06-submit-validation.js`: tells claimant ownership is still pending.
+- `migrations/0035_guard_franchise_claims.sql`: D1 triggers reject duplicate pending claims and stale or repeated review. Applied to active remote D1 on 2026-09-24 with `wrangler d1 execute --remote --file`, because Wrangler migration history still lists previously applied `0034` as pending; migration SQL remains idempotent in repository.
+- `scripts/check-claim-workflow.ts`: focused regression for missing listing, pending/duplicate, required review note, rejection, conflict, approval and rebuild.

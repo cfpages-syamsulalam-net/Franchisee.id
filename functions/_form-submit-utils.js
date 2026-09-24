@@ -82,22 +82,10 @@ export async function hasDuplicateFranchisor(db, email, whatsapp) {
 }
 
 export async function findClaimSource(db, data) {
-  if (data.unclaimed_id) {
-    const byId = await db
-      .prepare("SELECT id, slug FROM franchises WHERE source_sheet = 'UNCLAIMED' AND legacy_row_id = ? LIMIT 1")
-      .bind(data.unclaimed_id)
-      .first();
-    if (byId) return byId;
-  }
-
-  if (data.brand_name) {
-    return await db
-      .prepare("SELECT id, slug FROM franchises WHERE source_sheet = 'UNCLAIMED' AND LOWER(brand_name) = LOWER(?) LIMIT 1")
-      .bind(normalizeText(data.brand_name))
-      .first();
-  }
-
-  return null;
+  if (!data.unclaimed_id) return null;
+  return db.prepare(
+    "SELECT id, slug FROM franchises WHERE source_sheet = 'UNCLAIMED' AND status = 'unclaimed' AND owner_user_id IS NULL AND legacy_row_id = ? AND LOWER(brand_name) = LOWER(?) LIMIT 1"
+  ).bind(data.unclaimed_id, normalizeText(data.brand_name)).first();
 }
 
 export async function uniqueSlug(db, brandName, fallbackId) {

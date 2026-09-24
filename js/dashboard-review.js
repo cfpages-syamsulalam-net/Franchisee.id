@@ -141,7 +141,16 @@
             })
           ], "Review claim")
           : '<span>Login admin dibutuhkan untuk approve/reject.</span>';
-        return '<li><strong>' + utils.escapeHtml(row.brand_name) + '</strong><span>' + utils.escapeHtml(row.claimant_email || row.claimant_name || "Tanpa claimant") + ' - ' + utils.escapeHtml(row.created_at) + '</span>' + actions + '</li>';
+        var fields = [
+          ['Pengaju', row.claimant_email || row.claimant_name], ['Perusahaan', row.company_name],
+          ['PIC', row.pic_name], ['Email kontak', row.email_contact], ['WhatsApp', row.whatsapp],
+          ['NIB (pengakuan)', row.nib_number], ['HAKI (pengakuan)', row.haki_number],
+          ['Situs (pengakuan)', row.website_url]
+        ].filter(function (item) { return item[1]; }).map(function (item) {
+          return '<span>' + utils.escapeHtml(item[0]) + ': ' + utils.escapeHtml(item[1]) + '</span>';
+        }).join('');
+        return '<li><strong>' + utils.escapeHtml(row.brand_name) + '</strong>' + fields +
+          '<span>Diajukan ' + utils.escapeHtml(row.created_at) + '. Semua keterangan pengaju belum diverifikasi. Periksa kepemilikan melalui sumber independen sebelum menyetujui.</span>' + actions + '</li>';
       }).join("");
 
       options.claimRows.querySelectorAll("[data-review-claim]").forEach(function (button) {
@@ -664,11 +673,19 @@
     async function reviewClaim(button) {
       try {
         button.disabled = true;
+        var decision = button.getAttribute("data-decision");
+        var notes = window.prompt(decision === "approve"
+          ? "Tuliskan sumber dan hasil verifikasi kepemilikan yang Anda periksa secara independen."
+          : "Alasan penolakan klaim (opsional):", "");
+        if (notes === null || (decision === "approve" && !notes.trim())) {
+          button.disabled = false;
+          return;
+        }
         await options.postDashboardAction({
           action: "review_claim",
           claim_id: button.getAttribute("data-claim-id"),
-          decision: button.getAttribute("data-decision"),
-          notes: ""
+          decision: decision,
+          notes: notes.trim()
         });
         await options.reloadDashboard();
       } catch (error) {

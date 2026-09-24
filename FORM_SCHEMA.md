@@ -116,3 +116,6 @@ Note: these `*_url` field names remain compatibility fields for `/daftar` and D1
 - **Session TTL**: Persisted claim context automatically expires after 24 hours to prevent stale brand-claim state from resurfacing in later sessions.
 - **Draft Persistence**: Partially filled Franchisor fields are persisted in `localStorage` key `franchisor_form_draft` (72-hour TTL) and restored after refresh. **Note**: When claim mode is active, the auto-save includes the pre-filled brand data plus any additional user input.
 - **Important Behavior**: `Lanjut/Kembali` only navigate frontend steps; backend write occurs only on final submit. Current backend writes to D1 through `/form-submit`; Google Sheets is archive/import-only.
+
+## Existing-brand claim processing (2026-09-24)
+A claim requires the selected `unclaimed_id` and matching brand name; current form fields are preserved. Required fields make an application complete, not verified. `/form-submit` stores claimant answers in a private franchisor profile and creates a pending claim, without granting listing access. Admin review checks independent ownership evidence and records its basis before approval. The claim form reports a pending state; NIB and HAKI numbers are self-reported until checked.
