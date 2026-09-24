@@ -17,6 +17,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `docs/architecture/OCR_BATCH_SCHEDULING.md`: scheduler/cron provider ranking and recommended persisted-batch design for draining up to 100 OCR jobs with delay/rate limiting.
 - `docs/architecture/OCR_LISTING_ENRICHMENT_PLAN.md`: OCR result sampling, AI extraction/review plan, supplemental insight data model, and dynamic public listing tab recommendations.
 - `docs/architecture/DASHBOARD_INTEGRATION_GUIDE.md`: focused step-by-step third-party setup reference for `/dashboard` warnings and in-app integration guide anchors.
+- `docs/architecture/NEW_BRAND_REVIEW.md`: private new-brand applications, independent admin verification, D1 guards and acceptance criteria.
 - `docs/architecture/STATE_TRANSITION_AUDIT.md`: cross-system audit tracker for auth, OAuth, dashboard actions, OCR, Premium, outreach, claims, publishing, and migration state transitions.
 - `docs/architecture/R2_D1_MIGRATION_RUNBOOK.md`: replayable checklist for one-time moves of large D1 payloads into R2 with verification and cleanup.
 - `docs/data/FRANCHISE_FIELD_DICTIONARY.md`: canonical labels, aliases, proof rules, and no-infer notes for ambiguous franchise listing fields.

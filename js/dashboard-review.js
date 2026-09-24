@@ -40,6 +40,7 @@
       data = data || {};
       renderRoleCopy();
       renderQuality(data.data_quality || []);
+      renderBrandSubmissions(data.pending_brand_submissions || []);
       renderClaims(data.pending_claims || []);
       renderListingOptions(data.editable_listings || []);
       ensureEditFieldRows();
@@ -107,6 +108,39 @@
         button.addEventListener("click", function () {
           seedEditSuggestion(button);
         });
+      });
+    }
+
+    function renderBrandSubmissions(rows) {
+      if (!options.brandSubmissionRows) return;
+      if (!rows.length) {
+        options.brandSubmissionRows.innerHTML = '<li><strong>Tidak ada pendaftaran menunggu review</strong></li>';
+        return;
+      }
+      options.brandSubmissionRows.innerHTML = rows.map(function (row) {
+        var actions = isAdmin() && row.status === "pending" ? utils.renderActionToolbar([
+          utils.renderActionButton({ label: "Setujui brand", icon: "fas fa-check", tone: "success", attrs: {
+            "data-review-brand": "", "data-review-id": row.id, "data-decision": "approve"
+          } }),
+          utils.renderActionButton({ label: "Tolak brand", icon: "fas fa-times", tone: "danger", attrs: {
+            "data-review-brand": "", "data-review-id": row.id, "data-decision": "reject"
+          } })
+        ], "Review brand baru") : row.status === "rejected" ? '<span>Pengajuan telah ditolak. Pemohon dapat mendaftar ulang.</span>' : '<span>Keputusan hanya untuk admin.</span>';
+        var fields = [
+          ["Pengaju", row.applicant_email || row.applicant_name], ["Perusahaan", row.company_name],
+          ["PIC", row.pic_name], ["Email", row.email_contact], ["WhatsApp", row.whatsapp],
+          ["NIB (pengakuan)", row.nib_number], ["HAKI (pengakuan)", row.haki_number],
+          ["Situs (pengakuan)", row.website_url]
+        ].filter(function (entry) { return entry[1]; }).map(function (entry) {
+          return '<span>' + utils.escapeHtml(entry[0]) + ': ' + utils.escapeHtml(entry[1]) + '</span>';
+        }).join('');
+        var state = row.status === "rejected" ? "Ditolak; pemohon dapat mengajukan ulang." : "Menunggu verifikasi kepemilikan.";
+        var notes = row.status === "rejected" && row.review_notes ? '<span>Catatan: ' + utils.escapeHtml(row.review_notes) + '</span>' : '';
+        return '<li><strong>' + utils.escapeHtml(row.brand_name) + '</strong>' + fields +
+          '<span>' + state + ' Diajukan ' + utils.escapeHtml(row.created_at) + '.</span>' + notes + actions + '</li>';
+      }).join("");
+      options.brandSubmissionRows.querySelectorAll("[data-review-brand]").forEach(function (button) {
+        button.addEventListener("click", function () { reviewBrandSubmission(button); });
       });
     }
 
@@ -668,6 +702,25 @@
       var selected = boxes.filter(function (box) { return box.checked; }).map(function (box) { return box.value; });
       if (!selected.length) throw new Error("Pilih minimal satu field untuk disetujui.");
       return selected;
+    }
+
+    async function reviewBrandSubmission(button) {
+      try {
+        button.disabled = true;
+        var decision = button.getAttribute("data-decision");
+        var notes = window.prompt(decision === "approve"
+          ? "Catat sumber independen dan hasil verifikasi kepemilikan brand."
+          : "Catat alasan penolakan; data pengaju tetap tersimpan untuk ditinjau ulang.", "");
+        if (notes === null || !notes.trim()) { button.disabled = false; return; }
+        await options.postDashboardAction({
+          action: "review_brand_submission", review_id: button.getAttribute("data-review-id"),
+          decision: decision, notes: notes.trim()
+        });
+        await options.reloadDashboard();
+      } catch (error) {
+        button.disabled = false;
+        options.setStatus(error.message, true);
+      }
     }
 
     async function reviewClaim(button) {

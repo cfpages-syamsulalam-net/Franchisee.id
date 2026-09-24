@@ -45,7 +45,10 @@ function database() {
       }
       if (sql.some(x => x.includes('INSERT INTO franchises'))) {
         assert(sql.some(x => x.includes('franchise_site_publications')), 'new brand still creates its publication');
-        assert(sql.some(x => x.includes('site_rebuild_requests')), 'new brand still queues publication');
+        assert(sql.some(x => x.includes('INSERT INTO franchise_submission_reviews')), 'new brand queues private review');
+        assert(!sql.some(x => x.includes('site_rebuild_requests')), 'pending brand must not queue publication');
+        assert(sql.some(x => x.includes("'pending_review'")), 'new brand is pending');
+        assert(sql.some(x => x.includes("'draft'")), 'publication is draft');
         return statements.map(() => ({ meta: { changes: 1 } }));
       }
       const approval = sql.some(x => x.includes('UPDATE franchises'));
@@ -68,7 +71,7 @@ async function main() {
   state.brandExists = true;
   assert.equal((await response(handleFranchisorSubmit(db as never, { ...data, form_type: 'FRANCHISOR' }, false, actor as never))).body.error, 'BRAND_ALREADY_LISTED');
   state.brandExists = false;
-  assert.equal((await response(handleFranchisorSubmit(db as never, { ...data, form_type: 'FRANCHISOR' }, false, actor as never))).body.success, true);
+  assert.equal((await response(handleFranchisorSubmit(db as never, { ...data, form_type: 'FRANCHISOR' }, false, actor as never))).body.status, 'pending');
   assert.equal((await response(handleFranchisorSubmit(db as never, { ...data, unclaimed_id: 'wrong' }, true, actor as never))).code, 409);
   assert.equal(state.claimStatus, null);
   const submitted = await response(handleFranchisorSubmit(db as never, { ...data, unclaimed_id: 'listing-1' }, true, actor as never));

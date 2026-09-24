@@ -175,6 +175,8 @@
             const location = [match.category, match.city_origin].filter(Boolean).join(' · ');
             const state = match.state === 'unclaimed'
                 ? (match.claim_pending ? 'Klaim sedang ditinjau admin' : 'Belum dikelola')
+                : match.state === 'pending_review'
+                ? 'Pendaftaran brand belum diterbitkan'
                 : match.state === 'managed'
                     ? (match.ownership_confirmed ? 'Pengelola dikonfirmasi admin' : 'Dikelola; kepemilikan belum diverifikasi')
                     : 'Sudah tercantum';

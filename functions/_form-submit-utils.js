@@ -97,6 +97,9 @@ export async function findExistingBrands(db, brandName) {
       AND p.site_id = ? AND p.publication_status = 'published'
     LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
     WHERE LOWER(TRIM(f.brand_name)) = LOWER(?)
+      AND NOT (f.status = 'archived' AND EXISTS (
+        SELECT 1 FROM franchise_submission_reviews r WHERE r.franchise_id = f.id AND r.status = 'rejected'
+      ))
     ORDER BY CASE WHEN f.owner_user_id IS NOT NULL THEN 0 ELSE 1 END, f.created_at DESC
     LIMIT 8
   `).bind(SITE_FRANCHISEE_ID, normalizeText(brandName)).all();
@@ -113,7 +116,7 @@ export async function findExistingBrands(db, brandName) {
       brand_name: row.brand_name,
       category: publicUrl ? row.category || null : null,
       city_origin: publicUrl ? row.city_origin || null : null,
-      state: unclaimed ? 'unclaimed' : managed ? 'managed' : 'listed',
+      state: row.status === 'pending_review' ? 'pending_review' : unclaimed ? 'unclaimed' : managed ? 'managed' : 'listed',
       claim_pending: unclaimed && Boolean(row.claim_pending),
       claim_id: claimable ? row.id : null,
       public_url: publicUrl,

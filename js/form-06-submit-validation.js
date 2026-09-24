@@ -140,13 +140,13 @@
             if (result.success) {
                 if (btn) btn.innerHTML = '<i class="fas fa-check"></i> Berhasil!';
                 const nextTarget = FF.formSuccessNextUrl();
-                FF.setSubmitFeedback(feedback, result.status === 'pending' ? 'Klaim diterima untuk ditinjau admin. Listing tetap belum diklaim sampai kepemilikan diverifikasi.' : 'Data tersimpan. Anda bisa lanjut dari Profil atau kembali ke halaman sebelumnya.', 'success', {
+                FF.setSubmitFeedback(feedback, result.status === 'pending' ? (data.form_type === 'claim' ? 'Klaim diterima untuk ditinjau admin. Listing tetap belum diklaim sampai kepemilikan diverifikasi.' : 'Pendaftaran brand tersimpan dan menunggu verifikasi admin. Kontak serta listing belum ditampilkan publik.') : 'Data tersimpan. Anda bisa lanjut dari Profil atau kembali ke halaman sebelumnya.', 'success', {
                     actionLabel: nextTarget === '/profil/' ? 'Buka Profil' : 'Kembali ke peluang',
                     actionUrl: nextTarget
                 });
                 Swal.fire({
                     title: 'Berhasil!',
-                    text: result.status === 'pending' ? 'Klaim Anda menunggu verifikasi admin. Listing belum menjadi milik Anda.' : 'Data Anda sudah tersimpan. Lanjutkan dari Profil atau kembali ke halaman sebelumnya.',
+                    text: result.status === 'pending' ? (data.form_type === 'claim' ? 'Klaim Anda menunggu verifikasi admin. Listing belum menjadi milik Anda.' : 'Brand Anda menunggu verifikasi admin sebelum listing diterbitkan.') : 'Data Anda sudah tersimpan. Lanjutkan dari Profil atau kembali ke halaman sebelumnya.',
                     icon: 'success',
                     confirmButtonText: nextTarget === '/profil/' ? 'Buka Profil' : 'Kembali ke peluang'
                 }).then(() => {

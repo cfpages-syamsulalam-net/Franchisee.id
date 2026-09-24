@@ -296,6 +296,24 @@ export async function getPremiumOperations(db) {
   };
 }
 
+export async function getPendingBrandSubmissions(db) {
+  const result = await db.prepare(`
+    SELECT r.id, r.franchise_id, r.status, r.created_at, r.review_notes,
+      f.brand_name, f.slug, fp.company_name, fp.pic_name, fp.nib_number,
+      fp.haki_status, fp.haki_number, fp.email_contact, fp.whatsapp, fp.website_url,
+      u.primary_email AS applicant_email, u.display_name AS applicant_name
+    FROM franchise_submission_reviews r
+    JOIN franchises f ON f.id = r.franchise_id
+    LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
+    LEFT JOIN users u ON u.id = r.applicant_user_id
+    WHERE f.source_site_id = ? AND ((r.status = 'pending' AND f.status = 'pending_review') OR (r.status = 'rejected' AND f.status = 'archived'))
+      AND r.status IN ('pending', 'rejected')
+    ORDER BY CASE r.status WHEN 'pending' THEN 0 ELSE 1 END, r.created_at DESC
+    LIMIT 50
+  `).bind(SITE_ID).all();
+  return result.results || [];
+}
+
 export async function getPendingClaims(db) {
   const result = await db
     .prepare(

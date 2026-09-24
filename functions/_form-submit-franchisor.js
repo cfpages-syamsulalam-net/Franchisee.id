@@ -1,4 +1,4 @@
-import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
+import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
 import {
   auditStatement,
   cleanPayload,
@@ -28,10 +28,10 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
       const first = existingBrands[0];
       return jsonResponse({
         success: false, error: "BRAND_ALREADY_LISTED",
-        message: "Brand ini sudah tercantum. Pilih klaim jika belum dikelola, atau lihat listing yang ada.",
+        message: first.state === "pending_review" ? "Pendaftaran brand ini sedang diperiksa. Hubungi admin jika Anda berwenang mengelolanya." : "Brand ini sudah tercantum. Pilih klaim jika belum dikelola, atau lihat listing yang ada.",
         matches: existingBrands,
-        action_url: first.claim_id ? `/daftar/?claim_id=${encodeURIComponent(first.claim_id)}` : first.public_url || '/peluang-usaha/',
-        action_label: first.claim_id ? 'Klaim listing' : 'Lihat listing',
+        action_url: first.claim_id ? `/daftar/?claim_id=${encodeURIComponent(first.claim_id)}` : first.public_url || null,
+        action_label: first.claim_id ? 'Klaim listing' : first.public_url ? 'Lihat listing' : null,
       }, { status: 409 });
     }
     const duplicate = await hasDuplicateFranchisor(db, data.email_contact, data.whatsapp);
@@ -129,9 +129,9 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
           royalty_percent, royalty_basis,
           short_desc, full_desc, support_system, phone, logo_url, cover_url,
           gallery_urls, video_url, proposal_url, raw_payload
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'free', 'free', 'franchisor_form', 'FRANCHISOR', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending_review', 'free', 'franchisor_form', 'FRANCHISOR', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .bind(franchiseId, actor.id, profileId, "site_franchisee_id", normalizeText(data.brand_name), slug, textOrNull(data.category), ...franchiseBindValues(data, profileId, publicId, now, investment).slice(4))
+      .bind(franchiseId, null, profileId, "site_franchisee_id", normalizeText(data.brand_name), slug, textOrNull(data.category), ...franchiseBindValues(data, profileId, publicId, now, investment).slice(4))
   );
 
   statements.push(
@@ -139,7 +139,7 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
       .prepare(
         `INSERT INTO franchise_site_publications (
           id, franchise_id, site_id, slug, canonical_url, publication_status, is_primary, first_published_at, last_synced_at
-        ) VALUES (?, ?, ?, ?, ?, 'published', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+        ) VALUES (?, ?, ?, ?, ?, 'draft', 1, NULL, NULL)`
       )
       .bind(
         `publication_${randomId()}`,
@@ -148,6 +148,11 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
         slug,
         `https://franchisee.id/peluang-usaha/${slug}`
       )
+  );
+
+  statements.push(
+    db.prepare(`INSERT INTO franchise_submission_reviews (id, franchise_id, applicant_user_id)
+      VALUES (?, ?, ?)`).bind(`submission_${randomId()}`, franchiseId, actor.id)
   );
 
   const packagePrice = moneyOrNull(data.pkg_price_1) || investment;
@@ -179,27 +184,23 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
       profile_id: profileId,
     }, actor.id)
   );
-  statements.push(
-    ...siteRebuildStatements(db, {
-      siteId: SITE_FRANCHISEE_ID,
-      franchiseId,
-      reason: isClaim ? "franchise_claim_published" : "franchise_listing_submitted",
-      entityType: "franchises",
-      entityId: franchiseId,
-      actorUserId: actor.id,
-      source: "form-submit",
-      metadata: {
-        slug,
-        brand_name: normalizeText(data.brand_name),
-        claim: isClaim,
-      },
-    })
-  );
-
-  await db.batch(statements);
+  try {
+    await db.batch(statements);
+  } catch (error) {
+    if (!isClaim && /idx_pending_new_brand_name/.test(String(error))) {
+      return jsonResponse({
+        success: false,
+        error: "BRAND_ALREADY_LISTED",
+        message: "Pendaftaran brand ini sedang diperiksa. Hubungi admin jika Anda berwenang mengelolanya.",
+        matches: await findExistingBrands(db, data.brand_name),
+      }, { status: 409 });
+    }
+    throw error;
+  }
 
   return jsonResponse({
     success: true,
+    status: "pending",
     id: publicId,
     franchise_id: franchiseId,
     profile_id: profileId,

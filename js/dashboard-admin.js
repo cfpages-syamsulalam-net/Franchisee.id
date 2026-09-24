@@ -77,6 +77,7 @@
     qualityRows: document.querySelector("[data-quality-rows]"),
     refreshQualityButton: document.querySelector("[data-refresh-quality]"),
     claimRows: document.querySelector("[data-claim-rows]"),
+    brandSubmissionRows: document.querySelector("[data-brand-submission-rows]"),
     editRows: document.querySelector("[data-edit-rows]"),
     ocrReviewRows: document.querySelector("[data-ocr-review-rows]"),
     editCount: document.querySelector("[data-edit-count]"),

@@ -251,6 +251,71 @@ export async function handleReviewEditSuggestion(db, auth, data) {
   return jsonResponse({ success: true, status });
 }
 
+export async function handleReviewBrandSubmission(db, auth, data) {
+  assertAdmin(auth);
+  if (!data.notes?.trim()) return jsonResponse({ success: false, error: "BRAND_EVIDENCE_REQUIRED" }, { status: 400 });
+  const review = await db.prepare(`
+    SELECT r.id, r.franchise_id, r.applicant_user_id, r.status,
+      f.brand_name, f.status AS franchise_status, f.owner_user_id,
+      p.id AS publication_id, p.publication_status
+    FROM franchise_submission_reviews r
+    JOIN franchises f ON f.id = r.franchise_id
+    JOIN franchise_site_publications p ON p.franchise_id = f.id AND p.site_id = ?
+    WHERE r.id = ? AND f.source_site_id = ? LIMIT 1
+  `).bind(SITE_ID, data.review_id, SITE_ID).first();
+  if (!review) return jsonResponse({ success: false, error: "BRAND_REVIEW_NOT_FOUND" }, { status: 404 });
+  if (review.status !== "pending") {
+    return jsonResponse({ success: false, error: "BRAND_ALREADY_REVIEWED" }, { status: 409 });
+  }
+  if (review.franchise_status !== "pending_review" || review.owner_user_id || review.publication_status !== "draft") {
+    return jsonResponse({ success: false, error: "BRAND_REVIEW_CONFLICT" }, { status: 409 });
+  }
+  const approved = data.decision === "approve";
+  const status = approved ? "approved" : "rejected";
+  const statements = [
+    db.prepare(`UPDATE franchise_submission_reviews
+      SET status = ?, review_notes = ?, reviewed_by_user_id = ?, reviewed_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND franchise_id = ? AND status IN ('pending', 'rejected')`)
+      .bind(status, data.notes.trim(), auth.id, review.id, review.franchise_id),
+  ];
+  if (approved) {
+    statements.push(
+      db.prepare(`UPDATE franchises SET status = 'free', owner_user_id = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND status = 'pending_review' AND owner_user_id IS NULL`)
+        .bind(review.applicant_user_id, review.franchise_id),
+      db.prepare(`UPDATE franchise_site_publications
+        SET publication_status = 'published', first_published_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND publication_status = 'draft'`).bind(review.publication_id)
+    );
+  }
+  if (!approved) {
+    statements.push(db.prepare(`UPDATE franchises SET status = 'archived', updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND status = 'pending_review' AND owner_user_id IS NULL`).bind(review.franchise_id));
+  }
+  statements.push(auditStatement(db, `dashboard.brand_submission.${status}`, "franchises", review.franchise_id, {
+    brand_name: review.brand_name, review_id: review.id, verification_notes: data.notes.trim(),
+  }, auth.id));
+  if (approved) statements.push(...siteRebuildStatements(db, {
+    siteId: SITE_ID, franchiseId: review.franchise_id, reason: "brand_submission_approved",
+    entityType: "franchises", entityId: review.franchise_id, actorUserId: auth.id,
+    source: "dashboard", metadata: { review_id: review.id, brand_name: review.brand_name },
+  }));
+  try {
+    const results = await db.batch(statements);
+    if (results[0]?.meta?.changes !== 1 || results[1]?.meta?.changes !== 1 || (approved && results[2]?.meta?.changes !== 1)) {
+      return jsonResponse({ success: false, error: "BRAND_REVIEW_CONFLICT" }, { status: 409 });
+    }
+  } catch (error) {
+    if (/new_brand_(already_approved|already_reviewed|invalid_decision|evidence_required|not_pending|review_required)/.test(String(error))) {
+      return jsonResponse({ success: false, error: "BRAND_REVIEW_CONFLICT" }, { status: 409 });
+    }
+    throw error;
+  }
+  return jsonResponse({ success: true, status, franchise_id: review.franchise_id });
+}
+
 export async function handleReviewClaim(db, auth, data) {
   assertAdmin(auth);
   const claim = await db
@@ -343,9 +408,10 @@ export async function handleUpdatePublication(db, auth, data) {
   assertAdmin(auth);
   const publication = await db
     .prepare(
-      `SELECT p.*, f.brand_name
+      `SELECT p.*, f.brand_name, r.status AS brand_review_status
        FROM franchise_site_publications p
        JOIN franchises f ON f.id = p.franchise_id
+       LEFT JOIN franchise_submission_reviews r ON r.franchise_id = f.id
        WHERE p.franchise_id = ? AND p.site_id = ?
        LIMIT 1`
     )
@@ -354,6 +420,9 @@ export async function handleUpdatePublication(db, auth, data) {
 
   if (!publication) return jsonResponse({ success: false, error: "PUBLICATION_NOT_FOUND" }, { status: 404 });
 
+  if (data.publication_status === "published" && publication.brand_review_status && publication.brand_review_status !== "approved") {
+    return jsonResponse({ success: false, error: "BRAND_REVIEW_REQUIRED", message: "Verifikasi kepemilikan brand sebelum menerbitkan listing." }, { status: 409 });
+  }
   const statements = [
     db
       .prepare(

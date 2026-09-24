@@ -64,6 +64,13 @@ const ReviewEditSuggestionSchema = z.object({
   notes: z.string().trim().max(1200).optional().default(""),
 });
 
+const ReviewBrandSubmissionSchema = z.object({
+  action: z.literal("review_brand_submission"),
+  review_id: z.string().trim().min(1),
+  decision: DashboardDecisionSchema,
+  notes: z.string().trim().min(1).max(1200),
+});
+
 const ReviewClaimSchema = z.object({
   action: z.literal("review_claim"),
   claim_id: z.string().trim().min(1),
@@ -150,6 +157,7 @@ export const DashboardActionSchema = z.discriminatedUnion("action", [
   SuggestEditSchema,
   ReviewEditSuggestionSchema,
   ReviewClaimSchema,
+  ReviewBrandSubmissionSchema,
   RefreshQualityChecksSchema,
   UpdatePublicationSchema,
   UpdateListingLocationsSchema,

@@ -7,6 +7,8 @@ const rows = [
   { brand_name: 'Kopi Test', source_sheet: 'FRANCHISOR', status: 'free', owner_user_id: 'account-1', public_slug: 'kopi-test-3', pic_name: 'Approved PIC', public_phone: '0812345678', claim_pending: 0, claim_approved: 1, raw_payload: 'PRIVATE' },
   { brand_name: 'Kopi Test', source_sheet: 'FRANCHISOR', status: 'free', owner_user_id: 'account-2', public_slug: 'kopi-test-4', pic_name: 'Unreviewed PIC', public_phone: '0898765432', claim_pending: 0, claim_approved: 0 },
   { brand_name: 'Kopi Test', source_sheet: 'FRANCHISOR', status: 'free', owner_user_id: 'account-3', public_slug: '../../unsafe', pic_name: 'Unpublished PIC', public_phone: '088888888', claim_pending: 0, claim_approved: 1 },
+  { brand_name: 'Kopi Test', source_sheet: 'FRANCHISOR', status: 'pending_review', id: 'new-application',
+    owner_user_id: null, public_slug: null, pic_name: 'Pending PRIVATE', public_phone: '0888000', claim_pending: 0, claim_approved: 0 },
 ];
 const db = { prepare(sql: string) { assert.match(sql, /LOWER\(TRIM\(f\.brand_name\)\)/); return { bind(site: string, name: string) {
   assert.equal(site, 'site_franchisee_id'); assert.equal(name, 'Kopi Test');
@@ -37,6 +39,11 @@ async function main() {
   assert.equal(body.matches[3].contact_phone, null);
   assert.equal(body.matches[4].public_url, null);
   assert.equal(body.matches[4].contact_person, null);
+  assert.equal(body.matches[5].state, 'pending_review');
+  assert.equal(body.matches[5].claim_id, null);
+  assert.equal(body.matches[5].public_url, null);
+  assert.equal(body.matches[5].contact_person, null);
+  assert.equal(body.matches[5].contact_phone, null);
   const json = JSON.stringify(body);
   assert(!json.includes('account-1') && !json.includes('raw_payload') && !json.includes('PRIVATE'));
   console.log('brand match public projection and claim choices passed');
