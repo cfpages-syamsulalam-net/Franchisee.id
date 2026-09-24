@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2026-07-17 12:24 (Asia/Jakarta)
+Last updated: 2026-09-24 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
@@ -77,6 +77,9 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `TOPICAL_AUTHORITY.md` and `ARTICLE_CATALOG.md`: canonical complete authority plan and validated article inventory. Publication remains a separate, bounded editorial decision.
 
 ## Product Workflow
+- `docs/product/USER_JOURNEYS.md`: persona-by-persona map of guest buyers, registered franchisees, new franchisors, claimants, staff and admins, with route handoffs and confidence labels.
+- `docs/product/NEXT_STEPS.md`: ordered security, journey QA, publishing, Premium and public-trust work with acceptance checks.
+
 - `docs/product/SCOPE_TRIAGE.md`: P0/P1/P2 session triage template for broad requests that mix product, UI, backend, SEO, migration, and docs.
 
 ## Compatibility Pointer Files

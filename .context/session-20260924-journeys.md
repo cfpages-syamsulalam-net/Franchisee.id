@@ -1,0 +1,9 @@
+# Session — 2026-09-24 Franchisee.id persona journeys
+
+User goal: make it clear whom the site serves, what each person can do now, which handoffs still need proof, and what to fix first. Source boundary: local `Franchisee.id` repository at base `1646f3a`, user-reported contact-save success, directory live verification from the preceding task, and selected public pages. No authenticated persona or real payment was exercised during this documentation pass.
+
+Deliverables: `docs/product/USER_JOURNEYS.md` maps six personas and cross-role state transitions; `docs/product/NEXT_STEPS.md` orders immediate decisions and manual acceptance paths; `docs/forms/CLAIM_TRANSITION_MATRIX.md` now warns of the implementation mismatch. Critical finding: `functions/_form-submit-franchisor.js` can attach an unclaimed listing owner and insert an `approved` claim at submission, while the matrix expects `pending` and `functions/_dashboard-actions.js` reviews pending claims. This is a code-level risk that requires controlled repair; production exploitability was not tested. Homepage static `500+` versus directory snapshot 197 needs scope clarification rather than an assumed factual correction.
+
+Verification before delivery: confirm relative Markdown links and referenced implementation files exist; review wording for implemented versus production-verified behavior; inspect diff and repository status; commit, push `main`, check remote ref and Cloudflare deployment of exact SHA. No application code or production data change in this pass.
+
+Verification: local relative links in the two new product documents and claim matrix resolved; source assertions confirmed owner assignment, immediate approved claim, pending-only dashboard review, and homepage 500+ text. Documentation-only change; application build was not rerun.

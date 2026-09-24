@@ -1,3 +1,9 @@
+## 2026-09-24 user journey documentation
+### Added
+- `docs/product/USER_JOURNEYS.md`: current public buyer, registered franchisee, new/claiming franchisor, staff and admin routes with confidence and handoff boundaries.
+- `docs/product/NEXT_STEPS.md`: prioritized ownership, production QA, publishing, payment and trust work plus a manual persona checklist.
+### Clarified
+- `docs/forms/CLAIM_TRANSITION_MATRIX.md` flags that claim submission currently marks a claim approved and transfers owner before the expected review step; code was not changed in this documentation pass. `docs/README.md`, `CODEBASE.md`, `AUDIT.md`, and `.context/session-20260924-journeys.md` point to the new documentation.
 ## 2026-09-24 17:06 (Asia/Jakarta)
 ### Changed
 - Added native Kota and Modal selects beside Kategori, search, status, and sort; filters combine in shareable URLs. Kept Budget & BEP and Bandingkan as compact icon links. Added location-data tooltip and responsive sizing.
