@@ -3,6 +3,7 @@ import {
   normalizeRoyaltyBasisValue,
 } from "./_shared-schemas.js";
 import { DEFAULT_COUNTRY_NAME, countryNameFromDialCode } from "./_country-metadata.js";
+import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
 
 export function franchiseBindValues(data, profileId, publicId, now, investment) {
   return [
@@ -81,11 +82,53 @@ export async function hasDuplicateFranchisor(db, email, whatsapp) {
   return (result.results || []).some((row) => lowerOrNull(row.email_contact) === lowerOrNull(email) || digitsOnly(row.whatsapp) === cleanWhatsapp);
 }
 
+// One projection for the early form notice and the final duplicate guard.
+// Never return raw_payload, account identity or unpublished contact details.
+export async function findExistingBrands(db, brandName) {
+  const result = await db.prepare(`
+    SELECT f.brand_name, f.category, f.city_origin, f.source_sheet, f.status,
+           f.id, f.owner_user_id, f.legacy_row_id, f.verification_tier,
+           p.slug AS public_slug, fp.pic_name, COALESCE(NULLIF(TRIM(fp.whatsapp), ''), f.phone) AS public_phone,
+           EXISTS (SELECT 1 FROM franchise_claims c WHERE c.franchise_id = f.id AND c.status = 'pending') AS claim_pending,
+           EXISTS (SELECT 1 FROM franchise_claims c WHERE c.franchise_id = f.id
+                   AND c.claimant_user_id = f.owner_user_id AND c.status = 'approved') AS claim_approved
+    FROM franchises f
+    LEFT JOIN franchise_site_publications p ON p.franchise_id = f.id
+      AND p.site_id = ? AND p.publication_status = 'published'
+    LEFT JOIN franchisor_profiles fp ON fp.id = f.franchisor_profile_id
+    WHERE LOWER(TRIM(f.brand_name)) = LOWER(?)
+    ORDER BY CASE WHEN f.owner_user_id IS NOT NULL THEN 0 ELSE 1 END, f.created_at DESC
+    LIMIT 8
+  `).bind(SITE_FRANCHISEE_ID, normalizeText(brandName)).all();
+  return (result.results || []).map((row) => {
+    const publicUrl = !['archived', 'suspended'].includes(row.status)
+      && /^[a-z0-9-]+$/.test(row.public_slug || '')
+      ? `/peluang-usaha/${row.public_slug}` : null;
+    const managed = Boolean(row.owner_user_id) && Boolean(publicUrl);
+    const unclaimed = !row.owner_user_id && Boolean(publicUrl)
+      && row.source_sheet === 'UNCLAIMED' && row.status === 'unclaimed';
+    const claimable = unclaimed && !row.claim_pending && Boolean(row.id);
+    const confirmed = managed && Boolean(row.claim_approved);
+    return {
+      brand_name: row.brand_name,
+      category: publicUrl ? row.category || null : null,
+      city_origin: publicUrl ? row.city_origin || null : null,
+      state: unclaimed ? 'unclaimed' : managed ? 'managed' : 'listed',
+      claim_pending: unclaimed && Boolean(row.claim_pending),
+      claim_id: claimable ? row.id : null,
+      public_url: publicUrl,
+      ownership_confirmed: confirmed,
+      contact_person: confirmed && publicUrl ? row.pic_name || null : null,
+      contact_phone: confirmed && publicUrl ? row.public_phone || null : null,
+    };
+  });
+}
+
 export async function findClaimSource(db, data) {
   if (!data.unclaimed_id) return null;
   return db.prepare(
-    "SELECT id, slug FROM franchises WHERE source_sheet = 'UNCLAIMED' AND status = 'unclaimed' AND owner_user_id IS NULL AND legacy_row_id = ? AND LOWER(brand_name) = LOWER(?) LIMIT 1"
-  ).bind(data.unclaimed_id, normalizeText(data.brand_name)).first();
+    "SELECT id, slug, legacy_row_id FROM franchises WHERE source_sheet = 'UNCLAIMED' AND status = 'unclaimed' AND owner_user_id IS NULL AND (id = ? OR legacy_row_id = ?) AND LOWER(brand_name) = LOWER(?) LIMIT 1"
+  ).bind(data.unclaimed_id, data.unclaimed_id, normalizeText(data.brand_name)).first();
 }
 
 export async function uniqueSlug(db, brandName, fallbackId) {

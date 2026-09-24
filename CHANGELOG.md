@@ -1,3 +1,10 @@
+## 2026-09-24 17:52 UTC — existing-brand registration choices
+
+- `functions/brand-match.js` and `functions/_form-submit-utils.js` expose one live, exact-name lookup that only returns public listing details; PIC/phone require an approved owner claim and published listing. `functions/_form-submit-franchisor.js` reuses it to give actionable duplicate feedback while refusing a second listing. Claim lookup now accepts both the generated listing ID and legacy ID and records the actual legacy ID.
+- `daftar/index.html`, `css/form-franchise/06-claim-autocomplete.css`, `js/form-02-claim-workflow.js`, `js/form-06-submit-validation.js`, `js/form-07-init.js` show an early claim/view notice, pending and managed states, safe contact, duplicate-name choices, deep links and a submit fallback. All original named fields remain.
+- `migrations/0036_brand_match_lookup.sql` adds an expression index; applied to production D1 directly and confirmed in a remote query plan. `scripts/check-brand-match.ts`, `scripts/check-brand-match-ui.ts` and the expanded `scripts/check-claim-workflow.ts` cover public projection, form actions, current/legacy IDs and conflicts.
+- Updated `FORM_SCHEMA.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, `docs/forms/CLAIM_TRANSITION_MATRIX.md`, `docs/product/USER_JOURNEYS.md`, `docs/README.md`; added `docs/ux/BRAND_MATCH_FORM_AUDIT.md` and `.context/session-20260924-1752.md`. Focused checks, browser-script syntax checks, named-field preservation and `pnpm run build:astro` passed. Public visual review follows deployment.
+
 ## 2026-09-24 brand claim protection and adversarial journeys
 
 - Updated `docs/product/USER_JOURNEYS.md`, `docs/product/NEXT_STEPS.md`, `docs/forms/CLAIM_TRANSITION_MATRIX.md`, `FORM_SCHEMA.md` with fraud scenarios, pending claim rules and independent owner verification.

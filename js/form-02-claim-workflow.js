@@ -22,8 +22,11 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             const claimSlug = urlParams.get('claim');
-            if (claimSlug) {
-                const brand = S.searchableClaimBrands.find((b) => U.slugify(b.__displayName || b.brand_name) === claimSlug);
+            const claimId = urlParams.get('claim_id');
+            if (claimSlug || claimId) {
+                const brand = claimId
+                    ? S.unclaimedBrands.find((b) => String(b.id) === claimId)
+                    : S.searchableClaimBrands.find((b) => U.slugify(b.__displayName || b.brand_name) === claimSlug);
                 if (brand) {
                     FF.fillMainFranchisorForm(brand);
                 }
@@ -145,6 +148,110 @@
             claimSearchResults.style.display = 'none';
             claimSearchInput.value = '';
         });
+    };
+
+    FF.hideExistingBrandNotice = function () {
+        const notice = document.getElementById('existing-brand-notice');
+        if (notice) { notice.hidden = true; notice.replaceChildren(); }
+    };
+
+    FF.renderExistingBrandNotice = function (matches) {
+        const notice = document.getElementById('existing-brand-notice');
+        if (!notice) return;
+        notice.replaceChildren();
+        if (!Array.isArray(matches) || !matches.length) { notice.hidden = true; return; }
+
+        const heading = document.createElement('strong');
+        heading.textContent = matches.length > 1 ? 'Brand ini punya beberapa listing.' : 'Brand ini sudah tercantum.';
+        notice.appendChild(heading);
+        matches.forEach(function (match) {
+            const item = document.createElement('div');
+            item.className = 'brand-match-item';
+            const name = document.createElement('strong');
+            name.textContent = match.brand_name || 'Brand';
+            item.appendChild(name);
+            const detail = document.createElement('span');
+            detail.className = 'brand-match-meta';
+            const location = [match.category, match.city_origin].filter(Boolean).join(' · ');
+            const state = match.state === 'unclaimed'
+                ? (match.claim_pending ? 'Klaim sedang ditinjau admin' : 'Belum dikelola')
+                : match.state === 'managed'
+                    ? (match.ownership_confirmed ? 'Pengelola dikonfirmasi admin' : 'Dikelola; kepemilikan belum diverifikasi')
+                    : 'Sudah tercantum';
+            detail.textContent = location ? state + ' · ' + location : state;
+            item.appendChild(detail);
+            if (match.ownership_confirmed && match.public_url) {
+                const contact = document.createElement('span');
+                contact.className = 'brand-match-meta';
+                contact.textContent = [match.contact_person && 'PIC: ' + match.contact_person,
+                    match.contact_phone && 'Telepon: ' + match.contact_phone].filter(Boolean).join(' · ')
+                    || 'Kontak pengelola tersedia di halaman listing.';
+                item.appendChild(contact);
+            }
+            const actions = document.createElement('div');
+            actions.className = 'brand-match-actions';
+            if (match.claim_id && match.state === 'unclaimed' && !match.claim_pending) {
+                const claim = document.createElement('button');
+                claim.type = 'button';
+                claim.className = 'btn btn-sm btn-warning';
+                claim.textContent = 'Klaim listing';
+                claim.addEventListener('click', function () {
+                    FF.fillMainFranchisorForm({ id: match.claim_id, brand_name: match.brand_name, category: match.category });
+                });
+                actions.appendChild(claim);
+            }
+            if (typeof match.public_url === 'string' && /^\/peluang-usaha\/[a-z0-9-]+$/.test(match.public_url)) {
+                const link = document.createElement('a');
+                link.className = 'btn btn-sm btn-outline-secondary';
+                link.href = match.public_url;
+                link.textContent = 'Lihat listing';
+                actions.appendChild(link);
+            }
+            item.appendChild(actions);
+            notice.appendChild(item);
+        });
+        notice.hidden = false;
+    };
+
+    FF.initExistingBrandNotice = function () {
+        const input = document.getElementById('franchisor-brand-name');
+        const notice = document.getElementById('existing-brand-notice');
+        if (!input || !notice) return;
+        let timer;
+        let requestId = 0;
+        let lastChecked = '';
+        async function check() {
+            const name = input.value.trim();
+            const currentId = ++requestId;
+            clearTimeout(timer);
+            if (input.readOnly || document.getElementById('main_unclaimed_id')?.value || name.length < 3) {
+                FF.hideExistingBrandNotice();
+                return;
+            }
+            if (name.toLowerCase() === lastChecked) return;
+            lastChecked = '';
+            FF.hideExistingBrandNotice();
+            timer = setTimeout(async function () {
+                try {
+                    const response = await fetch('/brand-match?name=' + encodeURIComponent(name));
+                    const data = await window.FranchiseFetch.readJson(response, 'Brand belum bisa diperiksa.');
+                    if (currentId !== requestId || input.value.trim() !== name || input.readOnly || document.getElementById('main_unclaimed_id')?.value) return;
+                    lastChecked = name.toLowerCase();
+                    FF.renderExistingBrandNotice(data.matches || []);
+                } catch (error) {
+                    if (currentId !== requestId || input.readOnly || document.getElementById('main_unclaimed_id')?.value) return;
+                    notice.replaceChildren();
+                    const message = document.createElement('span');
+                    message.textContent = 'Pengecekan brand belum berhasil. Coba lagi nanti.';
+                    notice.appendChild(message);
+                    notice.hidden = false;
+                    lastChecked = '';
+                }
+            }, 600);
+        }
+        input.addEventListener('input', check);
+        input.addEventListener('blur', check);
+        if (input.value.trim()) check();
     };
 
     window.fetchUnclaimedBrands = FF.fetchUnclaimedBrands;

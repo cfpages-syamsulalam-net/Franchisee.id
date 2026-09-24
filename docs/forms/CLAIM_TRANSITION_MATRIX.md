@@ -28,3 +28,10 @@ This matrix covers franchise listing claims written by `/form-submit` and review
 ## Verification standard
 
 A submitted brand name, NIB, HAKI number, business email or uploaded marketing material is a **claim**, not independent proof. The admin checks the applicant's authority using a brand-controlled channel outside applicant-supplied details, records the source and result in review notes, and only then approves. A stranger can otherwise pass all required fields and divert customer inquiries or payments. The guard in migration `0035_guard_franchise_claims.sql` rejects racing/late approvals at the database boundary.
+
+## Additional transitions
+
+| Scenario | Expected behavior | Current owner |
+| --- | --- | --- |
+| Exact brand found while registering a new brand | Show existing published listing(s) immediately: claim only a currently unclaimed listing without a pending claim, otherwise view the listing. Final submit still rejects a duplicate and returns safe choices. | `GET /brand-match`, shared lookup, franchisor form |
+| Listing ID from unclaimed JSON differs from legacy row ID | Accept either ID only when it resolves to the same ownerless unclaimed brand; save the actual legacy row ID on the pending claim. | `findClaimSource` / claim submit |

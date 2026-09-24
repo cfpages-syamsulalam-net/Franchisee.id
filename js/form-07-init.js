@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const FF = window.FranchiseForm = window.FranchiseForm || {};
 
     if (typeof FF.initClaimSearchBindings === 'function') FF.initClaimSearchBindings();
+    if (typeof FF.initExistingBrandNotice === 'function') FF.initExistingBrandNotice();
     if (typeof FF.initCalculationAndCity === 'function') FF.initCalculationAndCity();
     if (typeof FF.loadCountryCodeOptions === 'function') FF.loadCountryCodeOptions();
     if (typeof FF.initFormSubmission === 'function') FF.initFormSubmission();
@@ -48,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (claimState && claimState.active && claimState.brand && typeof FF.fillMainFranchisorForm === 'function') {
         FF.fillMainFranchisorForm(claimState.brand, { persist: false, skipScroll: true });
-    } else if (urlParams.get('claim')) {
+    } else if ((urlParams.get('claim') || urlParams.get('claim_id'))) {
         window.openTab('klaim');
     } else if (roleParam) {
         window.openTab(roleParam);

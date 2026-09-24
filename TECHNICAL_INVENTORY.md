@@ -1443,3 +1443,11 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 - `migrations/0035_guard_franchise_claims.sql`: D1 triggers reject duplicate pending claims and stale or repeated review. Applied to active remote D1 on 2026-09-24 with `wrangler d1 execute --remote --file`, because Wrangler migration history still lists previously applied `0034` as pending; migration SQL remains idempotent in repository.
 - `scripts/check-claim-workflow.ts`: focused regression for missing listing, pending/duplicate, required review note, rejection, conflict, approval and rebuild.
 - `functions/_form-submit-franchisor.js` also rejects new-brand submissions matching any existing listing name; prevents the exact-name duplicate route around pending review.
+
+## Brand matching on `/daftar`
+- `functions/brand-match.js`: no-store public GET, 3–120 character exact-name check through a whitelisted D1 projection.
+- `functions/_form-submit-utils.js`: shared exact-name match query/response (no `raw_payload`, private account fields or unapproved contact); claim lookup accepts listing or legacy ID with exact unclaimed brand match.
+- `functions/_form-submit-franchisor.js`: duplicate submission returns actionable existing matches while still refusing a second listing; approved claim stores actual legacy row ID.
+- `daftar/index.html`, `css/form-franchise/06-claim-autocomplete.css`, `js/form-02-claim-workflow.js`, `js/form-06-submit-validation.js`, `js/form-07-init.js`: first-field status notice, claim/view action, accessible and mobile layout, duplicate-name deep links and submit fallback. Original named form fields remain.
+- `migrations/0036_brand_match_lookup.sql`: case/space-normalized expression index, directly applied to active remote D1; remote query plan confirms it is used. Wrangler history still lists some prior manually applied migrations as pending, so the SQL is idempotent.
+- `scripts/check-brand-match.ts`, `scripts/check-brand-match-ui.ts`, `scripts/check-claim-workflow.ts`: public projection, action states, listing-vs-legacy ID and final duplicate guard.

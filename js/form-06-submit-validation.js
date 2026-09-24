@@ -159,6 +159,10 @@
                     window.location.href = nextTarget;
                 });
             } else {
+                if (result.error === 'BRAND_ALREADY_LISTED' && typeof FF.renderExistingBrandNotice === 'function') {
+                    FF.renderExistingBrandNotice(result.matches || []);
+                    document.getElementById('franchisor-brand-name')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
                 throw Object.assign(new Error(result.message || result.error || 'Data belum bisa disimpan.'), {
                     action_url: result.action_url,
                     action_label: result.action_label,

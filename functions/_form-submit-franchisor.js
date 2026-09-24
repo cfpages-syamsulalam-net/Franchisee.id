@@ -4,6 +4,7 @@ import {
   cleanPayload,
   duplicateResponse,
   findClaimSource,
+  findExistingBrands,
   franchiseBindValues,
   hasDuplicateFranchisor,
   jakartaTimestamp,
@@ -22,9 +23,17 @@ import {
 
 export async function handleFranchisorSubmit(db, data, isClaim, actor) {
   if (!isClaim) {
-    const existingBrand = await db.prepare("SELECT id FROM franchises WHERE LOWER(TRIM(brand_name)) = LOWER(?) LIMIT 1")
-      .bind(normalizeText(data.brand_name)).first();
-    if (existingBrand) return jsonResponse({ success: false, error: "BRAND_ALREADY_LISTED", message: "Brand ini sudah tercantum. Gunakan alur klaim listing atau hubungi admin jika Anda pemiliknya." }, { status: 409 });
+    const existingBrands = await findExistingBrands(db, data.brand_name);
+    if (existingBrands.length) {
+      const first = existingBrands[0];
+      return jsonResponse({
+        success: false, error: "BRAND_ALREADY_LISTED",
+        message: "Brand ini sudah tercantum. Pilih klaim jika belum dikelola, atau lihat listing yang ada.",
+        matches: existingBrands,
+        action_url: first.claim_id ? `/daftar/?claim_id=${encodeURIComponent(first.claim_id)}` : first.public_url || '/peluang-usaha/',
+        action_label: first.claim_id ? 'Klaim listing' : 'Lihat listing',
+      }, { status: 409 });
+    }
     const duplicate = await hasDuplicateFranchisor(db, data.email_contact, data.whatsapp);
     if (duplicate) return duplicateResponse();
   }
@@ -86,7 +95,7 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
       ) SELECT ?, id, ?, ?, ?, ?, 'pending', ? FROM franchises
         WHERE id = ? AND owner_user_id IS NULL AND status = 'unclaimed' AND source_sheet = 'UNCLAIMED'
           AND NOT EXISTS (SELECT 1 FROM franchise_claims WHERE franchise_id = ? AND status = 'pending')`)
-        .bind(claimId, actor.id, profileId, SITE_FRANCHISEE_ID, textOrNull(data.unclaimed_id),
+        .bind(claimId, actor.id, profileId, SITE_FRANCHISEE_ID, textOrNull(claimSource.legacy_row_id),
           `Pernyataan pengaju (belum diverifikasi): ${normalizeText(data.brand_name)}; perusahaan: ${normalizeText(data.company_name) || '-'}; PIC: ${normalizeText(data.pic_name) || '-'}; NIB: ${normalizeText(data.nib_number) || '-'}; HAKI: ${normalizeText(data.haki_number) || '-'}; kontak: ${lowerOrNull(data.email_contact) || '-'} / ${normalizeWhatsapp(data.whatsapp) || '-'}`,
           franchiseId, franchiseId),
     );

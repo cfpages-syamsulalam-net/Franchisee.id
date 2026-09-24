@@ -29,6 +29,7 @@ This repository previously accumulated many root-level Markdown files. Going for
 - `data/country-metadata.json`: canonical supported-country metadata for country codes, flags, aliases, WhatsApp validation, and international phone parsing.
 - `docs/ux/TRAFFIC_FUNNEL_UX_AUDIT.md`: traffic-readiness and UX tracker for homepage-to-member-to-Premium conversion flow.
 - `docs/ux/LISTING_DETAIL_UX_AUDIT.md`: listing detail page compactness, claim CTA, and Cloudflare Pages Function request-limit tracker.
+- `docs/ux/BRAND_MATCH_FORM_AUDIT.md`: early existing-brand notice, ownership status, contact privacy and acceptance checks for `/daftar`.
 - `FORM_SCHEMA.md`: canonical form field inventory.
 - `FORM_PRESERVATION_MANDATE.md`: binding rule set for preserving existing form fields and payloads.
 - `TECHNICAL_INVENTORY.md`: function/module inventory for runtime and migration code.

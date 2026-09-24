@@ -682,8 +682,11 @@ var latepoint_helper = {"route_action":"latepoint_route_call","response_status":
 													<div class="form-section-card">
 														<h3 class="section-title">Langkah 1: Identitas & Legalitas</h3>
 														<div class="form-group-row">
-															<div class="label-col"><label class="form-label">Nama Brand</label></div>
-															<div class="input-col"><input type="text" name="brand_name" class="form-control" required></div>
+															<div class="label-col"><label class="form-label" for="franchisor-brand-name">Nama Brand</label></div>
+															<div class="input-col">
+																<input type="text" id="franchisor-brand-name" name="brand_name" class="form-control" aria-describedby="existing-brand-notice" required>
+																<div id="existing-brand-notice" class="brand-match-notice" role="status" aria-live="polite" hidden></div>
+															</div>
 														</div>
 														<div class="form-group-row">
 															<div class="label-col"><label class="form-label">Nama Perusahaan (PT/CV)</label></div>
