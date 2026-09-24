@@ -6,7 +6,7 @@ const actor = { id: 'applicant', roles: [{ role: 'franchisor' }] };
 const admin = { id: 'reviewer', roles: [{ role: 'admin' }] };
 const data = { form_type: 'claim', unclaimed_id: 'legacy-1', brand_name: 'Sample Brand', email_contact: 'owner@example.test', whatsapp: '08123456789', company_name: 'PT Sample', pic_name: 'Person' };
 function database() {
-  const state = { owner: null, listingStatus: 'unclaimed', claimStatus: null, profile: null, queued: false, sourceSheet: 'UNCLAIMED' };
+  const state = { owner: null, listingStatus: 'unclaimed', claimStatus: null, profile: null, queued: false, sourceSheet: 'UNCLAIMED', brandExists: false };
   const db = {
     prepare(sql) {
       return {
@@ -15,6 +15,7 @@ function database() {
             sql, values,
             async first() {
               if (sql.includes('SELECT email_contact') || sql.includes('SELECT slug FROM franchises')) return null;
+              if (sql.includes('SELECT id FROM franchises WHERE LOWER(TRIM(brand_name))')) return state.brandExists ? { id: 'already-listed' } : null;
               if (sql.includes('SELECT id, slug FROM franchises')) return state.owner === null && state.listingStatus === 'unclaimed' && values[0] === 'legacy-1' && values[1] === 'Sample Brand' ? { id: 'listing-1', slug: 'sample-brand' } : null;
               if (sql.includes('SELECT id FROM franchise_claims')) return state.claimStatus === 'pending' ? { id: 'claim-1' } : null;
               if (sql.includes('SELECT fc.*')) return state.claimStatus ? { id: 'claim-1', franchise_id: 'listing-1', claimant_user_id: 'applicant', franchisor_profile_id: state.profile, status: state.claimStatus, owner_user_id: state.owner, franchise_status: state.listingStatus, source_sheet: state.sourceSheet } : null;
@@ -55,6 +56,9 @@ function database() {
 async function response(value: Promise<Response>) { const r = await value; return { code: r.status, body: await r.json() as Record<string, unknown> }; }
 async function main() {
   const { db, state } = database();
+  state.brandExists = true;
+  assert.equal((await response(handleFranchisorSubmit(db as never, { ...data, form_type: 'FRANCHISOR' }, false, actor as never))).body.error, 'BRAND_ALREADY_LISTED');
+  state.brandExists = false;
   assert.equal((await response(handleFranchisorSubmit(db as never, { ...data, form_type: 'FRANCHISOR' }, false, actor as never))).body.success, true);
   assert.equal((await response(handleFranchisorSubmit(db as never, { ...data, unclaimed_id: 'wrong' }, true, actor as never))).code, 409);
   assert.equal(state.claimStatus, null);

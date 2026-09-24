@@ -22,6 +22,9 @@ import {
 
 export async function handleFranchisorSubmit(db, data, isClaim, actor) {
   if (!isClaim) {
+    const existingBrand = await db.prepare("SELECT id FROM franchises WHERE LOWER(TRIM(brand_name)) = LOWER(?) LIMIT 1")
+      .bind(normalizeText(data.brand_name)).first();
+    if (existingBrand) return jsonResponse({ success: false, error: "BRAND_ALREADY_LISTED", message: "Brand ini sudah tercantum. Gunakan alur klaim listing atau hubungi admin jika Anda pemiliknya." }, { status: 409 });
     const duplicate = await hasDuplicateFranchisor(db, data.email_contact, data.whatsapp);
     if (duplicate) return duplicateResponse();
   }

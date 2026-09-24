@@ -1442,3 +1442,4 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 - `js/form-06-submit-validation.js`: tells claimant ownership is still pending.
 - `migrations/0035_guard_franchise_claims.sql`: D1 triggers reject duplicate pending claims and stale or repeated review. Applied to active remote D1 on 2026-09-24 with `wrangler d1 execute --remote --file`, because Wrangler migration history still lists previously applied `0034` as pending; migration SQL remains idempotent in repository.
 - `scripts/check-claim-workflow.ts`: focused regression for missing listing, pending/duplicate, required review note, rejection, conflict, approval and rebuild.
+- `functions/_form-submit-franchisor.js` also rejects new-brand submissions matching any existing listing name; prevents the exact-name duplicate route around pending review.

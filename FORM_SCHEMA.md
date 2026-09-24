@@ -119,3 +119,4 @@ Note: these `*_url` field names remain compatibility fields for `/daftar` and D1
 
 ## Existing-brand claim processing (2026-09-24)
 A claim requires the selected `unclaimed_id` and matching brand name; current form fields are preserved. Required fields make an application complete, not verified. `/form-submit` stores claimant answers in a private franchisor profile and creates a pending claim, without granting listing access. Admin review checks independent ownership evidence and records its basis before approval. The claim form reports a pending state; NIB and HAKI numbers are self-reported until checked.
+Submitting an existing brand name as a new listing returns `BRAND_ALREADY_LISTED` and directs the applicant to the claim path.
