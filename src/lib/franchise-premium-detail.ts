@@ -1,4 +1,5 @@
 import type { D1FranchiseRow } from "./shared-schemas";
+import { canonicalCategoryLabel } from "../shared/franchise-category-route.mjs";
 import {
   escapeAttr,
   escapeHtml,
@@ -143,7 +144,7 @@ function generateProposalTab(row: D1FranchiseRow): DetailTabEntry | null {
 function generateFaqTab(row: D1FranchiseRow): DetailTabEntry {
   const brandName = normalizeBrandName(row.brand_name);
   const investment = formatRupiah(row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr);
-  const category = normalizeText(row.category) || "kategori ini";
+  const category = canonicalCategoryLabel(normalizeText(row.category)) || "kategori ini";
   const support = normalizeText(row.support_system);
   const faqItems = [
     ["Berapa estimasi modal awal?", investment === "Tanya Admin" ? "Modal belum ditampilkan lengkap. Gunakan tombol minta info untuk mendapatkan rincian terbaru dari brand." : `Estimasi modal yang tersedia mulai dari ${investment}.`],

@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs";
+import { canonicalCategoryLabel } from "../src/shared/franchise-category-route.mjs";
 import { dirname, join, resolve } from "node:path";
 import {
   ImportFranchiseeRowSchema,
@@ -211,7 +212,7 @@ function importFranchisors(
           source_site_id: SITE_ID,
           brand_name: normalizeText(row.brand_name),
           slug,
-          category: textOrNull(row.category),
+    category: textOrNull(canonicalCategoryLabel(row.category)),
           status: normalizeListingStatus(row.status || "FREE"),
           verification_tier: normalizeVerificationTier(row.status || "FREE", row.is_verified),
           source_type: "csv_import",
@@ -294,7 +295,7 @@ function importUnclaimed(
           source_site_id: SITE_ID,
           brand_name: normalizeText(row.brand_name),
           slug,
-          category: textOrNull(row.category),
+    category: textOrNull(canonicalCategoryLabel(row.category)),
           subcategory: textOrNull(row.subcategory),
           label: textOrNull(row.label),
           status: "unclaimed",

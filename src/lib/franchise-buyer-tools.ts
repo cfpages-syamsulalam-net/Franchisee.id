@@ -1,4 +1,5 @@
 import type { FranchiseStaticRow } from "./franchise-static";
+import { canonicalCategoryLabel } from "../shared/franchise-category-route.mjs";
 import { getCapitalSummaries, budgetRecommendationLabel, getComparableCapital } from "./franchise-capital";
 import { getCategorySummaries, canonicalCategoryHref } from "./franchise-category";
 import { getCitySummaries, primaryCityLabel } from "./franchise-city";
@@ -108,7 +109,7 @@ function comparisonPayload(rows: FranchiseStaticRow[]) {
       id: row.id,
       slug: row.slug,
       brand: normalizeBrandName(row.brand_name),
-      category: normalizeText(row.category) || "Bisnis Umum",
+    category: canonicalCategoryLabel(normalizeText(row.category)) || "Bisnis Umum",
       capital,
       capitalLabel: formatRupiah(capital),
       bep: row.estimated_bep_months ? `${row.estimated_bep_months} bulan` : "Tanya Admin",

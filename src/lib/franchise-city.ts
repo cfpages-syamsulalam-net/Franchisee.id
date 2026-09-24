@@ -45,6 +45,23 @@ export function getCitySummaries(rows: FranchiseStaticRow[]) {
   }));
 }
 
+export function getCityFilterOptions(rows: FranchiseStaticRow[]) {
+  const options = new Map<string, { slug: string; label: string; count: number }>();
+  for (const row of rows) {
+    for (const label of matchedCities(row)) {
+      const slug = slugify(label);
+      const current = options.get(slug) || { slug, label, count: 0 };
+      current.count += 1;
+      options.set(slug, current);
+    }
+  }
+  return [...options.values()].sort((a, b) => a.label.localeCompare(b.label, "id-ID"));
+}
+
+export function citySlugs(row: FranchiseStaticRow) {
+  return matchedCities(row).map((label) => slugify(label));
+}
+
 export function primaryCityLabel(row: FranchiseStaticRow) {
   return matchedCities(row)[0] || "";
 }

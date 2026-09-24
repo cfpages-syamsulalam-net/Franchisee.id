@@ -1,7 +1,7 @@
 import type { CategoryRouteEntry } from "./franchise-directory-types";
 import type { D1FranchiseRow as FranchiseStaticRow } from "./shared-schemas";
 import { normalizeText } from "./franchise-text";
-import { canonicalCategoryPath, resolveCategoryRoute } from "../shared/franchise-category-route.mjs";
+import { canonicalCategoryLabel, canonicalCategoryPath, resolveCategoryRoute } from "../shared/franchise-category-route.mjs";
 
 export function getCategoryRouteEntries(rows: FranchiseStaticRow[]) {
   const summaries = getCategorySummaries(rows);
@@ -66,5 +66,5 @@ export function categorySlug(row: FranchiseStaticRow) {
 
 function canonicalCategory(value: string) {
   const route = resolveCategoryRoute(value);
-  return { slug: route.slug, label: route.label || normalizeText(value) || "Bisnis Umum" };
+  return { slug: route.slug, label: canonicalCategoryLabel(value) || "Bisnis Umum" };
 }

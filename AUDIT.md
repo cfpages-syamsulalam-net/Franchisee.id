@@ -1,3 +1,5 @@
+## 2026-09-24 direktori filter dan kategori
+- Audit UI/UX: `docs/ux/DIRECTORY_FILTER_UI_UX_AUDIT_2026-09-24.md`. Form kategori/kota/modal bisa digabung dan ikon sekunder mengurangi kebisingan tautan; label lokasi menyatakan batas data. Kopi Coba memiliki nilai mentah `FnB` dan D1 diperbarui untuk satu baris; renderer dan impor kini memakai label kanonis. Perlu verifikasi produksi setelah push dan pemeriksaan visual desktop/mobile.
 ## 2026-09-24 Directory card UX follow-up
 
 - Live 1440px review confirmed five cramped cards per row, prominent gradient missing-logo blocks, and `Belum diklaim` truncation. A 390px device-emulated check measured a 390px document and 366px card, so the earlier narrow desktop screenshot did not establish mobile horizontal overflow. The legacy rule for all card descendants instead made the status badge 16px despite its 10px component rule.

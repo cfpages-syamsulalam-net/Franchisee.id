@@ -1,3 +1,10 @@
+## 2026-09-24 17:06 (Asia/Jakarta)
+### Changed
+- Added native Kota and Modal selects beside Kategori, search, status, and sort; filters combine in shareable URLs. Kept Budget & BEP and Bandingkan as compact icon links. Added location-data tooltip and responsive sizing.
+- Canonicalized legacy `FnB` as `Makanan & Minuman` across public rendering and CSV import; corrected Kopi Coba's single D1 row and refreshed its generated snapshot. Modal ranges now have exclusive upper limits and prioritize total investment over license fees.
+- Recorded UI/UX decisions in `docs/ux/DIRECTORY_FILTER_UI_UX_AUDIT_2026-09-24.md`; updated `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, and `.context/session-20260924-1706.md`.
+### Verified
+- Directory check passed with 197 listings and 14 category routes, including category alias and investment boundary cases. Full Astro build and legacy asset copy passed. Headless desktop and 390 px device emulation checked form layout without document overflow. Production interactions and deployment parity pending push.
 ## 2026-09-24 09:37 (Asia/Jakarta)
 
 ### Changed

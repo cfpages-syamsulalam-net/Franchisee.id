@@ -1,5 +1,5 @@
 import type { FranchiseStaticRow } from "./franchise-static";
-import { formatRupiah, normalizeBrandName, normalizeText, slugify } from "./franchise-text";
+import { formatRupiah, normalizeBrandName } from "./franchise-text";
 
 export interface CapitalRangeEntry {
   slug: string;
@@ -28,7 +28,7 @@ export function getCapitalRouteEntries(rows: FranchiseStaticRow[]): CapitalRange
       .filter((row) => {
         const capital = getComparableCapital(row);
         if (!capital) return false;
-        return capital >= range.min && (range.max === null || capital <= range.max);
+        return capital >= range.min && (range.max === null || capital < range.max);
       })
       .sort((a, b) => getComparableCapital(a) - getComparableCapital(b) || normalizeBrandName(a.brand_name).localeCompare(normalizeBrandName(b.brand_name), "id-ID"));
 
@@ -73,18 +73,12 @@ export function capitalIndexCopy(rows: FranchiseStaticRow[]) {
 }
 
 export function getComparableCapital(row: FranchiseStaticRow) {
-  const values = [
-    row.package_min_capital_idr,
-    row.min_investment_idr,
-    row.package_price_idr,
-    row.total_investment_idr,
-    row.fee_license_idr,
-  ].map((value) => Number(value || 0)).filter((value) => Number.isFinite(value) && value > 0);
-  return values.length ? Math.min(...values) : 0;
+  const values = [row.total_investment_idr, row.min_investment_idr, row.package_price_idr, row.package_min_capital_idr];
+  return values.map((value) => Number(value || 0)).find((value) => Number.isFinite(value) && value > 0) || 0;
 }
 
 export function budgetRecommendationLabel(value: number) {
-  const entry = CAPITAL_RANGES.find((range) => value >= range.min && (range.max === null || value <= range.max));
+  const entry = CAPITAL_RANGES.find((range) => value > 0 && value >= range.min && (range.max === null || value < range.max));
   return entry ? { label: entry.label, href: capitalHref(entry.slug) } : null;
 }
 
@@ -99,6 +93,7 @@ function capitalDescription(label: string, min: number, max: number | null, coun
 
 export function capitalSlugFromValue(value: unknown) {
   const number = Number(value || 0);
-  const entry = CAPITAL_RANGES.find((range) => number >= range.min && (range.max === null || number <= range.max));
-  return entry?.slug || slugify(normalizeText(value));
+  if (!Number.isFinite(number) || number <= 0) return "";
+  const entry = CAPITAL_RANGES.find((range) => number >= range.min && (range.max === null || number < range.max));
+  return entry?.slug || "";
 }

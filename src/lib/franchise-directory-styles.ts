@@ -95,13 +95,14 @@ export const FRANCHISE_DIRECTORY_STYLES = `<style id="franchise-directory-genera
 }
 .franchise-directory-control-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(150px, 1fr)) auto;
+  grid-template-columns: minmax(220px, 1.5fr) repeat(5, minmax(130px, 1fr));
   gap: 10px;
   align-items: end;
 }
 .franchise-directory-controls label {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 6px;
   color: #2b2b2b;
   font-size: 12px;
@@ -111,6 +112,8 @@ export const FRANCHISE_DIRECTORY_STYLES = `<style id="franchise-directory-genera
 .franchise-directory-controls select {
   min-height: 40px;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   border: 1px solid #d6d6d6;
   border-radius: 4px;
   padding: 8px 10px;
@@ -147,13 +150,25 @@ export const FRANCHISE_DIRECTORY_STYLES = `<style id="franchise-directory-genera
   background: #f7f7f7;
   color: #111111 !important;
 }
-.franchise-directory-quicklinks {
+.franchise-directory-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.franchise-directory-label { display: inline-flex; align-items: center; gap: 6px; }
+.franchise-directory-label i { color: #626262; }
+.franchise-directory-info { display: inline-flex; cursor: help; }
+.franchise-directory-info:focus-visible,
+.franchise-directory-controls :is(input, select, button, a):focus-visible { outline: 2px solid #111; outline-offset: 2px; }
+.franchise-directory-tools {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 16px;
   margin-top: 10px;
 }
-.franchise-directory-quicklinks a {
+.franchise-directory-tools a {
   border-bottom: 1px solid #b8b8b8;
   padding: 3px 0;
   color: #4d4d4d !important;
@@ -161,10 +176,8 @@ export const FRANCHISE_DIRECTORY_STYLES = `<style id="franchise-directory-genera
   font-weight: 600;
   text-decoration: none !important;
 }
-.franchise-directory-quicklinks a.is-active {
-  border-color: #111111;
-  color: #111111 !important;
-}
+.franchise-directory-tools i { margin-right: 5px; }
+.franchise-directory-noscript { margin: 10px 0 0; font-size: 12px; }
 .franchise-directory-result-count {
   margin: 10px 0 0;
   color: #4d4d4d;
@@ -327,6 +340,7 @@ ${FRANCHISE_DIRECTORY_CARD_STYLES}
   text-decoration: none !important;
 }
 @media (max-width: 980px) {
+  .franchise-directory-bottom-row { flex-wrap: wrap; }
   .fr-owner-cta {
     align-items: flex-start;
     flex-direction: column;
@@ -335,7 +349,7 @@ ${FRANCHISE_DIRECTORY_CARD_STYLES}
     justify-content: flex-start;
   }
   .franchise-directory-control-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .franchise-directory-search {
     grid-column: 1 / -1;
@@ -345,6 +359,8 @@ ${FRANCHISE_DIRECTORY_CARD_STYLES}
   }
 }
 @media (max-width: 640px) {
+  .franchise-directory-bottom-row { align-items: flex-start; }
+  .franchise-directory-tools { width: 100%; }
   .elementor-2184 .elementor-element.elementor-element-19b8c8c {
     --padding-top: 48px !important;
     --padding-bottom: 30px !important;
@@ -376,7 +392,7 @@ ${FRANCHISE_DIRECTORY_CARD_STYLES}
     padding: 12px;
   }
   .franchise-directory-control-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .franchise-directory-search,
   .franchise-directory-actions {

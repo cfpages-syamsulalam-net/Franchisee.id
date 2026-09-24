@@ -15,6 +15,8 @@ export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-gener
   var currentCategory = pathParts.length === 4 && pathParts[1] === "peluang-usaha" && pathParts[2] === "kategori"
     ? safeDecode(pathParts[3])
     : "";
+  var currentCity = pathParts.length === 4 && pathParts[1] === "peluang-usaha" && pathParts[2] === "kota" ? safeDecode(pathParts[3]) : "";
+  var currentModal = pathParts.length === 4 && pathParts[1] === "peluang-usaha" && pathParts[2] === "modal" ? safeDecode(pathParts[3]) : "";
   var currentCanonicalPath = currentCategory ? categoryPath(currentCategory) : "/peluang-usaha";
   initCompareButtons();
   if (!form || !grid) return;
@@ -35,6 +37,8 @@ export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-gener
     q: form.querySelector('[name="q"]'),
     sort: form.querySelector('[name="sort"]'),
     kategori: form.querySelector('[name="kategori"]'),
+    kota: form.querySelector('[name="kota"]'),
+    modal: form.querySelector('[name="modal"]'),
     status: form.querySelector('[name="status"]')
   };
 
@@ -45,15 +49,17 @@ export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-gener
   setField("q", params.get("q"));
   setField("sort", params.get("sort") || (params.get("view") === "kategori" ? "kategori" : ""));
   setField("kategori", currentCategory || params.get("kategori"));
+  setField("kota", currentCity || params.get("kota"));
+  setField("modal", currentModal || params.get("modal"));
   setField("status", params.get("status"));
   form.setAttribute("action", currentCanonicalPath);
-  if (reset) reset.setAttribute("href", currentCanonicalPath);
+  if (reset) reset.setAttribute("href", "/peluang-usaha");
 
   if (directoryEmpty) {
     directoryEmpty.classList.add("franchise-directory-empty");
     directoryEmpty.setAttribute("role", "status");
     directoryEmpty.setAttribute("aria-live", "polite");
-    directoryEmpty.innerHTML = '<strong>Belum ada franchise yang cocok.</strong><span>Ubah kata kunci atau filter untuk melihat pilihan lainnya.</span><a href="' + currentCanonicalPath + '" data-directory-empty-reset>Hapus filter</a>';
+    directoryEmpty.innerHTML = '<strong>Belum ada franchise yang cocok.</strong><span>Ubah kata kunci atau filter untuk melihat pilihan lainnya.</span><a href="/peluang-usaha" data-directory-empty-reset>Hapus filter</a>';
   }
 
   function normalizePath(path) {
@@ -90,12 +96,16 @@ export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-gener
     var query = (inputs.q && inputs.q.value || "").trim().toLowerCase();
     var sort = inputs.sort && inputs.sort.value || "";
     var category = inputs.kategori && inputs.kategori.value || "";
+    var city = inputs.kota && inputs.kota.value || "";
+    var modal = inputs.modal && inputs.modal.value || "";
     var status = inputs.status && inputs.status.value || "";
     var visible = cards.filter(function (card) {
-      var matchesQuery = !query || card.textContent.toLowerCase().indexOf(query) !== -1;
+      var matchesQuery = !query || card.textContent.toLowerCase().indexOf(query) !== -1 || (card.getAttribute("data-category-raw") || "").indexOf(query) !== -1;
       var matchesCategory = !category || card.getAttribute("data-category-slug") === category;
+      var matchesCity = !city || (" " + (card.getAttribute("data-city-slugs") || "") + " ").indexOf(" " + city + " ") !== -1;
+      var matchesModal = !modal || card.getAttribute("data-modal-range") === modal;
       var matchesStatus = !status || card.getAttribute("data-status") === status;
-      return matchesQuery && matchesCategory && matchesStatus;
+      return matchesQuery && matchesCategory && matchesCity && matchesModal && matchesStatus;
     });
 
     visible.sort(function (a, b) {
@@ -120,7 +130,7 @@ export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-gener
   form.addEventListener("submit", function (event) {
     event.preventDefault();
     var next = new URLSearchParams();
-    ["q", "sort", "status"].forEach(function (key) {
+    ["q", "sort", "status", "kota", "modal"].forEach(function (key) {
       var input = inputs[key];
       if (input && input.value) next.set(key, input.value);
     });
@@ -134,13 +144,6 @@ export const FRANCHISE_DIRECTORY_CLIENT = `<script id="franchise-directory-gener
     }
     window.history.replaceState({}, "", target);
     applyFilters();
-  });
-
-  form.querySelectorAll(".franchise-directory-quicklinks a").forEach(function (link) {
-    var linkUrl = new URL(link.href, window.location.origin);
-    if (normalizePath(linkUrl.pathname) === locationPath && linkUrl.search === window.location.search) {
-      link.classList.add("is-active");
-    }
   });
 
   applyFilters();

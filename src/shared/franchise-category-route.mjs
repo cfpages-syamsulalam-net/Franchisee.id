@@ -17,6 +17,11 @@ export function resolveCategoryRoute(value) {
   return alias || { slug: sourceSlug, label: "" };
 }
 
+export function canonicalCategoryLabel(value) {
+  const label = String(value ?? "").trim();
+  return resolveCategoryRoute(label).label || label;
+}
+
 export function canonicalCategoryPath(value) {
   const slug = categoryRouteSlug(value);
   return slug ? `/peluang-usaha/kategori/${slug}` : "/peluang-usaha";

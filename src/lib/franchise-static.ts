@@ -1,12 +1,14 @@
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { z } from "zod";
-import { capitalIndexCopy, capitalLandingCopy, getCapitalRouteEntries, getCapitalSummaries } from "./franchise-capital";
+import { capitalIndexCopy, capitalLandingCopy, getCapitalRouteEntries, getCapitalSummaries, getComparableCapital, capitalSlugFromValue } from "./franchise-capital";
 import { canonicalCategoryHref, categorySlug, getCategoryRouteEntries, getCategorySummaries } from "./franchise-category";
+import { canonicalCategoryLabel } from "../shared/franchise-category-route.mjs";
+import { generateDirectoryControls } from "./franchise-directory-controls";
 import { getFranchiseCategoryContent } from "./franchise-category-content";
 import { applyDirectoryMeta, prepareDirectoryTemplate, renderCategoryEditorialContent } from "./franchise-directory-document";
 import type { CategoryRouteEntry, DirectoryPageOptions } from "./franchise-directory-types";
-import { cityIndexCopy, cityLandingCopy, getCityRouteEntries, getCitySummaries, type CityRouteEntry } from "./franchise-city";
+import { cityIndexCopy, cityLandingCopy, citySlugs, getCityRouteEntries, getCitySummaries, type CityRouteEntry } from "./franchise-city";
 import { generateContactBlock, replaceLegacyFloatingContacts } from "./franchise-contact";
 import { countryDisplay, normalizeCountryName } from "./country-metadata";
 import { generateDetailQuickFacts } from "./franchise-detail-summary";
@@ -197,7 +199,7 @@ export function renderDetailPage(row: FranchiseStaticRow) {
   const tier = normalizeText(row.verification_tier || row.status).toLowerCase();
   const isUnclaimed = tier === "unclaimed";
   const brandName = normalizeBrandName(row.brand_name);
-  const category = normalizeText(row.category) || "Bisnis Umum";
+  const category = canonicalCategoryLabel(normalizeText(row.category)) || "Bisnis Umum";
   const description = normalizeDescriptionText(row.full_desc || row.short_desc, brandName) || `Peluang usaha franchise ${brandName}.`;
   const logoUrl = normalizeUrl(row.logo_url);
   const heroImage = normalizeUrl(row.cover_url || row.logo_url);
@@ -257,22 +259,23 @@ export function renderDetailPage(row: FranchiseStaticRow) {
 function generateCard(row: FranchiseStaticRow, index: number) {
   const tier = normalizeText(row.verification_tier || row.status).toUpperCase() || "UNCLAIMED";
   const brandName = normalizeBrandName(row.brand_name);
-  const category = normalizeText(row.category) || "Bisnis Umum";
+  const category = canonicalCategoryLabel(normalizeText(row.category)) || "Bisnis Umum";
   const link = `/peluang-usaha/${row.slug}`;
   const imageUrl = getThumb(row.cover_url || row.logo_url);
   const imageBlock = imageUrl
     ? `<img loading="lazy" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(brandName)}" width="300" height="150">`
     : generateCssPlaceholder(brandName, "franchise-css-placeholder");
-  const modal = formatRupiah(row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr);
+  const modalSort = getComparableCapital(row);
+  const modal = formatRupiah(modalSort);
   const desc = truncate(normalizeDescriptionText(row.short_desc || row.full_desc, brandName) || `Peluang usaha franchise ${brandName}.`, 90);
   const badge = generateStatusBadge(tier);
   const factChips = generateFactChips(row, modal);
   const categorySlugValue = categorySlug(row);
   const statusKey = tier.toLowerCase();
-  const modalSort = row.total_investment_idr || row.min_investment_idr || row.package_price_idr || row.package_min_capital_idr || 0;
+  const modalRange = capitalSlugFromValue(modalSort);
 
   return `
-    <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${escapeAttr(statusKey)}-tier" data-franchise-card data-franchise-id="${escapeAttr(row.id)}" data-brand="${escapeAttr(brandName.toLowerCase())}" data-category="${escapeAttr(category.toLowerCase())}" data-category-slug="${escapeAttr(categorySlugValue)}" data-status="${escapeAttr(statusKey)}" data-modal="${escapeAttr(modalSort)}" data-recommendation-score="${escapeAttr(scoreRecommendation(row))}" data-popularity-score="${escapeAttr(scorePopularity(row))}" data-index="${escapeAttr(index)}">
+  <div id="uc_post_grid_elementor_d0f4a5f_item${index}" class="uc_post_grid_style_one_item ue_post_grid_item ue-item ${escapeAttr(statusKey)}-tier" data-franchise-card data-franchise-id="${escapeAttr(row.id)}" data-brand="${escapeAttr(brandName.toLowerCase())}" data-category="${escapeAttr(category.toLowerCase())}" data-category-raw="${escapeAttr(normalizeText(row.category).toLowerCase())}" data-category-slug="${escapeAttr(categorySlugValue)}" data-city-slugs="${escapeAttr(citySlugs(row).join(" "))}" data-modal-range="${escapeAttr(modalRange)}" data-status="${escapeAttr(statusKey)}" data-modal="${escapeAttr(modalSort)}" data-recommendation-score="${escapeAttr(scoreRecommendation(row))}" data-popularity-score="${escapeAttr(scorePopularity(row))}" data-index="${escapeAttr(index)}">
         <a class="uc_post_grid_style_one_image" href="${escapeAttr(link)}">
             <div class="uc_post_image">
                 ${imageBlock}
@@ -468,63 +471,6 @@ function generateSaveOpportunityButton(row: FranchiseStaticRow, variant: "card" 
     </span>`;
 }
 
-function generateDirectoryControls(rows: FranchiseStaticRow[], options: DirectoryPageOptions) {
-  const categories = getCategorySummaries(rows);
-  const categoryOptions = categories
-    .map((summary) => `<option value="${escapeAttr(summary.slug)}">${escapeHtml(summary.label)} (${escapeHtml(summary.count)})</option>`)
-    .join("");
-
-  return `
-    <form class="franchise-directory-controls" id="franchise-directory-controls" action="${escapeAttr(options.canonicalPath)}" method="get" data-directory-controls data-directory-path="${escapeAttr(options.canonicalPath)}">
-      <div class="franchise-directory-control-row">
-        <label class="franchise-directory-search">
-          <span>Cari franchise</span>
-          <input type="search" name="q" placeholder="Nama brand, kategori, atau kata kunci">
-        </label>
-        <label>
-          <span>Urutkan</span>
-          <select name="sort">
-            <option value="">Prioritas</option>
-            <option value="rekomendasi">Rekomendasi</option>
-            <option value="populer">Populer</option>
-            <option value="abjad">A-Z</option>
-            <option value="kategori">Kategori</option>
-            <option value="modal-asc">Modal terendah</option>
-            <option value="modal-desc">Modal tertinggi</option>
-          </select>
-        </label>
-        <label>
-          <span>Kategori</span>
-          <select name="kategori">
-            <option value="">Semua kategori</option>
-            ${categoryOptions}
-          </select>
-        </label>
-        <label>
-          <span>Status</span>
-          <select name="status">
-            <option value="">Semua status</option>
-            <option value="verified">Terverifikasi</option>
-            <option value="premium">Premium</option>
-            <option value="unclaimed">Belum diklaim</option>
-          </select>
-        </label>
-        <div class="franchise-directory-actions">
-          <button type="submit">Terapkan</button>
-          <a href="${escapeAttr(options.canonicalPath)}" data-directory-reset>Reset</a>
-        </div>
-      </div>
-      <div class="franchise-directory-quicklinks" aria-label="Tampilan cepat">
-        <a href="/peluang-usaha/kategori/">Kategori</a>
-        <a href="/peluang-usaha/modal/">Modal</a>
-        <a href="/peluang-usaha/kota/">Kota</a>
-        <a href="/alat-franchise/">Budget & BEP</a>
-        <a href="/bandingkan">Bandingkan</a>
-      </div>
-      <p class="franchise-directory-result-count" aria-live="polite"></p>
-    </form>`;
-}
-
 function generateStatusBadge(tier: string) {
   if (tier === "VERIFIED" || tier === "PREMIUM") {
     const label = tier === "PREMIUM" ? "Premium" : "Terverifikasi";
@@ -608,14 +554,14 @@ function generateJsonLd(row: FranchiseStaticRow, description: string, logoUrl: s
     name: normalizeBrandName(row.brand_name),
     description,
     url: `https://franchisee.id/peluang-usaha/${row.slug}`,
-    category: row.category || "Franchise",
+    category: canonicalCategoryLabel(row.category) || "Franchise",
   };
   if (logoUrl) Object.assign(brand, { logo: logoUrl, image: imageUrl });
   return `<script type="application/ld+json">${JSON.stringify(brand)}</script>`;
 }
 
 function generateBreadcrumbs(row: FranchiseStaticRow) {
-  const category = normalizeText(row.category) || "Bisnis";
+  const category = canonicalCategoryLabel(normalizeText(row.category)) || "Bisnis";
   const brandName = normalizeBrandName(row.brand_name);
   return `
     <nav class="ast-breadcrumbs" aria-label="Breadcrumbs">
@@ -632,7 +578,7 @@ function generateBreadcrumbs(row: FranchiseStaticRow) {
 }
 
 function generateBreadcrumbJsonLd(row: FranchiseStaticRow) {
-  const category = normalizeText(row.category) || "Bisnis";
+  const category = canonicalCategoryLabel(normalizeText(row.category)) || "Bisnis";
   const brandName = normalizeBrandName(row.brand_name);
   const schema = {
     "@context": "https://schema.org",

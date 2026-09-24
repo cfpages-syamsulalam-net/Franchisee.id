@@ -1,0 +1,9 @@
+# Audit filter direktori peluang usaha — 24 September 2026
+
+| Prioritas | Bukti / perjalanan pengguna | Keputusan dan perubahan | Verifikasi |
+|---|---|---|---|
+| Sedang | Kategori sudah berupa pilihan, tetapi Kota dan Modal di bawahnya membuka halaman baru; pembeli tidak dapat memilih ketiganya dalam satu tindakan. | Sediakan Kategori, Kota, Modal sebagai pilihan dalam satu formulir, bersama pencarian, status, urutan, Terapkan, dan Reset. Pertahankan tautan halaman kategori/kota/modal untuk penelusuran dan tanpa JavaScript. | Uji direktori, HTML terbangun, tampilan desktop dan emulasi perangkat 390 px; uji kombinasi di halaman produksi setelah deploy. |
+| Sedang | Kopi Coba memiliki kategori mentah `FnB`, sementara kategori lain dan rute kanonis menggunakan `Makanan & Minuman`; nilai total investasi 90 juta berbeda dari biaya lisensi 30 juta. | Kanonisasi label pada impor dan semua permukaan publik; perbarui baris D1 Kopi Coba. Gunakan investasi total terlebih dahulu untuk satu kisaran modal tanpa batas tumpang tindih. | Uji direktori dan pemeriksaan satu baris D1 lulus; verifikasi halaman produksi setelah deploy. |
+| Rendah | Lima tautan cepat menambah teks dan bersaing dengan filter. Budget & BEP dan Bandingkan menjalankan tugas yang berbeda dari filter. | Tempatkan dua tautan alat bantu secara sekunder dengan ikon; gunakan ikon kecil pada label filter. Jelaskan bahwa Kota berdasarkan lokasi yang tercatat, bukan jaminan area kemitraan. | Emulasi 390 px dan desktop memperlihatkan label, tombol, dan tautan tanpa overflow pada area filter. |
+
+Pilihan native HTML mempertahankan label yang terlihat dan navigasi keyboard. Kategori tetap memiliki rute publik kanonis; gabungan kota dan modal menggunakan parameter URL yang dapat dibagikan. Penilaian ini mengikuti metode `franchisee-ui-ux-audit`: hierarki dan perilaku terlebih dahulu, ikon sebagai petunjuk tambahan. Pemeriksaan interaksi langsung pada domain produksi dicatat setelah push.

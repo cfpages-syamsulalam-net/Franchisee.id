@@ -3,6 +3,7 @@ import { generateDetailQuickFacts } from "../src/lib/franchise-detail-summary";
 import { generateDetailTabEntries, renderDetailTabsShell } from "../src/lib/franchise-detail-tabs";
 import { replaceLegacyFloatingContacts } from "../src/lib/franchise-contact";
 import { canonicalCategoryHref } from "../src/lib/franchise-category";
+import { canonicalCategoryLabel } from "../src/shared/franchise-category-route.mjs";
 import { generatePremiumLeadPanel } from "../src/lib/franchise-premium-detail";
 import { injectDetailAssets } from "../src/lib/franchise-static-assets";
 import type { D1FranchiseRow } from "../src/lib/shared-schemas";
@@ -22,7 +23,7 @@ export function buildUnclaimedItems(rows: D1FranchiseRow[]) {
     .map((row) => ({
       id: row.id,
       brand_name: normalizeText(row.brand_name),
-      category: normalizeText(row.category),
+      category: canonicalCategoryLabel(normalizeText(row.category)),
       min_capital: row.min_investment_idr || row.package_min_capital_idr || null,
       slug: row.slug,
     }))
@@ -38,7 +39,7 @@ export function renderDetailPage(row: D1FranchiseRow, template: string): string 
   const tier = normalizeText(row.verification_tier || row.status).toLowerCase();
   const isUnclaimed = tier === "unclaimed";
   const brandName = normalizeText(row.brand_name);
-  const category = normalizeText(row.category) || "Bisnis Umum";
+  const category = canonicalCategoryLabel(normalizeText(row.category)) || "Bisnis Umum";
   const description = normalizeText(row.full_desc || row.short_desc) || `Peluang usaha franchise ${brandName}.`;
   const logoUrl = normalizeUrl(row.logo_url);
   const heroImage = normalizeUrl(row.cover_url || row.logo_url);
@@ -107,7 +108,7 @@ export function compareFranchises(a: D1FranchiseRow, b: D1FranchiseRow) {
 function generateCard(row: D1FranchiseRow, index: number) {
   const tier = normalizeText(row.verification_tier || row.status).toUpperCase() || "UNCLAIMED";
   const brandName = normalizeText(row.brand_name);
-  const category = normalizeText(row.category) || "Bisnis Umum";
+  const category = canonicalCategoryLabel(normalizeText(row.category)) || "Bisnis Umum";
   const link = `/peluang-usaha/${row.slug}`;
   const imageUrl = getThumb(row.cover_url || row.logo_url);
   const imageBlock = imageUrl
@@ -166,13 +167,13 @@ function generateJsonLd(row: D1FranchiseRow, description: string, logoUrl: strin
     description,
     url: `https://franchisee.id/peluang-usaha/${row.slug}`,
     logo: logoUrl,
-    category: row.category || "Franchise",
+    category: canonicalCategoryLabel(row.category) || "Franchise",
   };
   return `<script type="application/ld+json">${JSON.stringify(schema)}</script>`;
 }
 
 function generateBreadcrumbs(row: D1FranchiseRow) {
-  const category = normalizeText(row.category) || "Bisnis";
+  const category = canonicalCategoryLabel(normalizeText(row.category)) || "Bisnis";
   return `
     <nav class="ast-breadcrumbs" aria-label="Breadcrumbs">
         <div class="ast-breadcrumbs-wrapper">

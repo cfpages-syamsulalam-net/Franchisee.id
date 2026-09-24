@@ -1,3 +1,5 @@
+## 2026-09-24 filter direktori
+- `generateDirectoryControls(rows, options)` (`src/lib/franchise-directory-controls.ts`): pilihan filter bersama dari seluruh listing, dua tautan alat bantu, dan label lokasi dengan tooltip. `citySlugs(row)` dan `getCityFilterOptions(rows)` (`franchise-city.ts`) melengkapi kota landing; `getComparableCapital(row)` dan `capitalSlugFromValue(value)` (`franchise-capital.ts`) memberi satu nilai/rentang konsisten. `canonicalCategoryLabel(value)` (`src/shared/franchise-category-route.mjs` dan deklarasi `.d.mts`) menangani `FnB` di renderer, impor CSV, perbandingan, metadata, dan detail. `scripts/check-franchise-directory.ts` memeriksa kategori dan batas modal.
 # Technical Inventory: Franchise.id Codebase
 
 ## 2026-09-24 Premium layout

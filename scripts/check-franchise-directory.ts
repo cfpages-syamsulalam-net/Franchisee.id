@@ -8,9 +8,11 @@ import {
   renderListingPage,
 } from "../src/lib/franchise-static";
 import { canonicalCategoryHref } from "../src/lib/franchise-category";
+import { capitalSlugFromValue, getComparableCapital } from "../src/lib/franchise-capital";
+import { citySlugs } from "../src/lib/franchise-city";
 import { getFranchiseCategoryContent } from "../src/lib/franchise-category-content";
 import { applyCanonicalLegacyLinks } from "../src/lib/franchise-text";
-import { canonicalCategoryPath } from "../src/shared/franchise-category-route.mjs";
+import { canonicalCategoryLabel, canonicalCategoryPath } from "../src/shared/franchise-category-route.mjs";
 // @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { onRequest as redirectLegacyCategory } from "../functions/peluang-usaha/index.js";
 
@@ -19,6 +21,20 @@ const legacyCategoryUrlPattern = /\/peluang-usaha\/?\?kategori=/;
 const rows = loadFranchiseStaticRows();
 const directoryHtml = renderListingPage(rows);
 const categoryEntries = getCategoryRouteEntries(rows);
+const kopiCoba = rows.find((row) => row.id === "franchise_f23f5cf9ebd98647");
+assert.ok(kopiCoba, "Kopi Coba fixture must remain in the snapshot");
+assert.equal(canonicalCategoryLabel(kopiCoba.category), "Makanan & Minuman");
+assert.equal(getComparableCapital(kopiCoba), 90_000_000, "total investment must win over its license fee");
+assert.equal(capitalSlugFromValue(getComparableCapital(kopiCoba)), "50-100-juta");
+assert.equal(capitalSlugFromValue(10_000_000), "10-25-juta", "capital boundaries must not overlap");
+assert.equal(capitalSlugFromValue(0), "", "unknown capital must not match a range");
+assert.ok(directoryHtml.includes('name="kota"') && directoryHtml.includes('name="modal"'), "city and capital must be selectable alongside category");
+const legacyCategoryHtml = renderListingPage([{ ...kopiCoba, category: "FnB" }]);
+assert.ok(legacyCategoryHtml.includes('data-category-raw="fnb"'), "legacy category must remain searchable");
+assert.ok(!legacyCategoryHtml.includes('>FnB</a>'), "legacy label must not appear on cards");
+assert.ok(directoryHtml.includes('data-category="makanan &amp; minuman"'), "cards must display a canonical category");
+assert.ok(directoryHtml.includes(`data-city-slugs="${citySlugs(kopiCoba).join(" ")}"`), "card cities must support stacked filters");
+assert.ok(directoryHtml.includes('data-modal-range="50-100-juta"'), "cards must carry one capital range");
 
 assert.equal((directoryHtml.match(/type="search" name="q"/g) || []).length, 1, "directory must expose one primary search input");
 assert.ok(!directoryHtml.includes('data-id="9hd9if8"'), "legacy explanatory section must be removed");
