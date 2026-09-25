@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 // @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { onRequestGet } from "../functions/get-franchises.js";
-import { D1FranchiseRowSchema } from "../src/lib/shared-schemas.ts";
+import { D1FranchiseRowSchema } from "../src/lib/shared-schemas";
 
 const request = (query: string) => new Request(`https://franchisee.id/get-franchises?${query}`);
 

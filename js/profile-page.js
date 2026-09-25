@@ -517,7 +517,7 @@
       });
       const payload = await readProfileJson(response, "Perubahan akun belum bisa disimpan.");
       if (!payload.success) throw new Error(payload.message || "Data gagal disimpan.");
-      setMessage(message, "Tersimpan.", "success");
+      setMessage(message, payload.status === "pending" ? (payload.message || "Perubahan menunggu pemeriksaan admin.") : "Tersimpan.", "success");
       state.accountEditingField = "";
       if (type === "account") state.accountMessage = { type: "success", text: "Akun tersimpan." };
       await loadProfile();
@@ -784,12 +784,12 @@
       const payload = await readProfileJson(response, "File belum bisa diunggah.");
       if (!payload.success) throw new Error(payload.message || "File belum bisa diunggah.");
       const asset = payload.asset || {};
-      if (asset.field && asset.public_url) {
+      if (payload.status !== "pending" && asset.field && asset.public_url) {
         listing[asset.field] = asset.public_url;
       }
       state.uploadMessage = {
         type: "success",
-        text: assetType === "proposal" && asset.knowledge_status === "processing"
+        text: payload.status === "pending" ? (payload.message || "File menunggu pemeriksaan admin.") : assetType === "proposal" && asset.knowledge_status === "processing"
           ? "Proposal berhasil diunggah. Informasinya sedang dibaca dan hasilnya akan masuk ke tinjauan data."
           : "File berhasil diunggah.",
       };

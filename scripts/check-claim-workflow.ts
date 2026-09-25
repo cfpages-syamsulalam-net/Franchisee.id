@@ -7,11 +7,11 @@ const actor = { id: 'applicant', roles: [{ role: 'franchisor' }] };
 const admin = { id: 'reviewer', roles: [{ role: 'admin' }] };
 const data = { form_type: 'claim', unclaimed_id: 'legacy-1', brand_name: 'Sample Brand', email_contact: 'owner@example.test', whatsapp: '08123456789', company_name: 'PT Sample', pic_name: 'Person' };
 function database() {
-  const state = { owner: null, listingStatus: 'unclaimed', claimStatus: null, profile: null, queued: false, sourceSheet: 'UNCLAIMED', brandExists: false };
+  const state: { owner: string | null; listingStatus: string; claimStatus: string | null; profile: string | null; queued: boolean; sourceSheet: string; brandExists: boolean } = { owner: null, listingStatus: 'unclaimed', claimStatus: null, profile: null, queued: false, sourceSheet: 'UNCLAIMED', brandExists: false };
   const db = {
-    prepare(sql) {
+    prepare(sql: string) {
       return {
-        bind(...values) {
+        bind(...values: unknown[]) {
           return {
             sql, values,
             async first() {
@@ -33,13 +33,13 @@ function database() {
         }
       };
     },
-    async batch(statements) {
+    async batch(statements: Array<{ sql: string; values: unknown[] }>) {
       const sql = statements.map(x => x.sql);
       if (sql.some(x => x.includes('INSERT INTO franchise_claims'))) {
         assert.equal(statements.length, 2, 'claim submit only stores the private profile and claim');
         assert.match(sql[1], /status = 'unclaimed'/);
         assert.match(sql[1], /NOT EXISTS/);
-        state.profile = statements[0].values[0];
+        state.profile = statements[0].values[0] as string;
         state.claimStatus = 'pending';
         return [{ meta: { changes: 1 } }, { meta: { changes: 1 } }];
       }

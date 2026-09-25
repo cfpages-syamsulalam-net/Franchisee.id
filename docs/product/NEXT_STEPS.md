@@ -1,6 +1,6 @@
 # Franchisee.id: what to do next
 
-Reviewed 24 September 2026. Read [user journeys](USER_JOURNEYS.md) first. This is a decision and verification queue for the current codebase, not a promise that code paths already work in every production account. `P0` means protect ownership or prove a core path before expanding traffic; `P1` means close a known operational gap; `P2` means improve acquisition once the core paths are sound. The order below is intentional.
+Reviewed 24 September 2026. Read [user journeys](USER_JOURNEYS.md) first. Use [controlled account and dashboard QA](AUTH_AND_DASHBOARD_QA.md) for signed in acceptance. This is a decision and verification queue for the current codebase, not a promise that code paths already work in every production account. `P0` means protect ownership or prove a core path before expanding traffic; `P1` means close a known operational gap; `P2` means improve acquisition once the core paths are sound. The order below is intentional.
 
 **Historical data review:** [suggestion 119](../../SUGGESTION.md) records an audit of reachable commits: raw payload keys appeared, but no populated NIB/HAKI values; populated PIC and contact values were also present in top-level fields. History rewriting for raw_payload alone would not remove those contacts. The current public export omits raw_payload.
 
@@ -39,3 +39,14 @@ Use a disposable record and keep a dated result (pass/fail/not run) for each row
 | Admin/Premium owner | Create/confirm a controlled Premium order, inspect Review/Premium and Publication/System, resolve payment, confirm owner/public state. | No duplicate order or ownership leak; subscription, listing tier, outbound notice, queue and public badge agree. |
 
 **Working rule:** record one failed step with its persona, account role, route, exact action and sanitized response; fix its root cause and rerun that journey before adding more features. The existing [dashboard job map](../../DASHBOARD.md) and [state transition audit](../architecture/STATE_TRANSITION_AUDIT.md) locate owners of cross-role failures. Never paste access tokens, payment proofs or personal lead details into this document.
+
+## Acceptance note for a larger change
+
+Before coding a new dashboard or user journey, fill these six short lines in the relevant issue or plan. Delete lines that do not apply:
+
+- Goal: What changes for the user or business?
+- Who uses it: Which personas and roles?
+- Must show: What state and evidence must they see?
+- Must not show: What private data or unsafe action must stay hidden?
+- Failure state: What happens when data, permission, or the external service fails?
+- Done when: Which local check and controlled production journey prove it?

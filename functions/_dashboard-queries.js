@@ -444,7 +444,7 @@ export async function getRecentOutreach(db) {
   return result.results || [];
 }
 
-export async function getEditSuggestions(db) {
+export async function getEditSuggestions(db, canReviewProfiles = false) {
   const [summary, pending] = await Promise.all([
     db
       .prepare(
@@ -475,10 +475,11 @@ export async function getEditSuggestions(db) {
          LEFT JOIN franchise_site_publications p ON p.franchise_id = f.id AND p.site_id = les.site_id
          LEFT JOIN users u ON u.id = les.suggested_by_user_id
          WHERE les.site_id = ? AND les.status = 'pending'
+          AND (les.field_name <> 'franchisor_profile' OR ? = 1)
          ORDER BY les.created_at DESC
          LIMIT 50`,
       )
-      .bind(SITE_ID)
+      .bind(SITE_ID, canReviewProfiles ? 1 : 0)
       .all(),
   ]);
 

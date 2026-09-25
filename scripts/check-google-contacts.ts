@@ -82,6 +82,7 @@ async function checkBulkDuplicateLookup() {
   }) as typeof fetch;
   try {
     const result = await filterExistingGoogleContacts("token", contacts);
+    if (!result.ok || !("contacts" in result) || !("duplicate_skipped" in result)) throw new Error("Expected successful Google Contacts lookup");
     assert.equal(result.ok, true);
     assert.equal(result.duplicate_skipped, 2);
     assert.equal(result.contacts.length, 198);

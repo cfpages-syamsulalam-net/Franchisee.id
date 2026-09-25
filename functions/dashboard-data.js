@@ -76,7 +76,7 @@ export async function onRequestGet({ request, env }) {
       getPendingPremiumPayments(db),
       getPremiumOperations(db),
       getRecentOutreach(db),
-      getEditSuggestions(db),
+      getEditSuggestions(db, isAdmin(auth)),
       getEditableListings(db),
       getLeadSummary(db),
       getSystemHealth(db, env),

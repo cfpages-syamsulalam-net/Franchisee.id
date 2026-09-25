@@ -5,6 +5,7 @@ import { authErrorResponse } from "../functions/_clerk-auth.js";
 
 async function main() {
   const unavailable = authErrorResponse(new Error("D1_ERROR: Your account has exceeded daily row read limit"));
+  assert.ok(unavailable);
   assert.equal(unavailable.status, 503);
   const body = await unavailable.json();
   assert.equal(body.error, "ACCOUNT_DATA_UNAVAILABLE");

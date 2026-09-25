@@ -10,6 +10,7 @@ import { SITE_ID, EDIT_FIELD_NAME, sanitizeChanges, updateListingStatement } fro
 import { getListingSnapshot, hasAutoApproval } from "./_dashboard-queries.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, parseJson, randomId } from "./_dashboard-utils.js";
 import { manualLocationSummary, manualLocationWriteStatements } from "./_location-writes.js";
+import { OWNER_REVIEW_REASON, reviewedProfileStatements } from "./_profile-owner-review.js";
 import { refreshDashboardQualityChecks } from "./_quality-checks.js";
 import { siteRebuildStatements } from "./_site-publish-queue.js";
 import { createPremiumNotification, queueNotificationEmail, recordPremiumEvent, updatePremiumSettings } from "./_premium-ops.js";
@@ -201,9 +202,21 @@ export async function handleReviewEditSuggestion(db, auth, data) {
   if (approved && !Object.keys(selectedSuggestedChanges).length) {
     return jsonResponse({ success: false, error: "NO_VALID_FIELDS_SELECTED", message: "Field yang dipilih tidak ada di suggestion ini." }, { status: 400 });
   }
-  const skippedFields = requestedFields
+  if (approved && suggestion.reason === OWNER_REVIEW_REASON && suggestion.field_name === EDIT_FIELD_NAME) {
+    const current = await getListingSnapshot(db, suggestion.franchise_id);
+    const previous = parseJson(suggestion.old_value, {});
+    if (!current || current.owner_user_id !== suggestion.suggested_by_user_id ||
+        Object.keys(selectedSuggestedChanges).some((field) => (current[field] ?? null) !== (previous[field] ?? null))) {
+      return jsonResponse({ success: false, error: 'OWNER_REVIEW_STALE',
+        message: 'Data listing berubah sejak usulan diajukan. Tolak usulan lama dan minta pengajuan baru.' }, { status: 409 });
+    }
+  }  const skippedFields = requestedFields
     ? Object.keys(suggestedChanges).filter((field) => !Object.prototype.hasOwnProperty.call(selectedSuggestedChanges, field))
     : [];
+  if (approved && suggestion.reason === OWNER_REVIEW_REASON && !String(data.notes || '').trim()) {
+    return jsonResponse({ success: false, error: 'REVIEW_EVIDENCE_REQUIRED',
+      message: 'Catat dasar pemeriksaan pemilik dan perubahan sebelum menyetujui.' }, { status: 400 });
+  }
   const reviewNotes = [
     data.notes,
     approved && requestedFields ? `Approved fields: ${Object.keys(selectedSuggestedChanges).join(", ")}.` : "",
@@ -225,7 +238,11 @@ export async function handleReviewEditSuggestion(db, auth, data) {
     }, auth.id),
   ];
 
-  if (approved) {
+  if (approved && suggestion.field_name === 'franchisor_profile') {
+    const profileStatements = await reviewedProfileStatements(db, suggestion, selectedSuggestedChanges, auth.id);
+    if (!profileStatements) return jsonResponse({ success: false, error: 'PROFILE_REVIEW_STALE', message: 'Data pemilik sudah berubah. Tolak usulan lama dan minta pengajuan baru.' }, { status: 409 });
+    statements.push(...profileStatements);
+  } else if (approved) {
     const changes = sanitizeChanges(selectedSuggestedChanges);
     statements.push(
       updateListingStatement(db, suggestion.franchise_id, changes),
@@ -247,7 +264,15 @@ export async function handleReviewEditSuggestion(db, auth, data) {
     );
   }
 
-  await db.batch(statements);
+  try {
+    await db.batch(statements);
+  } catch (error) {
+    if (/owner_edit_(already_reviewed|review_notes_required)/.test(String(error))) {
+      return jsonResponse({ success: false, error: 'SUGGESTION_ALREADY_REVIEWED',
+        message: 'Usulan telah diputuskan atau catatan pemeriksaan belum lengkap. Muat ulang daftar Review.' }, { status: 409 });
+    }
+    throw error;
+  }
   return jsonResponse({ success: true, status });
 }
 

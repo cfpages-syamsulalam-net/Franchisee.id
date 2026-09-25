@@ -444,6 +444,14 @@
     }
 
     function getFieldDef(fieldName) {
+      if (fieldName.indexOf("profile_") === 0) {
+        var labels = { whatsapp: "WhatsApp", website_url: "Situs", instagram_url: "Instagram",
+          facebook_url: "Facebook", tiktok_url: "TikTok", youtube_url: "YouTube",
+          linkedin_url: "LinkedIn", company_name: "Nama perusahaan", country_code: "Kode negara",
+          nib_number: "NIB", haki_status: "Status HAKI", haki_number: "Nomor HAKI" };
+        var name = fieldName.slice(8);
+        return { name: fieldName, label: labels[name] || name, type: "text" };
+      }
       return getEditableFields().filter(function (field) { return field.name === fieldName; })[0] || getEditableFields()[0];
     }
 
@@ -678,7 +686,10 @@
         if (decision === "approve") {
           payload.approved_fields = collectSelectedReviewFields(button);
         }
-        await options.postDashboardAction({
+        var notes = window.prompt("Catat alasan dan sumber pemeriksaan sebelum memutuskan usulan ini.", "");
+      if (notes === null || !notes.trim()) { button.disabled = false; return; }
+      payload.notes = notes.trim();
+      await options.postDashboardAction({
           action: payload.action,
           suggestion_id: payload.suggestion_id,
           decision: payload.decision,

@@ -84,7 +84,7 @@ const CANONICAL_ROUTE_MAP = new Map([
   ["/teknologi-digital", "/peluang-usaha/kategori/komputer-teknologi"],
 ]);
 
-const ROOT_FILE_NAMES = new Set(["robots.txt", "sitemap.xml", "sitemap_index.xml", "sitemap-complete.xml", "main-sitemap.xsl"]);
+const ROOT_FILE_NAMES = new Set(["robots.txt", "main-sitemap.xsl"]);
 const ROOT_FILE_EXTENSIONS = new Set([".html", ".xml", ".xsl"]);
 
 const LEGAL_FOOTER_LINKS = `<div class="fr-legal-footer-links" style="background:#050505;border-top:4px solid #ffc03d;margin:0;padding:18px 20px;text-align:center;color:#ffffff;font-size:14px;">

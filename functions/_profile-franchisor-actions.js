@@ -1,4 +1,5 @@
 import { buildUpdate, listingPatch } from "./_profile-listing-patch.js";
+import { queueOwnerReview } from "./_profile-owner-review.js";
 import { auditStatement, jsonResponse, normalizeWhatsapp, textOrNull } from "./_profile-utils.js";
 import { manualLocationSummary, manualLocationWriteStatements } from "./_location-writes.js";
 import { SITE_FRANCHISEE_ID, siteRebuildStatements } from "./_site-publish-queue.js";
@@ -8,14 +9,47 @@ const OWNED_LISTING_QUERY_CHUNK_SIZE = 80;
 
 export async function updateFranchisorProfile(db, actor, data) {
   const existing = await db
-    .prepare("SELECT id FROM franchisor_profiles WHERE user_id = ? LIMIT 1")
+    .prepare("SELECT * FROM franchisor_profiles WHERE user_id = ? LIMIT 1")
     .bind(actor.id)
     .first();
   if (!existing) {
     return jsonResponse({ success: false, message: "Silakan lengkapi form data brand terlebih dahulu." }, { status: 404 });
   }
 
-  await db.batch([
+  const ownerListing = await db.prepare(`SELECT f.id FROM franchises f
+    JOIN franchise_site_publications p ON p.franchise_id = f.id
+    WHERE f.franchisor_profile_id = ? AND f.owner_user_id = ?
+      AND p.site_id = ? AND p.publication_status = 'published' LIMIT 1`)
+    .bind(existing.id, actor.id, SITE_FRANCHISEE_ID).first();
+  if (ownerListing) {
+    const proposed = {
+      company_name: textOrNull(data.company_name), country_code: textOrNull(data.country_code),
+      whatsapp: normalizeWhatsapp(data.whatsapp), website_url: textOrNull(data.website_url),
+      instagram_url: textOrNull(data.instagram_url), facebook_url: textOrNull(data.facebook_url),
+      tiktok_url: textOrNull(data.tiktok_url), youtube_url: textOrNull(data.youtube_url),
+      linkedin_url: textOrNull(data.linkedin_url), nib_number: textOrNull(data.nib_number),
+      haki_status: textOrNull(data.haki_status), haki_number: textOrNull(data.haki_number),
+    };
+    const changed = Object.fromEntries(Object.entries(proposed)
+      .filter(([field, value]) => (existing[field] ?? null) !== value)
+      .map(([field, value]) => [`profile_${field}`, value]));
+    if (Object.keys(changed).length) {
+      const shared = await db.prepare(`SELECT COUNT(*) AS total FROM franchises
+        WHERE franchisor_profile_id = ? AND owner_user_id IS NOT ?`)
+        .bind(existing.id, actor.id).first();
+      if (Number(shared?.total || 0) > 0) {
+        return jsonResponse({ success: false, message: 'Profil ini terhubung dengan listing lain. Hubungi admin untuk memperbarui kontak.' }, { status: 409 });
+      }
+      const current = Object.fromEntries(Object.keys(changed)
+        .map((field) => [field, existing[field.slice(8)] ?? null]));
+      const review = await queueOwnerReview(db, actor, ownerListing.id, changed, current, 'franchisor_profile');
+      if (!review.pending) return jsonResponse({ success: false, message: 'Usulan sebelumnya baru saja diputuskan. Muat ulang dan ajukan ulang.' }, { status: 409 });
+      return jsonResponse({ success: true, status: 'pending', message: review.existing
+        ? 'Perubahan sebelumnya masih menunggu pemeriksaan admin.'
+        : 'Perubahan kontak dan identitas diajukan untuk diperiksa admin. Data publik tetap seperti semula.' });
+    }
+    return jsonResponse({ success: true, profile: existing });
+  }  await db.batch([
     db
       .prepare(
         `UPDATE franchisor_profiles
@@ -49,7 +83,7 @@ export async function updateOwnedListing(db, actor, data) {
   const franchisorProfile = await loadFranchisorProfile(db, actor.id);
   const listing = await db
     .prepare(
-      `SELECT id, owner_user_id, franchisor_profile_id, brand_name, slug
+      `SELECT *
        FROM franchises
        WHERE id = ?
          AND (owner_user_id = ? OR (? IS NOT NULL AND franchisor_profile_id = ?))
@@ -93,7 +127,17 @@ export async function updateOwnedListing(db, actor, data) {
     return jsonResponse({ success: false, message: "Tidak ada field listing yang berubah." }, { status: 400 });
   }
 
-  const update = buildUpdate("franchises", patch, "id");
+  const published = await db.prepare(`SELECT 1 AS published FROM franchise_site_publications
+    WHERE franchise_id = ? AND site_id = ? AND publication_status = 'published' LIMIT 1`)
+    .bind(listing.id, SITE_FRANCHISEE_ID).first();
+  if (published) {
+    if (listing.owner_user_id !== actor.id) return jsonResponse({ success: false, message: 'Listing ini bukan milik akun Anda.' }, { status: 403 });
+    const review = await queueOwnerReview(db, actor, listing.id, patch, listing, 'json_diff');
+    if (!review.pending) return jsonResponse({ success: false, message: 'Usulan sebelumnya baru saja diputuskan. Muat ulang dan ajukan ulang.' }, { status: 409 });
+    return jsonResponse({ success: true, status: 'pending', message: review.existing
+      ? 'Perubahan sebelumnya masih menunggu pemeriksaan admin.'
+      : 'Perubahan diajukan untuk diperiksa admin. Listing publik tetap seperti semula.' });
+  }  const update = buildUpdate("franchises", patch, "id");
   const statements = [
     db.prepare(update.sql).bind(...update.values, listing.id),
     auditStatement(db, "profile.listing.update", "franchises", listing.id, { source: "profile", fields: Object.keys(patch) }, actor.id),

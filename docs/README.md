@@ -4,6 +4,8 @@ Last updated: 2026-09-24 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
+- [Controlled account and dashboard QA](product/AUTH_AND_DASHBOARD_QA.md): disposable roles, owner review, publication and visual acceptance.
+
 ## Source Of Truth
 - `AGENTS.md`: working rules for coding sessions.
 - `CODEBASE.md`: living map of project-owned logic, routes, files, data contracts, and data flows.
