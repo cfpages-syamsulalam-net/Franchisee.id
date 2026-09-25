@@ -1,3 +1,6 @@
+## 2026-09-25 — profile read model smoke check
+- Added scripts/check-profile-boundaries.ts to exercise method denial and verify the empty-account GET read model keeps the response keys expected by the client. Updated SUGGESTION.md, CODEBASE.md, and .context/session-20260925-0837.md to record coverage and remaining authenticated action checks.
+
 ## 2026-09-25 — owner edits, canonical sitemap, dashboard and QA checks
 - `functions/_profile-owner-review.js`, `functions/_profile-franchisor-actions.js`, `functions/profile-upload.js`, `functions/_dashboard-actions.js`, `functions/_dashboard-queries.js`, `functions/dashboard-data.js`, `js/dashboard-review.js`, `js/profile-page.js`: queue published owner contact, listing and media proposals for admin review, require typed evidence, keep public fields intact until approval, restrict private proposals by role, and refresh published pages after approval. `migrations/0039_owner_edit_review_guard.sql` adds a pending proposal index and decision guards. Applied to active D1 and verified index and trigger remotely.
 - `scripts/check-owner-edit-review.ts`, `scripts/check-owner-edit-review-sql.py`, `scripts/check-dashboard-high-volume.ts`: local owner review and 217 listing query checks.
