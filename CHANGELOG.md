@@ -1,3 +1,20 @@
+## 2026-09-26 — Cross-repo: franchisor.id brand canonical family
+
+**Cross-repo change made from another harness (Command Code) at Syamsul's explicit instruction.** Read the scope note before building on it; this repository is the owner of the shared platform, so the change is deliberately minimal and mechanically guarded.
+
+- `functions/_premium.js` — `premiumCanonicalUrl` now returns `https://franchisor.id/usaha/{slug}` for `site_franchisor_id`. The other three sites and the unknown-site fallback keep `https://<domain>/peluang-usaha/{slug}/`. Production evidence and the reason are in the inline comment: franchisor.id serves real brand pages at `/usaha/{slug}` and those pages declare that URL as their own `<link rel="canonical">`, while `/peluang-usaha/{slug}` on that domain returns the site's soft-404 catch-all (HTTP 200 plus the directory home page).
+- `scripts/check-premium-lifecycle.ts` — added `checkPerSiteCanonicalFamilies()`, a behavioural guard asserting all four site URLs, the unknown-site fallback, the absence of `peluang-usaha` in any franchisor canonical, and the presence of the mapping in source.
+- `docs/architecture/PREMIUM_MONETIZATION_PLAN.md` — recorded the per-site brand URL family as a shared contract between this repository and `../Franchisor.id`.
+- Added `.context/session-20260926-0634.md`. This entry records every file changed in this pass.
+
+Why this repository had to change: Premium activation (`handleReviewPremiumPayment` in `functions/_dashboard-actions.js`) writes `franchise_site_publications.canonical_url` for all four network sites from whichever dashboard runs the approval. Without this branch, an approval executed from Franchisee.id's dashboard would write the wrong franchisor canonical. The only caller is that one activation path.
+
+Safety and scope: one function body, one assertion block, one documentation section. No schema, migration, secret, or provider change, and nothing was written to D1. All 15 `*:check` scripts pass, including `premium:lifecycle:check`.
+
+Companion change: `../Franchisor.id` maps the same value in its own `functions/_premium.js` (commit `eb94f7d`) and documents it in `docs/data/SHARED_DATA_CONTRACT.md` and `docs/architecture/FRANCHISE_NETWORK_CONTEXT.md`. The two copies must stay in agreement.
+
+Not done here, recorded so it is not lost: this repository's `scripts/d1-static-publish-poller.mjs` still reads `site_publish_requests`, `published_today`, and `last_error` — a table and columns that exist in no migration and not in the deployed schema (the Franchisor.id copy was corrected in `eb94f7d`); and the `d1_migrations` ledger still has no row for 0034–0036 or 0039 while those objects are live.
+
 ## 2026-09-25 — Franchisor network rollout documentation
 
 - Updated `docs/product/USER_JOURNEYS.md` and `docs/product/NEXT_STEPS.md` to reflect the implemented pending-claim guard and the remaining controlled production QA, and to link the Franchisor membership rollout.

@@ -43,6 +43,16 @@ export function premiumPublicationId(franchiseId, siteId) {
 
 export function premiumCanonicalUrl(siteId, slug) {
   const domain = PREMIUM_NETWORK_SITE_DOMAINS[siteId] || PREMIUM_NETWORK_SITE_DOMAINS.site_franchisee_id;
+  // Cross-repo decision 2026-09-25 (Franchisor.id rollout gate D.4): site_franchisor_id
+  // keeps its own retained /usaha/{slug} brand-page family instead of /peluang-usaha/{slug}.
+  // Evidence: franchisor.id serves real brand pages at /usaha/{slug} and those pages
+  // declare that URL as their own <link rel="canonical">, while the /peluang-usaha/{slug}
+  // form on that domain resolves to the site's soft-404 catch-all (HTTP 200 + directory
+  // home). Without this branch, a Premium approval executed from THIS dashboard writes the
+  // wrong franchisor canonical into franchise_site_publications.canonical_url.
+  // The other three sites keep the existing /peluang-usaha/{slug}/ family.
+  // Guarded by scripts/check-premium-lifecycle.ts.
+  if (siteId === "site_franchisor_id") return `https://franchisor.id/usaha/${slug}`;
   return `https://${domain}/peluang-usaha/${slug}/`;
 }
 

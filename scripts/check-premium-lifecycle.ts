@@ -5,6 +5,8 @@ import { readFileSync } from "node:fs";
 import { loadDueEmails } from "../functions/_premium-email-worker.js";
 // @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { expirePremiumAfterGrace } from "../functions/_premium-lifecycle.js";
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
+import { premiumCanonicalUrl } from "../functions/_premium.js";
 
 const calls: Array<{ sql: string; params: unknown[] }> = [];
 const candidateRows = [
@@ -62,8 +64,29 @@ async function main() {
   assert.match(premiumLifecycle, /publication_status = 'hidden'/);
 
   await checkPremiumRenewalInterleaving();
+  checkPerSiteCanonicalFamilies();
 
   console.log("Premium lifecycle checks passed, including renewal interleaving.");
+}
+
+// One canonical brand URL family per site. Franchisor.id is deliberately different:
+// it keeps its own retained /usaha/{slug} family, which is the URL the live franchisor
+// brand pages already declare, and which the other three sites do not use. This is a
+// cross-repo contract shared with Franchisor.id/functions/_premium.js — keep both copies
+// in agreement, or a Premium approval writes a canonical that does not resolve.
+function checkPerSiteCanonicalFamilies() {
+  assert.equal(premiumCanonicalUrl("site_franchisor_id", "kopi-coba"), "https://franchisor.id/usaha/kopi-coba",
+    "franchisor.id brand pages use the /usaha/{slug} family");
+  assert.equal(premiumCanonicalUrl("site_franchisee_id", "kopi-coba"), "https://franchisee.id/peluang-usaha/kopi-coba/");
+  assert.equal(premiumCanonicalUrl("site_franchise_id", "kopi-coba"), "https://franchise.id/peluang-usaha/kopi-coba/");
+  assert.equal(premiumCanonicalUrl("site_waralaba_id", "kopi-coba"), "https://waralaba.id/peluang-usaha/kopi-coba/");
+  assert.equal(premiumCanonicalUrl("site_unknown_id", "kopi-coba"), "https://franchisee.id/peluang-usaha/kopi-coba/",
+    "an unknown site still falls back to the franchisee domain");
+  assert.doesNotMatch(premiumCanonicalUrl("site_franchisor_id", "kopi-coba"), /peluang-usaha/,
+    "no franchisor canonical may use the /peluang-usaha/ family");
+
+  const premiumSource = readFileSync("functions/_premium.js", "utf8");
+  assert.match(premiumSource, /if \(siteId === "site_franchisor_id"\) return `https:\/\/franchisor\.id\/usaha\/\$\{slug\}`;/);
 }
 
 async function checkPremiumRenewalInterleaving() {

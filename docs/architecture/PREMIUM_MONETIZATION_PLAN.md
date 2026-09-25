@@ -34,6 +34,12 @@ Implementation idea:
 - Premium: eligible for all network sites through `franchise_site_publications`.
 - Dashboard shows publication status per site and public URLs.
 
+Per-site brand URL family (cross-repo decision, 2026-09-25):
+- `franchisee.id`, `franchise.id`, and `waralaba.id` publish brand pages at `https://<domain>/peluang-usaha/{slug}/`.
+- `franchisor.id` publishes brand pages at `https://franchisor.id/usaha/{slug}` — its own retained family, used for legacy and new brands, deliberately different from the other three so the two audiences get distinct URLs and intent instead of near-duplicates.
+- Evidence: franchisor.id serves real brand pages at `/usaha/{slug}` and those pages declare that URL as their own `<link rel="canonical">`; the `/peluang-usaha/{slug}` form on that domain resolves to the site's soft-404 catch-all (HTTP 200 plus the directory home page), so it is not a page at all.
+- This is a shared contract: `functions/_premium.js` here and `../Franchisor.id/functions/_premium.js` must agree, because Premium activation writes `franchise_site_publications.canonical_url` for all four sites from whichever dashboard runs the approval. Guarded by `scripts/check-premium-lifecycle.ts`.
+
 Why it matters:
 - The franchisor pays once but gets multiple search surfaces and domain contexts.
 - The network can target different search intent without duplicating brand data.
