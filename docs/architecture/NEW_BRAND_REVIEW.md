@@ -1,5 +1,7 @@
 # New-brand ownership review
 
+**Network adoption, 2026-09-25:** This Franchisee.id contract and shared D1 migrations `0037`–`0039` must also govern new-brand submissions and later owner public edits from Franchisor.id. The Franchisor July port predates these safeguards; its current [rollout plan](https://github.com/cfpages-admtravelbos/Franchisor.id/blob/main/docs/product/NETWORK_MEMBERSHIP_ROLLOUT_PLAN.md) requires parity before enabling production onboarding. A membership payment does not bypass independent ownership review or make a page live.
+
 A franchisor form is an applicant's claim, not proof of authority. The submitted package stays private until an admin checks ownership through a source independent of the application.
 
 ## State and access

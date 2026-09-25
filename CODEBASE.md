@@ -1,3 +1,7 @@
+## 2026-09-25 Franchise Network expansion context
+
+Franchisee.id remains the owner of the shared D1 migration chain, current ownership review rules, one-brand Premium order/subscription lifecycle, and site rebuild queue used by Franchisor.id. The Franchisor repository has a July adapted application but its live protected routes still served legacy HTML at the 2026-09-25 anonymous check. Its older claim handler can assign owner during submit, unlike this repository's pending-claim guard. The [Franchisor rollout plan](https://github.com/cfpages-admtravelbos/Franchisor.id/blob/main/docs/product/NETWORK_MEMBERSHIP_ROLLOUT_PLAN.md) and [journeys](https://github.com/cfpages-admtravelbos/Franchisor.id/blob/main/docs/product/FRANCHISOR_USER_JOURNEYS.md) define parity, deployment, and per-site publication gates; shared schema changes continue through this repository.
+
 ## 2026-09-25 dashboard account controls
 
 `src/pages/dashboard/index.astro` shows Ganti akun and Keluar in the signed-in header. `js/dashboard-account.js` owns Clerk sign-out, dashboard cache cleanup, destination routing, and retry feedback. `js/dashboard-admin.js` provides cache/status callbacks and reflects Clerk session state during normal load, login prompt, and data errors. `css/dashboard.css` handles desktop/mobile layout and focus; `scripts/check-dashboard-account.mjs` checks account-action behavior.

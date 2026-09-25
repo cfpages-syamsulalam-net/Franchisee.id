@@ -1,3 +1,9 @@
+## 2026-09-25 — Franchisor network rollout documentation
+
+- Updated `docs/product/USER_JOURNEYS.md` and `docs/product/NEXT_STEPS.md` to reflect the implemented pending-claim guard and the remaining controlled production QA, and to link the Franchisor membership rollout.
+- Updated `docs/architecture/PREMIUM_MONETIZATION_PLAN.md`, `docs/architecture/NEW_BRAND_REVIEW.md`, and `docs/product/AUTH_AND_DASHBOARD_QA.md` with the one-brand shared membership contract, trust baseline, cross-site readiness distinction, and controlled Franchisor/account checks.
+- Updated `CODEBASE.md` and `docs/README.md` to route shared-platform work to the Franchisor rollout plan and user journeys; added `.context/session-20260925-1913.md`. This `CHANGELOG.md` entry records every repository file changed in this documentation pass. No runtime code or shared D1 schema changed.
+
 ## 2026-09-25 — dashboard account actions
 
 - `src/pages/dashboard/index.astro` adds visible Ganti akun and Keluar buttons with icons to the signed-in dashboard header and loads the new account controller.

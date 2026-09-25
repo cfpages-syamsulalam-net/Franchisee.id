@@ -1,5 +1,7 @@
 # Premium Monetization Plan
 
+**Cross-site rollout update, 2026-09-25:** The current shared code still sets a Rp3.000.000 annual base for **one brand per membership** and names Franchisee.id, Franchise.id, Franchisor.id, and Waralaba.id as eligible sites. This document describes the Franchisee implementation and earlier product decisions; it does not prove that every named site's application, publication, or public page is live. Franchisor.id's [current rollout plan](https://github.com/cfpages-admtravelbos/Franchisor.id/blob/main/docs/product/NETWORK_MEMBERSHIP_ROLLOUT_PLAN.md) separates approved payment, entitlement, content readiness, site publication, deployment, and verified URL. Before promoting or charging for Franchisor exposure, reconcile the existing payment-before-readiness behavior with a clear rule for paid-but-not-ready listings and term start, and pass the controlled cross-site journey. Keep one shared order/subscription lifecycle and one email scheduler.
+
 Last updated: 2026-07-04 06:36 (Asia/Jakarta)
 
 This is the working plan and progress tracker for monetizing the Franchisee.id network while keeping the public franchise directory free.

@@ -1,5 +1,7 @@
 # Controlled account and dashboard QA
 
+For the Franchise Network expansion, use the [Franchisor rollout plan](https://github.com/cfpages-admtravelbos/Franchisor.id/blob/main/docs/product/NETWORK_MEMBERSHIP_ROLLOUT_PLAN.md) and its separate per-site acceptance matrix. A Franchisor repository build or legacy route returning 200 does not prove the shared identity or membership journey is live.
+
 Use disposable accounts and a disposable brand. Record the date, role, route, action, expected outcome, actual outcome, and sanitized request ID for each run. Never paste tokens, personal contacts, or real payment details into test records. These steps require a signed in operator and are not proved by a repository build.
 
 ## Identity and access
@@ -8,6 +10,8 @@ Use disposable accounts and a disposable brand. Record the date, role, route, ac
 - Register with Google, complete `/sso-callback/`, then log in using the same email by the other available method. Check whether Clerk links the intended identity before changing anything in D1.
 - Request password recovery, use the email link once, and check the expired link and wrong email states.
 - Visit `/profil` and `/dashboard` signed out, then with franchisee, franchisor, staff, and admin sessions. Confirm that tabs and API responses follow the actual role, never another account's data. Log out and check both shells again.
+- On `/dashboard`, confirm Ganti akun and Keluar appear only with a Clerk session. Ganti akun should end the old session and return to dashboard login; Keluar should open the homepage. A failed sign-out must leave the controls usable with a retry message.
+- Once the Franchisor app is deployed, sign the same test person into both domains and verify one Clerk identity maps to one D1 user without assuming cross-domain cookies. Check expired, denied, and role-switched sessions on each origin.
 
 ## Visual check at desktop and narrow mobile width
 
