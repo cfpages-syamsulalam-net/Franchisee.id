@@ -6,7 +6,7 @@ Reviewed 24 September 2026. Read [user journeys](USER_JOURNEYS.md) first. Use [c
 
 **Ownership gate implemented:** [new-brand review](../architecture/NEW_BRAND_REVIEW.md) keeps new submissions private until admin verification, and [suggestion 117](../../SUGGESTION.md) tracks controlled production QA. The next gate is disposable-account testing of new-brand approval, rejection, fresh resubmission, existing-brand claims and the resulting public rebuild.
 
-**After the ownership journey passes:** [suggestion 120](../../SUGGESTION.md) is the next coding gate. An approved owner can change public contact details later; hold trust-sensitive changes for review so a later account takeover or dishonest owner cannot silently redirect buyers.
+**After the ownership journey passes:** [suggestion 120](../../SUGGESTION.md) now queues published owner edits for admin review. Test an edit, admin approval, and public rebuild with a disposable signed in brand using [controlled QA](AUTH_AND_DASHBOARD_QA.md).
 ## Start here: three decisions for Syamsul
 
 1. **Brand claims:** code now keeps existing-brand claims `pending` and ownerless until an admin records independent verification. [Claim transition matrix](../forms/CLAIM_TRANSITION_MATRIX.md) explains the rule. Run a controlled production test with a disposable listing and separate accounts before inviting real owners to claim brands.

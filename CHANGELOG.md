@@ -3,6 +3,7 @@
 - `scripts/check-owner-edit-review.ts`, `scripts/check-owner-edit-review-sql.py`, `scripts/check-dashboard-high-volume.ts`: local owner review and 217 listing query checks.
 - `scripts/build-sitemap.mjs`, `scripts/check-sitemap.mjs`, `package.json`, `scripts/copy-legacy-static.mjs`, `robots.txt`: build sitemap XML from canonical generated pages, exclude non-content routes, and advertise the sitemap. Removed legacy tracked `sitemap.xml`, `sitemap_index.xml`, `sitemap-complete.xml`; `public/_redirects` now handles old trailing slash category URLs.
 - `scripts/check-auth-outage.ts`, `scripts/check-claim-workflow.ts`, `scripts/check-google-contacts.ts`, `scripts/check-public-franchise-privacy.ts`: correct nullable TypeScript fixture handling so repository Astro check passes without errors.
+- Production: `c8a3a1b` reached `origin/main` and Cloudflare Pages production; live sitemap contains 276 canonical pages without `/404` or `/login`; `/category/fnb/` and `/category/anak-balita/` redirect once to live categories, anonymous `/dashboard-data` GET returns 401. Protected owner approval still needs controlled signed in QA.
 - `docs/product/AUTH_AND_DASHBOARD_QA.md`, `docs/product/NEXT_STEPS.md`, `docs/architecture/NEW_BRAND_REVIEW.md`, `docs/README.md`, `CODEBASE.md`, `SUGGESTION.md`, `.context/session-20260925-0837.md`: record controlled account QA, acceptance notes, changed contracts, and remaining production checks.
 ## 2026-09-24 23:25 UTC — private new-brand applications and admin review
 
