@@ -464,6 +464,12 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 - Per-stage metadata includes `next_action`, `next_action_detail`, and `sla_days`, used by backend follow-up defaults and the Outreach board instructions.
 - `normalizeOutreachPipelineStatus(value, fallback)` / `outreachPipelineStatusMeta(value)`: Shared status normalization helpers for backend reads/writes.
 
+### File: `js/dashboard-account.js`
+*Dashboard header account actions.*
+- `configure({ clearCache, setStatus })`: Connects the dashboard cache and status message callbacks.
+- `setSession(hasSession)`: Shows the account actions only while a Clerk session exists.
+- `signOut(mode)`: Ends the Clerk session, clears the dashboard cache, and opens `/dashboard/` for account switching or `/` for logout; failed sign-out keeps the controls usable and shows a retry message.
+
 ### File: `js/dashboard-admin.js`
 *Client controller for the protected `/dashboard` shell.*
 - `boot()` / `showLoadingPanel(message)` / `showLoginPanel(message, isError)`: Initializes `window.FranchiseAuth`, shows a skeleton while auth/dashboard authorization is processing, only shows and force-mounts the login form after no usable session or an auth error is known, reads auth headers, handles locked/login states, and fetches `/dashboard-data` through `window.FranchiseFetch` for empty/non-JSON HTTP responses.

@@ -154,6 +154,7 @@
     premiumSettingsForm.addEventListener("submit", premiumOperations.submitPremiumSettings);
   }
   activateDashboardTab(initialDashboardTab(), false);
+  window.FranchiseDashboardAccount.configure({ clearCache: clearDashboardCache, setStatus: setStatus });
   boot();
 
   function bindDashboardTabs() {
@@ -255,13 +256,14 @@
       showLoadingPanel("Memeriksa sesi admin/staff...");
       renderAuthDebug("boot:start");
       await window.FranchiseAuth.init();
+      window.FranchiseDashboardAccount.setSession(Boolean(window.FranchiseAuth.clerk?.session));
       renderAuthDebug("boot:after_init");
       // Cached roles cannot authorize access during a database outage.
       var headers = await window.FranchiseAuth.getAuthHeaders({ skipPendingRoleSync: true });
       renderAuthDebug("boot:after_headers", { hasAuthorization: Boolean(headers.Authorization) });
       if (!headers.Authorization) {
         clearDashboardCache();
-        showLoginPanel("Login dengan akun admin/staff untuk membuka dashboard.", false);
+        showLoginPanel(window.FranchiseAuth.clerk?.session ? "Sesi login tidak dapat dipakai. Gunakan Ganti akun di atas untuk masuk lagi." : "Login dengan akun admin/staff untuk membuka dashboard.", false);
         return;
       }
 
@@ -269,7 +271,7 @@
       renderAuthDebug("dashboard_data:response", { status: response.status, ok: response.ok });
       if (response.status === 401) {
         clearDashboardCache();
-        showLoginPanel("Sesi login kedaluwarsa. Silakan login ulang.", true);
+        showLoginPanel("Sesi login kedaluwarsa. Gunakan Ganti akun di atas untuk masuk lagi.", true);
         return;
       }
       var data = await readDashboardJson(response, "Dashboard gagal dimuat.");
@@ -282,17 +284,15 @@
       currentUserIsAdmin = false;
       if (mainEl) mainEl.setAttribute("data-dashboard-protected", "locked");
       if (window.FranchiseAuth?.clerk?.session) {
+        window.FranchiseDashboardAccount.setSession(true);
         if (loadingEl) loadingEl.hidden = true;
         if (loginEl) loginEl.hidden = true;
         userEl.textContent = "Anda sudah login. Akses dashboard belum dapat diperiksa.";
-        setStatus('Data dashboard belum tersedia. Sesi login Anda tetap aktif. Coba lagi nanti. <button type="button" data-dashboard-retry>Coba lagi</button> <button type="button" data-dashboard-signout>Keluar</button>', true);
+        setStatus('Data dashboard belum tersedia. Sesi login Anda tetap aktif. <button type="button" data-dashboard-retry>Coba lagi</button> atau gunakan Ganti akun di atas.', true);
         statusEl.querySelector("[data-dashboard-retry]").addEventListener("click", boot);
-        statusEl.querySelector("[data-dashboard-signout]").addEventListener("click", async function () {
-          await window.FranchiseAuth.clerk.signOut();
-          window.location.reload();
-        });
         return;
       }
+      window.FranchiseDashboardAccount.setSession(false);
       if (loadingEl) loadingEl.hidden = true;
       if (loginEl) loginEl.hidden = false;
       mountDeferredLogin();
@@ -404,7 +404,9 @@
   function showLoginPanel(message, isError) {
     dashboardState = null;
     currentUserIsAdmin = false;
-    userEl.textContent = "Belum login";
+    var hasSession = Boolean(window.FranchiseAuth?.clerk?.session);
+    window.FranchiseDashboardAccount.setSession(hasSession);
+    userEl.textContent = hasSession ? "Sesi perlu diperbarui" : "Belum login";
     if (mainEl) mainEl.setAttribute("data-dashboard-protected", "locked");
     if (loadingEl) loadingEl.hidden = true;
     if (loginEl) loginEl.hidden = false;

@@ -31,7 +31,7 @@ const ocrProviderMetadataJson = JSON.stringify({
     <link rel="stylesheet" href="/wp-content/plugins/elementor/assets/lib/font-awesome/css/all.min.css?ver=3.32.3">
     <link rel="stylesheet" href="/css/auth-clerk.css">
     <link rel="stylesheet" href="/css/shared-tooltip.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=20260924-ui-audit">
+    <link rel="stylesheet" href="/css/dashboard.css?v=20260925-account-actions">
     <link rel="stylesheet" href="/css/dashboard-auth.css">
     <link rel="stylesheet" href="/css/dashboard-review.css">
     <link rel="stylesheet" href="/css/dashboard-operations.css">
@@ -56,7 +56,13 @@ const ocrProviderMetadataJson = JSON.stringify({
               <p>Ruang kerja internal untuk menjaga listing, Premium, dan publikasi tetap rapi.</p>
             </div>
           </div>
-          <div class="dash-user" data-dashboard-user>Memuat sesi...</div>
+          <div class="dash-account">
+            <div class="dash-user" data-dashboard-user>Memuat sesi...</div>
+            <div class="dash-account-actions" data-dashboard-account-actions hidden>
+              <button type="button" data-dashboard-account-action="switch" data-fr-tooltip="Masuk dengan akun lain"><i class="fas fa-user-circle" aria-hidden="true"></i><span>Ganti akun</span></button>
+              <button type="button" data-dashboard-account-action="logout" data-fr-tooltip="Keluar dari akun ini"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Keluar</span></button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -284,6 +290,7 @@ const ocrProviderMetadataJson = JSON.stringify({
     <script src="/js/dashboard-ocr-results.js" is:inline></script>
     <script src="/js/dashboard-ocr-worker.js" is:inline></script>
     <script src="/js/dashboard-ocr.js" is:inline></script>
-    <script src="/js/dashboard-admin.js" is:inline></script>
+    <script src="/js/dashboard-account.js" is:inline></script>
+    <script src="/js/dashboard-admin.js?v=20260925-account-actions" is:inline></script>
   </body>
 </html>

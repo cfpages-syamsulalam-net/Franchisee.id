@@ -1,3 +1,7 @@
+## 2026-09-25 dashboard account actions
+
+The dashboard header now exposes Ganti akun and Keluar for signed-in sessions, including data-load failure states. Sign-out clears the dashboard session cache and routes to login or home; failure leaves both actions enabled with retry guidance. `js/dashboard-account.js` keeps account behavior outside the 500-plus-line `js/dashboard-admin.js`, which remains the auth/bootstrap, tab, and orchestration facade. Future dashboard additions should stay in focused modules. Focused account check, Astro check, and build passed locally; signed-in production interaction needs controlled staff account QA.
+
 ## 2026-09-24 user journeys and next work
 - Added `docs/product/USER_JOURNEYS.md` and `docs/product/NEXT_STEPS.md` as the persona path and practical decision queue. Code review found a P0 discrepancy: the `/form-submit` claim path grants owner and inserts `approved` while the claim matrix and dashboard review require `pending`; production exploitability remains untested. Prioritized controlled repair, role-by-role production acceptance, publish queue parity, Premium handoff and homepage count scope; updated the claim matrix warning and documentation index.
 ## 2026-09-24 direktori filter dan kategori

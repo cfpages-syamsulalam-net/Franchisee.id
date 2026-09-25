@@ -1,3 +1,7 @@
+## 2026-09-25 dashboard account controls
+
+`src/pages/dashboard/index.astro` shows Ganti akun and Keluar in the signed-in header. `js/dashboard-account.js` owns Clerk sign-out, dashboard cache cleanup, destination routing, and retry feedback. `js/dashboard-admin.js` provides cache/status callbacks and reflects Clerk session state during normal load, login prompt, and data errors. `css/dashboard.css` handles desktop/mobile layout and focus; `scripts/check-dashboard-account.mjs` checks account-action behavior.
+
 ## 2026-09-24 persona journey map
 - `docs/product/USER_JOURNEYS.md` maps the code-backed guest buyer, franchisee, franchisor, claimant, staff and admin handoffs. `docs/product/NEXT_STEPS.md` prioritizes the ownership claim submit/review mismatch, production persona QA and static publish verification. Claim expectation `docs/forms/CLAIM_TRANSITION_MATRIX.md` differs from immediate owner/approved write in `functions/_form-submit-franchisor.js`; see the priority document before changing claim flows.
 ## 2026-09-24 direktori filter gabungan

@@ -1,3 +1,10 @@
+## 2026-09-25 — dashboard account actions
+
+- `src/pages/dashboard/index.astro` adds visible Ganti akun and Keluar buttons with icons to the signed-in dashboard header and loads the new account controller.
+- `js/dashboard-account.js` signs out, clears the session cache, routes to dashboard login or home, and recovers from sign-out failure; `js/dashboard-admin.js` keeps controls in sync with Clerk session and dashboard error states.
+- `css/dashboard.css` styles accessible, responsive account controls; `scripts/check-dashboard-account.mjs` checks signed-out visibility, both destinations, cache clearing, and failure recovery.
+- `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `AUDIT.md`, `SUGGESTION.md`, and `.context/session-20260925-1810.md` record the dashboard responsibility and validation. This entry records all repository files changed in the session, including `CHANGELOG.md`.
+
 ## 2026-09-25 — OCR-assisted security and state-race fixes
 
 - `js/form-02-claim-workflow.js` escapes imported brand names and search highlights in claim suggestions; `scripts/check-claim-workflow.ts` covers markup-bearing names.
