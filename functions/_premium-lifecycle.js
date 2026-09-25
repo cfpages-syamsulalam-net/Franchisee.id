@@ -293,19 +293,6 @@ export async function expirePremiumAfterGrace(db, settings = null) {
 
   let expired = 0;
   for (const row of rows) {
-    const hasReplacement = await db
-      .prepare(
-        `SELECT id
-         FROM franchise_subscriptions
-         WHERE franchise_id = ?
-           AND id != ?
-           AND status = 'active'
-           AND ends_at > CURRENT_TIMESTAMP
-         LIMIT 1`,
-      )
-      .bind(row.franchise_id, row.id)
-      .first()
-      .catch(() => null);
     const statements = [
       db
         .prepare(
@@ -322,46 +309,52 @@ export async function expirePremiumAfterGrace(db, settings = null) {
       }),
     ];
 
-    if (!hasReplacement) {
-      const networkSiteIds = PREMIUM_NETWORK_SITE_IDS.filter((siteId) => siteId !== SITE_FRANCHISEE_ID);
-      const placeholders = networkSiteIds.map(() => "?").join(", ");
+    const networkSiteIds = PREMIUM_NETWORK_SITE_IDS.filter((siteId) => siteId !== SITE_FRANCHISEE_ID);
+    const placeholders = networkSiteIds.map(() => "?").join(", ");
+    statements.push(
+      db
+        .prepare(
+          `UPDATE franchises
+           SET verification_tier = CASE WHEN verification_tier = 'premium' THEN 'free' ELSE verification_tier END,
+               status = CASE WHEN status = 'premium' THEN 'free' ELSE status END,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?
+             AND NOT EXISTS (
+               SELECT 1 FROM franchise_subscriptions
+               WHERE franchise_id = ? AND status = 'active' AND ends_at > CURRENT_TIMESTAMP
+             )`,
+        )
+        .bind(row.franchise_id, row.franchise_id),
+    );
+    if (networkSiteIds.length) {
       statements.push(
         db
           .prepare(
-            `UPDATE franchises
-             SET verification_tier = CASE WHEN verification_tier = 'premium' THEN 'free' ELSE verification_tier END,
-                 status = CASE WHEN status = 'premium' THEN 'free' ELSE status END,
+            `UPDATE franchise_site_publications
+             SET publication_status = 'hidden',
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = ?`,
+             WHERE franchise_id = ?
+               AND site_id IN (${placeholders})
+               AND NOT EXISTS (
+                 SELECT 1 FROM franchise_subscriptions
+                 WHERE franchise_id = ? AND status = 'active' AND ends_at > CURRENT_TIMESTAMP
+               )`,
           )
-          .bind(row.franchise_id),
-      );
-      if (networkSiteIds.length) {
-        statements.push(
-          db
-            .prepare(
-              `UPDATE franchise_site_publications
-               SET publication_status = 'hidden',
-                   updated_at = CURRENT_TIMESTAMP
-               WHERE franchise_id = ?
-                 AND site_id IN (${placeholders})`,
-            )
-            .bind(row.franchise_id, ...networkSiteIds),
-        );
-      }
-      statements.push(
-        ...PREMIUM_NETWORK_SITE_IDS.flatMap((siteId) => siteRebuildStatements(db, {
-          siteId,
-          franchiseId: row.franchise_id,
-          reason: "premium_grace_expired",
-          entityType: "franchise_subscriptions",
-          entityId: row.id,
-          actorUserId: null,
-          source: "premium_email_worker",
-          metadata: { brand_name: row.brand_name, grace_period_days: graceDays },
-        })),
+          .bind(row.franchise_id, ...networkSiteIds, row.franchise_id),
       );
     }
+    statements.push(
+      ...PREMIUM_NETWORK_SITE_IDS.flatMap((siteId) => siteRebuildStatements(db, {
+        siteId,
+        franchiseId: row.franchise_id,
+        reason: "premium_grace_expired",
+        entityType: "franchise_subscriptions",
+        entityId: row.id,
+        actorUserId: null,
+        source: "premium_email_worker",
+        metadata: { brand_name: row.brand_name, grace_period_days: graceDays },
+      })),
+    );
 
     await db.batch(statements);
     expired += 1;

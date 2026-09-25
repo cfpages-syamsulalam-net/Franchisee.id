@@ -18,6 +18,7 @@ export async function requireD1User(request, env, db, options = {}) {
   const session = await authenticateClerkSession(request, env);
   const clerkUser = await getClerkUser(env, session.userId);
   const user = await upsertD1User(db, clerkUser);
+  assertActiveD1User(user);
 
   if (SELF_ASSIGNABLE_ROLES.has(options.requestedRole)) {
     await ensureRole(db, user.id, options.requestedRole);
@@ -72,6 +73,7 @@ export async function syncD1User(request, env, db, requestedRole) {
   const session = await authenticateClerkSession(request, env);
   const clerkUser = await getClerkUser(env, session.userId);
   const user = await upsertD1User(db, clerkUser);
+  assertActiveD1User(user);
 
   if (SELF_ASSIGNABLE_ROLES.has(requestedRole)) {
     await ensureRole(db, user.id, requestedRole);
@@ -249,7 +251,7 @@ export async function upsertD1User(db, clerkUser) {
     await db
       .prepare(
         `UPDATE users
-         SET primary_email = ?, display_name = ?, status = 'active', updated_at = CURRENT_TIMESTAMP
+         SET primary_email = ?, display_name = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`
       )
       .bind(primaryEmail, displayName, existing.id)
@@ -260,9 +262,9 @@ export async function upsertD1User(db, clerkUser) {
       clerk_user_id: clerkUser.id,
       primary_email: primaryEmail,
       display_name: displayName,
-      status: "active",
+      status: existing.status || "active",
     };
-    await applyEmailRoleGrants(db, user);
+    if (user.status === "active") await applyEmailRoleGrants(db, user);
     return user;
   }
 
@@ -277,7 +279,7 @@ export async function upsertD1User(db, clerkUser) {
     await db
       .prepare(
         `UPDATE users
-         SET clerk_user_id = ?, primary_email = ?, display_name = ?, status = 'active', updated_at = CURRENT_TIMESTAMP
+         SET clerk_user_id = ?, primary_email = ?, display_name = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`
       )
       .bind(clerkUser.id, primaryEmail, displayName, existingByEmail.id)
@@ -288,9 +290,9 @@ export async function upsertD1User(db, clerkUser) {
       clerk_user_id: clerkUser.id,
       primary_email: primaryEmail,
       display_name: displayName,
-      status: "active",
+      status: existingByEmail.status || "active",
     };
-    await applyEmailRoleGrants(db, user);
+    if (user.status === "active") await applyEmailRoleGrants(db, user);
     return user;
   }
 
@@ -312,6 +314,12 @@ export async function upsertD1User(db, clerkUser) {
   };
   await applyEmailRoleGrants(db, user);
   return user;
+}
+
+export function assertActiveD1User(user) {
+  if (user?.status !== "active") {
+    throw new AuthError("Akun Anda tidak aktif.", 403, "ACCOUNT_INACTIVE");
+  }
 }
 
 async function ensureRole(db, userId, role) {

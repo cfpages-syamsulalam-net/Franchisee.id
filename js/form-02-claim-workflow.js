@@ -3,6 +3,21 @@
     const S = FF.state;
     const U = FF.utils;
 
+    function escapeClaimHtml(value) {
+        return value.replace(/[&<>"']/g, (character) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        })[character]);
+    }
+
+    function escapeClaimRegex(value) {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+
     FF.fetchUnclaimedBrands = async function () {
         try {
             console.log('🔍 Fetching unclaimed brands...');
@@ -128,9 +143,13 @@
 
             if (matches.length > 0) {
                 claimSearchResults.innerHTML = matches.map((b) => {
-                    const regex = new RegExp(`(${query})`, 'gi');
-                    const highlighted = (b.__displayName || '').replace(regex, '<strong>$1</strong>');
-                    return `<div class="suggestion-item" data-idx="${b.__idx}"><span class="brand-name">${highlighted}</span></div>`;
+                    const displayName = String(b.__displayName || '');
+                    const safeName = escapeClaimHtml(displayName);
+                    const safeQuery = escapeClaimRegex(escapeClaimHtml(query));
+                    const regex = new RegExp(`(${safeQuery})`, 'gi');
+                    const highlighted = safeName.replace(regex, '<strong>$1</strong>');
+                    const index = Number.isInteger(b.__idx) ? b.__idx : -1;
+                    return `<div class="suggestion-item" data-idx="${index}"><span class="brand-name">${highlighted}</span></div>`;
                 }).join('');
                 claimSearchResults.style.display = 'block';
             } else {

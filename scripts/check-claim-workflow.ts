@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { handleFranchisorSubmit } from '../functions/_form-submit-franchisor.js';
 import { handleReviewClaim } from '../functions/_dashboard-actions.js';
 import { findClaimSource } from '../functions/_form-submit-utils.js';
@@ -6,6 +8,45 @@ import { findClaimSource } from '../functions/_form-submit-utils.js';
 const actor = { id: 'applicant', roles: [{ role: 'franchisor' }] };
 const admin = { id: 'reviewer', roles: [{ role: 'admin' }] };
 const data = { form_type: 'claim', unclaimed_id: 'legacy-1', brand_name: 'Sample Brand', email_contact: 'owner@example.test', whatsapp: '08123456789', company_name: 'PT Sample', pic_name: 'Person' };
+
+function checkClaimSuggestionEscaping() {
+  const handlers: Record<string, (this: { value: string }) => void> = {};
+  const input = {
+    value: 'evil',
+    style: {} as Record<string, string>,
+    addEventListener(type: string, handler: (this: { value: string }) => void) {
+      handlers[`claim-brand-search:${type}`] = handler;
+    },
+  };
+  const results = {
+    innerHTML: '',
+    style: {} as Record<string, string>,
+    addEventListener(type: string, handler: (event: { target: { closest(selector: string): null } }) => void) {
+      handlers[`claim-search-results:${type}`] = handler as never;
+    },
+  };
+  const window = {
+    FranchiseForm: {
+      state: {
+        searchableClaimBrands: [{ __displayName: '<img src=x onerror=alert(1)> Evil', __idx: 0 }],
+        unclaimedBrands: [],
+      },
+      utils: {},
+    },
+  };
+  const document = {
+    getElementById(id: string) {
+      return id === 'claim-brand-search' ? input : id === 'claim-search-results' ? results : null;
+    },
+  };
+  runInNewContext(readFileSync('js/form-02-claim-workflow.js', 'utf8'), { window, document, console, URLSearchParams });
+  (window.FranchiseForm as typeof window.FranchiseForm & { initClaimSearchBindings(): void }).initClaimSearchBindings();
+  handlers['claim-brand-search:input'].call(input);
+  assert.match(results.innerHTML, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.doesNotMatch(results.innerHTML, /<img\b/i);
+  assert.match(results.innerHTML, /<strong>Evil<\/strong>/);
+}
+
 function database() {
   const state: { owner: string | null; listingStatus: string; claimStatus: string | null; profile: string | null; queued: boolean; sourceSheet: string; brandExists: boolean } = { owner: null, listingStatus: 'unclaimed', claimStatus: null, profile: null, queued: false, sourceSheet: 'UNCLAIMED', brandExists: false };
   const db = {
@@ -65,6 +106,7 @@ function database() {
 }
 async function response(value: Promise<Response>) { const r = await value; return { code: r.status, body: await r.json() as Record<string, unknown> }; }
 async function main() {
+  checkClaimSuggestionEscaping();
   const { db, state } = database();
   assert.equal((await findClaimSource(db as never, { unclaimed_id: 'listing-1', brand_name: 'Sample Brand' }))?.id, 'listing-1');
   assert.equal((await findClaimSource(db as never, { unclaimed_id: 'legacy-1', brand_name: 'Sample Brand' }))?.id, 'listing-1');

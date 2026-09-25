@@ -75,7 +75,8 @@ export function buildOcrTextKey(input = {}) {
   const asset = slugPart(input.assetId || input.contentHash || randomId());
   const kind = slugPart(input.kind || "ocr");
   const suffix = input.contentHash ? slugPart(input.contentHash).slice(0, 32) : randomId();
-  return `franchises/${franchise}/${TEXT_OBJECT_PREFIX}/${asset}-${kind}-${suffix}.txt`;
+  const revision = input.revision ? `-${slugPart(input.revision)}` : "";
+  return `franchises/${franchise}/${TEXT_OBJECT_PREFIX}/${asset}-${kind}-${suffix}${revision}.txt`;
 }
 
 function compactMetadata(input) {

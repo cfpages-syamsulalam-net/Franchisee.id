@@ -1,3 +1,12 @@
+## 2026-09-25 — OCR-assisted security and state-race fixes
+
+- `js/form-02-claim-workflow.js` escapes imported brand names and search highlights in claim suggestions; `scripts/check-claim-workflow.ts` covers markup-bearing names.
+- `js/auth-clerk-core.js` limits OAuth `next` and pending callback destinations to same-origin paths; `scripts/check-auth-client.mjs` covers protocol-relative and normalized URL attacks.
+- `functions/_clerk-auth.js` preserves non-active D1 account status during Clerk sync and rejects protected access for those users; `scripts/check-auth-outage.ts` covers suspended and deleted accounts.
+- `functions/_ocr-job-claiming.js` returns only successfully claimed rows, renews ownership before result writes, and parses ISO timestamps for stale release; `functions/_ocr-job-runner.js` fences result batches and completion; `functions/_ocr-text-store.js` and `functions/_proposal-knowledge.js` give claim revisions distinct R2 keys; `scripts/check-ocr-job-runner.ts` covers simultaneous selection, stale reclaim, and distinct keys.
+- `functions/_premium-lifecycle.js` checks for a live replacement subscription inside downgrade and publication SQL; `scripts/check-premium-lifecycle.ts` covers renewal during expiry.
+- `AUDIT.md`, `CODEBASE.md`, `TECHNICAL_INVENTORY.md`, `docs/architecture/STATE_TRANSITION_AUDIT.md`, `SUGGESTION.md`, and `.context/session-20260925-1452.md` record the selected-file review, changed contracts, validation, and remaining production QA. This `CHANGELOG.md` entry records every repository file touched by the fix.
+
 ## 2026-09-25 — profile read model smoke check
 - Added scripts/check-profile-boundaries.ts to exercise method denial and verify the empty-account GET read model keeps the response keys expected by the client. Updated SUGGESTION.md, CODEBASE.md, and .context/session-20260925-0837.md to record coverage and remaining authenticated action checks.
 

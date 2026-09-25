@@ -12,6 +12,10 @@ import { normalizeOcrText } from "../functions/_ocr-provider-adapters.js";
 import { getOcrEnrichmentQueue } from "../functions/_ocr-enrichment-review.js";
 // @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { attachDocumentSuggestionEvidence } from "../functions/_dashboard-review-evidence.js";
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
+import { claimPendingJobs, renewOcrJobClaim } from "../functions/_ocr-job-claiming.js";
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
+import { buildOcrTextKey } from "../functions/_ocr-text-store.js";
 
 type OcrEnrichmentItem = {
   suggested_value: {
@@ -26,6 +30,14 @@ type OcrEnrichmentItem = {
 };
 
 async function main() {
+  const textKeyInput = { franchiseId: "franchise_1", assetId: "asset_1", contentHash: "same-content", kind: "ocr-cache" };
+  assert.notEqual(
+    buildOcrTextKey({ ...textKeyInput, revision: "2026-09-25T07:00:00.000Z" }),
+    buildOcrTextKey({ ...textKeyInput, revision: "2026-09-25T07:15:00.000Z" }),
+    "a stale OCR claim must not overwrite the new claim's R2 text object",
+  );
+  assert.match(readFileSync("functions/_ocr-job-runner.js", "utf8"), /kind: "ocr-cache",\s*revision: job\.claimStartedAt/);
+  assert.match(readFileSync("functions/_proposal-knowledge.js", "utf8"), /revision: input\.revision/);
   const enqueue = DashboardActionSchema.safeParse({
     action: "enqueue_ocr_jobs",
     limit: 25,
@@ -234,7 +246,115 @@ async function main() {
   assert.match(claimingSource, /STALE_RUNNING_JOB_MINUTES = 15/);
   assert.match(claimingSource, /releaseStaleRunningJobs/);
   assert.match(claimingSource, /status = 'running'/);
-  assert.match(claimingSource, /started_at <= datetime\('now', \?\)/);
+  assert.match(claimingSource, /datetime\(started_at\) <= datetime\('now', \?\)/);
+  assert.match(claimingSource, /SET status = 'running', started_at = \?/);
+
+  const pendingJob = {
+    id: "ocrjob_race",
+    asset_id: "asset_race",
+    franchise_id: "franchise_race",
+    source_url: "https://assets.example.test/page.jpg",
+    mime_type: "image/jpeg",
+    attempt_count: 0,
+    requested_by_user_id: "user_race",
+    display_order: 0,
+    status: "pending" as "pending" | "running",
+    started_at: null as string | null,
+  };
+  let simultaneousSelections = 0;
+  let staleReleases = 0;
+  let releaseSelections!: () => void;
+  const bothSelectionsStarted = new Promise<void>((resolve) => { releaseSelections = resolve; });
+  const raceDb = {
+    prepare(sql: string) {
+      let values: unknown[] = [];
+      return {
+        bind(...bound: unknown[]) { values = bound; return this; },
+        async all() {
+          if (!/FROM ocr_jobs j/i.test(sql)) return { results: [] };
+          const selected = pendingJob.status === "pending" ? [{ ...pendingJob }] : [];
+          simultaneousSelections += 1;
+          if (simultaneousSelections === 2) releaseSelections();
+          await bothSelectionsStarted;
+          return { results: selected };
+        },
+        async run() {
+          if (/SET started_at = \?/i.test(sql) && pendingJob.status === "running" && pendingJob.started_at === values[2]) {
+            pendingJob.started_at = String(values[0]);
+            return { meta: { changes: 1 } };
+          }
+          if (/datetime\(started_at\) <= datetime\('now', \?\)/i.test(sql)
+            && pendingJob.status === "running"
+            && Date.parse(pendingJob.started_at || "") <= Date.now() - (15 * 60 * 1000)) {
+            pendingJob.status = "pending";
+            pendingJob.started_at = null;
+            staleReleases += 1;
+            return { meta: { changes: 1 } };
+          }
+          return { meta: { changes: 0 } };
+        },
+        sql,
+        get values() { return values; },
+      };
+    },
+    async batch(statements: Array<{ sql: string; values: unknown[] }>) {
+      return statements.map((statement) => {
+        if (/SET status = 'running'/i.test(statement.sql) && pendingJob.status === "pending") {
+          pendingJob.status = "running";
+          pendingJob.started_at = String(statement.values[0]);
+          return { meta: { changes: 1 } };
+        }
+        return { meta: { changes: 0 } };
+      });
+    },
+  };
+  const competingClaims = await Promise.all([
+    claimPendingJobs(raceDb as never, 1, pendingJob.id),
+    claimPendingJobs(raceDb as never, 1, pendingJob.id),
+  ]);
+  assert.deepEqual(competingClaims.map((jobs: unknown[]) => jobs.length).sort(), [0, 1], "only the worker whose conditional update changed the pending row may process it");
+
+  const staleClaim = competingClaims.flat().find((job: any) => job.claimStartedAt);
+  assert.ok(staleClaim, "the winning claim carries its start-time fence");
+  pendingJob.status = "running";
+  pendingJob.started_at = new Date(Date.now() - (16 * 60 * 1000)).toISOString();
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  const reclaimed = await claimPendingJobs(raceDb as never, 1, pendingJob.id);
+  assert.equal(staleReleases, 1, "the stale-running release clears the previous claim before reclaim");
+  assert.equal(reclaimed.length, 1, "a stale release makes the pending job available to a new worker");
+  assert.notEqual(reclaimed[0].claimStartedAt, staleClaim.claimStartedAt, "reclaim must replace the old claim fence");
+  const stillRunning = pendingJob.status === "running";
+  assert.equal(stillRunning && pendingJob.started_at === staleClaim.claimStartedAt, false, "the old worker cannot pass the claim fence after reclaim");
+  assert.equal(stillRunning && pendingJob.started_at === reclaimed[0].claimStartedAt, true, "the new worker still owns the running claim");
+  const staleOwner = { ...staleClaim };
+  let stalePersistenceBatches = 0;
+  if (await renewOcrJobClaim(raceDb as never, staleOwner)) stalePersistenceBatches += 1;
+  assert.equal(stalePersistenceBatches, 0, "the stale owner cannot start a persistence batch after reclaim");
+  const freshOwner = { ...reclaimed[0] };
+  assert.equal(await renewOcrJobClaim(raceDb as never, freshOwner), true, "the current owner can renew its claim");
+  assert.equal(pendingJob.started_at, freshOwner.claimStartedAt, "the renewal writes its new timestamp fence");
+
+  const runnerSource = readFileSync("functions/_ocr-job-runner.js", "utf8");
+  assert.match(runnerSource, /SET status = 'succeeded'[\s\S]*?WHERE id = \? AND status = 'running' AND started_at = \?/);
+  assert.match(runnerSource, /SET status = 'failed'[\s\S]*?WHERE id = \? AND status = 'running' AND started_at = \?/);
+  assert.match(runnerSource, /SET status = 'pending'[\s\S]*?WHERE id = \? AND status = 'running' AND started_at = \?/);
+  assert.match(runnerSource, /SET status = 'needs_review'[\s\S]*?WHERE id = \? AND status = 'running' AND started_at = \?/);
+  assert.match(runnerSource, /\.bind\(result\.providerKey, result\.contentHash, job\.id, job\.claimStartedAt\)/);
+  assert.equal((runnerSource.match(/\.bind\(cleanError\(message\), job\.id, job\.claimStartedAt\)/g) || []).length, 2);
+  assert.match(runnerSource, /markJobNeedsReviewStatement\(db, job\.id, job\.claimStartedAt,/);
+  assert.match(runnerSource, /\.bind\(cleanError\(message\), userId, jobId, claimStartedAt\)/);
+  assert.match(claimingSource, /WHERE id = \? AND status = 'running' AND started_at = \?/);
+  assert.match(claimingSource, /\.bind\(cleanOcrError\(reason\), job\.id, job\.claimStartedAt\)/);
+  assert.match(claimingSource, /\.bind\(nextStartedAt, job\.id, previousStartedAt\)/);
+  const processSource = runnerSource.slice(runnerSource.indexOf("async function processJob("), runnerSource.indexOf("async function successStatements("));
+  assert.match(processSource, /if \(!await renewOcrJobClaim\(db, job\)\) return claimLostResult\(job\);\s*const storedText = await storeOcrTextObject/);
+  assert.match(processSource, /if \(!await renewOcrJobClaim\(db, job\)\) return claimLostResult\(job\);\s*const knowledgeStatements = await successStatements/);
+  const batchPositions = [...processSource.matchAll(/await db\.batch\(/g)].map((match) => match.index || 0);
+  assert.ok(batchPositions.length >= 5, "all result persistence batches remain in the runner path");
+  for (const position of batchPositions) {
+    const beforeBatch = processSource.slice(Math.max(0, position - 700), position);
+    assert.match(beforeBatch, /if \(!await renewOcrJobClaim\(db, job\)\) return claimLostResult\(job\);/, "each result batch must be preceded by a successful claim renewal");
+  }
 
   const batchSource = readFileSync("functions/_ocr-batch-runs.js", "utf8");
   assert.match(batchSource, /releaseStaleRunningJobs\(db, id\)/);

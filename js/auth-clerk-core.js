@@ -219,11 +219,12 @@
     }
 
     function setPendingNext(url) {
-      if (!url || !url.startsWith("/")) return;
+      const safeUrl = safeNextPath(url);
+      if (!safeUrl) return;
       try {
-        sessionStorage.setItem(PENDING_NEXT_KEY, url);
+        sessionStorage.setItem(PENDING_NEXT_KEY, safeUrl);
       } catch (_error) {
-        Auth.pendingNext = url;
+        Auth.pendingNext = safeUrl;
       }
     }
 
@@ -390,7 +391,15 @@
 
     async function navigateAfterOAuth(target) {
       clearPendingNext();
-      const targetUrl = new URL(target || currentAuthUrl(), window.location.origin);
+      let targetUrl;
+      try {
+        targetUrl = new URL(target || currentAuthUrl(), window.location.origin);
+      } catch (_error) {
+        targetUrl = new URL(currentAuthUrl(), window.location.origin);
+      }
+      if (targetUrl.origin !== window.location.origin) {
+        targetUrl = new URL(currentAuthUrl(), window.location.origin);
+      }
       const currentUrl = new URL(window.location.href);
       removeClerkRedirectParamsFromUrl(currentUrl);
 
@@ -547,12 +556,11 @@
 
     function nextUrl(root) {
       const next = new URLSearchParams(window.location.search).get("next");
-      const rootNext = root?.getAttribute("data-auth-next");
-      if (root?.getAttribute("data-auth-variant") === "staff" && rootNext && rootNext.startsWith("/")) {
+      const rootNext = safeNextPath(root?.getAttribute("data-auth-next"));
+      if (root?.getAttribute("data-auth-variant") === "staff" && rootNext) {
         return rootNext;
       }
-      if (next && next.startsWith("/")) return next;
-      return rootNext && rootNext.startsWith("/") ? rootNext : "/profil/";
+      return safeNextPath(next) || rootNext || "/profil/";
     }
 
     function registrationNextUrl(role) {
@@ -565,7 +573,17 @@
 
     function nextUrlFromSearch() {
       const next = new URLSearchParams(window.location.search).get("next");
-      return next && next.startsWith("/") ? next : "";
+      return safeNextPath(next);
+    }
+
+    function safeNextPath(value) {
+      if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return "";
+      try {
+        const url = new URL(value, window.location.origin);
+        return url.origin === window.location.origin ? url.pathname + url.search + url.hash : "";
+      } catch (_error) {
+        return "";
+      }
     }
 
     function sanitizedLocation() {

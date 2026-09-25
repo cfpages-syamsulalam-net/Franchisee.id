@@ -37,6 +37,7 @@ export async function proposalKnowledgeStatements(db, input) {
     franchiseId: input.listing.id,
     assetId: input.assetId,
     contentHash: input.result.contentHash,
+    revision: input.revision,
     kind: input.result.method || "proposal",
     method: input.result.method,
   });

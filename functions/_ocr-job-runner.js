@@ -4,7 +4,7 @@ import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
 import { auditStatement, assertAdmin, isAdmin, jsonResponse, randomId } from "./_dashboard-utils.js";
 import { callOcrProvider } from "./_ocr-provider-adapters.js";
 import { maskBatchRow, refreshBatchProgress } from "./_ocr-batch-runs.js";
-import { claimPendingJobs, cleanOcrError as cleanError, releaseUnprocessedJobs, textOrNull } from "./_ocr-job-claiming.js";
+import { claimPendingJobs, cleanOcrError as cleanError, releaseUnprocessedJobs, renewOcrJobClaim, textOrNull } from "./_ocr-job-claiming.js";
 import { getActiveOcrRunLease, requireOcrRunLease } from "./_ocr-run-lease.js";
 import { getOcrWorkerUsage, prepareQuota, providerQuotaCanReset, quotaIncrementStatement } from "./_ocr-quota-policy.js";
 import { getOcrEnrichmentQueue } from "./_ocr-enrichment-review.js";
@@ -467,7 +467,7 @@ export async function runOcrJobs(db, env, auth, options = {}) {
   const pause = processed.find(isPausedResult);
   const batch = options.batchId ? await refreshBatchProgress(db, options.batchId, batchProgressOptions(processed, pause)) : null;
   return {
-    processed_count: processed.filter((item) => !isPausedResult(item)).length,
+    processed_count: processed.filter((item) => !isPausedResult(item) && !isClaimLostResult(item)).length,
     processed,
     provider_count: processed.length ? Math.max(providerCount, Number(processed[processed.length - 1]?.provider_count || 0)) : providerCount,
     batch,
@@ -610,15 +610,25 @@ async function processJob(db, env, auth, job, providerState, options) {
     if (cacheHit) {
       const cacheText = await readOcrTextObject(env, cacheHit, "text");
       if (cacheText.length < MIN_OCR_TEXT_CHARS) throw new Error("Cache OCR tidak memiliki teks yang bisa dipakai.");
-      await db.batch([
+      if (!await renewOcrJobClaim(db, job)) return claimLostResult(job);
+      const knowledgeStatements = await successStatements(db, env, auth, job, {
+        contentHash,
+        providerKey: cacheHit.provider_key,
+        text: cacheText,
+        textLength: Number(cacheHit.text_length || 0),
+        method: `ocr_cache_${cacheHit.provider_key}`,
+      });
+        if (!await renewOcrJobClaim(db, job)) return claimLostResult(job);
+        await db.batch([
         db.prepare("UPDATE ocr_content_cache SET last_used_at = CURRENT_TIMESTAMP WHERE content_hash = ?").bind(contentHash),
         attemptStatement(db, job.id, cacheHit.provider_key, "cache_hit", null, null, Number(cacheHit.text_length || 0), null, null),
-        ...await successStatements(db, env, auth, job, {
+        ...knowledgeStatements,
+        ...successTerminalStatements(db, auth, job, {
+          assetId: job.asset_id,
+          franchiseId: job.franchise_id,
           contentHash,
           providerKey: cacheHit.provider_key,
-          text: cacheText,
           textLength: Number(cacheHit.text_length || 0),
-          method: `ocr_cache_${cacheHit.provider_key}`,
         }),
       ]);
       return processedResult(job, "succeeded", cacheHit.provider_key, Number(cacheHit.text_length || 0), "cache_hit");
@@ -649,6 +659,7 @@ async function processJob(db, env, auth, job, providerState, options) {
       if (!quota.allowed) {
         quotaPauseCount += 1;
         lastError = providerAttemptError("OCR_PROVIDER_QUOTA_EXHAUSTED", providerQuotaExhaustedMessage(provider, quota.reason), null, 0);
+        if (!await renewOcrJobClaim(db, job)) return claimLostResult(job);
         await db.batch([
           attemptStatement(db, job.id, provider.provider_key, "quota_exhausted", null, null, 0, "OCR_PROVIDER_QUOTA_EXHAUSTED", providerQuotaExhaustedMessage(provider, quota.reason)),
           providerHealthStatement(db, provider.provider_key, "exhausted", providerQuotaExhaustedMessage(provider, quota.reason)),
@@ -658,7 +669,8 @@ async function processJob(db, env, auth, job, providerState, options) {
       const rateLimit = await prepareRateLimit(db, provider);
       if (!rateLimit.allowed) {
         rateLimitPauseCount += 1;
-        await db.batch([
+      if (!await renewOcrJobClaim(db, job)) return claimLostResult(job);
+      await db.batch([
           attemptStatement(db, job.id, provider.provider_key, "skipped", null, null, 0, "OCR_PROVIDER_RATE_LIMITED", rateLimit.reason),
           providerCooldownStatement(db, provider.provider_key, rateLimit.cooldownUntil, rateLimit.reason),
         ]);
@@ -673,14 +685,24 @@ async function processJob(db, env, auth, job, providerState, options) {
           throw providerAttemptError("OCR_TEXT_TOO_SHORT", "Provider tidak mengembalikan teks yang cukup untuk dipakai.", result.httpStatus, result.textLength);
         }
         const text = result.text.slice(0, CACHE_TEXT_CHARS);
+        if (!await renewOcrJobClaim(db, job)) return claimLostResult(job);
         const storedText = await storeOcrTextObject(env, {
           text,
           franchiseId: job.franchise_id,
           assetId: job.asset_id,
           contentHash,
           kind: "ocr-cache",
+          revision: job.claimStartedAt,
           method: `ocr_${provider.provider_key}_v1`,
         });
+        const knowledgeStatements = await successStatements(db, env, auth, job, {
+          contentHash,
+          providerKey: provider.provider_key,
+          text,
+          textLength: text.length,
+          method: `ocr_${provider.provider_key}_v1`,
+        });
+        if (!await renewOcrJobClaim(db, job)) return claimLostResult(job);
         await db.batch([
           db
             .prepare(
@@ -716,12 +738,13 @@ async function processJob(db, env, auth, job, providerState, options) {
           usageStatement(db, provider.provider_key, job.id, contentHash, 1, "counted"),
           quotaIncrementStatement(db, provider.provider_key),
           providerHealthStatement(db, provider.provider_key, "ready", null),
-          ...await successStatements(db, env, auth, job, {
+          ...knowledgeStatements,
+          ...successTerminalStatements(db, auth, job, {
+            assetId: job.asset_id,
+            franchiseId: job.franchise_id,
             contentHash,
             providerKey: provider.provider_key,
-            text,
             textLength: text.length,
-            method: `ocr_${provider.provider_key}_v1`,
           }),
         ]);
         return processedResult(job, "succeeded", provider.provider_key, text.length, "provider");
@@ -755,6 +778,7 @@ async function processJob(db, env, auth, job, providerState, options) {
             ? providerCooldownStatement(db, provider.provider_key, nextRateCooldown(provider), cleanError(error.message))
             : providerHealthStatement(db, provider.provider_key, quotaFailure ? "exhausted" : "ready", cleanError(error.message)));
         }
+        if (!await renewOcrJobClaim(db, job)) return claimLostResult(job);
         await db.batch(failureStatements);
       }
     }
@@ -785,7 +809,7 @@ async function processJob(db, env, auth, job, providerState, options) {
 
     if (textTooShortCount > 0 && hardFailureCount === 0) {
       const message = "OCR selesai, tetapi halaman brosur ini tidak memiliki teks yang cukup untuk dipakai. Lihat gambar untuk memastikan.";
-      await markJobNeedsReview(db, auth, job, message);
+      if (!await markJobNeedsReview(db, auth, job, message)) return claimLostResult(job);
       return processedResult(job, "needs_review", "", 0, "OCR_TEXT_TOO_SHORT", providers.length);
     }
 
@@ -801,8 +825,7 @@ async function successStatements(db, env, auth, job, result) {
   const listing = await loadListing(db, job.franchise_id);
   const candidates = extractProposalCandidatesFromText(result.text);
   const actorUserId = effectiveActorUserId(auth, job);
-  return [
-    ...await proposalKnowledgeStatements(db, {
+  return proposalKnowledgeStatements(db, {
       assetId: job.asset_id,
       listing,
       result: {
@@ -816,15 +839,21 @@ async function successStatements(db, env, auth, job, result) {
       env,
       actorUserId,
       siteId: SITE_FRANCHISEE_ID,
-    }),
+      revision: job.claimStartedAt,
+    });
+}
+
+function successTerminalStatements(db, auth, job, result) {
+  const actorUserId = effectiveActorUserId(auth, job);
+  return [
     db
       .prepare(
         `UPDATE ocr_jobs
          SET status = 'succeeded', provider_key = ?, content_hash = ?, attempt_count = attempt_count + 1,
              completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP, error_message = NULL
-         WHERE id = ?`,
+         WHERE id = ? AND status = 'running' AND started_at = ?`,
       )
-      .bind(result.providerKey, result.contentHash, job.id),
+      .bind(result.providerKey, result.contentHash, job.id, job.claimStartedAt),
     auditStatement(db, "dashboard.ocr_jobs.succeeded", "ocr_jobs", job.id, {
       asset_id: job.asset_id,
       franchise_id: job.franchise_id,
@@ -948,9 +977,9 @@ async function failJob(db, job, message) {
       `UPDATE ocr_jobs
        SET status = 'failed', error_message = ?, attempt_count = attempt_count + 1,
            completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
+       WHERE id = ? AND status = 'running' AND started_at = ?`,
     )
-    .bind(cleanError(message), job.id)
+    .bind(cleanError(message), job.id, job.claimStartedAt)
     .run();
 }
 
@@ -960,33 +989,35 @@ async function pauseJob(db, job, message) {
       `UPDATE ocr_jobs
        SET status = 'pending', error_message = ?,
            started_at = NULL, completed_at = NULL, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
+       WHERE id = ? AND status = 'running' AND started_at = ?`,
     )
-    .bind(cleanError(message), job.id)
+    .bind(cleanError(message), job.id, job.claimStartedAt)
     .run();
 }
 
 async function markJobNeedsReview(db, auth, job, message) {
+  if (!await renewOcrJobClaim(db, job)) return false;
   const actorUserId = effectiveActorUserId(auth, job);
   await db.batch([
-    markJobNeedsReviewStatement(db, job.id, message, actorUserId),
+    markJobNeedsReviewStatement(db, job.id, job.claimStartedAt, message, actorUserId),
     auditStatement(db, "dashboard.ocr_jobs.needs_review", "ocr_jobs", job.id, {
       asset_id: job.asset_id,
       franchise_id: job.franchise_id,
       reason: message,
     }, actorUserId),
   ]);
+  return true;
 }
 
-function markJobNeedsReviewStatement(db, jobId, message, userId) {
+function markJobNeedsReviewStatement(db, jobId, claimStartedAt, message, userId) {
   return db
     .prepare(
       `UPDATE ocr_jobs
        SET status = 'needs_review', error_message = ?, requested_by_user_id = ?,
            completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
+       WHERE id = ? AND status = 'running' AND started_at = ?`,
     )
-    .bind(cleanError(message), userId, jobId);
+    .bind(cleanError(message), userId, jobId, claimStartedAt);
 }
 
 function onlyMissingCandidates(candidates, listing) {
@@ -1112,6 +1143,14 @@ function isRateLimitFailure(error) {
 
 function isPausedResult(result) {
   return result?.note === PAUSE_RATE_LIMIT_NOTE || result?.note === PAUSE_QUOTA_NOTE;
+}
+
+function isClaimLostResult(result) {
+  return result?.note === "OCR_CLAIM_LOST";
+}
+
+function claimLostResult(job) {
+  return processedResult(job, "claim_lost", "", 0, "OCR_CLAIM_LOST", 0, "Job OCR telah dilepas atau diambil worker lain.");
 }
 
 function batchProgressOptions(processed, pause) {

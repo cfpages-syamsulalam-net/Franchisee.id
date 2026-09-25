@@ -1450,3 +1450,10 @@ Stateful flows that move rows, jobs, sessions, queues, or integrations between s
 - `daftar/index.html`, `css/form-franchise/06-claim-autocomplete.css`, `js/form-02-claim-workflow.js`, `js/form-06-submit-validation.js`, `js/form-07-init.js`: first-field status notice, claim/view action, accessible and mobile layout, duplicate-name deep links and submit fallback. Original named form fields remain.
 - `migrations/0036_brand_match_lookup.sql`: case/space-normalized expression index, directly applied to active remote D1; remote query plan confirms it is used. Wrangler history still lists some prior manually applied migrations as pending, so the SQL is idempotent.
 - `scripts/check-brand-match.ts`, `scripts/check-brand-match-ui.ts`, `scripts/check-claim-workflow.ts`: public projection, action states, listing-vs-legacy ID and final duplicate guard.
+## 2026-09-25 audit fix contracts
+
+- `js/form-02-claim-workflow.js`: `escapeClaimHtml()` and `escapeClaimRegex()` keep imported brand suggestion markup inert while preserving query highlights.
+- `js/auth-clerk-core.js`: `safeNextPath()` normalizes allowed OAuth return paths; `nextUrl()`, `nextUrlFromSearch()`, `setPendingNext()`, and `navigateAfterOAuth()` use the same-origin boundary.
+- `functions/_clerk-auth.js`: `upsertD1User()` preserves existing status, `assertActiveD1User()` blocks non-active users in protected auth and sync flows.
+- `functions/_ocr-job-claiming.js`: `claimPendingJobs()` filters D1 batch results by changed rows; `renewOcrJobClaim()` refreshes the timestamp fence; stale release parses ISO and SQLite timestamps. `functions/_ocr-job-runner.js` renews the claim before result batches and conditions terminal updates on that claim. `buildOcrTextKey()` in `_ocr-text-store.js` accepts a revision passed by `_proposal-knowledge.js` for OCR knowledge objects.
+- `functions/_premium-lifecycle.js`: `expirePremiumAfterGrace()` checks for an active replacement inside downgrade and network-publication SQL statements.

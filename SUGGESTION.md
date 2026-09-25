@@ -154,3 +154,6 @@ User decisions remain authoritative. This file is not a replacement for `AGENTS.
 
 - Done: protect applicant export, exclude internal build JSON, bind OAuth token reuse to Google subject, and correct hidden-menu overflow. Evidence is in `AUDIT.md` and the focused runtime checks.
 - Remaining operator decision: confirm whether `kopi-coba` is intentional production data before changing it.
+## 2026-09-25 audit follow-through
+
+The existing Auth reliability (#106), state-transition coverage (#107), and Premium lifecycle (#110) items now include focused regressions for same-origin OAuth return paths, inactive D1 users, claim suggestion markup, OCR claim ownership, and renewal during expiry. These fixes are complete locally; signed-in production and live D1 concurrency QA remain operational verification work under the existing auth and transition trackers. No new backlog item is needed from this pass.

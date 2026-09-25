@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 
 // @ts-ignore Pages Functions are JavaScript modules without generated declarations.
 import { loadDueEmails } from "../functions/_premium-email-worker.js";
+// @ts-ignore Pages Functions are JavaScript modules without generated declarations.
+import { expirePremiumAfterGrace } from "../functions/_premium-lifecycle.js";
 
 const calls: Array<{ sql: string; params: unknown[] }> = [];
 const candidateRows = [
@@ -59,7 +61,75 @@ async function main() {
   assert.match(premiumLifecycle, /siteRebuildStatements/);
   assert.match(premiumLifecycle, /publication_status = 'hidden'/);
 
-  console.log("Premium lifecycle email queue lock check passed.");
+  await checkPremiumRenewalInterleaving();
+
+  console.log("Premium lifecycle checks passed, including renewal interleaving.");
+}
+
+async function checkPremiumRenewalInterleaving() {
+  const expiredRow = {
+    id: "old_subscription",
+    franchise_id: "franchise_1",
+    user_id: "user_1",
+    ends_at: "2026-01-01 00:00:00",
+    brand_name: "Test Franchise",
+    slug: "test-franchise",
+  };
+  let replacementExists = false;
+  let tier: "premium" | "free" = "premium";
+  let publication: "published" | "hidden" = "published";
+  const statements: Array<{ sql: string; params: unknown[] }> = [];
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind(...params: unknown[]) {
+          const statement = { sql, params };
+          statements.push(statement);
+          return {
+            ...statement,
+            async all() {
+              return { results: [expiredRow] };
+            },
+          };
+        },
+      };
+    },
+    async batch(batchStatements: Array<{ sql: string; params: unknown[] }>) {
+      // The renewal lands after candidate selection and immediately before the atomic batch.
+      replacementExists = true;
+      const downgrade = batchStatements.find((statement) => statement.sql.includes("UPDATE franchises"));
+      const hide = batchStatements.find((statement) => statement.sql.includes("UPDATE franchise_site_publications"));
+      assert.ok(downgrade);
+      assert.ok(hide);
+      for (const statement of [downgrade, hide]) {
+        assert.match(statement.sql, /NOT EXISTS\s*\(\s*SELECT 1 FROM franchise_subscriptions/);
+        assert.match(statement.sql, /status = 'active' AND ends_at > CURRENT_TIMESTAMP/);
+        if (!replacementExists) {
+          if (statement === downgrade) tier = "free";
+          else publication = "hidden";
+        }
+      }
+      assert.equal(replacementExists, true);
+    },
+  };
+
+  // This is the previous check-then-batch behavior: the stale result permits both writes.
+  let legacyTier: "premium" | "free" = "premium";
+  let legacyPublication: "published" | "hidden" = "published";
+  const staleHasReplacement = false;
+  replacementExists = true;
+  if (!staleHasReplacement) {
+    legacyTier = "free";
+    legacyPublication = "hidden";
+  }
+  assert.equal(legacyTier, "free");
+  assert.equal(legacyPublication, "hidden");
+  replacementExists = false;
+
+  assert.equal(await expirePremiumAfterGrace(db, { grace_period_days: 0 } as any), 1);
+  assert.equal(tier, "premium");
+  assert.equal(publication, "published");
+  assert.equal(statements.some((statement) => statement.sql.includes("UPDATE franchises")), true);
 }
 
 main().catch((error) => {

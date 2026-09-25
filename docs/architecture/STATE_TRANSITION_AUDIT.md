@@ -70,3 +70,9 @@ Apply this checklist to every high-risk stateful change.
 ## 2026-09-21 Google Contacts callback hardening
 
 Pending state now transitions to consumed through a conditional UPDATE before provider exchange. Concurrent/replayed callbacks cannot exchange twice. Invalid expiry and inactive/nonstaff actors cannot connect. A successful reconnect may retain an existing refresh token only when the Google subject matches and the stored connection is not revoked; switching accounts without a new refresh token fails without replacing the existing connection. The dashboard explains permission revocation with a recoverable admin-contact message. `pnpm run google-contacts:check` executes persisted subject/token and simultaneous-callback fixtures.
+## 2026-09-25 transition review
+
+- ST-01: An existing suspended or deleted D1 user stays inactive during Clerk sync and cannot pass protected auth; OAuth return paths are normalized to this site's origin before storage and navigation. `scripts/check-auth-outage.ts` and `scripts/check-auth-client.mjs` cover these boundaries.
+- ST-05/ST-12: Imported brand names in claim suggestions are escaped before display; the claim check includes a markup-bearing brand and preserved search highlighting.
+- ST-08: A worker processes only jobs whose conditional pending-to-running update it won. It renews its timestamp claim before D1 result batches; terminal writes require the same claim. Stale release parses ISO timestamps, and R2 keys include the claim revision to prevent cross-claim overwrite. The runner check simulates simultaneous claims, stale release, renewal rejection, and distinct text keys.
+- ST-10: Expiration downgrade and network-publication hiding each require no active replacement subscription at SQL execution time within the D1 batch. The Premium lifecycle check models renewal after candidate selection.

@@ -23,8 +23,11 @@ export async function claimPendingJobs(db, maxJobs, jobId = "", batchId = "") {
       .all();
     const jobs = exact.results || [];
     if (!jobs.length) return [];
-    await markJobsRunning(db, jobs);
-    return jobs;
+    const claimStartedAt = new Date().toISOString();
+    const claimed = await markJobsRunning(db, jobs, claimStartedAt);
+    return jobs.flatMap((job, index) => Number(claimed[index]?.meta?.changes || 0) > 0
+      ? [{ ...job, claimStartedAt }]
+      : []);
   }
 
   const target = await db
@@ -58,8 +61,11 @@ export async function claimPendingJobs(db, maxJobs, jobId = "", batchId = "") {
     .all();
   const jobs = result.results || [];
   if (!jobs.length) return [];
-  await markJobsRunning(db, jobs);
-  return jobs;
+  const claimStartedAt = new Date().toISOString();
+  const claimed = await markJobsRunning(db, jobs, claimStartedAt);
+  return jobs.flatMap((job, index) => Number(claimed[index]?.meta?.changes || 0) > 0
+    ? [{ ...job, claimStartedAt }]
+    : []);
 }
 
 export async function releaseUnprocessedJobs(db, jobs, reason) {
@@ -69,9 +75,9 @@ export async function releaseUnprocessedJobs(db, jobs, reason) {
       `UPDATE ocr_jobs
        SET status = 'pending', error_message = COALESCE(error_message, ?),
            started_at = NULL, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND status = 'running'`,
+       WHERE id = ? AND status = 'running' AND started_at = ?`,
     )
-    .bind(cleanOcrError(reason), job.id)));
+    .bind(cleanOcrError(reason), job.id, job.claimStartedAt)));
 }
 
 export async function releaseStaleRunningJobs(db, batchId = "", jobId = "") {
@@ -86,7 +92,7 @@ export async function releaseStaleRunningJobs(db, batchId = "", jobId = "") {
            started_at = NULL,
            updated_at = CURRENT_TIMESTAMP
        WHERE status = 'running'
-         AND started_at <= datetime('now', ?)
+         AND datetime(started_at) <= datetime('now', ?)
          AND (? IS NULL OR batch_id = ?)
          AND (? IS NULL OR id = ?)`,
     )
@@ -114,6 +120,27 @@ export function retryJobStatement(db, jobId, userId) {
     .bind(userId, jobId);
 }
 
+export async function renewOcrJobClaim(db, job) {
+  const previousStartedAt = textOrNull(job?.claimStartedAt);
+  if (!previousStartedAt) return false;
+  const previousTime = Date.parse(previousStartedAt);
+  const nextStartedAt = new Date(Math.max(
+    Date.now(),
+    Number.isFinite(previousTime) ? previousTime + 1 : Date.now(),
+  )).toISOString();
+  const result = await db
+    .prepare(
+      `UPDATE ocr_jobs
+       SET started_at = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND status = 'running' AND started_at = ?`,
+    )
+    .bind(nextStartedAt, job.id, previousStartedAt)
+    .run();
+  if (Number(result?.meta?.changes || 0) !== 1) return false;
+  job.claimStartedAt = nextStartedAt;
+  return true;
+}
+
 export function cleanOcrError(value) {
   return normalizeOcrText(value).slice(0, 500);
 }
@@ -123,13 +150,13 @@ export function textOrNull(value) {
   return normalized || null;
 }
 
-async function markJobsRunning(db, jobs) {
-  await db.batch(jobs.map((job) => db
+async function markJobsRunning(db, jobs, claimStartedAt) {
+  return db.batch(jobs.map((job) => db
     .prepare(
       `UPDATE ocr_jobs
-       SET status = 'running', started_at = COALESCE(started_at, CURRENT_TIMESTAMP),
+       SET status = 'running', started_at = ?,
            updated_at = CURRENT_TIMESTAMP, error_message = NULL
        WHERE id = ? AND status = 'pending'`,
     )
-    .bind(job.id)));
+    .bind(claimStartedAt, job.id)));
 }
