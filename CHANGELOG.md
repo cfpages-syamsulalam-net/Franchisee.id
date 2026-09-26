@@ -1,4 +1,8 @@
-## 2026-09-26 (latest) — Shared-platform review fixes
+## 2026-09-26 — Cross-site URL documentation clarification
+
+- Updated `CODEBASE.md` to state Franchisee directory `/peluang-usaha/` and brand detail `/peluang-usaha/{slug}`, while Franchisor uses `/peluang-usaha/` for its directory and `/usaha/{slug}` for detail. Corrected the historical July claim-handler sentence so it does not describe current Franchisor code. Added `.context/session-20260926-1524.md`. No code or route changed.
+
+## 2026-09-26 — Shared-platform review fixes
 
 Mirrors `Franchisor.id` `02f486d`. This repository owns the shared platform, so these are the authoritative copies. No schema, migration, secret, or D1 change.
 
