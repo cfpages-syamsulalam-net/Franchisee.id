@@ -25,7 +25,7 @@ The current segmented toggles still rely too heavily on yellow. The next fix sho
 When Clerk/D1 identity is known, `/daftar` should prefill and lock identity-owned fields:
 
 - Franchisee `name` and `email`: read-only from Clerk/D1.
-- Franchisor `pic_name` and `email_contact`: read-only when they are populated from Clerk/D1 identity.
+- Franchisor `pic_name` and `email_contact`: read-only in the form, populated from Clerk/D1 identity. Since `0498f62` an account name/email save no longer writes them directly for a **published** brand: the change becomes an owner review proposal and the live page keeps its current values until an admin approves. An unpublished profile is still written directly.
 - Add a short helper note near locked fields: `Dikelola dari Profil`.
 - Do not remove fields; keep names and required attributes intact.
 - Profile edits should happen in `/profil`, not inside first-time `/daftar`.
@@ -183,7 +183,7 @@ Add a protected profile API instead of overloading `/form-submit`:
 
 ## Open Decisions Before Coding
 
-- Resolved: account name/email are read-only by default with an edit icon that unlocks editing and updates Clerk and D1 together.
+- Resolved: account name/email are read-only by default with an edit icon that unlocks editing and updates Clerk and D1 together. Since `0498f62` the split is explicit: account identity (`users`, `franchisee_profiles`) applies immediately, while a linked **published** brand's public PIC/contact becomes an owner review proposal instead of a silent overwrite.
 - Resolved: franchisor owner listing edits apply directly, but are rate-limited and only queue static rebuilds instead of triggering immediate builds.
 - Resolved: `/daftar` redirects completed users to `/profil`; `/daftar` remains initial completion.
 - Resolved: `/profil` shows a `/dashboard` shortcut for admin/staff only.

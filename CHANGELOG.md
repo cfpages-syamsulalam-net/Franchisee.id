@@ -1,3 +1,17 @@
+## 2026-09-26 (latest) — Shared-platform review fixes
+
+Mirrors `Franchisor.id` `02f486d`. This repository owns the shared platform, so these are the authoritative copies. No schema, migration, secret, or D1 change.
+
+- `functions/_profile-owner-review.js` exports `OWNER_PROFILE_FIELDS` with `pic_name` and `email_contact` added, and `functions/_dashboard-schemas.js` builds the review-approval allowlist from it plus `EDITABLE_LISTING_FIELD_DEFS`. The schema previously enumerated listing fields only, so a `franchisor_profile` proposal posted `profile_*` names that zod rejected before the handler ran — approval was unreachable from the UI though the handler supported it. `js/dashboard-review.js` gains labels for the two new fields.
+- `functions/_profile-account.js` stops writing `franchisor_profiles.pic_name`/`email_contact` directly. A published brand's PIC/contact is public trust data, so a change to it becomes an owner review proposal and the live page keeps its values until an admin approves; account identity still applies immediately, and only genuinely changed fields are proposed.
+- `functions/dashboard-data.js` gates the whole claim queue to admins, because claim decisions are admin-only and the queue carries claimant NIB, HAKI, and contact details.
+- `functions/_form-submit-franchisor.js` makes the claim-path `franchisor_profiles` insert share the claimability predicate, so an unavailable claim inserts no orphan profile row.
+- Documentation updated to match: `docs/architecture/PROFILE_PAGE_PLAN.md` (account identity versus reviewed brand contact), `docs/architecture/NEW_BRAND_REVIEW.md` (both queues admin-only).
+
+**Fixed here first, then in Franchisor.id:** a TypeScript `as` cast had been placed in the JavaScript file `functions/_dashboard-schemas.js`, which esbuild cannot transform. This repository's `functions:methods:check`, `google-contacts:check`, `ocr:check`, and `ocr:runner:check` caught it.
+
+Verification: all 15 `*:check` scripts pass; `astro:check` reports 0 errors.
+
 ## 2026-09-26 — Cross-repo: franchisor.id brand canonical family
 
 **Cross-repo change made from another harness (Command Code) at Syamsul's explicit instruction.** Read the scope note before building on it; this repository is the owner of the shared platform, so the change is deliberately minimal and mechanically guarded.
