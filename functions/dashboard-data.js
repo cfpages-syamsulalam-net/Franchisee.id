@@ -71,7 +71,10 @@ export async function onRequestGet({ request, env }) {
       getUnclaimedOutreachQueue(db),
       getUnclaimedOutreachSummary(db),
       getStaffGoogleContactsState(db, auth, env),
-      getPendingClaims(db),
+      // Claim decisions are admin-only, and the claim queue carries claimant NIB, HAKI
+      // and contact details. Gate the whole queue rather than trimming columns, so staff
+      // responses never contain another applicant's private evidence.
+      isAdmin(auth) ? getPendingClaims(db) : Promise.resolve([]),
       isAdmin(auth) ? getPendingBrandSubmissions(db) : Promise.resolve([]),
       getPendingPremiumPayments(db),
       getPremiumOperations(db),

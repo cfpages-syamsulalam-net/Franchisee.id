@@ -3,15 +3,24 @@ import { SITE_FRANCHISEE_ID } from "./_site-publish-queue.js";
 import {
   DashboardDecisionSchema,
   EDITABLE_LISTING_FIELD_DEFS,
-  EditableListingFieldSchema,
   sanitizeListingChanges,
 } from "./_shared-schemas.js";
+import { OWNER_PROFILE_FIELDS } from "./_profile-owner-review.js";
 import { DASHBOARD_OCR_ACTION_SCHEMAS } from "./_dashboard-ocr-schemas.js";
 import { OUTREACH_BURNED_REASON_VALUES, OUTREACH_PIPELINE_STATUS_VALUES } from "../src/lib/outreach-pipeline.js";
 
 export const SITE_ID = SITE_FRANCHISEE_ID;
 export const EDIT_FIELD_NAME = "json_diff";
 export { EDITABLE_LISTING_FIELD_DEFS };
+
+// Fields an admin may approve on a review suggestion. A listing proposal carries
+// listing field names; an owner profile proposal carries `profile_<field>` names.
+// Both spaces come from their own authoritative list, so the schema can never reject
+// a field the server handler is willing to apply.
+const ReviewableFieldSchema = z.enum([
+  ...EDITABLE_LISTING_FIELD_DEFS.map((definition) => definition.name),
+  ...OWNER_PROFILE_FIELDS.map((field) => `profile_${field}`),
+]);
 
 const OutreachEventSchema = z.object({
   action: z.literal("log_outreach"),
@@ -60,7 +69,7 @@ const ReviewEditSuggestionSchema = z.object({
   action: z.literal("review_edit_suggestion"),
   suggestion_id: z.string().trim().min(1),
   decision: DashboardDecisionSchema,
-  approved_fields: z.array(EditableListingFieldSchema).max(80).optional(),
+  approved_fields: z.array(ReviewableFieldSchema).max(80).optional(),
   notes: z.string().trim().max(1200).optional().default(""),
 });
 

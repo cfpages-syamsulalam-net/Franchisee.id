@@ -448,7 +448,8 @@
         var labels = { whatsapp: "WhatsApp", website_url: "Situs", instagram_url: "Instagram",
           facebook_url: "Facebook", tiktok_url: "TikTok", youtube_url: "YouTube",
           linkedin_url: "LinkedIn", company_name: "Nama perusahaan", country_code: "Kode negara",
-          nib_number: "NIB", haki_status: "Status HAKI", haki_number: "Nomor HAKI" };
+          nib_number: "NIB", haki_status: "Status HAKI", haki_number: "Nomor HAKI",
+          pic_name: "Nama PIC", email_contact: "Email kontak" };
         var name = fieldName.slice(8);
         return { name: fieldName, label: labels[name] || name, type: "text" };
       }

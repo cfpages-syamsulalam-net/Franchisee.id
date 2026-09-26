@@ -52,38 +52,52 @@ export async function handleFranchisorSubmit(db, data, isClaim, actor) {
   const investment = moneyOrNull(data.total_investment_value) || moneyOrNull(data.min_capital) || moneyOrNull(data.pkg_price_1);
   const now = jakartaTimestamp();
 
-  const statements = [
-    db
-      .prepare(
-        `INSERT INTO franchisor_profiles (
+  const profileValues = [
+    profileId,
+    actor.id,
+    "site_franchisee_id",
+    textOrNull(data.company_name),
+    textOrNull(data.pic_name),
+    lowerOrNull(data.email_contact),
+    textOrNull(data.country_code),
+    normalizeWhatsapp(data.whatsapp),
+    textOrNull(data.website_url),
+    textOrNull(data.instagram_url),
+    textOrNull(data.facebook_url),
+    textOrNull(data.tiktok_url),
+    textOrNull(data.youtube_url),
+    textOrNull(data.linkedin_url),
+    textOrNull(data.nib_number),
+    normalizeHakiStatus(data.haki_status),
+    textOrNull(data.haki_number),
+    publicId,
+    now,
+    JSON.stringify(payload),
+  ];
+  const PROFILE_COLUMNS = `(
           id, user_id, source_site_id, company_name, pic_name, email_contact, country_code,
           whatsapp, website_url, instagram_url, facebook_url, tiktok_url, youtube_url, linkedin_url,
           nib_number, haki_status, haki_number,
           legacy_row_id, legacy_timestamp, raw_payload
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
-        profileId,
-        actor.id,
-        "site_franchisee_id",
-        textOrNull(data.company_name),
-        textOrNull(data.pic_name),
-        lowerOrNull(data.email_contact),
-        textOrNull(data.country_code),
-        normalizeWhatsapp(data.whatsapp),
-        textOrNull(data.website_url),
-        textOrNull(data.instagram_url),
-        textOrNull(data.facebook_url),
-        textOrNull(data.tiktok_url),
-        textOrNull(data.youtube_url),
-        textOrNull(data.linkedin_url),
-        textOrNull(data.nib_number),
-        normalizeHakiStatus(data.haki_status),
-        textOrNull(data.haki_number),
-        publicId,
-        now,
-        JSON.stringify(payload)
-      ),
+        )`;
+  const profilePlaceholders = profileValues.map(() => "?").join(", ");
+
+  // On the claim path the profile row may only be created if the guarded claim insert
+  // can succeed too. Both statements share the same claimability predicate, so an
+  // unavailable claim inserts nothing at all instead of committing an orphan profile
+  // that would then feed the duplicate-contact guard on a later attempt.
+  const statements = [
+    isClaim
+      ? db
+          .prepare(
+            `INSERT INTO franchisor_profiles ${PROFILE_COLUMNS}
+             SELECT ${profilePlaceholders} FROM franchises
+             WHERE id = ? AND owner_user_id IS NULL AND status = 'unclaimed' AND source_sheet = 'UNCLAIMED'`,
+          )
+          .bind(...profileValues, franchiseId)
+      : db
+          .prepare(`INSERT INTO franchisor_profiles ${PROFILE_COLUMNS} VALUES (${profilePlaceholders})`)
+          .bind(...profileValues),
   ];
 
   if (isClaim) {
