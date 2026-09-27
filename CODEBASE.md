@@ -409,13 +409,38 @@ The current Sheets/CSV/functions implementation is a transition layer. The proje
 6. `/login?mode=forgot-password` sends a Clerk reset code and switches to an in-page password reset panel; `/login?mode=forgot-email` keeps recovery guidance and Google sign-in inside the same login surface.
 7. Public registration requires `Daftar sebagai` before email/password or Google SSO starts; the selected `franchisee`/`franchisor` role is stored across OAuth and synced through `/auth-sync` after Clerk session activation.
 8. The custom browser bootstrap handles Clerk OAuth callbacks on `/sso-callback/` before token checks, even when the callback has no visible Clerk URL parameters, then clears stale callback parameters or navigates to the saved post-login URL.
-9. After sign-up or sign-in, `/auth-sync` verifies the Clerk session, upserts D1 `users` by Clerk id or the same verified primary email, applies active `email_role_grants`, inserts self-assignable `franchisee`/`franchisor` roles when requested, and pushes the D1 role snapshot into Clerk metadata.
+9. After sign-up or sign-in, `/auth-sync` verifies the Clerk session, resolves the D1 `users` row **through `user_identities`** — linking a new Clerk identity by verified email when it is not yet known, and never overwriting `users.clerk_user_id` — applies active `email_role_grants` only when the account is `active`, inserts self-assignable `franchisee`/`franchisor` roles when requested, and pushes the D1 role snapshot into Clerk metadata. See the shared-identity section below.
 10. `/daftar` requires Clerk login before completion, opens the requested role tab when `?role=` is present, locks email/name/PIC fields from Clerk/D1 identity, and redirects completed users to `/profil/`.
 11. Public navbar links are normalized by `js/auth-navbar.js`; logged-out `Daftar Mitra` points to protected `/daftar/`, anonymous users are redirected to `/login?next=...` with an explanatory message, and logged-in users see Font Awesome account/logout icons, name, D1 role badge, `/profil/` account link, and immediate red icon-only logout.
 12. UI hints use the shared custom tooltip runtime (`data-fr-tooltip`) instead of browser `title` hints; legacy interactive titles loaded on shared-tooltip pages are upgraded at runtime.
 13. Clerk Dashboard webhooks call `/clerk-webhook` for `user.created`, `user.updated`, and `user.deleted`; the endpoint verifies signatures and syncs D1 `users`.
 14. D1 role changes initiated by the app use `/user-role`, which mutates D1 and then updates Clerk metadata. Manual SQL changes require `/sync-clerk-metadata` because D1 has no outbound webhook trigger.
 15. `/form-submit` uses `functions/_clerk-auth.js` to verify the Clerk token, check D1 roles, sync Clerk metadata from current D1 roles, and attach D1 user ownership to profiles/listings/claims/audit rows.
+
+### 5b. Shared identity across two Clerk applications — 2026-09-27
+
+Each network site has its **own Clerk application**, so the same person receives a different Clerk user id on
+each site, while brand ownership, roles and premium orders all key on the shared `users.id`. Clerk's own answer
+is satellite domains, which require a paid plan for production; D1 owns the link instead, consistent with the
+existing rule that D1 is authoritative and a valid Clerk session alone grants nothing.
+
+The design, with the reason each part exists — most of these were defects found by testing, not preferences:
+
+| Decision | Reason |
+| --- | --- |
+| `user_identities` holds one row per linked Clerk identity; `users.clerk_user_id` is the **home identity and is never overwritten** | An earlier resolver rewrote `clerk_user_id` on a verified-email match, so with two applications the column flip-flopped between them and `getD1UserByClerkId` missed half the time |
+| Linking is matched on the incoming Clerk user's **verified email** | The only identifier the two applications share, and `email_role_grants` already worked this way |
+| Resolution **never writes `status`** | A previous revision forced `status = 'active'`, so a suspended account reinstated itself by signing in — roles and email role grants included |
+| An email matching more than one user **refuses to link** and logs `user_identities.link_ambiguous` | With two people on one address the linker cannot tell them apart, and the wrong choice hands over their brand and roles. `idx_users_primary_email_unique` (0044) prevents the state arising; the refusal is the fail-closed backstop |
+| `markD1UserDeleted` revokes the **identity**, retiring the user only when none remain | Deleting the account in one Clerk application must not delete the person for the other site |
+| The legacy lookup fallback applies only to users with **no identity rows** | Matching `users.clerk_user_id` re-admitted a revoked identity, because that column holds the home identity |
+| Status and membership are **append-only timelines**; newest `effective_at` wins | Nothing recorded when or why a status changed. Millisecond precision is used because `CURRENT_TIMESTAMP` is second-granular, which made "newest wins" non-deterministic |
+| Premium is **downgraded, never deleted** | History survives and every site can read what the member's status was at a point in time |
+
+Migrations 0040–0044 own the schema, and the chain lives in this repository. Gates:
+`pnpm run auth:status:check` and `pnpm run resolver:parity:check`, both inside `build:astro`.
+`functions/_clerk-auth.js` is a hand-maintained copy shared in spirit with Franchisor.id — change both in the
+same commit, because the parity check compares the `upsertD1User` body and the exported surface.
 
 ### 5a. Protected Profile Flow
 1. `/profil/` is a static Astro shell that loads the custom Clerk runtime and redirects anonymous users to `/login/?next=/profil/`.

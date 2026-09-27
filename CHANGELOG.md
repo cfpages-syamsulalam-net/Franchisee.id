@@ -1,3 +1,31 @@
+## 2026-09-27 — One D1 user, reachable from two Clerk applications
+
+This repository owns the shared migration chain, so these are the authoritative copies.
+
+- **Migrations 0040–0044 applied additively** to the shared D1: `user_identities` (one row per linked Clerk
+  identity, with `users.clerk_user_id` as the home identity that is never overwritten), `user_status_events` and
+  `user_membership_events` (append-only timelines where the newest `effective_at` wins), `user_blocks` (the
+  tombstone that survives erasure, keyed by a salted email hash), and `idx_users_primary_email_unique` (makes
+  one-row-per-email real). Every object was verified present before its ledger row was recorded, the SQL came
+  straight from the committed files under a statement allowlist, and nothing was deleted or updated — `users`
+  stayed at 4 and `franchises` at 197 throughout. The ledger has no gaps across ids 1–44.
+- **`functions/_clerk-auth.js` resolves by identity** through `user_identities`; a second application's identity
+  becomes its own row rather than overwriting `users.clerk_user_id`. `markD1UserDeleted` revokes the identity and
+  retires the shared user only when none remains. New helpers: `linkIdentity`, `revokeIdentity`,
+  `listUserIdentities`, `recordUserStatusEvent`, `getCurrentUserStatus`, `recordMembershipEvent`,
+  `getCurrentMembership`.
+- **Three defects found by testing, in both repositories:** the verified-email lookup used `LIMIT 1` and would
+  link to an arbitrary row when two people share an address (now it refuses to guess and logs
+  `user_identities.link_ambiguous`); the legacy lookup fallback matched the home-identity column and so
+  re-admitted a revoked identity; and status/membership events used second-granular timestamps, making "newest
+  wins" non-deterministic.
+- **`scripts/check-auth-status.ts` rebuilt** to run against the real migration chain instead of a hand-written
+  fake, and now reachable as `auth:status:check`; the previously-unreferenced `check-auth-outage.ts` is wired as
+  `auth:outage:check`. Both, plus `resolver:parity:check`, run inside `build:astro`.
+- Docs: `CODEBASE.md` gained a shared-identity section recording each decision and its reason, flow item 9 was
+  corrected to stop describing a rebind, and `docs/architecture/CLERK_SETUP.md` now states that each site has its
+  own application.
+
 ## 2026-09-26 — Cross-site URL documentation clarification
 
 - Updated `CODEBASE.md` to state Franchisee directory `/peluang-usaha/` and brand detail `/peluang-usaha/{slug}`, while Franchisor uses `/peluang-usaha/` for its directory and `/usaha/{slug}` for detail. Corrected the historical July claim-handler sentence so it does not describe current Franchisor code. Added `.context/session-20260926-1524.md`. No code or route changed.

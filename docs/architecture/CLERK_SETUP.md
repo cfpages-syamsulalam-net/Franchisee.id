@@ -5,8 +5,30 @@ Last updated: 2026-07-13 17:43 (Asia/Jakarta)
 ## Purpose
 Clerk is the identity/session provider. D1 remains the authorization source of truth through `users` and `user_roles`.
 
+## One Clerk application per site — 2026-09-27
+
+This site and `franchisor.id` each have their **own** Clerk application. Clerk's supported way to share a session
+across different apex domains is satellite domains, which require a paid plan for production; instead **D1 owns
+the identity link** through `user_identities`, so one `users` row is reachable from either application and brand
+ownership, roles and premium stay attached to one person.
+
+What that changes here:
+
+- Publishable keys, secret keys and the `/clerk-webhook` signing secret are **per site**. Webhook signing
+  secrets are issued per endpoint, so they cannot be shared even when the code looks the same.
+- Step 5 below (account linking for verified email addresses) still applies and is about linking a password and
+  a Google account **within one Clerk application**. It is *not* what joins the two sites; `user_identities`
+  does that, matched on the incoming Clerk user's verified email.
+- Set `CLERK_APP_KEY` to this site's own value. It is stamped on every link so an operator can see which
+  application an identity arrived from.
+- `functions/_clerk-auth.js` is a hand-maintained copy of the sibling repository's file, and the two have
+  already drifted once in a way that let a suspended account reinstate itself. Change both in the same commit:
+  `pnpm run resolver:parity:check` compares the `upsertD1User` body and the exported surface, and
+  `pnpm run auth:status:check` asserts the identity rules against the real migration chain. Both run inside
+  `build:astro`.
+
 ## Required Clerk Dashboard Settings
-1. Create or open the Clerk application for the franchise network.
+1. Create or open **this site's own** Clerk application — the sibling site has a separate one, per the section above.
 2. Enable email/password authentication.
 3. Enable Google SSO as a social connection.
 4. Enable email verification by code for sign-up.
