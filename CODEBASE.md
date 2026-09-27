@@ -467,6 +467,25 @@ actions use the provenance-backed ownership predicate, never the `OR franchisor_
 branch. A hard delete is not an option anywhere: `DELETE FROM franchises` cascades into twenty tables, and a
 `users` row referenced by `franchise_submission_reviews` cannot be deleted at all.
 
+### Account lifecycle surfaces (added 2026-09-27)
+
+- **Deletion request screen** — `/pengaturan/hapus-akun/` posting `delete_account` to `/profile-data`, handled by
+  `deleteAccount` in `functions/_profile-account.js`. It lists the consequences in full, requires the phrase
+  `HAPUS AKUN SAYA` (validated against the same literal server-side), and records the **acknowledgement version**
+  on the block row so we can always show what a person agreed to. It returns `erasure_pending: true` and **does
+  not claim the data is deleted**, because the erasure is plan step 0.7b and does not exist yet. The block it
+  creates is real. The screen exists here as well as on `franchisor.id` because the account is shared — it should
+  be closable from whichever site the person is on.
+- **Block enforcement** — `blockAccount` / `unblockAccount` / `hashBlockedEmail` in `functions/_clerk-auth.js`,
+  mirrored with `franchisor.id` and covered by `resolver:parity:check`. A blocked address is refused *before*
+  any identity link or user insert; the block follows the **person** as well as the address; and `blocked` gets
+  its own code and message. Needs `USER_BLOCK_SALT` and refuses without it, because a hash we cannot reproduce
+  would look enforced while matching nothing.
+- **First-login registration and auth copy** — `js/auth-clerk.js` (`handleLogin` catches
+  `form_identifier_not_found` and moves into registration with the email prefilled, so first login *is*
+  registration; only that code counts, never `form_password_incorrect`) and `js/auth-clerk-ui.js` (one login
+  screen, Google first because it arrives verified, plus the network framing).
+
 ### 5a. Protected Profile Flow
 1. `/profil/` is a static Astro shell that loads the custom Clerk runtime and redirects anonymous users to `/login/?next=/profil/`.
 2. `js/profile-page.js` fetches `/profile-data` with the Clerk bearer token, renders a benefit-led next-best-action panel above the tabs, and renders side tabs by D1-authoritative role: franchisee users see the franchisee section, franchisor users see franchisor/listing/leads/claims sections, and admin/staff users see both.
