@@ -437,10 +437,35 @@ The design, with the reason each part exists — most of these were defects foun
 | Status and membership are **append-only timelines**; newest `effective_at` wins | Nothing recorded when or why a status changed. Millisecond precision is used because `CURRENT_TIMESTAMP` is second-granular, which made "newest wins" non-deterministic |
 | Premium is **downgraded, never deleted** | History survives and every site can read what the member's status was at a point in time |
 
-Migrations 0040–0044 own the schema, and the chain lives in this repository. Gates:
+Migrations 0040–0045 own the schema, and the chain lives in this repository. Gates:
 `pnpm run auth:status:check` and `pnpm run resolver:parity:check`, both inside `build:astro`.
 `functions/_clerk-auth.js` is a hand-maintained copy shared in spirit with Franchisor.id — change both in the
 same commit, because the parity check compares the `upsertD1User` body and the exported surface.
+
+### Continuing this work — read this before changing identity or ownership code
+
+**Where the design lives:** `~/.commandcode/plans/franchisor-id-two-clerk-apps-shared-d1.md`. Eleven risks with
+mitigations (§1), erasure buckets (§5.6), the brand-removal gate (§5.7), the copy deck (§5.10) and the exact
+contract for the block half (§5.11). Read §1 and §5.11 first: they state what must not be broken.
+
+**This repository owns the migration chain** (`migrations/`, now through `0045`), and the `d1_migrations` ledger
+is gapless across ids 1–45. Apply future migrations the same way: verify the object exists **before** recording
+its ledger row, take the SQL from the committed file under a statement allowlist, and prefer the D1 REST API over
+`wrangler d1 migrations apply` — `0038` contains `DROP TRIGGER IF EXISTS`, so a bulk apply would re-run it the
+moment the ledger fell behind.
+
+**Still to build:** the delete-and-block flow (the block half is specified in plan §5.11 and is safe to do alone;
+the erasure half is irreversible and must be tested bucket by bucket), the settings UI with its consequence
+screen, and the cross-site wording. The second Clerk application is Syamsul's to create.
+
+**Hard-won constraints — each was a defect found by testing, so treat them as requirements:** never write
+`status` during identity resolution; never overwrite `users.clerk_user_id`; never link when a verified email
+matches more than one person (refuse, log `user_identities.link_ambiguous`); never let a login revert a
+deliberate block or suspension; write timeline timestamps with millisecond precision, because
+`CURRENT_TIMESTAMP` is second-granular and "newest wins" stops being deterministic; and for destructive brand
+actions use the provenance-backed ownership predicate, never the `OR franchisor_profile_id = ?` association
+branch. A hard delete is not an option anywhere: `DELETE FROM franchises` cascades into twenty tables, and a
+`users` row referenced by `franchise_submission_reviews` cannot be deleted at all.
 
 ### 5a. Protected Profile Flow
 1. `/profil/` is a static Astro shell that loads the custom Clerk runtime and redirects anonymous users to `/login/?next=/profil/`.
