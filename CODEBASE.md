@@ -1,3 +1,5 @@
+> **Current review (2026-09-28):** [Recent-code audit](docs/testing/RECENT_CODE_AUDIT_2026-09-28.md) records open identity, block, erasure, publication, and cleanup failure paths. The older “still to build” and `erasure_pending` paragraphs below predate the shipped deletion flow.
+
 ## 2026-09-26 directory and brand URL contract
 
 Franchisee.id keeps `/peluang-usaha/` as its directory and `/peluang-usaha/{slug}` as each individual brand page. Franchisor.id also uses `/peluang-usaha/` for its directory, but its individual brand pages and stored canonicals use `/usaha/{slug}` without a trailing slash. The Franchisor Astro route and source links were aligned in `27a783c`; a local synthetic new-slug build passed, while existing-slug precedence and the live Cloudflare deployment still need verification. See [the Franchisor implementation handoff](https://github.com/cfpages-admtravelbos/Franchisor.id/blob/main/docs/operations/ASTRO_CLOUDFLARE_BRAND_PUBLISH_PLAN.md) and this repository's `functions/_premium.js` per-site canonical mapping. Do not change Franchisee's detail family to match Franchisor's.

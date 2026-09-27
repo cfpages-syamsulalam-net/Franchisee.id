@@ -3498,3 +3498,6 @@ Format:
 - None.
 ## 2026-09-21 D1 storage incident
 - Identified `operation_events` telemetry as the storage exhaustion source and added a 30-day retention migration plus a narrowly scoped emergency cleanup script.
+## 2026-09-28 — Documentation-only review of recent code
+
+- Added [recent-code audit](docs/testing/RECENT_CODE_AUDIT_2026-09-28.md) for the current Franchisee head, with identity, block, erasure, static-publication, R2 cleanup, and membership findings and acceptance checks. Linked it from the codebase. No application code or production state changed.
