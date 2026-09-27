@@ -495,6 +495,20 @@ branch. A hard delete is not an option anywhere: `DELETE FROM franchises` cascad
   column also holds bulk-import uploaders and would take out unrelated brands' media. Table-by-table map: plan
   §5.6b.
 
+### Failure modes this codebase has already paid for
+
+Each of these cost real work to find. They are written down so the next change does not rediscover them.
+
+- **A `NOT NULL` column cannot be set to NULL, and the failure aborts the whole batch.** Bit twice: `users.clerk_user_id` (migration 0001, which this repository owns) and `listing_edit_suggestions.suggested_by_user_id` (migration 0004). The second was the dangerous one — `queueOwnerReview` writes that row keyed on the owner's own id, so it is populated for exactly the people most likely to request deletion, and 58 rows existed. **Before writing `SET x = NULL`, check `pragma_table_info` — not that the column exists, but that it is nullable.** The erasure test now asserts that for every column it touches.
+- **An assertion that cannot fail is worse than no assertion.** One used `assert.equal(A || B, true)` where `A` was already true, so the real check never ran. Ask of every new assertion: what would make this fail?
+- **A parity check guards only the subset it compares.** The two `_clerk-auth.js` copies were compared by one function body plus the export list, and reported health while a **webhook feedback loop** and a divergent error mapping lived in the same file. It now compares the body of **every** exported function. The subset you choose to compare is exactly where drift survives.
+- **Screen copy drifts from behaviour unless it is read against the handler.** The deletion page claimed uploaded assets were deleted, Premium cancelled, and that an admin could restore anything — none of which the handler did.
+- **Never delete by an "actor" column that also holds system values.** `franchise_assets.uploaded_by_user_id` is set by bulk imports as well as by people. Delete by the thing that owns the row, not by who touched it.
+- **Order of operations is design, not detail.** Block before erasing; delete R2 after the database commit, never before.
+- **A check with nothing to check proves nothing.** The ownership audit is recorded as **vacuous, not passed**, because no franchise had an owner yet.
+- **Never round-trip `deployment_configs`.** Cloudflare returns `secret_text` as `""`, so a GET-merge-PATCH writes the blanks back. Add secrets with `wrangler pages secret put`.
+- **Timeline timestamps need millisecond precision**, because `CURRENT_TIMESTAMP` is second-granular.
+
 ### 5a. Protected Profile Flow
 1. `/profil/` is a static Astro shell that loads the custom Clerk runtime and redirects anonymous users to `/login/?next=/profil/`.
 2. `js/profile-page.js` fetches `/profile-data` with the Clerk bearer token, renders a benefit-led next-best-action panel above the tabs, and renders side tabs by D1-authoritative role: franchisee users see the franchisee section, franchisor users see franchisor/listing/leads/claims sections, and admin/staff users see both.
