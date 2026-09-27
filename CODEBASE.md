@@ -485,6 +485,15 @@ branch. A hard delete is not an option anywhere: `DELETE FROM franchises` cascad
   `form_identifier_not_found` and moves into registration with the email prefilled, so first login *is*
   registration; only that code counts, never `form_password_incorrect`) and `js/auth-clerk-ui.js` (one login
   screen, Google first because it arrives verified, plus the network framing).
+- **Erasure** — `functions/_account-erasure.js`, called by `deleteAccount` **after** the block goes in, so a failed
+  erasure still leaves the person unable to sign in. Not a mass delete, and it cannot be: a `users` row is
+  undeletable once a `franchise_submission_reviews` row references it, and `ON DELETE CASCADE` would take the
+  premium orders and both event timelines. Personal rows are deleted, actor pointers nulled, and the `users` row
+  becomes an **anonymous shell** — which is what makes it tractable, because every foreign key still pointing at
+  it stops being personal data. A brand is archived (not deleted) only for a **proven** owner, with its assets and
+  R2 objects; anything left standing is reported back. **Do not delete assets by `uploaded_by_user_id`** — that
+  column also holds bulk-import uploaders and would take out unrelated brands' media. Table-by-table map: plan
+  §5.6b.
 
 ### 5a. Protected Profile Flow
 1. `/profil/` is a static Astro shell that loads the custom Clerk runtime and redirects anonymous users to `/login/?next=/profil/`.
