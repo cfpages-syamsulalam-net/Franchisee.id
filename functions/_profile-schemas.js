@@ -93,6 +93,15 @@ const ListingLocationsSchema = z.object({
   locations: z.array(ListingLocationSchema).max(24).default([]),
 });
 
+const DeleteAccountSchema = z.object({
+  action: z.literal("delete_account"),
+  // The same literal the page tells the person to type, so a stray click or a replayed request cannot remove an
+  // account. Normalised because the phrase contains spaces and people paste it.
+  confirm: z.literal("HAPUS AKUN SAYA"),
+  // Which consequence text was on screen. Stored on the block row so we can show what they agreed to.
+  acknowledgement_version: z.string().trim().min(1).max(40),
+});
+
 const AddPublicRoleSchema = z.object({
   action: z.literal("add_public_role"),
   role: z.enum(["franchisee", "franchisor"]),
@@ -128,6 +137,7 @@ export const MutationSchema = z.discriminatedUnion("action", [
   FranchisorProfileSchema,
   ListingSchema,
   ListingLocationsSchema,
+  DeleteAccountSchema,
   AddPublicRoleSchema,
   FranchiseInquirySchema,
   SaveOpportunitySchema,
