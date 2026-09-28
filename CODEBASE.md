@@ -473,25 +473,31 @@ branch. A hard delete is not an option anywhere: `DELETE FROM franchises` cascad
 
 - **Deletion request screen** — `/pengaturan/hapus-akun/` posting `delete_account` to `/profile-data`, handled by
   `deleteAccount` in `functions/_profile-account.js`. It lists the consequences in full, requires the phrase
-  `HAPUS AKUN SAYA` (validated against the same literal server-side), and records the **acknowledgement version**
-  on the block row so we can always show what a person agreed to. It **erases the data and reports `erased: true`**
-  — `eraseAccount` computes `cleanupPending`, but the current response does not expose it, so incomplete media
-  cleanup is not yet reported separately from the completed D1 erasure (re-audit F6) — and the person must sign the forfeiture
-  contract before any of it runs. The block it creates is real. The screen exists here as well as on
-  `franchisor.id` because the account is shared — it should be closable from whichever site the person is on.
-- **Block enforcement** — `blockAccount` / `unblockAccount` / `hashBlockedEmail` in `functions/_clerk-auth.js`,
-  mirrored with `franchisor.id` and covered by `resolver:parity:check`. A blocked address is refused *before*
-  any identity link or user insert; the block follows the **person** as well as the address; and `blocked` gets
+  `HAPUS AKUN SAYA` (validated against the same literal server-side), binds the **acknowledgement and contract
+  versions to server-owned literals** (a stale or fabricated version fails before anything destructive runs), and
+  structurally validates the `path/v1` gesture (whole points, bounded canvas, matching point count). It collects
+  **every verified address** from the live Clerk record and blocks each one in the same batch. It **erases the
+  data and reports `erased: true`** — `eraseAccount` computes `cleanupPending`, but the current response does not
+  expose it, so incomplete media cleanup is not yet reported separately from the completed D1 erasure (re-audit
+  F6) — and the person must sign the forfeiture contract before any of it runs. The block it creates is real. The
+  screen exists here as well as on `franchisor.id` because the account is shared — it should be closable from
+  whichever site the person is on.
+- **Block enforcement** — `blockAccount` / `blockAccountStatements` / `unblockAccount` / `hashBlockedEmail` in
+  `functions/_clerk-auth.js`, mirrored with `franchisor.id` and covered by `resolver:parity:check`. Every verified
+  address on the arriving user is refused *before* any identity link or user insert; the block follows the
+  **person** as well as the address (`assertUserNotBlocked` by user id on both resolver paths, and the fast-path
+  status CASE matches by user id so a block under one address refuses the sibling address too); and `blocked` gets
   its own code and message. Needs `USER_BLOCK_SALT` and refuses without it, because a hash we cannot reproduce
   would look enforced while matching nothing.
 - **First-login registration and auth copy** — `js/auth-clerk.js` (`handleLogin` catches
   `form_identifier_not_found` and moves into registration with the email prefilled, so first login *is*
   registration; only that code counts, never `form_password_incorrect`) and `js/auth-clerk-ui.js` (one login
   screen, Google first because it arrives verified, plus the network framing).
-- **Erasure** — `functions/_account-erasure.js`, called by `deleteAccount` **after** the block goes in, so a failed
-  erasure still leaves the person unable to sign in. Not a mass delete, and it cannot be: a `users` row is
-  undeletable once a `franchise_submission_reviews` row references it, and `ON DELETE CASCADE` would take the
-  premium orders and both event timelines. Personal rows are deleted, actor pointers nulled, and the `users` row
+- **Erasure** — `functions/_account-erasure.js`, committed in **one batch** with the block, the consent and the
+  terminal `free`/`blocked` timeline events, so a failure anywhere leaves nothing half-done and the screen can be
+  used again. Not a mass delete, and it cannot be: a `users` row is undeletable once a
+  `franchise_submission_reviews` row references it, and `ON DELETE CASCADE` would take the premium orders and both
+  event timelines. Personal rows are deleted, actor pointers nulled, and the `users` row
   becomes an **anonymous shell** — which is what makes it tractable, because every foreign key still pointing at
   it stops being personal data. A brand is archived (not deleted) only for a **proven** owner, with its assets and
   R2 objects; anything left standing is reported back. **Do not delete assets by `uploaded_by_user_id`** — that
@@ -507,8 +513,11 @@ Each of these cost real work to find. They are written down so the next change d
 - **A parity check guards only the subset it compares.** The two `_clerk-auth.js` copies were compared by one function body plus the export list, and reported health while a **webhook feedback loop** and a divergent error mapping lived in the same file. It now compares the body of **every** exported function. The subset you choose to compare is exactly where drift survives.
 - **Screen copy drifts from behaviour unless it is read against the handler.** The deletion page claimed uploaded assets were deleted, Premium cancelled, and that an admin could restore anything — none of which the handler did.
 - **Never delete by an "actor" column that also holds system values.** `franchise_assets.uploaded_by_user_id` is set by bulk imports as well as by people. Delete by the thing that owns the row, not by who touched it.
-- **Order of operations is design, not detail.** Block before erasing; delete R2 after the database commit, never before.
+- **Order of operations is design, not detail.** Block, consent and terminal events commit in the same batch as the erasure; delete R2 after the database commit, never before.
 - **A check with nothing to check proves nothing.** The ownership audit is recorded as **vacuous, not passed**, because no franchise had an owner yet.
+- **Absence is a body shape, not a status.** The R2 Delete Object API answers a missing object with HTTP 200 `success:false` code 10007 and a bad bucket name with HTTP 400 code 10005 — neither is the 404 the drain treated as gone. Verify error shapes against the live API before encoding them; the finding that prompted this cost a wrong-bucket retry record.
+- **A subquery inside a batch observes the batch.** An INSERT...SELECT...WHERE NOT EXISTS tried as the membership downgrade silently skipped genuine expiries, because on D1 the predicate ran against the batch's own earlier statements. Keep the condition in the transition that owns it (the expiry UPDATE's `renewal_status` guard), not in an observation tacked onto the write.
+- **Copying a shared file across repositories can delete what only one of them has.** Porting the hardened `_profile-schemas.js` dropped Franchisor's `RemoveBrandSchema` and would have unshipped brand removal; the brand-removal gate caught it. Diff the union of concerns after every cross-repo copy, or the subset you forgot is exactly what ships.
 - **Never round-trip `deployment_configs`.** Cloudflare returns `secret_text` as `""`, so a GET-merge-PATCH writes the blanks back. Add secrets with `wrangler pages secret put`.
 - **Timeline timestamps need millisecond precision**, because `CURRENT_TIMESTAMP` is second-granular.
 

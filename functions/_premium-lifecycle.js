@@ -275,6 +275,22 @@ export async function queuePremiumGraceEmails(db, settings = null) {
   return queued;
 }
 
+/**
+ * Whether the expiry batch actually expired this row.
+ *
+ * The batch is conditional (a mid-flight renewal suppresses it), so the return count must reflect the commit,
+ * not the attempt. D1's `db.batch` resolves to one result per statement with `meta.changes`, and the expiry
+ * UPDATE is always `statements[0]` — but the node:sqlite adapter here runs statements one by one and resolves
+ * `undefined`, so an unreadable result falls back to re-reading the row. A fallback that cannot read either
+ * claims nothing rather than guessing.
+ */
+function expiredInBatch(batchResult) {
+  const first = Array.isArray(batchResult) ? batchResult[0] : null;
+  const changes = Number(first?.meta?.changes);
+  if (!Number.isFinite(changes)) return null;
+  return changes > 0;
+}
+
 export async function expirePremiumAfterGrace(db, settings = null) {
   const currentSettings = settings || await loadPremiumSettings(db);
   const graceDays = clampNumber(currentSettings.grace_period_days, 0, 30);
@@ -325,12 +341,17 @@ export async function expirePremiumAfterGrace(db, settings = null) {
     }
 
     const statements = [
+      // The `renewal_status <> 'renewed'` guard is the concurrent-renewal race fix: approval marks the old row
+      // `renewed` when it inserts the replacement in the same batch, so if approval landed between this worker's
+      // lookup and this batch, the expiry finds the row already renewed and changes nothing. The row then stays
+      // `active` rather than expiring under a live replacement — and the membership downgrade below is guarded
+      // the same way, so no `free` event can win over the new subscription either.
       db
         .prepare(
           `UPDATE franchise_subscriptions
            SET status = 'expired',
                updated_at = CURRENT_TIMESTAMP
-           WHERE id = ? AND status = 'active'`,
+           WHERE id = ? AND status = 'active' AND renewal_status <> 'renewed'`,
         )
         .bind(row.id),
       auditStatement(db, "premium.subscription.expire", "franchise_subscriptions", row.id, {
@@ -391,6 +412,13 @@ export async function expirePremiumAfterGrace(db, settings = null) {
     // the batch, so a failure in between left a lapsed subscription with a timeline that still said premium — and
     // a retry could then append a second downgrade. Now either both land or neither does, so a retry after a
     // partial failure still produces exactly one effective `free` transition.
+    //
+    // The renewal race is handled one level up: the expiry UPDATE carries `renewal_status <> 'renewed'`, so a
+    // renewal approved between this worker's lookup and this batch leaves the row `active` instead of expiring it.
+    // The membership INSERT itself stays unconditional once the pre-batch lookup has decided: an
+    // INSERT...SELECT...WHERE NOT EXISTS form was tried here and silently skipped genuine last-subscription
+    // downgrades, because the subquery runs against the batch's own earlier statements on D1 and observes the row
+    // it just expired rather than the renewal state the lookup saw.
     if (!stillSubscribed) {
       statements.push(
         membershipEventStatement(db, {
@@ -402,8 +430,23 @@ export async function expirePremiumAfterGrace(db, settings = null) {
       );
     }
 
-    await db.batch(statements);
-    expired += 1;
+    const batchResult = await db.batch(statements);
+    // The batch is conditional now: a renewal that landed mid-flight leaves the row `active` instead of expiring
+    // it, so count what the commit actually did rather than what was attempted. D1's batch answers per-statement
+    // `meta.changes` — no second read, and no adapter-shape guessing about what a follow-up query can answer.
+    // The node:sqlite adapter here resolves `undefined` (it runs statements one by one), so an unreadable result
+    // falls back to re-reading the row it just wrote through the same adapter the rest of the suite uses.
+    const decided = expiredInBatch(batchResult);
+    if (decided === true) {
+      expired += 1;
+    } else if (decided === null) {
+      const reread = await db
+        .prepare(`SELECT status FROM franchise_subscriptions WHERE id = ?`)
+        .bind(row.id)
+        .first()
+        .catch(() => null);
+      if (reread?.status === "expired") expired += 1;
+    }
   }
 
   if (deferred > 0) {

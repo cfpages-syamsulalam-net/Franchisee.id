@@ -4,6 +4,8 @@
 
 **Decision.** E2 and E4 from the earlier audit are fixed in local code. E1 still needs deployed URL proof; E3, E5 and E6 are partial. The findings below prevent calling account deletion and the two-app identity transition production complete. Code, database, provider settings and deployment were not changed in this audit.
 
+**Post-audit repairs (2026-09-28, same day, after this review was written).** F1, F2, F3 and F4 are fixed in local code with the re-audit's acceptance shapes proven as local gates; F5 is half-closed. Nothing below is reworded — the findings stand as written — but their dispositions changed, recorded in the table and the changelog entry "Re-audit repairs". Still not done: deployed URL retirement (E1), live two-app sign-in acceptance, production D1/R2/Clerk mutation, or a Pages build and deployment.
+
 ## F1 — R2 cleanup can acknowledge the wrong bucket (high)
 
 `functions/profile-upload.js:108` and `functions/premium-receipt-upload.js:81` save the Pages **binding label** `FRANCHISE_ASSETS` in `franchise_assets.r2_bucket`. `functions/_account-erasure.js` copies that value to the new outbox. `scripts/asset-cleanup-drain.mjs:95` prefers the row value over `ASSET_BUCKET=franchise-assets`, then sends it as the physical bucket name to [Cloudflare's Delete Object route](https://developers.cloudflare.com/api/resources/r2/subresources/buckets/subresources/objects/methods/delete/). Its `deleteObject` path treats any HTTP 404 as an already absent object and marks the outbox row `done`. The API route documents a bucket-name path parameter; it does not justify treating every 404 as object absence. A wrong-bucket response can therefore close the only retry record while the real object remains.
@@ -44,13 +46,13 @@
 
 | Earlier item | Current code evidence and remaining gate |
 | --- | --- |
-| E1, missing static rebuild | Partly fixed: `_account-erasure.js:228-277` now queues affected site IDs within the erasure batch. Neither a Franchisor legacy suppression build nor both deployed URLs/cards was proven; keep E1 open for deployed acceptance. |
-| E2, pre-committed block stranded user | Fixed locally: block and consent statements now join the erasure batch (`_profile-account.js:80-121`, `_account-erasure.js:331-335`); injected D1-batch failure test passes. F3 is a separate later-write gap. |
-| E3, Clerk/D1 email conflict | Partly fixed by precheck and unique-error compensation; F5 and the sibling-email F2 remain. |
+| E1, missing static rebuild | Partly fixed: `_account-erasure.js:228-277` now queues affected site IDs within the erasure batch. Neither a Franchisor legacy suppression build nor both deployed URLs/cards was proven; keep E1 open for deployed acceptance. (Unchanged by the post-audit repairs — the suppression proof is local only.) |
+| E2, pre-committed block stranded user | Fixed locally: block and consent statements now join the erasure batch (`_profile-account.js:80-121`, `_account-erasure.js:331-335`); injected D1-batch failure test passes. F3 is a separate later-write gap — **closed by the post-audit repairs**: the terminal events joined the same batch. |
+| E3, Clerk/D1 email conflict | Partly fixed by precheck and unique-error compensation; F5 and the sibling-email F2 remain. **Post-audit:** F2 closed (per-address blocks plus person-level refusal); F5 half-closed (blocked-target precheck; generic-outage reconciliation still open). |
 | E4, block lookup failed open | Fixed locally: `_clerk-auth.js:370-430` returns unavailable/503 on lookup errors; salted and unsalted failure tests pass. |
-| E5, R2 failure lost retry key | Partly fixed by migration 0046 outbox and scheduled drain. F1 can falsely mark a key done; actual REST consumer behavior is untested. |
-| E6, erased user retained Premium | Partly fixed on the happy path; F3 can leave the effective timeline Premium after a post-commit failure. |
-| E7, stale deletion prose | The top of `CODEBASE.md` now labels older text historical. F6 identifies a new response-contract mismatch. |
+| E5, R2 failure lost retry key | Partly fixed by migration 0046 outbox and scheduled drain. F1 can falsely mark a key done; actual REST consumer behavior is untested. **Post-audit:** F1 closed locally — label mapping plus body-shape absence, proven with the live API's verified shapes — but the REST consumer against seeded rows (not mocks) is still the open acceptance. |
+| E6, erased user retained Premium | Partly fixed on the happy path; F3 can leave the effective timeline Premium after a post-commit failure. **Post-audit:** F3's batch inclusion closes the post-commit window locally. |
+| E7, stale deletion prose | The top of `CODEBASE.md` now labels older text historical. F6 identifies a new response-contract mismatch. (F6 still open — the response still does not expose `cleanupPending`.) |
 
 ## Evidence and release checks
 
