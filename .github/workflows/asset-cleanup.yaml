@@ -1,0 +1,42 @@
+name: Asset Cleanup Drain
+# Render metadata: workflow_path=.github/workflows/asset-cleanup.yaml, companion_path=scripts/asset-cleanup-drain.mjs, expected_account=0ba63b7f0096bc267a93fe5c80b1f571, expected_database=812cd8ac-edd0-45d9-981f-c9a15358317b
+
+# Why a scheduled script and not a Cloudflare cron: Pages Functions have no scheduled handler at all, so the only
+# schedulers available here are GitHub Actions. The publish queue in this repository is drained exactly this way.
+#
+# Why this workflow exists in ONE repository only: `asset_cleanup_outbox` is not site-scoped. An erased brand's
+# media belongs to one person rather than to one site, so every row is work for whoever gets there first — a
+# second drainer would only duplicate the same deletes. It lives here because this repository owns the shared
+# schema (migrations 0040-0046).
+on:
+  schedule:
+    # Offset from the publish poller's 7,37 so the two never contend for the same D1 minute.
+    - cron: '13,43 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drain:
+    if: github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    concurrency:
+      group: asset-cleanup-drain
+      cancel-in-progress: false
+    env:
+      GITHUB_REPOSITORY: cfpages-syamsulalam-net/Franchisee.id
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_D1_DATABASE_ID: ${{ vars.CLOUDFLARE_D1_DATABASE_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ASSET_BUCKET: franchise-assets
+      CLEANUP_LIMIT: '50'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+      - name: Drain the asset cleanup outbox
+        run: node scripts/asset-cleanup-drain.mjs
