@@ -1,3 +1,9 @@
+## 2026-09-28 — Latest-diff code re-audit (documentation only)
+
+- Added `docs/testing/RECENT_CODE_REAUDIT_2026-09-28.md` for the application diff from `9538876` through `197a26e`, with the two later email-routing documentation commits reviewed separately. It records six actionable findings, earlier-finding dispositions, acceptance checks, and deployment limits.
+- Updated `CODEBASE.md` to link the re-audit and correct its claim that the deletion response already includes `cleanupPending`; linked the review from `docs/README.md`.
+- Added this changelog entry and `.context/session-20260928-1810.md` for the review handoff. No application code, provider setting or production data changed.
+
 ## 2026-09-28 — Inbound email routing verified (nothing created)
 
 - **The requested forward already existed, and that is why enumeration came first.** `email@franchisee.id → admin@alampintar.org` is rule `006bfc7c68bd4bfba1f3ae705d928e29`, enabled, `literal/to=email@franchisee.id` → `forward`, created **2025-10-13** and auto-named `Rule created at …` by the dashboard. Creating it as asked would have produced a **second rule with the same matcher — the same message forwarded twice**. No change was made.

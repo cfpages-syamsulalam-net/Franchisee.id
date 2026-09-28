@@ -1,4 +1,4 @@
-> **Current review (2026-09-28):** [Recent-code audit](docs/testing/RECENT_CODE_AUDIT_2026-09-28.md) records open identity, block, erasure, publication, and cleanup failure paths. The older “still to build” and `erasure_pending` paragraphs below predate the shipped deletion flow.
+> **Current review (2026-09-28):** [Initial audit](docs/testing/RECENT_CODE_AUDIT_2026-09-28.md) and [latest-diff re-audit](docs/testing/RECENT_CODE_REAUDIT_2026-09-28.md) record the current identity, erasure, cleanup and publication risks. The older “still to build” and `erasure_pending` paragraphs below predate the shipped deletion flow. The current deletion response does **not** expose the computed `cleanupPending` value (re-audit F6).
 
 ## 2026-09-26 directory and brand URL contract
 
@@ -475,8 +475,8 @@ branch. A hard delete is not an option anywhere: `DELETE FROM franchises` cascad
   `deleteAccount` in `functions/_profile-account.js`. It lists the consequences in full, requires the phrase
   `HAPUS AKUN SAYA` (validated against the same literal server-side), and records the **acknowledgement version**
   on the block row so we can always show what a person agreed to. It **erases the data and reports `erased: true`**
-  — the response also carries `cleanupPending`, so incomplete media cleanup is reported separately from the
-  completed D1 erasure rather than being folded into one success flag — and the person must sign the forfeiture
+  — `eraseAccount` computes `cleanupPending`, but the current response does not expose it, so incomplete media
+  cleanup is not yet reported separately from the completed D1 erasure (re-audit F6) — and the person must sign the forfeiture
   contract before any of it runs. The block it creates is real. The screen exists here as well as on
   `franchisor.id` because the account is shared — it should be closable from whichever site the person is on.
 - **Block enforcement** — `blockAccount` / `unblockAccount` / `hashBlockedEmail` in `functions/_clerk-auth.js`,

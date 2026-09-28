@@ -1,8 +1,10 @@
 # Documentation Index
 
+**Latest code review:** [2026-09-28 latest-diff re-audit](testing/RECENT_CODE_REAUDIT_2026-09-28.md), following the [initial recent-code audit](testing/RECENT_CODE_AUDIT_2026-09-28.md). Read their open identity, deletion, R2 cleanup and publication gates before describing those journeys as production complete.
+
 **Network context, 2026-09-25:** This repository owns the current shared D1 and Premium implementation. The Franchisor.id extension is specified in its [membership rollout plan](https://github.com/cfpages-admtravelbos/Franchisor.id/blob/main/docs/product/NETWORK_MEMBERSHIP_ROLLOUT_PLAN.md) and [user journeys](https://github.com/cfpages-admtravelbos/Franchisor.id/blob/main/docs/product/FRANCHISOR_USER_JOURNEYS.md). Use [this site's journeys](product/USER_JOURNEYS.md), [next steps](product/NEXT_STEPS.md), [Premium plan](architecture/PREMIUM_MONETIZATION_PLAN.md), and [controlled account QA](product/AUTH_AND_DASHBOARD_QA.md) for the shared baseline. The Franchisor July port is not proof of production parity.
 
-Last updated: 2026-09-24 (Asia/Jakarta)
+Last updated: 2026-09-28 (Asia/Jakarta)
 
 This repository previously accumulated many root-level Markdown files. Going forward, root Markdown should stay small and operational. Longer references live under `docs/` and should be linked instead of duplicated.
 
