@@ -474,10 +474,11 @@ branch. A hard delete is not an option anywhere: `DELETE FROM franchises` cascad
 - **Deletion request screen** — `/pengaturan/hapus-akun/` posting `delete_account` to `/profile-data`, handled by
   `deleteAccount` in `functions/_profile-account.js`. It lists the consequences in full, requires the phrase
   `HAPUS AKUN SAYA` (validated against the same literal server-side), and records the **acknowledgement version**
-  on the block row so we can always show what a person agreed to. It returns `erasure_pending: true` and **does
-  not claim the data is deleted**, because the erasure is plan step 0.7b and does not exist yet. The block it
-  creates is real. The screen exists here as well as on `franchisor.id` because the account is shared — it should
-  be closable from whichever site the person is on.
+  on the block row so we can always show what a person agreed to. It **erases the data and reports `erased: true`**
+  — the response also carries `cleanupPending`, so incomplete media cleanup is reported separately from the
+  completed D1 erasure rather than being folded into one success flag — and the person must sign the forfeiture
+  contract before any of it runs. The block it creates is real. The screen exists here as well as on
+  `franchisor.id` because the account is shared — it should be closable from whichever site the person is on.
 - **Block enforcement** — `blockAccount` / `unblockAccount` / `hashBlockedEmail` in `functions/_clerk-auth.js`,
   mirrored with `franchisor.id` and covered by `resolver:parity:check`. A blocked address is refused *before*
   any identity link or user insert; the block follows the **person** as well as the address; and `blocked` gets
