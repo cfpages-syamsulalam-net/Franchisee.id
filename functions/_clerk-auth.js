@@ -296,7 +296,8 @@ export async function hashBlockedEmail(email, salt) {
  * Refuses without a salt. Writing a hash we cannot reproduce would produce a block that never matches anything,
  * which is worse than no block at all because it looks enforced.
  */
-export async function blockAccount(db, input) {
+/** The block itself, as a statement rather than an execution, so a caller can commit it atomically with other work. */
+export async function blockAccountStatements(db, input) {
   if (!input?.salt) {
     throw new AuthError("Pemblokiran akun butuh USER_BLOCK_SALT yang belum diset.", 503, "BLOCK_SALT_MISSING");
   }
@@ -306,7 +307,7 @@ export async function blockAccount(db, input) {
     throw new AuthError("Alamat email tidak valid untuk diblokir.", 400, "BLOCK_EMAIL_REQUIRED");
   }
 
-  await db
+  const statement = db
     .prepare(
       `INSERT INTO user_blocks
          (id, user_id, email_hash, hash_algorithm, reason, request_source, acknowledged_at, acknowledgement_version)
@@ -329,8 +330,15 @@ export async function blockAccount(db, input) {
       input.requestSource === "self_service" ? "self_service" : "admin",
       input.acknowledgedAt || nowSqlite(),
       input.acknowledgementVersion || "unspecified"
-    )
-    .run();
+    );
+
+  return { statements: [statement], emailHash };
+}
+
+export async function blockAccount(db, input) {
+  const { statements, emailHash } = await blockAccountStatements(db, input);
+
+  await db.batch(statements);
 
   if (input.userId) {
     await recordUserStatusEvent(db, input.userId, "blocked", input.reason || "account blocked", input.actorUserId || null);
