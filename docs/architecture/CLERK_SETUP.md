@@ -56,6 +56,32 @@ actual send. A green DNS row is not the same claim as "email works".
 not conflict with routing, which claims only the names it serves — do not "resolve" a suspected clash by deleting
 either side.
 
+## Inbound email routing — verified 2026-09-28
+
+Recorded because it was **already in place** when it was asked for, and adding it again would have been the wrong
+action: a second rule with the same literal matcher means the same message is forwarded **twice**.
+
+| What | Value |
+| --- | --- |
+| Rule id | `006bfc7c68bd4bfba1f3ae705d928e29` — enabled, `priority: 0` |
+| Matcher | `literal` / `to` = `email@franchisee.id` |
+| Action | `forward` → `admin@alampintar.org` |
+| Created | 2025-10-13 (dashboard-made — Cloudflare auto-names those rules `Rule created at <timestamp>`) |
+| Zone DNS | MX `route1.mx.cloudflare.net` (17), `route2` (35), `route3` (83) · SPF `v=spf1 include:_spf.mx.cloudflare.net ~all` · DMARC `v=DMARC1; p=none` |
+
+**Every other address at this apex is silently dropped.** The catch-all is **disabled**, and it appears in the rules
+list as a second rule — `feec7040c2134fcd82c5ecb003a793ee`, `matchers: [all]` → `actions: [drop]`,
+`priority: 2147483647`. That is how a disabled catch-all is represented, not a stray rule to delete. Practical
+consequence: `email@franchisee.id` forwards, while something like `info@franchisee.id` is accepted and then
+discarded **with no bounce to the sender**, so a person writing to it cannot tell it failed. Enable or redirect the
+catch-all if other addresses are ever expected to receive mail.
+
+⬜ **Not verified: an actual delivery.** The rule is enabled and the DNS is complete, but the forwarding
+**destination's** verification state could not be read — addresses live at the account scope
+(`/accounts/{account_id}/email/routing/addresses`), which this token cannot read, so the confirmed statement stops
+at "the rule and the DNS are in place". Prove it by sending a real message from an external address and checking
+arrival at `admin@alampintar.org` — a green rule is not the claim "mail arrives".
+
 ## `USER_BLOCK_SALT` — set once, never rotated
 
 The blocked-address hash is `SHA-256(salt + ":" + normalised email)`, so **every stored hash derives from the salt**:

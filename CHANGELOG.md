@@ -1,3 +1,10 @@
+## 2026-09-28 — Inbound email routing verified (nothing created)
+
+- **The requested forward already existed, and that is why enumeration came first.** `email@franchisee.id → admin@alampintar.org` is rule `006bfc7c68bd4bfba1f3ae705d928e29`, enabled, `literal/to=email@franchisee.id` → `forward`, created **2025-10-13** and auto-named `Rule created at …` by the dashboard. Creating it as asked would have produced a **second rule with the same matcher — the same message forwarded twice**. No change was made.
+- **Zone DNS confirmed complete:** MX `route1.mx.cloudflare.net` (17) / `route2` (35) / `route3` (83), SPF `v=spf1 include:_spf.mx.cloudflare.net ~all`, DMARC `v=DMARC1; p=none`.
+- **Worth knowing: every other address at this apex is silently dropped.** The catch-all is disabled and appears in the rules list as `feec7040c2134fcd82c5ecb003a793ee`, `matchers:[all]` → `actions:[drop]`, `priority: 2147483647` — the representation of a *disabled* catch-all, not a stray rule to delete. `info@franchisee.id` would be accepted and discarded **with no bounce**, so the sender cannot tell. Enable or redirect the catch-all if more addresses are ever needed.
+- ⬜ **Not verified: an actual delivery.** The forwarding destination's verification state is account-scoped, and this token cannot read it — `GET /accounts/{account_id}/email/routing/addresses` returns `code 10000 Authentication error` while the zone-scoped variant returns `403` and zone *rules* read fine. The confirmed claim stops at "the rule and the DNS are in place"; a real external send to `email@franchisee.id` is the test.
+
 ## 2026-09-28 — Clerk email sender DNS (`clkmail2`)
 
 - **Three CNAMEs added to the `franchisee.id` zone**, all `proxied: false` to match the existing Clerk records: `clkmail2` → `mail2.kjqeve8dxzp1.clerk.services`, `pdk1._domainkey.clkmail2` → `dkim3.kjqeve8dxzp1.clerk.services`, and `pdk2._domainkey.clkmail2` → `dkim4.kjqeve8dxzp1.clerk.services`. Cloudflare returned the record ids, which are recorded in `docs/architecture/CLERK_SETUP.md` as the rollback handle.
