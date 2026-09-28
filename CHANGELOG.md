@@ -1,3 +1,11 @@
+## 2026-09-28 — Clerk email sender DNS (`clkmail2`)
+
+- **Three CNAMEs added to the `franchisee.id` zone**, all `proxied: false` to match the existing Clerk records: `clkmail2` → `mail2.kjqeve8dxzp1.clerk.services`, `pdk1._domainkey.clkmail2` → `dkim3.kjqeve8dxzp1.clerk.services`, and `pdk2._domainkey.clkmail2` → `dkim4.kjqeve8dxzp1.clerk.services`. Cloudflare returned the record ids, which are recorded in `docs/architecture/CLERK_SETUP.md` as the rollback handle.
+- **The `2` suffix is meaningful, and checking it was the point.** `clkmail` and `clk`/`clk2._domainkey` already answer for this zone, and the instance identifier `kjqeve8dxzp1` appears in every target — so these belong to *this* site's Clerk instance and are a second email domain on it, not a replacement for the first. Creating records without that check is how you end up verifying the wrong zone.
+- **Nothing else on the zone was touched.** The apex keeps Email Routing's MX records and `billing.` keeps its SES/Resend records; a CNAME on a `clkmail*` subdomain does not conflict with routing, which claims only the names it serves.
+- **Verified:** the API accepted all three, and the authoritative nameservers plus `1.1.1.1` both resolve them. ⬜ **Not verified:** Clerk's dashboard reporting the domain verified, and a real email arriving — a green DNS row is not the claim "email works". No smoke test yet exercises the new sender, because no application email is sent through it by default.
+- **Diagnostic worth keeping:** `Resolve-DnsName <name> -Server <ns-hostname>` returns *nothing* and looks identical to a record that never propagated. Pass the nameserver **IP** (`Resolve-DnsName damon.ns.cloudflare.com -Type A`) instead. That false negative produced one wrong "not resolving yet" conclusion here.
+
 ## 2026-09-27 — One D1 user, reachable from two Clerk applications
 
 This repository owns the shared migration chain, so these are the authoritative copies.

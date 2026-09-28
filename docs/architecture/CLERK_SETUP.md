@@ -27,6 +27,43 @@ What that changes here:
   `pnpm run auth:status:check` asserts the identity rules against the real migration chain. Both run inside
   `build:astro`.
 
+## Email sender DNS — `clkmail2`, added 2026-09-28
+
+Clerk's transactional email sends through a dedicated subdomain, and the dashboard asks for three **CNAME** records.
+They were added to the `franchisee.id` zone on 2026-09-28, all `proxied: false` to match the existing Clerk records
+— an orange-cloud CNAME answers with Cloudflare addresses, so Clerk's verification cannot see its target and fails.
+
+| Name | Type | Target | Cloudflare record id |
+| --- | --- | --- | --- |
+| `clkmail2` | CNAME | `mail2.kjqeve8dxzp1.clerk.services` | `ab407c93a3cfa1d064620346bd9a0731` |
+| `pdk1._domainkey.clkmail2` | CNAME | `dkim3.kjqeve8dxzp1.clerk.services` | `9fec53325d7e0a4722e2188e1bca9bfd` |
+| `pdk2._domainkey.clkmail2` | CNAME | `dkim4.kjqeve8dxzp1.clerk.services` | `cb140dfc355e4362d7f151fab135b495` |
+
+The ids are recorded deliberately: they are the rollback handle if the records ever need removing.
+
+The `2` suffix is because `clkmail` → `mail.kjqeve8dxzp1.clerk.services` and `clk`/`clk2._domainkey` already exist in
+this zone — so this is a **second** email domain on the same Clerk instance, not a replacement for the first. The
+instance identifier `kjqeve8dxzp1` appearing in all three targets is what confirms they belong to this zone rather
+than to a sibling site's Clerk instance.
+
+**Verified:** the API accepted all three (`200`), and both the authoritative nameservers and `1.1.1.1` resolve
+`clkmail2.franchisee.id → mail2.kjqeve8dxzp1.clerk.services` plus both DKIM names. ⬜ **Not verified:** Clerk's
+dashboard showing the domain as verified, and a real email delivered through it — those need the dashboard and an
+actual send. A green DNS row is not the same claim as "email works".
+
+**Interaction with the email already on this zone:** the apex keeps Cloudflare Email Routing's MX records
+(`route1..3.mx.cloudflare.net`) and `billing.` keeps its SES/Resend records. A CNAME on a `clkmail*` subdomain does
+not conflict with routing, which claims only the names it serves — do not "resolve" a suspected clash by deleting
+either side.
+
+## `USER_BLOCK_SALT` — set once, never rotated
+
+The blocked-address hash is `SHA-256(salt + ":" + normalised email)`, so **every stored hash derives from the salt**:
+rotating it while `user_blocks` has rows silently unblocks everyone, because no stored hash can be reproduced any
+more. It must be **identical on both sites**, since a block created on one has to be recognised on the other. If it
+is missing while blocks exist, sign-in is **refused** rather than permitted (E4 made that fail closed), and the
+hash is stored against the person as well as the address so changing an email in Clerk does not escape it.
+
 ## Required Clerk Dashboard Settings
 1. Create or open **this site's own** Clerk application — the sibling site has a separate one, per the section above.
 2. Enable email/password authentication.
