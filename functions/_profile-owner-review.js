@@ -56,20 +56,21 @@ export async function reviewedProfileStatements(db, suggestion, selected, review
     JOIN franchise_site_publications p ON p.franchise_id = f.id
     WHERE f.franchisor_profile_id = ? AND p.publication_status = 'published' AND f.owner_user_id = ?`)
     .bind(profile.id, suggestion.suggested_by_user_id).first();
-  if (Number(allPublished?.total || 0) !== Number(ownedPublished?.total || 0)) return null;  const listings = await db.prepare(`SELECT f.id FROM franchises f
+  if (Number(allPublished?.total || 0) !== Number(ownedPublished?.total || 0)) return null;
+  const publications = await db.prepare(`SELECT DISTINCT f.id AS franchise_id, p.site_id FROM franchises f
     JOIN franchise_site_publications p ON p.franchise_id = f.id
     WHERE f.franchisor_profile_id = ? AND f.owner_user_id = ?
-      AND p.site_id = ? AND p.publication_status = 'published'`)
-    .bind(profile.id, suggestion.suggested_by_user_id, SITE_FRANCHISEE_ID).all();
-  if (!listings.results?.length) return null;
+      AND p.publication_status = 'published'`)
+    .bind(profile.id, suggestion.suggested_by_user_id).all();
+  if (!publications.results?.length) return null;
   const fields = changes.map(([column]) => column);
   const statements = [db.prepare(`UPDATE franchisor_profiles SET ${fields.map((field) => `${field} = ?`).join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
     .bind(...changes.map(([, value]) => value), profile.id),
     auditStatement(db, 'dashboard.profile.review_applied', 'franchisor_profiles', profile.id,
       { suggestion_id: suggestion.id, fields }, reviewerId)];
-  for (const listing of listings.results) {
+  for (const pub of publications.results) {
     statements.push(...siteRebuildStatements(db, {
-      siteId: SITE_FRANCHISEE_ID, franchiseId: listing.id, reason: 'franchisor_contact_review_approved',
+      siteId: pub.site_id, franchiseId: pub.franchise_id, reason: 'franchisor_contact_review_approved',
       entityType: 'listing_edit_suggestions', entityId: suggestion.id, actorUserId: reviewerId,
       source: 'dashboard', metadata: { fields },
     }));

@@ -1,3 +1,15 @@
+## 2026-10-08 — Cross-Site Brand Content Synchronization & Rebuild Fan-Out
+
+- **Cross-Site Rebuild Fan-Out Helpers:** Added `getPublishedSiteIdsForFranchise(db, franchiseId, homeSiteId)`, `getPublishedSiteIdsForProfile(db, profileId, homeSiteId)`, and `fanoutSiteRebuildStatements(db, siteIds, options)` to `functions/_site-publish-queue.js`.
+- **Dashboard & Profile Write Handlers Wired:**
+  - `handleReviewEditSuggestion` (admin approval): Fans out rebuild requests to all published sites for the franchise plus `SITE_ID`.
+  - `handleSuggestEdit` (auto-approved): Fans out rebuild requests to all published sites for the franchise plus `SITE_ID`.
+  - `reviewedProfileStatements` (admin profile approval): Replaced single-site query with multi-site publication discovery across all owned brands; fans out rebuild requests to each published site across the network.
+  - `handleReviewClaim` (admin claim approval): Fans out rebuild requests to all published sites for the brand plus `SITE_ID`.
+  - `updateOwnedListing` & `updateListingLocations`: Fans out rebuild requests to all published sites for the brand plus `SITE_FRANCHISEE_ID`.
+  - `handleUpdateListingLocations`: Fans out rebuild requests to all published sites for the brand plus `SITE_ID`.
+- **Documentation & Shared Architecture:** Mirrored canonical design doc `docs/architecture/CROSS_SITE_BRAND_SYNC_DESIGN.md`. All local checks pass (`auth:status:check`, `resolver:parity:check`, `functions:methods:check`).
+
 ## 2026-09-28 — Re-audit repairs: R2 drain, erasure batch, consent proof, renewal race, two-address block
 
 - **F1/N1 — the drain no longer guesses the bucket, and absence is a body shape, not a status.** The outbox stores the Pages binding label `FRANCHISE_ASSETS`, but the R2 Delete Object route needs the physical `franchise-assets` — verified against the live API with nonexistent-key deletes: the label answers HTTP 400 code 10005, a genuinely missing object answers HTTP 200 `success:false` code 10007, and neither is a 404 the old code treated as gone. `resolveBucket` maps the label at the consumer boundary and unknown names are requeued without ever calling R2; only proven object absence (bare 404 or 200/10007) closes the row. Case 19 in `check-auth-status.ts` proves all five shapes with the live API's responses.
