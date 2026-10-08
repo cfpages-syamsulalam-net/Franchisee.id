@@ -59,13 +59,13 @@ export function generateDirectoryControls(rows: D1FranchiseRow[], options: Direc
       </div>
       <div class="franchise-directory-bottom-row">
         <div class="franchise-directory-actions">
-          <button type="submit">Terapkan</button>
-          <a href="/peluang-usaha" data-directory-reset>Reset</a>
+          <button type="submit" data-fr-tooltip="Terapkan filter pencarian"><i class="fas fa-filter" aria-hidden="true" style="margin-right: 5px;"></i>Terapkan</button>
+          <a href="/peluang-usaha" data-directory-reset data-fr-tooltip="Reset semua filter ke kondisi awal"><i class="fas fa-undo-alt" aria-hidden="true" style="margin-right: 5px;"></i>Reset</a>
         </div>
         <p class="franchise-directory-result-count" aria-live="polite"></p>
         <nav class="franchise-directory-tools" aria-label="Alat bantu">
-          <a href="/alat-franchise/"><i class="fas fa-calculator" aria-hidden="true"></i>Budget &amp; BEP</a>
-          <a href="/bandingkan"><i class="fas fa-balance-scale" aria-hidden="true"></i>Bandingkan</a>
+          <a href="/alat-franchise/" data-fr-tooltip="Kalkulator modal &amp; estimasi BEP"><i class="fas fa-calculator" aria-hidden="true"></i>Budget &amp; BEP</a>
+          <a href="/bandingkan" data-fr-tooltip="Bandingkan komparasi brand franchise"><i class="fas fa-balance-scale" aria-hidden="true"></i>Bandingkan</a>
         </nav>
       </div>
       <noscript><p class="franchise-directory-noscript">Untuk memilih berdasarkan lokasi atau modal, buka <a href="/peluang-usaha/kota/">daftar kota</a> atau <a href="/peluang-usaha/modal/">daftar modal</a>.</p></noscript>

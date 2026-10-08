@@ -1,3 +1,12 @@
+## 2026-10-08 — UI/UX Styling Overhaul: Tooltip Typography, Save Button Contrast, Icon Badges & Navbar Deduplication
+
+- **Tooltip Typography De-bolding:** Updated `.fr-tooltip` in `css/shared-tooltip.css` and inlined card styles to `font-weight: 400 !important; font-size: 12px; line-height: 1.45;` with slate `#1e293b` background, soft borders, and gentle letter-spacing (`0.01em`). Boldness is restricted to semantic `strong`/`b` elements, eliminating visual overbearing on descriptive explainers.
+- **Card Save & Compare Button Overhaul:** Redesigned `.fr-save-opportunity-button--card` in `css/opportunity-save.css` and inlined directory styles into a crisp circular 34x34px white button (`background: #ffffff !important;`) with brand gold icon (`color: #c28d00 !important;`), transitioning smoothly to gold background with white icon on hover, and green `#137333` when saved. Inlined with high-specificity `!important` to guarantee immediate rendering that bypasses external stylesheet caching.
+- **Zero-Truncation Circular Status Badges:** Replaced text-bearing status badges ("Belum diklaim") with compact 22x22px circular icon-only badges (`fa-store-slash`, `fa-check-circle`, `fa-crown`) paired with comprehensive `data-fr-tooltip` descriptions, permanently eliminating flexbox card title text clipping ("Belum dik...").
+- **FontAwesome Visual Cues:** Added contextual icons to card fact chips (`fa-wallet`, `fa-calculator`, `fa-calendar-alt`, `fa-globe-asia`, `fa-bullseye`), directory controls (`fa-filter`, `fa-undo-alt`, `fa-balance-scale`), and card CTAs (`fa-arrow-right`).
+- **Navbar Deduplication & Visual Polish:** Removed redundant duplicate "Login" link (`menu-item-1779`), leaving single canonical "Masuk" link (`menu-item-1780`) with `<i class="fas fa-user-circle"></i>` and tooltip across `templates/peluang-usaha-tpl.html`, `templates/detail-franchise-tpl.html`, `customer-cabinet/index.html`, `login/index.html`, and `daftar/index.html`. Added visual icons and tooltips across the top header bar and main navigation items.
+- **Cache-Busting:** Added `?v=20261008-2` cache-busting to `shared-tooltip.css` and `opportunity-save.css` links in directory and detail templates.
+
 ## 2026-10-08 — Cross-Site Brand Content Synchronization & Rebuild Fan-Out
 
 - **Cross-Site Rebuild Fan-Out Helpers:** Added `getPublishedSiteIdsForFranchise(db, franchiseId, homeSiteId)`, `getPublishedSiteIdsForProfile(db, profileId, homeSiteId)`, and `fanoutSiteRebuildStatements(db, siteIds, options)` to `functions/_site-publish-queue.js`.

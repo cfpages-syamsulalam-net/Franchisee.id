@@ -301,7 +301,7 @@ function generateCard(row: FranchiseStaticRow, index: number) {
                 </div>
                 <div class="uc_post_button">
                     <a class="uc_more_btn" href="${escapeAttr(link)}">
-                        <div class="uc_btn_inner"><div class="uc_btn_txt">Lihat detail</div></div>
+                        <div class="uc_btn_inner"><div class="uc_btn_txt"><i class="fas fa-arrow-right" aria-hidden="true" style="margin-right: 5px;"></i>Lihat detail</div></div>
                     </a>
                     <span class="franchise-card-tools">
                         ${generateSaveOpportunityButton(row, "card")}
@@ -473,13 +473,18 @@ function generateSaveOpportunityButton(row: FranchiseStaticRow, variant: "card" 
 
 function generateStatusBadge(tier: string) {
   if (tier === "VERIFIED" || tier === "PREMIUM") {
-    const label = tier === "PREMIUM" ? "Premium" : "Terverifikasi";
-    const tip = tier === "PREMIUM" ? "Listing premium dengan informasi prioritas." : "Brand sudah diverifikasi oleh tim Franchisee.id.";
-    return `<span class="franchise-status-badge franchise-status-verified" aria-label="${escapeAttr(label)}" data-fr-tooltip="${escapeAttr(tip)}"><i class="fas fa-check-circle" aria-hidden="true"></i><span>${escapeHtml(label)}</span></span>`;
+    const isPremium = tier === "PREMIUM";
+    const label = isPremium ? "Premium" : "Terverifikasi";
+    const icon = isPremium ? "fa-crown" : "fa-check-circle";
+    const className = isPremium ? "franchise-status-premium" : "franchise-status-verified";
+    const tip = isPremium
+      ? "Listing Mitra Resmi: Informasi prioritas dan terverifikasi langsung oleh tim Franchisee.id."
+      : "Terverifikasi: Brand telah diverifikasi resmi oleh tim Franchisee.id.";
+    return `<span class="franchise-status-badge ${className} franchise-status-badge--icon-only" aria-label="${escapeAttr(label)}" data-fr-tooltip="${escapeAttr(tip)}"><i class="fas ${icon}" aria-hidden="true"></i></span>`;
   }
 
   if (tier === "UNCLAIMED") {
-    return `<span class="franchise-status-badge franchise-status-unclaimed" aria-label="Belum diklaim" data-fr-tooltip="Data ini belum dikelola langsung oleh pemilik brand. Pemilik brand dapat klaim untuk memperbarui profil."><i class="fas fa-exclamation-circle" aria-hidden="true"></i><span>Belum diklaim</span></span>`;
+    return `<span class="franchise-status-badge franchise-status-unclaimed franchise-status-badge--icon-only" aria-label="Halaman Belum Dikelola" data-fr-tooltip="Halaman Belum Dikelola: Profil ini dihimpun dari sumber publik dan belum dikelola langsung oleh pemilik brand. Pemilik brand dapat mengklaim halaman ini untuk memperbarui profil."><i class="fas fa-store-slash" aria-hidden="true"></i></span>`;
   }
 
   return "";
@@ -489,15 +494,18 @@ function generateFactChips(row: FranchiseStaticRow, modal: string) {
   const origin = nonIndonesiaCountryDisplay(row.brand_country);
   const target = origin ? marketDisplay(row.target_market || "Indonesia") : "";
   const chips = [
-    ["Modal", modal],
-    row.estimated_bep_months ? ["BEP", `${row.estimated_bep_months} bulan`] : null,
-    row.year_established ? ["Berdiri", String(row.year_established)] : null,
-    origin ? ["Asal", origin] : null,
-    target ? ["Target", target] : null,
-  ].filter(Boolean) as [string, string][];
+    { label: "Modal", value: modal, icon: "fa-wallet", tip: "Perkiraan modal investasi awal franchise" },
+    row.estimated_bep_months ? { label: "BEP", value: `${row.estimated_bep_months} bln`, icon: "fa-calculator", tip: "Estimasi Break Even Point (Balik Modal)" } : null,
+    row.year_established ? { label: "Berdiri", value: String(row.year_established), icon: "fa-calendar-alt", tip: "Tahun brand mulai didirikan" } : null,
+    origin ? { label: "Asal", value: origin, icon: "fa-globe-asia", tip: "Negara asal prinsipal brand" } : null,
+    target ? { label: "Target", value: target, icon: "fa-bullseye", tip: "Target wilayah ekspansi pasar" } : null,
+  ].filter(Boolean) as { label: string; value: string; icon: string; tip: string }[];
 
   return `<span class="franchise-card-facts">${chips
-    .map(([label, value]) => `<span class="franchise-fact-chip"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></span>`)
+    .map(
+      (chip) =>
+        `<span class="franchise-fact-chip" data-fr-tooltip="${escapeAttr(chip.tip)}"><i class="fas ${escapeAttr(chip.icon)}" aria-hidden="true"></i><span>${escapeHtml(chip.label)}</span><strong>${escapeHtml(chip.value)}</strong></span>`,
+    )
     .join("")}</span>`;
 }
 

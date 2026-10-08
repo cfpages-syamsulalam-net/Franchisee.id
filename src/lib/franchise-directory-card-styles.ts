@@ -167,6 +167,48 @@ export const FRANCHISE_DIRECTORY_CARD_STYLES = `
   white-space: nowrap;
   flex: 0 0 auto;
 }
+#uc_post_grid_elementor_d0f4a5f .franchise-status-badge--icon-only {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+#uc_post_grid_elementor_d0f4a5f .franchise-status-badge--icon-only:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+}
+#uc_post_grid_elementor_d0f4a5f .franchise-status-badge--icon-only.franchise-status-unclaimed {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+#uc_post_grid_elementor_d0f4a5f .franchise-status-badge--icon-only.franchise-status-unclaimed i {
+  color: #64748b !important;
+  font-size: 10px !important;
+}
+#uc_post_grid_elementor_d0f4a5f .franchise-status-badge--icon-only.franchise-status-verified {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+#uc_post_grid_elementor_d0f4a5f .franchise-status-badge--icon-only.franchise-status-verified i {
+  color: #059669 !important;
+  font-size: 10px !important;
+}
+#uc_post_grid_elementor_d0f4a5f .franchise-status-badge--icon-only.franchise-status-premium {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+#uc_post_grid_elementor_d0f4a5f .franchise-status-badge--icon-only.franchise-status-premium i {
+  color: #d97706 !important;
+  font-size: 10px !important;
+}
 .franchise-status-badge:hover,
 .franchise-status-badge:focus-within {
   z-index: 30;
@@ -192,18 +234,29 @@ export const FRANCHISE_DIRECTORY_CARD_STYLES = `
   display: flex;
   width: 100%;
   flex-wrap: wrap;
-  gap: 5px 12px;
+  gap: 5px 8px;
   margin-top: 8px;
 }
 .franchise-fact-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 0;
-  background: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.04);
   color: #222222;
   font-size: 11px;
   line-height: 1.4;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.franchise-fact-chip:hover {
+  background: #f1f5f9;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.franchise-fact-chip i {
+  color: #c28d00;
+  font-size: 10px;
 }
 #uc_post_grid_elementor_d0f4a5f .franchise-fact-chip,
 #uc_post_grid_elementor_d0f4a5f .franchise-fact-chip * {
@@ -211,10 +264,11 @@ export const FRANCHISE_DIRECTORY_CARD_STYLES = `
   line-height: 1.4 !important;
 }
 .franchise-fact-chip span {
-  color: #767676;
+  color: #64748b;
 }
 .franchise-fact-chip strong {
   font-weight: 700;
+  color: #0f172a;
 }
 .fr-compare-wrap--card {
   position: relative;
@@ -250,23 +304,62 @@ export const FRANCHISE_DIRECTORY_CARD_STYLES = `
 }
 #uc_post_grid_elementor_d0f4a5f .fr-save-opportunity-button--card,
 #uc_post_grid_elementor_d0f4a5f .fr-compare-button--card {
-  width: 34px;
-  height: 34px;
-  min-height: 34px;
-  border: 1px solid #d9d9d9;
-  background: #ffffff;
-  color: #333333;
-  box-shadow: none;
+  width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+  background: #ffffff !important;
+  color: #c28d00 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+#uc_post_grid_elementor_d0f4a5f .fr-save-opportunity-button--card i {
+  color: #c28d00 !important;
+  -webkit-text-fill-color: #c28d00 !important;
+  font-size: 13px !important;
+}
+#uc_post_grid_elementor_d0f4a5f .fr-compare-button--card i {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  font-size: 13px !important;
+}
+#uc_post_grid_elementor_d0f4a5f .fr-save-opportunity-button--card:hover,
+#uc_post_grid_elementor_d0f4a5f .fr-compare-button--card:hover,
+#uc_post_grid_elementor_d0f4a5f .fr-save-opportunity-button--card:focus-visible,
+#uc_post_grid_elementor_d0f4a5f .fr-compare-button--card:focus-visible {
+  background: #c28d00 !important;
+  border-color: #c28d00 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(194, 141, 0, 0.3) !important;
+}
+#uc_post_grid_elementor_d0f4a5f .fr-save-opportunity-button--card:hover i,
+#uc_post_grid_elementor_d0f4a5f .fr-compare-button--card:hover i,
+#uc_post_grid_elementor_d0f4a5f .fr-save-opportunity-button--card:focus-visible i,
+#uc_post_grid_elementor_d0f4a5f .fr-compare-button--card:focus-visible i {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 #uc_post_grid_elementor_d0f4a5f .fr-save-opportunity-button--card.is-saved {
-  border-color: #137333;
-  background: #137333;
-  color: #ffffff;
+  border-color: #137333 !important;
+  background: #137333 !important;
+  color: #ffffff !important;
+}
+#uc_post_grid_elementor_d0f4a5f .fr-save-opportunity-button--card.is-saved i {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 #uc_post_grid_elementor_d0f4a5f .fr-compare-button--card.is-added {
-  border-color: #f0ca00;
-  background: #f0ca00;
-  color: #111111;
+  border-color: #c28d00 !important;
+  background: #c28d00 !important;
+  color: #ffffff !important;
+}
+#uc_post_grid_elementor_d0f4a5f .fr-compare-button--card.is-added i {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 .fr-compare-button--card span {
   position: absolute;
@@ -280,7 +373,25 @@ export const FRANCHISE_DIRECTORY_CARD_STYLES = `
   padding: 8px 13px;
 }
 .fr-compare-button.is-added {
-  background: #f0ca00;
-  color: #111111;
+  background: #c28d00;
+  color: #ffffff !important;
+}
+.fr-tooltip {
+  font-family: Outfit, "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  letter-spacing: 0.01em !important;
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25) !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+}
+.fr-tooltip strong,
+.fr-tooltip b {
+  font-weight: 600 !important;
+  color: #ffffff !important;
 }
 `;
